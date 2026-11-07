@@ -20,10 +20,16 @@ extends Node
 ##   limbs push on it as they drive.
 ## - freeze() turns every piece static where it is: the body joins the tower.
 ##
-## Joint control is Jolt's hinge MOTOR (a velocity motor with a torque cap, solved
-## inside the engine, so it's stable at any stiffness): a driven limb's motor chases
-## its aim, a loose limb's motor holds still with a little torque (the joint
-## friction), and the spine, neck, wrists and ankles are motors pulling home.
+## THE DRAG (the reference game's model, read off it by playing it, 2026-11-07):
+## holding a limb PULLS ITS HAND OR FOOT toward the target (the mouse point, or the
+## pad's steered point) with a strong elastic pull, capped at Feel drag_strength
+## body-weights. Nothing aims the joints: the pulled hand drags the arm straight
+## toward the target and the body after it. Every joint has FRICTION (a Jolt hinge
+## motor holding still with a capped torque), so the body keeps whatever pose it's
+## pushed into, and under a pull the knees and elbows buckle sideways, either way.
+## The pulled limb's own joints are nearly free so it follows the pull. The torso's
+## two spine joints and the neck are soft springs. A climber's own pieces never
+## collide with each other.
 
 const Layout := preload("res://climber/body_layout.gd")
 
@@ -31,7 +37,6 @@ const LAYER_WORLD := 1
 const LAYER_LIVE := 2
 const LAYER_FROZEN := 4
 const DEPTH := 0.24  # how thick a box piece is through the plane, for contacts (m)
-const MAX_DRIVE_W := 4.0  # rad/s: the fastest a driven joint swings (a steady reach, not a whip)
 ## The engine's hinge sign conventions, pinned by the --spike "signs" test.
 const MOTOR_SIGN := -1.0  # Jolt: a positive motor velocity spins the child CW (pinned by --spike signs)
 const LIMIT_FLIP := true  # Jolt: the hinge angle runs clockwise about +z (pinned by --spike signs)
@@ -504,8 +509,16 @@ func attach(i: int, other: Object) -> void:
 	var end: RigidBody3D = bodies[l.def.end]
 	var ob := other as CollisionObject3D
 	var at := end.global_position
+	# A WELD, as the reference game's grabs are: a hinge on z locked at its current
+	# angle, so a stuck hand or foot can't turn on what it holds (a free pin let the
+	# standing body topple over its feet at the first lean).
 	var rid := PhysicsServer3D.joint_create()
-	PhysicsServer3D.joint_make_pin(rid, end.get_rid(), Vector3.ZERO, ob.get_rid(), ob.global_transform.affine_inverse() * at)
+	var frame_end := Transform3D(Basis(), Vector3.ZERO)
+	var frame_other := ob.global_transform.affine_inverse() * end.global_transform
+	PhysicsServer3D.joint_make_hinge(rid, end.get_rid(), frame_end, ob.get_rid(), Transform3D(Basis(Vector3.BACK, 0.0) * frame_other.basis.orthonormalized(), frame_other.origin))
+	PhysicsServer3D.hinge_joint_set_flag(rid, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, true)
+	PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_LIMIT_LOWER, 0.0)
+	PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_LIMIT_UPPER, 0.0)
 	# The end and what it holds must not push apart while stuck. NOT the joint's own
 	# disable-collisions flag: on Jolt that exception outlived the freed joint, so a
 	# released foot never touched the deck again (0.1.3). An explicit exception,
@@ -550,45 +563,31 @@ func release_all() -> void:
 		release(i)
 
 
-## The motors. Driven limbs chase their aim with a capped torque; loose limbs'
-## motors hold still with a small torque (joint friction); the spine, neck,
-## wrists and ankles pull home. Motor torques act between the two pieces, so a
-## limb driving to one side bends the torso it pushes against.
+## THE JOINTS: friction everywhere (a motor holding still with a capped torque, so a
+## pose holds until something pushes harder), soft springs in the spine and neck.
+## Then THE DRAG on every held hand or foot, while attached.
 func _tick_joints(attached: bool) -> void:
 	var g := 9.8 * Feel.get_k("gravity_scale")
-	var drive_w := Feel.get_k("drive_freq")
 	var dt := 1.0 / float(Engine.physics_ticks_per_second)
-	var targets := {}
-	var caps := {}
-	for i in limbs.size():
-		var l: Dictionary = limbs[i]
-		l.driving = false
-		if not l.held or not attached:
-			continue
-		var t = _limb_targets(i)
-		if t == null:
-			t = l.hold
-		else:
-			l.hold = t
-		l.driving = true
-		var reach: float = l.l1 + l.l2
-		var strength := Feel.get_k("arm_strength") if l.def.arm else Feel.get_k("leg_strength")
-		var cap := strength * total_mass * g * reach
-		targets[l.def.root] = t[0]
-		targets[l.def.mid] = t[1]
-		caps[l.def.root] = cap
-		# Elbows and knees are softer than shoulders and hips, so a limb you steer
-		# swings from its root and bends at the middle under load, both ways.
-		caps[l.def.mid] = Feel.get_k("bend_strength") * total_mass * g * reach
-	var hold := Feel.get_k("hold_strength")
+	var weight := total_mass * g
+	var held_joints := {}
+	for l in limbs:
+		l.driving = l.held and attached
+		if l.held:
+			held_joints[l.def.root] = true
+			held_joints[l.def.mid] = true
+			held_joints["wrist_l" if l.def.end == "hand_l" else ("wrist_r" if l.def.end == "hand_r" else ("ankle_l" if l.def.end == "foot_l" else "ankle_r"))] = true
+	var f_root := Feel.get_k("joint_friction") * weight * 0.5
+	var f_mid := Feel.get_k("bend_friction") * weight * 0.5
+	var f_held := Feel.get_k("held_friction") * weight * 0.5
+	var f_end := Feel.get_k("wrist_friction") * weight * 0.5
 	var spine_w := Feel.get_k("spine_spring") * 20.0
 	var neck_w := Feel.get_k("neck_spring") * 20.0
-	var end_w := Feel.get_k("wrist_spring") * 20.0
 	for jn in joints:
 		var j: Dictionary = joints[jn]
 		var rel := wrapf(angle_of(j.b) - angle_of(j.a), -PI, PI)
 		var ie: float = j.ieff
-		var want_w := 0.0  # rel spin the motor asks for (rad/s, CCW)
+		var want_w := 0.0  # rel spin the motor asks for (rad/s, CCW); 0 = friction
 		var torque := 0.0  # its torque cap (N m)
 		match j.kind:
 			"spine":
@@ -598,41 +597,56 @@ func _tick_joints(attached: bool) -> void:
 				want_w = -neck_w * rel
 				torque = ie * neck_w * neck_w * absf(rel) + ie * neck_w
 			"end":
-				if _end_stuck(jn):
-					if jn.begins_with("ankle"):
-						# THE STANCE: a planted foot's ankle holds the body upright, sized by
-						# the body's inertia about it (free, the body toppled and rocked on
-						# its pins at every arm move).
-						var io: float = j.ieff_other
-						want_w = -end_w * rel
-						torque = io * end_w * end_w * absf(rel) + io * end_w * 0.5
-					else:
-						torque = 0.0  # a stuck hand pivots freely on what it holds
+				# A planted FOOT's ankle is as stiff as a hip: it holds the body up over
+				# the welded foot. A stuck hand's wrist stays loose, so you swing from it.
+				if held_joints.has(jn):
+					torque = f_held
+				elif jn.begins_with("ankle") and _end_stuck(jn):
+					torque = f_root
 				else:
-					want_w = -end_w * rel
-					torque = ie * end_w * end_w * absf(rel) + ie * end_w * 0.5
+					torque = f_end
+			"mid":
+				torque = f_held if held_joints.has(jn) else f_mid
 			_:
-				if targets.has(jn):
-					# Plain difference, never wrapped: a limited hinge isn't a circle.
-					# (Wrapped, a hanging arm at +100 deg aimed at -84 deg drove the
-					# "short" way through 180 and pinned itself on the +170 limit.)
-					var err := float(targets[jn]) - rel
-					want_w = clampf(drive_w * err, -MAX_DRIVE_W, MAX_DRIVE_W)
-					torque = caps[jn]
-				else:
-					# Not held: shoulders and hips hold their angle (a pose, so the body
-					# stands and keeps its shape); elbows and knees hold loosely and bend
-					# either way under load (the reference game's floppy, bendy limbs).
-					if j.kind == "mid":
-						# A planted limb's middle is braced (a stuck foot's knee carries the
-						# body: floppy, the climber squatted 0.4 m and couldn't reach); a free
-						# limb's middle is floppy and swings either way.
-						var braced := _limb_of_mid_stuck(jn)
-						torque = (hold * 0.8 if braced else Feel.get_k("bend_hold")) * total_mass * g * 0.7
-					else:
-						torque = hold * total_mass * g * 0.7
+				torque = f_held if held_joints.has(jn) else f_root
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, want_w * MOTOR_SIGN)
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, torque * dt)
+	if not attached:
+		return
+	var cap := Feel.get_k("drag_strength") * weight
+	var k := Feel.get_k("drag_stiffness") * total_mass
+	var c := Feel.get_k("drag_damping") * total_mass
+	for i in limbs.size():
+		var l: Dictionary = limbs[i]
+		if not l.held:
+			continue
+		var target := drag_target(i)
+		var end: RigidBody3D = bodies[l.def.end]
+		var p := pos2(end)
+		var v := Vector2(end.linear_velocity.x, end.linear_velocity.y)
+		var f := ((target - p) * k - v * c).limit_length(cap)
+		end.apply_central_force(Vector3(f.x, f.y, 0.0))
+
+
+## Where limb i's held hand or foot is being pulled (world m). The mouse puts it
+## on its point; a pad's stick moves it like a cursor (Feel hand_speed) and a
+## resting stick leaves it. It starts where the hand was when the button went down.
+func drag_target(i: int) -> Vector2:
+	var l: Dictionary = limbs[i]
+	var aim = driver.aim(self, i) if driver != null else null
+	if aim is Dictionary:
+		if aim.has("point"):
+			l.cursor = aim.point
+		elif aim.has("dir"):
+			var dt := 1.0 / float(Engine.physics_ticks_per_second)
+			l.cursor += (aim.dir as Vector2).normalized() * clampf(float(aim.mag), 0.0, 1.0) * Feel.get_k("hand_speed") * dt
+			# A stick-steered target stays within a stretch of the limb's root, so it
+			# can't wander off-screen while the hand is held back.
+			var S := limb_root(i)
+			var reach: float = (l.l1 + l.l2) * 1.25
+			if l.cursor.distance_to(S) > reach:
+				l.cursor = S + (l.cursor - S).normalized() * reach
+	return l.cursor
 
 
 ## Is the limb whose elbow or knee this is stuck to something?
@@ -657,59 +671,6 @@ func _current_rel(i: int) -> Array:
 	if r.is_empty() or m.is_empty():
 		return [0.0, 0.0]
 	return [wrapf(angle_of(r.b) - angle_of(r.a), -PI, PI), wrapf(angle_of(m.b) - angle_of(m.a), -PI, PI)]
-
-
-## The two-bone aim for limb i: [root target, mid target] as rad relative
-## angles, or null when the driver has no aim this tick (keep the pose).
-func _limb_targets(i: int):
-	var l: Dictionary = limbs[i]
-	var aim = driver.aim(self, i) if driver != null else null
-	if aim == null:
-		aim = {}  # stick at rest: the hand stays where it was steered
-	var root_j: Dictionary = joints[l.def.root]
-	var parent: RigidBody3D = root_j.a
-	var S := xf2(parent) * (root_j.local_a as Vector2)
-	var l1: float = l.l1
-	var l2: float = l.l2
-	# THE HAND IS WHAT YOU STEER (Parker: "when you hold a button you are more or
-	# less controlling the hand, the limb is bending at the shoulder and elbow or hip
-	# and knee sideways to follow the hand"). The mouse puts the hand on its point;
-	# the stick moves the hand like a cursor (Feel hand_speed), and a resting stick
-	# leaves it where it is. The two-bone solve then bends shoulder and elbow to
-	# follow, whichever way the elbow already bends.
-	if aim.has("point"):
-		l.cursor = aim.point
-	elif aim.has("dir"):
-		var dt := 1.0 / float(Engine.physics_ticks_per_second)
-		l.cursor += (aim.dir as Vector2).normalized() * clampf(float(aim.mag), 0.0, 1.0) * Feel.get_k("hand_speed") * dt
-	# Keep the cursor inside what the limb can reach, so it never runs away.
-	var off: Vector2 = l.cursor - S
-	var r := clampf(off.length(), absf(l1 - l2) + 0.06, l1 + l2 - 0.01)
-	if off.length() < 0.0001:
-		off = Vector2.from_angle(deg_to_rad(l.def.rest_deg))
-	l.cursor = S + off.normalized() * r
-	var T: Vector2 = l.cursor
-	var v := T - S
-	var dd := clampf(v.length(), absf(l1 - l2) + 0.02, l1 + l2 - 0.002)
-	var base := v.angle() if v.length() > 0.0001 else deg_to_rad(l.def.rest_deg)
-	var cos_a := clampf((l1 * l1 + dd * dd - l2 * l2) / (2.0 * l1 * dd), -1.0, 1.0)
-	# Bend the way the elbow or knee already bends: left or right, whichever the
-	# physics put it in. Nearly straight, it takes the layout's default side.
-	var bend := float(l.def.bend)
-	var mj_now: Dictionary = joints[l.def.mid]
-	var mid_now := wrapf(angle_of(mj_now.b) - angle_of(mj_now.a), -PI, PI)
-	if absf(mid_now) > deg_to_rad(8.0):
-		bend = -signf(mid_now)
-	var upper := base + bend * acos(cos_a)
-	var E := S + Vector2.from_angle(upper) * l1
-	var T2 := S + Vector2.from_angle(base) * dd
-	var lower := (T2 - E).angle()
-	var rest := deg_to_rad(l.def.rest_deg)
-	var root_rel := wrapf((upper - rest) - angle_of(parent), -PI, PI)
-	var mid_rel := wrapf(lower - upper, -PI, PI)
-	var rj: Dictionary = joints[l.def.root]
-	var mj: Dictionary = joints[l.def.mid]
-	return [clampf(root_rel, rj.lo, rj.hi), clampf(mid_rel, mj.lo, mj.hi)]
 
 
 ## World position (y-up m) of limb i's root joint and end.
