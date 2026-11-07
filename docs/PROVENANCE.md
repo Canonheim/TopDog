@@ -9,7 +9,10 @@
 | `textures/input_prompts/` | Golemheim (Kenney Input Prompts, CC0) | As is |
 | `models/metal_knight.glb` | Golemheim `models/Metal_Knight.glb` | Texture path pointed at `../palette/house_atlas.png` |
 | `models/barrel.glb` | `Armory Second Look\Armory_Remake\models\atlas\barrel.glb` (Parker's REMAKE pick) | Texture path pointed at `../palette/house_atlas.png` |
-| `models/palette/house_atlas.png` | `Desktop\House Style 3D Kit\atlas\house_atlas.png` (byte-identical to Golemheim's atlas) | As is |
+| `palette/` (the atlas, its two masks, the map, their imports) | `Desktop\House Style 3D Kit\godot\demo_project\palette\` (the atlas is byte-identical to Golemheim's) | As is |
+| `shaders/cel/` (the cel shader, ramp, includes, the ink host and its six compute passes) | `Desktop\House Style 3D Kit\godot\demo_project\shaders\cel\` (Golemheim's, generalized; its LICENSE beside it) | As is |
+| `scripts/cel_pass.gd`, `scripts/atlas_map.gd` | the same kit, `scripts\` | As is |
+| `ui/pad_nav.gd` | Golemheim `scripts/ui_pad.gd` (ensure focus, focus first, the legend idea) | Rewritten: reads every pad directly |
 | `audio/sfx/` grunts, hurt, thud, land, clap, UI, victory, defeat, bell, tick, yells | Golemheim `audio/sfx/` (its procedural set) | Two renamed (`lock_bell`, `clock_tick`) |
 | `audio/sfx/slap_1-4.wav`, `grip.wav` | New, synthesized here | |
 | `audio/music/top_your_pals_theme.ogg` | New, `tools/music/theme.py` | Made with the house method |
