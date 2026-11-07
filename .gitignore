@@ -2,3 +2,8 @@
 builds/
 *.tmp
 export_credentials.cfg
+tools/steam/steamcmd/
+tools/steam/app_build.vdf
+tools/bin/
+tools/soundfonts/*.sf2
+tools/music/__pycache__/

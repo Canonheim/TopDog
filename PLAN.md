@@ -4,7 +4,7 @@ A physics climbing party game: 3D to look at, played on one plane. Climbers race
 
 It's a spiritual successor to a 2013 tower-climbing party game Parker owns on Steam, called "the reference game" in this repo. It's built on Golemheim's code and art kit, in Godot 4.7.2, with GodotSteam on its own Steam app.
 
-**State (2026-11-07):** plan only. Parker answered every call in section 8. No repo, no Godot run, nothing copied. Work starts on Parker's word.
+**State (2026-11-07):** BUILT, P0-P7, in one session. Parker answered every call in section 8. The 2D-physics call failed its gate and the game runs on Jolt locked to the plane: see docs/BOOK.md, which is the record from here on.
 
 ---
 

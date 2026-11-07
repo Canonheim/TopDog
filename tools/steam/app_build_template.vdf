@@ -1,0 +1,26 @@
+// Top Your Pals SteamPipe build script. upload_build.bat fills APPID / DEPOTID
+// into app_build.vdf and stages builds/steam_content first; never point
+// ContentRoot at builds/ itself (saves, the console wrapper and the debug DLL
+// live there and must not ship). No SetLive on purpose: going live on a branch
+// is a deliberate click on the partner site.
+"AppBuild"
+{
+	"AppID" "APPID"
+	"Desc" "Top Your Pals upload (tools/steam/upload_build.bat)"
+
+	"ContentRoot" "..\..\builds\steam_content\"
+	"BuildOutput" "..\..\builds\steam_output\"
+
+	"Depots"
+	{
+		"DEPOTID"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "*"
+				"DepotPath" "."
+				"recursive" "1"
+			}
+		}
+	}
+}

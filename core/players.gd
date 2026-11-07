@@ -61,11 +61,15 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	for s in slots.size():
 		var dev: int = slots[s].device
+		# A press is kept until something reads it (an edge must never be lost
+		# because the reader ticked a frame late).
 		var now := _action(dev, "lock")
-		_lock_edge[s] = now and not _lock_prev.get(s, false)
+		if now and not _lock_prev.get(s, false):
+			_lock_edge[s] = true
 		_lock_prev[s] = now
 		var p := _action(dev, "pause")
-		_pause_edge[s] = p and not _pause_prev.get(s, false)
+		if p and not _pause_prev.get(s, false):
+			_pause_edge[s] = true
 		_pause_prev[s] = p
 
 
@@ -98,6 +102,10 @@ func slot_of_device(device: int) -> int:
 
 func clear_players() -> void:
 	slots.clear()
+	_lock_prev.clear()
+	_lock_edge.clear()
+	_pause_prev.clear()
+	_pause_edge.clear()
 
 
 ## For a join screen: a device that pressed its Lock In / A just now and has no

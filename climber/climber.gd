@@ -283,12 +283,21 @@ func _build_limbs() -> void:
 		})
 
 
+## Each climber's knight is washed toward its player colour (the artist's skins
+## will replace this; any skin on the 16 Defaultio names drops in piece by piece).
 func set_tint(c: Color) -> void:
 	tint = c
+	var wash := Color(1, 1, 1).lerp(c, 0.45)
 	for b in bodies.values():
 		for ch in b.get_children():
-			if ch is GeometryInstance3D:
-				(ch as GeometryInstance3D).set_instance_shader_parameter("tint", c)
+			if ch is MeshInstance3D:
+				var mi := ch as MeshInstance3D
+				for si in mi.get_surface_override_material_count():
+					var m := mi.get_active_material(si)
+					if m is StandardMaterial3D:
+						var d: StandardMaterial3D = m.duplicate()
+						d.albedo_color = wash
+						mi.set_surface_override_material(si, d)
 
 
 # ---------------------------------------------------------------- tick

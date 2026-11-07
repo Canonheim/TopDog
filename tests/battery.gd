@@ -541,3 +541,207 @@ func _run_scramble() -> void:
 	t("scramble: the last one in wins", int(g.results.get("winner", -1)) == 0, g.results)
 	g.end_match()
 	g.queue_free()
+
+
+# ================================================================ P2: --climb
+
+## A scripted climber (mouse-style point aims) gets onto the barrel: the proof the
+## strength and grab numbers let a body climb. Not the feel test: that's Parker's.
+func _run_climb() -> void:
+	var st := Stage.new("dock")
+	st.build(world, false)
+	var bx := st.barrel_half
+	var bt := st.barrel_top
+	var c := spawn(Vector2(bx + 0.5, 0.05))
+	var d: Drivers.ScriptDriver = c.driver
+	await seconds(0.8)
+	var log := []
+	var best := 0.0
+	# 1. Feet on the deck (attached), near hand to the barrel's top edge.
+	d.holds = [false, false, true, true]
+	await seconds(0.3)
+	d.point_limb(0, true, Vector2(bx - 0.08, bt + 0.04))
+	await seconds(1.2)
+	log.append("edge grab %s, top %.2f" % [c.limbs[0].grab.is_valid(), c.top_height()])
+	# 2. Feet off; pull the near arm down so the shoulder rises over the hand.
+	d.holds[2] = false
+	d.holds[3] = false
+	d.aims[2] = null
+	d.aims[3] = null
+	for k in 3:
+		d.point_limb(0, true, c.limb_end(0) + Vector2(0.15, -0.9))
+		await seconds(0.5)
+		best = maxf(best, c.top_height())
+	# 3. Far hand onto the top, further in; then both pull and a foot swings up.
+	d.point_limb(1, true, Vector2(bx - 0.45, bt + 0.06))
+	await seconds(1.0)
+	log.append("far hand %s, top %.2f" % [c.limbs[1].grab.is_valid(), c.top_height()])
+	for k in 6:
+		d.set_limb(0, true, Vector2(0.3, -1.0), 1.0)
+		d.set_limb(1, true, Vector2(0.2, -1.0), 1.0)
+		d.point_limb(2, true, Vector2(bx - 0.15, bt + 0.12))
+		await seconds(0.6)
+		best = maxf(best, c.top_height())
+		log.append("pull %d: top %.2f stuck %d (feet %s %s)" % [k, c.top_height(), c.stuck_count(), c.limbs[2].grab.is_valid(), c.limbs[3].grab.is_valid()])
+	for l in log:
+		print("      ", l)
+	t("climb: the scripted climber pulls its head above the barrel top (lock-in height)", best > bt + 0.1, "best top %.2f, barrel %.2f" % [best, bt])
+
+
+## Strength check: hang from a bar by both hands, then drive both arms "down"
+## (shoulders over the hands): the body has to rise. And one-armed.
+func _run_pullup() -> void:
+	for arms in [[0]]:
+		var c := spawn(Vector2(0, 3.0))
+		var bar := bar_at(c.limb_end(0))
+		c.attach(0, bar)
+		var bar2: StaticBody3D = null
+		if arms.size() > 1:
+			bar2 = bar_at(c.limb_end(1))
+			c.attach(1, bar2)
+		var d: Drivers.ScriptDriver = c.driver
+		await seconds(2.0)
+		var y0 := c.centre_of_mass().y
+		var hand_y := c.limb_end(0).y
+		var top := -INF
+		for k in int(2.5 * Engine.physics_ticks_per_second):
+			for a in arms:
+				d.set_limb(a, true, Vector2.DOWN, 1.0)
+			await get_tree().physics_frame
+			top = maxf(top, c.centre_of_mass().y)
+		print("      arms %s: COM %.2f -> best %.2f (hands at %.2f)" % [arms, y0, top, hand_y])
+		t("pullup: %d-arm pull lifts the body at least 0.35 m" % arms.size(), top - y0 > 0.35, "%.2f m" % (top - y0))
+		c.remove()
+		bar.queue_free()
+		if bar2 != null:
+			bar2.queue_free()
+		await frames(2)
+
+
+# ================================================================ P5: --net (two machines, one process)
+
+## A host and a client over real ENet loopback, each with its own multiplayer
+## branch and its own physics world (a SubViewport), playing Scramble.
+func _run_net() -> void:
+	var port := 7790 + randi() % 50
+	var machines := []
+	for nm in ["A", "B"]:
+		var holder := Node.new()
+		holder.name = nm
+		add_child(holder)
+		var vp := SubViewport.new()
+		vp.own_world_3d = true
+		vp.size = Vector2i(64, 64)
+		vp.render_target_update_mode = SubViewport.UPDATE_DISABLED
+		holder.add_child(vp)
+		var w := Node3D.new()
+		vp.add_child(w)
+		var api := SceneMultiplayer.new()
+		get_tree().set_multiplayer(api, holder.get_path())
+		var g: Game = GameScript.new()
+		g.name = "Game"
+		g.world = w
+		g.dress = false
+		holder.add_child(g)
+		machines.append({"holder": holder, "api": api, "game": g, "world": w})
+	var host_peer := ENetMultiplayerPeer.new()
+	t("net: the host opens a port", host_peer.create_server(port, 4) == OK)
+	machines[0].api.multiplayer_peer = host_peer
+	var client_peer := ENetMultiplayerPeer.new()
+	client_peer.create_client("127.0.0.1", port)
+	machines[1].api.multiplayer_peer = client_peer
+	for i in 240:
+		await get_tree().process_frame
+		if machines[1].api.get_unique_id() > 1 and machines[0].api.get_peers().size() == 1:
+			break
+	var cid_peer: int = machines[1].api.get_unique_id()
+	t("net: the client connects", machines[0].api.get_peers().size() == 1, cid_peer)
+	var A: Game = machines[0].game
+	var B: Game = machines[1].game
+	A.bot_drivers[0] = Drivers.ScriptDriver.new()
+	B.bot_drivers[1] = Drivers.ScriptDriver.new()
+	var roster := [{"pid": 0, "name": "Host bot", "tint": Color.RED, "peer": 1, "slot": 0},
+		{"pid": 1, "name": "Client bot", "tint": Color.BLUE, "peer": cid_peer, "slot": 0}]
+	A.host_start({"mode": "scramble", "timer": 6.0, "spawn": "alternate", "stage": "dock"}, roster)
+	await wait_phase(A, "round", 6.0)
+	await wait_phase(B, "round", 3.0)
+	await frames(30)
+	t("net: both machines start the round", A.phase == "round" and B.phase == "round", "%s %s" % [A.phase, B.phase])
+	var a0: Climber = A.climbers.get(A.live.get(0, -1))
+	var a1: Climber = A.climbers.get(A.live.get(1, -1))
+	var b0: Climber = B.climbers.get(B.live.get(0, -1))
+	var b1: Climber = B.climbers.get(B.live.get(1, -1))
+	t("net: each machine owns its own climber and puppets the other",
+		a0 != null and b1 != null and a0.state == Climber.State.LIVE and b1.state == Climber.State.LIVE
+		and a1.state == Climber.State.PUPPET and b0.state == Climber.State.PUPPET)
+	# The stream: the client's puppet follows the host's real body.
+	await seconds(1.0)
+	var lag := a0.centre_of_mass().distance_to(b0.centre_of_mass())
+	t("net: the puppet follows the real body (within 25 cm at rest)", lag < 0.25, "%.3f m" % lag)
+	# Grab across machines: the client's hand holds the host climber's puppet.
+	b1.attach(0, b0.bodies["chest"])
+	await seconds(0.5)
+	t("net: the host's climber learns it's held (counts as attached)", a0.remote_grabbed == 1 and a0.is_attached(), a0.remote_grabbed)
+	t("net: the holder's pull arrives on the held climber's machine", not a0.remote_pulls.is_empty(), a0.remote_pulls)
+	b1.release(0)
+	await seconds(0.4)
+	t("net: releasing un-counts it on the other machine", a0.remote_grabbed == 0)
+	# The client locks in above the line: the host decides, both freeze it the same.
+	var line_before := A.line
+	await lift_and_lock(B, 1, 0.5)
+	await seconds(0.5)
+	t("net: the client's lock-in froze it on both machines", b1.state == Climber.State.FROZEN and a1.state == Climber.State.FROZEN)
+	t("net: the line rose on both machines", A.line > line_before and absf(A.line - B.line) < 0.0001, "%.3f %.3f" % [A.line, B.line])
+	t("net: the frozen body is identical on both machines", _pose_diff(a1.pose(), b1.pose()) < 0.0001, "%.6f" % _pose_diff(a1.pose(), b1.pose()))
+	# The host's climber runs out the clock: frozen and out, identical on both.
+	await wait_phase(A, "over", 10.0)
+	await seconds(0.5)
+	t("net: the timed-out climber is frozen on both machines", a0.state == Climber.State.FROZEN and b0.state == Climber.State.FROZEN)
+	t("net: its frozen body matches across machines", _pose_diff(a0.pose(), b0.pose()) < 0.0001, "%.6f" % _pose_diff(a0.pose(), b0.pose()))
+	t("net: both machines agree on the winner (the client)", int(A.results.get("winner", -1)) == 1 and int(B.results.get("winner", -1)) == 1, "%s / %s" % [A.results.get("winner"), B.results.get("winner")])
+	A.end_match()
+	B.end_match()
+	host_peer.close()
+	client_peer.close()
+	for m in machines:
+		m.holder.queue_free()
+
+
+func _pose_diff(a: PackedFloat32Array, b: PackedFloat32Array) -> float:
+	var d := 0.0
+	for i in mini(a.size(), b.size()):
+		d = maxf(d, absf(a[i] - b[i]))
+	return d
+
+
+# ================================================================ P4: --devices
+
+## Four fake pads drive four players with no crosstalk; the triggers share one
+## press point; the keyboard player is its own device.
+func _run_devices() -> void:
+	Players.clear_players()
+	Players.fake.clear()
+	for k in 4:
+		Players.fake[1000 + k] = {"buttons": {}, "stick": Vector2.ZERO}
+	for k in 4:
+		t("devices: pad %d joins as player %d" % [k, k], Players.add_player(1000 + k) == k)
+	t("devices: a pad can't join twice", Players.add_player(1000) == -1)
+	Players.fake[1002].buttons = {"arm_r": true}
+	Players.fake[1002].stick = Vector2(0.9, 0.1)
+	var crosstalk := false
+	for s in 4:
+		for limb in 4:
+			var want := s == 2 and limb == 1
+			if Players.limb_held(s, limb) != want:
+				crosstalk = true
+	t("devices: one pad's button moves only its own player's limb", not crosstalk)
+	var aim = Players.limb_aim(2, null, 1)
+	t("devices: that pad's stick aims only its own player", aim != null and Players.limb_aim(0, null, 1) == null)
+	await frames(2)
+	Players.lock_pressed(1)  # drain anything from before
+	Players.fake[1001].buttons = {"lock": true}
+	await frames(2)
+	t("devices: Lock In is an edge (one press, one lock)", Players.lock_pressed(1) and not Players.lock_pressed(1))
+	t("devices: the keyboard is its own device", Players.slot_of_device(Players.KBM) == -1)
+	Players.fake.clear()
+	Players.clear_players()

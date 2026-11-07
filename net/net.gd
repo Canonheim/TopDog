@@ -1,1 +1,518 @@
 extends Node
+## NET: sessions and the lobby. Autoload "Net".
+##
+## Transports (nothing above this file knows which is in use):
+## - Steam: GodotSteam's SteamMultiplayerPeer over a Steam lobby (Valve's relay,
+##   no ports). App 480 (Spacewar) with our own lobby tag until our own app exists.
+## - ENet on a port: LAN and same-PC tests (one Steam account can't join itself).
+##
+## The lobby: every machine sends the host its local players; the host keeps the
+## member list, ready flags, chat and match settings, and starts the match through
+## Game (game/game.gd), which owns everything after that.
+##
+## Lifted from Golemheim's net.gd (Steam init, lobby create/join/browse, invites,
+## +connect_lobby, the version gate, the ghost-lobby and crossed-join guards), cut
+## down to this game. See docs/PROVENANCE.md.
+
+signal status(text: String)
+signal members_changed
+signal chat_line(who: String, text: String)
+signal settings_changed
+signal session_started  # we're connected (host or client)
+signal session_ended(reason: String)
+signal lobby_list(rows: Array)
+
+const LobbyLogic := preload("res://net/lobby_logic.gd")
+
+const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
+const LOBBY_TAG := "topyourpals"  # must equal lobby_logic.gd GAME_TAG
+const GAME_VERSION := "0.1.0"  # bump on every build: RPC tables move between builds
+const ENET_PORT := 7788
+const MAX_MACHINES := 8
+const MAX_CLIMBERS := 8
+const CHAT_PRESETS := ["Hello!", "Ready!", "Not ready", "Nice one!", "Oops!", "Get off me!", "Hold on!", "GG"]
+
+const VIS_PUBLIC := "public"
+const VIS_FRIENDS := "friends"
+const VIS_INVITE := "invite"
+
+var steam_ok := false
+var steam_lobby := 0
+var online := false
+## peer id -> {"name": String, "players": [{name, tint}], "ready": bool}
+var members := {}
+var settings := Modes.default_settings()
+var in_match := false
+
+var _pending_lobby := false
+var _hosting := false
+var _invite_lobby := 0
+var _list_wanted := false
+var _chat_times := {}
+
+
+func _ready() -> void:
+	_init_steam()
+	multiplayer.peer_connected.connect(_on_peer_connected)
+	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
+	multiplayer.connected_to_server.connect(_on_connected)
+	multiplayer.connection_failed.connect(func(): _end("Couldn't connect"))
+	multiplayer.server_disconnected.connect(func(): _end("Host left"))
+	var argv := OS.get_cmdline_args()
+	for i in argv.size():
+		# Steam launches a CLOSED game with +connect_lobby <id> when a friend
+		# accepts an invite; join_requested only fires for a running game.
+		if argv[i] == "+connect_lobby" and i + 1 < argv.size() and int(argv[i + 1]) > 0:
+			call_deferred("join_steam", int(argv[i + 1]))
+
+
+func _process(_delta: float) -> void:
+	if steam_ok:
+		Steam.run_callbacks()  # every frame, online or not: invites arrive here
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		leave()
+
+
+## Cut our connections on the Steam singleton as the tree closes (Golemheim's
+## THE STEAM EXIT CUT: GodotSteam's teardown crashed a quit holding them).
+func _exit_tree() -> void:
+	if not ClassDB.class_exists(&"Steam"):
+		return
+	for sig in Steam.get_signal_list():
+		for c in Steam.get_signal_connection_list(sig.name):
+			if c.callable.get_object() == self:
+				Steam.disconnect(sig.name, c.callable)
+
+
+func is_host() -> bool:
+	return multiplayer.multiplayer_peer == null or multiplayer.is_server()
+
+
+func me() -> int:
+	return multiplayer.get_unique_id()
+
+
+func my_name() -> String:
+	if steam_ok:
+		return str(Steam.getPersonaName())
+	return OS.get_environment("USERNAME") if OS.get_environment("USERNAME") != "" else "Player"
+
+
+# ================================================================ Steam
+
+func _init_steam() -> void:
+	if "--no-steam" in OS.get_cmdline_user_args() or not ClassDB.class_exists(&"Steam"):
+		return
+	var res: Dictionary = Steam.steamInitEx(STEAM_APP_ID, false)
+	if int(res.get("status", -1)) != Steam.STEAM_API_INIT_RESULT_OK:
+		print("[Net] Steam init failed (is Steam running?): ", res)
+		return
+	steam_ok = true
+	Steam.lobby_created.connect(_on_lobby_created)
+	Steam.lobby_joined.connect(_on_lobby_joined)
+	Steam.lobby_match_list.connect(_on_lobby_match_list)
+	Steam.join_requested.connect(_on_join_requested)
+	Steam.lobby_data_update.connect(_on_lobby_data_update)
+	print("[Net] Steam ready: ", Steam.getPersonaName())
+
+
+func host_steam(visibility := VIS_PUBLIC, lobby_name := "") -> void:
+	if online or _pending_lobby:
+		return  # one round-trip at a time: a second createLobby tore the live peer
+	if not steam_ok:
+		status.emit("Steam isn't running. Start Steam and restart the game, or play on LAN.")
+		return
+	_pending_lobby = true
+	_hosting = true
+	_pending_name = lobby_name if lobby_name != "" else "%s's climb" % my_name()
+	status.emit("Creating a Steam lobby...")
+	var t := Steam.LOBBY_TYPE_PUBLIC
+	if visibility == VIS_FRIENDS:
+		t = Steam.LOBBY_TYPE_FRIENDS_ONLY
+	elif visibility == VIS_INVITE:
+		t = Steam.LOBBY_TYPE_PRIVATE
+	Steam.createLobby(t, MAX_MACHINES)
+
+
+var _pending_name := ""
+
+
+func _on_lobby_created(result: int, lobby_id: int) -> void:
+	_pending_lobby = false
+	_hosting = false
+	if result != Steam.RESULT_OK:
+		status.emit("Steam lobby failed (%d)" % result)
+		return
+	if online:
+		Steam.setLobbyJoinable(lobby_id, false)
+		Steam.leaveLobby(lobby_id)
+		return
+	steam_lobby = lobby_id
+	Steam.setLobbyData(lobby_id, "game", LOBBY_TAG)
+	Steam.setLobbyData(lobby_id, "version", GAME_VERSION)
+	Steam.setLobbyData(lobby_id, "name", _pending_name)
+	Steam.setLobbyData(lobby_id, "host", my_name())
+	Steam.setLobbyData(lobby_id, "mode", str(settings.mode))
+	Steam.setLobbyJoinable(lobby_id, true)
+	var peer := SteamMultiplayerPeer.new()
+	var err = peer.host_with_lobby(lobby_id)
+	if err is int and err != OK:
+		# NO GHOST LOBBY: never leave a tagged, joinable room nobody serves.
+		Steam.setLobbyJoinable(lobby_id, false)
+		Steam.leaveLobby(lobby_id)
+		steam_lobby = 0
+		status.emit("Steam socket failed (%s)" % err)
+		return
+	multiplayer.multiplayer_peer = peer
+	_start_session_as_host()
+	status.emit("Hosting on Steam. Invite friends from the overlay (Shift+Tab) or the Invite button.")
+
+
+func request_lobby_list() -> void:
+	if not steam_ok:
+		lobby_list.emit([])
+		return
+	_list_wanted = true
+	Steam.addRequestLobbyListStringFilter("game", LOBBY_TAG, Steam.LOBBY_COMPARISON_EQUAL)
+	Steam.addRequestLobbyListDistanceFilter(Steam.LOBBY_DISTANCE_FILTER_WORLDWIDE)
+	Steam.requestLobbyList()
+
+
+func _on_lobby_match_list(lobbies: Array) -> void:
+	if not _list_wanted:
+		return
+	_list_wanted = false
+	var raw: Array = []
+	for l in lobbies:
+		raw.append({
+			"id": int(l), "game": Steam.getLobbyData(l, "game"), "version": Steam.getLobbyData(l, "version"),
+			"name": Steam.getLobbyData(l, "name"), "host": Steam.getLobbyData(l, "host"),
+			"mode": Steam.getLobbyData(l, "mode"), "count": Steam.getNumLobbyMembers(l), "max": Steam.getLobbyMemberLimit(l),
+		})
+	lobby_list.emit(LobbyLogic.rows_from(raw, GAME_VERSION))
+
+
+func join_steam(lobby_id: int) -> void:
+	if online or _pending_lobby or lobby_id == 0:
+		return
+	if not steam_ok:
+		status.emit("Steam isn't running.")
+		return
+	_pending_lobby = true
+	status.emit("Joining lobby...")
+	Steam.joinLobby(lobby_id)
+
+
+func invite_friends() -> void:
+	if not steam_ok or steam_lobby == 0:
+		return
+	if Steam.isOverlayEnabled():
+		Steam.activateGameOverlayInviteDialog(steam_lobby)
+	else:
+		status.emit("The Steam overlay isn't available here (launch through Steam). Friends can still join from your Steam profile.")
+
+
+## A running game: a friend's invite was accepted. Check the build first.
+func _on_join_requested(lobby_id: int, _steam_id: int) -> void:
+	if online:
+		status.emit("Leave this game first, then accept the invite.")
+		return
+	_invite_lobby = lobby_id
+	if not Steam.requestLobbyData(lobby_id):
+		_invite_lobby = 0
+		status.emit("Couldn't reach the friend's lobby")
+
+
+func _on_lobby_data_update(_success: bool, lobby_id: int, _member: int) -> void:
+	if _invite_lobby == 0 or lobby_id != _invite_lobby or online:
+		return
+	_invite_lobby = 0
+	var v := str(Steam.getLobbyData(lobby_id, "version"))
+	if v != GAME_VERSION:
+		status.emit("Can't join: they're on version %s (you have %s)" % [v if v != "" else "unknown", GAME_VERSION])
+		return
+	join_steam(lobby_id)
+
+
+func _on_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) -> void:
+	if response != Steam.CHAT_ROOM_ENTER_RESPONSE_SUCCESS:
+		_pending_lobby = false
+		status.emit("Couldn't enter the lobby (%d)" % response)
+		return
+	if Steam.getLobbyOwner(lobby_id) == Steam.getSteamID():
+		if steam_lobby == 0 and not _hosting:
+			# A joiner made owner: the host's leave and our join crossed. Nobody serves it.
+			Steam.leaveLobby(lobby_id)
+			_pending_lobby = false
+			status.emit("That lobby has no host any more")
+		return
+	if online:
+		Steam.leaveLobby(lobby_id)
+		_pending_lobby = false
+		return
+	steam_lobby = lobby_id
+	var v := str(Steam.getLobbyData(lobby_id, "version"))
+	if v != GAME_VERSION:
+		Steam.leaveLobby(lobby_id)
+		steam_lobby = 0
+		_pending_lobby = false
+		status.emit("Can't join: they're on version %s (you have %s)" % [v if v != "" else "unknown", GAME_VERSION])
+		return
+	var peer := SteamMultiplayerPeer.new()
+	var err = peer.connect_to_lobby(lobby_id)
+	if err is int and err != OK:
+		Steam.leaveLobby(lobby_id)
+		steam_lobby = 0
+		_pending_lobby = false
+		status.emit("Steam connect failed (%s)" % err)
+		return
+	multiplayer.multiplayer_peer = peer
+	status.emit("Connecting through Steam...")
+
+
+# ================================================================ LAN
+
+func host_lan() -> void:
+	if online:
+		return
+	var peer := ENetMultiplayerPeer.new()
+	var err := peer.create_server(ENET_PORT, MAX_MACHINES)
+	if err != OK:
+		status.emit("Couldn't open port %d (%s)" % [ENET_PORT, error_string(err)])
+		return
+	multiplayer.multiplayer_peer = peer
+	_start_session_as_host()
+	status.emit("Hosting on LAN, port %d. Others join with your IP address." % ENET_PORT)
+
+
+func join_lan(ip: String) -> void:
+	if online:
+		return
+	var peer := ENetMultiplayerPeer.new()
+	var err := peer.create_client(ip if ip != "" else "127.0.0.1", ENET_PORT)
+	if err != OK:
+		status.emit("Couldn't connect (%s)" % error_string(err))
+		return
+	multiplayer.multiplayer_peer = peer
+	status.emit("Connecting to %s..." % ip)
+
+
+# ================================================================ the session
+
+func _start_session_as_host() -> void:
+	online = true
+	in_match = false
+	members.clear()
+	members[1] = {"name": my_name(), "players": _local_players(), "ready": false}
+	members_changed.emit()
+	session_started.emit()
+
+
+func _on_connected() -> void:
+	online = true
+	_pending_lobby = false
+	_rpc_hello.rpc_id(1, GAME_VERSION, my_name(), _local_players())
+	session_started.emit()
+
+
+func _on_peer_connected(_id: int) -> void:
+	pass  # the hello carries everything
+
+
+func _on_peer_disconnected(id: int) -> void:
+	if not is_host():
+		return
+	if members.has(id):
+		var n: String = members[id].name
+		members.erase(id)
+		_rpc_members.rpc(members)
+		_rpc_chat_line.rpc("", "%s left" % n)
+
+
+func _local_players() -> Array:
+	var out: Array = []
+	for s in Players.slots.size():
+		out.append({"name": str(Players.slots[s].name), "tint": Players.slots[s].tint, "slot": s})
+	return out
+
+
+## Re-send our local players (after a local player joins or leaves in the lobby).
+func update_local_players() -> void:
+	if not online:
+		return
+	if is_host():
+		members[1].players = _local_players()
+		_rpc_members.rpc(members)
+	else:
+		_rpc_players.rpc_id(1, _local_players())
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_hello(version: String, pname: String, players: Array) -> void:
+	if not is_host():
+		return
+	var id := multiplayer.get_remote_sender_id()
+	if version != GAME_VERSION:
+		_rpc_refused.rpc_id(id, "The host is on version %s (you have %s)" % [GAME_VERSION, version])
+		return
+	if in_match:
+		_rpc_refused.rpc_id(id, "That game is mid-match. Try again when it's back in the lobby.")
+		return
+	if members.size() >= MAX_MACHINES or _climber_count() + players.size() > MAX_CLIMBERS:
+		_rpc_refused.rpc_id(id, "That lobby is full")
+		return
+	members[id] = {"name": pname.left(32), "players": _clean_players(players), "ready": false}
+	_rpc_members.rpc(members)
+	_rpc_settings.rpc_id(id, settings)
+	_rpc_chat_line.rpc("", "%s joined" % pname.left(32))
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_players(players: Array) -> void:
+	var id := multiplayer.get_remote_sender_id()
+	if not is_host() or not members.has(id):
+		return
+	members[id].players = _clean_players(players)
+	_rpc_members.rpc(members)
+
+
+func _clean_players(players: Array) -> Array:
+	var out: Array = []
+	for p in players.slice(0, 4):
+		if p is Dictionary:
+			out.append({"name": str(p.get("name", "Climber")).left(40), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": int(p.get("slot", 0))})
+	return out
+
+
+func _climber_count() -> int:
+	var n := 0
+	for m in members.values():
+		n += m.players.size()
+	return n
+
+
+@rpc("authority", "call_remote", "reliable")
+func _rpc_refused(reason: String) -> void:
+	_end(reason)
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_members(m: Dictionary) -> void:
+	members = m
+	members_changed.emit()
+
+
+func set_ready(on: bool) -> void:
+	if is_host():
+		members[1].ready = on
+		_rpc_members.rpc(members)
+	else:
+		_rpc_ready.rpc_id(1, on)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_ready(on: bool) -> void:
+	var id := multiplayer.get_remote_sender_id()
+	if is_host() and members.has(id):
+		members[id].ready = on
+		_rpc_members.rpc(members)
+
+
+func all_ready() -> bool:
+	for id in members:
+		if id != 1 and not members[id].ready:
+			return false
+	return _climber_count() >= 1
+
+
+func send_chat(text: String) -> void:
+	text = text.strip_edges().left(140)
+	if text == "":
+		return
+	if is_host():
+		_relay_chat(1, text)
+	else:
+		_rpc_chat.rpc_id(1, text)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_chat(text: String) -> void:
+	if is_host():
+		_relay_chat(multiplayer.get_remote_sender_id(), text.left(140))
+
+
+func _relay_chat(id: int, text: String) -> void:
+	var now := Time.get_ticks_msec()
+	if now - int(_chat_times.get(id, 0)) < 400:
+		return  # rate limit
+	_chat_times[id] = now
+	var who: String = members[id].name if members.has(id) else "?"
+	_rpc_chat_line.rpc(who, text)
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_chat_line(who: String, text: String) -> void:
+	chat_line.emit(who, text)
+
+
+func set_settings(s: Dictionary) -> void:
+	if not is_host():
+		return
+	settings = s
+	if online:
+		_rpc_settings.rpc(s)
+		if steam_ok and steam_lobby != 0:
+			Steam.setLobbyData(steam_lobby, "mode", str(s.mode))
+	else:
+		settings_changed.emit()
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_settings(s: Dictionary) -> void:
+	settings = s
+	settings_changed.emit()
+
+
+## Host: the roster for Game.host_start, one entry per climber across machines.
+func build_roster() -> Array:
+	var roster: Array = []
+	var pid := 0
+	var ids := members.keys()
+	ids.sort()
+	for id in ids:
+		for p in members[id].players:
+			roster.append({"pid": pid, "name": p.name, "tint": p.tint, "peer": id, "slot": p.slot})
+			pid += 1
+	return roster
+
+
+func set_in_match(on: bool) -> void:
+	in_match = on
+	if is_host() and steam_ok and steam_lobby != 0:
+		Steam.setLobbyJoinable(steam_lobby, not on)
+
+
+func leave() -> void:
+	if steam_ok and steam_lobby != 0:
+		if is_host():
+			Steam.setLobbyJoinable(steam_lobby, false)
+		Steam.leaveLobby(steam_lobby)
+		steam_lobby = 0
+	if multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
+		multiplayer.multiplayer_peer.close()
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	online = false
+	in_match = false
+	_pending_lobby = false
+	members.clear()
+
+
+func _end(reason: String) -> void:
+	var was := online
+	leave()
+	status.emit(reason)
+	if was or reason != "":
+		session_ended.emit(reason)

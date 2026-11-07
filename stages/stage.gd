@@ -8,7 +8,7 @@ const BARREL_MODEL := preload("res://models/barrel.glb")
 
 ## Stage rows: deck half-width, barrel scale, spawn x, bounds.
 const STAGES := {
-	"dock": {"name": "The Dock", "deck_half": 9.0, "barrel_scale": 1.7, "spawn_x": 5.5, "kill_y": -4.0, "side_x": 16.0},
+	"dock": {"name": "The Dock", "deck_half": 9.0, "barrel_scale": 2.1, "spawn_x": 5.5, "kill_y": -4.0, "side_x": 16.0},
 }
 
 ## The barrel's profile at the plane: (half-width, height) pairs, bottom to top,
