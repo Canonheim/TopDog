@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://cjvsqxmanw05y"
+path="res://.godot/imported/outline_edges.glsl-c9bae3fe72e37a1887c5e143cc117182.res"
+
+[deps]
+
+source_file="res://shaders/cel/outline_edges.glsl"
+dest_files=["res://.godot/imported/outline_edges.glsl-c9bae3fe72e37a1887c5e143cc117182.res"]
+
+[params]
+

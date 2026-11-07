@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dfpe0v77fc8bs"
+path="res://.godot/imported/outline_downsample.glsl-394d206a380b38e49572c5ad7d3a3d01.res"
+
+[deps]
+
+source_file="res://shaders/cel/outline_downsample.glsl"
+dest_files=["res://.godot/imported/outline_downsample.glsl-394d206a380b38e49572c5ad7d3a3d01.res"]
+
+[params]
+

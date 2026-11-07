@@ -88,6 +88,7 @@ func _dress(vis: Node3D, half: float, bs: float) -> void:
 	var barrel: Node3D = BARREL_MODEL.instantiate()
 	root.add_child(barrel)
 	barrel.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5).scaled(Vector3.ONE * bs), Vector3.ZERO)
+	CelPass.celify(barrel)
 	# The deck: planks across the play plane, deep enough to read as 3D.
 	var wood := _mat(Color(0.47, 0.32, 0.2), 0.85)
 	var wood_dark := _mat(Color(0.36, 0.24, 0.15), 0.9)
@@ -137,11 +138,7 @@ func _dress(vis: Node3D, half: float, bs: float) -> void:
 	var pm := PlaneMesh.new()
 	pm.size = Vector2(400, 400)
 	sea.mesh = pm
-	var sm := StandardMaterial3D.new()
-	sm.albedo_color = Color(0.13, 0.36, 0.48)
-	sm.roughness = 0.15
-	sm.metallic = 0.1
-	sea.material_override = sm
+	sea.material_override = CelPass.cel_material(Color(0.2, 0.45, 0.6))
 	sea.position = Vector3(0, -1.5, 0)
 	root.add_child(sea)
 	# Far islands for depth.
@@ -167,8 +164,6 @@ func _dress(vis: Node3D, half: float, bs: float) -> void:
 		root.add_child(b)
 
 
-func _mat(c: Color, rough: float) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.albedo_color = c
-	m.roughness = rough
-	return m
+## Dressing built in code is born cel (the house look); the ink outlines it.
+func _mat(c: Color, _rough: float) -> ShaderMaterial:
+	return CelPass.cel_material(c)

@@ -26,7 +26,7 @@ const LobbyLogic := preload("res://net/lobby_logic.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topyourpals"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.1.0"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.1.1"  # bump on every build: RPC tables move between builds
 const ENET_PORT := 7788
 const MAX_MACHINES := 8
 const MAX_CLIMBERS := 8
@@ -52,7 +52,11 @@ var _chat_times := {}
 
 
 func _ready() -> void:
-	_init_steam()
+	# Steam starts when Online play opens (ensure_steam), not at boot: on the
+	# shared dev app (480), Steam's controller layer can take the pads away from
+	# the whole game. --steam starts it at boot.
+	if "--steam" in OS.get_cmdline_user_args():
+		_init_steam()
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	multiplayer.connected_to_server.connect(_on_connected)
@@ -63,6 +67,7 @@ func _ready() -> void:
 		# Steam launches a CLOSED game with +connect_lobby <id> when a friend
 		# accepts an invite; join_requested only fires for a running game.
 		if argv[i] == "+connect_lobby" and i + 1 < argv.size() and int(argv[i + 1]) > 0:
+			_init_steam()
 			call_deferred("join_steam", int(argv[i + 1]))
 
 
@@ -103,7 +108,19 @@ func my_name() -> String:
 
 # ================================================================ Steam
 
+var _steam_tried := false
+
+
+## Start Steam once, on first need (the Online screen).
+func ensure_steam() -> void:
+	if not _steam_tried:
+		_init_steam()
+
+
 func _init_steam() -> void:
+	if _steam_tried:
+		return
+	_steam_tried = true
 	if "--no-steam" in OS.get_cmdline_user_args() or not ClassDB.class_exists(&"Steam"):
 		return
 	var res: Dictionary = Steam.steamInitEx(STEAM_APP_ID, false)

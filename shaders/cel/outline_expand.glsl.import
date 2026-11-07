@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://dwsig2hxiuvaq"
+path="res://.godot/imported/outline_expand.glsl-65dcdb29e79b722f733c792a2232f871.res"
+
+[deps]
+
+source_file="res://shaders/cel/outline_expand.glsl"
+dest_files=["res://.godot/imported/outline_expand.glsl-65dcdb29e79b722f733c792a2232f871.res"]
+
+[params]
+

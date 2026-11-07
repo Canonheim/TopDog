@@ -7,6 +7,7 @@ extends Node
 const UiKit := preload("res://ui/ui_kit.gd")
 const GameScript := preload("res://game/game.gd")
 const Layout := preload("res://climber/body_layout.gd")
+const PadNavScript := preload("res://ui/pad_nav.gd")
 
 var world: Node3D
 var game: Game
@@ -37,6 +38,8 @@ var _local_list: VBoxContainer
 var _settings_box: Dictionary = {}
 var _results_label: Label
 var _rebind_wait := {}  # {"scheme", "action", "index", "button"}
+var pad_nav: Node
+var _pad_readout: Label
 
 
 func _ready() -> void:
@@ -118,14 +121,12 @@ func _demo() -> void:
 	show_screen("hud")
 
 
+## Menus: PadNav (ui/pad_nav.gd) reads every pad directly and drives ui_* itself.
 func _input_defaults() -> void:
-	# Stock 4.7.2 has no pad button on ui_accept / ui_cancel: add A and B.
-	for pair in [["ui_accept", JOY_BUTTON_A], ["ui_cancel", JOY_BUTTON_B]]:
-		var ev := InputEventJoypadButton.new()
-		ev.button_index = pair[1]
-		ev.device = -1
-		if not InputMap.action_has_event(pair[0], ev):
-			InputMap.action_add_event(pair[0], ev)
+	pad_nav = PadNavScript.new()
+	pad_nav.name = "PadNav"
+	add_child(pad_nav)
+	pad_nav.back_pressed.connect(_back)
 
 
 # ================================================================ the world
@@ -153,11 +154,11 @@ func _build_world() -> void:
 	e.fog_light_color = Color(0.75, 0.84, 0.92)
 	e.fog_density = 0.0035
 	e.fog_aerial_perspective = 0.4
-	e.ssao_enabled = true
 	e.glow_enabled = true
-	e.glow_intensity = 0.4
+	e.glow_intensity = 0.25
 	env.environment = e
 	add_child(env)
+	CelPass.add_outline_pass(self)  # the house ink (Forward+ only; headless runs get none)
 	var sun := DirectionalLight3D.new()
 	sun.light_energy = 1.25
 	sun.shadow_enabled = true
@@ -208,11 +209,22 @@ func _process(delta: float) -> void:
 	for s in Players.slots.size():
 		if Players.pause_pressed(s) and screen in ["hud", "pause"]:
 			_toggle_pause()
+	if _pad_readout != null and screen == "controls":
+		var pads := Input.get_connected_joypads()
+		var names := pads.map(func(d): return "%s (%d)" % [Input.get_joy_name(d), d])
+		_pad_readout.text = "Pads connected: %s
+Last pad input the game saw: %s" % [
+			", ".join(names) if not pads.is_empty() else "none",
+			("%s on pad %d" % [pad_nav.last_input, pad_nav.last_pad]) if pad_nav.last_pad >= 0 else "nothing yet - press something"]
 
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F1:
 		feel_panel.visible = not feel_panel.visible
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE 			and _rebind_wait.is_empty() and screen not in ["hud", "pause"]:
+		_back()
+	if event is InputEventKey and event.pressed and not event.echo and pad_nav != null 			and event.physical_keycode in [KEY_UP, KEY_DOWN, KEY_TAB]:
+		pad_nav.ensure_focus()
 	if not _rebind_wait.is_empty():
 		_capture_bind(event)
 
@@ -366,6 +378,11 @@ func show_screen(id: String) -> void:
 	screen = id
 	for k in screens:
 		screens[k].visible = k == id
+	if pad_nav != null:
+		pad_nav.screen_root = screens.get(id)
+		pad_nav.active = id != "hud"
+	if id == "online":
+		Net.ensure_steam()
 	paused = false
 	var sc: Control = screens.get(id)
 	if sc != null:
@@ -706,6 +723,25 @@ func _screen_pause() -> Control:
 	return c
 
 
+## Back one level: B on any pad, or Escape.
+func _back() -> void:
+	if not _rebind_wait.is_empty():
+		return
+	match screen:
+		"local", "online":
+			show_screen("title")
+		"controls":
+			show_screen(_controls_back)
+		"options":
+			show_screen(_options_back)
+		"pause":
+			_toggle_pause()
+		"results":
+			game.end_match()
+			show_screen("title" if local_mode else "lobby")
+	Sound.play("ui_close", -8.0)
+
+
 func _toggle_pause() -> void:
 	if screen == "hud":
 		show_screen("pause")
@@ -750,6 +786,10 @@ func _screen_controls() -> Control:
 		grid.add_child(Control.new())
 	UiKit.button(box, "Reset to defaults", func(): Players.reset_binds(); _rebuild_controls())
 	UiKit.button(box, "Back", func(): show_screen(_controls_back))
+	_pad_readout = Label.new()
+	_pad_readout.add_theme_font_size_override("font_size", 22)
+	_pad_readout.modulate = Color(0.8, 0.9, 1.0)
+	box.add_child(_pad_readout)
 	return c
 
 

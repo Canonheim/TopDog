@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://cvy1yr8urkfx6"
+path="res://.godot/imported/outline_clean.glsl-1ac3a57ac05f7f536e2e6f05afc6ae73.res"
+
+[deps]
+
+source_file="res://shaders/cel/outline_clean.glsl"
+dest_files=["res://.godot/imported/outline_clean.glsl-1ac3a57ac05f7f536e2e6f05afc6ae73.res"]
+
+[params]
+

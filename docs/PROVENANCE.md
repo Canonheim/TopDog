@@ -7,8 +7,8 @@
 | `net/net.gd` (Steam init, lobby create/join/browse, invites, `+connect_lobby`, version gate, ghost-lobby and crossed-join guards, the Steam exit cut) | Golemheim `scripts/net.gd` | Rewritten small around those pieces; app 480 |
 | `core/save_paths.gd` | Golemheim `scripts/save_paths.gd` | As is |
 | `textures/input_prompts/` | Golemheim (Kenney Input Prompts, CC0) | As is |
-| `models/metal_knight.glb` | Golemheim `models/Metal_Knight.glb` | Texture path pointed at `palette/house_atlas.png` |
-| `models/barrel.glb` | `Armory Second Look\Armory_Remake\models\atlas\barrel.glb` (Parker's REMAKE pick) | Texture path pointed at `palette/house_atlas.png` |
+| `models/metal_knight.glb` | Golemheim `models/Metal_Knight.glb` | Texture path pointed at `../palette/house_atlas.png` |
+| `models/barrel.glb` | `Armory Second Look\Armory_Remake\models\atlas\barrel.glb` (Parker's REMAKE pick) | Texture path pointed at `../palette/house_atlas.png` |
 | `models/palette/house_atlas.png` | `Desktop\House Style 3D Kit\atlas\house_atlas.png` (byte-identical to Golemheim's atlas) | As is |
 | `audio/sfx/` grunts, hurt, thud, land, clap, UI, victory, defeat, bell, tick, yells | Golemheim `audio/sfx/` (its procedural set) | Two renamed (`lock_bell`, `clock_tick`) |
 | `audio/sfx/slap_1-4.wav`, `grip.wav` | New, synthesized here | |

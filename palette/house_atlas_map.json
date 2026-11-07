@@ -1,0 +1,8357 @@
+{
+ "image": "house_atlas.png",
+ "emission_image": "house_atlas_emit.png",
+ "surface_image": "house_atlas_surface.png",
+ "size": 2048,
+ "cell": 32,
+ "cols": 64,
+ "rows": 64,
+ "uv_convention": "u = x / size, v = 1 - y / size (glTF v is top-down: use 1 - v there); a named cell's uv is its centre",
+ "colour_space": "PNG holds sRGB; rgb_linear is the material value the style guide used (Blender/glTF linear)",
+ "strength_max": 4.0,
+ "rules": [
+  "existing pixels never move or change",
+  "new named colours only in free cells",
+  "one colour per face: collapse the face's UVs to a point inside one section, a few pixels from any edge",
+  "sample NEAREST, no mipmaps",
+  "a section's masks define its surface: the emission image's alpha is strength / 4 (GLOW sections only); the surface image's R is metallic and G gloss where A is set (SATIN and POLISHED only); everything else is matte",
+  "every section holds the whole colour space: pick the same spot in another section for the same colour on another surface"
+ ],
+ "sections": [
+  {
+   "name": "MATTE",
+   "y": [
+    0,
+    160
+   ],
+   "block": {
+    "y": [
+     0,
+     96
+    ],
+    "hues": 64,
+    "column_px": 32,
+    "x": "saturation 1 -> 0.03 left to right inside a column",
+    "y_axis": "value 1 -> 0.08 top to bottom"
+   },
+   "ramps": [
+    {
+     "y": [
+      96,
+      112
+     ],
+     "label": "greys, black to white"
+    },
+    {
+     "y": [
+      112,
+      128
+     ],
+     "label": "warm neutrals, tar to sand"
+    },
+    {
+     "y": [
+      128,
+      144
+     ],
+     "label": "skin tones, deep to pale"
+    },
+    {
+     "y": [
+      144,
+      160
+     ],
+     "label": "metals: iron, steel, silver | brass, gold | copper, bronze"
+    }
+   ],
+   "emissive": false,
+   "glow_strength": null,
+   "metallic": false,
+   "gloss": null
+  },
+  {
+   "name": "SATIN",
+   "y": [
+    176,
+    336
+   ],
+   "block": {
+    "y": [
+     176,
+     272
+    ],
+    "hues": 64,
+    "column_px": 32,
+    "x": "saturation 1 -> 0.03 left to right inside a column",
+    "y_axis": "value 1 -> 0.08 top to bottom"
+   },
+   "ramps": [
+    {
+     "y": [
+      272,
+      288
+     ],
+     "label": "greys, black to white"
+    },
+    {
+     "y": [
+      288,
+      304
+     ],
+     "label": "warm neutrals, tar to sand"
+    },
+    {
+     "y": [
+      304,
+      320
+     ],
+     "label": "skin tones, deep to pale"
+    },
+    {
+     "y": [
+      320,
+      336
+     ],
+     "label": "metals: iron, steel, silver | brass, gold | copper, bronze"
+    }
+   ],
+   "emissive": false,
+   "glow_strength": null,
+   "metallic": true,
+   "gloss": 0.5
+  },
+  {
+   "name": "POLISHED",
+   "y": [
+    352,
+    512
+   ],
+   "block": {
+    "y": [
+     352,
+     448
+    ],
+    "hues": 64,
+    "column_px": 32,
+    "x": "saturation 1 -> 0.03 left to right inside a column",
+    "y_axis": "value 1 -> 0.08 top to bottom"
+   },
+   "ramps": [
+    {
+     "y": [
+      448,
+      464
+     ],
+     "label": "greys, black to white"
+    },
+    {
+     "y": [
+      464,
+      480
+     ],
+     "label": "warm neutrals, tar to sand"
+    },
+    {
+     "y": [
+      480,
+      496
+     ],
+     "label": "skin tones, deep to pale"
+    },
+    {
+     "y": [
+      496,
+      512
+     ],
+     "label": "metals: iron, steel, silver | brass, gold | copper, bronze"
+    }
+   ],
+   "emissive": false,
+   "glow_strength": null,
+   "metallic": true,
+   "gloss": 1.0
+  },
+  {
+   "name": "GLOW SOFT",
+   "y": [
+    528,
+    688
+   ],
+   "block": {
+    "y": [
+     528,
+     624
+    ],
+    "hues": 64,
+    "column_px": 32,
+    "x": "saturation 1 -> 0.03 left to right inside a column",
+    "y_axis": "value 1 -> 0.08 top to bottom"
+   },
+   "ramps": [
+    {
+     "y": [
+      624,
+      640
+     ],
+     "label": "greys, black to white"
+    },
+    {
+     "y": [
+      640,
+      656
+     ],
+     "label": "warm neutrals, tar to sand"
+    },
+    {
+     "y": [
+      656,
+      672
+     ],
+     "label": "skin tones, deep to pale"
+    },
+    {
+     "y": [
+      672,
+      688
+     ],
+     "label": "metals: iron, steel, silver | brass, gold | copper, bronze"
+    }
+   ],
+   "emissive": true,
+   "glow_strength": 0.5,
+   "metallic": false,
+   "gloss": null
+  },
+  {
+   "name": "GLOW NORMAL",
+   "y": [
+    704,
+    864
+   ],
+   "block": {
+    "y": [
+     704,
+     800
+    ],
+    "hues": 64,
+    "column_px": 32,
+    "x": "saturation 1 -> 0.03 left to right inside a column",
+    "y_axis": "value 1 -> 0.08 top to bottom"
+   },
+   "ramps": [
+    {
+     "y": [
+      800,
+      816
+     ],
+     "label": "greys, black to white"
+    },
+    {
+     "y": [
+      816,
+      832
+     ],
+     "label": "warm neutrals, tar to sand"
+    },
+    {
+     "y": [
+      832,
+      848
+     ],
+     "label": "skin tones, deep to pale"
+    },
+    {
+     "y": [
+      848,
+      864
+     ],
+     "label": "metals: iron, steel, silver | brass, gold | copper, bronze"
+    }
+   ],
+   "emissive": true,
+   "glow_strength": 1.0,
+   "metallic": false,
+   "gloss": null
+  },
+  {
+   "name": "GLOW HOT",
+   "y": [
+    880,
+    1040
+   ],
+   "block": {
+    "y": [
+     880,
+     976
+    ],
+    "hues": 64,
+    "column_px": 32,
+    "x": "saturation 1 -> 0.03 left to right inside a column",
+    "y_axis": "value 1 -> 0.08 top to bottom"
+   },
+   "ramps": [
+    {
+     "y": [
+      976,
+      992
+     ],
+     "label": "greys, black to white"
+    },
+    {
+     "y": [
+      992,
+      1008
+     ],
+     "label": "warm neutrals, tar to sand"
+    },
+    {
+     "y": [
+      1008,
+      1024
+     ],
+     "label": "skin tones, deep to pale"
+    },
+    {
+     "y": [
+      1024,
+      1040
+     ],
+     "label": "metals: iron, steel, silver | brass, gold | copper, bronze"
+    }
+   ],
+   "emissive": true,
+   "glow_strength": 3.0,
+   "metallic": false,
+   "gloss": null
+  }
+ ],
+ "separators": {
+  "height": 16,
+  "rgb": [
+   24,
+   24,
+   26
+  ],
+  "note": "dark lines between sections; not a colour to use"
+ },
+ "named_rows": [
+  33,
+  38
+ ],
+ "named_count": 364,
+ "first_free_cell": {
+  "col": 44,
+  "row": 38
+ },
+ "free_cells": 1620,
+ "cells": {
+  "black_iron": {
+   "col": 0,
+   "row": 33,
+   "uv": [
+    0.0078125,
+    0.4765625
+   ],
+   "srgb": [
+    53,
+    58,
+    63
+   ],
+   "rgb_linear": [
+    0.035,
+    0.042,
+    0.05
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "brass_dark": {
+   "col": 1,
+   "row": 33,
+   "uv": [
+    0.0234375,
+    0.4765625
+   ],
+   "srgb": [
+    149,
+    108,
+    54
+   ],
+   "rgb_linear": [
+    0.3,
+    0.15,
+    0.037
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "brass_edge": {
+   "col": 2,
+   "row": 33,
+   "uv": [
+    0.0390625,
+    0.4765625
+   ],
+   "srgb": [
+    234,
+    197,
+    129
+   ],
+   "rgb_linear": [
+    0.82,
+    0.56,
+    0.22
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "brass_light": {
+   "col": 3,
+   "row": 33,
+   "uv": [
+    0.0546875,
+    0.4765625
+   ],
+   "srgb": [
+    234,
+    197,
+    129
+   ],
+   "rgb_linear": [
+    0.82,
+    0.56,
+    0.22
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bright_edge": {
+   "col": 4,
+   "row": 33,
+   "uv": [
+    0.0703125,
+    0.4765625
+   ],
+   "srgb": [
+    229,
+    234,
+    231
+   ],
+   "rgb_linear": [
+    0.78,
+    0.82,
+    0.8
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bright_steel": {
+   "col": 5,
+   "row": 33,
+   "uv": [
+    0.0859375,
+    0.4765625
+   ],
+   "srgb": [
+    209,
+    219,
+    221
+   ],
+   "rgb_linear": [
+    0.64,
+    0.71,
+    0.72
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cheese_gold": {
+   "col": 6,
+   "row": 33,
+   "uv": [
+    0.1015625,
+    0.4765625
+   ],
+   "srgb": [
+    239,
+    184,
+    89
+   ],
+   "rgb_linear": [
+    0.86,
+    0.48,
+    0.1
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "copper": {
+   "col": 7,
+   "row": 33,
+   "uv": [
+    0.1171875,
+    0.4765625
+   ],
+   "srgb": [
+    214,
+    145,
+    95
+   ],
+   "rgb_linear": [
+    0.67,
+    0.285,
+    0.115
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "crust": {
+   "col": 8,
+   "row": 33,
+   "uv": [
+    0.1328125,
+    0.4765625
+   ],
+   "srgb": [
+    196,
+    133,
+    61
+   ],
+   "rgb_linear": [
+    0.55,
+    0.235,
+    0.047
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "crust_dark": {
+   "col": 9,
+   "row": 33,
+   "uv": [
+    0.1484375,
+    0.4765625
+   ],
+   "srgb": [
+    144,
+    86,
+    36
+   ],
+   "rgb_linear": [
+    0.28,
+    0.092,
+    0.018
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "crust_light": {
+   "col": 10,
+   "row": 33,
+   "uv": [
+    0.1640625,
+    0.4765625
+   ],
+   "srgb": [
+    219,
+    160,
+    81
+   ],
+   "rgb_linear": [
+    0.71,
+    0.35,
+    0.083
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dark_iron": {
+   "col": 11,
+   "row": 33,
+   "uv": [
+    0.1796875,
+    0.4765625
+   ],
+   "srgb": [
+    97,
+    103,
+    108
+   ],
+   "rgb_linear": [
+    0.12,
+    0.135,
+    0.15
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dull_bronze": {
+   "col": 12,
+   "row": 33,
+   "uv": [
+    0.1953125,
+    0.4765625
+   ],
+   "srgb": [
+    166,
+    130,
+    77
+   ],
+   "rgb_linear": [
+    0.38,
+    0.225,
+    0.075
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "gilt": {
+   "col": 13,
+   "row": 33,
+   "uv": [
+    0.2109375,
+    0.4765625
+   ],
+   "srgb": [
+    215,
+    177,
+    97
+   ],
+   "rgb_linear": [
+    0.68,
+    0.44,
+    0.12
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "gold_dark": {
+   "col": 14,
+   "row": 33,
+   "uv": [
+    0.2265625,
+    0.4765625
+   ],
+   "srgb": [
+    168,
+    124,
+    50
+   ],
+   "rgb_linear": [
+    0.39,
+    0.2,
+    0.032
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "gold_light": {
+   "col": 15,
+   "row": 33,
+   "uv": [
+    0.2421875,
+    0.4765625
+   ],
+   "srgb": [
+    241,
+    205,
+    124
+   ],
+   "rgb_linear": [
+    0.88,
+    0.61,
+    0.2
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "gold_rims": {
+   "col": 16,
+   "row": 33,
+   "uv": [
+    0.2578125,
+    0.4765625
+   ],
+   "srgb": [
+    235,
+    189,
+    91
+   ],
+   "rgb_linear": [
+    0.83,
+    0.51,
+    0.105
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "grey_steel": {
+   "col": 17,
+   "row": 33,
+   "uv": [
+    0.2734375,
+    0.4765625
+   ],
+   "srgb": [
+    139,
+    149,
+    153
+   ],
+   "rgb_linear": [
+    0.26,
+    0.3,
+    0.32
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "hammer_bronze": {
+   "col": 18,
+   "row": 33,
+   "uv": [
+    0.2890625,
+    0.4765625
+   ],
+   "srgb": [
+    158,
+    111,
+    60
+   ],
+   "rgb_linear": [
+    0.34,
+    0.16,
+    0.045
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "heat_blue_steel": {
+   "col": 19,
+   "row": 33,
+   "uv": [
+    0.3046875,
+    0.4765625
+   ],
+   "srgb": [
+    77,
+    121,
+    144
+   ],
+   "rgb_linear": [
+    0.075,
+    0.19,
+    0.28
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "iron_edge": {
+   "col": 20,
+   "row": 33,
+   "uv": [
+    0.3203125,
+    0.4765625
+   ],
+   "srgb": [
+    124,
+    134,
+    139
+   ],
+   "rgb_linear": [
+    0.2,
+    0.24,
+    0.26
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "iron_inner": {
+   "col": 21,
+   "row": 33,
+   "uv": [
+    0.3359375,
+    0.4765625
+   ],
+   "srgb": [
+    62,
+    68,
+    72
+   ],
+   "rgb_linear": [
+    0.048,
+    0.057,
+    0.065
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "iron_light": {
+   "col": 22,
+   "row": 33,
+   "uv": [
+    0.3515625,
+    0.4765625
+   ],
+   "srgb": [
+    118,
+    132,
+    139
+   ],
+   "rgb_linear": [
+    0.18,
+    0.23,
+    0.26
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rust_black_iron": {
+   "col": 23,
+   "row": 33,
+   "uv": [
+    0.3671875,
+    0.4765625
+   ],
+   "srgb": [
+    77,
+    62,
+    52
+   ],
+   "rgb_linear": [
+    0.075,
+    0.048,
+    0.034
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rust_brown": {
+   "col": 24,
+   "row": 33,
+   "uv": [
+    0.3828125,
+    0.4765625
+   ],
+   "srgb": [
+    149,
+    91,
+    55
+   ],
+   "rgb_linear": [
+    0.3,
+    0.105,
+    0.038
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rust_brown_iron": {
+   "col": 25,
+   "row": 33,
+   "uv": [
+    0.3984375,
+    0.4765625
+   ],
+   "srgb": [
+    134,
+    87,
+    60
+   ],
+   "rgb_linear": [
+    0.24,
+    0.095,
+    0.045
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rust_iron": {
+   "col": 26,
+   "row": 33,
+   "uv": [
+    0.4140625,
+    0.4765625
+   ],
+   "srgb": [
+    144,
+    87,
+    55
+   ],
+   "rgb_linear": [
+    0.28,
+    0.095,
+    0.038
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "sea_black_steel": {
+   "col": 27,
+   "row": 33,
+   "uv": [
+    0.4296875,
+    0.4765625
+   ],
+   "srgb": [
+    44,
+    66,
+    70
+   ],
+   "rgb_linear": [
+    0.025,
+    0.055,
+    0.061
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tarnished_silver": {
+   "col": 28,
+   "row": 33,
+   "uv": [
+    0.4453125,
+    0.4765625
+   ],
+   "srgb": [
+    162,
+    175,
+    179
+   ],
+   "rgb_linear": [
+    0.36,
+    0.43,
+    0.45
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tin_grey": {
+   "col": 29,
+   "row": 33,
+   "uv": [
+    0.4609375,
+    0.4765625
+   ],
+   "srgb": [
+    147,
+    158,
+    160
+   ],
+   "rgb_linear": [
+    0.29,
+    0.34,
+    0.35
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "verdigris_bronze": {
+   "col": 30,
+   "row": 33,
+   "uv": [
+    0.4765625,
+    0.4765625
+   ],
+   "srgb": [
+    149,
+    168,
+    137
+   ],
+   "rgb_linear": [
+    0.3,
+    0.39,
+    0.25
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "worn_seam": {
+   "col": 31,
+   "row": 33,
+   "uv": [
+    0.4921875,
+    0.4765625
+   ],
+   "srgb": [
+    115,
+    118,
+    121
+   ],
+   "rgb_linear": [
+    0.17,
+    0.18,
+    0.19
+   ],
+   "family": "Metals and patina",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "brass": {
+   "col": 32,
+   "row": 33,
+   "uv": [
+    0.5078125,
+    0.4765625
+   ],
+   "srgb": [
+    202,
+    160,
+    89
+   ],
+   "rgb_linear": [
+    0.59,
+    0.35,
+    0.1
+   ],
+   "family": "Metals and patina",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "edge": {
+   "col": 33,
+   "row": 33,
+   "uv": [
+    0.5234375,
+    0.4765625
+   ],
+   "srgb": [
+    215,
+    226,
+    225
+   ],
+   "rgb_linear": [
+    0.68,
+    0.76,
+    0.75
+   ],
+   "family": "Metals and patina",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steel": {
+   "col": 34,
+   "row": 33,
+   "uv": [
+    0.5390625,
+    0.4765625
+   ],
+   "srgb": [
+    147,
+    162,
+    168
+   ],
+   "rgb_linear": [
+    0.29,
+    0.36,
+    0.39
+   ],
+   "family": "Metals and patina",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_hoard_gold": {
+   "col": 35,
+   "row": 33,
+   "uv": [
+    0.5546875,
+    0.4765625
+   ],
+   "srgb": [
+    206,
+    170,
+    91
+   ],
+   "rgb_linear": [
+    0.62,
+    0.4,
+    0.105
+   ],
+   "family": "Metals and patina",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_hoard_gold_dark": {
+   "col": 36,
+   "row": 33,
+   "uv": [
+    0.5703125,
+    0.4765625
+   ],
+   "srgb": [
+    147,
+    119,
+    61
+   ],
+   "rgb_linear": [
+    0.29,
+    0.185,
+    0.046
+   ],
+   "family": "Metals and patina",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_hoard_gold_light": {
+   "col": 37,
+   "row": 33,
+   "uv": [
+    0.5859375,
+    0.4765625
+   ],
+   "srgb": [
+    236,
+    200,
+    121
+   ],
+   "rgb_linear": [
+    0.84,
+    0.58,
+    0.19
+   ],
+   "family": "Metals and patina",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "heat_blue": {
+   "col": 38,
+   "row": 33,
+   "uv": [
+    0.6015625,
+    0.4765625
+   ],
+   "srgb": [
+    77,
+    121,
+    147
+   ],
+   "rgb_linear": [
+    0.075,
+    0.19,
+    0.29
+   ],
+   "family": "Metals and patina",
+   "theme": "Forge",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_blackened_iron": {
+   "col": 39,
+   "row": 33,
+   "uv": [
+    0.6171875,
+    0.4765625
+   ],
+   "srgb": [
+    66,
+    60,
+    56
+   ],
+   "rgb_linear": [
+    0.055,
+    0.045,
+    0.04
+   ],
+   "family": "Metals and patina",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_blackened_iron_dark": {
+   "col": 40,
+   "row": 33,
+   "uv": [
+    0.6328125,
+    0.4765625
+   ],
+   "srgb": [
+    45,
+    40,
+    38
+   ],
+   "rgb_linear": [
+    0.026,
+    0.021,
+    0.019
+   ],
+   "family": "Metals and patina",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_blackened_iron_light": {
+   "col": 41,
+   "row": 33,
+   "uv": [
+    0.6484375,
+    0.4765625
+   ],
+   "srgb": [
+    80,
+    74,
+    72
+   ],
+   "rgb_linear": [
+    0.08,
+    0.068,
+    0.064
+   ],
+   "family": "Metals and patina",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_blood_red": {
+   "col": 42,
+   "row": 33,
+   "uv": [
+    0.6640625,
+    0.4765625
+   ],
+   "srgb": [
+    158,
+    47,
+    39
+   ],
+   "rgb_linear": [
+    0.34,
+    0.028,
+    0.02
+   ],
+   "family": "Metals and patina",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_blood_red_dark": {
+   "col": 43,
+   "row": 33,
+   "uv": [
+    0.6796875,
+    0.4765625
+   ],
+   "srgb": [
+    111,
+    30,
+    24
+   ],
+   "rgb_linear": [
+    0.16,
+    0.013,
+    0.009
+   ],
+   "family": "Metals and patina",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_blood_red_light": {
+   "col": 44,
+   "row": 33,
+   "uv": [
+    0.6953125,
+    0.4765625
+   ],
+   "srgb": [
+    186,
+    59,
+    52
+   ],
+   "rgb_linear": [
+    0.49,
+    0.044,
+    0.034
+   ],
+   "family": "Metals and patina",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "gold": {
+   "col": 45,
+   "row": 33,
+   "uv": [
+    0.7109375,
+    0.4765625
+   ],
+   "srgb": [
+    234,
+    199,
+    121
+   ],
+   "rgb_linear": [
+    0.82,
+    0.57,
+    0.19
+   ],
+   "family": "Metals and patina",
+   "theme": "Saint",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_brass": {
+   "col": 46,
+   "row": 33,
+   "uv": [
+    0.7265625,
+    0.4765625
+   ],
+   "srgb": [
+    208,
+    166,
+    91
+   ],
+   "rgb_linear": [
+    0.63,
+    0.38,
+    0.105
+   ],
+   "family": "Metals and patina",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_brass_dark": {
+   "col": 47,
+   "row": 33,
+   "uv": [
+    0.7421875,
+    0.4765625
+   ],
+   "srgb": [
+    149,
+    116,
+    60
+   ],
+   "rgb_linear": [
+    0.3,
+    0.175,
+    0.045
+   ],
+   "family": "Metals and patina",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_brass_light": {
+   "col": 48,
+   "row": 33,
+   "uv": [
+    0.7578125,
+    0.4765625
+   ],
+   "srgb": [
+    236,
+    196,
+    115
+   ],
+   "rgb_linear": [
+    0.84,
+    0.55,
+    0.17
+   ],
+   "family": "Metals and patina",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_copper": {
+   "col": 49,
+   "row": 33,
+   "uv": [
+    0.7734375,
+    0.4765625
+   ],
+   "srgb": [
+    200,
+    133,
+    85
+   ],
+   "rgb_linear": [
+    0.58,
+    0.235,
+    0.09
+   ],
+   "family": "Metals and patina",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_copper_dark": {
+   "col": 50,
+   "row": 33,
+   "uv": [
+    0.7890625,
+    0.4765625
+   ],
+   "srgb": [
+    144,
+    91,
+    55
+   ],
+   "rgb_linear": [
+    0.28,
+    0.105,
+    0.038
+   ],
+   "family": "Metals and patina",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_copper_light": {
+   "col": 51,
+   "row": 33,
+   "uv": [
+    0.8046875,
+    0.4765625
+   ],
+   "srgb": [
+    229,
+    160,
+    108
+   ],
+   "rgb_linear": [
+    0.78,
+    0.35,
+    0.15
+   ],
+   "family": "Metals and patina",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_oiled_iron": {
+   "col": 52,
+   "row": 33,
+   "uv": [
+    0.8203125,
+    0.4765625
+   ],
+   "srgb": [
+    77,
+    85,
+    87
+   ],
+   "rgb_linear": [
+    0.075,
+    0.09,
+    0.095
+   ],
+   "family": "Metals and patina",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_oiled_iron_dark": {
+   "col": 53,
+   "row": 33,
+   "uv": [
+    0.8359375,
+    0.4765625
+   ],
+   "srgb": [
+    53,
+    58,
+    61
+   ],
+   "rgb_linear": [
+    0.035,
+    0.042,
+    0.047
+   ],
+   "family": "Metals and patina",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_oiled_iron_light": {
+   "col": 54,
+   "row": 33,
+   "uv": [
+    0.8515625,
+    0.4765625
+   ],
+   "srgb": [
+    91,
+    103,
+    106
+   ],
+   "rgb_linear": [
+    0.105,
+    0.135,
+    0.145
+   ],
+   "family": "Metals and patina",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bronze": {
+   "col": 55,
+   "row": 33,
+   "uv": [
+    0.8671875,
+    0.4765625
+   ],
+   "srgb": [
+    158,
+    142,
+    97
+   ],
+   "rgb_linear": [
+    0.34,
+    0.27,
+    0.12
+   ],
+   "family": "Metals and patina",
+   "theme": "Verdigris",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "patina": {
+   "col": 56,
+   "row": 33,
+   "uv": [
+    0.8828125,
+    0.4765625
+   ],
+   "srgb": [
+    77,
+    164,
+    147
+   ],
+   "rgb_linear": [
+    0.075,
+    0.37,
+    0.29
+   ],
+   "family": "Metals and patina",
+   "theme": "Verdigris",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "iron": {
+   "col": 57,
+   "row": 33,
+   "uv": [
+    0.8984375,
+    0.4765625
+   ],
+   "srgb": [
+    124,
+    133,
+    137
+   ],
+   "rgb_linear": [
+    0.2,
+    0.235,
+    0.25
+   ],
+   "family": "Metals and patina",
+   "theme": "Warren",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "scrap": {
+   "col": 58,
+   "row": 33,
+   "uv": [
+    0.9140625,
+    0.4765625
+   ],
+   "srgb": [
+    162,
+    171,
+    173
+   ],
+   "rgb_linear": [
+    0.36,
+    0.405,
+    0.42
+   ],
+   "family": "Metals and patina",
+   "theme": "Warren",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rust": {
+   "col": 59,
+   "row": 33,
+   "uv": [
+    0.9296875,
+    0.4765625
+   ],
+   "srgb": [
+    166,
+    99,
+    60
+   ],
+   "rgb_linear": [
+    0.38,
+    0.125,
+    0.045
+   ],
+   "family": "Metals and patina",
+   "theme": "Wreck",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rust_light": {
+   "col": 60,
+   "row": 33,
+   "uv": [
+    0.9453125,
+    0.4765625
+   ],
+   "srgb": [
+    202,
+    138,
+    82
+   ],
+   "rgb_linear": [
+    0.59,
+    0.255,
+    0.085
+   ],
+   "family": "Metals and patina",
+   "theme": "Wreck",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "ash": {
+   "col": 61,
+   "row": 33,
+   "uv": [
+    0.9609375,
+    0.4765625
+   ],
+   "srgb": [
+    199,
+    158,
+    108
+   ],
+   "rgb_linear": [
+    0.57,
+    0.34,
+    0.15
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "ash_light": {
+   "col": 62,
+   "row": 33,
+   "uv": [
+    0.9765625,
+    0.4765625
+   ],
+   "srgb": [
+    221,
+    186,
+    137
+   ],
+   "rgb_linear": [
+    0.72,
+    0.49,
+    0.25
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "black_drones": {
+   "col": 63,
+   "row": 33,
+   "uv": [
+    0.9921875,
+    0.4765625
+   ],
+   "srgb": [
+    36,
+    41,
+    39
+   ],
+   "rgb_linear": [
+    0.018,
+    0.022,
+    0.02
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "black_wheel": {
+   "col": 0,
+   "row": 34,
+   "uv": [
+    0.0078125,
+    0.4609375
+   ],
+   "srgb": [
+    36,
+    40,
+    38
+   ],
+   "rgb_linear": [
+    0.018,
+    0.021,
+    0.019
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "black_wood": {
+   "col": 1,
+   "row": 34,
+   "uv": [
+    0.0234375,
+    0.4609375
+   ],
+   "srgb": [
+    53,
+    44,
+    36
+   ],
+   "rgb_linear": [
+    0.035,
+    0.025,
+    0.018
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bore": {
+   "col": 2,
+   "row": 34,
+   "uv": [
+    0.0390625,
+    0.4609375
+   ],
+   "srgb": [
+    31,
+    25,
+    22
+   ],
+   "rgb_linear": [
+    0.014,
+    0.01,
+    0.008
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cork": {
+   "col": 3,
+   "row": 34,
+   "uv": [
+    0.0546875,
+    0.4609375
+   ],
+   "srgb": [
+    173,
+    132,
+    80
+   ],
+   "rgb_linear": [
+    0.42,
+    0.23,
+    0.08
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cork_light": {
+   "col": 4,
+   "row": 34,
+   "uv": [
+    0.0703125,
+    0.4609375
+   ],
+   "srgb": [
+    208,
+    168,
+    111
+   ],
+   "rgb_linear": [
+    0.63,
+    0.39,
+    0.16
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dark_chanter": {
+   "col": 5,
+   "row": 34,
+   "uv": [
+    0.0859375,
+    0.4609375
+   ],
+   "srgb": [
+    82,
+    57,
+    40
+   ],
+   "rgb_linear": [
+    0.085,
+    0.041,
+    0.021
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dark_oak": {
+   "col": 6,
+   "row": 34,
+   "uv": [
+    0.1015625,
+    0.4609375
+   ],
+   "srgb": [
+    115,
+    82,
+    50
+   ],
+   "rgb_linear": [
+    0.17,
+    0.085,
+    0.032
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dark_wood": {
+   "col": 7,
+   "row": 34,
+   "uv": [
+    0.1171875,
+    0.4609375
+   ],
+   "srgb": [
+    97,
+    64,
+    41
+   ],
+   "rgb_linear": [
+    0.12,
+    0.051,
+    0.022
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "endgrain": {
+   "col": 8,
+   "row": 34,
+   "uv": [
+    0.1328125,
+    0.4609375
+   ],
+   "srgb": [
+    149,
+    101,
+    60
+   ],
+   "rgb_linear": [
+    0.3,
+    0.13,
+    0.045
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "endgrain_light": {
+   "col": 9,
+   "row": 34,
+   "uv": [
+    0.1484375,
+    0.4609375
+   ],
+   "srgb": [
+    200,
+    153,
+    101
+   ],
+   "rgb_linear": [
+    0.58,
+    0.32,
+    0.13
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "fingerboard": {
+   "col": 10,
+   "row": 34,
+   "uv": [
+    0.1640625,
+    0.4609375
+   ],
+   "srgb": [
+    72,
+    46,
+    29
+   ],
+   "rgb_linear": [
+    0.065,
+    0.027,
+    0.012
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "fingerboard_edge": {
+   "col": 11,
+   "row": 34,
+   "uv": [
+    0.1796875,
+    0.4609375
+   ],
+   "srgb": [
+    86,
+    63,
+    43
+   ],
+   "rgb_linear": [
+    0.092,
+    0.049,
+    0.024
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "frame": {
+   "col": 12,
+   "row": 34,
+   "uv": [
+    0.1953125,
+    0.4609375
+   ],
+   "srgb": [
+    132,
+    87,
+    50
+   ],
+   "rgb_linear": [
+    0.23,
+    0.095,
+    0.032
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "frame_light": {
+   "col": 13,
+   "row": 34,
+   "uv": [
+    0.2109375,
+    0.4609375
+   ],
+   "srgb": [
+    155,
+    108,
+    63
+   ],
+   "rgb_linear": [
+    0.33,
+    0.15,
+    0.05
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "grave_grey_ash": {
+   "col": 14,
+   "row": 34,
+   "uv": [
+    0.2265625,
+    0.4609375
+   ],
+   "srgb": [
+    164,
+    168,
+    158
+   ],
+   "rgb_linear": [
+    0.37,
+    0.39,
+    0.34
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "grey_ash": {
+   "col": 15,
+   "row": 34,
+   "uv": [
+    0.2421875,
+    0.4609375
+   ],
+   "srgb": [
+    168,
+    170,
+    158
+   ],
+   "rgb_linear": [
+    0.39,
+    0.4,
+    0.34
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "hole_edge": {
+   "col": 16,
+   "row": 34,
+   "uv": [
+    0.2578125,
+    0.4609375
+   ],
+   "srgb": [
+    89,
+    61,
+    35
+   ],
+   "rgb_linear": [
+    0.1,
+    0.046,
+    0.017
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "honey_wood": {
+   "col": 17,
+   "row": 34,
+   "uv": [
+    0.2734375,
+    0.4609375
+   ],
+   "srgb": [
+    184,
+    138,
+    77
+   ],
+   "rgb_linear": [
+    0.48,
+    0.255,
+    0.075
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "oak": {
+   "col": 18,
+   "row": 34,
+   "uv": [
+    0.2890625,
+    0.4609375
+   ],
+   "srgb": [
+    162,
+    115,
+    72
+   ],
+   "rgb_linear": [
+    0.36,
+    0.17,
+    0.065
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "oak_dark": {
+   "col": 19,
+   "row": 34,
+   "uv": [
+    0.3046875,
+    0.4609375
+   ],
+   "srgb": [
+    97,
+    63,
+    36
+   ],
+   "rgb_linear": [
+    0.12,
+    0.049,
+    0.018
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "oak_light": {
+   "col": 20,
+   "row": 34,
+   "uv": [
+    0.3203125,
+    0.4609375
+   ],
+   "srgb": [
+    181,
+    133,
+    87
+   ],
+   "rgb_linear": [
+    0.46,
+    0.235,
+    0.095
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "oak_mid": {
+   "col": 21,
+   "row": 34,
+   "uv": [
+    0.3359375,
+    0.4609375
+   ],
+   "srgb": [
+    170,
+    122,
+    77
+   ],
+   "rgb_linear": [
+    0.4,
+    0.195,
+    0.075
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pale_ash": {
+   "col": 22,
+   "row": 34,
+   "uv": [
+    0.3515625,
+    0.4609375
+   ],
+   "srgb": [
+    214,
+    181,
+    134
+   ],
+   "rgb_linear": [
+    0.67,
+    0.46,
+    0.24
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "reed": {
+   "col": 23,
+   "row": 34,
+   "uv": [
+    0.3671875,
+    0.4609375
+   ],
+   "srgb": [
+    199,
+    158,
+    108
+   ],
+   "rgb_linear": [
+    0.57,
+    0.34,
+    0.15
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "reed_light": {
+   "col": 24,
+   "row": 34,
+   "uv": [
+    0.3828125,
+    0.4609375
+   ],
+   "srgb": [
+    223,
+    186,
+    132
+   ],
+   "rgb_linear": [
+    0.74,
+    0.49,
+    0.23
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rosette": {
+   "col": 25,
+   "row": 34,
+   "uv": [
+    0.3984375,
+    0.4609375
+   ],
+   "srgb": [
+    151,
+    97,
+    53
+   ],
+   "rgb_linear": [
+    0.31,
+    0.12,
+    0.035
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "soundboard": {
+   "col": 26,
+   "row": 34,
+   "uv": [
+    0.4140625,
+    0.4609375
+   ],
+   "srgb": [
+    214,
+    168,
+    108
+   ],
+   "rgb_linear": [
+    0.67,
+    0.39,
+    0.15
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tar_brown_ash": {
+   "col": 27,
+   "row": 34,
+   "uv": [
+    0.4296875,
+    0.4609375
+   ],
+   "srgb": [
+    97,
+    72,
+    47
+   ],
+   "rgb_linear": [
+    0.12,
+    0.065,
+    0.028
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "walnut": {
+   "col": 28,
+   "row": 34,
+   "uv": [
+    0.4453125,
+    0.4609375
+   ],
+   "srgb": [
+    121,
+    78,
+    48
+   ],
+   "rgb_linear": [
+    0.19,
+    0.076,
+    0.03
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "wood_dark": {
+   "col": 29,
+   "row": 34,
+   "uv": [
+    0.4609375,
+    0.4609375
+   ],
+   "srgb": [
+    97,
+    62,
+    41
+   ],
+   "rgb_linear": [
+    0.12,
+    0.048,
+    0.022
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "wood": {
+   "col": 30,
+   "row": 34,
+   "uv": [
+    0.4765625,
+    0.4609375
+   ],
+   "srgb": [
+    144,
+    101,
+    66
+   ],
+   "rgb_linear": [
+    0.28,
+    0.13,
+    0.055
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "wood_light": {
+   "col": 31,
+   "row": 34,
+   "uv": [
+    0.4921875,
+    0.4609375
+   ],
+   "srgb": [
+    179,
+    137,
+    93
+   ],
+   "rgb_linear": [
+    0.45,
+    0.25,
+    0.11
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_bark": {
+   "col": 32,
+   "row": 34,
+   "uv": [
+    0.5078125,
+    0.4609375
+   ],
+   "srgb": [
+    118,
+    87,
+    60
+   ],
+   "rgb_linear": [
+    0.18,
+    0.095,
+    0.045
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_bark_dark": {
+   "col": 33,
+   "row": 34,
+   "uv": [
+    0.5234375,
+    0.4609375
+   ],
+   "srgb": [
+    82,
+    58,
+    39
+   ],
+   "rgb_linear": [
+    0.085,
+    0.043,
+    0.02
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_bark_light": {
+   "col": 34,
+   "row": 34,
+   "uv": [
+    0.5390625,
+    0.4609375
+   ],
+   "srgb": [
+    137,
+    106,
+    77
+   ],
+   "rgb_linear": [
+    0.25,
+    0.145,
+    0.075
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_living_wood": {
+   "col": 35,
+   "row": 34,
+   "uv": [
+    0.5546875,
+    0.4609375
+   ],
+   "srgb": [
+    173,
+    133,
+    85
+   ],
+   "rgb_linear": [
+    0.42,
+    0.235,
+    0.09
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_living_wood_dark": {
+   "col": 36,
+   "row": 34,
+   "uv": [
+    0.5703125,
+    0.4609375
+   ],
+   "srgb": [
+    124,
+    91,
+    55
+   ],
+   "rgb_linear": [
+    0.2,
+    0.105,
+    0.038
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_living_wood_light": {
+   "col": 37,
+   "row": 34,
+   "uv": [
+    0.5859375,
+    0.4609375
+   ],
+   "srgb": [
+    200,
+    160,
+    108
+   ],
+   "rgb_linear": [
+    0.58,
+    0.35,
+    0.15
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "hickory": {
+   "col": 38,
+   "row": 34,
+   "uv": [
+    0.6015625,
+    0.4609375
+   ],
+   "srgb": [
+    186,
+    141,
+    91
+   ],
+   "rgb_linear": [
+    0.49,
+    0.265,
+    0.105
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Forge",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "hickory_light": {
+   "col": 39,
+   "row": 34,
+   "uv": [
+    0.6171875,
+    0.4609375
+   ],
+   "srgb": [
+    214,
+    173,
+    118
+   ],
+   "rgb_linear": [
+    0.67,
+    0.42,
+    0.18
+   ],
+   "family": "Woods, reeds and cork",
+   "theme": "Forge",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "barnacle_white": {
+   "col": 40,
+   "row": 34,
+   "uv": [
+    0.6328125,
+    0.4609375
+   ],
+   "srgb": [
+    218,
+    226,
+    208
+   ],
+   "rgb_linear": [
+    0.7,
+    0.76,
+    0.63
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "binding": {
+   "col": 41,
+   "row": 34,
+   "uv": [
+    0.6484375,
+    0.4609375
+   ],
+   "srgb": [
+    121,
+    66,
+    41
+   ],
+   "rgb_linear": [
+    0.19,
+    0.055,
+    0.022
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "binding_light": {
+   "col": 42,
+   "row": 34,
+   "uv": [
+    0.6640625,
+    0.4609375
+   ],
+   "srgb": [
+    158,
+    101,
+    66
+   ],
+   "rgb_linear": [
+    0.34,
+    0.13,
+    0.055
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "black_horn": {
+   "col": 43,
+   "row": 34,
+   "uv": [
+    0.6796875,
+    0.4609375
+   ],
+   "srgb": [
+    44,
+    49,
+    50
+   ],
+   "rgb_linear": [
+    0.025,
+    0.031,
+    0.032
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "black_leather": {
+   "col": 44,
+   "row": 34,
+   "uv": [
+    0.6953125,
+    0.4609375
+   ],
+   "srgb": [
+    44,
+    41,
+    36
+   ],
+   "rgb_linear": [
+    0.025,
+    0.022,
+    0.018
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "blue_leather": {
+   "col": 45,
+   "row": 34,
+   "uv": [
+    0.7109375,
+    0.4609375
+   ],
+   "srgb": [
+    53,
+    80,
+    124
+   ],
+   "rgb_linear": [
+    0.035,
+    0.08,
+    0.2
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "blue_wrap": {
+   "col": 46,
+   "row": 34,
+   "uv": [
+    0.7265625,
+    0.4609375
+   ],
+   "srgb": [
+    72,
+    111,
+    158
+   ],
+   "rgb_linear": [
+    0.065,
+    0.16,
+    0.34
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bone_ivory": {
+   "col": 47,
+   "row": 34,
+   "uv": [
+    0.7421875,
+    0.4609375
+   ],
+   "srgb": [
+    230,
+    221,
+    194
+   ],
+   "rgb_linear": [
+    0.79,
+    0.72,
+    0.54
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bone_keys": {
+   "col": 48,
+   "row": 34,
+   "uv": [
+    0.7578125,
+    0.4609375
+   ],
+   "srgb": [
+    235,
+    226,
+    199
+   ],
+   "rgb_linear": [
+    0.83,
+    0.76,
+    0.57
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bone_rings": {
+   "col": 49,
+   "row": 34,
+   "uv": [
+    0.7734375,
+    0.4609375
+   ],
+   "srgb": [
+    230,
+    221,
+    194
+   ],
+   "rgb_linear": [
+    0.79,
+    0.72,
+    0.54
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bone_white": {
+   "col": 50,
+   "row": 34,
+   "uv": [
+    0.7890625,
+    0.4609375
+   ],
+   "srgb": [
+    235,
+    229,
+    208
+   ],
+   "rgb_linear": [
+    0.83,
+    0.78,
+    0.63
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "charred_black": {
+   "col": 51,
+   "row": 34,
+   "uv": [
+    0.8046875,
+    0.4609375
+   ],
+   "srgb": [
+    53,
+    55,
+    42
+   ],
+   "rgb_linear": [
+    0.035,
+    0.038,
+    0.023
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "coral_red": {
+   "col": 52,
+   "row": 34,
+   "uv": [
+    0.8203125,
+    0.4609375
+   ],
+   "srgb": [
+    200,
+    81,
+    64
+   ],
+   "rgb_linear": [
+    0.58,
+    0.083,
+    0.052
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cord": {
+   "col": 53,
+   "row": 34,
+   "uv": [
+    0.8359375,
+    0.4609375
+   ],
+   "srgb": [
+    222,
+    197,
+    149
+   ],
+   "rgb_linear": [
+    0.73,
+    0.56,
+    0.3
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cream_fleece": {
+   "col": 54,
+   "row": 34,
+   "uv": [
+    0.8515625,
+    0.4609375
+   ],
+   "srgb": [
+    236,
+    229,
+    205
+   ],
+   "rgb_linear": [
+    0.84,
+    0.78,
+    0.61
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dark_jaw": {
+   "col": 55,
+   "row": 34,
+   "uv": [
+    0.8671875,
+    0.4609375
+   ],
+   "srgb": [
+    134,
+    118,
+    97
+   ],
+   "rgb_linear": [
+    0.24,
+    0.18,
+    0.12
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dark_joints": {
+   "col": 56,
+   "row": 34,
+   "uv": [
+    0.8828125,
+    0.4609375
+   ],
+   "srgb": [
+    132,
+    119,
+    97
+   ],
+   "rgb_linear": [
+    0.23,
+    0.185,
+    0.12
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "ivory": {
+   "col": 57,
+   "row": 34,
+   "uv": [
+    0.8984375,
+    0.4609375
+   ],
+   "srgb": [
+    241,
+    232,
+    208
+   ],
+   "rgb_linear": [
+    0.88,
+    0.81,
+    0.63
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "kelp_green": {
+   "col": 58,
+   "row": 34,
+   "uv": [
+    0.9140625,
+    0.4609375
+   ],
+   "srgb": [
+    97,
+    137,
+    85
+   ],
+   "rgb_linear": [
+    0.12,
+    0.25,
+    0.09
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "leather": {
+   "col": 59,
+   "row": 34,
+   "uv": [
+    0.9296875,
+    0.4609375
+   ],
+   "srgb": [
+    121,
+    77,
+    53
+   ],
+   "rgb_linear": [
+    0.19,
+    0.075,
+    0.035
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "leather_light": {
+   "col": 60,
+   "row": 34,
+   "uv": [
+    0.9453125,
+    0.4609375
+   ],
+   "srgb": [
+    202,
+    157,
+    110
+   ],
+   "rgb_linear": [
+    0.59,
+    0.335,
+    0.155
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "moss_green": {
+   "col": 61,
+   "row": 34,
+   "uv": [
+    0.9609375,
+    0.4609375
+   ],
+   "srgb": [
+    124,
+    153,
+    87
+   ],
+   "rgb_linear": [
+    0.2,
+    0.32,
+    0.095
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "oxblood_cords": {
+   "col": 62,
+   "row": 34,
+   "uv": [
+    0.9765625,
+    0.4609375
+   ],
+   "srgb": [
+    149,
+    44,
+    48
+   ],
+   "rgb_linear": [
+    0.3,
+    0.025,
+    0.03
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "oxblood_wrap": {
+   "col": 63,
+   "row": 34,
+   "uv": [
+    0.9921875,
+    0.4609375
+   ],
+   "srgb": [
+    147,
+    41,
+    45
+   ],
+   "rgb_linear": [
+    0.29,
+    0.022,
+    0.026
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "oxhide_brown": {
+   "col": 0,
+   "row": 35,
+   "uv": [
+    0.0078125,
+    0.4453125
+   ],
+   "srgb": [
+    147,
+    91,
+    55
+   ],
+   "rgb_linear": [
+    0.29,
+    0.105,
+    0.038
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pale_belly": {
+   "col": 1,
+   "row": 35,
+   "uv": [
+    0.0234375,
+    0.4453125
+   ],
+   "srgb": [
+    197,
+    211,
+    205
+   ],
+   "rgb_linear": [
+    0.56,
+    0.65,
+    0.61
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pearl_white": {
+   "col": 2,
+   "row": 35,
+   "uv": [
+    0.0390625,
+    0.4453125
+   ],
+   "srgb": [
+    229,
+    234,
+    218
+   ],
+   "rgb_linear": [
+    0.78,
+    0.82,
+    0.7
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "red_cord": {
+   "col": 3,
+   "row": 35,
+   "uv": [
+    0.0546875,
+    0.4453125
+   ],
+   "srgb": [
+    175,
+    53,
+    44
+   ],
+   "rgb_linear": [
+    0.43,
+    0.035,
+    0.025
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "red_gills": {
+   "col": 4,
+   "row": 35,
+   "uv": [
+    0.0703125,
+    0.4453125
+   ],
+   "srgb": [
+    184,
+    70,
+    62
+   ],
+   "rgb_linear": [
+    0.48,
+    0.062,
+    0.048
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "red_rawhide": {
+   "col": 5,
+   "row": 35,
+   "uv": [
+    0.0859375,
+    0.4453125
+   ],
+   "srgb": [
+    170,
+    61,
+    48
+   ],
+   "rgb_linear": [
+    0.4,
+    0.047,
+    0.029
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rope_light": {
+   "col": 6,
+   "row": 35,
+   "uv": [
+    0.1015625,
+    0.4453125
+   ],
+   "srgb": [
+    206,
+    177,
+    132
+   ],
+   "rgb_linear": [
+    0.62,
+    0.44,
+    0.23
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "shell_dark": {
+   "col": 7,
+   "row": 35,
+   "uv": [
+    0.1171875,
+    0.4453125
+   ],
+   "srgb": [
+    85,
+    97,
+    72
+   ],
+   "rgb_linear": [
+    0.09,
+    0.12,
+    0.065
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "shell_moss": {
+   "col": 8,
+   "row": 35,
+   "uv": [
+    0.1328125,
+    0.4453125
+   ],
+   "srgb": [
+    111,
+    132,
+    72
+   ],
+   "rgb_linear": [
+    0.16,
+    0.23,
+    0.065
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "shell_ochre": {
+   "col": 9,
+   "row": 35,
+   "uv": [
+    0.1484375,
+    0.4453125
+   ],
+   "srgb": [
+    158,
+    137,
+    77
+   ],
+   "rgb_linear": [
+    0.34,
+    0.25,
+    0.075
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "shell_olive": {
+   "col": 10,
+   "row": 35,
+   "uv": [
+    0.1640625,
+    0.4453125
+   ],
+   "srgb": [
+    137,
+    151,
+    85
+   ],
+   "rgb_linear": [
+    0.25,
+    0.31,
+    0.09
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "shell_rim": {
+   "col": 11,
+   "row": 35,
+   "uv": [
+    0.1796875,
+    0.4453125
+   ],
+   "srgb": [
+    181,
+    160,
+    97
+   ],
+   "rgb_linear": [
+    0.46,
+    0.35,
+    0.12
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "shell_sage": {
+   "col": 12,
+   "row": 35,
+   "uv": [
+    0.1953125,
+    0.4453125
+   ],
+   "srgb": [
+    158,
+    168,
+    111
+   ],
+   "rgb_linear": [
+    0.34,
+    0.39,
+    0.16
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "skin": {
+   "col": 13,
+   "row": 35,
+   "uv": [
+    0.2109375,
+    0.4453125
+   ],
+   "srgb": [
+    239,
+    221,
+    179
+   ],
+   "rgb_linear": [
+    0.86,
+    0.72,
+    0.45
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "skin_edge": {
+   "col": 14,
+   "row": 35,
+   "uv": [
+    0.2265625,
+    0.4453125
+   ],
+   "srgb": [
+    205,
+    175,
+    126
+   ],
+   "rgb_linear": [
+    0.61,
+    0.43,
+    0.21
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "straw_twine": {
+   "col": 15,
+   "row": 35,
+   "uv": [
+    0.2421875,
+    0.4453125
+   ],
+   "srgb": [
+    200,
+    173,
+    124
+   ],
+   "rgb_linear": [
+    0.58,
+    0.42,
+    0.2
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tan_hide": {
+   "col": 16,
+   "row": 35,
+   "uv": [
+    0.2578125,
+    0.4453125
+   ],
+   "srgb": [
+    175,
+    144,
+    105
+   ],
+   "rgb_linear": [
+    0.43,
+    0.28,
+    0.14
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tan_leather": {
+   "col": 17,
+   "row": 35,
+   "uv": [
+    0.2734375,
+    0.4453125
+   ],
+   "srgb": [
+    181,
+    136,
+    91
+   ],
+   "rgb_linear": [
+    0.46,
+    0.245,
+    0.105
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tarred_cord": {
+   "col": 18,
+   "row": 35,
+   "uv": [
+    0.2890625,
+    0.4453125
+   ],
+   "srgb": [
+    46,
+    36,
+    29
+   ],
+   "rgb_linear": [
+    0.027,
+    0.018,
+    0.012
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tarred_rope": {
+   "col": 19,
+   "row": 35,
+   "uv": [
+    0.3046875,
+    0.4453125
+   ],
+   "srgb": [
+    82,
+    73,
+    56
+   ],
+   "rgb_linear": [
+    0.085,
+    0.066,
+    0.04
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tooth_white": {
+   "col": 20,
+   "row": 35,
+   "uv": [
+    0.3203125,
+    0.4453125
+   ],
+   "srgb": [
+    235,
+    231,
+    211
+   ],
+   "rgb_linear": [
+    0.83,
+    0.8,
+    0.65
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "weed_green": {
+   "col": 21,
+   "row": 35,
+   "uv": [
+    0.3359375,
+    0.4453125
+   ],
+   "srgb": [
+    85,
+    134,
+    97
+   ],
+   "rgb_linear": [
+    0.09,
+    0.24,
+    0.12
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "wrap": {
+   "col": 22,
+   "row": 35,
+   "uv": [
+    0.3515625,
+    0.4453125
+   ],
+   "srgb": [
+    158,
+    111,
+    77
+   ],
+   "rgb_linear": [
+    0.34,
+    0.16,
+    0.075
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "yellow_nails": {
+   "col": 23,
+   "row": 35,
+   "uv": [
+    0.3671875,
+    0.4453125
+   ],
+   "srgb": [
+    212,
+    200,
+    129
+   ],
+   "rgb_linear": [
+    0.66,
+    0.58,
+    0.22
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "yellowed_gut": {
+   "col": 24,
+   "row": 35,
+   "uv": [
+    0.3828125,
+    0.4453125
+   ],
+   "srgb": [
+    194,
+    166,
+    105
+   ],
+   "rgb_linear": [
+    0.54,
+    0.38,
+    0.14
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bone": {
+   "col": 25,
+   "row": 35,
+   "uv": [
+    0.3984375,
+    0.4453125
+   ],
+   "srgb": [
+    227,
+    218,
+    186
+   ],
+   "rgb_linear": [
+    0.77,
+    0.7,
+    0.49
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bone_shadow": {
+   "col": 26,
+   "row": 35,
+   "uv": [
+    0.4140625,
+    0.4453125
+   ],
+   "srgb": [
+    175,
+    170,
+    149
+   ],
+   "rgb_linear": [
+    0.43,
+    0.4,
+    0.3
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rope": {
+   "col": 27,
+   "row": 35,
+   "uv": [
+    0.4296875,
+    0.4453125
+   ],
+   "srgb": [
+    189,
+    168,
+    129
+   ],
+   "rgb_linear": [
+    0.51,
+    0.39,
+    0.22
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_horn": {
+   "col": 28,
+   "row": 35,
+   "uv": [
+    0.4453125,
+    0.4453125
+   ],
+   "srgb": [
+    196,
+    186,
+    158
+   ],
+   "rgb_linear": [
+    0.55,
+    0.49,
+    0.34
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_horn_dark": {
+   "col": 29,
+   "row": 35,
+   "uv": [
+    0.4609375,
+    0.4453125
+   ],
+   "srgb": [
+    139,
+    133,
+    113
+   ],
+   "rgb_linear": [
+    0.26,
+    0.235,
+    0.165
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_horn_light": {
+   "col": 30,
+   "row": 35,
+   "uv": [
+    0.4765625,
+    0.4453125
+   ],
+   "srgb": [
+    226,
+    216,
+    188
+   ],
+   "rgb_linear": [
+    0.76,
+    0.69,
+    0.5
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_scale": {
+   "col": 31,
+   "row": 35,
+   "uv": [
+    0.4921875,
+    0.4453125
+   ],
+   "srgb": [
+    60,
+    115,
+    99
+   ],
+   "rgb_linear": [
+    0.045,
+    0.17,
+    0.125
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_scale_dark": {
+   "col": 32,
+   "row": 35,
+   "uv": [
+    0.5078125,
+    0.4453125
+   ],
+   "srgb": [
+    39,
+    80,
+    66
+   ],
+   "rgb_linear": [
+    0.02,
+    0.08,
+    0.055
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_scale_light": {
+   "col": 33,
+   "row": 35,
+   "uv": [
+    0.5234375,
+    0.4453125
+   ],
+   "srgb": [
+    77,
+    134,
+    122
+   ],
+   "rgb_linear": [
+    0.075,
+    0.24,
+    0.195
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_amber_sap": {
+   "col": 34,
+   "row": 35,
+   "uv": [
+    0.5390625,
+    0.4453125
+   ],
+   "srgb": [
+    209,
+    149,
+    66
+   ],
+   "rgb_linear": [
+    0.64,
+    0.3,
+    0.055
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_amber_sap_dark": {
+   "col": 35,
+   "row": 35,
+   "uv": [
+    0.5546875,
+    0.4453125
+   ],
+   "srgb": [
+    149,
+    103,
+    43
+   ],
+   "rgb_linear": [
+    0.3,
+    0.135,
+    0.024
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_amber_sap_light": {
+   "col": 36,
+   "row": 35,
+   "uv": [
+    0.5703125,
+    0.4453125
+   ],
+   "srgb": [
+    241,
+    178,
+    87
+   ],
+   "rgb_linear": [
+    0.88,
+    0.445,
+    0.095
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_horn": {
+   "col": 37,
+   "row": 35,
+   "uv": [
+    0.5859375,
+    0.4453125
+   ],
+   "srgb": [
+    126,
+    105,
+    82
+   ],
+   "rgb_linear": [
+    0.21,
+    0.14,
+    0.085
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_horn_dark": {
+   "col": 38,
+   "row": 35,
+   "uv": [
+    0.6015625,
+    0.4453125
+   ],
+   "srgb": [
+    89,
+    72,
+    55
+   ],
+   "rgb_linear": [
+    0.1,
+    0.065,
+    0.038
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_horn_light": {
+   "col": 39,
+   "row": 35,
+   "uv": [
+    0.6171875,
+    0.4453125
+   ],
+   "srgb": [
+    149,
+    126,
+    103
+   ],
+   "rgb_linear": [
+    0.3,
+    0.21,
+    0.135
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_leather": {
+   "col": 40,
+   "row": 35,
+   "uv": [
+    0.6328125,
+    0.4453125
+   ],
+   "srgb": [
+    129,
+    87,
+    56
+   ],
+   "rgb_linear": [
+    0.22,
+    0.095,
+    0.04
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_leather_dark": {
+   "col": 41,
+   "row": 35,
+   "uv": [
+    0.6484375,
+    0.4453125
+   ],
+   "srgb": [
+    91,
+    58,
+    36
+   ],
+   "rgb_linear": [
+    0.105,
+    0.043,
+    0.018
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_leather_light": {
+   "col": 42,
+   "row": 35,
+   "uv": [
+    0.6640625,
+    0.4453125
+   ],
+   "srgb": [
+    151,
+    106,
+    72
+   ],
+   "rgb_linear": [
+    0.31,
+    0.145,
+    0.065
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "coral": {
+   "col": 43,
+   "row": 35,
+   "uv": [
+    0.6796875,
+    0.4453125
+   ],
+   "srgb": [
+    222,
+    95,
+    72
+   ],
+   "rgb_linear": [
+    0.73,
+    0.115,
+    0.065
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Verdigris",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pearl": {
+   "col": 44,
+   "row": 35,
+   "uv": [
+    0.6953125,
+    0.4453125
+   ],
+   "srgb": [
+    240,
+    237,
+    218
+   ],
+   "rgb_linear": [
+    0.87,
+    0.85,
+    0.7
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Verdigris",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "kelp": {
+   "col": 45,
+   "row": 35,
+   "uv": [
+    0.7109375,
+    0.4453125
+   ],
+   "srgb": [
+    108,
+    136,
+    89
+   ],
+   "rgb_linear": [
+    0.15,
+    0.245,
+    0.1
+   ],
+   "family": "Organics, leather and cordage",
+   "theme": "Wreck",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "black_wicks": {
+   "col": 46,
+   "row": 35,
+   "uv": [
+    0.7265625,
+    0.4453125
+   ],
+   "srgb": [
+    24,
+    20,
+    16
+   ],
+   "rgb_linear": [
+    0.009,
+    0.007,
+    0.005
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "blue": {
+   "col": 47,
+   "row": 35,
+   "uv": [
+    0.7421875,
+    0.4453125
+   ],
+   "srgb": [
+    47,
+    77,
+    137
+   ],
+   "rgb_linear": [
+    0.028,
+    0.075,
+    0.25
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "blue_dark": {
+   "col": 48,
+   "row": 35,
+   "uv": [
+    0.7578125,
+    0.4453125
+   ],
+   "srgb": [
+    31,
+    51,
+    91
+   ],
+   "rgb_linear": [
+    0.014,
+    0.033,
+    0.105
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "blue_light": {
+   "col": 49,
+   "row": 35,
+   "uv": [
+    0.7734375,
+    0.4453125
+   ],
+   "srgb": [
+    72,
+    115,
+    172
+   ],
+   "rgb_linear": [
+    0.065,
+    0.17,
+    0.41
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "bright_spike_tips": {
+   "col": 50,
+   "row": 35,
+   "uv": [
+    0.7890625,
+    0.4453125
+   ],
+   "srgb": [
+    200,
+    209,
+    209
+   ],
+   "rgb_linear": [
+    0.58,
+    0.64,
+    0.64
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "charcoal": {
+   "col": 51,
+   "row": 35,
+   "uv": [
+    0.8046875,
+    0.4453125
+   ],
+   "srgb": [
+    36,
+    31,
+    29
+   ],
+   "rgb_linear": [
+    0.018,
+    0.014,
+    0.012
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cloth_cream": {
+   "col": 52,
+   "row": 35,
+   "uv": [
+    0.8203125,
+    0.4453125
+   ],
+   "srgb": [
+    230,
+    222,
+    196
+   ],
+   "rgb_linear": [
+    0.79,
+    0.73,
+    0.55
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cloth_red": {
+   "col": 53,
+   "row": 35,
+   "uv": [
+    0.8359375,
+    0.4453125
+   ],
+   "srgb": [
+    199,
+    56,
+    47
+   ],
+   "rgb_linear": [
+    0.57,
+    0.04,
+    0.028
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cream": {
+   "col": 54,
+   "row": 35,
+   "uv": [
+    0.8515625,
+    0.4453125
+   ],
+   "srgb": [
+    237,
+    231,
+    209
+   ],
+   "rgb_linear": [
+    0.85,
+    0.8,
+    0.64
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cream_dial": {
+   "col": 55,
+   "row": 35,
+   "uv": [
+    0.8671875,
+    0.4453125
+   ],
+   "srgb": [
+    240,
+    232,
+    209
+   ],
+   "rgb_linear": [
+    0.87,
+    0.81,
+    0.64
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cream_label": {
+   "col": 56,
+   "row": 35,
+   "uv": [
+    0.8828125,
+    0.4453125
+   ],
+   "srgb": [
+    231,
+    223,
+    194
+   ],
+   "rgb_linear": [
+    0.8,
+    0.74,
+    0.54
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dark_red": {
+   "col": 57,
+   "row": 35,
+   "uv": [
+    0.8984375,
+    0.4453125
+   ],
+   "srgb": [
+    137,
+    53,
+    47
+   ],
+   "rgb_linear": [
+    0.25,
+    0.035,
+    0.028
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dark_ship": {
+   "col": 58,
+   "row": 35,
+   "uv": [
+    0.9140625,
+    0.4453125
+   ],
+   "srgb": [
+    60,
+    69,
+    69
+   ],
+   "rgb_linear": [
+    0.045,
+    0.06,
+    0.06
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "drowned_crimson": {
+   "col": 59,
+   "row": 35,
+   "uv": [
+    0.9296875,
+    0.4453125
+   ],
+   "srgb": [
+    129,
+    44,
+    72
+   ],
+   "rgb_linear": [
+    0.22,
+    0.025,
+    0.065
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "frost_white": {
+   "col": 60,
+   "row": 35,
+   "uv": [
+    0.9453125,
+    0.4453125
+   ],
+   "srgb": [
+    222,
+    234,
+    237
+   ],
+   "rgb_linear": [
+    0.73,
+    0.82,
+    0.85
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "indigo": {
+   "col": 61,
+   "row": 35,
+   "uv": [
+    0.9609375,
+    0.4453125
+   ],
+   "srgb": [
+    60,
+    77,
+    121
+   ],
+   "rgb_linear": [
+    0.045,
+    0.075,
+    0.19
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "ink": {
+   "col": 62,
+   "row": 35,
+   "uv": [
+    0.9765625,
+    0.4453125
+   ],
+   "srgb": [
+    72,
+    50,
+    36
+   ],
+   "rgb_linear": [
+    0.065,
+    0.032,
+    0.018
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "madder_red": {
+   "col": 63,
+   "row": 35,
+   "uv": [
+    0.9921875,
+    0.4453125
+   ],
+   "srgb": [
+    166,
+    62,
+    60
+   ],
+   "rgb_linear": [
+    0.38,
+    0.048,
+    0.045
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "ochre_ridges": {
+   "col": 0,
+   "row": 36,
+   "uv": [
+    0.0078125,
+    0.4296875
+   ],
+   "srgb": [
+    196,
+    155,
+    82
+   ],
+   "rgb_linear": [
+    0.55,
+    0.33,
+    0.085
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "paint_red": {
+   "col": 1,
+   "row": 36,
+   "uv": [
+    0.0234375,
+    0.4296875
+   ],
+   "srgb": [
+    197,
+    53,
+    44
+   ],
+   "rgb_linear": [
+    0.56,
+    0.035,
+    0.025
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "paint_white": {
+   "col": 2,
+   "row": 36,
+   "uv": [
+    0.0390625,
+    0.4296875
+   ],
+   "srgb": [
+    232,
+    230,
+    214
+   ],
+   "rgb_linear": [
+    0.81,
+    0.79,
+    0.67
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "paper": {
+   "col": 3,
+   "row": 36,
+   "uv": [
+    0.0546875,
+    0.4296875
+   ],
+   "srgb": [
+    239,
+    226,
+    192
+   ],
+   "rgb_linear": [
+    0.86,
+    0.76,
+    0.53
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "paper_edge": {
+   "col": 4,
+   "row": 36,
+   "uv": [
+    0.0703125,
+    0.4296875
+   ],
+   "srgb": [
+    212,
+    191,
+    151
+   ],
+   "rgb_linear": [
+    0.66,
+    0.52,
+    0.31
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "paper_shadow": {
+   "col": 5,
+   "row": 36,
+   "uv": [
+    0.0859375,
+    0.4296875
+   ],
+   "srgb": [
+    181,
+    160,
+    124
+   ],
+   "rgb_linear": [
+    0.46,
+    0.35,
+    0.2
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "parchment": {
+   "col": 6,
+   "row": 36,
+   "uv": [
+    0.1015625,
+    0.4296875
+   ],
+   "srgb": [
+    239,
+    221,
+    175
+   ],
+   "rgb_linear": [
+    0.86,
+    0.72,
+    0.43
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "parchment_edge": {
+   "col": 7,
+   "row": 36,
+   "uv": [
+    0.1171875,
+    0.4296875
+   ],
+   "srgb": [
+    188,
+    153,
+    105
+   ],
+   "rgb_linear": [
+    0.5,
+    0.32,
+    0.14
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "parchment_light": {
+   "col": 8,
+   "row": 36,
+   "uv": [
+    0.1328125,
+    0.4296875
+   ],
+   "srgb": [
+    234,
+    215,
+    175
+   ],
+   "rgb_linear": [
+    0.82,
+    0.68,
+    0.43
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pit_brown": {
+   "col": 9,
+   "row": 36,
+   "uv": [
+    0.1484375,
+    0.4296875
+   ],
+   "srgb": [
+    87,
+    51,
+    36
+   ],
+   "rgb_linear": [
+    0.095,
+    0.033,
+    0.018
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "purple": {
+   "col": 10,
+   "row": 36,
+   "uv": [
+    0.1640625,
+    0.4296875
+   ],
+   "srgb": [
+    77,
+    36,
+    115
+   ],
+   "rgb_linear": [
+    0.075,
+    0.018,
+    0.17
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "purple_light": {
+   "col": 11,
+   "row": 36,
+   "uv": [
+    0.1796875,
+    0.4296875
+   ],
+   "srgb": [
+    118,
+    63,
+    149
+   ],
+   "rgb_linear": [
+    0.18,
+    0.049,
+    0.3
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "putty_blue": {
+   "col": 12,
+   "row": 36,
+   "uv": [
+    0.1953125,
+    0.4296875
+   ],
+   "srgb": [
+    72,
+    139,
+    173
+   ],
+   "rgb_linear": [
+    0.065,
+    0.26,
+    0.42
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "red_light": {
+   "col": 13,
+   "row": 36,
+   "uv": [
+    0.2109375,
+    0.4296875
+   ],
+   "srgb": [
+    225,
+    60,
+    56
+   ],
+   "rgb_linear": [
+    0.75,
+    0.045,
+    0.04
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "red_wax": {
+   "col": 14,
+   "row": 36,
+   "uv": [
+    0.2265625,
+    0.4296875
+   ],
+   "srgb": [
+    175,
+    36,
+    42
+   ],
+   "rgb_linear": [
+    0.43,
+    0.018,
+    0.023
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "salt_white": {
+   "col": 15,
+   "row": 36,
+   "uv": [
+    0.2421875,
+    0.4296875
+   ],
+   "srgb": [
+    230,
+    229,
+    216
+   ],
+   "rgb_linear": [
+    0.79,
+    0.78,
+    0.69
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "sea_black_varnish": {
+   "col": 16,
+   "row": 36,
+   "uv": [
+    0.2578125,
+    0.4296875
+   ],
+   "srgb": [
+    50,
+    75,
+    76
+   ],
+   "rgb_linear": [
+    0.032,
+    0.07,
+    0.073
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "sea_blue": {
+   "col": 17,
+   "row": 36,
+   "uv": [
+    0.2734375,
+    0.4296875
+   ],
+   "srgb": [
+    77,
+    137,
+    158
+   ],
+   "rgb_linear": [
+    0.075,
+    0.25,
+    0.34
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "sea_faded_white": {
+   "col": 18,
+   "row": 36,
+   "uv": [
+    0.2890625,
+    0.4296875
+   ],
+   "srgb": [
+    222,
+    227,
+    216
+   ],
+   "rgb_linear": [
+    0.73,
+    0.77,
+    0.69
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "seal": {
+   "col": 19,
+   "row": 36,
+   "uv": [
+    0.3046875,
+    0.4296875
+   ],
+   "srgb": [
+    170,
+    118,
+    63
+   ],
+   "rgb_linear": [
+    0.4,
+    0.18,
+    0.05
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "seal_edge": {
+   "col": 20,
+   "row": 36,
+   "uv": [
+    0.3203125,
+    0.4296875
+   ],
+   "srgb": [
+    227,
+    181,
+    97
+   ],
+   "rgb_linear": [
+    0.77,
+    0.46,
+    0.12
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "seal_face": {
+   "col": 21,
+   "row": 36,
+   "uv": [
+    0.3359375,
+    0.4296875
+   ],
+   "srgb": [
+    53,
+    97,
+    121
+   ],
+   "rgb_linear": [
+    0.035,
+    0.12,
+    0.19
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "silk_grey_white": {
+   "col": 22,
+   "row": 36,
+   "uv": [
+    0.3515625,
+    0.4296875
+   ],
+   "srgb": [
+    212,
+    219,
+    221
+   ],
+   "rgb_linear": [
+    0.66,
+    0.71,
+    0.72
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "string": {
+   "col": 23,
+   "row": 36,
+   "uv": [
+    0.3671875,
+    0.4296875
+   ],
+   "srgb": [
+    239,
+    230,
+    199
+   ],
+   "rgb_linear": [
+    0.86,
+    0.79,
+    0.57
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tallow_cream": {
+   "col": 24,
+   "row": 36,
+   "uv": [
+    0.3828125,
+    0.4296875
+   ],
+   "srgb": [
+    239,
+    227,
+    192
+   ],
+   "rgb_linear": [
+    0.86,
+    0.77,
+    0.53
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tar_black": {
+   "col": 25,
+   "row": 36,
+   "uv": [
+    0.3984375,
+    0.4296875
+   ],
+   "srgb": [
+    43,
+    48,
+    49
+   ],
+   "rgb_linear": [
+    0.024,
+    0.029,
+    0.031
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "tar_black_line": {
+   "col": 26,
+   "row": 36,
+   "uv": [
+    0.4140625,
+    0.4296875
+   ],
+   "srgb": [
+    44,
+    42,
+    39
+   ],
+   "rgb_linear": [
+    0.025,
+    0.023,
+    0.02
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "teal": {
+   "col": 27,
+   "row": 36,
+   "uv": [
+    0.4296875,
+    0.4296875
+   ],
+   "srgb": [
+    36,
+    144,
+    151
+   ],
+   "rgb_linear": [
+    0.018,
+    0.28,
+    0.31
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "teal_light": {
+   "col": 28,
+   "row": 36,
+   "uv": [
+    0.4453125,
+    0.4296875
+   ],
+   "srgb": [
+    59,
+    177,
+    175
+   ],
+   "rgb_linear": [
+    0.044,
+    0.44,
+    0.43
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "team": {
+   "col": 29,
+   "row": 36,
+   "uv": [
+    0.4609375,
+    0.4296875
+   ],
+   "srgb": [
+    36,
+    85,
+    166
+   ],
+   "rgb_linear": [
+    0.018,
+    0.09,
+    0.38
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "team_light": {
+   "col": 30,
+   "row": 36,
+   "uv": [
+    0.4765625,
+    0.4296875
+   ],
+   "srgb": [
+    58,
+    121,
+    205
+   ],
+   "rgb_linear": [
+    0.042,
+    0.19,
+    0.61
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "terracotta": {
+   "col": 31,
+   "row": 36,
+   "uv": [
+    0.4921875,
+    0.4296875
+   ],
+   "srgb": [
+    182,
+    116,
+    80
+   ],
+   "rgb_linear": [
+    0.47,
+    0.175,
+    0.08
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "verdigris_green": {
+   "col": 32,
+   "row": 36,
+   "uv": [
+    0.5078125,
+    0.4296875
+   ],
+   "srgb": [
+    97,
+    158,
+    137
+   ],
+   "rgb_linear": [
+    0.12,
+    0.34,
+    0.25
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "weathered_teal": {
+   "col": 33,
+   "row": 36,
+   "uv": [
+    0.5234375,
+    0.4296875
+   ],
+   "srgb": [
+    82,
+    144,
+    142
+   ],
+   "rgb_linear": [
+    0.085,
+    0.28,
+    0.27
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "wine_dark": {
+   "col": 34,
+   "row": 36,
+   "uv": [
+    0.5390625,
+    0.4296875
+   ],
+   "srgb": [
+    97,
+    29,
+    44
+   ],
+   "rgb_linear": [
+    0.12,
+    0.012,
+    0.025
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "worn_inner_rim": {
+   "col": 35,
+   "row": 36,
+   "uv": [
+    0.5546875,
+    0.4296875
+   ],
+   "srgb": [
+    196,
+    202,
+    199
+   ],
+   "rgb_linear": [
+    0.55,
+    0.59,
+    0.57
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "black": {
+   "col": 36,
+   "row": 36,
+   "uv": [
+    0.5703125,
+    0.4296875
+   ],
+   "srgb": [
+    46,
+    55,
+    58
+   ],
+   "rgb_linear": [
+    0.027,
+    0.038,
+    0.042
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "white": {
+   "col": 37,
+   "row": 36,
+   "uv": [
+    0.5859375,
+    0.4296875
+   ],
+   "srgb": [
+    229,
+    226,
+    206
+   ],
+   "rgb_linear": [
+    0.78,
+    0.76,
+    0.62
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "Corsair",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "grey": {
+   "col": 38,
+   "row": 36,
+   "uv": [
+    0.6015625,
+    0.4296875
+   ],
+   "srgb": [
+    126,
+    137,
+    137
+   ],
+   "rgb_linear": [
+    0.21,
+    0.25,
+    0.25
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "Ossuary",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "red": {
+   "col": 39,
+   "row": 36,
+   "uv": [
+    0.6171875,
+    0.4296875
+   ],
+   "srgb": [
+    212,
+    66,
+    58
+   ],
+   "rgb_linear": [
+    0.66,
+    0.055,
+    0.042
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "Warren",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "chalk": {
+   "col": 40,
+   "row": 36,
+   "uv": [
+    0.6328125,
+    0.4296875
+   ],
+   "srgb": [
+    232,
+    234,
+    219
+   ],
+   "rgb_linear": [
+    0.81,
+    0.82,
+    0.71
+   ],
+   "family": "Cloths, paints, paper and wax",
+   "theme": "Wreck",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "amethyst": {
+   "col": 41,
+   "row": 36,
+   "uv": [
+    0.6484375,
+    0.4296875
+   ],
+   "srgb": [
+    129,
+    66,
+    170
+   ],
+   "rgb_linear": [
+    0.22,
+    0.055,
+    0.4
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "amethyst_dark": {
+   "col": 42,
+   "row": 36,
+   "uv": [
+    0.6640625,
+    0.4296875
+   ],
+   "srgb": [
+    91,
+    44,
+    132
+   ],
+   "rgb_linear": [
+    0.105,
+    0.025,
+    0.23
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "amethyst_light": {
+   "col": 43,
+   "row": 36,
+   "uv": [
+    0.6796875,
+    0.4296875
+   ],
+   "srgb": [
+    162,
+    95,
+    200
+   ],
+   "rgb_linear": [
+    0.36,
+    0.115,
+    0.58
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "gem": {
+   "col": 44,
+   "row": 36,
+   "uv": [
+    0.6953125,
+    0.4296875
+   ],
+   "srgb": [
+    33,
+    158,
+    89
+   ],
+   "rgb_linear": [
+    0.015,
+    0.34,
+    0.1
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "gem_dark": {
+   "col": 45,
+   "row": 36,
+   "uv": [
+    0.7109375,
+    0.4296875
+   ],
+   "srgb": [
+    16,
+    108,
+    55
+   ],
+   "rgb_linear": [
+    0.005,
+    0.15,
+    0.038
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "gem_light": {
+   "col": 46,
+   "row": 36,
+   "uv": [
+    0.7265625,
+    0.4296875
+   ],
+   "srgb": [
+    87,
+    144,
+    235
+   ],
+   "rgb_linear": [
+    0.095,
+    0.28,
+    0.83
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "grey_stone": {
+   "col": 47,
+   "row": 36,
+   "uv": [
+    0.7421875,
+    0.4296875
+   ],
+   "srgb": [
+    158,
+    166,
+    166
+   ],
+   "rgb_linear": [
+    0.34,
+    0.38,
+    0.38
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "light_stone": {
+   "col": 48,
+   "row": 36,
+   "uv": [
+    0.7578125,
+    0.4296875
+   ],
+   "srgb": [
+    186,
+    192,
+    189
+   ],
+   "rgb_linear": [
+    0.49,
+    0.53,
+    0.51
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "shadow_stone": {
+   "col": 49,
+   "row": 36,
+   "uv": [
+    0.7734375,
+    0.4296875
+   ],
+   "srgb": [
+    124,
+    134,
+    139
+   ],
+   "rgb_linear": [
+    0.2,
+    0.24,
+    0.26
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "slate_blue_black": {
+   "col": 50,
+   "row": 36,
+   "uv": [
+    0.7890625,
+    0.4296875
+   ],
+   "srgb": [
+    60,
+    82,
+    97
+   ],
+   "rgb_linear": [
+    0.045,
+    0.085,
+    0.12
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "slate_grey": {
+   "col": 51,
+   "row": 36,
+   "uv": [
+    0.8046875,
+    0.4296875
+   ],
+   "srgb": [
+    124,
+    141,
+    147
+   ],
+   "rgb_linear": [
+    0.2,
+    0.265,
+    0.29
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "stone_dark": {
+   "col": 52,
+   "row": 36,
+   "uv": [
+    0.8203125,
+    0.4296875
+   ],
+   "srgb": [
+    108,
+    115,
+    121
+   ],
+   "rgb_linear": [
+    0.15,
+    0.17,
+    0.19
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "stone_light": {
+   "col": 53,
+   "row": 36,
+   "uv": [
+    0.8359375,
+    0.4296875
+   ],
+   "srgb": [
+    158,
+    163,
+    166
+   ],
+   "rgb_linear": [
+    0.34,
+    0.365,
+    0.38
+   ],
+   "family": "Stone and gems",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_crimson_gem": {
+   "col": 54,
+   "row": 36,
+   "uv": [
+    0.8515625,
+    0.4296875
+   ],
+   "srgb": [
+    162,
+    53,
+    72
+   ],
+   "rgb_linear": [
+    0.36,
+    0.035,
+    0.065
+   ],
+   "family": "Stone and gems",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_crimson_gem_dark": {
+   "col": 55,
+   "row": 36,
+   "uv": [
+    0.8671875,
+    0.4296875
+   ],
+   "srgb": [
+    115,
+    34,
+    48
+   ],
+   "rgb_linear": [
+    0.17,
+    0.016,
+    0.03
+   ],
+   "family": "Stone and gems",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_crimson_gem_light": {
+   "col": 56,
+   "row": 36,
+   "uv": [
+    0.8828125,
+    0.4296875
+   ],
+   "srgb": [
+    191,
+    66,
+    91
+   ],
+   "rgb_linear": [
+    0.52,
+    0.055,
+    0.105
+   ],
+   "family": "Stone and gems",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_obsidian": {
+   "col": 57,
+   "row": 36,
+   "uv": [
+    0.8984375,
+    0.4296875
+   ],
+   "srgb": [
+    53,
+    48,
+    60
+   ],
+   "rgb_linear": [
+    0.035,
+    0.03,
+    0.045
+   ],
+   "family": "Stone and gems",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_obsidian_dark": {
+   "col": 58,
+   "row": 36,
+   "uv": [
+    0.9140625,
+    0.4296875
+   ],
+   "srgb": [
+    34,
+    31,
+    40
+   ],
+   "rgb_linear": [
+    0.016,
+    0.014,
+    0.021
+   ],
+   "family": "Stone and gems",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_obsidian_light": {
+   "col": 59,
+   "row": 36,
+   "uv": [
+    0.9296875,
+    0.4296875
+   ],
+   "srgb": [
+    63,
+    60,
+    75
+   ],
+   "rgb_linear": [
+    0.05,
+    0.045,
+    0.07
+   ],
+   "family": "Stone and gems",
+   "theme": "Draconic",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_ash": {
+   "col": 60,
+   "row": 36,
+   "uv": [
+    0.9453125,
+    0.4296875
+   ],
+   "srgb": [
+    147,
+    149,
+    145
+   ],
+   "rgb_linear": [
+    0.29,
+    0.3,
+    0.285
+   ],
+   "family": "Stone and gems",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_ash_dark": {
+   "col": 61,
+   "row": 36,
+   "uv": [
+    0.9609375,
+    0.4296875
+   ],
+   "srgb": [
+    103,
+    105,
+    103
+   ],
+   "rgb_linear": [
+    0.135,
+    0.14,
+    0.135
+   ],
+   "family": "Stone and gems",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_ash_light": {
+   "col": 62,
+   "row": 36,
+   "uv": [
+    0.9765625,
+    0.4296875
+   ],
+   "srgb": [
+    172,
+    175,
+    173
+   ],
+   "rgb_linear": [
+    0.41,
+    0.43,
+    0.42
+   ],
+   "family": "Stone and gems",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_brimstone": {
+   "col": 63,
+   "row": 36,
+   "uv": [
+    0.9921875,
+    0.4296875
+   ],
+   "srgb": [
+    196,
+    175,
+    66
+   ],
+   "rgb_linear": [
+    0.55,
+    0.43,
+    0.055
+   ],
+   "family": "Stone and gems",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_brimstone_dark": {
+   "col": 0,
+   "row": 37,
+   "uv": [
+    0.0078125,
+    0.4140625
+   ],
+   "srgb": [
+    139,
+    124,
+    43
+   ],
+   "rgb_linear": [
+    0.26,
+    0.2,
+    0.024
+   ],
+   "family": "Stone and gems",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_brimstone_light": {
+   "col": 1,
+   "row": 37,
+   "uv": [
+    0.0234375,
+    0.4140625
+   ],
+   "srgb": [
+    226,
+    206,
+    85
+   ],
+   "rgb_linear": [
+    0.76,
+    0.62,
+    0.09
+   ],
+   "family": "Stone and gems",
+   "theme": "Infernal",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "stone": {
+   "col": 2,
+   "row": 37,
+   "uv": [
+    0.0390625,
+    0.4140625
+   ],
+   "srgb": [
+    160,
+    166,
+    160
+   ],
+   "rgb_linear": [
+    0.35,
+    0.38,
+    0.35
+   ],
+   "family": "Stone and gems",
+   "theme": "Saint",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "glass_dark": {
+   "col": 3,
+   "row": 37,
+   "uv": [
+    0.0546875,
+    0.4140625
+   ],
+   "srgb": [
+    24,
+    101,
+    99
+   ],
+   "rgb_linear": [
+    0.009,
+    0.13,
+    0.125
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "glass_light": {
+   "col": 4,
+   "row": 37,
+   "uv": [
+    0.0703125,
+    0.4140625
+   ],
+   "srgb": [
+    66,
+    175,
+    166
+   ],
+   "rgb_linear": [
+    0.055,
+    0.43,
+    0.38
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "glass_rim": {
+   "col": 5,
+   "row": 37,
+   "uv": [
+    0.0859375,
+    0.4140625
+   ],
+   "srgb": [
+    134,
+    184,
+    191
+   ],
+   "rgb_linear": [
+    0.24,
+    0.48,
+    0.52
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "glass_rim_light": {
+   "col": 6,
+   "row": 37,
+   "uv": [
+    0.1015625,
+    0.4140625
+   ],
+   "srgb": [
+    175,
+    215,
+    216
+   ],
+   "rgb_linear": [
+    0.43,
+    0.68,
+    0.69
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "lip": {
+   "col": 7,
+   "row": 37,
+   "uv": [
+    0.1171875,
+    0.4140625
+   ],
+   "srgb": [
+    118,
+    175,
+    200
+   ],
+   "rgb_linear": [
+    0.18,
+    0.43,
+    0.58
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "lip_light": {
+   "col": 8,
+   "row": 37,
+   "uv": [
+    0.1328125,
+    0.4140625
+   ],
+   "srgb": [
+    166,
+    212,
+    226
+   ],
+   "rgb_linear": [
+    0.38,
+    0.66,
+    0.76
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "murky_green": {
+   "col": 9,
+   "row": 37,
+   "uv": [
+    0.1484375,
+    0.4140625
+   ],
+   "srgb": [
+    111,
+    144,
+    111
+   ],
+   "rgb_linear": [
+    0.16,
+    0.28,
+    0.16
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pale_green_glass": {
+   "col": 10,
+   "row": 37,
+   "uv": [
+    0.1640625,
+    0.4140625
+   ],
+   "srgb": [
+    162,
+    200,
+    173
+   ],
+   "rgb_linear": [
+    0.36,
+    0.58,
+    0.42
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pale_sea_green_glass": {
+   "col": 11,
+   "row": 37,
+   "uv": [
+    0.1796875,
+    0.4140625
+   ],
+   "srgb": [
+    166,
+    211,
+    196
+   ],
+   "rgb_linear": [
+    0.38,
+    0.65,
+    0.55
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "glass": {
+   "col": 12,
+   "row": 37,
+   "uv": [
+    0.1953125,
+    0.4140625
+   ],
+   "srgb": [
+    162,
+    225,
+    205
+   ],
+   "rgb_linear": [
+    0.36,
+    0.75,
+    0.61
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "Saint",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_smoked_glass": {
+   "col": 13,
+   "row": 37,
+   "uv": [
+    0.2109375,
+    0.4140625
+   ],
+   "srgb": [
+    82,
+    91,
+    89
+   ],
+   "rgb_linear": [
+    0.085,
+    0.105,
+    0.1
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_smoked_glass_dark": {
+   "col": 14,
+   "row": 37,
+   "uv": [
+    0.2265625,
+    0.4140625
+   ],
+   "srgb": [
+    56,
+    62,
+    61
+   ],
+   "rgb_linear": [
+    0.04,
+    0.048,
+    0.047
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_smoked_glass_light": {
+   "col": 15,
+   "row": 37,
+   "uv": [
+    0.2421875,
+    0.4140625
+   ],
+   "srgb": [
+    97,
+    110,
+    108
+   ],
+   "rgb_linear": [
+    0.12,
+    0.155,
+    0.15
+   ],
+   "family": "Glass as opaque colour",
+   "theme": "Steampunk",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "apple_dark": {
+   "col": 16,
+   "row": 37,
+   "uv": [
+    0.2578125,
+    0.4140625
+   ],
+   "srgb": [
+    149,
+    22,
+    33
+   ],
+   "rgb_linear": [
+    0.3,
+    0.008,
+    0.015
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "apple_green": {
+   "col": 17,
+   "row": 37,
+   "uv": [
+    0.2734375,
+    0.4140625
+   ],
+   "srgb": [
+    147,
+    199,
+    66
+   ],
+   "rgb_linear": [
+    0.29,
+    0.57,
+    0.055
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "apple_light": {
+   "col": 18,
+   "row": 37,
+   "uv": [
+    0.2890625,
+    0.4140625
+   ],
+   "srgb": [
+    226,
+    61,
+    57
+   ],
+   "rgb_linear": [
+    0.76,
+    0.047,
+    0.041
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "apple_red": {
+   "col": 19,
+   "row": 37,
+   "uv": [
+    0.3046875,
+    0.4140625
+   ],
+   "srgb": [
+    197,
+    36,
+    45
+   ],
+   "rgb_linear": [
+    0.56,
+    0.018,
+    0.026
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "apple_shadow": {
+   "col": 20,
+   "row": 37,
+   "uv": [
+    0.3203125,
+    0.4140625
+   ],
+   "srgb": [
+    132,
+    175,
+    55
+   ],
+   "rgb_linear": [
+    0.23,
+    0.43,
+    0.038
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cabbage": {
+   "col": 21,
+   "row": 37,
+   "uv": [
+    0.3359375,
+    0.4140625
+   ],
+   "srgb": [
+    124,
+    168,
+    77
+   ],
+   "rgb_linear": [
+    0.2,
+    0.39,
+    0.075
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cabbage_dark": {
+   "col": 22,
+   "row": 37,
+   "uv": [
+    0.3515625,
+    0.4140625
+   ],
+   "srgb": [
+    80,
+    129,
+    52
+   ],
+   "rgb_linear": [
+    0.08,
+    0.22,
+    0.034
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cabbage_light": {
+   "col": 23,
+   "row": 37,
+   "uv": [
+    0.3671875,
+    0.4140625
+   ],
+   "srgb": [
+    158,
+    192,
+    101
+   ],
+   "rgb_linear": [
+    0.34,
+    0.53,
+    0.13
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cheese": {
+   "col": 24,
+   "row": 37,
+   "uv": [
+    0.3828125,
+    0.4140625
+   ],
+   "srgb": [
+    248,
+    208,
+    126
+   ],
+   "rgb_linear": [
+    0.94,
+    0.63,
+    0.21
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "cheese_light": {
+   "col": 25,
+   "row": 37,
+   "uv": [
+    0.3984375,
+    0.4140625
+   ],
+   "srgb": [
+    255,
+    235,
+    173
+   ],
+   "rgb_linear": [
+    1.0,
+    0.83,
+    0.42
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "clove_brown": {
+   "col": 26,
+   "row": 37,
+   "uv": [
+    0.4140625,
+    0.4140625
+   ],
+   "srgb": [
+    121,
+    75,
+    47
+   ],
+   "rgb_linear": [
+    0.19,
+    0.071,
+    0.028
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "crumb": {
+   "col": 27,
+   "row": 37,
+   "uv": [
+    0.4296875,
+    0.4140625
+   ],
+   "srgb": [
+    246,
+    216,
+    158
+   ],
+   "rgb_linear": [
+    0.92,
+    0.69,
+    0.34
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "crumb_light": {
+   "col": 28,
+   "row": 37,
+   "uv": [
+    0.4453125,
+    0.4140625
+   ],
+   "srgb": [
+    255,
+    237,
+    192
+   ],
+   "rgb_linear": [
+    1.0,
+    0.85,
+    0.53
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dung": {
+   "col": 29,
+   "row": 37,
+   "uv": [
+    0.4609375,
+    0.4140625
+   ],
+   "srgb": [
+    129,
+    85,
+    47
+   ],
+   "rgb_linear": [
+    0.22,
+    0.09,
+    0.028
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dung_dark": {
+   "col": 30,
+   "row": 37,
+   "uv": [
+    0.4765625,
+    0.4140625
+   ],
+   "srgb": [
+    101,
+    59,
+    31
+   ],
+   "rgb_linear": [
+    0.13,
+    0.044,
+    0.014
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dung_light": {
+   "col": 31,
+   "row": 37,
+   "uv": [
+    0.4921875,
+    0.4140625
+   ],
+   "srgb": [
+    151,
+    105,
+    63
+   ],
+   "rgb_linear": [
+    0.31,
+    0.14,
+    0.049
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "leaf": {
+   "col": 32,
+   "row": 37,
+   "uv": [
+    0.5078125,
+    0.4140625
+   ],
+   "srgb": [
+    72,
+    137,
+    43
+   ],
+   "rgb_linear": [
+    0.065,
+    0.25,
+    0.024
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "leaf_dark": {
+   "col": 33,
+   "row": 37,
+   "uv": [
+    0.5234375,
+    0.4140625
+   ],
+   "srgb": [
+    44,
+    91,
+    24
+   ],
+   "rgb_linear": [
+    0.025,
+    0.105,
+    0.009
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "leaf_light": {
+   "col": 34,
+   "row": 37,
+   "uv": [
+    0.5390625,
+    0.4140625
+   ],
+   "srgb": [
+    111,
+    168,
+    55
+   ],
+   "rgb_linear": [
+    0.16,
+    0.39,
+    0.038
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "mould_green": {
+   "col": 35,
+   "row": 37,
+   "uv": [
+    0.5546875,
+    0.4140625
+   ],
+   "srgb": [
+    93,
+    134,
+    66
+   ],
+   "rgb_linear": [
+    0.11,
+    0.24,
+    0.055
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "orange": {
+   "col": 36,
+   "row": 37,
+   "uv": [
+    0.5703125,
+    0.4140625
+   ],
+   "srgb": [
+    243,
+    121,
+    34
+   ],
+   "rgb_linear": [
+    0.9,
+    0.19,
+    0.016
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "orange_dark": {
+   "col": 37,
+   "row": 37,
+   "uv": [
+    0.5859375,
+    0.4140625
+   ],
+   "srgb": [
+    191,
+    80,
+    18
+   ],
+   "rgb_linear": [
+    0.52,
+    0.08,
+    0.006
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "orange_light": {
+   "col": 38,
+   "row": 37,
+   "uv": [
+    0.6015625,
+    0.4140625
+   ],
+   "srgb": [
+    255,
+    153,
+    44
+   ],
+   "rgb_linear": [
+    1.0,
+    0.32,
+    0.025
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pale_root": {
+   "col": 39,
+   "row": 37,
+   "uv": [
+    0.6171875,
+    0.4140625
+   ],
+   "srgb": [
+    211,
+    194,
+    153
+   ],
+   "rgb_linear": [
+    0.65,
+    0.54,
+    0.32
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "rind": {
+   "col": 40,
+   "row": 37,
+   "uv": [
+    0.6328125,
+    0.4140625
+   ],
+   "srgb": [
+    215,
+    155,
+    63
+   ],
+   "rgb_linear": [
+    0.68,
+    0.33,
+    0.05
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "score_edge": {
+   "col": 41,
+   "row": 37,
+   "uv": [
+    0.6484375,
+    0.4140625
+   ],
+   "srgb": [
+    175,
+    118,
+    55
+   ],
+   "rgb_linear": [
+    0.43,
+    0.18,
+    0.038
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "stem": {
+   "col": 42,
+   "row": 37,
+   "uv": [
+    0.6640625,
+    0.4140625
+   ],
+   "srgb": [
+    121,
+    77,
+    44
+   ],
+   "rgb_linear": [
+    0.19,
+    0.075,
+    0.025
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "stem_light": {
+   "col": 43,
+   "row": 37,
+   "uv": [
+    0.6796875,
+    0.4140625
+   ],
+   "srgb": [
+    158,
+    111,
+    72
+   ],
+   "rgb_linear": [
+    0.34,
+    0.16,
+    0.065
+   ],
+   "family": "Food and plants",
+   "theme": "",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_blossom": {
+   "col": 44,
+   "row": 37,
+   "uv": [
+    0.6953125,
+    0.4140625
+   ],
+   "srgb": [
+    199,
+    137,
+    147
+   ],
+   "rgb_linear": [
+    0.57,
+    0.25,
+    0.29
+   ],
+   "family": "Food and plants",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_blossom_dark": {
+   "col": 45,
+   "row": 37,
+   "uv": [
+    0.7109375,
+    0.4140625
+   ],
+   "srgb": [
+    142,
+    95,
+    105
+   ],
+   "rgb_linear": [
+    0.27,
+    0.115,
+    0.14
+   ],
+   "family": "Food and plants",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_blossom_light": {
+   "col": 46,
+   "row": 37,
+   "uv": [
+    0.7265625,
+    0.4140625
+   ],
+   "srgb": [
+    229,
+    164,
+    175
+   ],
+   "rgb_linear": [
+    0.78,
+    0.37,
+    0.43
+   ],
+   "family": "Food and plants",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_leaf": {
+   "col": 47,
+   "row": 37,
+   "uv": [
+    0.7421875,
+    0.4140625
+   ],
+   "srgb": [
+    77,
+    149,
+    95
+   ],
+   "rgb_linear": [
+    0.075,
+    0.3,
+    0.115
+   ],
+   "family": "Food and plants",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_leaf_dark": {
+   "col": 48,
+   "row": 37,
+   "uv": [
+    0.7578125,
+    0.4140625
+   ],
+   "srgb": [
+    52,
+    105,
+    63
+   ],
+   "rgb_linear": [
+    0.034,
+    0.14,
+    0.05
+   ],
+   "family": "Food and plants",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_leaf_light": {
+   "col": 49,
+   "row": 37,
+   "uv": [
+    0.7734375,
+    0.4140625
+   ],
+   "srgb": [
+    97,
+    173,
+    118
+   ],
+   "rgb_linear": [
+    0.12,
+    0.42,
+    0.18
+   ],
+   "family": "Food and plants",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_moss": {
+   "col": 50,
+   "row": 37,
+   "uv": [
+    0.7890625,
+    0.4140625
+   ],
+   "srgb": [
+    108,
+    134,
+    72
+   ],
+   "rgb_linear": [
+    0.15,
+    0.24,
+    0.065
+   ],
+   "family": "Food and plants",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_moss_dark": {
+   "col": 51,
+   "row": 37,
+   "uv": [
+    0.8046875,
+    0.4140625
+   ],
+   "srgb": [
+    75,
+    94,
+    47
+   ],
+   "rgb_linear": [
+    0.07,
+    0.112,
+    0.028
+   ],
+   "family": "Food and plants",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_moss_light": {
+   "col": 52,
+   "row": 37,
+   "uv": [
+    0.8203125,
+    0.4140625
+   ],
+   "srgb": [
+    129,
+    158,
+    91
+   ],
+   "rgb_linear": [
+    0.22,
+    0.34,
+    0.105
+   ],
+   "family": "Food and plants",
+   "theme": "Dryad",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "crystal": {
+   "col": 53,
+   "row": 37,
+   "uv": [
+    0.8359375,
+    0.4140625
+   ],
+   "srgb": [
+    33,
+    181,
+    170
+   ],
+   "rgb_linear": [
+    0.015,
+    0.46,
+    0.4
+   ],
+   "family": "Emissive colours",
+   "theme": "",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "crystal_dark": {
+   "col": 54,
+   "row": 37,
+   "uv": [
+    0.8515625,
+    0.4140625
+   ],
+   "srgb": [
+    22,
+    134,
+    136
+   ],
+   "rgb_linear": [
+    0.008,
+    0.24,
+    0.245
+   ],
+   "family": "Emissive colours",
+   "theme": "",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "crystal_light": {
+   "col": 55,
+   "row": 37,
+   "uv": [
+    0.8671875,
+    0.4140625
+   ],
+   "srgb": [
+    89,
+    225,
+    211
+   ],
+   "rgb_linear": [
+    0.1,
+    0.75,
+    0.65
+   ],
+   "family": "Emissive colours",
+   "theme": "",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "ember_orange": {
+   "col": 56,
+   "row": 37,
+   "uv": [
+    0.8828125,
+    0.4140625
+   ],
+   "srgb": [
+    255,
+    121,
+    53
+   ],
+   "rgb_linear": [
+    1.0,
+    0.19,
+    0.035
+   ],
+   "family": "Emissive colours",
+   "theme": "",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "ember_red": {
+   "col": 57,
+   "row": 37,
+   "uv": [
+    0.8984375,
+    0.4140625
+   ],
+   "srgb": [
+    231,
+    72,
+    29
+   ],
+   "rgb_linear": [
+    0.8,
+    0.065,
+    0.012
+   ],
+   "family": "Emissive colours",
+   "theme": "",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "fungus_green": {
+   "col": 58,
+   "row": 37,
+   "uv": [
+    0.9140625,
+    0.4140625
+   ],
+   "srgb": [
+    97,
+    231,
+    69
+   ],
+   "rgb_linear": [
+    0.12,
+    0.8,
+    0.06
+   ],
+   "family": "Emissive colours",
+   "theme": "",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pale_blue_flame": {
+   "col": 59,
+   "row": 37,
+   "uv": [
+    0.9296875,
+    0.4140625
+   ],
+   "srgb": [
+    149,
+    215,
+    255
+   ],
+   "rgb_linear": [
+    0.3,
+    0.68,
+    1.0
+   ],
+   "family": "Emissive colours",
+   "theme": "",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pale_gold_eyes": {
+   "col": 60,
+   "row": 37,
+   "uv": [
+    0.9453125,
+    0.4140625
+   ],
+   "srgb": [
+    255,
+    223,
+    147
+   ],
+   "rgb_linear": [
+    1.0,
+    0.74,
+    0.29
+   ],
+   "family": "Emissive colours",
+   "theme": "",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "pale_sea_green": {
+   "col": 61,
+   "row": 37,
+   "uv": [
+    0.9609375,
+    0.4140625
+   ],
+   "srgb": [
+    179,
+    243,
+    212
+   ],
+   "rgb_linear": [
+    0.45,
+    0.9,
+    0.66
+   ],
+   "family": "Emissive colours",
+   "theme": "",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "draconic_ember_eye": {
+   "col": 62,
+   "row": 37,
+   "uv": [
+    0.9765625,
+    0.4140625
+   ],
+   "srgb": [
+    255,
+    111,
+    44
+   ],
+   "rgb_linear": [
+    1,
+    0.16,
+    0.025
+   ],
+   "family": "Emissive colours",
+   "theme": "Draconic",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "dryad_sap_glow": {
+   "col": 63,
+   "row": 37,
+   "uv": [
+    0.9921875,
+    0.4140625
+   ],
+   "srgb": [
+    243,
+    168,
+    66
+   ],
+   "rgb_linear": [
+    0.9,
+    0.39,
+    0.055
+   ],
+   "family": "Emissive colours",
+   "theme": "Dryad",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "infernal_lava_glow": {
+   "col": 0,
+   "row": 38,
+   "uv": [
+    0.0078125,
+    0.3984375
+   ],
+   "srgb": [
+    255,
+    91,
+    29
+   ],
+   "rgb_linear": [
+    1,
+    0.105,
+    0.012
+   ],
+   "family": "Emissive colours",
+   "theme": "Infernal",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "steampunk_dial_lamp": {
+   "col": 1,
+   "row": 38,
+   "uv": [
+    0.0234375,
+    0.3984375
+   ],
+   "srgb": [
+    255,
+    173,
+    80
+   ],
+   "rgb_linear": [
+    1,
+    0.42,
+    0.08
+   ],
+   "family": "Emissive colours",
+   "theme": "Steampunk",
+   "emissive_by_name": true,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_stone": {
+   "col": 2,
+   "row": 38,
+   "uv": [
+    0.0390625,
+    0.3984375
+   ],
+   "srgb": [
+    112,
+    124,
+    110
+   ],
+   "rgb_linear": [
+    0.162,
+    0.2016,
+    0.1559
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_stone_l": {
+   "col": 3,
+   "row": 38,
+   "uv": [
+    0.0546875,
+    0.3984375
+   ],
+   "srgb": [
+    138,
+    148,
+    130
+   ],
+   "rgb_linear": [
+    0.2542,
+    0.2961,
+    0.2232
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_stone_d": {
+   "col": 4,
+   "row": 38,
+   "uv": [
+    0.0703125,
+    0.3984375
+   ],
+   "srgb": [
+    84,
+    94,
+    86
+   ],
+   "rgb_linear": [
+    0.0887,
+    0.1119,
+    0.0931
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_exterior": {
+   "col": 5,
+   "row": 38,
+   "uv": [
+    0.0859375,
+    0.3984375
+   ],
+   "srgb": [
+    66,
+    72,
+    68
+   ],
+   "rgb_linear": [
+    0.0545,
+    0.0648,
+    0.0578
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_wet": {
+   "col": 6,
+   "row": 38,
+   "uv": [
+    0.1015625,
+    0.3984375
+   ],
+   "srgb": [
+    58,
+    72,
+    64
+   ],
+   "rgb_linear": [
+    0.0423,
+    0.0648,
+    0.0513
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_salt": {
+   "col": 7,
+   "row": 38,
+   "uv": [
+    0.1171875,
+    0.3984375
+   ],
+   "srgb": [
+    212,
+    212,
+    194
+   ],
+   "rgb_linear": [
+    0.6584,
+    0.6584,
+    0.5395
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_ceil": {
+   "col": 8,
+   "row": 38,
+   "uv": [
+    0.1328125,
+    0.3984375
+   ],
+   "srgb": [
+    74,
+    82,
+    76
+   ],
+   "rgb_linear": [
+    0.0685,
+    0.0844,
+    0.0723
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_trim": {
+   "col": 9,
+   "row": 38,
+   "uv": [
+    0.1484375,
+    0.3984375
+   ],
+   "srgb": [
+    156,
+    160,
+    140
+   ],
+   "rgb_linear": [
+    0.3325,
+    0.3515,
+    0.2623
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_flag": {
+   "col": 10,
+   "row": 38,
+   "uv": [
+    0.1640625,
+    0.3984375
+   ],
+   "srgb": [
+    126,
+    118,
+    102
+   ],
+   "rgb_linear": [
+    0.2086,
+    0.1812,
+    0.1329
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_flag_d": {
+   "col": 11,
+   "row": 38,
+   "uv": [
+    0.1796875,
+    0.3984375
+   ],
+   "srgb": [
+    110,
+    103,
+    89
+   ],
+   "rgb_linear": [
+    0.1559,
+    0.1356,
+    0.0999
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_flag_l": {
+   "col": 12,
+   "row": 38,
+   "uv": [
+    0.1953125,
+    0.3984375
+   ],
+   "srgb": [
+    139,
+    131,
+    114
+   ],
+   "rgb_linear": [
+    0.2582,
+    0.227,
+    0.1683
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_thresh": {
+   "col": 13,
+   "row": 38,
+   "uv": [
+    0.2109375,
+    0.3984375
+   ],
+   "srgb": [
+    150,
+    142,
+    122
+   ],
+   "rgb_linear": [
+    0.305,
+    0.2705,
+    0.1946
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_reveal": {
+   "col": 14,
+   "row": 38,
+   "uv": [
+    0.2265625,
+    0.3984375
+   ],
+   "srgb": [
+    128,
+    138,
+    122
+   ],
+   "rgb_linear": [
+    0.2159,
+    0.2542,
+    0.1946
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_niche": {
+   "col": 15,
+   "row": 38,
+   "uv": [
+    0.2421875,
+    0.3984375
+   ],
+   "srgb": [
+    50,
+    58,
+    54
+   ],
+   "rgb_linear": [
+    0.0319,
+    0.0423,
+    0.0369
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_kelp": {
+   "col": 16,
+   "row": 38,
+   "uv": [
+    0.2578125,
+    0.3984375
+   ],
+   "srgb": [
+    32,
+    54,
+    30
+   ],
+   "rgb_linear": [
+    0.0144,
+    0.0369,
+    0.013
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_kelp_l": {
+   "col": 17,
+   "row": 38,
+   "uv": [
+    0.2734375,
+    0.3984375
+   ],
+   "srgb": [
+    58,
+    84,
+    40
+   ],
+   "rgb_linear": [
+    0.0423,
+    0.0887,
+    0.0212
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_timber_d": {
+   "col": 18,
+   "row": 38,
+   "uv": [
+    0.2890625,
+    0.3984375
+   ],
+   "srgb": [
+    70,
+    48,
+    32
+   ],
+   "rgb_linear": [
+    0.0612,
+    0.0296,
+    0.0144
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_timber": {
+   "col": 19,
+   "row": 38,
+   "uv": [
+    0.3046875,
+    0.3984375
+   ],
+   "srgb": [
+    100,
+    72,
+    46
+   ],
+   "rgb_linear": [
+    0.1274,
+    0.0648,
+    0.0273
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_iron": {
+   "col": 20,
+   "row": 38,
+   "uv": [
+    0.3203125,
+    0.3984375
+   ],
+   "srgb": [
+    40,
+    40,
+    44
+   ],
+   "rgb_linear": [
+    0.0212,
+    0.0212,
+    0.0252
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_candle": {
+   "col": 21,
+   "row": 38,
+   "uv": [
+    0.3359375,
+    0.3984375
+   ],
+   "srgb": [
+    226,
+    216,
+    186
+   ],
+   "rgb_linear": [
+    0.7605,
+    0.6867,
+    0.491
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_flame": {
+   "col": 22,
+   "row": 38,
+   "uv": [
+    0.3515625,
+    0.3984375
+   ],
+   "srgb": [
+    255,
+    176,
+    64
+   ],
+   "rgb_linear": [
+    1.0,
+    0.4342,
+    0.0513
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_gilt": {
+   "col": 23,
+   "row": 38,
+   "uv": [
+    0.3671875,
+    0.3984375
+   ],
+   "srgb": [
+    186,
+    148,
+    64
+   ],
+   "rgb_linear": [
+    0.491,
+    0.2961,
+    0.0513
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_rubble": {
+   "col": 24,
+   "row": 38,
+   "uv": [
+    0.3828125,
+    0.3984375
+   ],
+   "srgb": [
+    100,
+    104,
+    94
+   ],
+   "rgb_linear": [
+    0.1274,
+    0.1384,
+    0.1119
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_rubble_d": {
+   "col": 25,
+   "row": 38,
+   "uv": [
+    0.3984375,
+    0.3984375
+   ],
+   "srgb": [
+    80,
+    84,
+    76
+   ],
+   "rgb_linear": [
+    0.0802,
+    0.0887,
+    0.0723
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_lining": {
+   "col": 26,
+   "row": 38,
+   "uv": [
+    0.4140625,
+    0.3984375
+   ],
+   "srgb": [
+    164,
+    154,
+    132
+   ],
+   "rgb_linear": [
+    0.3712,
+    0.3231,
+    0.2307
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_lining_d": {
+   "col": 27,
+   "row": 38,
+   "uv": [
+    0.4296875,
+    0.3984375
+   ],
+   "srgb": [
+    130,
+    122,
+    104
+   ],
+   "rgb_linear": [
+    0.2232,
+    0.1946,
+    0.1384
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_ledge": {
+   "col": 28,
+   "row": 38,
+   "uv": [
+    0.4453125,
+    0.3984375
+   ],
+   "srgb": [
+    205,
+    194,
+    165
+   ],
+   "rgb_linear": [
+    0.6105,
+    0.5395,
+    0.3763
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_rock": {
+   "col": 29,
+   "row": 38,
+   "uv": [
+    0.4609375,
+    0.3984375
+   ],
+   "srgb": [
+    106,
+    102,
+    92
+   ],
+   "rgb_linear": [
+    0.1441,
+    0.1329,
+    0.107
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_rock_l": {
+   "col": 30,
+   "row": 38,
+   "uv": [
+    0.4765625,
+    0.3984375
+   ],
+   "srgb": [
+    136,
+    130,
+    116
+   ],
+   "rgb_linear": [
+    0.2462,
+    0.2232,
+    0.1746
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_rock_d": {
+   "col": 31,
+   "row": 38,
+   "uv": [
+    0.4921875,
+    0.3984375
+   ],
+   "srgb": [
+    78,
+    76,
+    70
+   ],
+   "rgb_linear": [
+    0.0762,
+    0.0723,
+    0.0612
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_turf": {
+   "col": 32,
+   "row": 38,
+   "uv": [
+    0.5078125,
+    0.3984375
+   ],
+   "srgb": [
+    94,
+    120,
+    66
+   ],
+   "rgb_linear": [
+    0.1119,
+    0.1878,
+    0.0545
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_turf_d": {
+   "col": 33,
+   "row": 38,
+   "uv": [
+    0.5234375,
+    0.3984375
+   ],
+   "srgb": [
+    74,
+    98,
+    52
+   ],
+   "rgb_linear": [
+    0.0685,
+    0.1221,
+    0.0343
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_sand": {
+   "col": 34,
+   "row": 38,
+   "uv": [
+    0.5390625,
+    0.3984375
+   ],
+   "srgb": [
+    176,
+    158,
+    112
+   ],
+   "rgb_linear": [
+    0.4342,
+    0.3419,
+    0.162
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_sand_d": {
+   "col": 35,
+   "row": 38,
+   "uv": [
+    0.5546875,
+    0.3984375
+   ],
+   "srgb": [
+    137,
+    126,
+    94
+   ],
+   "rgb_linear": [
+    0.2502,
+    0.2086,
+    0.1119
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_banner": {
+   "col": 36,
+   "row": 38,
+   "uv": [
+    0.5703125,
+    0.3984375
+   ],
+   "srgb": [
+    132,
+    53,
+    42
+   ],
+   "rgb_linear": [
+    0.2307,
+    0.0356,
+    0.0232
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_banner_d": {
+   "col": 37,
+   "row": 38,
+   "uv": [
+    0.5859375,
+    0.3984375
+   ],
+   "srgb": [
+    88,
+    39,
+    36
+   ],
+   "rgb_linear": [
+    0.0976,
+    0.0203,
+    0.0176
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "keep_wrack": {
+   "col": 38,
+   "row": 38,
+   "uv": [
+    0.6015625,
+    0.3984375
+   ],
+   "srgb": [
+    77,
+    69,
+    42
+   ],
+   "rgb_linear": [
+    0.0742,
+    0.0595,
+    0.0232
+   ],
+   "family": "The Keep (the kit and the island)",
+   "theme": "Keep",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "egypt_gold_light": {
+   "col": 39,
+   "row": 38,
+   "uv": [
+    0.6171875,
+    0.3984375
+   ],
+   "srgb": [
+    249,
+    223,
+    153
+   ],
+   "rgb_linear": [
+    0.9473,
+    0.7379,
+    0.3185
+   ],
+   "family": "The Egyptian weapon set (the twelfth theme)",
+   "theme": "Egyptian",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "egypt_gold_dark": {
+   "col": 40,
+   "row": 38,
+   "uv": [
+    0.6328125,
+    0.3984375
+   ],
+   "srgb": [
+    173,
+    142,
+    75
+   ],
+   "rgb_linear": [
+    0.4179,
+    0.2705,
+    0.0704
+   ],
+   "family": "The Egyptian weapon set (the twelfth theme)",
+   "theme": "Egyptian",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "egypt_lapis_light": {
+   "col": 41,
+   "row": 38,
+   "uv": [
+    0.6484375,
+    0.3984375
+   ],
+   "srgb": [
+    80,
+    124,
+    206
+   ],
+   "rgb_linear": [
+    0.0802,
+    0.2016,
+    0.6172
+   ],
+   "family": "The Egyptian weapon set (the twelfth theme)",
+   "theme": "Egyptian",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "egypt_carnelian": {
+   "col": 42,
+   "row": 38,
+   "uv": [
+    0.6640625,
+    0.3984375
+   ],
+   "srgb": [
+    206,
+    97,
+    56
+   ],
+   "rgb_linear": [
+    0.6172,
+    0.1195,
+    0.0395
+   ],
+   "family": "The Egyptian weapon set (the twelfth theme)",
+   "theme": "Egyptian",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  },
+  "egypt_bronze_edge": {
+   "col": 43,
+   "row": 38,
+   "uv": [
+    0.6796875,
+    0.3984375
+   ],
+   "srgb": [
+    218,
+    196,
+    153
+   ],
+   "rgb_linear": [
+    0.7011,
+    0.552,
+    0.3185
+   ],
+   "family": "The Egyptian weapon set (the twelfth theme)",
+   "theme": "Egyptian",
+   "emissive_by_name": false,
+   "section": "MATTE cell (use the GLOW sections for its glowing form)"
+  }
+ }
+}

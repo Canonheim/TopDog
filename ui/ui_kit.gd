@@ -64,6 +64,14 @@ static func panel_screen(title: String, blurb: String) -> Control:
 		b.add_theme_font_size_override("font_size", 24)
 		box.add_child(b)
 	c.set_meta("box", box)
+	# The pad legend (Golemheim's PAD HANDS rule: pad hands always know the buttons).
+	var legend := Label.new()
+	legend.text = "Pad:  D-pad / stick  move     A  select     B  back"
+	legend.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	legend.add_theme_font_size_override("font_size", 20)
+	legend.modulate = Color(1, 1, 1, 0.6)
+	box.add_child(legend)
+	box.move_child.call_deferred(legend, -1)
 	return c
 
 

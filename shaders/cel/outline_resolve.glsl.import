@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://seq72hcpxeml"
+path="res://.godot/imported/outline_resolve.glsl-a6c47f2cf64a64f3a2a6fcb1e5731e7a.res"
+
+[deps]
+
+source_file="res://shaders/cel/outline_resolve.glsl"
+dest_files=["res://.godot/imported/outline_resolve.glsl-a6c47f2cf64a64f3a2a6fcb1e5731e7a.res"]
+
+[params]
+

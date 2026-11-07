@@ -275,6 +275,7 @@ func _spike_limp() -> void:
 
 ## 20 climbers dropped in a heap on a block and frozen one by one, then one live.
 func _spike_tower() -> void:
+	seed(11)
 	ground()
 	static_box(Vector2(0, 0.8), Vector2(0.7, 0.8))
 	var frozen: Array = []
@@ -302,6 +303,7 @@ func _spike_tower() -> void:
 
 ## Eight live climbers on a block, every limb flailing and grabbing for 20 s.
 func _spike_eight() -> void:
+	seed(7)  # the flailing is random: a fixed seed makes the run repeatable
 	ground()
 	static_box(Vector2(0, 0.8), Vector2(0.7, 0.8))
 	var cs: Array = []

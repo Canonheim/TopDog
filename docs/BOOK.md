@@ -107,9 +107,33 @@ A full scripted climb onto the barrel top isn't written. The feel is Parker's wa
 - **Bumping across machines is one-way.** Your body is pushed by a rival's puppet, but the push isn't sent to the rival's machine. Only grabs send force.
 - **No spectating mid-match.** Late joiners are refused.
 - **Real pads are untested.** Pad joining and rebinding were tested with fake devices only.
-- **The look is first-pass:** plain StandardMaterial knights with a colour wash (no house cel/ink shader yet), and a simple dock built from primitives.
+- **The look:** the house style is in (see below), but the dock is still built from primitives, and the Metal Knight's player-colour wash reads dark.
+- **Quitting exits with a crash code (139).** That's the known Godot 4.7.2 shutdown crash with the ink compositor (the house style kit records the same). The game itself is fine.
 - **The music** needs Parker's ear.
 - **No GitHub remote yet.** `gh` isn't installed here, so the Canonheim repo needs creating, and nothing is pushed.
+
+## Pads in the menus and the house look (Parker, 2026-11-07, build 0.1.1)
+
+Parker: "I can't seem to control the main menu with my controller... make it work". Then: "give it the same art style as golemheim, with the outlines and shaders".
+
+**Pads in the menus (`ui/pad_nav.gd`):**
+- Every connected pad is read directly, and its presses become `ui_up`/`down`/`left`/`right`/`accept`/`cancel` events. The stock pad events are stripped from those actions, so nothing counts twice.
+- Holding the D-pad or stick repeats.
+- A pad press always lands the focus: the first press with nothing focused only focuses.
+- B (or Escape) goes back one screen.
+- Every menu shows a pad legend.
+- The Controls screen shows a live readout of the connected pads and the last pad input the game saw. If a pad ever goes deaf, that readout says whether the game is getting anything at all.
+- `tests/pad_probe.tscn` drives the real menu with raw pad state (windowed): it moves, presses A, and goes back with B.
+
+**Steam starts late.** Steam now starts when the Online screen opens, not at boot. It also starts on `+connect_lobby`, or at boot with `--steam`. The suspicion is that on the shared dev app (480), Steam's controller layer can apply Spacewar's controller setup and take the pads from the game. That was **not proven**: synthetic presses worked with and without Steam, and only Parker's hands can test the real case. Our own app ID ends the question, because its Steam Input settings will be ours.
+
+**The house look:**
+- Copied from `Desktop\House Style 3D Kit`: `shaders/cel/`, `palette/`, `scripts/cel_pass.gd`, `scripts/atlas_map.gd`, plus the five shader globals and `rendering/house_ink/profile="stabilized"` in `project.godot`.
+- Rendering is FXAA with no MSAA.
+- **The knight and barrel** are on the shared atlas, with their uris pointing at `../palette/house_atlas.png`. They're celified when built.
+- **Code-built dressing** uses `CelPass.cel_material`.
+- **The ink** is `CelPass.add_outline_pass(Main)`.
+- **The player colour** is a per-climber copy of the cel material, with its `color` set to the wash.
 
 ## Record
 
@@ -117,3 +141,5 @@ A full scripted climb onto the barrel top isn't written. The feel is Parker's wa
   - The 2D spike failed; the game moved to Jolt on a plane.
   - All batteries pass.
   - A release export boots.
+- **2026-11-07, 0.1.1:** pads drive the menus, Steam starts late, the house cel and ink look is in.
+  - The random crowd and tower tests are now seeded, so runs repeat. An unseeded run once reached 11.4 cm in the crowd test.

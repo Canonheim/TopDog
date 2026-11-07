@@ -39,7 +39,10 @@ Godot_v4.7.2-stable_win64_console.exe --headless --path . res://tests/battery.ts
 Godot_v4.7.2-stable_win64_console.exe --headless --path . res://tests/lint.tscn -- --no-steam
 ```
 
-Always run them with a timeout, one Godot at a time.
+Always run them with a timeout, one Godot at a time. The menu's pad check runs
+windowed: `... --path . res://tests/pad_probe.tscn -- --no-steam`.
+
+Steam starts when you open Online play (or at boot with `-- --steam`).
 
 ## Layout
 

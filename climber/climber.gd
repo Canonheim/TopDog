@@ -283,21 +283,32 @@ func _build_limbs() -> void:
 		})
 
 
-## Each climber's knight is washed toward its player colour (the artist's skins
-## will replace this; any skin on the 16 Defaultio names drops in piece by piece).
+## The house look (CelPass: cel shading on the shared colour atlas, inked by the
+## screen-space outline), with each climber's knight washed toward its player
+## colour. The artist's skins replace the wash; any skin on the 16 Defaultio
+## names drops in piece by piece.
 func set_tint(c: Color) -> void:
 	tint = c
 	var wash := Color(1, 1, 1).lerp(c, 0.45)
 	for b in bodies.values():
 		for ch in b.get_children():
-			if ch is MeshInstance3D:
-				var mi := ch as MeshInstance3D
-				for si in mi.get_surface_override_material_count():
-					var m := mi.get_active_material(si)
-					if m is StandardMaterial3D:
-						var d: StandardMaterial3D = m.duplicate()
-						d.albedo_color = wash
-						mi.set_surface_override_material(si, d)
+			if not (ch is MeshInstance3D):
+				continue
+			var mi := ch as MeshInstance3D
+			if mi.mesh == null:
+				continue
+			for si in mi.mesh.get_surface_count():
+				var m := mi.get_active_material(si)
+				var cel: ShaderMaterial = null
+				if m is StandardMaterial3D:
+					cel = CelPass.material_for(m, mi.mesh, si)
+				elif m is ShaderMaterial:
+					cel = m
+				if cel == null:
+					continue
+				var mine: ShaderMaterial = cel.duplicate()
+				mine.set_shader_parameter("color", wash)
+				mi.set_surface_override_material(si, mine)
 
 
 # ---------------------------------------------------------------- tick

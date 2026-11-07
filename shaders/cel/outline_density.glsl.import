@@ -1,0 +1,14 @@
+[remap]
+
+importer="glsl"
+type="RDShaderFile"
+uid="uid://cokpbxbki0ob1"
+path="res://.godot/imported/outline_density.glsl-ca14bdf3217df222b580fec55fce99b3.res"
+
+[deps]
+
+source_file="res://shaders/cel/outline_density.glsl"
+dest_files=["res://.godot/imported/outline_density.glsl-ca14bdf3217df222b580fec55fce99b3.res"]
+
+[params]
+
