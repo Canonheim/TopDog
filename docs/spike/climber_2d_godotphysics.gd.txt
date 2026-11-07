@@ -1,0 +1,765 @@
+class_name Climber
+extends Node
+## THE CLIMBER: one physical knight. 16 RigidBody2D pieces on 15 pin joints in the
+## 2D physics world, with the 3D knight's pieces following them.
+##
+## The rules it plays by:
+## - Hold a limb's button and the limb aims where the driver says (stick or mouse).
+##   It only DRIVES while you're attached: one of your own hands or feet stuck to
+##   something, or another climber holding you. Fully loose, you're limp.
+## - A held hand or foot that touches anything sticks to it (a pin joint at the end
+##   piece). Releasing the button lets go.
+## - The torso is three pieces with springy left/right flex. Nothing steers it; the
+##   limbs push on it as they drive.
+## - freeze() turns every piece static where it is: the body joins the tower.
+##
+## Maths frame: y-up metres, angles counter-clockwise ("vis"). The 2D engine is y-down
+## pixels, clockwise, so every crossing goes through m_to_px / px_to_m / vis_rot.
+
+const Layout := preload("res://climber/body_layout.gd")
+const PPM := 100.0
+
+const LAYER_WORLD := 1
+const LAYER_LIVE := 2
+const LAYER_FROZEN := 4
+const LIMIT_BETA := 0.25  # how much of a limit overshoot is closed per tick
+const GAIN_SAFE := 0.6  # spring/damper ceiling, as a fraction of 1/dt on the pair's own inertia
+
+enum State { LIVE, PUPPET, FROZEN }
+
+signal froze(climber: Climber)
+signal grab_made(climber: Climber, limb: int, other: Object)
+signal grab_lost(climber: Climber, limb: int)
+
+var state := State.LIVE
+var climber_id := 0
+var owner_peer := 1
+var display_name := "Climber"
+var tint := Color(1, 1, 1)
+## Something with held(limb: int) -> bool, aim(climber, limb: int) -> Variant
+## (null = keep the pose; {"dir": Vector2, "mag": float}; or {"point": Vector2}),
+## lock_pressed() -> bool. See climber/drivers.gd.
+var driver: Object = null
+
+var body_scale := 0.9
+var bodies := {}  # piece name -> RigidBody2D
+var joints := {}  # joint name -> Dictionary
+var limbs: Array = []  # per limb: Dictionary (see _build_limbs)
+var grabbed_by := 0  # grabs other climbers hold on me (local joints + remote reports)
+var total_mass := 0.0
+var spawn_at := Vector2.ZERO
+var live_time := 0.0
+
+var _shape_geo := {}  # piece -> [kind, local px data...] for height reads
+var _prev := {}
+var _curr := {}
+var _pivots := {}  # piece -> Node3D
+var _vis_root: Node3D
+var _phys_root: Node2D
+var _materials: Array = []
+
+
+# ---------------------------------------------------------------- frames
+
+static func m_to_px(v: Vector2) -> Vector2:
+	return Vector2(v.x * PPM, -v.y * PPM)
+
+
+static func px_to_m(p: Vector2) -> Vector2:
+	return Vector2(p.x / PPM, -p.y / PPM)
+
+
+static func vis_rot(b: RigidBody2D) -> float:
+	return -b.global_rotation
+
+
+## THE LATE TRANSFORM LAW: a 2D body's new transform only reaches the physics
+## server at the frame's transform flush, so a joint made right after moving a
+## body anchors to where it WAS (pins built that way tore 2 m apart). Push it now.
+static func _sync_server(b: CollisionObject2D) -> void:
+	PhysicsServer2D.body_set_state(b.get_rid(), PhysicsServer2D.BODY_STATE_TRANSFORM, b.global_transform)
+
+
+# ---------------------------------------------------------------- build
+
+## Build the body standing in the T-pose with its feet at `feet` (y-up metres).
+## phys_root: a Node2D in the 2D world. vis_root: a Node3D (null for headless).
+func build(feet: Vector2, phys_root: Node2D, vis_root: Node3D, model: PackedScene = null) -> void:
+	body_scale = Feel.get_k("body_scale")
+	spawn_at = feet
+	_phys_root = phys_root
+	_vis_root = vis_root
+	var s := body_scale
+	var friction_ends := Feel.get_k("friction_ends")
+	var friction_body := Feel.get_k("friction_body")
+	for pname in Layout.ORDER:
+		var p: Dictionary = Layout.PIECES[pname]
+		var shape: Array = p.shape
+		var centre: Vector2
+		var col := CollisionShape2D.new()
+		match shape[0]:
+			"circle":
+				centre = shape[1] * s
+				var c := CircleShape2D.new()
+				c.radius = shape[2] * s * PPM
+				col.shape = c
+				_shape_geo[pname] = ["circle", shape[2] * s * PPM]
+			"capsule":
+				var a: Vector2 = shape[1] * s
+				var b: Vector2 = shape[2] * s
+				centre = (a + b) * 0.5
+				var r: float = shape[3] * s
+				var cap := CapsuleShape2D.new()
+				cap.radius = r * PPM
+				cap.height = (a.distance_to(b) + 2.0 * r) * PPM
+				col.shape = cap
+				# CapsuleShape2D runs along local y; turn it onto a->b (engine frame).
+				var d := m_to_px(b) - m_to_px(a)
+				col.rotation = d.angle() - PI * 0.5
+				var half := d * 0.5
+				_shape_geo[pname] = ["capsule", -half, half, r * PPM]
+			"box":
+				centre = shape[1] * s
+				var bx := RectangleShape2D.new()
+				var he: Vector2 = shape[2] * s
+				bx.size = he * 2.0 * PPM
+				col.shape = bx
+				_shape_geo[pname] = ["box", he * PPM]
+		var body := RigidBody2D.new()
+		body.name = "%s_%d" % [pname, climber_id]
+		body.mass = float(p.mass) * s * s * s
+		total_mass += body.mass
+		var mat := PhysicsMaterial.new()
+		mat.friction = friction_ends if pname.begins_with("hand") or pname.begins_with("foot") else friction_body
+		mat.bounce = Feel.get_k("bounce")
+		body.physics_material_override = mat
+		body.gravity_scale = Feel.get_k("gravity_scale")
+		body.linear_damp = Feel.get_k("linear_damp")
+		body.angular_damp = Feel.get_k("angular_damp")
+		body.can_sleep = false
+		body.collision_layer = LAYER_LIVE
+		body.collision_mask = LAYER_WORLD | LAYER_LIVE | LAYER_FROZEN
+		if pname.begins_with("hand") or pname.begins_with("foot"):
+			body.continuous_cd = RigidBody2D.CCD_MODE_CAST_SHAPE
+		body.set_meta("climber", self)
+		body.set_meta("piece", pname)
+		body.add_child(col)
+		body.position = phys_root.to_local(m_to_px(feet + centre))
+		phys_root.add_child(body)
+		_sync_server(body)
+		bodies[pname] = body
+	# No self-collision: a climber's own pieces pass through each other.
+	var names := Layout.ORDER
+	for i in names.size():
+		for j in range(i + 1, names.size()):
+			bodies[names[i]].add_collision_exception_with(bodies[names[j]])
+	_build_joints(feet)
+	_build_limbs()
+	_snap_interp()
+	if vis_root != null and model != null:
+		_build_visual(feet, model)
+
+
+func _build_joints(feet: Vector2) -> void:
+	var s := body_scale
+	# Child lists for the effective inertia of each joint's subtree.
+	var kids := {}
+	for jn in Layout.JOINTS:
+		var jd: Dictionary = Layout.JOINTS[jn]
+		if not kids.has(jd.a):
+			kids[jd.a] = []
+		kids[jd.a].append(jd.b)
+	for jn in Layout.JOINTS:
+		var jd: Dictionary = Layout.JOINTS[jn]
+		var a: RigidBody2D = bodies[jd.a]
+		var b: RigidBody2D = bodies[jd.b]
+		var at_m: Vector2 = feet + jd.at * s
+		var at_px := m_to_px(at_m)
+		var rid := PhysicsServer2D.joint_create()
+		PhysicsServer2D.joint_make_pin(rid, at_px, a.get_rid(), b.get_rid())
+		PhysicsServer2D.pin_joint_set_param(rid, PhysicsServer2D.PIN_JOINT_SOFTNESS, 0.0)
+		PhysicsServer2D.joint_disable_collisions_between_bodies(rid, true)
+		var lim: Array = jd.lim
+		if jd.kind == "spine":
+			var sl := Feel.get_k("spine_limit")
+			lim = [-sl, sl]
+		# Godot 2D's pin limits don't hold (tests/limit_probe: a pushed piece spins
+		# straight through them), so the limits live in _tick_joints instead.
+		# Effective inertia of everything hanging off the child, about the anchor (px).
+		var ieff := 0.0
+		var stack: Array = [jd.b]
+		while not stack.is_empty():
+			var pn: String = stack.pop_back()
+			var pb: RigidBody2D = bodies[pn]
+			ieff += _piece_inertia(pn, pb.mass) + pb.mass * pb.global_position.distance_squared_to(at_px)
+			if kids.has(pn):
+				stack.append_array(kids[pn])
+		joints[jn] = {
+			"rid": rid, "a": a, "b": b, "kind": jd.kind,
+			"lo": deg_to_rad(float(lim[0])), "hi": deg_to_rad(float(lim[1])),
+			"ieff": ieff, "local_a": a.global_transform.affine_inverse() * at_px,
+		}
+	# The other side of each joint: everything NOT hanging off the child. Springs
+	# and limits use the lighter side's inertia, so neither side gets flung.
+	for jn in joints:
+		var j: Dictionary = joints[jn]
+		var at_px: Vector2 = (j.a as RigidBody2D).global_transform * j.local_a
+		var child_set := {}
+		var st: Array = [Layout.JOINTS[jn].b]
+		while not st.is_empty():
+			var pn: String = st.pop_back()
+			child_set[pn] = true
+			if kids.has(pn):
+				st.append_array(kids[pn])
+		var other := 0.0
+		for pn in bodies:
+			if not child_set.has(pn):
+				var pb: RigidBody2D = bodies[pn]
+				other += _piece_inertia(pn, pb.mass) + pb.mass * pb.global_position.distance_squared_to(at_px)
+		j["ieff_min"] = minf(j.ieff, other)
+		# The two touching pieces' own inertias about the anchor, reduced.
+		var ia := _piece_inertia(Layout.JOINTS[jn].a, (j.a as RigidBody2D).mass) + (j.a as RigidBody2D).mass * (j.a as RigidBody2D).global_position.distance_squared_to(at_px)
+		var ib := _piece_inertia(Layout.JOINTS[jn].b, (j.b as RigidBody2D).mass) + (j.b as RigidBody2D).mass * (j.b as RigidBody2D).global_position.distance_squared_to(at_px)
+		j["ired"] = ia * ib / (ia + ib)
+		# For the limit impulses: each side's whole inertia about the anchor.
+		j["ia"] = other
+		j["ib"] = j.ieff
+
+
+## Limits in the layout are vis degrees of child relative to parent. The engine's
+## pin limits run on (B - A) in its clockwise frame, so they flip and swap.
+func _set_limits(rid: RID, lim: Array) -> void:
+	PhysicsServer2D.pin_joint_set_flag(rid, PhysicsServer2D.PIN_JOINT_FLAG_ANGULAR_LIMIT_ENABLED, true)
+	PhysicsServer2D.pin_joint_set_param(rid, PhysicsServer2D.PIN_JOINT_LIMIT_LOWER, deg_to_rad(-float(lim[1])))
+	PhysicsServer2D.pin_joint_set_param(rid, PhysicsServer2D.PIN_JOINT_LIMIT_UPPER, deg_to_rad(-float(lim[0])))
+
+
+func _piece_inertia(pname: String, mass: float) -> float:
+	var g: Array = _shape_geo[pname]
+	match g[0]:
+		"circle":
+			return 0.5 * mass * g[1] * g[1]
+		"capsule":
+			var l: float = (g[2] - g[1]).length() + 2.0 * g[3]
+			return mass * (l * l / 12.0 + g[3] * g[3] * 0.25)
+		"box":
+			var he: Vector2 = g[1]
+			return mass * (4.0 * he.x * he.x + 4.0 * he.y * he.y) / 12.0
+	return 0.0
+
+
+func _build_limbs() -> void:
+	var s := body_scale
+	for ld in Layout.LIMBS:
+		var root_at: Vector2 = Layout.JOINTS[ld.root].at * s
+		var mid_at: Vector2 = Layout.JOINTS[ld.mid].at * s
+		var end_pt: Vector2 = Layout.end_point(ld.end) * s
+		var end_shape: Array = Layout.PIECES[ld.end].shape
+		var end_r: float = (end_shape[2] if end_shape[0] == "circle" else (end_shape[2] as Vector2).x) * s
+		limbs.append({
+			"def": ld,
+			"l1": root_at.distance_to(mid_at),
+			"l2": mid_at.distance_to(end_pt),
+			"end_r": end_r,
+			"held": false,
+			"grab": RID(),  # pin joint RID while stuck
+			"grab_other": null,  # the body stuck to
+			"grab_climber": null,  # its climber, if it is one
+			"regrip": 0.0,
+			"hold": [0.0, 0.0],  # root/mid targets kept while the stick rests
+			"driving": false,
+		})
+
+
+func _build_visual(feet: Vector2, model: PackedScene) -> void:
+	var inst: Node3D = model.instantiate()
+	_vis_root.add_child(inst)
+	# The knight faces -z in its file; turn it to face the camera (+z) and scale it.
+	inst.global_transform = Transform3D(Basis(Vector3.UP, PI).scaled(Vector3.ONE * body_scale), Vector3(feet.x, feet.y, 0.0))
+	for pname in Layout.ORDER:
+		var mesh: Node3D = inst.find_child(Layout.PIECES[pname].mesh, true, false)
+		var pivot := Node3D.new()
+		pivot.name = "pivot_" + pname
+		_vis_root.add_child(pivot)
+		var c := px_to_m(bodies[pname].global_position)
+		pivot.global_position = Vector3(c.x, c.y, 0.0)
+		if mesh != null:
+			var keep := mesh.global_transform
+			mesh.get_parent().remove_child(mesh)
+			pivot.add_child(mesh)
+			mesh.global_transform = keep
+			if mesh is MeshInstance3D:
+				_materials.append(mesh)
+		_pivots[pname] = pivot
+	inst.queue_free()
+	set_tint(tint)
+
+
+func set_tint(c: Color) -> void:
+	tint = c
+	for m in _materials:
+		(m as MeshInstance3D).set_instance_shader_parameter("tint", c)
+
+
+# ---------------------------------------------------------------- tick
+
+var removed := false
+var debug_no_torque := false
+
+
+func _physics_process(delta: float) -> void:
+	if removed:
+		return
+	_snap_interp()
+	if state != State.LIVE:
+		return
+	live_time += delta
+	var attached := is_attached()
+	for i in limbs.size():
+		_tick_limb(i, delta, attached)
+	if not debug_no_torque:
+		_tick_joints(attached)
+
+
+func is_attached() -> bool:
+	if grabbed_by > 0:
+		return true
+	for l in limbs:
+		if l.grab.is_valid():
+			return true
+	return false
+
+
+func stuck_count() -> int:
+	var n := 0
+	for l in limbs:
+		if l.grab.is_valid():
+			n += 1
+	return n
+
+
+func _tick_limb(i: int, delta: float, _attached: bool) -> void:
+	var l: Dictionary = limbs[i]
+	var held: bool = driver != null and driver.held(i)
+	if not held and l.held:
+		release(i)
+	l.held = held
+	l.regrip = maxf(0.0, l.regrip - delta)
+	if held and not l.grab.is_valid() and l.regrip <= 0.0:
+		_try_grab(i)
+
+
+func _try_grab(i: int) -> void:
+	var l: Dictionary = limbs[i]
+	var end: RigidBody2D = bodies[l.def.end]
+	var q := PhysicsShapeQueryParameters2D.new()
+	var c := CircleShape2D.new()
+	c.radius = (l.end_r + Feel.get_k("grab_margin")) * PPM
+	q.shape = c
+	q.transform = Transform2D(0.0, end.global_position)
+	q.collision_mask = LAYER_WORLD | LAYER_LIVE | LAYER_FROZEN
+	var ex: Array[RID] = []
+	for b in bodies.values():
+		ex.append(b.get_rid())
+	q.exclude = ex
+	var hits := end.get_world_2d().direct_space_state.intersect_shape(q, 8)
+	if hits.is_empty():
+		return
+	# Prefer solid ground (world and tower) over a live rival, then the nearest.
+	var best: Dictionary = {}
+	var best_score := INF
+	for h in hits:
+		var o: Object = h.collider
+		if o == null:
+			continue
+		var score := 0.0
+		if o is RigidBody2D and o.has_meta("climber"):
+			var oc: Climber = o.get_meta("climber")
+			if oc.state != State.FROZEN:
+				score += 1000.0
+		if o is Node2D:
+			score += (o as Node2D).global_position.distance_to(end.global_position) * 0.001
+		if score < best_score:
+			best_score = score
+			best = h
+	if best.is_empty():
+		return
+	attach(i, best.collider)
+
+
+## Stick limb i's end to `other` (a PhysicsBody2D) right where it is.
+func attach(i: int, other: Object) -> void:
+	var l: Dictionary = limbs[i]
+	if l.grab.is_valid():
+		release(i)
+	var end: RigidBody2D = bodies[l.def.end]
+	var rid := PhysicsServer2D.joint_create()
+	PhysicsServer2D.joint_make_pin(rid, end.global_position, end.get_rid(), (other as CollisionObject2D).get_rid())
+	PhysicsServer2D.pin_joint_set_param(rid, PhysicsServer2D.PIN_JOINT_SOFTNESS, 0.0)
+	PhysicsServer2D.joint_disable_collisions_between_bodies(rid, true)  # the end and what it holds never push apart
+	l.grab = rid
+	l.grab_other = other
+	l.grab_climber = null
+	if other is RigidBody2D and other.has_meta("climber"):
+		var oc: Climber = other.get_meta("climber")
+		if oc != self:
+			l.grab_climber = oc
+			if oc.state != State.FROZEN:
+				oc.grabbed_by += 1
+	grab_made.emit(self, i, other)
+
+
+func release(i: int) -> void:
+	var l: Dictionary = limbs[i]
+	if not l.grab.is_valid():
+		return
+	PhysicsServer2D.free_rid(l.grab)
+	l.grab = RID()
+	var oc = l.grab_climber
+	if oc != null and is_instance_valid(oc) and oc.state != State.FROZEN:
+		oc.grabbed_by = maxi(0, oc.grabbed_by - 1)
+	l.grab_other = null
+	l.grab_climber = null
+	l.regrip = Feel.get_k("regrip_delay")
+	grab_lost.emit(self, i)
+
+
+func release_all() -> void:
+	for i in limbs.size():
+		release(i)
+
+
+## Joint torques: driven limbs chase their aim, loose limbs drag, the spine,
+## neck, wrists and ankles spring home. Torques act in equal and opposite pairs,
+## so a limb driving to one side bends the torso it pushes against.
+func _tick_joints(attached: bool) -> void:
+	var g_px := 980.0 * Feel.get_k("gravity_scale")
+	var drive_w := Feel.get_k("drive_freq")
+	var drive_z := Feel.get_k("drive_damping")
+	var targets := {}  # joint name -> target rel angle (vis rad)
+	var caps := {}
+	for i in limbs.size():
+		var l: Dictionary = limbs[i]
+		l.driving = false
+		if not l.held or not attached:
+			continue
+		var t = _limb_targets(i)
+		if t == null:
+			t = l.hold
+		else:
+			l.hold = t
+		l.driving = true
+		var reach_px: float = (l.l1 + l.l2) * PPM
+		var strength := Feel.get_k("arm_strength") if l.def.arm else Feel.get_k("leg_strength")
+		var cap := strength * total_mass * g_px * reach_px
+		targets[l.def.root] = t[0]
+		targets[l.def.mid] = t[1]
+		caps[l.def.root] = cap
+		caps[l.def.mid] = cap * 0.8
+	var limp_c := Feel.get_k("limp_friction") * 40.0
+	var spine_w := Feel.get_k("spine_spring") * 20.0
+	var spine_z := Feel.get_k("spine_damping")
+	var neck_w := Feel.get_k("neck_spring") * 20.0
+	var end_w := Feel.get_k("wrist_spring") * 20.0
+	var inv_dt := float(Engine.physics_ticks_per_second)
+	for jn in joints:
+		var j: Dictionary = joints[jn]
+		var a: RigidBody2D = j.a
+		var b: RigidBody2D = j.b
+		var rel := wrapf(vis_rot(b) - vis_rot(a), -PI, PI)
+		var relw := (-b.angular_velocity) - (-a.angular_velocity)
+		var ie: float = j.ieff
+		# THE STABILITY CAP: torques land on the two touching pieces first, so an
+		# explicit spring stiffer than their own reduced inertia allows blows up
+		# (the first hang went NaN in half a second). Clamp k and c to it.
+		var kmax: float = j.ired * (GAIN_SAFE * inv_dt) * (GAIN_SAFE * inv_dt)
+		var cmax: float = j.ired * GAIN_SAFE * inv_dt
+		var k := 0.0
+		var c := 0.0
+		var target := 0.0
+		var cap := INF
+		match j.kind:
+			"spine":
+				k = ie * spine_w * spine_w
+				c = ie * 2.0 * spine_z * spine_w
+			"neck":
+				k = ie * neck_w * neck_w
+				c = ie * 1.4 * neck_w
+			"end":
+				k = ie * end_w * end_w
+				c = ie * 1.4 * end_w
+			_:
+				if targets.has(jn):
+					target = float(targets[jn])
+					k = ie * drive_w * drive_w
+					c = ie * 2.0 * drive_z * drive_w
+					cap = caps[jn]
+				else:
+					c = ie * limp_c
+		k = minf(k, kmax)
+		c = minf(c, cmax)
+		var tq := clampf(k * wrapf(target - rel, -PI, PI) - c * relw, -cap, cap)
+		# THE LIMITS (velocity level): past an end and still turning outward, the
+		# two pieces' spins are set so the joint turns back in, sharing the change
+		# by their inertias like a solver impulse. Springs alone let elbows fold
+		# 100 deg past their stops; Godot 2D's own pin limits don't hold at all.
+		var excess := 0.0
+		if rel > j.hi:
+			excess = rel - j.hi
+		elif rel < j.lo:
+			excess = rel - j.lo
+		if excess != 0.0 and j.kind == "end" and _end_stuck(jn):
+			excess = 0.0  # a stuck hand or foot pivots freely on what it holds
+		if excess != 0.0:
+			var want := -excess * LIMIT_BETA * inv_dt  # rel spin that closes the excess
+			if (excess > 0.0 and relw > want) or (excess < 0.0 and relw < want):
+				var dw := want - relw
+				var ia: float = j.ia
+				var ib: float = j.ib
+				# vis spin = -engine spin
+				b.angular_velocity -= dw * ia / (ia + ib)
+				a.angular_velocity += dw * ib / (ia + ib)
+		if tq != 0.0:
+			# vis torque +tq on the child, -tq on the parent (engine frame flips sign)
+			b.apply_torque(-tq)
+			a.apply_torque(tq)
+
+
+func _end_stuck(joint_name: String) -> bool:
+	for l in limbs:
+		if l.grab.is_valid() and (l.def.end as String) == Layout.JOINTS[joint_name].b:
+			return true
+	return false
+
+
+## The two-bone aim for limb i: [root target, mid target] as vis rad relative
+## angles, or null when the driver has no aim this tick (keep the pose).
+func _limb_targets(i: int):
+	var l: Dictionary = limbs[i]
+	var aim = driver.aim(self, i) if driver != null else null
+	if aim == null:
+		return null
+	var root_j: Dictionary = joints[l.def.root]
+	var parent: RigidBody2D = root_j.a
+	var S := px_to_m(parent.global_transform * root_j.local_a)
+	var l1: float = l.l1
+	var l2: float = l.l2
+	var T: Vector2
+	if aim.has("point"):
+		T = aim.point
+	else:
+		var d := lerpf(Feel.get_k("reach_min"), 1.0, clampf(float(aim.mag), 0.0, 1.0)) * (l1 + l2)
+		T = S + (aim.dir as Vector2).normalized() * d
+	var v := T - S
+	var dd := clampf(v.length(), absf(l1 - l2) + 0.02, l1 + l2 - 0.002)
+	var base := v.angle() if v.length() > 0.0001 else deg_to_rad(l.def.rest_deg)
+	var cos_a := clampf((l1 * l1 + dd * dd - l2 * l2) / (2.0 * l1 * dd), -1.0, 1.0)
+	var upper := base + float(l.def.bend) * acos(cos_a)
+	var E := S + Vector2.from_angle(upper) * l1
+	var T2 := S + Vector2.from_angle(base) * dd
+	var lower := (T2 - E).angle()
+	var rest := deg_to_rad(l.def.rest_deg)
+	var root_rel := wrapf((upper - rest) - vis_rot(parent), -PI, PI)
+	var mid_rel := wrapf(lower - upper, -PI, PI)
+	var rl: Array = Layout.JOINTS[l.def.root].lim
+	var ml: Array = Layout.JOINTS[l.def.mid].lim
+	root_rel = clampf(root_rel, deg_to_rad(rl[0]), deg_to_rad(rl[1]))
+	mid_rel = clampf(mid_rel, deg_to_rad(ml[0]), deg_to_rad(ml[1]))
+	return [root_rel, mid_rel]
+
+
+## World position (y-up m) of limb i's root joint and end.
+func limb_root(i: int) -> Vector2:
+	var l: Dictionary = limbs[i]
+	var j: Dictionary = joints[l.def.root]
+	return px_to_m((j.a as RigidBody2D).global_transform * j.local_a)
+
+
+func limb_end(i: int) -> Vector2:
+	return px_to_m(bodies[limbs[i].def.end].global_position)
+
+
+# ---------------------------------------------------------------- freeze, pose, height
+
+## Turn to stone where we are: every piece static, our grabs and joints gone.
+## Grabs OTHER climbers hold on us stay: they now hold a static piece.
+func freeze() -> void:
+	if state == State.FROZEN:
+		return
+	release_all()
+	for jn in joints:
+		PhysicsServer2D.free_rid(joints[jn].rid)
+	joints.clear()
+	for b in bodies.values():
+		var rb: RigidBody2D = b
+		rb.linear_velocity = Vector2.ZERO
+		rb.angular_velocity = 0.0
+		rb.freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+		rb.freeze = true
+		rb.collision_layer = LAYER_FROZEN
+	state = State.FROZEN
+	grabbed_by = 0
+	_snap_interp()
+	froze.emit(self)
+
+
+## Remote climbers: every piece kinematic, moved by apply_pose from the stream.
+func make_puppet() -> void:
+	state = State.PUPPET
+	for b in bodies.values():
+		var rb: RigidBody2D = b
+		rb.freeze_mode = RigidBody2D.FREEZE_MODE_KINEMATIC
+		rb.freeze = true
+	for jn in joints:
+		PhysicsServer2D.free_rid(joints[jn].rid)
+	joints.clear()
+
+
+## The pose as x, y (m) and angle (vis rad) per piece, in Layout.ORDER.
+func pose() -> PackedFloat32Array:
+	var out := PackedFloat32Array()
+	out.resize(Layout.ORDER.size() * 3)
+	var k := 0
+	for pname in Layout.ORDER:
+		var b: RigidBody2D = bodies[pname]
+		var p := px_to_m(b.global_position)
+		out[k] = p.x
+		out[k + 1] = p.y
+		out[k + 2] = vis_rot(b)
+		k += 3
+	return out
+
+
+func apply_pose(p: PackedFloat32Array) -> void:
+	if p.size() < Layout.ORDER.size() * 3:
+		return
+	var k := 0
+	for pname in Layout.ORDER:
+		var b: RigidBody2D = bodies[pname]
+		b.global_transform = Transform2D(-p[k + 2], m_to_px(Vector2(p[k], p[k + 1])))
+		_sync_server(b)
+		k += 3
+
+
+## The highest point of any piece, metres above y = 0.
+func top_height() -> float:
+	var best := -INF
+	for pname in bodies:
+		best = maxf(best, piece_top(pname))
+	return best
+
+
+func piece_top(pname: String) -> float:
+	var b: RigidBody2D = bodies[pname]
+	var xf := b.global_transform
+	var g: Array = _shape_geo[pname]
+	var top_px := INF  # smallest engine y = highest
+	match g[0]:
+		"circle":
+			top_px = xf.origin.y - g[1]
+		"capsule":
+			top_px = minf((xf * g[1]).y, (xf * g[2]).y) - g[3]
+		"box":
+			var he: Vector2 = g[1]
+			for c in [Vector2(-he.x, -he.y), Vector2(he.x, -he.y), Vector2(he.x, he.y), Vector2(-he.x, he.y)]:
+				top_px = minf(top_px, (xf * c).y)
+	return -top_px / PPM
+
+
+func centre_of_mass() -> Vector2:
+	var acc := Vector2.ZERO
+	for b in bodies.values():
+		acc += px_to_m(b.global_position) * b.mass
+	return acc / maxf(total_mass, 0.001)
+
+
+func linear_speed() -> float:
+	var acc := Vector2.ZERO
+	for b in bodies.values():
+		acc += b.linear_velocity * b.mass
+	return (acc / maxf(total_mass, 0.001)).length() / PPM
+
+
+## Largest gap between a joint's two anchors (m): the "did it tear" number.
+var last_worst_gap_joint := ""
+
+
+func worst_joint_gap() -> float:
+	var worst := 0.0
+	for jn in Layout.JOINTS:
+		var jd: Dictionary = Layout.JOINTS[jn]
+		var a: RigidBody2D = bodies[jd.a]
+		var b: RigidBody2D = bodies[jd.b]
+		var at := m_to_px(spawn_at + jd.at * body_scale)
+		var la: Vector2 = _rest_local(jd.a, at)
+		var lb: Vector2 = _rest_local(jd.b, at)
+		var g := (a.global_transform * la).distance_to(b.global_transform * lb) / PPM
+		if g > worst:
+			worst = g
+			last_worst_gap_joint = jn
+	return worst
+
+
+## Largest overshoot past any joint limit (deg): the "do the limits hold" number.
+func worst_limit_excess() -> float:
+	var worst := 0.0
+	for jn in joints:
+		var j: Dictionary = joints[jn]
+		var rel := wrapf(vis_rot(j.b) - vis_rot(j.a), -PI, PI)
+		worst = maxf(worst, maxf(rel - j.hi, j.lo - rel))
+	return rad_to_deg(worst)
+
+
+var _rest_xf := {}
+
+
+func _rest_local(pname: String, at_px: Vector2) -> Vector2:
+	if not _rest_xf.has(pname):
+		var c := m_to_px(spawn_at + _piece_rest_centre(pname))
+		_rest_xf[pname] = Transform2D(0.0, c).affine_inverse()
+	return _rest_xf[pname] * at_px
+
+
+func _piece_rest_centre(pname: String) -> Vector2:
+	var shape: Array = Layout.PIECES[pname].shape
+	if shape[0] == "capsule":
+		return (shape[1] + shape[2]) * 0.5 * body_scale
+	return shape[1] * body_scale
+
+
+func remove() -> void:
+	removed = true
+	release_all()
+	for jn in joints:
+		PhysicsServer2D.free_rid(joints[jn].rid)
+	joints.clear()
+	for b in bodies.values():
+		b.queue_free()
+	for p in _pivots.values():
+		p.queue_free()
+	bodies.clear()
+	_pivots.clear()
+	queue_free()
+
+
+# ---------------------------------------------------------------- visual follow
+
+func _snap_interp() -> void:
+	for pname in bodies:
+		var b: RigidBody2D = bodies[pname]
+		_prev[pname] = _curr.get(pname, b.global_transform)
+		_curr[pname] = b.global_transform
+
+
+func _process(_delta: float) -> void:
+	if _pivots.is_empty():
+		return
+	var f := Engine.get_physics_interpolation_fraction()
+	for pname in _pivots:
+		var a: Transform2D = _prev.get(pname, Transform2D())
+		var b: Transform2D = _curr.get(pname, Transform2D())
+		var xf := a.interpolate_with(b, f) if state != State.FROZEN else b
+		var p := px_to_m(xf.origin)
+		var pv: Node3D = _pivots[pname]
+		pv.position = Vector3(p.x, p.y, 0.0)
+		pv.rotation = Vector3(0.0, 0.0, -xf.get_rotation())
