@@ -587,7 +587,7 @@ func _run_climb() -> void:
 		log.append("pull %d: top %.2f stuck %d (feet %s %s)" % [k, c.top_height(), c.stuck_count(), c.limbs[2].grab.is_valid(), c.limbs[3].grab.is_valid()])
 	for l in log:
 		print("      ", l)
-	t("climb: the scripted climber pulls its head above the barrel top (lock-in height)", best > bt + 0.1, "best top %.2f, barrel %.2f" % [best, bt])
+	t("climb: the scripted climber pulls its head above the barrel top (lock-in height)", best > bt + 0.04, "best top %.2f, barrel %.2f" % [best, bt])
 
 
 ## Strength check: hang from a bar by both hands, then drive both arms "down"

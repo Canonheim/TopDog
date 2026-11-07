@@ -40,9 +40,11 @@ var _results_label: Label
 var _rebind_wait := {}  # {"scheme", "action", "index", "button"}
 var pad_nav: Node
 var _pad_readout: Label
+var _pad_corner: Label
 
 
 func _ready() -> void:
+	get_tree().auto_accept_quit = false  # the X button runs quit_game too
 	_input_defaults()
 	_build_world()
 	game = GameScript.new()
@@ -88,7 +90,7 @@ func _shot(spec: String) -> void:
 	var img := get_viewport().get_texture().get_image()
 	img.save_png(parts[0])
 	print("SHOT ", parts[0])
-	get_tree().quit()
+	quit_game()  # through the real quit path, so a run with --shot also proves the exit
 
 
 ## Screenshot hook: --demo-heap drops knights on the barrel and freezes each,
@@ -209,13 +211,16 @@ func _process(delta: float) -> void:
 	for s in Players.slots.size():
 		if Players.pause_pressed(s) and screen in ["hud", "pause"]:
 			_toggle_pause()
+	if _pad_corner != null:
+		_pad_corner.visible = screen not in ["hud", "pause"]
+		if _pad_corner.visible:
+			_pad_corner.text = pad_nav.readout()
 	if _pad_readout != null and screen == "controls":
-		var pads := Input.get_connected_joypads()
-		var names := pads.map(func(d): return "%s (%d)" % [Input.get_joy_name(d), d])
-		_pad_readout.text = "Pads connected: %s
-Last pad input the game saw: %s" % [
-			", ".join(names) if not pads.is_empty() else "none",
-			("%s on pad %d" % [pad_nav.last_input, pad_nav.last_pad]) if pad_nav.last_pad >= 0 else "nothing yet - press something"]
+		var hint := ""
+		if pad_nav.last_pad < 0 and not Input.get_connected_joypads().is_empty():
+			hint = "
+A pad is connected but nothing has arrived. If pressing changes nothing here, something outside the game (Steam Input's desktop layout, or another app) is holding the pad: try closing Steam, or add the game to Steam and launch it from there."
+		_pad_readout.text = pad_nav.readout() + hint
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -429,6 +434,15 @@ func _build_ui() -> void:
 	feel_panel = _feel_panel()
 	feel_panel.visible = false
 	root.add_child(feel_panel)
+	_pad_corner = Label.new()
+	_pad_corner.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_pad_corner.offset_top = -36
+	_pad_corner.offset_bottom = -6
+	_pad_corner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pad_corner.add_theme_font_size_override("font_size", 18)
+	_pad_corner.modulate = Color(0.85, 0.92, 1.0, 0.85)
+	_pad_corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_pad_corner)
 
 
 func _screen_title() -> Control:
@@ -439,7 +453,7 @@ func _screen_title() -> Control:
 	UiKit.button(box, "Practice", _start_practice)
 	UiKit.button(box, "Controls", func(): _controls_back = "title"; show_screen("controls"))
 	UiKit.button(box, "Options", func(): _options_back = "title"; show_screen("options"))
-	UiKit.button(box, "Quit", func(): get_tree().quit())
+	UiKit.button(box, "Quit", quit_game)
 	return c
 
 
@@ -721,6 +735,43 @@ func _screen_pause() -> Control:
 			Net.leave()
 		_to_title(""))
 	return c
+
+
+var _quitting := false
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		quit_game()
+
+
+## THE QUIT. Godot 4.7.2's exported release build crashes (exit 139) about two
+## seconds into its own shutdown here, with or without Steam (the editor binary
+## exits clean; Golemheim's record 755 and the style kit saw the same crash). A
+## crashing teardown can leave a frozen window or a crash dialog, which is what
+## "quit doesn't work" looked like. So: leave the session, shut Steam down, pull the
+## ink pass off the world, give the renderer two frames, and then an exported build
+## ends its own process instead of walking into the crash. Options and binds are
+## saved the moment they change, so nothing is lost. The editor still quits normally.
+func quit_game() -> void:
+	if _quitting:
+		return
+	_quitting = true
+	Net.shutdown()
+	for child in get_children():
+		if child is WorldEnvironment:
+			var we := child as WorldEnvironment
+			if we.compositor != null:
+				for fx in we.compositor.compositor_effects:
+					if fx != null:
+						fx.enabled = false
+				we.compositor.compositor_effects = []
+				we.compositor = null
+	await RenderingServer.frame_post_draw
+	await RenderingServer.frame_post_draw
+	if OS.has_feature("template") and not ("--slow-quit" in OS.get_cmdline_user_args()):
+		OS.kill(OS.get_process_id())
+	get_tree().quit()
 
 
 ## Back one level: B on any pad, or Escape.

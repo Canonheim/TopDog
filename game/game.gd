@@ -260,6 +260,8 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2) -> void:
 			c.driver = bot_drivers[pid]
 		else:
 			c.driver = Drivers.LocalDriver.new(int(r.get("slot", 0)))
+			if dress:
+				c.set_glyphs(Glyphs.limb_glyphs(int(r.get("slot", 0))))
 		c.grab_made.connect(_on_grab_made)
 		c.grab_lost.connect(_on_grab_lost)
 	else:

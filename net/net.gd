@@ -26,7 +26,7 @@ const LobbyLogic := preload("res://net/lobby_logic.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topyourpals"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.1.1"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.1.2"  # bump on every build: RPC tables move between builds
 const ENET_PORT := 7788
 const MAX_MACHINES := 8
 const MAX_CLIMBERS := 8
@@ -52,11 +52,10 @@ var _chat_times := {}
 
 
 func _ready() -> void:
-	# Steam starts when Online play opens (ensure_steam), not at boot: on the
-	# shared dev app (480), Steam's controller layer can take the pads away from
-	# the whole game. --steam starts it at boot.
-	if "--steam" in OS.get_cmdline_user_args():
-		_init_steam()
+	# Steam starts at boot, as Golemheim's does (its pads work). A late start was
+	# tried in 0.1.1 on a hunch about Steam Input and proved nothing; the on-screen
+	# pad readout is what tells a deaf pad apart now. --no-steam skips it.
+	_init_steam()
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	multiplayer.connected_to_server.connect(_on_connected)
@@ -510,6 +509,20 @@ func set_in_match(on: bool) -> void:
 	in_match = on
 	if is_host() and steam_ok and steam_lobby != 0:
 		Steam.setLobbyJoinable(steam_lobby, not on)
+
+
+## The way out: leave, cut every Steam signal, shut the Steam API down. GodotSteam's
+## own teardown on process exit is where Golemheim's quit crashed and this game's
+## quit hung (0.1.1); shutting it down ourselves first lets the engine exit clean.
+func shutdown() -> void:
+	leave()
+	if ClassDB.class_exists(&"Steam"):
+		for sig in Steam.get_signal_list():
+			for c in Steam.get_signal_connection_list(sig.name):
+				Steam.disconnect(sig.name, c.callable)
+		if steam_ok:
+			Steam.steamShutdown()
+	steam_ok = false
 
 
 func leave() -> void:

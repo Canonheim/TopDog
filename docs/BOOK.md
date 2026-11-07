@@ -135,6 +135,18 @@ Parker: "I can't seem to control the main menu with my controller... make it wor
 - **The ink** is `CelPass.add_outline_pass(Main)`.
 - **The player colour** is a per-climber copy of the cel material, with its `color` set to the wash.
 
+## 0.1.2 (Parker, 2026-11-07): quit, pads again, limb glyphs, new music
+
+Parker: "quit is not working, and also the controller is still not working, also the glyphs for each hand and foot should be on the part like in MYF... Also the music is terrible, try again... Make it Fun and jazzy and smooth."
+
+**Quit.** The exported release build crashes (exit 139) about two seconds into its own shutdown, with Steam or without it (`--no-steam` proved it isn't Steam); the editor binary exits clean. A crashing teardown can leave a frozen window or a crash dialog. `quit_game()` now leaves the session, shuts Steam down (`Net.shutdown()`), pulls the ink pass off the world, waits two frames, and then an exported build **ends its own process** (`OS.kill`) instead of walking into the crash. Options and binds save the moment they change, so nothing is lost. The window's X button goes through the same path (`auto_accept_quit = false`). Measured: the exported game is gone in under two seconds after quit, exit code 0. `--slow-quit` runs the normal teardown for anyone hunting the crash.
+
+**Pads, second pass.** The menus now take pad input by **two paths**: polling every connected pad each frame (as 0.1.1 did) AND the joypad events arriving in `_input`. Both feed one held-state table, so a press seen by both fires once. Steam starts at boot again, as Golemheim's does. **The on-screen pad readout** is the new tool: the bottom line of every menu shows the pads the game sees and the last pad input it received. If Parker's pad is listed there but the line never changes while he presses, nothing is reaching the game at all (then it's Steam Input's desktop layout or another app holding the pad; the Controls screen says so). If the line changes but the menu doesn't move, the fault is in PadNav and the readout says which button arrived. `tests/pad_probe.tscn` drives the real menu with raw pad state and passes; it can't stand in for Parker's hands.
+
+**Limb glyphs** (`Climber.set_glyphs`, `core/glyphs.gd`): each hand and foot wears its bind's picture (Kenney prompts: LB/RB/LT/RT on a pad, mouse buttons and keys on the keyboard), billboarded, drawn over everything. Dim when loose, bright while held, green when stuck. Hidden on a frozen body. Only the local player's climbers wear them. Feet glyphs step outward so they don't overlap.
+
+**Music, take two** (`tools/music/theme.py`): a swinging jazz loop in Bb at 126 bpm, 32 bars AABA, 61 s, seamless. Walking acoustic bass, brush kit, tine electric piano comping Charleston figures on rootless voicings, soft jazz guitar on all four, vibraphone on the tune, muted trumpet taking the second chorus, flute on the bridge. Triplet swing. Needs Parker's ear.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

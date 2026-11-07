@@ -66,6 +66,7 @@ var remote_pulls := {}
 
 var _shape_geo := {}  # piece -> [kind, data...] for height reads (local, m)
 var _root: Node3D
+var _glyphs: Array = []  # per limb: the Sprite3D / Label3D riding the hand or foot
 
 
 # ---------------------------------------------------------------- frames
@@ -309,6 +310,69 @@ func set_tint(c: Color) -> void:
 				var mine: ShaderMaterial = cel.duplicate()
 				mine.set_shader_parameter("color", wash)
 				mi.set_surface_override_material(si, mine)
+
+
+## THE LIMB GLYPHS (the reference game's idea): the button for each limb sits ON
+## the hand or foot, so you never wonder which button is which. Dim when loose,
+## bright when held, green when stuck. items: [{"tex": Texture2D or null, "text"}].
+func set_glyphs(items: Array) -> void:
+	for g in _glyphs:
+		if is_instance_valid(g):
+			g.queue_free()
+	_glyphs.clear()
+	for i in mini(items.size(), limbs.size()):
+		var end: RigidBody3D = bodies[limbs[i].def.end]
+		var item: Dictionary = items[i]
+		var node: Node3D
+		if item.get("tex") != null:
+			var sp := Sprite3D.new()
+			sp.texture = item.tex
+			sp.pixel_size = 0.0038
+			sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			sp.no_depth_test = true
+			sp.render_priority = 20
+			sp.shaded = false
+			node = sp
+		else:
+			var lb := Label3D.new()
+			lb.text = str(item.get("text", "?"))
+			lb.font_size = 48
+			lb.pixel_size = 0.0055
+			lb.outline_size = 12
+			lb.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			lb.no_depth_test = true
+			lb.render_priority = 20
+			node = lb
+		# Feet sit close together: their glyphs step outward so both read.
+		var side := 0.0
+		if not bool(limbs[i].def.arm):
+			side = -0.16 if limbs[i].def.id == "leg_l" else 0.16
+		node.position = Vector3(side, -0.04 if not bool(limbs[i].def.arm) else 0.0, 0.3)
+		end.add_child(node)
+		_glyphs.append(node)
+
+
+func _process(_delta: float) -> void:
+	if _glyphs.is_empty():
+		return
+	for i in _glyphs.size():
+		var g = _glyphs[i]
+		if not is_instance_valid(g):
+			continue
+		var l: Dictionary = limbs[i]
+		var c := Color(1, 1, 1, 0.55)
+		var sc := 1.0
+		if l.grab.is_valid():
+			c = Color(0.55, 1.0, 0.55, 1.0)
+			sc = 1.1
+		elif l.held:
+			c = Color(1, 1, 1, 1)
+			sc = 1.25
+		if g is Sprite3D:
+			(g as Sprite3D).modulate = c
+		else:
+			(g as Label3D).modulate = c
+		g.scale = Vector3.ONE * sc
 
 
 # ---------------------------------------------------------------- tick
@@ -582,6 +646,9 @@ func freeze() -> void:
 	grabbed_by = 0
 	remote_grabbed = 0
 	remote_pulls.clear()
+	for g in _glyphs:
+		if is_instance_valid(g):
+			g.visible = false
 	froze.emit(self)
 
 

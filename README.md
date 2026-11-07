@@ -20,6 +20,11 @@ played on one plane. Godot 4.7.2, Jolt physics, GodotSteam.
   | Lock in | Space | A |
   | Pause | Esc | Start |
 
+- Each hand and foot wears its button (the reference game's idea): dim when
+  loose, bright while held, green when stuck.
+- The bottom line of every menu shows which pads the game sees and the last
+  pad input it received. If a pad is listed but that line never changes while
+  you press, something outside the game has the pad.
 - **F1** opens the feel table: every physics and control knob, live.
 
 ## Modes
