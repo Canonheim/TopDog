@@ -39,6 +39,7 @@ var _settings_box: Dictionary = {}
 var _results_label: Label
 var _rebind_wait := {}  # {"scheme", "action", "index", "button"}
 var pad_nav: Node
+var lucha: LuchaUI  # Top Dog's 3D front end (ui3d/lucha_ui.gd)
 var _pad_readout: Label
 var _pad_corner: Label
 
@@ -76,6 +77,10 @@ func _ready() -> void:
 	Players.joined.connect(func(_s): _refresh_local(); Net.update_local_players())
 	game.stage = Stage.new("dock")
 	game.stage.build(world, true)
+	lucha = LuchaUI.new()
+	lucha.name = "LuchaUI"
+	add_child(lucha)
+	lucha.setup(self)
 	show_screen("title")
 	Sound.music("title")
 	if "--demo" in OS.get_cmdline_user_args():
@@ -392,6 +397,11 @@ func show_screen(id: String) -> void:
 	if pad_nav != null:
 		pad_nav.screen_root = screens.get(id)
 		pad_nav.active = id != "hud"
+	# Screens the 3D front end owns: its menu shows, the flat one stays hidden.
+	if lucha != null and lucha.show_screen(id):
+		screens[id].visible = false
+		if pad_nav != null:
+			pad_nav.screen_root = null
 	if id == "online":
 		Net.ensure_steam()
 	paused = false
@@ -456,7 +466,7 @@ func _build_ui() -> void:
 
 
 func _screen_title() -> Control:
-	var c := UiKit.panel_screen("TOP YOUR PALS", "Grab, fling, freeze. Climb the tower of everyone who went before you.")
+	var c := UiKit.panel_screen("TOP DOG", "Grab, fling, freeze. Climb the tower of everyone who went before you.")
 	var box: VBoxContainer = c.get_meta("box")
 	UiKit.button(box, "Play together (this PC)", func(): show_screen("local"))
 	UiKit.button(box, "Play online", func(): show_screen("online"))

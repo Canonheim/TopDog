@@ -20,8 +20,8 @@ const SFX := {
 	"ui_close": ["ui_close"],
 }
 const MUSIC := {
-	"title": "res://audio/music/top_your_pals_theme.ogg",
-	"climb": "res://audio/music/top_your_pals_theme.ogg",
+	"title": "res://audio/music/top_dog_theme.ogg",
+	"climb": "res://audio/music/top_dog_theme.ogg",
 }
 const OPTIONS := "user://options.cfg"
 
