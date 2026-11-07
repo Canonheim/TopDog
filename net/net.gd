@@ -26,7 +26,7 @@ const LobbyLogic := preload("res://net/lobby_logic.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topyourpals"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.1.3"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.1.4"  # bump on every build: RPC tables move between builds
 const ENET_PORT := 7788
 const MAX_MACHINES := 8
 const MAX_CLIMBERS := 8
@@ -53,10 +53,14 @@ var _chat_times := {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	# Steam starts at boot, as Golemheim's does (its pads work). A late start was
-	# tried in 0.1.1 on a hunch about Steam Input and proved nothing; the on-screen
-	# pad readout is what tells a deaf pad apart now. --no-steam skips it.
-	_init_steam()
+	# Steam starts when Online play opens (ensure_steam), not at boot. PROVEN by
+	# Parker on 0.1.3: his pad worked only with Steam off. On the shared dev app
+	# (480) Steam applies Spacewar's controller settings, which hand the game
+	# nothing. (0.1.1's late start looked like it failed only because Practice was
+	# hard-wired to the keyboard then.) Our own app ID ends this. --steam starts it
+	# at boot; +connect_lobby starts it for an invite.
+	if "--steam" in OS.get_cmdline_user_args():
+		_init_steam()
 	multiplayer.peer_connected.connect(_on_peer_connected)
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	multiplayer.connected_to_server.connect(_on_connected)

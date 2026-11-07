@@ -319,6 +319,7 @@ func _build_limbs() -> void:
 			"grab_piece": "",
 			"regrip": 0.0,
 			"hold": [0.0, 0.0],  # root/mid targets kept while the stick rests
+			"cursor": Vector2.ZERO,  # where a held hand or foot is being steered (world m)
 			"driving": false,
 		})
 
@@ -456,6 +457,7 @@ func _tick_limb(i: int, delta: float) -> void:
 			release(i)
 		l.regrip = 0.0
 		l.hold = _current_rel(i)
+		l.cursor = limb_end(i)  # steering starts from where the hand is
 	elif not held and l.held:
 		l.regrip = 0.0  # release: plant it right now if it's on something
 	l.held = held
@@ -575,7 +577,9 @@ func _tick_joints(attached: bool) -> void:
 		targets[l.def.root] = t[0]
 		targets[l.def.mid] = t[1]
 		caps[l.def.root] = cap
-		caps[l.def.mid] = cap * 0.8
+		# Elbows and knees are softer than shoulders and hips, so a limb you steer
+		# swings from its root and bends at the middle under load, both ways.
+		caps[l.def.mid] = Feel.get_k("bend_strength") * total_mass * g * reach
 	var hold := Feel.get_k("hold_strength")
 	var spine_w := Feel.get_k("spine_spring") * 20.0
 	var neck_w := Feel.get_k("neck_spring") * 20.0
@@ -616,12 +620,27 @@ func _tick_joints(attached: bool) -> void:
 					want_w = clampf(drive_w * err, -MAX_DRIVE_W, MAX_DRIVE_W)
 					torque = caps[jn]
 				else:
-					# Not held: the joint holds its angle (the reference game's stiff,
-					# posed bodies). Loose limbs that dangled made the legs buckle the
-					# moment a reaching hand pushed on anything.
-					torque = hold * total_mass * g * 0.7
+					# Not held: shoulders and hips hold their angle (a pose, so the body
+					# stands and keeps its shape); elbows and knees hold loosely and bend
+					# either way under load (the reference game's floppy, bendy limbs).
+					if j.kind == "mid":
+						# A planted limb's middle is braced (a stuck foot's knee carries the
+						# body: floppy, the climber squatted 0.4 m and couldn't reach); a free
+						# limb's middle is floppy and swings either way.
+						var braced := _limb_of_mid_stuck(jn)
+						torque = (hold * 0.8 if braced else Feel.get_k("bend_hold")) * total_mass * g * 0.7
+					else:
+						torque = hold * total_mass * g * 0.7
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, want_w * MOTOR_SIGN)
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, torque * dt)
+
+
+## Is the limb whose elbow or knee this is stuck to something?
+func _limb_of_mid_stuck(mid_joint: String) -> bool:
+	for l in limbs:
+		if (l.def.mid as String) == mid_joint:
+			return l.grab.is_valid()
+	return false
 
 
 func _end_stuck(joint_name: String) -> bool:
@@ -646,23 +665,42 @@ func _limb_targets(i: int):
 	var l: Dictionary = limbs[i]
 	var aim = driver.aim(self, i) if driver != null else null
 	if aim == null:
-		return null
+		aim = {}  # stick at rest: the hand stays where it was steered
 	var root_j: Dictionary = joints[l.def.root]
 	var parent: RigidBody3D = root_j.a
 	var S := xf2(parent) * (root_j.local_a as Vector2)
 	var l1: float = l.l1
 	var l2: float = l.l2
-	var T: Vector2
+	# THE HAND IS WHAT YOU STEER (Parker: "when you hold a button you are more or
+	# less controlling the hand, the limb is bending at the shoulder and elbow or hip
+	# and knee sideways to follow the hand"). The mouse puts the hand on its point;
+	# the stick moves the hand like a cursor (Feel hand_speed), and a resting stick
+	# leaves it where it is. The two-bone solve then bends shoulder and elbow to
+	# follow, whichever way the elbow already bends.
 	if aim.has("point"):
-		T = aim.point
-	else:
-		var d := lerpf(Feel.get_k("reach_min"), 1.0, clampf(float(aim.mag), 0.0, 1.0)) * (l1 + l2)
-		T = S + (aim.dir as Vector2).normalized() * d
+		l.cursor = aim.point
+	elif aim.has("dir"):
+		var dt := 1.0 / float(Engine.physics_ticks_per_second)
+		l.cursor += (aim.dir as Vector2).normalized() * clampf(float(aim.mag), 0.0, 1.0) * Feel.get_k("hand_speed") * dt
+	# Keep the cursor inside what the limb can reach, so it never runs away.
+	var off: Vector2 = l.cursor - S
+	var r := clampf(off.length(), absf(l1 - l2) + 0.06, l1 + l2 - 0.01)
+	if off.length() < 0.0001:
+		off = Vector2.from_angle(deg_to_rad(l.def.rest_deg))
+	l.cursor = S + off.normalized() * r
+	var T: Vector2 = l.cursor
 	var v := T - S
 	var dd := clampf(v.length(), absf(l1 - l2) + 0.02, l1 + l2 - 0.002)
 	var base := v.angle() if v.length() > 0.0001 else deg_to_rad(l.def.rest_deg)
 	var cos_a := clampf((l1 * l1 + dd * dd - l2 * l2) / (2.0 * l1 * dd), -1.0, 1.0)
-	var upper := base + float(l.def.bend) * acos(cos_a)
+	# Bend the way the elbow or knee already bends: left or right, whichever the
+	# physics put it in. Nearly straight, it takes the layout's default side.
+	var bend := float(l.def.bend)
+	var mj_now: Dictionary = joints[l.def.mid]
+	var mid_now := wrapf(angle_of(mj_now.b) - angle_of(mj_now.a), -PI, PI)
+	if absf(mid_now) > deg_to_rad(8.0):
+		bend = -signf(mid_now)
+	var upper := base + bend * acos(cos_a)
 	var E := S + Vector2.from_angle(upper) * l1
 	var T2 := S + Vector2.from_angle(base) * dd
 	var lower := (T2 - E).angle()

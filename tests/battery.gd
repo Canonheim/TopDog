@@ -734,3 +734,47 @@ func _run_devices() -> void:
 	t("devices: the keyboard is its own device", Players.slot_of_device(Players.KBM) == -1)
 	Players.fake.clear()
 	Players.clear_players()
+
+
+# ================================================================ --bend
+
+## The reference game's bendy limbs: hang by one hand and steer the other hand in a
+## circle that passes close to the shoulder (the elbow must fold to follow it), and
+## swing a leg's foot the same way (the knee must fold). Free limbs flop both ways.
+func _run_bend() -> void:
+	var c := spawn(Vector2(0, 3.0))
+	var bar := bar_at(c.limb_end(1))
+	c.attach(1, bar)
+	var d: Drivers.ScriptDriver = c.driver
+	await seconds(1.0)
+	var lo := {"elbow_l": INF, "knee_l": INF, "knee_r": INF}
+	var hi := {"elbow_l": -INF, "knee_l": -INF, "knee_r": -INF}
+	for i in int(5.0 * Engine.physics_ticks_per_second):
+		var ang := float(i) / Engine.physics_ticks_per_second * TAU * 0.5
+		var S := c.limb_root(0)
+		var H := c.limb_root(2)
+		d.point_limb(0, true, S + Vector2(0.15, 0.0) + Vector2.from_angle(ang) * 0.42)
+		d.point_limb(2, true, H + Vector2(-0.1, -0.2) + Vector2.from_angle(-ang) * 0.45)
+		await get_tree().physics_frame
+		for jn in lo:
+			var j: Dictionary = c.joints[jn]
+			var rel := rad_to_deg(wrapf(Climber.angle_of(j.b) - Climber.angle_of(j.a), -PI, PI))
+			lo[jn] = minf(lo[jn], rel)
+			hi[jn] = maxf(hi[jn], rel)
+	t("bend: a steered elbow folds to follow the hand (past 60 deg)", maxf(absf(lo.elbow_l), absf(hi.elbow_l)) > 60.0, "%.0f .. %.0f deg" % [lo.elbow_l, hi.elbow_l])
+	t("bend: a steered knee folds to follow the foot (past 60 deg)", maxf(absf(lo.knee_l), absf(hi.knee_l)) > 60.0, "%.0f .. %.0f deg" % [lo.knee_l, hi.knee_l])
+	t("bend: a free knee is floppy (bends past 20 deg under its own weight)", maxf(absf(lo.knee_r), absf(hi.knee_r)) > 20.0, "%.0f .. %.0f deg" % [lo.knee_r, hi.knee_r])
+	# A pad: the stick moves the hand, and a resting stick leaves it there.
+	var start := c.limb_end(0)
+	d.set_limb(2, false)
+	d.point_limb(0, true, c.limb_root(0) + Vector2(-0.15, -0.35))  # hand low and inside its reach
+	await seconds(0.8)
+	d.set_limb(0, true, Vector2.ZERO)  # pick up the stick there
+	await seconds(0.3)
+	var rest_hand := c.limb_end(0) - c.limb_root(0)  # relative to the shoulder: the body sways
+	d.set_limb(0, true, Vector2(0, 1), 1.0)  # stick UP in our y-up world (Godot's Vector2.UP is y-down)
+	await seconds(0.25)
+	d.set_limb(0, true, Vector2.ZERO)
+	await seconds(0.4)
+	var moved := (c.limb_end(0) - c.limb_root(0)) - rest_hand
+	t("bend: a pushed stick moves the hand that way, a resting stick holds it", moved.y > 0.15, "moved %s (from %s)" % [moved, start])

@@ -46,11 +46,11 @@ const JOINTS := {
 	"elbow_r": {"a": "arm_r_up", "b": "arm_r_lo", "at": Vector2(0.625, 1.582), "lim": [-150.0, 150.0], "kind": "mid"},
 	"wrist_r": {"a": "arm_r_lo", "b": "hand_r", "at": Vector2(0.93, 1.582), "lim": [-50.0, 50.0], "kind": "end"},
 
-	"hip_l": {"a": "pelvis", "b": "leg_l_up", "at": Vector2(-0.0906, 1.0187), "lim": [-150.0, 35.0], "kind": "root"},
-	"knee_l": {"a": "leg_l_up", "b": "leg_l_lo", "at": Vector2(-0.09, 0.587), "lim": [-140.0, 10.0], "kind": "mid"},
+	"hip_l": {"a": "pelvis", "b": "leg_l_up", "at": Vector2(-0.0906, 1.0187), "lim": [-150.0, 90.0], "kind": "root"},
+	"knee_l": {"a": "leg_l_up", "b": "leg_l_lo", "at": Vector2(-0.09, 0.587), "lim": [-150.0, 150.0], "kind": "mid"},
 	"ankle_l": {"a": "leg_l_lo", "b": "foot_l", "at": Vector2(-0.09, 0.1465), "lim": [-40.0, 40.0], "kind": "end"},
-	"hip_r": {"a": "pelvis", "b": "leg_r_up", "at": Vector2(0.0906, 1.0187), "lim": [-35.0, 150.0], "kind": "root"},
-	"knee_r": {"a": "leg_r_up", "b": "leg_r_lo", "at": Vector2(0.09, 0.587), "lim": [-10.0, 140.0], "kind": "mid"},
+	"hip_r": {"a": "pelvis", "b": "leg_r_up", "at": Vector2(0.0906, 1.0187), "lim": [-90.0, 150.0], "kind": "root"},
+	"knee_r": {"a": "leg_r_up", "b": "leg_r_lo", "at": Vector2(0.09, 0.587), "lim": [-150.0, 150.0], "kind": "mid"},
 	"ankle_r": {"a": "leg_r_lo", "b": "foot_r", "at": Vector2(0.09, 0.1465), "lim": [-40.0, 40.0], "kind": "end"},
 }
 

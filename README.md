@@ -9,8 +9,12 @@ played on one plane. Godot 4.7.2, Jolt physics, GodotSteam.
 - **Play:** open the project in Godot 4.7.2 and press Play, or run
   `builds\TopYourPals.exe` after an export.
 - **How it plays:** hands and feet stick to whatever they touch, by themselves.
-  Hold a limb's button to pick it up and steer it with the stick or the mouse;
-  let go to plant it. You can only move a limb while another is stuck (or a pal
+  Hold a limb's button to pick it up and steer its hand (or foot) with the stick
+  or the mouse; the elbow and shoulder (knee and hip) bend either way to follow.
+  Let go to plant it.
+- **Steam starts when you open Play online**, not before. On Valve's test app
+  (until we have our own) Steam takes the controller, so local play stays clear
+  of it. You can only move a limb while another is stuck (or a pal
   is holding you). Pick up your last stuck limb and you fall.
 - **Controls (rebindable in Controls):** a face button per limb, laid out like
   the body.

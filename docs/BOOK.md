@@ -174,6 +174,22 @@ Parker: "quit to menu still doesn't work and the controller still doesn't work a
 
 **Still unknown: the pad in the menus.** Parker hasn't reported the readout line yet. `builds\TopYourPals (no Steam).bat` launches with Steam off for the one experiment that tells Steam apart from the game.
 
+## 0.1.4 (Parker, 2026-11-07): bendy limbs steered by the hand, Steam out of the pad's way
+
+Parker: "the legs and arms are like not bending. They should be bending left and right like in MYF. It is not anatomically correct but it's what we want." Then: "when you hold a button you are more or less controlling the hand, the limb is bending at the shoulder and elbow or hip and knee sideways to follow the hand you are controlling". And: "only the no steam version is working with my controller... This may be an issue with my controller drivers, so check that first." And: a GameCube controller adapter is plugged in and has upset input before.
+
+**THE HAND IS WHAT YOU STEER** (`Climber._limb_targets`). The stick moves a hand (or foot) target like a cursor, at Feel `hand_speed` (2.6 m/s at full push); a resting stick leaves it where it is; the mouse puts it on its point. The target is kept inside the limb's reach. The two-bone solve bends shoulder and elbow (hip and knee) to follow it, **whichever way the elbow already bends** (left or right; nearly straight, it takes the layout's side). Before, a full stick meant "point the limb that way at full reach", which kept limbs straight.
+
+**Elbows and knees bend both ways** (knees were one-way; hips swing wider too):
+- Steered: elbows and knees drive to the solve at Feel `bend_strength` 0.6 body-weights at reach. **0.7 broke the barrel reach** (the stronger elbow shoved the body off the barrel), so the number is sensitive.
+- Not steered, free: floppy, Feel `bend_hold` 0.05 (a free knee falls 30-60° under its own weight).
+- Not steered, planted (the limb's end is stuck): braced at 0.8 × `hold_strength`. Floppy planted knees squatted the standing climber 0.4 m so it couldn't reach anything.
+- `--bend` proves it: a steered elbow folds to 132°, a steered knee to 147°, a free knee flops, and a pushed stick moves the hand that way and a resting stick holds it.
+
+**The pad and Steam, settled.** Drivers checked first, as Parker asked: the Xbox controller (USB 045E:0B12) is on Microsoft's own driver 10.0.26100.9444 (2026-09-02), no remappers or virtual-pad drivers installed (only G HUB, as a virtual keyboard); the GameCube adapter (WUP-028, 057E:0337) is on a WinUSB driver (Dolphin's setup), which Windows doesn't treat as a gamepad, though Steam has its own GameCube adapter support. Parker's own test settled it: the pad works only with Steam off. On the shared dev app (480) Steam applies Spacewar's controller settings, which hand the game nothing. **Steam now starts only when the Online screen opens** (and for `+connect_lobby`, or at boot with `--steam`). Practice and Play together never start it. Online play with a pad on app 480 will still lose the pad; our own app ID, with its Steam Input set to pass the gamepad through, ends it. (0.1.1's late start looked like a failure only because Practice was hard-wired to the keyboard then.)
+
+**Test gotcha:** Godot's `Vector2.UP` is (0, -1), screen-style. Our world is y-up: a test stick "up" is `Vector2(0, 1)`. Real pads are flipped in `Players.stick`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
