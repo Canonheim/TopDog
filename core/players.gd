@@ -10,29 +10,39 @@ extends Node
 
 signal joined(slot: int)
 signal left(slot: int)
+## An ANY-device slot's effective device changed (the player picked up the pad, or
+## went back to the mouse): glyphs follow it.
+signal device_changed(slot: int)
 
 const KBM := -1
+## The one-player slot: whichever device spoke last drives (Practice, Online with
+## one local player). Swap between keyboard+mouse and any pad at will.
+const ANY := -2
 const ACTIONS := ["arm_l", "arm_r", "leg_l", "leg_r", "lock", "pause"]
 const ACTION_NAMES := ["Left hand", "Right hand", "Left foot", "Right foot", "Lock in", "Pause"]
 const MAX_LOCAL := 8
 
 ## Two binds per action per scheme. A bind is {"key": physical keycode},
 ## {"mouse": button}, {"pad": button} or {"axis": axis} (a trigger).
+## The reference game's layout: a face button per limb, laid out like the body
+## (X left hand, Y right hand, A left foot, B right foot), the stick aims, Start
+## locks in. The keyboard mirrors the diamond on A W S D, the mouse aims, and the
+## mouse buttons double as the hands.
 const DEFAULT_KBM := {
-	"arm_l": [{"mouse": MOUSE_BUTTON_LEFT}, {"key": KEY_Q}],
-	"arm_r": [{"mouse": MOUSE_BUTTON_RIGHT}, {"key": KEY_E}],
-	"leg_l": [{"key": KEY_A}, {"key": KEY_Z}],
-	"leg_r": [{"key": KEY_D}, {"key": KEY_C}],
-	"lock": [{"key": KEY_SPACE}, {}],
+	"arm_l": [{"key": KEY_A}, {"mouse": MOUSE_BUTTON_LEFT}],
+	"arm_r": [{"key": KEY_W}, {"mouse": MOUSE_BUTTON_RIGHT}],
+	"leg_l": [{"key": KEY_S}, {}],
+	"leg_r": [{"key": KEY_D}, {}],
+	"lock": [{"key": KEY_SPACE}, {"key": KEY_ENTER}],
 	"pause": [{"key": KEY_ESCAPE}, {}],
 }
 const DEFAULT_PAD := {
-	"arm_l": [{"pad": JOY_BUTTON_LEFT_SHOULDER}, {}],
-	"arm_r": [{"pad": JOY_BUTTON_RIGHT_SHOULDER}, {}],
-	"leg_l": [{"axis": JOY_AXIS_TRIGGER_LEFT}, {}],
-	"leg_r": [{"axis": JOY_AXIS_TRIGGER_RIGHT}, {}],
-	"lock": [{"pad": JOY_BUTTON_A}, {}],
-	"pause": [{"pad": JOY_BUTTON_START}, {}],
+	"arm_l": [{"pad": JOY_BUTTON_X}, {}],
+	"arm_r": [{"pad": JOY_BUTTON_Y}, {}],
+	"leg_l": [{"pad": JOY_BUTTON_A}, {}],
+	"leg_r": [{"pad": JOY_BUTTON_B}, {}],
+	"lock": [{"pad": JOY_BUTTON_START}, {}],
+	"pause": [{"pad": JOY_BUTTON_BACK}, {}],
 }
 const SAVE := "user://binds.cfg"
 
@@ -44,6 +54,10 @@ var camera: Camera3D = null
 ## Batteries: fake devices. device id -> {"buttons": {action: bool}, "stick": Vector2}
 var fake := {}
 
+## The device that spoke last: KBM or a pad id. ANY slots follow it.
+var last_device := KBM
+var _any_dev_shown := KBM
+
 var _lock_prev := {}
 var _lock_edge := {}
 var _pause_prev := {}
@@ -51,11 +65,39 @@ var _pause_edge := {}
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS  # the pause button must work while paused
 	process_physics_priority = -100
 	process_priority = -100
 	binds.kbm = DEFAULT_KBM.duplicate(true)
 	binds.pad = DEFAULT_PAD.duplicate(true)
 	_load()
+
+
+## Which device spoke last, for the ANY slot and its glyphs.
+func _input(event: InputEvent) -> void:
+	var dev := -99
+	if event is InputEventKey or event is InputEventMouseButton:
+		dev = KBM
+	elif event is InputEventMouseMotion and (event as InputEventMouseMotion).relative.length() > 6.0:
+		dev = KBM
+	elif event is InputEventJoypadButton:
+		dev = (event as InputEventJoypadButton).device
+	elif event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) > 0.5:
+		dev = (event as InputEventJoypadMotion).device
+	if dev == -99 or dev == last_device:
+		return
+	last_device = dev
+	for s in slots.size():
+		if int(slots[s].device) == ANY:
+			device_changed.emit(s)
+
+
+## The device an ANY slot reads right now (its own device for a fixed slot).
+func effective_device(slot: int) -> int:
+	if slot < 0 or slot >= slots.size():
+		return KBM
+	var d := int(slots[slot].device)
+	return last_device if d == ANY else d
 
 
 func _physics_process(_delta: float) -> void:
@@ -127,6 +169,8 @@ func devices() -> Array:
 static func device_label(device: int) -> String:
 	if device == KBM:
 		return "Keyboard + mouse"
+	if device == ANY:
+		return "Any device"
 	if device >= 1000:
 		return "Test pad %d" % (device - 1000)
 	return Input.get_joy_name(device) if Input.get_joy_name(device) != "" else "Pad %d" % device
@@ -161,6 +205,8 @@ func limb_aim(s: int, climber, limb: int):
 	if dev == KBM:
 		return _mouse_aim()
 	var st := stick(dev)
+	if dev == ANY and st.length() < Feel.get_k("stick_deadzone"):
+		return _mouse_aim() if last_device == KBM else null
 	if st.length() < Feel.get_k("stick_deadzone"):
 		return null
 	var mag := inverse_lerp(Feel.get_k("stick_deadzone"), 1.0, minf(st.length(), 1.0))
@@ -169,6 +215,13 @@ func limb_aim(s: int, climber, limb: int):
 
 ## The device's stick, y-up, radial deadzone left to the caller.
 func stick(dev: int) -> Vector2:
+	if dev == ANY:
+		var best := Vector2.ZERO
+		for p in Input.get_connected_joypads():
+			var v := stick(p)
+			if v.length() > best.length():
+				best = v
+		return best
 	if fake.has(dev):
 		return fake[dev].get("stick", Vector2.ZERO)
 	var l := Vector2(Input.get_joy_axis(dev, JOY_AXIS_LEFT_X), -Input.get_joy_axis(dev, JOY_AXIS_LEFT_Y))
@@ -191,6 +244,13 @@ func _mouse_aim():
 
 
 func _action(dev: int, action: String) -> bool:
+	if dev == ANY:
+		if _action(KBM, action):
+			return true
+		for p in Input.get_connected_joypads():
+			if _action(p, action):
+				return true
+		return false
 	if fake.has(dev):
 		return fake[dev].get("buttons", {}).get(action, false)
 	var scheme: String = "kbm" if dev == KBM else "pad"

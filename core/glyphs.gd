@@ -46,7 +46,7 @@ static func limb_glyphs(slot: int) -> Array:
 	var out: Array = []
 	if slot < 0 or slot >= Players.slots.size():
 		return out
-	var scheme := "kbm" if int(Players.slots[slot].device) == Players.KBM else "pad"
+	var scheme := "kbm" if Players.effective_device(slot) == Players.KBM else "pad"
 	for i in 4:
 		var binds: Array = Players.binds[scheme].get(Players.ACTIONS[i], [{}, {}])
 		var b: Dictionary = binds[0] if not (binds[0] as Dictionary).is_empty() else binds[1]

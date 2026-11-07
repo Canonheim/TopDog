@@ -45,11 +45,17 @@ var _pad_corner: Label
 
 func _ready() -> void:
 	get_tree().auto_accept_quit = false  # the X button runs quit_game too
+	# THE PAUSE LAW: the tree pauses the WORLD and the GAME only. Main, its menus,
+	# Players and PadNav keep running, or the pause menu can't be clicked and the
+	# pause button can't unpause (0.1.2: "quit to menu doesn't work").
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_input_defaults()
 	_build_world()
+	world.process_mode = Node.PROCESS_MODE_PAUSABLE
 	game = GameScript.new()
 	game.name = "Game"
 	game.world = world
+	game.process_mode = Node.PROCESS_MODE_PAUSABLE
 	add_child(game)
 	game.announce.connect(_on_announce)
 	game.phase_changed.connect(_on_phase)
@@ -116,7 +122,7 @@ func _demo_heap() -> void:
 ## A battery/screenshot hook: two local bots on the barrel, no menus.
 func _demo() -> void:
 	Players.clear_players()
-	Players.add_player(Players.KBM, "Parker the Barrel-Hugger")
+	Players.add_player(Players.ANY, "Parker the Barrel-Hugger")
 	local_mode = true
 	game.host_start({"mode": "scramble", "timer": 60.0, "spawn": "alternate", "stage": "dock"},
 		[{"pid": 0, "name": Players.slots[0].name, "tint": Players.slots[0].tint, "peer": 1, "slot": 0}])
@@ -304,7 +310,7 @@ func _tick_hud(delta: float) -> void:
 		var cl: Climber = c
 		if cl.owner_peer == game.me() and cl.top_height() > game.line + Game.LOCK_MARGIN:
 			hint = "Above the line! Lock in: Space / A"
-	hud_hint.text = hint
+	hud_hint.text = hint.replace("Space / A", "Space / Start")
 
 
 func _tick_tags() -> void:
@@ -395,6 +401,10 @@ func show_screen(id: String) -> void:
 		if first != null:
 			first.call_deferred("grab_focus")
 	if id == "local":
+		# Play together wants one device per player: an ANY slot from Practice goes.
+		for s in range(Players.slots.size() - 1, -1, -1):
+			if int(Players.slots[s].device) == Players.ANY:
+				Players.remove_player(s)
 		_refresh_local()
 	if id == "lobby":
 		_refresh_lobby()
@@ -504,8 +514,8 @@ func _start_local() -> void:
 
 
 func _start_practice() -> void:
-	if Players.slots.is_empty():
-		Players.add_player(Players.KBM)
+	Players.clear_players()
+	Players.add_player(Players.ANY)  # keyboard, mouse or any pad, swapped at will
 	local_mode = true
 	var s := Net.settings.duplicate()
 	s.mode = "practice"
@@ -547,7 +557,7 @@ func _screen_online() -> Control:
 
 func _ensure_player() -> void:
 	if Players.slots.is_empty():
-		Players.add_player(Players.KBM, Net.my_name())
+		Players.add_player(Players.ANY, Net.my_name())
 
 
 func _fill_lobby_list(rows: Array) -> void:
@@ -691,7 +701,7 @@ func _screen_hud() -> Control:
 	var help := Label.new()
 	help.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	help.position = Vector2(32, -60)
-	help.text = "Hold a limb (LMB/RMB/A/D or LB/RB/LT/RT) and steer it. Held hands and feet stick. Esc / Start: pause."
+	help.text = "Hold a limb's button (X Y A B on a pad, A W S D on the keyboard) to lift it, steer it with the stick or mouse, let go to plant it. Start / Space: lock in. Back / Esc: pause."
 	help.add_theme_font_size_override("font_size", 20)
 	help.modulate = Color(1, 1, 1, 0.7)
 	c.add_child(help)
@@ -812,7 +822,7 @@ func _to_title(reason: String) -> void:
 
 
 func _screen_controls() -> Control:
-	var c := UiKit.panel_screen("Controls", "Hold a limb's button to drive it; it sticks to whatever it touches. You can only drive while something of yours is stuck, or a pal is holding you. Steer with the stick or the mouse. Lock in above the line!")
+	var c := UiKit.panel_screen("Controls", "Hands and feet stick to whatever they touch. Hold a limb's button to pick it up and steer it with the stick or mouse; let go to plant it. You can only move a limb while another is stuck, or a pal is holding you. Lock in above the line!")
 	var box: VBoxContainer = c.get_meta("box")
 	var grid := GridContainer.new()
 	grid.columns = 5

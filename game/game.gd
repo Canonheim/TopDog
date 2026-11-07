@@ -73,6 +73,11 @@ var _now := 0.0
 
 
 func _ready() -> void:
+	Players.device_changed.connect(func(slot: int) -> void:
+		for c in climbers.values():
+			var cl: Climber = c
+			if cl.local_slot == slot and cl.state == Climber.State.LIVE and dress:
+				cl.set_glyphs(Glyphs.limb_glyphs(slot)))
 	multiplayer.peer_disconnected.connect(_on_peer_left)
 	multiplayer.server_disconnected.connect(func(): host_left.emit())
 
@@ -259,9 +264,10 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2) -> void:
 		if bot_drivers.has(pid):
 			c.driver = bot_drivers[pid]
 		else:
-			c.driver = Drivers.LocalDriver.new(int(r.get("slot", 0)))
+			c.local_slot = int(r.get("slot", 0))
+			c.driver = Drivers.LocalDriver.new(c.local_slot)
 			if dress:
-				c.set_glyphs(Glyphs.limb_glyphs(int(r.get("slot", 0))))
+				c.set_glyphs(Glyphs.limb_glyphs(c.local_slot))
 		c.grab_made.connect(_on_grab_made)
 		c.grab_lost.connect(_on_grab_lost)
 	else:

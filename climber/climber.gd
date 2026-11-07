@@ -8,12 +8,14 @@ extends Node
 ## working angle limits; joints stretched 0.3-1.4 m under swings). The record is
 ## docs/BOOK.md "The physics call" and docs/spike/.
 ##
-## The rules it plays by:
-## - Hold a limb's button and the limb aims where the driver says (stick or mouse).
-##   It only DRIVES while you're attached: one of your own hands or feet stuck to
-##   something, or another climber holding you. Fully loose, you're limp.
-## - A held hand or foot that touches anything sticks to it (a pin joint at the end
-##   piece). Releasing the button lets go.
+## The rules it plays by (the reference game's, Parker 2026-11-07):
+## - A hand or foot that is NOT held sticks to whatever it touches, by itself, and
+##   stays stuck. Pressing its button picks it up (unsticks it); while held it aims
+##   where the driver says (stick or mouse) and cannot stick. Letting go plants it:
+##   if it's on something, it sticks right there.
+## - A held limb only DRIVES while you're attached by something else: another hand
+##   or foot stuck, or another climber holding you. Pick up your last stuck limb
+##   and you fall, holding your pose, until an unheld limb catches.
 ## - The torso is three pieces with springy left/right flex. Nothing steers it; the
 ##   limbs push on it as they drive.
 ## - freeze() turns every piece static where it is: the body joins the tower.
@@ -29,7 +31,7 @@ const LAYER_WORLD := 1
 const LAYER_LIVE := 2
 const LAYER_FROZEN := 4
 const DEPTH := 0.24  # how thick a box piece is through the plane, for contacts (m)
-const MAX_DRIVE_W := 14.0  # rad/s: the fastest a driven joint swings
+const MAX_DRIVE_W := 4.0  # rad/s: the fastest a driven joint swings (a steady reach, not a whip)
 ## The engine's hinge sign conventions, pinned by the --spike "signs" test.
 const MOTOR_SIGN := -1.0  # Jolt: a positive motor velocity spins the child CW (pinned by --spike signs)
 const LIMIT_FLIP := true  # Jolt: the hinge angle runs clockwise about +z (pinned by --spike signs)
@@ -42,6 +44,7 @@ signal grab_lost(climber: Climber, limb: int)
 
 var state := State.LIVE
 var climber_id := 0
+var local_slot := -1  # the local Players slot driving this climber, or -1
 var owner_peer := 1
 var player_id := 0
 var display_name := "Climber"
@@ -161,6 +164,8 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 		body.collision_mask = LAYER_WORLD | LAYER_LIVE | LAYER_FROZEN
 		if _is_end(pname):
 			body.continuous_cd = true
+			body.contact_monitor = true
+			body.max_contacts_reported = 6
 		body.set_meta("climber", self)
 		body.set_meta("piece", pname)
 		body.add_child(col)
@@ -184,7 +189,27 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 			bodies[names[i]].add_collision_exception_with(bodies[names[j]])
 	_build_joints(feet)
 	_build_limbs()
+	_arms_down()
 	set_tint(tint)
+
+
+## The file's T-pose is the build pose; a climber STANDS with its arms at its sides
+## (0.46 m wide, not 1.8 m), so spawns next to each other or next to the barrel
+## don't start tangled. Each arm swings 90 degrees about its shoulder, pieces and
+## joints together, before the first physics tick.
+func _arms_down() -> void:
+	for ld in Layout.LIMBS:
+		if not bool(ld.arm):
+			continue
+		var j: Dictionary = joints[ld.root]
+		var S: Vector2 = j.at
+		var turn := PI * 0.5 if ld.id == "arm_l" else -PI * 0.5  # left arm: 180 -> 270; right: 0 -> -90
+		for pname in [ld.up, ld.lo, ld.end]:
+			var b: RigidBody3D = bodies[pname]
+			var p := pos2(b)
+			var q := S + (p - S).rotated(turn)
+			b.global_transform = Transform3D(Basis(Vector3.BACK, angle_of(b) + turn), Vector3(q.x, q.y, 0.0))
+			sync_server(b)
 
 
 static func _is_end(pname: String) -> bool:
@@ -226,10 +251,24 @@ func _build_joints(feet: Vector2) -> void:
 			ieff += _piece_inertia(pn, pb.mass) + pb.mass * pos2(pb).distance_squared_to(at)
 			if kids.has(pn):
 				stack.append_array(kids[pn])
+		# And the other side: everything NOT hanging off the child, about the anchor.
+		# A stuck foot's ankle holds the BODY up, so its servo is sized by this.
+		var child_set := {}
+		var st: Array = [jd.b]
+		while not st.is_empty():
+			var pn: String = st.pop_back()
+			child_set[pn] = true
+			if kids.has(pn):
+				st.append_array(kids[pn])
+		var other := 0.0
+		for pn in bodies:
+			if not child_set.has(pn):
+				var pb: RigidBody3D = bodies[pn]
+				other += _piece_inertia(pn, pb.mass) + pb.mass * pos2(pb).distance_squared_to(at)
 		joints[jn] = {
 			"rid": rid, "a": a, "b": b, "kind": jd.kind, "at": at,
 			"lo": deg_to_rad(float(lim[0])), "hi": deg_to_rad(float(lim[1])),
-			"ieff": ieff, "local_a": xf2(a).affine_inverse() * at,
+			"ieff": ieff, "ieff_other": other, "local_a": xf2(a).affine_inverse() * at,
 		}
 
 
@@ -411,42 +450,39 @@ func stuck_count() -> int:
 func _tick_limb(i: int, delta: float) -> void:
 	var l: Dictionary = limbs[i]
 	var held: bool = driver != null and driver.held(i)
-	if not held and l.held:
-		release(i)
 	if held and not l.held:
+		# Press: pick the limb up. It won't stick while held.
+		if l.grab.is_valid():
+			release(i)
+		l.regrip = 0.0
 		l.hold = _current_rel(i)
+	elif not held and l.held:
+		l.regrip = 0.0  # release: plant it right now if it's on something
 	l.held = held
 	l.regrip = maxf(0.0, l.regrip - delta)
-	if held and not l.grab.is_valid() and l.regrip <= 0.0:
+	if not held and not l.grab.is_valid() and l.regrip <= 0.0:
 		_try_grab(i)
 
 
 func _try_grab(i: int) -> void:
 	var l: Dictionary = limbs[i]
 	var end: RigidBody3D = bodies[l.def.end]
-	var q := PhysicsShapeQueryParameters3D.new()
-	var sp := SphereShape3D.new()
-	sp.radius = l.end_r + Feel.get_k("grab_margin")
-	q.shape = sp
-	q.transform = Transform3D(Basis(), end.global_position)
-	q.collision_mask = LAYER_WORLD | LAYER_LIVE | LAYER_FROZEN
-	var ex: Array[RID] = []
-	for b in bodies.values():
-		ex.append(b.get_rid())
-	q.exclude = ex
-	var hits := end.get_world_3d().direct_space_state.intersect_shape(q, 8)
+	# The end pieces report their contacts (contact_monitor), so a stick check is
+	# a list read, not a shape query: every unheld limb checks every tick.
+	var hits := end.get_colliding_bodies()
 	if hits.is_empty():
 		return
 	# Prefer solid ground (world and tower) over a live rival, then the nearest.
 	var best: Object = null
 	var best_score := INF
-	for h in hits:
-		var o: Object = h.collider
-		if o == null:
+	for o in hits:
+		if o == null or o == end:
 			continue
 		var score := 0.0
 		if o is RigidBody3D and o.has_meta("climber"):
 			var oc: Climber = o.get_meta("climber")
+			if oc == self:
+				continue
 			if oc.state != State.FROZEN:
 				score += 1000.0
 		if o is Node3D:
@@ -468,7 +504,12 @@ func attach(i: int, other: Object) -> void:
 	var at := end.global_position
 	var rid := PhysicsServer3D.joint_create()
 	PhysicsServer3D.joint_make_pin(rid, end.get_rid(), Vector3.ZERO, ob.get_rid(), ob.global_transform.affine_inverse() * at)
-	PhysicsServer3D.joint_disable_collisions_between_bodies(rid, true)  # the end and what it holds never push apart
+	# The end and what it holds must not push apart while stuck. NOT the joint's own
+	# disable-collisions flag: on Jolt that exception outlived the freed joint, so a
+	# released foot never touched the deck again (0.1.3). An explicit exception,
+	# removed on release, is reversible.
+	PhysicsServer3D.joint_disable_collisions_between_bodies(rid, false)
+	end.add_collision_exception_with(ob)
 	l.grab = rid
 	l.grab_other = other
 	l.grab_climber = null
@@ -489,6 +530,9 @@ func release(i: int) -> void:
 		return
 	PhysicsServer3D.free_rid(l.grab)
 	l.grab = RID()
+	var end: RigidBody3D = bodies[l.def.end]
+	if l.grab_other != null and is_instance_valid(l.grab_other) and l.grab_other is CollisionObject3D:
+		end.remove_collision_exception_with(l.grab_other)
 	var oc = l.grab_climber
 	if oc != null and is_instance_valid(oc) and oc.state != State.FROZEN:
 		oc.grabbed_by = maxi(0, oc.grabbed_by - 1)
@@ -532,7 +576,7 @@ func _tick_joints(attached: bool) -> void:
 		targets[l.def.mid] = t[1]
 		caps[l.def.root] = cap
 		caps[l.def.mid] = cap * 0.8
-	var limp := Feel.get_k("limp_friction")
+	var hold := Feel.get_k("hold_strength")
 	var spine_w := Feel.get_k("spine_spring") * 20.0
 	var neck_w := Feel.get_k("neck_spring") * 20.0
 	var end_w := Feel.get_k("wrist_spring") * 20.0
@@ -551,17 +595,31 @@ func _tick_joints(attached: bool) -> void:
 				torque = ie * neck_w * neck_w * absf(rel) + ie * neck_w
 			"end":
 				if _end_stuck(jn):
-					torque = 0.0  # a stuck hand or foot pivots freely on what it holds
+					if jn.begins_with("ankle"):
+						# THE STANCE: a planted foot's ankle holds the body upright, sized by
+						# the body's inertia about it (free, the body toppled and rocked on
+						# its pins at every arm move).
+						var io: float = j.ieff_other
+						want_w = -end_w * rel
+						torque = io * end_w * end_w * absf(rel) + io * end_w * 0.5
+					else:
+						torque = 0.0  # a stuck hand pivots freely on what it holds
 				else:
 					want_w = -end_w * rel
 					torque = ie * end_w * end_w * absf(rel) + ie * end_w * 0.5
 			_:
 				if targets.has(jn):
-					var err := wrapf(float(targets[jn]) - rel, -PI, PI)
+					# Plain difference, never wrapped: a limited hinge isn't a circle.
+					# (Wrapped, a hanging arm at +100 deg aimed at -84 deg drove the
+					# "short" way through 180 and pinned itself on the +170 limit.)
+					var err := float(targets[jn]) - rel
 					want_w = clampf(drive_w * err, -MAX_DRIVE_W, MAX_DRIVE_W)
 					torque = caps[jn]
 				else:
-					torque = limp * total_mass * g * 0.5
+					# Not held: the joint holds its angle (the reference game's stiff,
+					# posed bodies). Loose limbs that dangled made the legs buckle the
+					# moment a reaching hand pushed on anything.
+					torque = hold * total_mass * g * 0.7
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, want_w * MOTOR_SIGN)
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, torque * dt)
 

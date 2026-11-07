@@ -147,6 +147,33 @@ Parker: "quit is not working, and also the controller is still not working, also
 
 **Music, take two** (`tools/music/theme.py`): a swinging jazz loop in Bb at 126 bpm, 32 bars AABA, 61 s, seamless. Walking acoustic bass, brush kit, tine electric piano comping Charleston figures on rootless voicings, soft jazz guitar on all four, vibraphone on the tune, muted trumpet taking the second chorus, flute on the bridge. Triplet swing. Needs Parker's ear.
 
+## 0.1.3 (Parker, 2026-11-07): the reference game's limb rule, its controls, device swapping, a pause that works
+
+Parker: "quit to menu still doesn't work and the controller still doesn't work at all. Also the controls are not the same as MYF and for some reason you cannot control a limb unless it is attached. Look at how MYF does it. You should be able to control a limb as long as any limb is attached to something. It unattached and cannot stick once you are holding it down. I am mostly trying the practice mode." Then: "make the game detect your input so you can swap between keyboard and mouse and controller whenever you want and the glyphs change correctly too."
+
+**THE LIMB RULE, the reference game's way** (`Climber._tick_limb`). I had it backwards (hold to stick). Now:
+- A hand or foot that is **not held sticks to whatever it touches, by itself**, and stays stuck. You spawn standing because your feet stick to the deck.
+- **Pressing** a limb's button **picks it up**: it unsticks, and while held it aims where the stick or mouse says and cannot stick.
+- **Letting go plants it**: if it's on something it sticks right there; if not, it sticks on its next touch.
+- A held limb **drives only while something else of yours is stuck** (or a pal holds you). Pick up your last stuck limb and you fall, limp, until an unheld limb catches something.
+- So climbing is: reach a free limb to a hold, let go, move the next one. The body moves by the reaction of the limb motors against your stuck limbs. No limb "pulls" while stuck.
+
+**The controls, the reference game's layout:** a face button per limb, laid out like the body (X left hand, Y right hand, A left foot, B right foot), either stick aims, **Start locks in**, Back pauses. The keyboard mirrors the diamond on A W S D, the mouse aims, and the mouse buttons double as the hands. Space or Enter locks in, Esc pauses. All rebindable. The source for "face button per limb, stick aims" is a review of the game; which button is which limb is my reading of the diamond onto the body, and Parker can rebind or tell me.
+
+**Device swapping** (`Players.ANY`): Practice, the demo and a lone local player online use the ANY slot: whatever device spoke last drives (keyboard and mouse, or any pad), `Players.last_device` tracks it from raw input events, and `device_changed` makes the Game re-set the climber's glyphs, so the hands and feet show X Y A B or A W S D as you switch. Play together (this PC) still gives each joined device its own player. **This is also why the controller did nothing in Practice before:** Practice hard-wired the player to the keyboard.
+
+**Quit to menu, fixed.** `get_tree().paused = true` paused the pause menu too: the menu's buttons took no clicks and the pause button couldn't unpause (Players was paused). THE PAUSE LAW: Main, its menus, Players, PadNav and Net run always; only the World and the Game pause.
+
+**Batteries** rewritten for the new rule: `--grab` (stand, pick up, can't stick while held, plant on release), `--spike limp` (picking up the last stuck limb drops you), `--spike fling` (the anchor hand is never held; the other three swing), `--climb` (stand by the barrel, hand to the edge, let go, both feet up the side: COM rises with three limbs stuck). `--pullup` is gone: a stuck limb can't be driven any more.
+
+**Three physics fixes the new rule forced out:**
+- **THE HINGE ERROR IS NEVER WRAPPED.** A limited hinge isn't a circle. The drive's error used `wrapf`, so a hanging arm at +100° aimed at -84° drove the "short" way through 180° and pinned itself on the +170° limit. Plain difference now. (This is why a reaching hand swung the wrong way.)
+- **THE STANCE.** A planted foot's ankle is a servo sized by the body's inertia about it (`ieff_other`); a stuck hand's wrist stays a free pivot. Free ankles let the body topple and rock on its pins at every arm move.
+- **STIFF, POSED BODIES.** Joints you're not moving hold their angle with real torque (Feel `hold_strength`, 0.8 body-weights at reach), as the reference game's climbers do. Loose limbs (`limp_friction`, 5 N·m) made the legs buckle the moment a reaching hand pushed on the barrel. A falling climber now falls holding its pose.
+- Also: the limb drive is a steady reach (6 rad/s cap, `drive_freq` 8), not a whip; the stick check reads the end pieces' contacts (`contact_monitor`) instead of a shape query each tick; the grab's collision exception is explicit and removed on release (the joint's own flag outlived the freed joint on Jolt, so a released foot never touched the deck again).
+
+**Still unknown: the pad in the menus.** Parker hasn't reported the readout line yet. `builds\TopYourPals (no Steam).bat` launches with Steam off for the one experiment that tells Steam apart from the game.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

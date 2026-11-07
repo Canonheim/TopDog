@@ -8,18 +8,27 @@ played on one plane. Godot 4.7.2, Jolt physics, GodotSteam.
 
 - **Play:** open the project in Godot 4.7.2 and press Play, or run
   `builds\TopYourPals.exe` after an export.
-- **Controls (rebindable in Controls):**
+- **How it plays:** hands and feet stick to whatever they touch, by themselves.
+  Hold a limb's button to pick it up and steer it with the stick or the mouse;
+  let go to plant it. You can only move a limb while another is stuck (or a pal
+  is holding you). Pick up your last stuck limb and you fall.
+- **Controls (rebindable in Controls):** a face button per limb, laid out like
+  the body.
 
-  | Action | Keyboard + mouse | Pad |
+  | Action | Pad | Keyboard + mouse |
   |---|---|---|
-  | Left hand | Left mouse (or Q) | LB |
-  | Right hand | Right mouse (or E) | RB |
-  | Left foot | A (or Z) | LT |
-  | Right foot | D (or C) | RT |
-  | Steer the held limbs | mouse | either stick |
-  | Lock in | Space | A |
-  | Pause | Esc | Start |
+  | Left hand | X | A (or left mouse) |
+  | Right hand | Y | W (or right mouse) |
+  | Left foot | A | S |
+  | Right foot | B | D |
+  | Steer the held limb | either stick | mouse |
+  | Lock in | Start | Space / Enter |
+  | Pause | Back | Esc |
 
+- **Swap devices any time.** In Practice and online, the one local player is
+  "any device": whatever you touch last drives, and the glyphs on the hands and
+  feet switch with it. Play together (this PC) gives each joined device its own
+  player.
 - Each hand and foot wears its button (the reference game's idea): dim when
   loose, bright while held, green when stuck.
 - The bottom line of every menu shows which pads the game sees and the last
@@ -40,7 +49,7 @@ climbers; more than one can play from the same PC.
 ## Batteries (headless tests)
 
 ```
-Godot_v4.7.2-stable_win64_console.exe --headless --path . res://tests/battery.tscn -- --no-steam --spike --grab --frozen --climb --pullup --tower --scramble --devices --net
+Godot_v4.7.2-stable_win64_console.exe --headless --path . res://tests/battery.tscn -- --no-steam --spike --grab --frozen --climb --tower --scramble --devices --net
 Godot_v4.7.2-stable_win64_console.exe --headless --path . res://tests/lint.tscn -- --no-steam
 ```
 
