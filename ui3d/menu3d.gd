@@ -293,12 +293,6 @@ func _process(delta: float) -> void:
 			continue
 		var n: Node3D = it.node
 		var want := 1.12 if i == focus else 1.0
-		# The pug crest crowns the focused belt only (the kit's rule: shown on every
-		# belt, the crests overlapped the labels above them).
-		if not it.has("crest"):
-			it["crest"] = n.find_child("belt_crest", true, false)
-		if it.crest != null:
-			(it.crest as Node3D).visible = i == focus
 		if _open_t > 0.6:
 			n.scale = n.scale.lerp(Vector3.ONE * want, 1.0 - exp(-delta * 12.0))
 		n.rotation.z = (sin(t * 5.0 + i) * 0.035) if i == focus else lerpf(n.rotation.z, sin(t * 1.3 + i * 0.7) * 0.01, 0.1)
