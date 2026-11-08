@@ -35,6 +35,25 @@ const CLOUDS := {"cloud_a": 8.3, "cloud_b": 10.45, "cloud_c": 4.25, "cloud_d": 9
 static var _font: Font = null
 
 
+## Tint one named part of a kit model (a near-white part on the atlas): its own copy
+## of the cel material with `color` set, so the shared material stays untouched.
+static func tint_part(root: Node, part: String, c: Color) -> void:
+	var n := root.find_child(part, true, false)
+	if n == null or not (n is MeshInstance3D):
+		return
+	var mi := n as MeshInstance3D
+	for si in mi.mesh.get_surface_count():
+		var m := mi.get_active_material(si)
+		if m is ShaderMaterial:
+			var d: ShaderMaterial = m.duplicate()
+			d.set_shader_parameter("color", c)
+			mi.set_surface_override_material(si, d)
+
+
+static func kit_model_exists(name: String) -> bool:
+	return ResourceLoader.exists(KIT_DIR + name + ".glb")
+
+
 ## A kit model if it's been delivered, else null.
 static func kit_model(name: String) -> Node3D:
 	var p := KIT_DIR + name + ".glb"
@@ -163,6 +182,10 @@ static func title_logo() -> Node3D:
 static func mask_icon(face := RED, trim := GOLD) -> Node3D:
 	var k := kit_model("mask_icon")
 	if k != null:
+		# Built ~0.71 x 0.49 m, origin the head's centre; the hood is near-white
+		# so it takes the player's colour. (The placeholder is ~0.64 tall: match it.)
+		tint_part(k, "mask_hood", face)
+		k.scale = Vector3.ONE * 1.1
 		return k
 	var root := Node3D.new()
 	var head := ball(0.32, face)
@@ -270,6 +293,12 @@ static func belt_button(width := 2.2) -> Node3D:
 static func card_frame(face := CREAM, band := RED) -> Node3D:
 	var k := kit_model("card_frame")
 	if k != null:
+		# Built 1.2 x 1.6 m body (origin its centre), a 0.45 m mask crest above, ribbon
+		# tails 0.2 m out. The band (and its tails) and the device strip are
+		# near-white: they take the player's colour.
+		tint_part(k, "card_band", band)
+		tint_part(k, "card_strip", band.darkened(0.15))
+		k.set_meta("kit", true)
 		return k
 	var root := Node3D.new()
 	root.add_child(box(Vector3(1.3, 1.7, 0.05), INK, Vector3(0, 0, -0.03)))

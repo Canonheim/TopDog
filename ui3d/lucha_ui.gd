@@ -20,6 +20,8 @@ extends Node3D
 const MENU_DIST := 6.0  # in front of the ring's apron at every camera distance
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
 const OWNED := ["title", "local", "pause", "results"]
+const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
+const CARD_DY := 2.3  # and 2.05 m with its mask crest
 
 var main: Node
 var cam: Camera3D
@@ -185,13 +187,13 @@ func _build_menus() -> void:
 	menus.title = t
 	# PLAY TOGETHER
 	var l := _menu()
-	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.2, 0))
+	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
 	l.column_x = -2.4
 	l.top_y = 1.25
 	var mode_ids := ["tower", "scramble"]
 	l.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "tower")))), func(i): Net.settings.mode = mode_ids[i])
 	l.add_choice("CLOCK", ["40 S", "1 MIN", "1:30"], maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0)))), func(i): Net.settings.timer = Modes.TIMERS[i])
-	l.add_choice("SPAWNS", ["ALTERNATE", "LEFT", "RIGHT", "RANDOM"], maxi(0, Modes.SPAWNS.find(str(Net.settings.get("spawn", "alternate")))), func(i): Net.settings.spawn = Modes.SPAWNS[i])
+	l.add_choice("SPAWN", ["SWAP", "LEFT", "RIGHT", "RANDOM"], maxi(0, Modes.SPAWNS.find(str(Net.settings.get("spawn", "alternate")))), func(i): Net.settings.spawn = Modes.SPAWNS[i])
 	l.add_button("FIGHT!", main._start_local)
 	l.add_button("REMOVE LAST", func():
 		if not Players.slots.is_empty():
@@ -232,7 +234,7 @@ func _build_menus() -> void:
 	# Player cards (Play together) and the podium (results) hang in the same frame.
 	_cards = Node3D.new()
 	cam.add_child(_cards)
-	_cards.position = Vector3(0.6, 0.9, -MENU_DIST)
+	_cards.position = Vector3(0.2, 0.75, -MENU_DIST)
 	_cards.scale = Vector3.ONE * UI_SCALE
 	_cards.visible = false
 	_podium = Node3D.new()
@@ -261,21 +263,21 @@ func _refresh_cards() -> void:
 	for s in mini(Players.slots.size(), 8):
 		var slot: Dictionary = Players.slots[s]
 		var card := LuchaKit.card_frame(LuchaKit.CREAM, slot.tint)
-		card.position = Vector3((s % 4) * 1.45, -(s / 4) * 1.85, 0)
+		card.position = Vector3((s % 4) * CARD_DX, -(s / 4) * CARD_DY, 0)
 		card.rotation.z = sin(s * 1.7) * 0.05
 		var num := LuchaKit.poster_text("P%d" % (s + 1), 0.24, LuchaKit.CREAM, LuchaKit.INK, 0.04)
-		num.position = Vector3(0, 0.63, 0.06)
+		num.position = Vector3(0, 0.56, 0.06)  # on the band (y 0.37..0.71)
 		card.add_child(num)
 		var m := LuchaKit.mask_icon(slot.tint, LuchaKit.GOLD)
 		m.scale = Vector3.ONE * 0.75
-		m.position = Vector3(0, 0.12, 0.08)
+		m.position = Vector3(0, -0.04, 0.12)  # on the panel (y -0.50..0.25)
 		card.add_child(m)
 		var nm := str(slot.name).split(" the ")
 		var who := LuchaKit.poster_text(nm[0].to_upper(), 0.13, LuchaKit.INK, LuchaKit.CREAM, 0.02)
-		who.position = Vector3(0, -0.42, 0.05)
+		who.position = Vector3(0, -0.4, 0.06)
 		card.add_child(who)
 		var dev := LuchaKit.poster_text(Players.device_label(int(slot.device)).to_upper(), 0.07, LuchaKit.CREAM, LuchaKit.INK, 0.015)
-		dev.position = Vector3(0, -0.74, 0.06)
+		dev.position = Vector3(0, -0.63, 0.06)  # on the strip (y -0.71..-0.55)
 		card.add_child(dev)
 		_cards.add_child(card)
 		card.scale = Vector3.ONE * 0.01
@@ -283,7 +285,7 @@ func _refresh_cards() -> void:
 	if Players.slots.size() < 8:
 		var s := Players.slots.size()
 		var empty := LuchaKit.card_frame(Color(0.9, 0.86, 0.78), LuchaKit.INK)
-		empty.position = Vector3((s % 4) * 1.45, -(s / 4) * 1.85, 0)
+		empty.position = Vector3((s % 4) * CARD_DX, -(s / 4) * CARD_DY, 0)
 		var join := LuchaKit.poster_text("PRESS A\nOR SPACE", 0.12, LuchaKit.RED, LuchaKit.CREAM, 0.02)
 		join.position = Vector3(0, 0.05, 0.05)
 		empty.add_child(join)
@@ -341,7 +343,7 @@ func _build_hud() -> void:
 	_info.position = Vector3(-5.6, 2.55, 0)
 	_hud.add_child(_info)
 	_clock_text = Node3D.new()
-	_clock_text.position = Vector3(0, 2.25, 0.12)
+	_clock_text.position = Vector3(0, 2.25, 0.075)  # just proud of the kit's face (z 0.06)
 	_hud.add_child(_clock_text)
 	_banner = Node3D.new()
 	_banner.position = Vector3(0, 1.2, 0.3)
@@ -480,8 +482,9 @@ func _process(delta: float) -> void:
 			for ch in _clock_text.get_children():
 				ch.queue_free()
 			if v >= 0:
-				var col := LuchaKit.RED if v <= 10 else LuchaKit.GOLD
-				var num := LuchaKit.text3d(str(v), 0.42, col, 0.06)
+				var on_kit := LuchaKit.kit_model_exists("clock_buckle")
+				var col := LuchaKit.RED if v <= 10 else (LuchaKit.INK if on_kit else LuchaKit.GOLD)
+				var num := LuchaKit.text3d(str(v), 0.34 if on_kit else 0.42, col, 0.03)
 				_clock_text.add_child(num)
 				if v <= 10:
 					_clock_text.scale = Vector3.ONE * 1.35

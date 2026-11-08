@@ -99,7 +99,7 @@ func _relabel(i: int) -> void:
 		ch.queue_free()
 	var s: String = it.label
 	if it.kind == "choice":
-		s = "<  %s: %s  >" % [it.label, str(it.options[it.index])]
+		s = "%s  %s" % [it.label, str(it.options[it.index])]  # left / right flips it; the stars on the belt say so
 	# Fit the words to the belt's label face (the kit's face, or the placeholder plate).
 	var belt: Node3D = it.belt
 	var face_w: float = belt.get_meta("face_w", BELT_W * 0.92)
