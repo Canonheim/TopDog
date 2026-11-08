@@ -308,6 +308,15 @@ Parker: "Golemheim has a shoulder offset to make the shoulders wider. Add that i
 - The shift is applied wherever rest positions are read: piece centres, mesh placement, joint anchors, limb lengths, `end_point`, the joint-gap check. Both are F1 knobs and take effect on the next spawn. Every machine must use the same values, since puppets and frozen bodies rebuild from the layout.
 - Checked: the full battery passes.
 
+## 0.3.9 (Parker, 2026-11-07): a higher first line, one pull budget, power without speed
+
+Parker: "make the first line slightly higher up. Right now I can reach straight up at spawn and touch it. Also make it so controlling more than one limb does not give you more force, and increase individual torque of a limb so it is more powerful but not faster. One controlled limb should be able to move the whole body."
+- **The first line** is `Stage.first_line` = barrel top + `FIRST_LINE_ABOVE` (0.45 m): 2.47 m instead of 2.02. It's the line before the tower passes it, and `tower_top()` starts from it.
+- **One budget:** `drag_strength` (now 2.4 body-weights at full gravity) is shared among the held limbs, so two held limbs get half each. `--feel` checks that the summed pull never exceeds one cap.
+- **Power, not speed:** the cap went 1.5 → 2.4 and `drag_stiffness` 140 → 240. The new Feel `drag_max_speed` (12.5 m/s, today's peak was 12.6) trims the push along the hand's motion so a tick can't carry it faster. The hand is light: a full pull adds about 10 m/s per tick, so the trim looks one tick ahead.
+- **One held limb moves the body:** the out-of-reach lean went from 0.41 to 0.51 m (`--feel` now asks for 0.30).
+- `GAME_VERSION` 0.3.9. Full battery passes.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

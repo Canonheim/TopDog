@@ -659,6 +659,10 @@ func release_all() -> void:
 ## THE JOINTS: friction everywhere (a motor holding still with a capped torque, so a
 ## pose holds until something pushes harder), soft springs in the spine and neck.
 ## Then THE DRAG on every held hand or foot, while attached.
+## The summed drag force this tick (N), for the batteries: never over one budget.
+var _drag_total := 0.0
+
+
 func _tick_joints(attached: bool) -> void:
 	var g := 9.8 * Feel.get_k("gravity_scale")
 	var dt := 1.0 / float(Engine.physics_ticks_per_second)
@@ -704,11 +708,19 @@ func _tick_joints(attached: bool) -> void:
 				torque = f_held if held_joints.has(jn) else f_root
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, want_w * MOTOR_SIGN)
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, torque * dt)
+	_drag_total = 0.0
 	if not attached:
 		return
 	# The cap is in body-weights at FULL gravity, so turning gravity down (Feel
 	# gravity_scale) never weakens the hands (Parker 11-07: more force, less gravity).
-	var cap := Feel.get_k("drag_strength") * total_mass * 9.8
+	# ONE BUDGET (Parker 11-07: "controlling more than one limb does not give you
+	# more force"): it's shared out among the limbs you're holding.
+	var n_held := 0
+	for l in limbs:
+		if l.held:
+			n_held += 1
+	var cap := Feel.get_k("drag_strength") * total_mass * 9.8 / float(maxi(1, n_held))
+	var vmax := Feel.get_k("drag_max_speed")
 	var k := Feel.get_k("drag_stiffness") * total_mass
 	var c := Feel.get_k("drag_damping") * total_mass
 	for i in limbs.size():
@@ -720,6 +732,17 @@ func _tick_joints(attached: bool) -> void:
 		var p := pos2(end)
 		var v := Vector2(end.linear_velocity.x, end.linear_velocity.y)
 		var f := ((target - p) * k - v * c).limit_length(cap)
+		# More powerful, not faster: the push along the hand's motion is trimmed so
+		# this tick can't carry it past drag_max_speed (the hand is light: a full
+		# pull adds ~10 m/s in one tick). It can always brake and steer.
+		var sp := v.length()
+		if sp > 0.001:
+			var dir := v / sp
+			var along := f.dot(dir)
+			var room := maxf(0.0, (vmax - sp) * end.mass / dt)
+			if along > room:
+				f -= dir * (along - room)
+		_drag_total += f.length()
 		end.apply_central_force(Vector3(f.x, f.y, 0.0))
 
 

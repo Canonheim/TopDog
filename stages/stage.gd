@@ -25,6 +25,11 @@ const BARREL_PROFILE := [
 
 var row: Dictionary
 var barrel_top := 0.0
+## THE FIRST LINE: the line before anyone is in the tower sits this far above the
+## barrel's top, out of a standing climber's reach (Parker 11-07: "I can reach
+## straight up at spawn and touch it").
+const FIRST_LINE_ABOVE := 0.45
+var first_line := 0.0
 var barrel_half := 0.0
 var bodies: Array = []
 
@@ -47,6 +52,7 @@ func build(world: Node3D, dress := true) -> void:
 		pts.append(Vector2(p.x * bs, p.y * bs))
 	_static_poly(world, pts, 0.9, 0.6)
 	barrel_top = BARREL_PROFILE[-1].y * bs
+	first_line = barrel_top + FIRST_LINE_ABOVE
 	barrel_half = BARREL_PROFILE[2].x * bs
 	if dress:
 		if str(row.get("dress", "dock")) == "plaza":

@@ -118,7 +118,7 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	if stage == null:
 		stage = Stage.new(str(settings.get("stage", "dock")))
 		stage.build(world, dress)
-	line = stage.barrel_top
+	line = stage.first_line
 	turn_order = roster.map(func(r): return int(r.pid))
 	turn_i = -1
 	round_n = 0
@@ -184,7 +184,7 @@ func _next() -> void:
 		round_n += 1
 		locked.clear()
 		_round_fail_tops.clear()
-		_rpc_phase.rpc("round", float(settings.get("timer", 60.0)), line if round_n > 1 else stage.barrel_top, round_n, -1)
+		_rpc_phase.rpc("round", float(settings.get("timer", 60.0)), line if round_n > 1 else stage.first_line, round_n, -1)
 		var n := 0
 		for pid in still:
 			_spawn(pid, n)
@@ -539,7 +539,7 @@ func alive_pids() -> Array:
 
 
 func tower_top() -> float:
-	var top := stage.barrel_top if stage != null else 0.0
+	var top := stage.first_line if stage != null else 0.0  # the first line until the tower passes it
 	for cid in tower:
 		if climbers.has(cid):
 			top = maxf(top, climbers[cid].top_height())

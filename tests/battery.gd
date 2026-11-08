@@ -493,6 +493,7 @@ func lift_and_lock(g: Game, pid: int, above := 0.4) -> Climber:
 
 func _run_tower() -> void:
 	var g := make_game("tower", 3, 3.0)
+	t("tower: the first line is out of a standing reach (barrel top + 0.45)", absf(g.line - (g.stage.barrel_top + Stage.FIRST_LINE_ABOVE)) < 0.001 and g.tower_top() >= g.line - 0.001, "line %.2f, barrel %.2f" % [g.line, g.stage.barrel_top])
 	var plan := {0: [true, true, true], 1: [true, false], 2: [false]}  # per pid, per turn: lock above?
 	var turns := {0: 0, 1: 0, 2: 0}
 	var line_before := 0.0
@@ -794,6 +795,9 @@ func _run_bend() -> void:
 ## and its hand jumps to the cursor, the arm straightens toward it and the body
 ## leans after it; out of reach the body leans hard but the feet hold; let go and
 ## the arm keeps its pose; a foot does the same; loose in the air nothing pulls.
+var _feel_peak_hand := 0.0
+
+
 func _run_feel() -> void:
 	ground()
 	var c := spawn(Vector2(0, 0.05))
@@ -806,7 +810,13 @@ func _run_feel() -> void:
 	var reach: float = c.limbs[0].l1 + c.limbs[0].l2
 	var goal := S + Vector2(-0.45, 0.35)
 	d.point_limb(0, true, goal)
-	await seconds(0.6)
+	var peak := 0.0
+	for k in int(0.6 * Engine.physics_ticks_per_second):
+		await get_tree().physics_frame
+		peak = maxf(peak, c.bodies[c.limbs[0].def.end].linear_velocity.length())
+	_feel_peak_hand = peak
+	print("INFO feel: peak held-hand speed %.2f m/s" % peak)
+	t("feel: power, not speed: a held hand never outruns drag_max_speed", peak < Feel.get_k("drag_max_speed") + 1.0, "peak %.2f m/s" % peak)
 	var miss := c.limb_end(0).distance_to(goal)
 	t("feel: a held hand jumps to the cursor (within 12 cm in 0.6 s)", miss < 0.12, "%.3f m off" % miss)
 	t("feel: the feet stay stuck while you reach", c.limbs[2].grab.is_valid() and c.limbs[3].grab.is_valid())
@@ -816,6 +826,7 @@ func _run_feel() -> void:
 	await seconds(1.0)
 	var lean := com0.x - c.centre_of_mass().x
 	t("feel: out of reach, the body leans after the hand (COM 10 cm or more toward it)", lean > 0.10, "%.2f m" % lean)
+	t("feel: one held limb moves the whole body (COM 30 cm or more)", lean > 0.30, "%.2f m" % lean)
 	t("feel: out of reach, the feet still hold (no flying)", c.limbs[2].grab.is_valid() and c.limbs[3].grab.is_valid())
 	# 3. Let go: the arm keeps its pose.
 	var hand_rel := c.limb_end(0) - c.limb_root(0)
@@ -824,6 +835,15 @@ func _run_feel() -> void:
 	var drift := (c.limb_end(0) - c.limb_root(0)).distance_to(hand_rel)
 	t("feel: let go, and the arm holds its new pose (hand drifts under 25 cm)", drift < 0.25, "%.3f m" % drift)
 	t("feel: after the big lean the body is still up (head top over 1.3 m)", c.piece_top("head") > 1.3, "%.2f" % c.piece_top("head"))
+	# 3b. Two held limbs share ONE budget: holding more never pulls harder.
+	d.point_limb(0, true, c.limb_root(0) + Vector2(-2.5, 1.5))
+	d.point_limb(1, true, c.limb_root(1) + Vector2(-2.5, 1.5))
+	var worst_total := 0.0
+	for k in 30:
+		await get_tree().physics_frame
+		worst_total = maxf(worst_total, c._drag_total)
+	var budget: float = Feel.get_k("drag_strength") * c.total_mass * 9.8
+	t("feel: two held limbs share one pull budget (total under one limb's cap)", worst_total > 0.0 and worst_total <= budget * 1.001, "%.0f of %.0f N" % [worst_total, budget])
 	# 4. A foot, on a fresh climber: lifts off and follows the cursor; the other foot stays.
 	d.clear()
 	c = spawn(Vector2(-3.0, 0.05))
