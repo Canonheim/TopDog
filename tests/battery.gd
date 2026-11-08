@@ -866,6 +866,39 @@ func _run_feel() -> void:
 	t("feel: the standing knee buckles sideways under the lean (past 10 deg)", maxf(absf(lo), absf(hi)) > 10.0, "%.0f .. %.0f deg" % [lo, hi])
 	d.clear()
 	await seconds(0.5)
+	# 4b. Pull yourself up with ONE limb (Parker 11-07: "I am having trouble moving
+	# myself upwards with just a limb"): hang by the left hand from a bar, then
+	# drag the right hand straight up, out of reach. The body must rise.
+	var hc := spawn(Vector2(-6.0, 3.0))
+	var hd: Drivers.ScriptDriver = hc.driver
+	var hbar := bar_at(hc.limb_end(0))
+	hc.attach(0, hbar)
+	await seconds(2.0)
+	var y0 := hc.centre_of_mass().y
+	var rise := 0.0
+	for k in int(1.2 * Engine.physics_ticks_per_second):
+		hd.point_limb(1, true, hc.limb_root(1) + Vector2(0.0, 3.0))
+		await get_tree().physics_frame
+		rise = maxf(rise, hc.centre_of_mass().y - y0)
+	print("INFO feel: one-hand pull-up rise %.2f m" % rise)
+	t("feel: one held hand pulls the hanging body up (COM rises 25 cm or more)", rise > 0.25, "%.2f m" % rise)
+	hd.clear()
+	await seconds(0.3)
+	# ... and with a FOOT: hang by the left hand, drag the right foot up, out of reach.
+	var fc := spawn(Vector2(-9.0, 3.0))
+	var fd: Drivers.ScriptDriver = fc.driver
+	fc.attach(0, bar_at(fc.limb_end(0)))
+	await seconds(2.0)
+	var fy0 := fc.centre_of_mass().y
+	var frise := 0.0
+	for k in int(1.2 * Engine.physics_ticks_per_second):
+		fd.point_limb(3, true, fc.limb_root(3) + Vector2(0.0, 3.0))
+		await get_tree().physics_frame
+		frise = maxf(frise, fc.centre_of_mass().y - fy0)
+	print("INFO feel: one-foot pull-up rise %.2f m" % frise)
+	t("feel: one held foot lifts the hanging body (COM rises 15 cm or more)", frise > 0.15, "%.2f m" % frise)
+	fd.clear()
+	await seconds(0.3)
 	# 5. Loose in the air, a held limb isn't pulled anywhere.
 	var air := spawn(Vector2(4.0, 6.0))
 	var ad: Drivers.ScriptDriver = air.driver

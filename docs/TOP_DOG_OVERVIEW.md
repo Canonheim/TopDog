@@ -44,8 +44,9 @@ names, characters, music, sounds, text or levels.
 Holding a limb **pulls its hand or foot toward the target** with a strong, capped elastic force, and the body
 follows through stiff, bendy joints.
 
-- **One budget:** the cap (`drag_strength`, 2.4 body-weights at full gravity) is **shared among the held
+- **One budget:** the cap (`drag_strength`, 3.5 body-weights at full gravity) is **shared among the held
   limbs**, so holding more limbs never pulls harder. One held limb gets all of it and can drag the whole body.
+- **Out of reach = full power:** a target past the limb's reach from its shoulder or hip pulls at the full cap.
 - **Power, not speed:** a held hand or foot is never pushed faster than `drag_max_speed` (12.5 m/s). The trim
   looks one physics tick ahead, because the hand is light.
 - **Lower gravity:** `gravity_scale` 0.75. The pull is measured at full gravity, so lowering gravity never
@@ -84,6 +85,11 @@ last drives it. F1 opens the live **feel panel**, which shows every physics numb
 - **Practice:** climb alone. Nobody is ever out, and your best height is the score.
 - **Settings:** clock of 40 s, 1 min or 1 min 30; spawn side alternating, left, right or random; stage (the
   Plaza Ring).
+
+### The camera
+
+In play it follows the live climbers, close (a climber fills about half the screen), not the whole tower.
+The line comes into view as you climb toward it. In menus and between turns it frames the tower top.
 
 ### Local and online
 

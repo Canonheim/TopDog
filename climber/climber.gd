@@ -732,6 +732,12 @@ func _tick_joints(attached: bool) -> void:
 		var p := pos2(end)
 		var v := Vector2(end.linear_velocity.x, end.linear_velocity.y)
 		var f := ((target - p) * k - v * c).limit_length(cap)
+		# OUT OF REACH = FULL POWER (Parker 11-07: "I am having trouble moving myself
+		# upwards with just a limb"): a target past the limb's reach from its root is
+		# a pull on the whole body, so the limb pulls at its full cap toward it, not
+		# at whatever the short spring stretch gives.
+		if limb_root(i).distance_to(target) > float(l.l1 + l.l2) and p.distance_to(target) > 0.02:
+			f = ((target - p).normalized() * cap - v * c * 0.25).limit_length(cap)
 		# More powerful, not faster: the push along the hand's motion is trimmed so
 		# this tick can't carry it past drag_max_speed (the hand is light: a full
 		# pull adds ~10 m/s in one tick). It can always brake and steer.

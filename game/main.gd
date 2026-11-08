@@ -28,6 +28,7 @@ var paused := false
 var feel_panel: Control
 var _cam_target := Vector3(0, 2, 14)
 var _cam_fov := 34.0
+const FOLLOW_HALF_H := 1.75  # in play: the camera shows at least this many metres above and below you
 var _last_tick_s := -1
 var _lobby_list: VBoxContainer
 var _online_status: Label
@@ -300,18 +301,28 @@ func _tick_camera(delta: float) -> void:
 		pts.append(Vector2(0, top))
 	var lo := Vector2(INF, INF)
 	var hi := Vector2(-INF, -INF)
-	for p in pts + [Vector2(-2.0, maxf(0.0, line_y - 3.0)), Vector2(2.0, line_y + 0.8)]:
+	# THE FOLLOW CAMERA (Parker 11-07: "it looks at you, not at you and the whole
+	# structure", as the reference game does): in play the camera frames only the
+	# live climbers, close. With nobody live (menus, between turns) it frames the
+	# tower top and the line as before, so the 3D menus riding the camera stay put.
+	var follow := not game.live_climbers().is_empty() and game.phase in ["turn", "round"]
+	var frame: Array = pts if follow else pts + [Vector2(-2.0, maxf(0.0, line_y - 3.0)), Vector2(2.0, line_y + 0.8)]
+	for p in frame:
 		lo = lo.min(p)
 		hi = hi.max(p)
-	lo -= Vector2(1.6, 1.0)
-	hi += Vector2(1.6, 1.4)
+	if follow:
+		lo -= Vector2(1.0, 1.0)
+		hi += Vector2(1.0, 1.2)
+	else:
+		lo -= Vector2(1.6, 1.0)
+		hi += Vector2(1.6, 1.4)
 	var centre := (lo + hi) * 0.5
 	var aspect := 16.0 / 9.0
 	if get_viewport() != null:
 		var vs := get_viewport().get_visible_rect().size
 		aspect = vs.x / maxf(vs.y, 1.0)
 	var half_h := maxf((hi.y - lo.y) * 0.5, (hi.x - lo.x) * 0.5 / aspect)
-	half_h = maxf(half_h, 3.2)
+	half_h = maxf(half_h, FOLLOW_HALF_H if follow else 3.2)
 	var dist := half_h / tan(deg_to_rad(_cam_fov * 0.5))
 	_cam_target = Vector3(centre.x, centre.y + 0.3, dist)
 	cam.position = cam.position.lerp(_cam_target, 1.0 - exp(-delta * 2.5))

@@ -13,7 +13,7 @@ const SPEC := {
 	"shoulder_flare": [0.05, 0.0, 0.3, "Wide shoulders: arms sit this far further out than the model (m, Golemheim's flare). Rebuilds on the next spawn"],
 	"shoulder_drop": [0.05, 0.0, 0.2, "Arms sit this much lower than the model (m). Rebuilds on the next spawn"],
 	"gravity_scale": [0.75, 0.2, 2.0, "Gravity on climbers"],
-	"drag_strength": [2.4, 0.2, 6.0, "The pull budget, in body-weights at full gravity: one held limb gets it all, two share it"],
+	"drag_strength": [3.5, 0.2, 8.0, "The pull budget, in body-weights at full gravity: one held limb gets it all, two share it"],
 	"drag_stiffness": [240.0, 20.0, 600.0, "How hard the pull grows with distance (per kg of body, N/m/kg)"],
 	"drag_damping": [12.0, 0.0, 60.0, "How much the pulled hand or foot is steadied (per kg of body)"],
 	"drag_max_speed": [12.5, 2.0, 30.0, "A held hand or foot is never pushed faster than this (m/s): power without speed"],

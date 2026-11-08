@@ -317,6 +317,14 @@ Parker: "make the first line slightly higher up. Right now I can reach straight 
 - **One held limb moves the body:** the out-of-reach lean went from 0.41 to 0.51 m (`--feel` now asks for 0.30).
 - `GAME_VERSION` 0.3.9. Full battery passes.
 
+## The follow camera and full power out of reach (Parker, 2026-11-07)
+
+Parker: "the camera should match what it does in MYF, where it looks at you, not at you and the whole structure. Also increase the power of one limb, I am having trouble moving myself upwards with just a limb."
+- **The follow camera** (`main._tick_camera`): in play (turn and round phases, someone live) it frames only the live climbers, padded 1.0 m wide and 1.0 below / 1.2 above, at least `FOLLOW_HALF_H` 1.75 m half-height. A climber fills about half the screen. The line comes into view as you near it. With nobody live (menus, between turns) it frames the tower top and the line as before, so the 3D menus riding the camera are unchanged.
+- **More power:** `drag_strength` 2.4 → 3.5 body-weights (still one budget shared among held limbs, still the 12.5 m/s speed cap). A target past the limb's reach from its root now pulls at the full cap toward it, instead of the short spring stretch the stick's 1.15-reach target gave.
+- New `--feel` checks: hanging by one hand, one held hand pulls the body up (1.42 m), and one held foot lifts it (0.64 m). Both were already near those numbers before, because the limb's reach limits them. So if a climb move still fails, it's a different situation from these two (Parker to say which).
+- Full battery passes.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
