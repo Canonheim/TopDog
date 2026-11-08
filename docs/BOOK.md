@@ -304,7 +304,7 @@ Parker: "replace the default knight with this skeleton in game".
 ## The wide shoulders (Parker, 2026-11-07)
 
 Parker: "Golemheim has a shoulder offset to make the shoulders wider. Add that into this game so the shoulders are wider and a little lower."
-- `Layout.shift(name)`: every arm piece, its mesh and its shoulder, elbow and wrist joints sit Feel `shoulder_flare` (0.09 m, Golemheim's `SHOULDER_FLARE`) further out and `shoulder_drop` (0.05 m) lower than the model. The chest stays put.
+- `Layout.shift(name)`: every arm piece, its mesh and its shoulder, elbow and wrist joints sit Feel `shoulder_flare` (0.09 m, Golemheim's `SHOULDER_FLARE`) further out and `shoulder_drop` (0.05 m) lower than the model. The chest stays put. Parker then said "reduce the flair": `shoulder_flare` is 0.05.
 - The shift is applied wherever rest positions are read: piece centres, mesh placement, joint anchors, limb lengths, `end_point`, the joint-gap check. Both are F1 knobs and take effect on the next spawn. Every machine must use the same values, since puppets and frozen bodies rebuild from the layout.
 - Checked: the full battery passes.
 
