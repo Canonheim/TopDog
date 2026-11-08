@@ -16,6 +16,7 @@ const STAGES := {
 }
 ## The plaza's ground level (the ring's canvas is y = 0, its stage stands on this).
 const PLAZA_GROUND := -0.9  # the kit ring's apron drops 0.9 m to the plaza
+const CANVAS := Color("#ADA28E")  # the ring canvas: mid warm grey, so pale climbers read on it
 
 ## The barrel's profile at the plane: (half-width, height) pairs, bottom to top,
 ## at scale 1.0 (staves bulge 0.44 at the middle, 0.40 at the rims; 0.96 tall).
@@ -199,6 +200,11 @@ func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
 		# Built at the stage's size (18 x 3.42 m, canvas top at y 0, origin its
 		# centre, apron dropping 0.9 m): it goes in at scale 1.
 		root.add_child(kit)
+		# The canvas in a mid warm grey: the kit's near-white read pure white in
+		# the sun and swallowed the climber's pale legs (environment pass 11-08).
+		var canvas := kit.find_child("ring_canvas", true, false) as MeshInstance3D
+		if canvas != null:
+			canvas.material_override = CelPass.cel_material(CANVAS)
 	else:
 		var w := half * 2.0
 		# The stage block and its skirt panels, then the canvas and its rim.

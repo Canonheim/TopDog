@@ -119,30 +119,35 @@ func _build_sky() -> void:
 ## THE TOWN (the environment pass, 2026-11-08). The follow camera sits 6.7 m out
 ## and climbs with the climber, so the town has to fill the frame at every height:
 ## - the plaza row: the kit houses edge to edge at z -16 to -18, set back by turns;
-## - the bell tower (the kit's `bell_tower`, or a stand-in): the landmark at 10 to
-##   19 m, a little left of the climbing tower, so the climber keeps clear sky behind;
+## - the church at the centre back: a code facade between two of the kit's
+##   `bell_tower`s, the landmark at 10 to 19 m; the climber keeps the facade and the
+##   sky between the towers behind him (the kit's `plaza_church`, if it ever lands,
+##   replaces the whole thing);
 ## - the hill town: four terraces climbing behind the plaza with houses on each,
 ##   so rooftops pass you as you climb (to about 18 m);
 ## - land to the horizon and far ridges (the sky's dark lower half read as sea);
-## - the papel picado on poles at z -11.5, the pinata on the right-hand string.
-const PLAZA_ROW := [  # [x centre, kit house (a 4.8, b 5.2, c 3.8 wide), z]
-	[-31.95, "b", -17.2], [-26.85, "a", -16.4], [-22.25, "c", -17.8], [-17.45, "b", -16.6],
-	[-12.15, "a", -17.6], [-7.55, "c", -16.2], [-2.75, "b", -17.0], [2.6, "a", -16.4],
-	[7.2, "c", -17.6], [11.95, "b", -16.2], [17.25, "a", -17.4], [21.85, "c", -16.6],
-	[26.65, "b", -17.8], [31.75, "a", -16.6],
+## - the papel picado on poles at z -12.6: one span each side, and a string from
+##   each inner pole up to its church tower, so no string crosses the climbing
+##   column; the pinata hangs mid-span on the right, in front of a wall.
+const PLAZA_ROW := [  # [x centre, kit house (a 4.8, b 5.2, c 3.8 wide), z, height scale]
+	[-31.95, "b", -17.2, 1.04], [-26.85, "a", -16.4, 0.94], [-22.25, "c", -17.8, 1.08], [-17.45, "b", -16.6, 0.96],
+	[-12.15, "a", -17.6, 1.06], [-7.55, "c", -16.2, 0.92], [-2.75, "b", -17.0, 0.95], [2.6, "a", -16.4, 0.93],
+	[7.2, "c", -17.6, 1.05], [11.95, "b", -16.2, 0.94], [17.25, "a", -17.4, 1.08], [21.85, "c", -16.6, 0.96],
+	[26.65, "b", -17.8, 1.06], [31.75, "a", -16.6, 0.95],
 ]
 const HOUSE_W := {"a": 4.8, "b": 5.2, "c": 3.8}
 const HILL_TERRACES := [  # [front z, depth, top above the stones, half-width]
 	[-22.0, 7.0, 2.0, 38.0], [-29.0, 7.0, 4.6, 32.0], [-36.0, 7.0, 7.4, 25.0], [-43.0, 7.0, 10.4, 18.0],
 ]
-const TOWER_X := -6.5
+const CHURCH_Z := -22.6  # the church's front line, on the first terrace
+const CHURCH_CLEAR := 8.5  # no hill houses within this of x 0 on the first two terraces
 const STONE := Color("#C2A878")
 const DRY_GRASS := Color("#8E9A5C")  # lit, the cel band reads it a dry green
 const LAND := Color("#C9BE92")
 const RIDGE_NEAR := Color("#B4C9EC")  # haze blues: the far ridges sit back by colour (no fog in the look)
 const RIDGE_FAR := Color("#CCDBF3")
 const POLE_WOOD := Color("#6A4128")
-const BUNTING_Z := -11.5
+const BUNTING_Z := -12.6  # the houses' awnings reach about z -13.4
 const BUNTING_POLES := [-18.0, -6.0, 6.0, 18.0]
 
 
@@ -158,6 +163,7 @@ func _build_plaza() -> void:
 	for row in PLAZA_ROW:
 		var house := _house(str(row[1]))
 		house.position = Vector3(float(row[0]), gy, float(row[2]))
+		house.scale = Vector3(1.0, float(row[3]), 1.0)  # a little stagger in the roofline
 		plaza.add_child(house)
 	for px in [-20.2, -9.7, 9.4, 20.0]:
 		var palm := _palm()
@@ -177,8 +183,8 @@ func _build_plaza() -> void:
 		var x := -hw + 3.0 + rng.randf_range(0.0, 2.0)
 		while x < hw - 3.0:
 			var kind: String = ["a", "b", "c"][rng.randi() % 3]
-			# The bell tower's spot on the first terrace stays clear.
-			if not (k == 0 and absf(x - TOWER_X) < 4.5):
+			# The church's spot on the first two terraces stays clear.
+			if not (k < 2 and absf(x) < CHURCH_CLEAR):
 				var h := _house(kind)
 				h.position = Vector3(x, gy + top, zf - 2.7 - rng.randf_range(0.0, 0.8))
 				h.scale = Vector3.ONE * (0.92 - k * 0.04)  # a touch smaller up the hill, for depth
@@ -190,10 +196,10 @@ func _build_plaza() -> void:
 				palm.scale = Vector3.ONE * 0.85
 				plaza.add_child(palm)
 			x += float(HOUSE_W[kind]) + gap
-	# The bell tower on the first terrace.
-	var tower := _bell_tower()
-	tower.position = Vector3(TOWER_X, gy + float(HILL_TERRACES[0][2]), float(HILL_TERRACES[0][0]) - 3.2)
-	plaza.add_child(tower)
+	# The church at the centre back, on the first terrace.
+	var church := _church()
+	church.position = Vector3(0, gy + float(HILL_TERRACES[0][2]), CHURCH_Z)
+	plaza.add_child(church)
 	# Far ridges: flat cards in the haze blues, so the land meets something at the horizon.
 	for r in [[-140.0, -260.0, 300.0, 52.0, RIDGE_FAR], [120.0, -240.0, 280.0, 44.0, RIDGE_FAR], [-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR]]:
 		var w: float = r[2]
@@ -206,14 +212,22 @@ func _build_plaza() -> void:
 	# Papel picado strung between poles, a little back from the stage.
 	for px in BUNTING_POLES:
 		plaza.add_child(_bunting_pole(Vector3(px, gy, BUNTING_Z)))
-	for k in 3:
-		var b := LuchaKit.bunting(Vector3(BUNTING_POLES[k], 6.5, BUNTING_Z), Vector3(BUNTING_POLES[k + 1], 6.8, BUNTING_Z), 9, 0.9)
+	var tie_y := gy + float(HILL_TERRACES[0][2]) + 10.6  # just under the belfries
+	var strings := [
+		[Vector3(-18.0, 6.5, BUNTING_Z), Vector3(-6.0, 6.8, BUNTING_Z), 9, 0.9],
+		[Vector3(6.0, 6.8, BUNTING_Z), Vector3(18.0, 6.5, BUNTING_Z), 9, 0.9],
+		[Vector3(-6.0, 6.8, BUNTING_Z), Vector3(-CHURCH_TOWER_X, tie_y, CHURCH_Z), 7, 0.6],
+		[Vector3(6.0, 6.8, BUNTING_Z), Vector3(CHURCH_TOWER_X, tie_y, CHURCH_Z), 7, 0.6],
+	]
+	for st in strings:
+		var b := LuchaKit.bunting(st[0], st[1], st[2], st[3])
 		plaza.add_child(b)
-		if k == 2:
-			_hang_pinata(plaza, Vector3(8.0, 6.05, BUNTING_Z))  # on the right-hand string, clear of the HUD clock
 		for f in b.get_children():
 			if f.has_meta("sway"):
 				_flags.append(f)
+	# Mid-span on the right, where the string sags lowest: it hangs in front of a
+	# house wall, not on a roof ridge, and clear of the HUD clock.
+	_hang_pinata(plaza, Vector3(12.0, 5.75, BUNTING_Z))
 
 
 ## A kit plaza house (a, b or c), or a plain stand-in.
@@ -227,6 +241,45 @@ func _house(kind: String) -> Node3D:
 	house.add_child(LuchaKit.box(Vector3(w, h, 4.6), Color(0.92, 0.82, 0.62), Vector3(0, h * 0.5, 0)))
 	house.add_child(LuchaKit.box(Vector3(w + 0.5, 0.5, 5.0), Color(0.78, 0.32, 0.2), Vector3(0, h + 0.2, 0)))
 	return house
+
+
+const CHURCH_TOWER_X := 5.0
+const CHURCH_STONE := Color("#C98E7A")
+const CHURCH_TRIM := Color("#E6D8B4")
+
+
+## THE CHURCH: the plaza's landmark at the centre back. The kit's `plaza_church`
+## if it lands; until then two `bell_tower`s (kit or stand-in) at x +-5 with a
+## nave and a gabled facade between them, built here. Origin at the facade's
+## foot, front +Z.
+func _church() -> Node3D:
+	var k := LuchaKit.kit_model("plaza_church")
+	if k != null:
+		return k
+	var root := Node3D.new()
+	var face_w := CHURCH_TOWER_X * 2.0 - 3.4  # between the towers
+	var body_h := 9.0
+	# The nave behind, and the facade: a stone wall, a cream cornice, a gable.
+	root.add_child(LuchaKit.box(Vector3(face_w + 1.0, body_h - 1.0, 14.0), CHURCH_STONE, Vector3(0, (body_h - 1.0) * 0.5, -7.5)))
+	root.add_child(LuchaKit.box(Vector3(face_w, body_h, 0.8), CHURCH_STONE, Vector3(0, body_h * 0.5, -0.4)))
+	root.add_child(LuchaKit.box(Vector3(face_w + 0.3, 0.4, 1.0), CHURCH_TRIM, Vector3(0, body_h + 0.2, -0.4)))
+	var gable := LuchaKit._extrude(PackedVector2Array([Vector2(-face_w * 0.5, 0), Vector2(face_w * 0.5, 0), Vector2(0, 2.6)]), 0.8, CHURCH_STONE)
+	gable.position = Vector3(0, body_h + 0.4, -0.4)
+	root.add_child(gable)
+	root.add_child(LuchaKit.ball(0.25, LuchaKit.GOLD, Vector3(0, body_h + 3.15, -0.4)))
+	# The door (an arched dark opening in a cream surround) and the round window.
+	root.add_child(LuchaKit.box(Vector3(2.6, 3.9, 0.12), CHURCH_TRIM, Vector3(0, 1.95, 0.04)))
+	root.add_child(LuchaKit.box(Vector3(2.0, 3.0, 0.14), Color("#4A2C1A"), Vector3(0, 1.5, 0.06)))
+	var arch := LuchaKit.cyl(1.0, 0.14, Color("#4A2C1A"), Vector3(0, 3.0, 0.06), Vector3.BACK)
+	root.add_child(arch)
+	root.add_child(LuchaKit.cyl(1.25, 0.12, CHURCH_TRIM, Vector3(0, 6.6, 0.04), Vector3.BACK))
+	root.add_child(LuchaKit.cyl(0.95, 0.14, Color("#2A3A6A"), Vector3(0, 6.6, 0.06), Vector3.BACK))
+	# The towers.
+	for sx in [-1.0, 1.0]:
+		var t := _bell_tower()
+		t.position = Vector3(sx * CHURCH_TOWER_X, 0, -1.2)  # the towers stand a little proud of the facade
+		root.add_child(t)
+	return root
 
 
 ## The plaza's bell tower: the kit's `bell_tower` when it lands, else a stand-in
