@@ -93,7 +93,7 @@ func _build_sky() -> void:
 	rng.seed = 21
 	for i in 9:
 		var w := rng.randf_range(9.0, 18.0)
-		var c := LuchaKit.swirl_cloud(w)
+		var c := LuchaKit.swirl_cloud(w, i)
 		c.position = Vector3(rng.randf_range(-70.0, 70.0), rng.randf_range(9.0, 26.0), rng.randf_range(-95.0, -70.0))
 		c.set_meta("speed", rng.randf_range(0.4, 1.0))
 		sky.add_child(c)

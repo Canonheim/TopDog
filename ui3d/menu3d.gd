@@ -68,6 +68,7 @@ func _add(it: Dictionary) -> int:
 	var root := Node3D.new()
 	var belt := LuchaKit.belt_button(BELT_W)
 	root.add_child(belt)
+	it.belt = belt
 	var txt := Node3D.new()
 	root.add_child(txt)
 	it.text_node = txt
@@ -99,8 +100,13 @@ func _relabel(i: int) -> void:
 	var s: String = it.label
 	if it.kind == "choice":
 		s = "<  %s: %s  >" % [it.label, str(it.options[it.index])]
-	var t := LuchaKit.poster_text(s, 0.2 if s.length() < 22 else 0.16, LuchaKit.LEATHER, LuchaKit.GOLD_DARK, 0.03)
-	t.position = Vector3(0, 0, 0.07)
+	# Fit the words to the belt's label face (the kit's face, or the placeholder plate).
+	var belt: Node3D = it.belt
+	var face_w: float = belt.get_meta("face_w", BELT_W * 0.92)
+	var face_z: float = belt.get_meta("face_z", 0.06)
+	var size := minf(0.2, face_w * 0.94 / maxf(1.0, s.length() * 0.62))
+	var t := LuchaKit.poster_text(s, size, belt.get_meta("text_color", LuchaKit.LEATHER), belt.get_meta("text_back", LuchaKit.GOLD_DARK), 0.025)
+	t.position = Vector3(0, 0, face_z + 0.01)
 	it.text_node.add_child(t)
 
 
@@ -112,10 +118,13 @@ func set_label(i: int, s: String) -> void:
 func _layout() -> void:
 	var y := top_y
 	for it in items:
+		var step := STEP
 		if it.node != null:
 			it.node.position = Vector3(column_x, y, 0)
 			it.node.set_meta("home", it.node.position)
-		y -= STEP
+			# A kit belt says how tall its plate is: never let the points overlap.
+			step = maxf(STEP, float((it.belt as Node3D).get_meta("height", 0.0)) + 0.06)
+		y -= step
 
 
 # ---------------------------------------------------------------- show / hide
@@ -287,9 +296,17 @@ func _process(delta: float) -> void:
 		if _open_t > 0.6:
 			n.scale = n.scale.lerp(Vector3.ONE * want, 1.0 - exp(-delta * 12.0))
 		n.rotation.z = (sin(t * 5.0 + i) * 0.035) if i == focus else lerpf(n.rotation.z, sin(t * 1.3 + i * 0.7) * 0.01, 0.1)
-	if cursor != null and _live(focus) and _open_t > 0.3:
+		# The kit belt's pug crest shows on the selected belt only (they stack tight).
+		var crest = (it.belt as Node3D).get_meta("crest", null)
+		if crest != null and is_instance_valid(crest):
+			(crest as Node3D).visible = i == focus
+	# The kit belt carries its own selection mark (the pug crest): no mask cursor then.
+	if cursor != null and _live(focus):
+		cursor.visible = (items[focus].belt as Node3D).get_meta("crest", null) == null
+	if cursor != null and cursor.visible and _live(focus) and _open_t > 0.3:
 		var home: Vector3 = items[focus].node.get_meta("home")
-		var target := home + Vector3(-BELT_W * 0.5 - 0.62, 0, 0.12)
+		var bw: float = (items[focus].belt as Node3D).get_meta("width", BELT_W)
+		var target := home + Vector3(-bw * 0.5 - 0.45, 0, 0.12)
 		cursor.position = cursor.position.lerp(target, 1.0 - exp(-delta * 14.0))
 		cursor.rotation.z = sin(t * 6.0) * 0.18
 		cursor.rotation.y = sin(t * 2.0) * 0.4
