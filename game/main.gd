@@ -431,7 +431,7 @@ func _on_over(res: Dictionary) -> void:
 
 func show_screen(id: String) -> void:
 	screen = id
-	Sound.music("climb" if id == "hud" else "title")
+	Sound.music("climb" if id in ["hud", "pause"] else "title")  # the match music plays on through a pause
 	for k in screens:
 		screens[k].visible = k == id
 	if pad_nav != null:
