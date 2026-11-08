@@ -365,7 +365,9 @@ func set_tint(c: Color) -> void:
 
 ## THE LIMB GLYPHS (the reference game's idea): the button for each limb sits ON
 ## the hand or foot, so you never wonder which button is which. Dim when loose,
-## bright when held, green when stuck. items: [{"tex": Texture2D or null, "text"}].
+## bright when held, on a white disc when stuck to something (Parker 11-07: half
+## the old size, "a white background to indicate they are attached").
+## items: [{"tex": Texture2D or null, "text"}].
 func set_glyphs(items: Array) -> void:
 	for g in _glyphs:
 		if is_instance_valid(g):
@@ -378,7 +380,7 @@ func set_glyphs(items: Array) -> void:
 		if item.get("tex") != null:
 			var sp := Sprite3D.new()
 			sp.texture = item.tex
-			sp.pixel_size = 0.0038
+			sp.pixel_size = 0.0019
 			sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 			sp.no_depth_test = true
 			sp.render_priority = 20
@@ -388,7 +390,7 @@ func set_glyphs(items: Array) -> void:
 			var lb := Label3D.new()
 			lb.text = str(item.get("text", "?"))
 			lb.font_size = 48
-			lb.pixel_size = 0.0055
+			lb.pixel_size = 0.00275
 			lb.outline_size = 12
 			lb.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 			lb.no_depth_test = true
@@ -400,7 +402,80 @@ func set_glyphs(items: Array) -> void:
 			side = -0.16 if limbs[i].def.id == "leg_l" else 0.16
 		node.position = Vector3(side, -0.04 if not bool(limbs[i].def.arm) else 0.0, 0.3)
 		end.add_child(node)
+		# The stuck look: the glyph baked onto a white disc with a dark rim (one image,
+		# so no sorting between two see-through sprites), swapped in while stuck.
+		if node is Sprite3D:
+			node.set_meta("tex_free", _on_disc(item.tex, false))
+			node.set_meta("tex_stuck", _on_disc(item.tex, true))
+			(node as Sprite3D).texture = node.get_meta("tex_free")
+		else:
+			var disc := Sprite3D.new()
+			disc.name = "StuckDisc"
+			disc.texture = _on_disc(null, true)
+			disc.pixel_size = 0.13 / 128.0
+			disc.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+			disc.no_depth_test = true
+			disc.render_priority = 19
+			disc.shaded = false
+			disc.visible = false
+			node.add_child(disc)
 		_glyphs.append(node)
+
+
+## tex (any size, or null) with its cut-out letter inked dark, over a white disc
+## with a dark rim filling the canvas when `disc`.
+static func _on_disc(tex: Texture2D, disc := true) -> Texture2D:
+	var n := 128
+	var top: Image = null
+	if tex != null:
+		top = tex.get_image().duplicate()
+		if top.is_compressed():
+			top.decompress()
+		top.convert(Image.FORMAT_RGBA8)
+		n = top.get_width()
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	var r := n * 0.5 if disc else 0.0
+	var rim_w := maxf(2.0, n * 0.045)
+	var rim := Color(0.08, 0.09, 0.2)
+	for y in n:
+		for x in n:
+			var d := Vector2(x + 0.5 - n * 0.5, y + 0.5 - n * 0.5).length()
+			var c := rim.lerp(Color.WHITE, clampf(r - rim_w - d, 0.0, 1.0))
+			c.a = clampf(r - d, 0.0, 1.0)
+			img.set_pixel(x, y, c)
+	if top != null:
+		img.blend_rect(top, Rect2i(0, 0, n, top.get_height()), Vector2i.ZERO)
+		# The prompts cut their letter out of the cap (a see-through hole), which
+		# vanishes on white: ink the holes. A hole is a clear pixel that a flood
+		# from the image's edge can't reach.
+		var h := top.get_height()
+		var outside := PackedByteArray()
+		outside.resize(n * h)
+		var stack: Array[Vector2i] = []
+		for x in n:
+			stack.append(Vector2i(x, 0))
+			stack.append(Vector2i(x, h - 1))
+		for y in h:
+			stack.append(Vector2i(0, y))
+			stack.append(Vector2i(n - 1, y))
+		while not stack.is_empty():
+			var q: Vector2i = stack.pop_back()
+			if q.x < 0 or q.y < 0 or q.x >= n or q.y >= h or outside[q.y * n + q.x] == 1:
+				continue
+			if top.get_pixel(q.x, q.y).a > 0.5:
+				continue
+			outside[q.y * n + q.x] = 1
+			stack.append(q + Vector2i.RIGHT)
+			stack.append(q + Vector2i.LEFT)
+			stack.append(q + Vector2i.DOWN)
+			stack.append(q + Vector2i.UP)
+		for y in h:
+			for x in n:
+				var a := top.get_pixel(x, y).a
+				if outside[y * n + x] == 0 and a < 1.0:
+					var ink := Color(rim.r, rim.g, rim.b, 1.0)
+					img.set_pixel(x, y, ink.lerp(img.get_pixel(x, y), a))
+	return ImageTexture.create_from_image(img)
 
 
 func _process(_delta: float) -> void:
@@ -413,8 +488,14 @@ func _process(_delta: float) -> void:
 		var l: Dictionary = limbs[i]
 		var c := Color(1, 1, 1, 0.55)
 		var sc := 1.0
-		if l.grab.is_valid():
-			c = Color(0.55, 1.0, 0.55, 1.0)
+		var stuck: bool = l.grab.is_valid()
+		var disc := (g as Node).get_node_or_null("StuckDisc")
+		if disc != null:
+			disc.visible = stuck
+		if (g as Node).has_meta("tex_stuck"):
+			(g as Sprite3D).texture = g.get_meta("tex_stuck") if stuck else g.get_meta("tex_free")
+		if stuck:
+			c = Color(1, 1, 1, 1)
 			sc = 1.1
 		elif l.held:
 			c = Color(1, 1, 1, 1)
@@ -619,7 +700,9 @@ func _tick_joints(attached: bool) -> void:
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, torque * dt)
 	if not attached:
 		return
-	var cap := Feel.get_k("drag_strength") * weight
+	# The cap is in body-weights at FULL gravity, so turning gravity down (Feel
+	# gravity_scale) never weakens the hands (Parker 11-07: more force, less gravity).
+	var cap := Feel.get_k("drag_strength") * total_mass * 9.8
 	var k := Feel.get_k("drag_stiffness") * total_mass
 	var c := Feel.get_k("drag_damping") * total_mass
 	for i in limbs.size():
@@ -635,8 +718,11 @@ func _tick_joints(attached: bool) -> void:
 
 
 ## Where limb i's held hand or foot is being pulled (world m). The mouse puts it
-## on its point; a pad's stick moves it like a cursor (Feel hand_speed) and a
-## resting stick leaves it. It starts where the hand was when the button went down.
+## on its point. A pad's stick POINTS the limb, at once (Parker 11-07: the stick is
+## instant, as in the reference game): the target sits out from the limb's root
+## (shoulder or hip) in the stick's direction, at the stick's push times a little
+## over the limb's full reach. A resting stick leaves the target where it was. It
+## starts where the hand was when the button went down.
 func drag_target(i: int) -> Vector2:
 	var l: Dictionary = limbs[i]
 	var aim = driver.aim(self, i) if driver != null else null
@@ -644,14 +730,8 @@ func drag_target(i: int) -> Vector2:
 		if aim.has("point"):
 			l.cursor = aim.point
 		elif aim.has("dir"):
-			var dt := 1.0 / float(Engine.physics_ticks_per_second)
-			l.cursor += (aim.dir as Vector2).normalized() * clampf(float(aim.mag), 0.0, 1.0) * Feel.get_k("hand_speed") * dt
-			# A stick-steered target stays within a stretch of the limb's root, so it
-			# can't wander off-screen while the hand is held back.
-			var S := limb_root(i)
-			var reach: float = (l.l1 + l.l2) * 1.25
-			if l.cursor.distance_to(S) > reach:
-				l.cursor = S + (l.cursor - S).normalized() * reach
+			var reach: float = (l.l1 + l.l2) * Feel.get_k("stick_reach")
+			l.cursor = limb_root(i) + (aim.dir as Vector2).normalized() * clampf(float(aim.mag), 0.0, 1.0) * reach
 	return l.cursor
 
 

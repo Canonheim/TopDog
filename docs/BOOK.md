@@ -263,6 +263,17 @@ Parker: "the right stick should not control it, it should be the left stick", "t
 - **Jolt position steps 8 → 16.** With the wrist free, the whole body hung off one hand stretched that wrist 2.4 cm (0.8 cm when it was limited); 16 steps hold it to 0.3 cm (`--spike --part=hang`, which now also prints the settled stretch).
 - `GAME_VERSION` 0.3.1.
 
+## 0.3.2 (Parker, 2026-11-07): small glyphs on white when stuck, a stronger pull, an instant stick, less gravity
+
+Parker: "make the hand and feet glyphs half as big, and when they are attached, make them have a white background", "Hands and feet need more force and to move faster when controlled, and gravity is too strong", and "Aren't sticks instant on contact?"
+
+- **Glyphs** are half size. A stuck limb's glyph sits on a white disc with a dark rim (one baked image: two see-through sprites wouldn't sort). The key prompts cut their letter out as a hole, which vanished on white, so the holes are inked dark in both looks.
+- **The stick points the limb, at once** (`Climber.drag_target`): the target sits out from the shoulder or hip in the stick's direction, at the stick's push times Feel `stick_reach` (1.15 limb lengths). A resting stick leaves it. Feel `hand_speed` (the old cursor) is gone. My study of the reference used keys and mouse only; the cursor was my guess, Parker corrected it.
+- **Stronger pull:** `drag_strength` 1.15 → 1.5, `drag_stiffness` 140 → 190. The cap is now in body-weights at FULL gravity, so lowering gravity never weakens the hands.
+- **Gravity** `gravity_scale` 1.0 → 0.75.
+- Merged the Second Director's 17d2690 (the kit's Online parts wired in).
+- Checked: lint, every battery, pad_probe, online_pad_probe, online3d_probe.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

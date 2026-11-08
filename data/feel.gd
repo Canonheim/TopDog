@@ -10,9 +10,9 @@ const PPM := 100.0  # 2D physics pixels per metre (the physics world is in px)
 ## [value, min, max, help]. Order here is the dev panel's order.
 const SPEC := {
 	"body_scale": [0.9, 0.6, 1.3, "Climber size (1.0 = the knight's modelled 2.02 m)"],
-	"gravity_scale": [1.0, 0.2, 2.0, "Gravity on climbers"],
-	"drag_strength": [1.15, 0.2, 4.0, "The pull on a held hand or foot, capped at this many body-weights"],
-	"drag_stiffness": [140.0, 20.0, 600.0, "How hard the pull grows with distance (per kg of body, N/m/kg)"],
+	"gravity_scale": [0.75, 0.2, 2.0, "Gravity on climbers"],
+	"drag_strength": [1.5, 0.2, 4.0, "The pull on a held hand or foot, capped at this many body-weights (at full gravity)"],
+	"drag_stiffness": [190.0, 20.0, 600.0, "How hard the pull grows with distance (per kg of body, N/m/kg)"],
 	"drag_damping": [12.0, 0.0, 60.0, "How much the pulled hand or foot is steadied (per kg of body)"],
 	"joint_friction": [0.5, 0.0, 2.0, "Friction in shoulders and hips: how stiffly the body holds a pose (body-weights x 0.5 m)"],
 	"bend_friction": [0.28, 0.0, 2.0, "Friction in elbows and knees: low = they buckle sideways under a pull"],
@@ -22,7 +22,7 @@ const SPEC := {
 	"spine_damping": [0.5, 0.0, 2.0, "Torso flex damping ratio"],
 	"spine_limit": [12.0, 0.0, 30.0, "Torso flex per spine joint (deg, two joints)"],
 	"neck_spring": [0.8, 0.0, 3.0, "Neck spring"],
-	"hand_speed": [2.6, 0.5, 8.0, "Pad: how fast the stick moves a held hand or foot's target (m/s at full push)"],
+	"stick_reach": [1.15, 0.5, 2.0, "Pad: a full stick puts the held hand or foot's target this many limb-lengths out from its shoulder or hip"],
 	"stick_deadzone": [0.22, 0.05, 0.6, "Pad stick deadzone"],
 	"trigger_press": [0.45, 0.1, 0.9, "Pad trigger press point (both triggers)"],
 	"regrip_delay": [0.12, 0.0, 0.6, "Seconds before a released limb can stick again"],
