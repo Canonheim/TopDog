@@ -21,7 +21,7 @@ const SFX := {
 }
 const MUSIC := {
 	"title": "res://audio/music/top_dog_theme.ogg",
-	"climb": "res://audio/music/top_dog_theme.ogg",
+	"climb": "res://audio/music/desert_snake.wav",
 }
 const OPTIONS := "user://options.cfg"
 
