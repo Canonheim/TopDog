@@ -234,6 +234,14 @@ Parker: "get the new controls version and the UI updates all together however we
 - **Export:** `builds/TopDog.exe`; the no-Steam launcher and the upload script follow the new name. The playtest zip is `builds/TopDog_playtest_0.2.1.zip` (exe, the two Steam DLLs, `HOW TO PLAY.txt`, the no-Steam launcher); the how-to is kept as `docs/PLAYTEST_HOW_TO_PLAY.txt`.
 - **Checked:** lint (31 scripts), every battery, the pad driving the 3D menus (D-pad, stick, A, B, keyboard), the exported build's title and match screens, and a clean exit.
 
+## 0.2.2 (Parker, 2026-11-07): the controller online, through Steam
+
+Parker: "my controller is not working online". His global "Steam Input for Xbox controllers" switch was already off, so the dev app (480, Valve's own Steam Input sample game) forces Steam Input on for itself, and its layout binds nothing a normal game reads. Parker: "we are using steam. Make it work through steam."
+
+**`core/steam_input.gd`:** when Steam starts, the game writes its OWN Steam Input layout to `user://steam_input/` (an action manifest plus a config per controller type: Xbox One, Xbox 360, generic, PS4, PS5, Switch Pro, Steam Controller, Steam Deck), passes it to `SetInputActionManifestFilePath` before `Steam.inputInit`, and reads the actions back each frame. Action set "Game": X left hand, A right hand, Y left foot, B right foot, Start lock in, Back pause, either stick steers (`joystick_move`), the d-pad moves menus, A selects, B goes back. Steam controllers are Players devices 3000+ (the ANY slot reads them too), and PadNav drives the menus from them, ignoring the raw pads while Steam has any (never twice). The menu readout line shows "Steam Input: N controllers [type], last: action".
+
+**Proved live on Parker's machine (Steam running, app 480):** the manifest was accepted, his Xbox One controller showed up with our action set current, every action reported `active: true`, and `arm_l`'s origin was 116 (XBoxOne_X). Button presses themselves can only be tested by hand. The controller list is read twice a second (GodotSteam logs every `getConnectedControllers` call).
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

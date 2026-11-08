@@ -99,11 +99,17 @@ func _input(event: InputEvent) -> void:
 # ---------------------------------------------------------------- path 1: polling
 
 func _process(delta: float) -> void:
+	var si = Net.steam_input
+	var steam_live: bool = si != null and si.count() > 0
+	if steam_live:
+		_poll_steam(si, delta)
 	var devs := {}
 	for dev in Input.get_connected_joypads():
 		devs[dev] = true
 	for dev in seen_devices:
 		devs[dev] = true
+	if steam_live:
+		devs.clear()  # Steam has the pads: read them through it only, never twice
 	for dev in devs:
 		for action in DIRS:
 			var d: Array = DIRS[action]
@@ -125,6 +131,28 @@ func _process(delta: float) -> void:
 			var down := Input.is_joy_button_pressed(dev, BUTTONS[action])
 			if down != bool(_held.get("%d:%s" % [dev, action], false)):
 				_edge(dev, action, down, false)
+
+
+## Steam's controllers drive the menus the same way: held table, repeat, focus.
+func _poll_steam(si, delta: float) -> void:
+	for dev in si.devices.keys():
+		var st: Dictionary = si.menu_state(dev)
+		for action in DIRS:
+			var key := "%d:%s" % [dev, action]
+			var was: bool = _held.get(key, false)
+			var down: bool = st[action]
+			if down and not was:
+				_edge(dev, action, true, true)
+			elif down and was:
+				_repeat[key] = float(_repeat.get(key, REPEAT_FIRST)) - delta
+				if _repeat[key] <= 0.0:
+					_fire(dev, action)
+					_repeat[key] = REPEAT_NEXT
+			elif not down and was:
+				_held[key] = false
+		for action in BUTTONS:
+			if bool(st[action]) != bool(_held.get("%d:%s" % [dev, action], false)):
+				_edge(dev, action, st[action], false)
 
 
 # ---------------------------------------------------------------- the one held table
@@ -192,6 +220,9 @@ func readout() -> String:
 		var n := Input.get_joy_name(d)
 		names.append("%s (%d)" % [n if n != "" else "pad", d])
 	var line := "Pads: %s" % (", ".join(names) if not pads.is_empty() else "none connected")
+	var si = Net.steam_input
+	if si != null and si.ok:
+		line += "   |   " + si.readout()
 	if last_pad >= 0:
 		line += "   |   last: %s on pad %d, %.1f s ago" % [last_input, last_pad, (Time.get_ticks_msec() - last_time) / 1000.0]
 	else:

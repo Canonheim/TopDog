@@ -23,10 +23,11 @@ signal session_ended(reason: String)
 signal lobby_list(rows: Array)
 
 const LobbyLogic := preload("res://net/lobby_logic.gd")
+const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.2.1"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.2.2"  # bump on every build: RPC tables move between builds
 const ENET_PORT := 7788
 const MAX_MACHINES := 8
 const MAX_CLIMBERS := 8
@@ -37,6 +38,8 @@ const VIS_FRIENDS := "friends"
 const VIS_INVITE := "invite"
 
 var steam_ok := false
+## Reads controllers through Steam's controller API (core/steam_input.gd); made when Steam starts.
+var steam_input: Node = null
 var steam_lobby := 0
 var online := false
 ## peer id -> {"name": String, "players": [{name, tint}], "ready": bool}
@@ -138,6 +141,11 @@ func _init_steam() -> void:
 	Steam.join_requested.connect(_on_join_requested)
 	Steam.lobby_data_update.connect(_on_lobby_data_update)
 	print("[Net] Steam ready: ", Steam.getPersonaName())
+	# Steam takes the controllers once it's running here: read them through it.
+	steam_input = SteamInputScript.new()
+	steam_input.name = "SteamInput"
+	add_child(steam_input)
+	steam_input.start()
 
 
 func host_steam(visibility := VIS_PUBLIC, lobby_name := "") -> void:
@@ -521,6 +529,8 @@ func set_in_match(on: bool) -> void:
 ## quit hung (0.1.1); shutting it down ourselves first lets the engine exit clean.
 func shutdown() -> void:
 	leave()
+	if steam_input != null:
+		steam_input.shutdown()
 	if ClassDB.class_exists(&"Steam"):
 		for sig in Steam.get_signal_list():
 			for c in Steam.get_signal_connection_list(sig.name):

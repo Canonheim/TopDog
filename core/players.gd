@@ -167,8 +167,29 @@ func poll_join() -> int:
 func devices() -> Array:
 	var out: Array = [KBM]
 	out.append_array(Input.get_connected_joypads())
+	out.append_array(steam_devices())
 	out.append_array(fake.keys())
 	return out
+
+
+## Controllers read through Steam's controller API (when Steam is running).
+func steam_devices() -> Array:
+	var si = Net.steam_input if Net.get("steam_input") != null else null
+	return si.devices.keys() if si != null else []
+
+
+func _is_steam_dev(dev: int) -> bool:
+	return dev >= 3000 and dev < 3100
+
+
+## A Steam controller spoke (it makes no InputEvents): the ANY slot follows it.
+func note_device(dev: int) -> void:
+	if dev == last_device:
+		return
+	last_device = dev
+	for s in slots.size():
+		if int(slots[s].device) == ANY:
+			device_changed.emit(s)
 
 
 static func device_label(device: int) -> String:
@@ -176,6 +197,8 @@ static func device_label(device: int) -> String:
 		return "Keyboard + mouse"
 	if device == ANY:
 		return "Any device"
+	if device >= 3000 and device < 3100:
+		return "Steam controller %d" % (device - 3000)
 	if device >= 1000:
 		return "Test pad %d" % (device - 1000)
 	return Input.get_joy_name(device) if Input.get_joy_name(device) != "" else "Pad %d" % device
@@ -222,11 +245,13 @@ func limb_aim(s: int, climber, limb: int):
 func stick(dev: int) -> Vector2:
 	if dev == ANY:
 		var best := Vector2.ZERO
-		for p in Input.get_connected_joypads():
+		for p in Input.get_connected_joypads() + steam_devices():
 			var v := stick(p)
 			if v.length() > best.length():
 				best = v
 		return best
+	if _is_steam_dev(dev):
+		return Net.steam_input.stick(dev) if Net.steam_input != null else Vector2.ZERO
 	if fake.has(dev):
 		return fake[dev].get("stick", Vector2.ZERO)
 	var l := Vector2(Input.get_joy_axis(dev, JOY_AXIS_LEFT_X), -Input.get_joy_axis(dev, JOY_AXIS_LEFT_Y))
@@ -255,7 +280,12 @@ func _action(dev: int, action: String) -> bool:
 		for p in Input.get_connected_joypads():
 			if _action(p, action):
 				return true
+		for p in steam_devices():
+			if _action(p, action):
+				return true
 		return false
+	if _is_steam_dev(dev):
+		return Net.steam_input != null and Net.steam_input.button(dev, action)
 	if fake.has(dev):
 		return fake[dev].get("buttons", {}).get(action, false)
 	var scheme: String = "kbm" if dev == KBM else "pad"
