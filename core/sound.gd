@@ -4,6 +4,9 @@ extends Node
 
 const RARE_GRAB := "grab_slap_10"
 const SFX := {
+	"chair_light": ["big_slam_01", "big_slam_02"],
+	"chair_heavy": ["big_slam_03", "big_slam_04"],
+	"chair_break": ["chair_break_01", "chair_break_02", "chair_break_03", "chair_break_04", "chair_break_05", "chair_break_06"],
 	"grab": [
 		"grab_slap_01", "grab_slap_02", "grab_slap_03", "grab_slap_05", "grab_slap_06",
 		"grab_slap_07", "grab_slap_08", "grab_slap_09", RARE_GRAB, "grab_slap_11",
@@ -136,13 +139,17 @@ func contact_player(stream: AudioStream, pitch: float, host: Node) -> AudioStrea
 
 
 ## A positioned effect in the 3D world.
-func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null) -> void:
+func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null, clip := "") -> void:
 	var list: Array = SFX.get(kind, [])
 	if list.is_empty():
 		return
-	var s = _pick_stream(kind, list)
-	if s == null:
+	var s = _pick_stream(kind, list) if clip.is_empty() else _streams.get(clip)
+	if s == null or (not clip.is_empty() and clip not in list):
 		return
+	var chair_boost_db := linear_to_db(5.0) if kind in ["chair_light", "chair_heavy", "chair_break"] else 0.0
+	if kind == "chair_heavy":
+		chair_boost_db += linear_to_db(1.2)
+	volume_db += chair_boost_db
 	var host: Node = parent if parent != null else get_tree().current_scene
 	if host == null:
 		play(kind, volume_db)
@@ -151,7 +158,8 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	p.bus = "Effects"
 	p.stream = s
 	p.volume_db = volume_db
-	p.pitch_scale = randf_range(0.92, 1.08)
+	p.max_db += chair_boost_db
+	p.pitch_scale = randf_range(0.92, 1.08) if clip.is_empty() else 1.0
 	p.unit_size = 6.0
 	if kind == "grab":
 		p.max_db += linear_to_db(8.4)  # Preserve the gain increase at close range.

@@ -14,7 +14,7 @@ extends Node
 ##   where the driver says (stick or mouse) and cannot stick. Letting go plants it:
 ##   if it's on something, it sticks right there.
 ## - A held limb only DRIVES while you're attached by something else: another hand
-##   or foot stuck, or another climber holding you. Pick up your last stuck limb
+##   or foot stuck to the arena or frozen stack. Pick up your last stuck limb
 ##   in midair and you fall. On landing, loose limbs settle into a passive grip.
 ## - The torso is three pieces with springy left/right flex. With one grip the
 ##   active limb can swing the whole body about the planted end.
@@ -44,10 +44,10 @@ const LIMIT_FLIP := true  # Jolt: the hinge angle runs clockwise about +z (pinne
 enum State { LIVE, PUPPET, FROZEN }
 
 signal froze(climber: Climber)
+signal limb_selected(index: int, release_velocity: Vector3)
 signal grab_made(climber: Climber, limb: int, other: Object)
 signal release_contact(position: Vector3)
 signal exerted
-signal grab_lost(climber: Climber, limb: int)
 
 var state := State.LIVE
 var climber_id := 0
@@ -65,15 +65,10 @@ var body_scale := 0.9
 var bodies := {}  # piece name -> RigidBody3D
 var joints := {}  # joint name -> Dictionary
 var limbs: Array = []  # per limb: Dictionary (see _build_limbs)
-var grabbed_by := 0  # grabs other climbers hold on me (local joints)
-var remote_grabbed := 0  # grabs on me reported from other machines
 var total_mass := 0.0
 var spawn_at := Vector2.ZERO
 var live_time := 0.0
 var removed := false
-## Online: forces other machines' climbers put on my pieces, piece -> Vector2 (N).
-var remote_pulls := {}
-
 var _shape_geo := {}  # piece -> [kind, data...] for height reads (local, m)
 var _grunt_wait := 2.0
 var _active_limb := -1
@@ -346,7 +341,6 @@ func _build_limbs() -> void:
 			"grab": RID(),  # pin joint RID while stuck
 			"grab_other": null,  # the body stuck to
 			"grab_climber": null,  # its climber, if it is one
-			"grab_piece": "",
 			"regrip": 0.0,
 			"cursor": Vector2.ZERO,  # where a held hand or foot is being steered (world m)
 			"driving": false,
@@ -541,15 +535,7 @@ func _physics_process(delta: float) -> void:
 			body.gravity_scale = gravity
 		_gravity_scale = gravity
 	_tick_joints(attached, delta)
-	for pn in remote_pulls:
-		var f: Vector2 = remote_pulls[pn]
-		if bodies.has(pn):
-			(bodies[pn] as RigidBody3D).apply_central_force(Vector3(f.x, f.y, 0.0))
-
-
 func is_attached() -> bool:
-	if grabbed_by > 0 or remote_grabbed > 0:
-		return true
 	for l in limbs:
 		if l.grab.is_valid():
 			return true
@@ -566,7 +552,12 @@ func stuck_count() -> int:
 
 # A fresh press takes over. Older held buttons must be pressed again to unplant.
 # For edges sampled in the same tick, use the first limb in controller order.
+func active_limb() -> int:
+	return _active_limb
+
+
 func _select_active_limb() -> void:
+	var previous := _active_limb
 	var pressed := -1
 	for i in limbs.size():
 		var down: bool = driver != null and driver.held(i)
@@ -577,6 +568,12 @@ func _select_active_limb() -> void:
 		_active_limb = pressed
 	elif _active_limb != -1 and not _buttons_down[_active_limb]:
 		_active_limb = -1
+	if previous != _active_limb:
+		var velocity := Vector3.ZERO
+		if previous >= 0:
+			var end: RigidBody3D = bodies[limbs[previous].def.end]
+			velocity = end.linear_velocity
+		limb_selected.emit(_active_limb, velocity)
 
 
 func _tick_limb(i: int, delta: float) -> void:
@@ -609,7 +606,7 @@ func _try_grab(i: int) -> void:
 	var hits := end.get_colliding_bodies()
 	if hits.is_empty():
 		return
-	# Prefer solid ground (world and tower) over a live rival, then the nearest.
+	# Only the arena and frozen stack are valid anchors.
 	var best: Object = null
 	var best_score := INF
 	for o in hits:
@@ -618,10 +615,8 @@ func _try_grab(i: int) -> void:
 		var score := 0.0
 		if o is RigidBody3D and o.has_meta("climber"):
 			var oc: Climber = o.get_meta("climber")
-			if oc == self:
+			if oc == self or oc.state != State.FROZEN:
 				continue
-			if oc.state != State.FROZEN:
-				score += 1000.0
 		if o is Node3D:
 			score += (o as Node3D).global_position.distance_to(end.global_position) * 0.001
 		if score < best_score:
@@ -633,6 +628,10 @@ func _try_grab(i: int) -> void:
 
 ## Stick limb i's end to `other` (a PhysicsBody3D) right where it is.
 func attach(i: int, other: Object) -> void:
+	if other.has_meta("climber"):
+		var target: Climber = other.get_meta("climber")
+		if target == self or target.state != State.FROZEN:
+			return
 	var l: Dictionary = limbs[i]
 	if l.grab.is_valid():
 		release(i)
@@ -658,14 +657,10 @@ func attach(i: int, other: Object) -> void:
 	l.grab = rid
 	l.grab_other = other
 	l.grab_climber = null
-	l.grab_piece = ""
 	if other is RigidBody3D and other.has_meta("climber"):
 		var oc: Climber = other.get_meta("climber")
 		if oc != self:
 			l.grab_climber = oc
-			l.grab_piece = other.get_meta("piece")
-			if oc.state != State.FROZEN:
-				oc.grabbed_by += 1
 	grab_made.emit(self, i, other)
 
 
@@ -678,14 +673,9 @@ func release(i: int) -> void:
 	var end: RigidBody3D = bodies[l.def.end]
 	if l.grab_other != null and is_instance_valid(l.grab_other) and l.grab_other is CollisionObject3D:
 		end.remove_collision_exception_with(l.grab_other)
-	var oc = l.grab_climber
-	if oc != null and is_instance_valid(oc) and oc.state != State.FROZEN:
-		oc.grabbed_by = maxi(0, oc.grabbed_by - 1)
 	l.grab_other = null
 	l.grab_climber = null
-	l.grab_piece = ""
 	l.regrip = Feel.get_k("regrip_delay")
-	grab_lost.emit(self, i)
 
 
 func release_all() -> void:
@@ -918,9 +908,6 @@ func freeze() -> void:
 		rb.freeze = true
 		rb.collision_layer = LAYER_FROZEN
 	state = State.FROZEN
-	grabbed_by = 0
-	remote_grabbed = 0
-	remote_pulls.clear()
 	for g in _glyphs:
 		if is_instance_valid(g):
 			g.visible = false

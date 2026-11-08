@@ -38,7 +38,6 @@ const SPEC := {
 	"linear_damp": [0.05, 0.0, 2.0, "Air drag on every piece"],
 	"angular_damp": [0.4, 0.0, 5.0, "Spin drag on every piece"],
 	"puppet_delay": [0.1, 0.0, 0.4, "Online: seconds of buffer behind a remote climber"],
-	"pull_cap": [1.5, 0.0, 6.0, "Online: cap on a rival's pull, in body-weights"],
 }
 
 var v := {}
