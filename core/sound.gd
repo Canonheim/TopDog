@@ -4,6 +4,9 @@ extends Node
 
 const RARE_GRAB := "grab_slap_10"
 const SFX := {
+	"chair_light": ["big_slam_01", "big_slam_02"],
+	"chair_heavy": ["big_slam_03", "big_slam_04"],
+	"chair_break": ["chair_break_01", "chair_break_02", "chair_break_03", "chair_break_04", "chair_break_05", "chair_break_06"],
 	"grab": [
 		"grab_slap_01", "grab_slap_02", "grab_slap_03", "grab_slap_05", "grab_slap_06",
 		"grab_slap_07", "grab_slap_08", "grab_slap_09", RARE_GRAB, "grab_slap_11",
@@ -11,7 +14,12 @@ const SFX := {
 		"grab_slap_17", "grab_slap_18", "grab_slap_19", "grab_slap_20",
 	],
 	"grip": ["grip"],
-	"strain": ["grunt_jump_1", "grunt_jump_2", "grunt_jump_3"],
+	"strain": [
+		"dog_exertion_02", "dog_exertion_03", "dog_exertion_04", "dog_exertion_05",
+		"dog_exertion_07", "dog_exertion_08", "dog_exertion_09", "dog_exertion_10",
+		"dog_exertion_11", "dog_exertion_12", "dog_exertion_13", "dog_exertion_14",
+		"dog_exertion_15", "dog_exertion_16", "dog_exertion_17", "dog_exertion_18",
+	],
 	"thud": ["thud", "land_soft", "hit_flesh"],
 	"hurt": ["hurt_1", "hurt_2", "hurt_3", "hurt_4"],
 	"fall": ["yell_1", "yell_2", "yell_3"],
@@ -66,18 +74,22 @@ func _ready() -> void:
 
 
 func _pick_stream(kind: String, clips: Array) -> AudioStream:
-	if kind != "grab":
-		return _streams.get(clips.pick_random())
+	if kind == "grab":
+		return _streams[pick_grab()]
+	return _streams.get(clips.pick_random())
+
+
+func pick_grab() -> String:
 	if randi_range(1, 100) == 1:
-		return _streams[RARE_GRAB]
+		return RARE_GRAB
 	if _grab_bag.is_empty():
-		_grab_bag = clips.duplicate()
+		_grab_bag = SFX["grab"].duplicate()
 		_grab_bag.erase(RARE_GRAB)
 		_grab_bag.shuffle()
 		if _grab_bag.back() == _last_grab:
 			_grab_bag.push_front(_grab_bag.pop_back())
 	_last_grab = _grab_bag.pop_back()
-	return _streams[_last_grab]
+	return _last_grab
 
 
 func play(kind: String, volume_db := 0.0, pitch := 1.0) -> void:
@@ -97,14 +109,47 @@ func play(kind: String, volume_db := 0.0, pitch := 1.0) -> void:
 			return
 
 
+func play_exertion(clip: String, chest: Node3D) -> void:
+	if clip not in SFX["strain"]:
+		return
+	var player := contact_player(_streams[clip], 1.0, chest)
+	player.finished.connect(player.queue_free)
+	player.play()
+
+
+func play_grab(clip: String, at: Vector3, pitch: float, host: Node) -> void:
+	if clip not in SFX["grab"]:
+		return
+	var player := contact_player(_streams[clip], pitch, host)
+	player.global_position = at
+	player.finished.connect(player.queue_free)
+	player.play()
+
+
+func contact_player(stream: AudioStream, pitch: float, host: Node) -> AudioStreamPlayer3D:
+	var player := AudioStreamPlayer3D.new()
+	player.bus = "Effects"
+	player.stream = stream
+	player.volume_db = -4.0 + linear_to_db(10.5)
+	player.max_db += linear_to_db(8.4)
+	player.unit_size = 6.0
+	player.pitch_scale = pitch
+	host.add_child(player)
+	return player
+
+
 ## A positioned effect in the 3D world.
-func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null) -> void:
+func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null, clip := "") -> void:
 	var list: Array = SFX.get(kind, [])
 	if list.is_empty():
 		return
-	var s = _pick_stream(kind, list)
-	if s == null:
+	var s = _pick_stream(kind, list) if clip.is_empty() else _streams.get(clip)
+	if s == null or (not clip.is_empty() and clip not in list):
 		return
+	var chair_boost_db := linear_to_db(5.0) if kind in ["chair_light", "chair_heavy", "chair_break"] else 0.0
+	if kind == "chair_heavy":
+		chair_boost_db += linear_to_db(1.2)
+	volume_db += chair_boost_db
 	var host: Node = parent if parent != null else get_tree().current_scene
 	if host == null:
 		play(kind, volume_db)
@@ -113,7 +158,8 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	p.bus = "Effects"
 	p.stream = s
 	p.volume_db = volume_db
-	p.pitch_scale = randf_range(0.92, 1.08)
+	p.max_db += chair_boost_db
+	p.pitch_scale = randf_range(0.92, 1.08) if clip.is_empty() else 1.0
 	p.unit_size = 6.0
 	if kind == "grab":
 		p.max_db += linear_to_db(8.4)  # Preserve the gain increase at close range.

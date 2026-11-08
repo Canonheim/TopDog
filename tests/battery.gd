@@ -194,7 +194,7 @@ func _spike_limits() -> void:
 		head.apply_torque(Vector3(0, 0, -push * head.mass * 9.8 * 0.4))
 		await get_tree().physics_frame
 		worst = maxf(worst, c.worst_limit_excess())
-	t("limits: spine and neck shoved with 2x an arm's weight overshoot under 8 deg (limbs are free, no limits)", worst < 8.0, "worst %.1f deg" % worst)
+	t("limits: joint overshoot stays under 8 deg during a loaded hang", worst < 8.0, "worst %.1f deg" % worst)
 	await frames(240)
 	t("limits: spine and neck back inside their limits once let go", c.worst_limit_excess() < 1.0, "%.2f deg" % c.worst_limit_excess())
 
@@ -259,7 +259,7 @@ func _spike_fling() -> void:
 		bar.queue_free()
 		await frames(1)
 	t("fling: 20 hard drags and releases, no joint opens past 8 cm", worst < 0.08, "worst %.4f m" % worst)
-	t("fling: spine and neck limits hold under hard drags (under 40 deg over; limbs are free)", worst_lim < 40.0, "worst %.1f deg" % worst_lim)
+	t("fling: joint limits hold under hard drags (under 40 deg over)", worst_lim < 40.0, "worst %.1f deg" % worst_lim)
 	t("fling: nothing explodes (finite, in the plane, under 40 m/s)", bad == 0 and max_speed < 40.0, "bad %d, top %.1f m/s" % [bad, max_speed])
 	t("fling: the swings actually fling (half travel > 0.5 m)", flown >= 10, "%d/20" % flown)
 
@@ -278,10 +278,20 @@ func _spike_limp() -> void:
 	await frames(3)
 	t("limp: an unheld hand touching a bar sticks by itself", c.limbs[1].grab.is_valid())
 	await frames(1)
-	var all_drive := true
-	for i in [0, 2, 3]:
-		all_drive = all_drive and c.limbs[i].driving
-	t("limp: once something is stuck, every held limb drives", all_drive)
+	t("limp: simultaneous presses select exactly one limb", c.limbs[0].driving and not c.limbs[2].held and not c.limbs[3].held)
+	d.set_limb(2, false)
+	await frames(2)
+	d.set_limb(2, true)
+	await frames(2)
+	t("limp: a new press takes over and preserves the passive grip", c.limbs[2].driving and not c.limbs[0].held and c.limbs[1].grab.is_valid())
+	var next_bar := bar_at(c.limb_end(0))
+	await frames(4)
+	t("limp: the deselected hand catches on contact despite its button staying down", c.limbs[0].grab_other == next_bar)
+	d.set_limb(2, false)
+	await frames(2)
+	t("limp: releasing the selection leaves the older hand planted", not c.limbs[0].held and c.limbs[0].grab_other == next_bar)
+	next_bar.queue_free()
+	c.release(0)
 	d.set_limb(1, true, Vector2.UP, 1.0)
 	await frames(2)
 	t("limp: picking up the last stuck limb drops you (nothing drives)", not c.limbs[1].grab.is_valid() and not c.is_attached())
@@ -349,10 +359,10 @@ func _spike_eight() -> void:
 	for c in cs:
 		ok = ok and finite_body(c)
 	var avg := sum / ticks
-	t("eight live: 20 s welded into a blob (every unheld limb sticks), joints under 12 cm", worst_gap < 0.12, "worst %.4f m" % worst_gap)
+	t("eight live: jostling for 20 s, joints under 12 cm", worst_gap < 0.12, "worst %.4f m" % worst_gap)
 	t("eight live: all sane (finite, in the plane)", ok)
-	t("eight live: they grabbed each other", rival_grabs[0] > 0, rival_grabs[0])
-	t("eight live: physics frame under 6 ms on average (eight welded climbers)", avg < 6.0, "avg %.3f ms, worst %.3f ms" % [avg, worst_ms])
+	t("eight live: nobody grabs another live climber", rival_grabs[0] == 0, rival_grabs[0])
+	t("eight live: physics frame under 6 ms on average (eight climbers)", avg < 6.0, "avg %.3f ms, worst %.3f ms" % [avg, worst_ms])
 
 
 ## A hangs from B, B from C, C from a bar. C freezes: nobody drops.
@@ -360,30 +370,51 @@ func _spike_chain() -> void:
 	var cC := spawn(Vector2(0, 7.0))
 	var bar := bar_at(cC.limb_end(0))
 	cC.attach(0, bar)
-	await seconds(2.0)
-	var hand_off := Layout.end_point("hand_l") * cC.body_scale
-	var cB := spawn(cC.limb_end(2) - hand_off)
+	var cB := spawn(Vector2(0, 4))
 	cB.attach(0, cC.bodies["foot_l"])
-	await seconds(2.0)
-	var cA := spawn(cB.limb_end(2) - hand_off)
-	cA.attach(0, cB.bodies["foot_l"])
-	await seconds(3.0)
-	t("chain: C is held by B, B by A (grabbed_by counts)", cC.grabbed_by >= 1 and cB.grabbed_by >= 1, "%d %d" % [cC.grabbed_by, cB.grabbed_by])
-	var b_hand := cB.limb_end(0)
+	t("chain: a grounded live climber cannot anchor another player", not cB.is_attached())
 	cC.freeze()
-	var worst_slip := 0.0
-	var worst_gap := 0.0
-	for i in int(3.0 * Engine.physics_ticks_per_second):
-		await get_tree().physics_frame
-		worst_slip = maxf(worst_slip, cB.limb_end(0).distance_to(b_hand))
-		worst_gap = maxf(worst_gap, maxf(cA.worst_joint_gap(), cB.worst_joint_gap()))
-	t("chain: after C freezes, B and A still hold on", cB.limbs[0].grab.is_valid() and cA.limbs[0].grab.is_valid())
-	t("chain: B's hand stays on C's frozen foot (under 6 cm)", worst_slip < 0.06, "%.4f m" % worst_slip)
-	t("chain: joints hold through the freeze (under 13 cm, two stiff climbers on one wrist)", worst_gap < 0.13, "%.4f m" % worst_gap)
-	t("chain: B still counts as attached (A holds it, it holds C)", cB.is_attached())
-
+	cB.attach(0, cC.bodies["foot_l"])
+	t("chain: the same piece is grabbable after lock-in", cB.is_attached())
 
 # ================================================================ P2: --grab, --frozen
+
+func _run_exertion() -> void:
+	var c := spawn(Vector2(0, 4))
+	var d: Drivers.ScriptDriver = c.driver
+	var chest: RigidBody3D = c.bodies["chest"]
+	c.attach(0, bar_at(c.limb_end(0)))
+	var events := [0]
+	c.exerted.connect(func(): events[0] += 1)
+	chest.linear_velocity.y = 5.1
+	d.set_limb(3, true, Vector2(0, 1), 1.0)  # Climber input is y-up.
+	c._physics_process(0.01)
+	t("grunt: two-second opening delay", events[0] == 0 and c._grunt_wait > 1.9)
+	c._grunt_wait = -1.0
+	d.set_limb(3, false)
+	c._physics_process(0.01)
+	t("grunt: rising while gripping without steering stays quiet", events[0] == 0)
+	d.set_limb(3, true, Vector2(0, 1), 0.5)
+	c._physics_process(0.01)
+	t("grunt: half input stays quiet", events[0] == 0)
+	d.set_limb(3, true, Vector2(0, 1), 1.0)
+	chest.linear_velocity.y = 5.0
+	c._physics_process(0.01)
+	t("grunt: speed threshold is strict", events[0] == 0)
+	chest.linear_velocity.y = 5.1
+	c._physics_process(0.01)
+	t("grunt: rising pull fires once and rolls a 1.5 to 3.5 second cooldown", events[0] == 1 and c._grunt_wait >= 1.5 and c._grunt_wait <= 3.5)
+	c._physics_process(0.01)
+	t("grunt: continuous pulling respects cooldown", events[0] == 1)
+	c._grunt_wait = -1.0
+	c.release_all()
+	c._physics_process(0.01)
+	t("grunt: no actual grip does not count", events[0] == 1)
+	c.attach(0, bar_at(c.limb_end(0)))
+	d.point_limb(3, true, c.limb_root(3) + Vector2(0, 2))
+	c._physics_process(0.01)
+	t("grunt: mouse aim uses upward reach", events[0] == 2)
+
 
 func _run_grab() -> void:
 	ground()
@@ -412,12 +443,7 @@ func _run_grab() -> void:
 	h.attach(1, f.bodies["chest"])
 	t("grab: a frozen climber can be held", h.limbs[1].grab.is_valid())
 	h.attach(2, e.bodies["chest"])
-	t("grab: a live rival can be held, and counts the grab", h.limbs[2].grab.is_valid() and e.grabbed_by == 1)
-	e.release_all()
-	await frames(1)
-	t("grab: a held climber counts as attached (Parker's rule 10)", e.is_attached() and e.stuck_count() == 0)
-	h.release(2)
-	t("grab: releasing a rival un-counts it", e.grabbed_by == 0 and not e.is_attached())
+	t("grab: a live rival is never a grip", not h.limbs[2].grab.is_valid())
 
 
 func _run_frozen() -> void:
@@ -447,16 +473,16 @@ func _run_frozen() -> void:
 const GameScript := preload("res://game/game.gd")
 
 
-func make_game(mode_id: String, n: int, timer: float) -> Game:
+func make_game(mode_id: String, n: int, timer: float, arena := "dock", draw := false) -> Game:
 	var g: Game = GameScript.new()
 	g.world = world
-	g.dress = false
+	g.dress = draw
 	add_child(g)
 	var roster: Array = []
 	for i in n:
 		roster.append({"pid": i, "name": "Bot %d" % i, "tint": Color.WHITE, "peer": 1, "slot": i})
 		g.bot_drivers[i] = Drivers.ScriptDriver.new()
-	g.host_start({"mode": mode_id, "timer": timer, "spawn": "alternate", "stage": "dock"}, roster)
+	g.host_start({"mode": mode_id, "timer": timer, "spawn": "alternate", "stage": arena}, roster)
 	return g
 
 
@@ -469,27 +495,60 @@ func wait_phase(g: Game, ph: String, max_s := 30.0) -> bool:
 	return false
 
 
-## Lift a live climber so its feet sit `above` metres over the line, and press
-## Lock In. (A rules test, not a climbing test: --climb does the climbing.)
-func lift_and_lock(g: Game, pid: int, above := 0.4) -> Climber:
+## Put the lowest piece onto the barrel or the topmost frozen piece, matching
+## the geometry on every peer. The "airborne" variant is well clear of the stack.
+func lift_and_lock(g: Game, pid: int, above := 0.4, airborne := false) -> Climber:
 	var c: Climber = g.climbers[g.live[pid]]
 	c.release_all()
 	for l in c.limbs:
-		l.regrip = 2.0  # stay loose in the air for the check
+		l.regrip = 2.0
 	var p := c.pose()
-	var low := INF
-	for i in range(1, p.size(), 3):
-		low = minf(low, p[i])
-	var dy := g.line + above - low + 0.2
-	for i in range(1, p.size(), 3):
-		p[i] += dy
-	for i in range(0, p.size(), 3):
-		p[i] = p[i] - c.spawn_at.x + 2.5 * signf(c.spawn_at.x)
+	var support := Vector2(0.0, g.stage.barrel_top)
+	for cid in g.tower:
+		var frozen: Climber = g.climbers[cid]
+		for piece in Layout.ORDER:
+			var y := frozen.piece_top(piece)
+			if y > support.y:
+				support = Vector2(Climber.pos2(frozen.bodies[piece]).x, y)
+	var bottom := Vector2(0.0, INF)
+	for i in Layout.ORDER.size():
+		var k := 3 * i
+		var y := -c.top_of(Layout.ORDER[i], Transform2D(p[k + 2] + PI, Vector2(0, -p[k + 1])))
+		if y < bottom.y:
+			bottom = Vector2(p[k], y)
+	if airborne:
+		support = Vector2(6.0, g.line + 2.0)
+	elif above < 0:
+		support = Vector2(-6.0, 0.0)
+	var offset := support - bottom - Vector2(0, 0.008)
+	for k in range(0, p.size(), 3):
+		p[k] += offset.x
+		p[k + 1] += offset.y
 	c.apply_pose(p)
 	(g.bot_drivers[pid] as Drivers.ScriptDriver).lock = true
 	await frames(3)
 	return c
 
+
+func _run_groundlock() -> void:
+	for id in ["tower", "scramble", "practice"]:
+		var g := make_game(id, 1, 50.0)
+		await wait_phase(g, "round" if id == "scramble" else "turn")
+		var c := await lift_and_lock(g, 0, 0.4, true)
+		t("%s: an above-line airborne lock is refused" % id, c.state == Climber.State.LIVE and g.tower.is_empty() and g.best[0] == 0.0)
+		await lift_and_lock(g, 0)
+		t("%s: contact with the barrel accepts the lock" % id, c.state == Climber.State.FROZEN and g.tower.size() == 1)
+		g.end_match()
+		g.queue_free()
+		await frames(2)
+	var timed := make_game("tower", 1, 50.0)
+	await wait_phase(timed, "turn")
+	await lift_and_lock(timed, 0, 0.4, true)
+	timed._time_up()
+	t("timeout: an airborne pose cannot score or become a new platform", not timed.alive[0] and timed.best[0] == 0.0 and timed.tower.is_empty() and timed.live.is_empty())
+	timed.end_match()
+	timed.queue_free()
+	await frames(2)
 
 func _run_tower() -> void:
 	var g := make_game("tower", 3, 3.0)
@@ -590,9 +649,9 @@ func _run_climb() -> void:
 	await seconds(0.5)
 	var y0 := c.centre_of_mass().y
 	var log := ["standing at x %.2f: feet stuck %s %s, near hand stuck %s" % [c.centre_of_mass().x, c.limbs[2].grab.is_valid(), c.limbs[3].grab.is_valid(), c.limbs[0].grab.is_valid()]]
-	d.point_limb(0, true, Vector2(bx + 0.12, 1.75))  # pick the near hand up: lift it clear of the side first
+	d.point_limb(0, true, Vector2(bx + 0.25, 1.95))  # pick the near hand up: lift it clear of the side first
 	await seconds(0.8)
-	d.point_limb(0, true, Vector2(bx - 0.03, 1.75))  # then press it onto the side, high
+	d.point_limb(0, true, Vector2(bx - 0.20, 1.95))  # then press it onto the side, high
 	await seconds(0.4)
 	log.append("hand reaching: end at %s" % c.limb_end(0))
 	d.set_limb(0, false)
@@ -624,7 +683,7 @@ func _run_climb() -> void:
 func _run_net() -> void:
 	var port := 7790 + randi() % 50
 	var machines := []
-	for nm in ["A", "B"]:
+	for nm in ["A", "B", "Spectator"]:
 		var holder := Node.new()
 		holder.name = nm
 		add_child(holder)
@@ -649,19 +708,22 @@ func _run_net() -> void:
 	var client_peer := ENetMultiplayerPeer.new()
 	client_peer.create_client("127.0.0.1", port)
 	machines[1].api.multiplayer_peer = client_peer
+	var spectator_peer := ENetMultiplayerPeer.new()
+	spectator_peer.create_client("127.0.0.1", port)
+	machines[2].api.multiplayer_peer = spectator_peer
 	for i in 240:
 		await get_tree().process_frame
-		if machines[1].api.get_unique_id() > 1 and machines[0].api.get_peers().size() == 1:
+		if machines[1].api.get_peers().size() == 2 and machines[2].api.get_peers().size() == 2:
 			break
 	var cid_peer: int = machines[1].api.get_unique_id()
-	t("net: the client connects", machines[0].api.get_peers().size() == 1, cid_peer)
+	t("net: the client connects", machines[0].api.get_peers().size() == 2, cid_peer)
 	var A: Game = machines[0].game
 	var B: Game = machines[1].game
 	A.bot_drivers[0] = Drivers.ScriptDriver.new()
 	B.bot_drivers[1] = Drivers.ScriptDriver.new()
 	var roster := [{"pid": 0, "name": "Host bot", "tint": Color.RED, "peer": 1, "slot": 0},
 		{"pid": 1, "name": "Client bot", "tint": Color.BLUE, "peer": cid_peer, "slot": 0}]
-	A.host_start({"mode": "scramble", "timer": 6.0, "spawn": "alternate", "stage": "dock"}, roster)
+	A.host_start({"mode": "scramble", "timer": 6.0, "spawn": "alternate", "stage": "plaza"}, roster)
 	await wait_phase(A, "round", 6.0)
 	await wait_phase(B, "round", 3.0)
 	await frames(30)
@@ -673,19 +735,100 @@ func _run_net() -> void:
 	t("net: each machine owns its own climber and puppets the other",
 		a0 != null and b1 != null and a0.state == Climber.State.LIVE and b1.state == Climber.State.LIVE
 		and a1.state == Climber.State.PUPPET and b0.state == Climber.State.PUPPET)
+	# A client makes a contact and holds RB. Both peers hear the same take.
+	var grunts := []
+	for m in machines:
+		var climber: Climber = m.game.climbers[b1.climber_id]
+		climber.bodies["chest"].child_entered_tree.connect(func(node):
+			if node is AudioStreamPlayer3D:
+				grunts.append(node.stream.resource_path.get_file().get_basename()))
+	b1.exerted.emit()
+	await frames(8)
+	t("net: all three peers play the same approved exertion take", grunts.size() == 3 and grunts.count(grunts[0]) == 3 and grunts[0] in Sound.SFX["strain"])
+	var slaps := []
+	for m in machines:
+		m.world.child_entered_tree.connect(func(node):
+			if node is AudioStreamPlayer3D:
+				slaps.append(node.stream.resource_path))
+	b1.release_contact.emit(b1.bodies["hand_r"].global_position)
+	Players.fake[1099] = {"buttons": {"fart": true}}
+	b1.local_slot = Players.add_player(1099)
+	await frames(20)
+	t("net: slap reaches all three machines once", slaps.size() == 3 and slaps.count(slaps[0]) == 3)
+	var voices := []
+	for m in machines:
+		var copy: Climber = m.game.climbers[b1.climber_id]
+		voices.append(copy.bodies["pelvis"].get_node("FartVoice"))
+	var first = voices[0]
+	t("net: RB starts the same looping take and pitch everywhere", first.active() and voices.all(func(v):
+		return v.active() and v._take == first._take and v._body.pitch_scale == first._body.pitch_scale and v._body.stream.loop_mode == AudioStreamWAV.LOOP_FORWARD))
+	Players.fake[1099].buttons.fart = false
+	await seconds(0.55)
+	t("net: releasing RB clears the sustain and finishes the tail everywhere", voices.all(func(v): return not v.active() and v.get_child_count() == 0))
+	# A partly refilled tank must cut off on the owner, host and spectator while RB stays down.
+	B._fart_fuel[b1.player_id] = 0.25
+	Players.fake[1099].buttons.fart = true
+	await seconds(0.10)
+	t("net: partial tank plays on every peer", voices.all(func(v): return v.active()))
+	await seconds(0.30)
+	t("net: tank exhaustion silences every peer until release", B._fart_fuel[b1.player_id] == 0.0 and voices.all(func(v): return not v.active() and v.get_child_count() == 0))
+	Players.fake[1099].buttons.fart = false
+	b1.local_slot = -1
+	Players.fake.erase(1099)
+	Players.clear_players()
+	# Let the client pick up the host-owned chair using the normal limb selection.
+	t("net: the arena chair exists on host and client without a practice NPC", A.chair != null and B.chair != null and A.partner == null and B.partner == null)
+	var client_hand: RigidBody3D = a1.bodies["hand_l"]
+	A.chair.global_position = client_hand.global_position
+	Climber.sync_server(A.chair)
+	(B.bot_drivers[1] as Drivers.ScriptDriver).set_limb(0, true)
+	await seconds(0.25)
+	A.chair.set_hit_count(A.chair.dent_hits.y)
+	await seconds(0.15)
+	t("net: the chair wear count reaches client and spectator", B.chair.dent_hits == A.chair.dent_hits and B.chair.damage_stage() == 2 and machines[2].game.chair.damage_stage() == 2)
+	t("net: the remote pickup is shared", A.chair.holder == b1.climber_id and B.chair.holder == b1.climber_id)
+	(B.bot_drivers[1] as Drivers.ScriptDriver).set_limb(0, false)
+	await seconds(0.25)
+	t("net: remote release drops the same chair", A.chair.holder == -1 and B.chair.holder == -1)
+	var chair_sounds := []
+	for m in machines:
+		var heard := []
+		chair_sounds.append(heard)
+		m.world.child_entered_tree.connect(func(node):
+			if node is AudioStreamPlayer3D:
+				heard.append(node.stream.resource_path.get_file().get_basename()))
+	var test_hit := {"piece": "chest", "offset": Vector3.ZERO, "impulse": Vector3.RIGHT, "speed": A.chair.LIGHT_HIT_MAX_SPEED}
+	for kind in ["chair_light", "chair_heavy", "chair_break"]:
+		for heard in chair_sounds:
+			heard.clear()
+		if kind == "chair_heavy":
+			test_hit.speed += 0.01
+		elif kind == "chair_break":
+			A.chair.set_hit_count(19)
+		var before_hits := A.chair.hit_count
+		A._apply_chair_hits({a1.climber_id: test_hit})
+		await seconds(0.08)
+		if kind != "chair_break":
+			var expected := before_hits + int(kind == "chair_heavy")
+			t("net: wear matches the slam at the sound boundary", A.chair.hit_count == expected and B.chair.hit_count == expected)
+		var expected_cues := ["chair_heavy", "chair_break"] if kind == "chair_break" else [kind]
+		for heard in chair_sounds:
+			var correct: bool = heard == chair_sounds[0] and heard.size() == expected_cues.size()
+			for cue in mini(heard.size(), expected_cues.size()):
+				correct = correct and heard[cue] in Sound.SFX[expected_cues[cue]]
+			t("net: synchronized chair cue sequence " + kind, correct, heard)
+	await seconds(0.12)
+	t("net: the final hit removes the chair for host, client and spectator", A.chair == null and B.chair == null and machines[2].game.chair == null)
 	# The stream: the client's puppet follows the host's real body.
 	await seconds(1.0)
 	var lag := a0.centre_of_mass().distance_to(b0.centre_of_mass())
 	t("net: the puppet follows the real body (within 25 cm at rest)", lag < 0.25, "%.3f m" % lag)
-	# Grab across machines: the client's hand holds the host climber's puppet.
 	b1.attach(0, b0.bodies["chest"])
-	await seconds(0.5)
-	t("net: the host's climber learns it's held (counts as attached)", a0.remote_grabbed == 1 and a0.is_attached(), a0.remote_grabbed)
-	t("net: the holder's pull arrives on the held climber's machine", not a0.remote_pulls.is_empty(), a0.remote_pulls)
-	b1.release(0)
-	await seconds(0.4)
-	t("net: releasing un-counts it on the other machine", a0.remote_grabbed == 0)
+	t("net: a remote puppet cannot be used as a foothold", not b1.limbs[0].grab.is_valid())
 	# The client locks in above the line: the host decides, both freeze it the same.
+	await lift_and_lock(B, 1, 0.5, true)
+	await seconds(0.3)
+	t("net: host rejects airborne lock from a remote client", b1.state == Climber.State.LIVE and a1.state == Climber.State.PUPPET and A.tower.is_empty())
 	var line_before := A.line
 	await lift_and_lock(B, 1, 0.5)
 	await seconds(0.5)
@@ -698,10 +841,12 @@ func _run_net() -> void:
 	t("net: the timed-out climber is frozen on both machines", a0.state == Climber.State.FROZEN and b0.state == Climber.State.FROZEN)
 	t("net: its frozen body matches across machines", _pose_diff(a0.pose(), b0.pose()) < 0.0001, "%.6f" % _pose_diff(a0.pose(), b0.pose()))
 	t("net: both machines agree on the winner (the client)", int(A.results.get("winner", -1)) == 1 and int(B.results.get("winner", -1)) == 1, "%s / %s" % [A.results.get("winner"), B.results.get("winner")])
-	A.end_match()
-	B.end_match()
+	for m in machines:
+		m.game.set_physics_process(false)
+		m.game.end_match()
 	host_peer.close()
 	client_peer.close()
+	spectator_peer.close()
 	for m in machines:
 		m.holder.queue_free()
 
@@ -835,7 +980,7 @@ func _run_feel() -> void:
 	var drift := (c.limb_end(0) - c.limb_root(0)).distance_to(hand_rel)
 	t("feel: let go, and the arm holds its new pose (hand drifts under 25 cm)", drift < 0.25, "%.3f m" % drift)
 	t("feel: after the big lean the body is still up (head top over 1.3 m)", c.piece_top("head") > 1.3, "%.2f" % c.piece_top("head"))
-	# 3b. Two held limbs share ONE budget: holding more never pulls harder.
+	# 3b. Switching hands under overlapping input keeps the pull within budget.
 	d.point_limb(0, true, c.limb_root(0) + Vector2(-2.5, 1.5))
 	d.point_limb(1, true, c.limb_root(1) + Vector2(-2.5, 1.5))
 	var worst_total := 0.0
@@ -843,7 +988,7 @@ func _run_feel() -> void:
 		await get_tree().physics_frame
 		worst_total = maxf(worst_total, c._drag_total)
 	var budget: float = Feel.get_k("drag_strength") * c.total_mass * 9.8
-	t("feel: two held limbs share one pull budget (total under one limb's cap)", worst_total > 0.0 and worst_total <= budget * 1.001, "%.0f of %.0f N" % [worst_total, budget])
+	t("feel: overlapping buttons drive one limb within its pull cap", worst_total > 0.0 and worst_total <= budget * 1.001, "%.0f of %.0f N" % [worst_total, budget])
 	# 4. A foot, on a fresh climber: lifts off and follows the cursor; the other foot stays.
 	d.clear()
 	c = spawn(Vector2(-3.0, 0.05))
@@ -908,3 +1053,491 @@ func _run_feel() -> void:
 	await seconds(0.3)
 	var moved := (air.limb_end(0) - air.limb_root(0)).distance_to(before)
 	t("feel: loose in the air, a held limb isn't pulled (under 10 cm)", moved < 0.10 and not air.is_attached(), "%.3f m" % moved)
+
+func _run_recovery() -> void:
+	var c := spawn(Vector2.ZERO)
+	# Lay the climber sideways across a narrow ledge with its ends clear.
+	var pivot := (c.bodies["chest"] as RigidBody3D).global_position
+	var turn := Basis(Vector3.BACK, PI / 2.0)
+	for b: RigidBody3D in c.bodies.values():
+		b.global_transform = Transform3D(turn * b.global_basis, turn * (b.global_position - pivot) + Vector3.UP)
+		Climber.sync_server(b)
+	static_box(Vector2(0, 0.74), Vector2(0.08, 0.10))
+	var d: Drivers.ScriptDriver = c.driver
+	# Wait for contact instead of assuming a fall time at a particular gravity.
+	for tick in 240:
+		await frames(1)
+		if c._touching_solid():
+			break
+	var drive_ticks := 0
+	var loose_ticks := 0
+	for tick in 100:
+		d.set_limb(3, true, Vector2.from_angle(TAU * tick / 48.0))
+		await frames(1)
+		if not c.is_attached():
+			loose_ticks += 1
+			if c._drag_total > 0.001:
+				drive_ticks += 1
+	t("recovery: sweeping B while supported without a grip supplies no propulsion", loose_ticks > 0 and drive_ticks == 0, "%d powered ticks out of %d loose" % [drive_ticks, loose_ticks])
+
+func _run_freeflight() -> void:
+	var tuned := Feel.get_k("free_gravity_multiplier")
+	var rises := []
+	for multiplier in [1.0, tuned]:
+		Feel.set_k("free_gravity_multiplier", multiplier)
+		var c := spawn(Vector2(0, 5))
+		var bar := bar_at(c.limb_end(0))
+		c.attach(0, bar)
+		await frames(3)
+		var body: RigidBody3D = c.bodies["chest"]
+		t("fling: swing uses latched gravity", is_equal_approx(body.gravity_scale, Feel.get_k("gravity_scale") * Feel.get_k("latched_gravity_multiplier")))
+		c.release(0)
+		bar.queue_free()
+		var start := c.centre_of_mass().y
+		var peak := start
+		for b: RigidBody3D in c.bodies.values():
+			b.linear_velocity = Vector3(2, 4, 0)
+		for tick in Engine.physics_ticks_per_second:
+			await frames(1)
+			peak = maxf(peak, c.centre_of_mass().y)
+		t("fling: release switches to free-flight gravity", is_equal_approx(body.gravity_scale, Feel.get_k("gravity_scale") * multiplier))
+		rises.append(peak - start)
+		var catch_bar := bar_at(c.limb_end(1))
+		c.attach(1, catch_bar)
+		await frames(2)
+		t("fling: catching restores latched gravity", is_equal_approx(body.gravity_scale, Feel.get_k("gravity_scale") * Feel.get_k("latched_gravity_multiplier")))
+		c.remove()
+		catch_bar.queue_free()
+		await frames(2)
+	t("fling: same launch rises higher with free-flight gravity", rises[1] > rises[0] * 1.1, "%.2f m -> %.2f m" % rises)
+
+
+func _run_swing() -> void:
+	var c := spawn(Vector2(0, 5))
+	var anchor := bar_at(c.limb_end(0))
+	c.attach(0, anchor)
+	var d: Drivers.ScriptDriver = c.driver
+	await seconds(1.0)
+	var previous := c.centre_of_mass()
+	var release_speed := 0.0
+	var peak_speed := 0.0
+	# Pump the opposite foot across the bottom and up the far side of the arc.
+	for tick in 180:
+		var phase := TAU * float(tick) / 96.0
+		d.set_limb(3, true, Vector2(cos(phase), sin(phase)))
+		await frames(1)
+		var centre := c.centre_of_mass()
+		release_speed = (centre.y - previous.y) * Engine.physics_ticks_per_second
+		previous = centre
+		peak_speed = maxf(peak_speed, release_speed)
+		if tick > 6 and release_speed > 1.0 and release_speed < peak_speed:
+			break
+	# Transfer control to the anchor hand to release exactly as a player would.
+	d.set_limb(0, true)
+	await frames(2)
+	t("swing: the last grip releases on the button handoff", not c.is_attached())
+	var takeoff := c.centre_of_mass().y
+	var peak := takeoff
+	for tick in Engine.physics_ticks_per_second * 2:
+		await frames(1)
+		if c.is_attached():
+			break
+		peak = maxf(peak, c.centre_of_mass().y)
+	t("swing: a single foot pumps an upward launch from one anchored hand", peak > takeoff + 0.18 and release_speed > 1.0, "upward %.2f m/s, rise %.2f m" % [release_speed, peak - takeoff])
+
+
+func _run_horizontal() -> void:
+	await _horizontal_trials()
+
+
+func _horizontal_trials() -> Array:
+	var trials := []
+	for anchor_limb in [0, 2]:
+		var c := spawn(Vector2(0, 6))
+		if anchor_limb == 2:
+			# Bend the free leg away so it cannot plant on the same foothold.
+			var leg: Dictionary = c.limbs[3].def
+			var hip := c.limb_root(3)
+			var spread := Basis(Vector3.BACK, PI / 2.0)
+			var hip3 := Vector3(hip.x, hip.y, 0)
+			for name in [leg.up, leg.lo, leg.end]:
+				var piece: RigidBody3D = c.bodies[name]
+				piece.global_transform = Transform3D(spread * piece.global_basis, hip3 + spread * (piece.global_position - hip3))
+				Climber.sync_server(piece)
+		var anchor_pos := c.limb_end(anchor_limb)
+		var radius := c.centre_of_mass() - anchor_pos
+		var turn := Basis(Vector3.BACK, -radius.angle())
+		var pivot := Vector3(anchor_pos.x, anchor_pos.y, 0)
+		for body: RigidBody3D in c.bodies.values():
+			body.global_transform = Transform3D(turn * body.global_basis, pivot + turn * (body.global_position - pivot))
+			Climber.sync_server(body)
+		# Touch the outer edge of just this extremity, like a narrow peg.
+		var outward := (anchor_pos - c.limb_end(anchor_limb + 1)).normalized()
+		var bar := static_box(anchor_pos + outward * c.limbs[anchor_limb].end_r, Vector2(0.015, 0.015))
+		c.attach(anchor_limb, bar)
+		var start := c.centre_of_mass().y
+		var d: Drivers.ScriptDriver = c.driver
+		d.set_limb(1, true, Vector2(0, 1))  # The 3D play plane is y-up.
+		var release_speed := 0.0
+		var lift_ticks := 0
+		for tick in 60:
+			await frames(1)
+			lift_ticks += 1
+			if c.centre_of_mass().y > start + 0.25:
+				break
+		t("horizontal: only the intended extremity holds the peg", c.stuck_count() == 1)
+		var rise := c.centre_of_mass().y - start
+		d.set_limb(anchor_limb, true)
+		await frames(2)
+		t("horizontal: switching to the anchor releases it", not c.is_attached())
+		# Isolate ballistic rise from any later regrab of the starting peg.
+		bar.queue_free()
+		var launch := c.centre_of_mass().y
+		for body: RigidBody3D in c.bodies.values():
+			release_speed += body.mass * body.linear_velocity.y / c.total_mass
+		var peak := launch
+		for tick in 100:
+			if c.is_attached():
+				break
+			peak = maxf(peak, c.centre_of_mass().y)
+			await frames(1)
+		trials.append(Vector3(float(lift_ticks) / Engine.physics_ticks_per_second, release_speed, peak - launch))
+		t("horizontal: one grip lifts the torso and releases upward", rise > 0.20 and release_speed > 1.5 and peak - launch > 0.3, "anchor %d, lift %.2f m in %d ticks, launch %.2f m/s, airborne rise %.2f m" % [anchor_limb, rise, lift_ticks, release_speed, peak - launch])
+		c.remove()
+		await frames(2)
+	return trials
+
+
+func _run_floor() -> void:
+	ground()
+	var c := spawn(Vector2.ZERO)
+	# Head and shoulders land first with all four ends clear of the flat deck.
+	var head: RigidBody3D = c.bodies["head"]
+	var origin := head.global_position
+	var turn := Basis(Vector3.BACK, PI - 0.18)
+	for piece: RigidBody3D in c.bodies.values():
+		piece.global_transform = Transform3D(turn * piece.global_basis, turn * (piece.global_position - origin) + Vector3.UP * 0.22)
+		Climber.sync_server(piece)
+	var d: Drivers.ScriptDriver = c.driver
+	var supported_ticks := 0
+	var powered_ticks := 0
+	for tick in 480:
+		d.set_limb(3, true, Vector2.from_angle(TAU * tick / 48.0))
+		await frames(1)
+		if c.is_attached():
+			break
+		if c._touching_solid():
+			supported_ticks += 1
+			if c.limbs[3].driving or c._drag_total > 0.001:
+				powered_ticks += 1
+	t("floor: B cannot propel a body resting on the deck without a grip", supported_ticks > 0 and powered_ticks == 0, "%d powered ticks out of %d supported" % [powered_ticks, supported_ticks])
+	t("floor: an inactive extremity settles into a grip on the deck", c.stuck_count() > 0)
+
+
+func _run_pace() -> void:
+	var main := preload("res://game/main.gd").new()
+	main.screen = "hud"
+	var baseline := await _horizontal_trials()
+	main._on_phase("between")
+	main._on_phase("turn")
+	await frames(3)
+	var slower := await _horizontal_trials()
+	for i in baseline.size():
+		var before: Vector3 = baseline[i]
+		var after: Vector3 = slower[i]
+		t("pace: release window expands and launch is preserved", absf(after.x - before.x * 1.25) <= 1.01 / Engine.physics_ticks_per_second and absf(after.y - before.y) < 0.05 and absf(after.z - before.z) < 0.05, "%.0f -> %.0f ms, %.2f -> %.2f m apex" % [before.x * 1000, after.x * 1000, before.z, after.z])
+	var g := Game.new()
+	add_child(g)
+	g.phase = "turn"
+	g.clock = 10.0
+	g._clock_t = 10.0
+	await frames(Engine.physics_ticks_per_second)
+	t("pace: the round clock counts real seconds", absf(g.clock - 9.0) < 0.001)
+	g.free()
+	main._on_phase("over")
+	t("pace: ending a match restores the engine clock", Engine.physics_ticks_per_second == 120 and is_equal_approx(Engine.time_scale, 1.0))
+	main.free()
+
+
+func _run_fullreach() -> void:
+	await _check_reach(1.0)
+
+
+func _run_partialreach() -> void:
+	for magnitude in [Feel.get_k("stick_deadzone") + 0.001, 0.35, 0.5, 0.65, 0.8, 0.86, 0.88, 0.89, 0.9, 0.91, 0.99]:
+		await _check_reach(magnitude)
+
+
+func _check_reach(magnitude: float) -> void:
+	var main := preload("res://game/main.gd").new()
+	main.screen = "hud"
+	main._on_phase("turn")
+	await frames(3)
+	# Two holds keep the torso supported without putting the reaching end on a surface.
+	for i in 4:
+		var c := spawn(Vector2(0, 5))
+		var anchors: Array = []
+		for j in ([2, 3] if i < 2 else [1 - (i % 2), i ^ 1]):
+			var bar := bar_at(c.limb_end(j))
+			anchors.append(bar)
+			c.attach(j, bar)
+		var d: Drivers.ScriptDriver = c.driver
+		var dir := Vector2(-1.0 if i % 2 == 0 else 1.0, 0.6 if i < 2 else -0.6).normalized()
+		d.set_limb(i, true, dir, magnitude)
+		await seconds(2.0)
+		var end: RigidBody3D = c.bodies[c.limbs[i].def.end]
+		var previous := c.limb_end(i) - c.limb_root(i)
+		var last_step := Vector2.ZERO
+		var previous_angle := Climber.angle_of(end)
+		var last_turn := 0.0
+		var jitter := 0.0
+		var twist := 0.0
+		for tick in 120:
+			await frames(1)
+			var pos := c.limb_end(i) - c.limb_root(i)
+			var step := pos - previous
+			var angle := Climber.angle_of(end)
+			var turn := angle_difference(previous_angle, angle)
+			if tick > 0:
+				jitter = maxf(jitter, (step - last_step).length())
+				twist = maxf(twist, absf(turn - last_turn))
+			previous = pos
+			last_step = step
+			previous_angle = angle
+			last_turn = turn
+		var extension := previous.dot(dir) / float(c.limbs[i].l1 + c.limbs[i].l2)
+		var minimum := float(c.limbs[i].min_reach) / float(c.limbs[i].l1 + c.limbs[i].l2)
+		var expected := clampf(magnitude * Feel.get_k("stick_reach"), minimum, 1.0)
+		t("a sustained pull reaches the stick target smoothly", absf(extension - expected) < 0.10 and jitter < 0.003 and twist < deg_to_rad(3.0), "limb %d, %.1f%% stick, %.0f%% reach, %.1f mm and %.1f deg frame-step variation" % [i, 100 * magnitude, 100 * extension, jitter * 1000, rad_to_deg(twist)])
+		c.remove()
+		for bar in anchors:
+			bar.queue_free()
+		await frames(2)
+	main._on_phase("over")
+	main.free()
+
+
+func _run_neutral() -> void:
+	for i in 4:
+		var c := spawn(Vector2(0, 5))
+		var anchors := []
+		for j in ([2, 3] if i < 2 else [1 - (i % 2), i ^ 1]):
+			var bar := bar_at(c.limb_end(j))
+			anchors.append(bar)
+			c.attach(j, bar)
+		var d: Drivers.ScriptDriver = c.driver
+		var base: RigidBody3D = c.joints[c.limbs[i].def.root].a
+		var end: RigidBody3D = c.bodies[c.limbs[i].def.end]
+		for action in ["press", "recenter", "reselect bent limb"]:
+			if action == "reselect bent limb":
+				d.set_limb(i, false)
+				await frames(3)
+			elif action == "recenter":
+				d.set_limb(i, true, Vector2(1 if i % 2 else -1, 0.4), 0.45)
+				await frames(40)
+				t("neutral: steering resumes without a second press", c._drag_total > 0.0)
+			d.set_limb(i, true)
+			await frames(2)
+			var rest := base.to_local(end.global_position)
+			var rotation := Climber.angle_of(end) - Climber.angle_of(base)
+			var drift := 0.0
+			var twist := 0.0
+			var drag := 0.0
+			for tick in 120:
+				await frames(1)
+				drag = maxf(drag, c._drag_total)
+				if tick >= 24:
+					drift = maxf(drift, rest.distance_to(base.to_local(end.global_position)))
+					twist = maxf(twist, absf(angle_difference(rotation, Climber.angle_of(end) - Climber.angle_of(base))))
+			t("neutral: selected limb waits in its body-relative pose", drag == 0 and drift < 0.05 and twist < deg_to_rad(12), "limb %d, %s, %.3f m, %.1f deg, %.1f N drag" % [i, action, drift, rad_to_deg(twist), drag])
+		c.remove()
+		for bar in anchors:
+			bar.queue_free()
+		await frames(2)
+
+
+func _run_selffold() -> void:
+	for i in 4:
+		var c := spawn(Vector2(0, 6))
+		var ld: Dictionary = c.limbs[i].def
+		c.set_physics_process(false)
+		for name in c.bodies:
+			var b: RigidBody3D = c.bodies[name]
+			b.gravity_scale = 0
+			b.freeze = name not in [ld.up, ld.lo, ld.end]
+		var root: Dictionary = c.joints[ld.root]
+		var mid: Dictionary = c.joints[ld.mid]
+		for j in [root, mid]:
+			PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, 2.0)
+		PhysicsServer3D.hinge_joint_set_param(root.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, 5.0 * Climber.MOTOR_SIGN)
+		var previous := Climber.angle_of(root.b)
+		var travel := 0.0
+		for tick in 220:
+			await frames(1)
+			var angle := Climber.angle_of(root.b)
+			travel += angle_difference(previous, angle)
+			previous = angle
+		t("fold: the whole limb can revolve past 360 degrees", travel > TAU, "%s %.0f deg" % [ld.id, rad_to_deg(travel)])
+		PhysicsServer3D.hinge_joint_set_param(root.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, 0)
+		for direction in [1.0, -1.0]:
+			PhysicsServer3D.hinge_joint_set_param(mid.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, direction * 7.0 * Climber.MOTOR_SIGN)
+			var worst := 0.0
+			var at_stop := 0.0
+			for tick in 180:
+				await frames(1)
+				var fold := rad_to_deg(angle_difference(Climber.angle_of(mid.a), Climber.angle_of(mid.b)))
+				worst = maxf(worst, absf(fold))
+				if tick == 159:
+					at_stop = fold
+				if tick == 179:
+					t("fold: the joint bends then stalls under sustained drive", absf(fold * direction - rad_to_deg(mid.hi)) < 5 and worst < rad_to_deg(mid.hi) + 5 and absf(fold - at_stop) < 3, "%s %.0f deg, max %.0f" % [ld.mid, fold, worst])
+		c.remove()
+		await frames(2)
+
+
+func _run_chair() -> void:
+	var g := make_game("practice", 1, 50.0, "plaza")
+	await wait_phase(g, "turn")
+	await seconds(1)
+	var c: Climber = g.climbers[g.live[0]]
+	var npc := g.partner
+	t("practice: chair and upright partner spawn outside the scoring roster", g.chair != null and npc != null and g.live.size() == 1 and npc.piece_top("head") > 1.40, npc.piece_top("head"))
+	var d: Drivers.ScriptDriver = c.driver
+	c.attach(0, npc.bodies["chest"])
+	t("practice: NPC cannot be used as a grip", not c.limbs[0].grab.is_valid())
+	t("chair: rests flat on a broad face", absf(g.chair.global_basis.z.y) > 0.98)
+	var foot: RigidBody3D = c.bodies["foot_l"]
+	var piece_mass := foot.mass
+	d.point_limb(2, true, Climber.pos2(g.chair) + Vector2(0.18, 0.02))
+	for tick in 240:
+		await frames(1)
+		if g.chair.holder == c.climber_id:
+			break
+	t("chair: reaching with an active foot picks up the flat chair", g.chair.holder == c.climber_id)
+	if g.chair.holder == c.climber_id:
+		d.set_limb(2, true, Vector2(-1, 1).normalized())
+		await frames(30)
+		t("chair: held without mass or collision load", foot.mass == piece_mass and g.chair.freeze and g.chair.collision_mask == 0)
+		var head: RigidBody3D = npc.bodies["head"]
+		# Independently rotating a wrist/ankle in place must never flip the prop.
+		for tick in 100:
+			g.chair.follow(c, 1.0 / 120)
+		var stable := g.chair.global_transform
+		var saved := foot.global_transform
+		foot.global_basis = Basis(Vector3.BACK, PI) * foot.global_basis
+		g.chair.follow(c, 1.0 / 120)
+		t("chair: endpoint roll in place cannot flip the carried model", stable.is_equal_approx(g.chair.global_transform))
+		foot.global_transform = saved
+		var shin: RigidBody3D = npc.bodies["leg_l_lo"]
+		g.chair.global_transform = Transform3D(Basis.IDENTITY, shin.global_position + Vector3(-0.30, -0.45, 0))
+		g.chair.previous = g.chair.global_transform
+		g.chair.previous.origin.x -= 0.065
+		var low_hit := g.chair.sweep_hits(1.0 / 120, c.climber_id)
+		t("chair: a low strike selects the leg or foot", low_hit.has(-2) and low_hit[-2].piece in ["leg_l_lo", "foot_l", "leg_r_lo", "foot_r"], low_hit)
+		g.chair.recent_hits.clear()
+		# Graze the side of the head, away from the torso, while sweeping right.
+		g.chair.global_transform = Transform3D(Basis.IDENTITY, head.global_position + Vector3(-0.28, 0.51, 0))
+		g.chair.previous = g.chair.global_transform
+		t("chair: resting contact does not strike", g.chair.sweep_hits(1.0 / 120, c.climber_id).is_empty())
+		g.chair.previous.origin.x -= 0.06
+		var hits := g.chair.sweep_hits(1.0 / 120, c.climber_id)
+		t("chair: head strike carries direction and a local contact point", hits.has(-2) and hits[-2].piece == "head" and hits[-2].impulse.x > 0 and hits[-2].offset.length() > 0.01, hits)
+		if hits.has(-2):
+			var before := head.linear_velocity
+			g._apply_chair_hits(hits)
+			await frames(2)
+			t("chair: head recoils and partner temporarily stops balancing", head.linear_velocity.x > before.x + 0.2 and npc.stagger_time > 0)
+		for direction in [-1.0, 1.0]:
+			g.chair.pick_up(c, 2)
+			foot.linear_velocity = Vector3(direction * 3.0, 0.3, 0)
+			g.chair.carry_velocity = Vector3(-direction * 3.0, 0, 0)
+			g.chair.drop(c, 1.0 / 120)
+			t("chair: release follows the limb even after reversal", g.chair.linear_velocity.x * direction > 2.0)
+		d.clear()
+	# Start the dropped chair balanced on its thin side, not already face-down.
+	g.chair.global_transform = Transform3D(Basis(Vector3.BACK, PI / 2), Vector3(-3, 0.28, 0))
+	Climber.sync_server(g.chair)
+	g.chair.linear_velocity = Vector3.ZERO
+	g.chair.angular_velocity = Vector3.ZERO
+	g.chair.sleeping = false
+	await seconds(4)
+	t("chair: an edge landing settles onto a broad face", absf(g.chair.global_basis.z.y) > 0.94, g.chair.global_basis.z.y)
+	# Turn the NPC onto its side on the canvas, then allow its balance controller to act.
+	var pose := npc.pose()
+	var pivot := npc.centre_of_mass()
+	for k in range(0, pose.size(), 3):
+		var xy := (Vector2(pose[k], pose[k + 1]) - pivot).rotated(PI * 0.5) + Vector2(2.8, 0.38)
+		pose[k] = xy.x
+		pose[k + 1] = xy.y
+		pose[k + 2] += PI * 0.5
+	npc.apply_pose(pose)
+	await seconds(5)
+	t("practice: fallen partner attempts to stand back upright", npc.piece_top("head") > 1.3 and absf(Climber.angle_of(npc.bodies["chest"])) < 0.65, npc.piece_top("head"))
+	pose = npc.pose()
+	for k in range(0, pose.size(), 3):
+		pose[k] += 25
+	npc.apply_pose(pose)
+	await frames(4)
+	t("practice: out-of-bounds partner respawns without advancing the turn", g.partner != null and g.partner != npc and not g.stage.out_of_bounds(g.partner.centre_of_mass()) and g.live[0] == c.climber_id and g.phase == "turn")
+	g.end_match()
+	t("practice: leaving removes chair and partner", g.chair == null and g.partner == null)
+	g.queue_free()
+	await frames(2)
+
+
+func _run_chairwear() -> void:
+	var g := make_game("practice", 1, 50.0, "plaza", true)
+	await wait_phase(g, "turn")
+	var chair := g.chair
+	var c: Climber = g.climbers[g.live[0]]
+	var head: RigidBody3D = g.partner.bodies["head"]
+	var rival := spawn(Vector2(-3, 5))
+	rival.climber_id = 99
+	g.climbers[rival.climber_id] = rival
+	t("wear: both dent thresholds fall in their allowed windows", chair.dent_hits.x in [8,9,10] and chair.dent_hits.y in [11,12,13])
+	var contact := Transform3D(Basis.IDENTITY, head.global_position + Vector3(-0.28, 0.51, 0))
+	var clear := contact
+	clear.origin.x -= 2.0
+	var paths := ["folding_chair.glb", "folding_chair_damage_1.glb", "folding_chair_damage_2.glb"]
+	chair.pick_up(c, 0)
+	for n in range(1, 21):
+		var victim_head: RigidBody3D = head if n % 2 else rival.bodies["head"]
+		contact.origin = victim_head.global_position + Vector3(-0.28, 0.51, 0)
+		chair.global_transform = clear
+		chair.previous = clear
+		chair.sweep_hits(0.4, c.climber_id)
+		chair.global_transform = contact
+		chair.previous = contact
+		chair.previous.origin.x -= 0.025  # 3 m/s: a real light hit, above the contact threshold.
+		var light := chair.sweep_hits(1.0 / 120, c.climber_id)
+		g._apply_chair_hits(light)
+		t("wear: a light impact lands without advancing wear", light.size() == 1 and chair.hit_count == n - 1)
+		chair.global_transform = clear
+		chair.previous = clear
+		chair.sweep_hits(0.4, c.climber_id)
+		chair.global_transform = contact
+		chair.previous = contact
+		chair.previous.origin.x -= 0.06
+		var ignore_id := chair.holder if chair.holder != -1 else chair.thrower
+		if chair.holder == -1:
+			g._tick_chair(1.0 / 120)
+		else:
+			g._apply_chair_hits(chair.sweep_hits(1.0 / 120, ignore_id))
+		if n == 20:
+			t("wear: twentieth hit removes the playable chair immediately", g.chair == null)
+			t("wear: separate pieces of the damaged model scatter", is_instance_valid(g.chair_debris) and g.chair_debris.get_child_count() >= 3)
+			break
+		var stage := int(n >= chair.dent_hits.x) + int(n >= chair.dent_hits.y)
+		t("wear: qualifying impact shows the correct model", chair.hit_count == n and chair.model.scene_file_path.get_file() == paths[stage], "hit %d: %s" % [n, chair.model.scene_file_path])
+		chair.sweep_hits(0.5, ignore_id)
+		chair.previous.origin.x -= 0.06
+		t("wear: sustained contact cannot count a second hit", chair.sweep_hits(1.0 / 120, ignore_id).is_empty())
+		if n in [1, 19]:
+			chair.drop(c, 1.0 / 120)
+		if n == 3:
+			chair.pick_up(c, 0)
+	await seconds(1.6)
+	t("wear: fragments despawn and the chair stays gone", not is_instance_valid(g.chair_debris) and g.chair == null)
+	g.end_match()
+	g.queue_free()
+	await frames(2)

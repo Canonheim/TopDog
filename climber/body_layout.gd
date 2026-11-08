@@ -40,17 +40,17 @@ const JOINTS := {
 	"spine_lo": {"a": "navel", "b": "pelvis", "at": Vector2(0.0, 1.1926), "lim": [-12.0, 12.0], "kind": "spine"},
 
 	"shoulder_l": {"a": "chest", "b": "arm_l_up", "at": Vector2(-0.225, 1.582), "lim": [-170.0, 170.0], "kind": "root"},
-	"elbow_l": {"a": "arm_l_up", "b": "arm_l_lo", "at": Vector2(-0.625, 1.582), "lim": [-150.0, 150.0], "kind": "mid"},
+	"elbow_l": {"a": "arm_l_up", "b": "arm_l_lo", "at": Vector2(-0.625, 1.582), "lim": [-120.0, 120.0], "kind": "mid"},
 	"wrist_l": {"a": "arm_l_lo", "b": "hand_l", "at": Vector2(-0.93, 1.582), "lim": [-50.0, 50.0], "kind": "end"},
 	"shoulder_r": {"a": "chest", "b": "arm_r_up", "at": Vector2(0.225, 1.582), "lim": [-170.0, 170.0], "kind": "root"},
-	"elbow_r": {"a": "arm_r_up", "b": "arm_r_lo", "at": Vector2(0.625, 1.582), "lim": [-150.0, 150.0], "kind": "mid"},
+	"elbow_r": {"a": "arm_r_up", "b": "arm_r_lo", "at": Vector2(0.625, 1.582), "lim": [-120.0, 120.0], "kind": "mid"},
 	"wrist_r": {"a": "arm_r_lo", "b": "hand_r", "at": Vector2(0.93, 1.582), "lim": [-50.0, 50.0], "kind": "end"},
 
 	"hip_l": {"a": "pelvis", "b": "leg_l_up", "at": Vector2(-0.0906, 1.0187), "lim": [-150.0, 90.0], "kind": "root"},
-	"knee_l": {"a": "leg_l_up", "b": "leg_l_lo", "at": Vector2(-0.09, 0.587), "lim": [-150.0, 150.0], "kind": "mid"},
+	"knee_l": {"a": "leg_l_up", "b": "leg_l_lo", "at": Vector2(-0.09, 0.587), "lim": [-115.0, 115.0], "kind": "mid"},
 	"ankle_l": {"a": "leg_l_lo", "b": "foot_l", "at": Vector2(-0.09, 0.1465), "lim": [-40.0, 40.0], "kind": "end"},
 	"hip_r": {"a": "pelvis", "b": "leg_r_up", "at": Vector2(0.0906, 1.0187), "lim": [-90.0, 150.0], "kind": "root"},
-	"knee_r": {"a": "leg_r_up", "b": "leg_r_lo", "at": Vector2(0.09, 0.587), "lim": [-150.0, 150.0], "kind": "mid"},
+	"knee_r": {"a": "leg_r_up", "b": "leg_r_lo", "at": Vector2(0.09, 0.587), "lim": [-115.0, 115.0], "kind": "mid"},
 	"ankle_r": {"a": "leg_r_lo", "b": "foot_r", "at": Vector2(0.09, 0.1465), "lim": [-40.0, 40.0], "kind": "end"},
 }
 

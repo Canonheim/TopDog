@@ -9,6 +9,11 @@ const GameScript := preload("res://game/game.gd")
 const Layout := preload("res://climber/body_layout.gd")
 const PadNavScript := preload("res://ui/pad_nav.gd")
 
+# Keep each simulation step the same length and schedule fewer steps per real second.
+const MATCH_PACE := 0.8
+var _original_hz := 0
+var _original_speed := 1.0
+
 var world: Node3D
 var game: Game
 var cam: Camera3D
@@ -396,7 +401,6 @@ func _on_spawned(c: Climber) -> void:
 	tag.no_depth_test = true
 	world.add_child(tag)
 	tags[c.climber_id] = tag
-	c.release_contact.connect(func(at: Vector3): Sound.play_at("grab", at, -4.0 + linear_to_db(10.5), world))
 	c.froze.connect(func(_cl): Sound.play("thud", -6.0))
 
 
@@ -416,7 +420,25 @@ func _on_announce(text: String, big: bool) -> void:
 		Sound.play("clap")
 
 
+func _set_match_pace(active: bool) -> void:
+	if active and _original_hz == 0:
+		_original_hz = Engine.physics_ticks_per_second
+		_original_speed = Engine.time_scale
+		var match_hz := maxi(1, roundi(_original_hz * MATCH_PACE))
+		Engine.physics_ticks_per_second = match_hz
+		Engine.time_scale = _original_speed * match_hz / _original_hz
+	elif not active and _original_hz > 0:
+		Engine.physics_ticks_per_second = _original_hz
+		Engine.time_scale = _original_speed
+		_original_hz = 0
+
+
+func _exit_tree() -> void:
+	_set_match_pace(false)
+
+
 func _on_phase(p: String) -> void:
+	_set_match_pace(p in ["turn", "round", "between"])
 	if p in ["turn", "round", "between"] and screen not in ["hud", "pause"]:
 		show_screen("hud")
 
@@ -937,7 +959,7 @@ func _to_title(reason: String) -> void:
 
 
 func _screen_controls() -> Control:
-	var c := UiKit.panel_screen("Controls", "Hands and feet stick to whatever they touch. Hold a limb's button to pick it up and steer it with the stick or mouse; let go to plant it. You can only move a limb while another is stuck, or a pal is holding you. Lock in above the line!")
+	var c := UiKit.panel_screen("Controls", "Hands and feet stick to whatever they touch. Hold a limb's button to pick it up and steer it with the stick or mouse; let go to plant it. You can only move a limb while another is stuck to the arena or frozen stack. Hold a limb against the chair to carry it. Release the button to drop it. Touch the stage or the stack while above the line to lock in!")
 	var box: VBoxContainer = c.get_meta("box")
 	var grid := GridContainer.new()
 	grid.columns = 5
