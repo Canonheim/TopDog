@@ -30,6 +30,8 @@ const LEATHER := RED  # belt-plate lettering
 const SILVER := Color(0.82, 0.84, 0.88)
 const FLAG_COLOURS := [RED, GOLD, BLUE, MAGENTA, TURQUOISE, GREEN, Color(1.0, 0.55, 0.15)]
 ## The kit's cloud cards and their built widths (m), for scaling to a wanted width.
+const LOGO_SCALE := 1.25  # the title logo, 25% bigger (Parker 11-08)
+const LOGO_TILT_DEG := 10.0  # tilted clockwise (Parker 11-08)
 const CLOUDS := {"cloud_a": 8.6, "cloud_b": 8.6, "cloud_c": 5.1, "cloud_d": 7.9, "cloud_e": 8.6}  # v2 widths (11-08)
 
 static var _font: Font = null
@@ -188,7 +190,14 @@ static func title_logo() -> Node3D:
 		var holder := Node3D.new()
 		k.scale = Vector3.ONE * 1.45
 		k.position = Vector3(0, -1.006 * 1.45 * 0.5, 0)
-		holder.add_child(k)
+		# Parker 11-08: "about 25% bigger and rotated clockwise about 10 degrees",
+		# on an inner pivot at the logo's centre, so the menu's wobble-in on the
+		# holder never overrides it.
+		var pivot := Node3D.new()
+		pivot.scale = Vector3.ONE * LOGO_SCALE
+		pivot.rotation = Vector3(0, 0, deg_to_rad(-LOGO_TILT_DEG))  # negative z = clockwise as seen
+		pivot.add_child(k)
+		holder.add_child(pivot)
 		return holder
 	var root := Node3D.new()
 	var slab := box(Vector3(4.3, 1.55, 0.18), RED, Vector3(0, 0.05, -0.2))
