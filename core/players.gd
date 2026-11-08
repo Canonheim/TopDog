@@ -224,7 +224,7 @@ func pause_pressed(s: int) -> bool:
 	return e
 
 
-## A pad aims with its stick (either stick, whichever is pushed further); the
+## A pad aims with its LEFT stick; the
 ## keyboard player aims with the mouse on the play plane.
 func limb_aim(s: int, climber, limb: int):
 	if s < 0 or s >= slots.size():
@@ -254,9 +254,8 @@ func stick(dev: int) -> Vector2:
 		return Net.steam_input.stick(dev) if Net.steam_input != null else Vector2.ZERO
 	if fake.has(dev):
 		return fake[dev].get("stick", Vector2.ZERO)
-	var l := Vector2(Input.get_joy_axis(dev, JOY_AXIS_LEFT_X), -Input.get_joy_axis(dev, JOY_AXIS_LEFT_Y))
-	var r := Vector2(Input.get_joy_axis(dev, JOY_AXIS_RIGHT_X), -Input.get_joy_axis(dev, JOY_AXIS_RIGHT_Y))
-	return l if l.length() >= r.length() else r
+	# The LEFT stick steers; the right stick does nothing (Parker 2026-11-07).
+	return Vector2(Input.get_joy_axis(dev, JOY_AXIS_LEFT_X), -Input.get_joy_axis(dev, JOY_AXIS_LEFT_Y))
 
 
 func _mouse_aim():
