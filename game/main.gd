@@ -502,7 +502,9 @@ func _build_ui() -> void:
 	_pad_corner.offset_bottom = -6
 	_pad_corner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_pad_corner.add_theme_font_size_override("font_size", 18)
-	_pad_corner.modulate = Color(0.85, 0.92, 1.0, 0.85)
+	_pad_corner.modulate = Color(0.85, 0.92, 1.0, 0.95)
+	_pad_corner.add_theme_constant_override("outline_size", 8)  # readable on the light plaza floor
+	_pad_corner.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
 	_pad_corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_pad_corner)
 
@@ -755,7 +757,9 @@ func _screen_hud() -> Control:
 	help.position = Vector2(32, -60)
 	help.text = "Hold a limb's button to drag it (pad: X A hands, Y B feet; keyboard: A D hands, W S feet) and steer with the stick or mouse. Let go and it sticks. Start / Space: lock in. Back / Esc: pause."
 	help.add_theme_font_size_override("font_size", 20)
-	help.modulate = Color(1, 1, 1, 0.7)
+	help.modulate = Color(1, 1, 1, 0.95)
+	help.add_theme_constant_override("outline_size", 8)  # readable on the light plaza floor
+	help.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
 	c.add_child(help)
 	return c
 

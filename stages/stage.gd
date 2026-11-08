@@ -15,7 +15,7 @@ const STAGES := {
 	"plaza": {"name": "The Plaza Ring", "deck_half": 9.0, "barrel_scale": 2.1, "spawn_x": 5.5, "kill_y": -4.0, "side_x": 16.0, "dress": "plaza"},
 }
 ## The plaza's ground level (the ring's canvas is y = 0, its stage stands on this).
-const PLAZA_GROUND := -1.1
+const PLAZA_GROUND := -0.9  # the kit ring's apron drops 0.9 m to the plaza
 
 ## The barrel's profile at the plane: (half-width, height) pairs, bottom to top,
 ## at scale 1.0 (staves bulge 0.44 at the middle, 0.40 at the rims; 0.96 tall).
@@ -190,8 +190,8 @@ func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
 	var depth := 3.4  # shallow: the front apron must stay out of the camera's lower frame
 	var gy := PLAZA_GROUND
 	if kit != null:
-		# Built 9 m square on its canvas top: stretch it along the 18 m deck.
-		kit.scale = Vector3(half * 2.0 / 9.0, 1.0, depth / 9.0)
+		# Built at the stage's size (18 x 3.42 m, canvas top at y 0, origin its
+		# centre, apron dropping 0.9 m): it goes in at scale 1.
 		root.add_child(kit)
 	else:
 		var w := half * 2.0

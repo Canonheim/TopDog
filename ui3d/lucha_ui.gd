@@ -510,6 +510,7 @@ func _process(delta: float) -> void:
 				var it := LuchaKit.poster_text(info, 0.26, LuchaKit.GOLD, LuchaKit.INK, 0.05)
 				it.position = Vector3(info.length() * 0.09, 0, 0)
 				_info.add_child(it)
+				no_shadows(it)
 		var v := int(ceil(g.clock)) if show else -1
 		if v != _clock_val:
 			_clock_val = v
