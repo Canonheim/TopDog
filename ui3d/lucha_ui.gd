@@ -410,7 +410,10 @@ func _on_announce(text: String, big: bool) -> void:
 	var size := (0.42 if big else 0.26) * (1.0 if t.length() < 22 else 0.7)
 	var band := LuchaKit.box(Vector3(minf(t.length() * size * 0.62 + 0.8, 8.0), size * 1.9, 0.04), LuchaKit.RED if big else LuchaKit.BLUE, Vector3(0, 0, -0.08))
 	_banner.add_child(band)
-	var flagline := LuchaKit.bunting(Vector3(-band.mesh.size.x * 0.5, size * 1.0, -0.05), Vector3(band.mesh.size.x * 0.5, size * 1.0, -0.05), int(band.mesh.size.x / 0.5), 0.05)
+	# The flags hang from a string ABOVE the band (the kit's 0.6 m cut flags behind
+	# the words made them hard to read).
+	var top := size * 0.95 + 0.62
+	var flagline := LuchaKit.bunting(Vector3(-band.mesh.size.x * 0.5, top, -0.05), Vector3(band.mesh.size.x * 0.5, top, -0.05), int(band.mesh.size.x / 0.5), 0.05)
 	_banner.add_child(flagline)
 	var words := LuchaKit.poster_text(t, size, LuchaKit.GOLD if big else LuchaKit.CREAM, LuchaKit.INK, 0.06)
 	_banner.add_child(words)
@@ -419,7 +422,7 @@ func _on_announce(text: String, big: bool) -> void:
 	_banner.position = Vector3(0, 4.5, 0.3)
 	_banner.rotation.z = randf_range(-0.12, 0.12)
 	var tw := create_tween()
-	tw.tween_property(_banner, "position", Vector3(0, 1.3, 0.3), 0.4).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(_banner, "position", Vector3(0, 0.8, 0.3), 0.4).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	_banner_t = 2.4 if big else 1.8
 
 

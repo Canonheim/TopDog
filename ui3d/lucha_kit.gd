@@ -310,10 +310,21 @@ static func card_frame(face := CREAM, band := RED) -> Node3D:
 
 ## A4: a papel picado flag (a thin paper rectangle with a scalloped bottom; the
 ## real ones from the kit have cut patterns).
-static func papel_flag(c: Color) -> Node3D:
+static func papel_flag(c: Color, which := 0) -> Node3D:
+	# The kit file holds five cut flags in a row (flag_a..flag_e, origin at each
+	# flag's top centre) and a string: take one flag out and zero its offset.
 	var k := kit_model("papel_picado")
 	if k != null:
-		return k
+		var nm := "flag_" + "abcde"[which % 5]
+		var f := k.find_child(nm, true, false) as Node3D
+		if f != null:
+			var holder := Node3D.new()
+			f.get_parent().remove_child(f)
+			holder.add_child(f)
+			f.position = Vector3.ZERO
+			k.queue_free()
+			return holder
+		k.queue_free()
 	var pts := PackedVector2Array([Vector2(-0.22, 0), Vector2(0.22, 0)])
 	for i in range(6, -1, -1):
 		var x := -0.22 + i * (0.44 / 6.0)
@@ -341,7 +352,7 @@ static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 			seg.rotate_object_local(Vector3.RIGHT, PI * 0.5)
 			root.add_child(seg)
 		if i > 0 and i < n:
-			var flag := papel_flag(FLAG_COLOURS[i % FLAG_COLOURS.size()])
+			var flag := papel_flag(FLAG_COLOURS[i % FLAG_COLOURS.size()], i)
 			flag.position = p
 			flag.rotation.z = randf_range(-0.08, 0.08)
 			flag.set_meta("sway", randf() * TAU)
