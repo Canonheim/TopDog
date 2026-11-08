@@ -116,46 +116,168 @@ func _build_sky() -> void:
 		_clouds.append(c)
 
 
-## The plaza behind the stage (placeholders until the kit's houses, palms and ring).
+## THE TOWN (the environment pass, 2026-11-08). The follow camera sits 6.7 m out
+## and climbs with the climber, so the town has to fill the frame at every height:
+## - the plaza row: the kit houses edge to edge at z -16 to -18, set back by turns;
+## - the bell tower (the kit's `bell_tower`, or a stand-in): the landmark at 10 to
+##   19 m, a little left of the climbing tower, so the climber keeps clear sky behind;
+## - the hill town: four terraces climbing behind the plaza with houses on each,
+##   so rooftops pass you as you climb (to about 18 m);
+## - land to the horizon and far ridges (the sky's dark lower half read as sea);
+## - the papel picado on poles at z -11.5, the pinata on the right-hand string.
+const PLAZA_ROW := [  # [x centre, kit house (a 4.8, b 5.2, c 3.8 wide), z]
+	[-31.95, "b", -17.2], [-26.85, "a", -16.4], [-22.25, "c", -17.8], [-17.45, "b", -16.6],
+	[-12.15, "a", -17.6], [-7.55, "c", -16.2], [-2.75, "b", -17.0], [2.6, "a", -16.4],
+	[7.2, "c", -17.6], [11.95, "b", -16.2], [17.25, "a", -17.4], [21.85, "c", -16.6],
+	[26.65, "b", -17.8], [31.75, "a", -16.6],
+]
+const HOUSE_W := {"a": 4.8, "b": 5.2, "c": 3.8}
+const HILL_TERRACES := [  # [front z, depth, top above the stones, half-width]
+	[-22.0, 7.0, 2.0, 38.0], [-29.0, 7.0, 4.6, 32.0], [-36.0, 7.0, 7.4, 25.0], [-43.0, 7.0, 10.4, 18.0],
+]
+const TOWER_X := -6.5
+const STONE := Color("#C2A878")
+const DRY_GRASS := Color("#8E9A5C")  # lit, the cel band reads it a dry green
+const LAND := Color("#C9BE92")
+const RIDGE_NEAR := Color("#B4C9EC")  # haze blues: the far ridges sit back by colour (no fog in the look)
+const RIDGE_FAR := Color("#CCDBF3")
+const POLE_WOOD := Color("#6A4128")
+const BUNTING_Z := -11.5
+const BUNTING_POLES := [-18.0, -6.0, 6.0, 18.0]
+
+
 func _build_plaza() -> void:
 	var plaza := Node3D.new()
 	plaza.name = "Plaza"
 	main.world.add_child(plaza)
-	var walls := [Color(0.94, 0.88, 0.74), Color(0.9, 0.74, 0.46), Color(0.74, 0.45, 0.36), Color(0.6, 0.72, 0.86), Color(0.92, 0.82, 0.62)]
-	var roof := Color(0.78, 0.32, 0.2)
-	var x := -26.0
-	var i := 0
-	while x < 26.0:
-		var house := LuchaKit.kit_model(["plaza_house_a", "plaza_house_b", "plaza_house_c"][i % 3])
-		var w := 4.0 + float(i % 3)
-		if house == null:
-			house = Node3D.new()
-			var h := 4.5 + float((i * 7) % 3) * 1.2
-			house.add_child(LuchaKit.box(Vector3(w, h, 4.0), walls[i % walls.size()], Vector3(0, h * 0.5, 0)))
-			var r := LuchaKit.box(Vector3(w + 0.6, 0.5, 4.6), roof, Vector3(0, h + 0.15, 0))
-			house.add_child(r)
-			house.add_child(LuchaKit.box(Vector3(1.0, 2.0, 0.2), Color(0.45, 0.28, 0.16), Vector3(0, 1.0, 2.05)))
-			for wx in [-w * 0.3, w * 0.3]:
-				house.add_child(LuchaKit.box(Vector3(0.8, 0.9, 0.2), Color(0.25, 0.4, 0.6), Vector3(wx, h * 0.65, 2.05)))
-		house.position = Vector3(x + w * 0.5, Stage.PLAZA_GROUND, -16.0 - float(i % 2) * 2.5)
+	var gy := Stage.PLAZA_GROUND
+	# Land to the horizon (just under the stones), and the plaza floor out to the hill.
+	plaza.add_child(LuchaKit.box(Vector3(4000, 0.2, 4000), LAND, Vector3(0, gy - 0.12, -1980)))
+	plaza.add_child(LuchaKit.box(Vector3(80, 0.4, 20), Color(0.86, 0.78, 0.6), Vector3(0, gy - 0.2, -14)))
+	# The plaza row.
+	for row in PLAZA_ROW:
+		var house := _house(str(row[1]))
+		house.position = Vector3(float(row[0]), gy, float(row[2]))
 		plaza.add_child(house)
-		if i % 2 == 1:
-			var palm := _palm()
-			palm.position = Vector3(x + w + 0.4, Stage.PLAZA_GROUND, -12.5)
-			plaza.add_child(palm)
-		x += w + 0.6
-		i += 1
-	# The plaza floor between the dock and the houses.
-	plaza.add_child(LuchaKit.box(Vector3(70, 0.4, 14), Color(0.86, 0.78, 0.6), Vector3(0, Stage.PLAZA_GROUND - 0.2, -16)))
-	# Papel picado strung across, in front of the houses.
+	for px in [-20.2, -9.7, 9.4, 20.0]:
+		var palm := _palm()
+		palm.position = Vector3(px, gy, -12.8)
+		plaza.add_child(palm)
+	# The hill town: terraces with a stone face and a dry-grass top, houses along each.
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 8
+	for k in HILL_TERRACES.size():
+		var t: Array = HILL_TERRACES[k]
+		var zf: float = t[0]
+		var d: float = t[1]
+		var top: float = t[2]
+		var hw: float = t[3]
+		plaza.add_child(LuchaKit.box(Vector3(hw * 2.0, top + 0.5, d), STONE, Vector3(0, gy + (top - 0.5) * 0.5, zf - d * 0.5)))
+		plaza.add_child(LuchaKit.box(Vector3(hw * 2.0 - 0.4, 0.12, d - 0.2), DRY_GRASS, Vector3(0, gy + top + 0.06, zf - d * 0.5 - 0.1)))
+		var x := -hw + 3.0 + rng.randf_range(0.0, 2.0)
+		while x < hw - 3.0:
+			var kind: String = ["a", "b", "c"][rng.randi() % 3]
+			# The bell tower's spot on the first terrace stays clear.
+			if not (k == 0 and absf(x - TOWER_X) < 4.5):
+				var h := _house(kind)
+				h.position = Vector3(x, gy + top, zf - 2.7 - rng.randf_range(0.0, 0.8))
+				h.scale = Vector3.ONE * (0.92 - k * 0.04)  # a touch smaller up the hill, for depth
+				plaza.add_child(h)
+			var gap := rng.randf_range(1.0, 3.6)
+			if gap > 2.6 and k < 3:  # a palm in the wider gaps
+				var palm := _palm()
+				palm.position = Vector3(x + float(HOUSE_W[kind]) * 0.5 + gap * 0.5, gy + top, zf - 1.6)
+				palm.scale = Vector3.ONE * 0.85
+				plaza.add_child(palm)
+			x += float(HOUSE_W[kind]) + gap
+	# The bell tower on the first terrace.
+	var tower := _bell_tower()
+	tower.position = Vector3(TOWER_X, gy + float(HILL_TERRACES[0][2]), float(HILL_TERRACES[0][0]) - 3.2)
+	plaza.add_child(tower)
+	# Far ridges: flat cards in the haze blues, so the land meets something at the horizon.
+	for r in [[-140.0, -260.0, 300.0, 52.0, RIDGE_FAR], [120.0, -240.0, 280.0, 44.0, RIDGE_FAR], [-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR]]:
+		var w: float = r[2]
+		var rh: float = r[3]
+		var pts := PackedVector2Array([Vector2(-w * 0.5, 0), Vector2(-w * 0.3, rh * 0.55), Vector2(-w * 0.12, rh * 0.8),
+			Vector2(0, rh), Vector2(w * 0.1, rh * 0.72), Vector2(w * 0.28, rh * 0.85), Vector2(w * 0.5, 0)])
+		var ridge := LuchaKit._extrude(pts, 4.0, r[4])
+		ridge.position = Vector3(r[0], gy - 0.2, r[1])
+		plaza.add_child(ridge)
+	# Papel picado strung between poles, a little back from the stage.
+	for px in BUNTING_POLES:
+		plaza.add_child(_bunting_pole(Vector3(px, gy, BUNTING_Z)))
 	for k in 3:
-		var b := LuchaKit.bunting(Vector3(-18 + k * 12, 6.5, -9.0), Vector3(-6 + k * 12, 6.8, -9.0), 9, 0.9)
+		var b := LuchaKit.bunting(Vector3(BUNTING_POLES[k], 6.5, BUNTING_Z), Vector3(BUNTING_POLES[k + 1], 6.8, BUNTING_Z), 9, 0.9)
 		plaza.add_child(b)
 		if k == 2:
-			_hang_pinata(plaza, Vector3(8.0, 6.05, -9.0))  # on the right-hand string, clear of the HUD clock
+			_hang_pinata(plaza, Vector3(8.0, 6.05, BUNTING_Z))  # on the right-hand string, clear of the HUD clock
 		for f in b.get_children():
 			if f.has_meta("sway"):
 				_flags.append(f)
+
+
+## A kit plaza house (a, b or c), or a plain stand-in.
+func _house(kind: String) -> Node3D:
+	var k := LuchaKit.kit_model("plaza_house_" + kind)
+	if k != null:
+		return k
+	var w := float(HOUSE_W[kind])
+	var h := 5.4 if kind == "a" else (5.8 if kind == "b" else 6.8)
+	var house := Node3D.new()
+	house.add_child(LuchaKit.box(Vector3(w, h, 4.6), Color(0.92, 0.82, 0.62), Vector3(0, h * 0.5, 0)))
+	house.add_child(LuchaKit.box(Vector3(w + 0.5, 0.5, 5.0), Color(0.78, 0.32, 0.2), Vector3(0, h + 0.2, 0)))
+	return house
+
+
+## The plaza's bell tower: the kit's `bell_tower` when it lands, else a stand-in
+## built here (a stone shaft, a cornice, a belfry with dark openings and a bell, a
+## tiled pyramid cap). Origin at the footprint centre on the ground, front +Z.
+func _bell_tower() -> Node3D:
+	var k := LuchaKit.kit_model("bell_tower")
+	if k != null:
+		return k
+	var stone := Color("#C98E7A")
+	var trim := Color("#F2E6C8")
+	var root := Node3D.new()
+	root.add_child(LuchaKit.box(Vector3(4.2, 1.0, 4.2), trim, Vector3(0, 0.5, 0)))
+	root.add_child(LuchaKit.box(Vector3(3.6, 11.0, 3.6), stone, Vector3(0, 6.5, 0)))
+	for y in [5.0, 9.0]:
+		root.add_child(LuchaKit.box(Vector3(0.8, 1.4, 0.1), Color("#2A3A6A"), Vector3(0, y, 1.81)))
+	root.add_child(LuchaKit.box(Vector3(4.0, 0.4, 4.0), trim, Vector3(0, 12.2, 0)))
+	root.add_child(LuchaKit.box(Vector3(3.4, 3.4, 3.4), stone, Vector3(0, 14.1, 0)))
+	for f in 4:
+		var a := f * PI * 0.5
+		var opening := LuchaKit.box(Vector3(1.5, 2.2, 0.12), Color("#3A2A30"), Vector3(sin(a) * 1.71, 14.0, cos(a) * 1.71))
+		opening.rotation.y = a
+		root.add_child(opening)
+	root.add_child(LuchaKit.ball(0.55, Color("#C8A040"), Vector3(0, 13.9, 1.2)))
+	root.add_child(LuchaKit.box(Vector3(3.9, 0.35, 3.9), trim, Vector3(0, 15.95, 0)))
+	var cap := MeshInstance3D.new()
+	var cm := CylinderMesh.new()
+	cm.top_radius = 0.0
+	cm.bottom_radius = 2.6
+	cm.height = 2.8
+	cm.radial_segments = 4
+	cap.mesh = cm
+	cap.material_override = LuchaKit.mat(Color("#D2643A"))
+	cap.position = Vector3(0, 17.5, 0)
+	cap.rotation.y = PI * 0.25
+	root.add_child(cap)
+	root.add_child(LuchaKit.ball(0.3, Color("#E8B14A"), Vector3(0, 19.1, 0)))
+	return root
+
+
+## A wooden pole the papel picado hangs from: a post with a crossbar and a gold
+## ball at the top, on a stone foot.
+func _bunting_pole(at: Vector3) -> Node3D:
+	var root := Node3D.new()
+	var top := 7.0 - at.y  # the strings tie on at about 6.5 to 6.8 m
+	root.add_child(LuchaKit.cyl(0.09, top, POLE_WOOD, Vector3(0, top * 0.5, 0)))
+	root.add_child(LuchaKit.cyl(0.05, 0.8, POLE_WOOD, Vector3(0, top - 0.45, 0), Vector3.RIGHT))
+	root.add_child(LuchaKit.ball(0.16, LuchaKit.GOLD, Vector3(0, top + 0.12, 0)))
+	root.add_child(LuchaKit.cyl(0.22, 0.3, Color("#9EA6A6"), Vector3(0, 0.15, 0)))
+	root.position = at
+	return root
 
 
 func _palm() -> Node3D:
