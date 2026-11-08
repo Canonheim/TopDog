@@ -354,7 +354,9 @@ func _check_bounds() -> void:
 		if c.state == Climber.State.FROZEN:
 			continue
 		if stage.out_of_bounds(c.centre_of_mass()):
-			announce.emit("%s fell off!" % c.display_name, false)
+			# To every machine (its banner carries the fall sound): Parker 11-08, "All
+			# people should hear all noises". This runs on the host only.
+			_rpc_note.rpc("%s fell off!" % c.display_name)
 			_spawn(pid)
 
 

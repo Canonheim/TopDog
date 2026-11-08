@@ -397,6 +397,7 @@ Parker: "Dan took out grabbing people. Put it back in ... the practice partner i
 - **Hands on hips at spawn** (`_hands_on_hips`, a two-bone solve, elbows out); it replaces `_arms_down`.
 - **The flags hang along their strings** (`LuchaKit.bunting`: each flag is turned about the vertical to the string's run).
 - **Arms in front of the torso:** tried, then reverted on Parker's word.
+- **Everyone hears everything** (Parker: "All people should hear all noises like farts and slaps and stuff"). Audit: slaps, farts and grunts were already broadcast (`_rpc_slap`, `_rpc_fart`, `_rpc_exertion`), as were the chair sounds and the lock-in, out and short verdicts (`_rpc_freeze`). The freeze thud plays on every machine. Only "fell off" was raised on the host alone, and it now goes out through `_rpc_note`. Private notes ("climb higher", "touch the stage") stay with their player.
 - **The slap on every catch** (Parker: "anytime a hand connects, it should make the noise"): any new stick, whether held or loose (a flung limb landing, a held one grabbing someone), emits `release_contact` and plays the slap, broadcast online. The first `SLAP_QUIET_S` (0.6 s) after a spawn is silent, while the feet settle. `--grab` checks a dropped climber slaps.
 - **Tests:**
   - New and passing: held grabs, no flying, the elbow turning through 180 under a hand-pull twist, and the press stack.
