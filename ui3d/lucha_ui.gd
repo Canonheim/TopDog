@@ -256,11 +256,39 @@ const CHURCH_TRIM := Color("#E6D8B4")
 ## nave and a gabled facade between them, built here, origin at the facade's foot.
 ## Either way the node carries metas `front_reach` (its foremost local z) and
 ## `anchors` (the two string ties, local).
+## The foremost local z of a model's meshes (its front, for a +Z-facing building).
+static func _front_z(root: Node3D) -> float:
+	var front := -INF
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		if m.mesh == null:
+			continue
+		var xf := root.global_transform.affine_inverse() * m.global_transform if root.is_inside_tree() else _local_xf(root, m)
+		var bb: AABB = xf * m.mesh.get_aabb()
+		front = maxf(front, bb.end.z)
+	return front if front > -INF else 0.0
+
+
+static func _local_xf(root: Node3D, n: Node3D) -> Transform3D:
+	var xf := Transform3D.IDENTITY
+	var cur: Node = n
+	while cur != null and cur != root:
+		if cur is Node3D:
+			xf = (cur as Node3D).transform * xf
+		cur = cur.get_parent()
+	return xf
+
+
 func _church() -> Node3D:
 	var k := LuchaKit.kit_model("plaza_church")
 	if k != null:
-		k.set_meta("front_reach", 4.95)
-		k.set_meta("anchors", [Vector3(-6.2, 14.6, 2.0), Vector3(6.2, 14.6, 2.0)])
+		# Measured from the model, not assumed: its foremost point (the steps) is the
+		# front, whatever origin the file has (the Building Maker moved it from the
+		# nave's centre to the facade's foot, 11-08). The string ties sit on the
+		# belfries' outer faces, 2.95 m behind that front, 14.6 m up.
+		var front := _front_z(k)
+		k.set_meta("front_reach", front)
+		k.set_meta("anchors", [Vector3(-6.2, 14.6, front - 2.95), Vector3(6.2, 14.6, front - 2.95)])
 		return k
 	var root := Node3D.new()
 	root.set_meta("front_reach", 0.55)  # the towers' fronts
