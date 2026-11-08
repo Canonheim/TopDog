@@ -299,7 +299,7 @@ Parker: "replace the default knight with this skeleton in game".
 - `models/skeleton_knight.glb` is now the default climber (`Game.KNIGHT`, and the slot skin is `skeleton_knight`). `metal_knight.glb` is kept.
 - It's on the 16-piece contract: the same mesh names, transforms applied, one `PALETTE` material, and the same joint positions as the knight. So the physics shapes (measured from the knight) still fit; the bones are just thinner.
 - It embedded Golemheim's atlas. Every colour it uses is pixel-identical on the house atlas, so the game copy points at `../palette/house_atlas.png` with nearest sampling.
-- Players still wash it toward their colour (`set_tint`, 45 %).
+- **No colour wash** (Parker: "remove color washing towards colors. People can look the same it's fine. Eventually people will pick their own skins"). Every climber wears the model's own colours; `tint` still colours name tags and cards.
 
 ## Record
 

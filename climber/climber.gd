@@ -337,12 +337,11 @@ func _build_limbs() -> void:
 
 
 ## The house look (CelPass: cel shading on the shared colour atlas, inked by the
-## screen-space outline), with each climber's knight washed toward its player
-## colour. The artist's skins replace the wash; any skin on the 16 Defaultio
-## names drops in piece by piece.
+## screen-space outline), in the model's own colours: no wash toward the player
+## colour (Parker 11-07). Players will pick skins later; any skin on the 16
+## Defaultio names drops in piece by piece. `tint` still colours tags and cards.
 func set_tint(c: Color) -> void:
-	tint = c
-	var wash := Color(1, 1, 1).lerp(c, 0.45)
+	tint = c  # still the player's colour for name tags and cards; the body keeps its own colours
 	for b in bodies.values():
 		for ch in b.get_children():
 			if not (ch is MeshInstance3D):
@@ -359,9 +358,9 @@ func set_tint(c: Color) -> void:
 					cel = m
 				if cel == null:
 					continue
-				var mine: ShaderMaterial = cel.duplicate()
-				mine.set_shader_parameter("color", wash)
-				mi.set_surface_override_material(si, mine)
+				# No wash toward the player colour (Parker 11-07: "People can look the same
+				# it's fine"; skins will tell players apart later): the shared cel material.
+				mi.set_surface_override_material(si, cel)
 
 
 ## THE LIMB GLYPHS (the reference game's idea): the button for each limb sits ON
