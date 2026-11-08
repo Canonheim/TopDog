@@ -27,3 +27,4 @@
 | Ours | Source | Licence | Date |
 |---|---|---|---|
 | `fonts/luckiest_guy/LuckiestGuy-Regular.ttf` | Luckiest Guy by Astigmatic (Brian J. Bonislawsky), Google Fonts' own repository: https://github.com/google/fonts/tree/main/apache/luckiestguy (fonts.google.com/specimen/Luckiest+Guy) | Apache License 2.0 (`fonts/luckiest_guy/LICENSE.txt`; Google Fonts lists it as APACHE2, not OFL) | 2026-11-07, Parker's OK |
+| `models/skeleton_knight.glb` | Parker's artist: Skeleton Knight on the 16-piece Defaultio contract (Parker 2026-11-07); its embedded Golemheim atlas swapped for the uri `../palette/house_atlas.png` (all 12 colours it uses are pixel-identical), sampler set nearest | Parker's own asset | 2026-11-07 |

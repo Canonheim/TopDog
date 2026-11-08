@@ -293,6 +293,14 @@ Parker: "make the hand and feet glyphs half as big, and when they are attached, 
   - Proven in a focused windowed probe: `getAnalogActionOrigins` was `[]` with "active false"; after the fix it was `[126]`, active, with full-range values while Parker swirled the stick.
   - 0.3.7 was Dan's local build, so this one is 0.3.8. Zip: `builds/TopDog_playtest_0.3.8.zip`.
 
+## The skeleton knight (Parker, 2026-11-07)
+
+Parker: "replace the default knight with this skeleton in game".
+- `models/skeleton_knight.glb` is now the default climber (`Game.KNIGHT`, and the slot skin is `skeleton_knight`). `metal_knight.glb` is kept.
+- It's on the 16-piece contract: the same mesh names, transforms applied, one `PALETTE` material, and the same joint positions as the knight. So the physics shapes (measured from the knight) still fit; the bones are just thinner.
+- It embedded Golemheim's atlas. Every colour it uses is pixel-identical on the house atlas, so the game copy points at `../palette/house_atlas.png` with nearest sampling.
+- Players still wash it toward their colour (`set_tint`, 45 %).
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
