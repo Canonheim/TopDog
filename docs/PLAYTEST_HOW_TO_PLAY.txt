@@ -43,7 +43,9 @@ Both of you need Steam running and logged in.
 3. Everyone presses Ready; the host presses Start.
 If Steam won't connect, the LAN option works on the same network (Host on LAN,
 then the other types the host's IP and presses Join on LAN).
-Known: online over Steam with a controller may lose the controller until the
-game has its own Steam app. Keyboard and mouse is safest online for now.
+Controller online: until the game has its own Steam app, Steam takes the
+controller once you go online. Fix: Steam > Settings > Controller > turn OFF
+"Enable Steam Input for Xbox controllers", then restart the game. (Turn it back
+on afterwards if another game needs it.)
 
 Found a bug? Note what you did right before it, and a screenshot helps.
