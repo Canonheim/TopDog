@@ -42,6 +42,7 @@ var pad_nav: Node
 var lucha: LuchaUI  # Top Dog's 3D front end (ui3d/lucha_ui.gd)
 var _pad_readout: Label
 var _pad_corner: Label
+var _build_tag: Label  # "BUILD x.y.z" in the title's corner (Parker 11-07: know which build you booted)
 
 
 func _ready() -> void:
@@ -262,6 +263,8 @@ func _process(delta: float) -> void:
 	for s in Players.slots.size():
 		if Players.pause_pressed(s) and screen in ["hud", "pause"]:
 			_toggle_pause()
+	if _build_tag != null:
+		_build_tag.visible = screen == "title"
 	if _pad_corner != null:
 		_pad_corner.visible = screen not in ["hud", "pause"]
 		if _pad_corner.visible:
@@ -505,6 +508,19 @@ func _build_ui() -> void:
 	_pad_corner.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
 	_pad_corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_pad_corner)
+	_build_tag = Label.new()
+	_build_tag.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	_build_tag.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_build_tag.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_build_tag.offset_right = -18
+	_build_tag.offset_bottom = -8
+	_build_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_build_tag.text = "BUILD " + Net.GAME_VERSION
+	_build_tag.add_theme_font_size_override("font_size", 22)
+	_build_tag.add_theme_constant_override("outline_size", 8)
+	_build_tag.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
+	_build_tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(_build_tag)
 
 
 func _screen_title() -> Control:
