@@ -242,12 +242,21 @@ godot --path . res://tests/online3d_probe.tscn -- --no-steam
 
 ### Building
 
-- Export: `godot --headless --path . --export-release "Windows Desktop" builds/TopDog.exe`.
-- The build folder needs `TopDog.exe`, `libgodotsteam.windows.template_release.x86_64.dll`, `steam_api64.dll`,
-  `HOW TO PLAY.txt` (from `docs/PLAYTEST_HOW_TO_PLAY.txt`), and `TopDog (no Steam).bat`. That bat starts the
-  game with Steam off, for when Steam grabs a controller.
+**ONE BUILD, overwritten every time** (Parker 11-08: "lets just have one build in there that gets
+overwritten"). `builds/` holds only:
+- `builds/TopDog/`: the game, ready to run;
+- `builds/TopDog_playtest.zip`: the same, zipped to send.
+
+No version folders and no old zips: any old build can be remade from its commit. The version shows in the
+title screen's corner ("BUILD x.y.z").
+
+- Export: `godot --headless --path . --export-release "Windows Desktop" builds/TopDog/TopDog.exe` (it writes
+  the exe and copies the two Steam DLLs beside it).
+- Copy in `HOW TO PLAY.txt` (from `docs/PLAYTEST_HOW_TO_PLAY.txt`) and `TopDog (no Steam).bat` (from
+  `tools/`; it starts the game with Steam off, for when Steam grabs a controller). Then zip `builds/TopDog/` as
+  `builds/TopDog_playtest.zip`, with the files inside a `TopDog/` folder.
 - Bump `GAME_VERSION` for every build you hand out.
-- If `builds\TopDog.exe` is running, the export can't replace it. Export to `builds/<version>/TopDog.exe` instead.
+- If `builds/TopDog/TopDog.exe` is running, the export can't replace it: close the game first.
 
 ## Known gaps and what's next
 
