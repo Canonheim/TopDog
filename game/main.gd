@@ -82,7 +82,6 @@ func _ready() -> void:
 	add_child(lucha)
 	lucha.setup(self)
 	show_screen("title")
-	Sound.music("title")
 	if "--demo" in OS.get_cmdline_user_args():
 		call_deferred("_demo")
 	if "--demo-heap" in OS.get_cmdline_user_args():
@@ -408,7 +407,6 @@ func _on_announce(text: String, big: bool) -> void:
 func _on_phase(p: String) -> void:
 	if p in ["turn", "round", "between"] and screen not in ["hud", "pause"]:
 		show_screen("hud")
-		Sound.music("climb")
 
 
 func _on_over(res: Dictionary) -> void:
@@ -434,6 +432,7 @@ func _on_over(res: Dictionary) -> void:
 
 func show_screen(id: String) -> void:
 	screen = id
+	Sound.music("climb" if id == "hud" else "title")
 	for k in screens:
 		screens[k].visible = k == id
 	if pad_nav != null:
