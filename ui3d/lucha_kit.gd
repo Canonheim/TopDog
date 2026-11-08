@@ -404,9 +404,14 @@ static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 			# Two nodes: the hanger sits on the string, turned to its run; the flag
 			# inside swings only about the string's own axis (its local x), as a
 			# flag hinged on a line does (Parker 11-08).
+			# The top edge lies along the string (Parker 11-08: "connected by the top 2
+			# corners to the string"): roll the hanger to the string's slope here (the
+			# sag's tangent), so both top corners sit on the line.
+			var tangent := (b - a) + Vector3(0, -sag * 4.0 * (1.0 - 2.0 * f), 0)
+			var horiz := Vector2(tangent.x, tangent.z).length()
 			var hanger := Node3D.new()
 			hanger.position = p
-			hanger.rotation.y = yaw
+			hanger.rotation = Vector3(0.0, yaw, atan2(tangent.y, horiz))
 			root.add_child(hanger)
 			var flag := papel_flag(FLAG_COLOURS[i % FLAG_COLOURS.size()], i)
 			flag.set_meta("sway", randf() * TAU)
