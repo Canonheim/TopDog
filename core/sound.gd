@@ -20,8 +20,8 @@ const SFX := {
 	"ui_close": ["ui_close"],
 }
 const MUSIC := {
-	"title": "res://audio/music/top_your_pals_theme.ogg",
-	"climb": "res://audio/music/top_your_pals_theme.ogg",
+	"title": "res://audio/music/top_dog_theme.ogg",
+	"climb": "res://audio/music/top_dog_theme.ogg",
 }
 const OPTIONS := "user://options.cfg"
 
@@ -30,7 +30,7 @@ var _pool: Array = []
 var _pool3d: Array = []
 var _music: AudioStreamPlayer
 var _music_id := ""
-var volumes := {"Master": 0.9, "Music": 0.6, "Effects": 0.9}
+var volumes := {"Master": 0.4, "Music": 0.6, "Effects": 0.9}  # Master defaults to 40% (Parker, 2026-11-07)
 
 
 func _ready() -> void:

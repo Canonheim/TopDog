@@ -223,6 +223,17 @@ That is now our default (`Players.DEFAULT_PAD` / `DEFAULT_KBM`, `BINDS_VERSION` 
 
 **THE KEY-GUARD LAW (an incident).** The first try at driving our own game with AutoHotkey sent a keypress into Parker's browser (a Reddit comment box got a stray "a"; nothing was submitted; he was told). The driver had sent keys even when the game window never came forward. `drive.ahk` now checks the target window is the ACTIVE window before every input and aborts, releasing held keys, if not. Our own game is driven from inside (`--demo-drag`) instead.
 
+## 0.2.1 (Parker, 2026-11-07): the first playtest build, controls + UI merged
+
+Parker: "get the new controls version and the UI updates all together however we have them so far, I need a playable build I can send to my partner so I can play test." And: "make the game default to 40% master volume."
+
+- **Merged** the `luchador-ui` branch (worktree `TopDog-luchador`, commit ad0f725: the 3D luchador front end, the plaza, the luchador theme, the rename to **Top Dog**) into main on top of 0.1.5's drag controls. One conflict, `net.gd`'s tag and version: resolved to tag `topdog` (matching `lobby_logic.gd`) and `GAME_VERSION` 0.2.1.
+- **The Top Dog Kit's models** (title logo, belt button, five clouds) come in by `tools/sync_kit.py`, copied from the uncommitted file in that worktree; it rewrites their atlas uri for `res://kit/models/`. The belt button is the re-landed one (crest backing moved off the plate, golds on SATIN).
+- **The crest crowns the focused belt only** (`Menu3D._process`); on every belt the crests overlapped the labels above.
+- **Master volume defaults to 40%** (`Sound.volumes`). The rename gives the game a new user-data folder, so saved options and binds start fresh.
+- **Export:** `builds/TopDog.exe`; the no-Steam launcher and the upload script follow the new name. The playtest zip is `builds/TopDog_playtest_0.2.1.zip` (exe, the two Steam DLLs, `HOW TO PLAY.txt`, the no-Steam launcher); the how-to is kept as `docs/PLAYTEST_HOW_TO_PLAY.txt`.
+- **Checked:** lint (31 scripts), every battery, the pad driving the 3D menus (D-pad, stick, A, B, keyboard), the exported build's title and match screens, and a clean exit.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

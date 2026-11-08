@@ -25,8 +25,8 @@ signal lobby_list(rows: Array)
 const LobbyLogic := preload("res://net/lobby_logic.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
-const LOBBY_TAG := "topyourpals"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.1.5"  # bump on every build: RPC tables move between builds
+const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
+const GAME_VERSION := "0.2.1"  # bump on every build: RPC tables move between builds
 const ENET_PORT := 7788
 const MAX_MACHINES := 8
 const MAX_CLIMBERS := 8

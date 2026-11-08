@@ -6,7 +6,7 @@ extends RefCounted
 
 ## MUST MATCH net.gd LOBBY_TAG: on the shared dev app (480) this tag is the only
 ## thing keeping our lobbies apart from every other game testing there.
-const GAME_TAG := "topyourpals"
+const GAME_TAG := "topdog"
 
 const MODE_NAMES := {"tower": "Tower", "scramble": "Scramble", "practice": "Practice"}
 

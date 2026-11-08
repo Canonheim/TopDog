@@ -22,8 +22,8 @@ if "%APPID%"=="0" (
 
 set "BUILDS=..\..\builds"
 set "STAGE=%BUILDS%\steam_content"
-if not exist "%BUILDS%\TopYourPals.exe" (
-    echo [!] builds\TopYourPals.exe not found - export the Windows Desktop preset ^(release^) first.
+if not exist "%BUILDS%\TopDog.exe" (
+    echo [!] builds\TopDog.exe not found - export the Windows Desktop preset ^(release^) first.
     goto :fail
 )
 if not exist "%BUILDS%\libgodotsteam.windows.template_release.x86_64.dll" (
@@ -35,7 +35,7 @@ rem ---- stage exactly what ships (THE FILE-LIST LAW: a DLL not listed here
 rem ---- ships missing, silently) ----------------------------------------
 if exist "%STAGE%" rd /s /q "%STAGE%"
 mkdir "%STAGE%"
-copy /b /y "%BUILDS%\TopYourPals.exe" "%STAGE%\" >nul || goto :copyfail
+copy /b /y "%BUILDS%\TopDog.exe" "%STAGE%\" >nul || goto :copyfail
 copy /b /y "%BUILDS%\steam_api64.dll" "%STAGE%\" >nul || goto :copyfail
 copy /b /y "%BUILDS%\libgodotsteam.windows.template_release.x86_64.dll" "%STAGE%\" >nul || goto :copyfail
 echo [ok] staged builds\steam_content
