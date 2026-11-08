@@ -401,12 +401,16 @@ static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 			seg.rotate_object_local(Vector3.RIGHT, PI * 0.5)
 			root.add_child(seg)
 		if i > 0 and i < n:
+			# Two nodes: the hanger sits on the string, turned to its run; the flag
+			# inside swings only about the string's own axis (its local x), as a
+			# flag hinged on a line does (Parker 11-08).
+			var hanger := Node3D.new()
+			hanger.position = p
+			hanger.rotation.y = yaw
+			root.add_child(hanger)
 			var flag := papel_flag(FLAG_COLOURS[i % FLAG_COLOURS.size()], i)
-			flag.position = p
-			flag.rotation.y = yaw
-			flag.rotation.z = randf_range(-0.08, 0.08)
 			flag.set_meta("sway", randf() * TAU)
-			root.add_child(flag)
+			hanger.add_child(flag)
 		prev = p
 	return root
 

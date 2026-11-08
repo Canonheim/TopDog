@@ -223,7 +223,7 @@ func _build_plaza() -> void:
 	for st in strings:
 		var b := LuchaKit.bunting(st[0], st[1], st[2], st[3])
 		plaza.add_child(b)
-		for f in b.get_children():
+		for f in b.find_children("*", "Node3D", true, false):
 			if f.has_meta("sway"):
 				_flags.append(f)
 	# Mid-span on the right, where the string sags lowest: it hangs in front of a
@@ -721,7 +721,7 @@ func _process(delta: float) -> void:
 			n.position.x = -80.0
 	for f in _flags:
 		var n: Node3D = f
-		n.rotation.z = sin(t * 2.2 + float(n.get_meta("sway"))) * 0.12
+		# Swing about the string only (the hanger's local x): no sideways rock.
 		n.rotation.x = sin(t * 1.7 + float(n.get_meta("sway")) * 1.3) * 0.25
 	# The join card pulses.
 	if _cards != null and _cards.visible:
