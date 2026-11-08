@@ -20,8 +20,9 @@ names, characters, music, sounds, text or levels.
 - **Online:** GodotSteam, Steam lobbies, on Valve's test app **480 (Spacewar)** until Top Dog has its own app ID.
 - **Repo:** github.com/Canonheim/TopDog. `main` is the game, and `luchador-ui` is the 3D UI branch.
   Parker's code partner Dan also pushes to `main`.
-- **Version:** `GAME_VERSION` in `net/net.gd`. It's bumped on every build, because RPC tables change between
-  builds and the lobby refuses mismatched versions.
+- **Version:** `GAME_VERSION` in `net/net.gd`, shown as "BUILD x.y.z" in the title screen's bottom-right corner.
+  It's bumped on every build, because RPC tables change between builds and the lobby refuses mismatched
+  versions. Two people playing together need the same build.
 
 ## How it plays
 
@@ -156,6 +157,11 @@ last drives it. F1 opens the live **feel panel**, which shows every physics numb
   game hands Steam **its own action manifest** (written to `user://steam_input`, passed before `inputInit`).
   Steam controllers appear as devices 3000 and up. While Steam has controllers, raw pad reads are ignored so
   nothing counts twice.
+- **Steam's source names:** in the layout, the left stick is `joystick` and the right stick is `right_joystick`.
+  `left_joystick` isn't a source name: Steam drops that binding silently, so the stick reads zero online
+  (fixed in 0.3.8). To check a binding, call `Steam.getAnalogActionOrigins` / `getDigitalActionOrigins` from a
+  **focused, windowed** run. Steam binds the layout only to the focused app-480 instance, so close other
+  copies first. An empty list means unbound.
 - **The pause law:** only World and Game pause. Main, Players, Net and PadNav always run.
 
 ### The look
@@ -216,6 +222,7 @@ godot --path . res://tests/online3d_probe.tscn -- --no-steam
   `HOW TO PLAY.txt` (from `docs/PLAYTEST_HOW_TO_PLAY.txt`), and `TopDog (no Steam).bat`. That bat starts the
   game with Steam off, for when Steam grabs a controller.
 - Bump `GAME_VERSION` for every build you hand out.
+- If `builds\TopDog.exe` is running, the export can't replace it. Export to `builds/<version>/TopDog.exe` instead.
 
 ## Known gaps and what's next
 

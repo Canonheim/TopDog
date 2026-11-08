@@ -274,6 +274,25 @@ Parker: "make the hand and feet glyphs half as big, and when they are attached, 
 - Merged the Second Director's 17d2690 (the kit's Online parts wired in).
 - Checked: lint, every battery, pad_probe, online_pad_probe, online3d_probe.
 
+## 0.3.3 to 0.3.8 (2026-11-07 evening): the look pass, Dan's sounds, the build tag, the stick online
+
+- **The look pass** (the Second Director, luchador-ui 9b7e0ef):
+  - a bright cartoon-blue sky, no fog, glow off, Linear tonemapping;
+  - `CelPass.NO_EMISSION` (no emissive colours anywhere: Parker);
+  - UI words are flat Label3D in Luckiest Guy (`fonts/luckiest_guy/`, Apache 2.0) and skip the ink, while the TOP DOG logo keeps its ink;
+  - the kit's Online parts, the bell, the piñata and confetti.
+- **Dan (GitHub DPisculli), Parker's collaborator, pushes to main too:**
+  - da296d8: "Desert Snake" plays in matches and the theme in menus. The match music now plays on through a pause.
+  - fa8ff9e: shuffled slap sounds when a released limb sticks, one rare slap at 1 in 100, and `GAME_VERSION` 0.3.6.
+  - Always fetch and merge his work before pushing.
+- **Docs:** `docs/TOP_DOG_OVERVIEW.md` (everything about the game) and `docs/HOUSE_ATLAS_AND_3D_MODELS.md` (the atlas and the model road), written for Dan's LLM.
+- **The build tag:** "BUILD x.y.z" in the title screen's bottom-right corner, read from `GAME_VERSION` (Parker: "so we know what build we are booting").
+- **0.3.8, the stick online.** Parker: "controller does not work at all in online. It just makes you twitch a little."
+  - The Steam Input layout bound the stick group to `left_joystick`, which isn't a Steam source name (the left stick is `joystick`, the right `right_joystick`), so Steam dropped the binding.
+  - Online the stick read zero: a press picked the limb up and the release replanted it in place (the twitch), and the left stick couldn't move the online menus.
+  - Proven in a focused windowed probe: `getAnalogActionOrigins` was `[]` with "active false"; after the fix it was `[126]`, active, with full-range values while Parker swirled the stick.
+  - 0.3.7 was Dan's local build, so this one is 0.3.8. Zip: `builds/TopDog_playtest_0.3.8.zip`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
