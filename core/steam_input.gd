@@ -192,6 +192,9 @@ func _group(id: int, mode: String, inputs: String, game_action := "") -> String:
 	return '\t"group"\n\t{\n\t\t"id"\t\t"%d"\n\t\t"mode"\t\t"%s"\n\t\t"name"\t\t""\n\t\t"description"\t\t""\n\t\t"inputs"\n\t\t{\n%s\t\t}\n%s\t}\n' % [id, mode, inputs, ga]
 
 
+## Steam's source names: the LEFT stick is "joystick" (the right is "right_joystick").
+## "left_joystick" is not a source: Steam dropped the binding silently and the
+## stick read nothing online (found 11-07 with getAnalogActionOrigins: []).
 func _config(controller_type: String) -> String:
 	var diamond := _press("button_x", ["arm_l"]) + _press("button_a", ["arm_r", "menu_select"]) + \
 		_press("button_y", ["leg_l"]) + _press("button_b", ["leg_r", "menu_back"])
@@ -208,5 +211,5 @@ func _config(controller_type: String) -> String:
 		_group(0, "four_buttons", diamond) + _group(1, "dpad", dpad) + \
 		_group(2, "joystick_move", "", "steer") + _group(3, "switches", switches) + \
 		'\t"preset"\n\t{\n\t\t"id"\t\t"0"\n\t\t"name"\t\t"Game"\n\t\t"group_source_bindings"\n\t\t{\n' + \
-		'\t\t\t"0"\t\t"button_diamond active"\n\t\t\t"1"\t\t"dpad active"\n\t\t\t"2"\t\t"left_joystick active"\n\t\t\t"3"\t\t"switch active"\n' + \
+		'\t\t\t"0"\t\t"button_diamond active"\n\t\t\t"1"\t\t"dpad active"\n\t\t\t"2"\t\t"joystick active"\n\t\t\t"3"\t\t"switch active"\n' + \
 		'\t\t}\n\t}\n\t"settings"\n\t{\n\t}\n}\n'
