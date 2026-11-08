@@ -73,7 +73,24 @@ const ORDER := [
 ]
 
 
-## The reach point of the end piece: hand-ball or foot centre, y-up metres.
+## The reach point of the end piece: hand-ball or foot centre, y-up metres
+## (with the shoulder shift for a hand).
 static func end_point(end_name: String) -> Vector2:
 	var s: Array = PIECES[end_name].shape
-	return s[1]
+	return s[1] + shift(end_name)
+
+
+## THE WIDE SHOULDERS (Golemheim's SHOULDER_FLARE, Parker 2026-11-07: "make the
+## shoulders wider and a little lower"): every arm piece and arm joint (shoulder,
+## elbow, wrist) sits Feel shoulder_flare further OUT and shoulder_drop LOWER than
+## the model, the arm meshes riding along. The chest stays put. Body-scale 1 metres,
+## screen side (arm_l is screen-left). Zero for everything else.
+const _LEFT_ARM := ["arm_l_up", "arm_l_lo", "hand_l", "shoulder_l", "elbow_l", "wrist_l"]
+const _RIGHT_ARM := ["arm_r_up", "arm_r_lo", "hand_r", "shoulder_r", "elbow_r", "wrist_r"]
+
+
+static func shift(name: String) -> Vector2:
+	var side := -1.0 if _LEFT_ARM.has(name) else (1.0 if _RIGHT_ARM.has(name) else 0.0)
+	if side == 0.0:
+		return Vector2.ZERO
+	return Vector2(side * Feel.get_k("shoulder_flare"), -Feel.get_k("shoulder_drop"))

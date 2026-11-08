@@ -126,14 +126,14 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 		var col := CollisionShape3D.new()
 		match shape[0]:
 			"circle":
-				centre = shape[1] * s
+				centre = (shape[1] + Layout.shift(pname)) * s
 				var sp := SphereShape3D.new()
 				sp.radius = shape[2] * s
 				col.shape = sp
 				_shape_geo[pname] = ["circle", shape[2] * s]
 			"capsule":
-				var a: Vector2 = shape[1] * s
-				var b: Vector2 = shape[2] * s
+				var a: Vector2 = (shape[1] + Layout.shift(pname)) * s
+				var b: Vector2 = (shape[2] + Layout.shift(pname)) * s
 				centre = (a + b) * 0.5
 				var r: float = shape[3] * s
 				var cap := CapsuleShape3D.new()
@@ -145,7 +145,7 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 				col.rotation = Vector3(0, 0, d.angle() - PI * 0.5)
 				_shape_geo[pname] = ["capsule", -d * 0.5, d * 0.5, r]
 			"box":
-				centre = shape[1] * s
+				centre = (shape[1] + Layout.shift(pname)) * s
 				var bx := BoxShape3D.new()
 				var he: Vector2 = shape[2] * s
 				bx.size = Vector3(he.x * 2.0, he.y * 2.0, DEPTH)
@@ -183,6 +183,8 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 			var mesh: Node3D = visual.find_child(p.mesh, true, false)
 			if mesh != null:
 				var keep := mesh.global_transform
+				var sh := Layout.shift(pname) * s  # the wide shoulders: the arm mesh rides out with its piece
+				keep.origin += Vector3(sh.x, sh.y, 0.0)
 				mesh.get_parent().remove_child(mesh)
 				body.add_child(mesh)
 				mesh.global_transform = keep
@@ -234,7 +236,7 @@ func _build_joints(feet: Vector2) -> void:
 		var jd: Dictionary = Layout.JOINTS[jn]
 		var a: RigidBody3D = bodies[jd.a]
 		var b: RigidBody3D = bodies[jd.b]
-		var at := feet + (jd.at as Vector2) * s
+		var at := feet + ((jd.at as Vector2) + Layout.shift(jn)) * s
 		var at3 := Vector3(at.x, at.y, 0.0)
 		var lim: Array = jd.lim
 		if jd.kind == "spine":
@@ -314,8 +316,8 @@ func _piece_inertia(pname: String, mass: float) -> float:
 func _build_limbs() -> void:
 	var s := body_scale
 	for ld in Layout.LIMBS:
-		var root_at: Vector2 = Layout.JOINTS[ld.root].at * s
-		var mid_at: Vector2 = Layout.JOINTS[ld.mid].at * s
+		var root_at: Vector2 = (Layout.JOINTS[ld.root].at + Layout.shift(ld.root)) * s
+		var mid_at: Vector2 = (Layout.JOINTS[ld.mid].at + Layout.shift(ld.mid)) * s
 		var end_pt: Vector2 = Layout.end_point(ld.end) * s
 		var end_shape: Array = Layout.PIECES[ld.end].shape
 		var end_r: float = (end_shape[2] if end_shape[0] == "circle" else (end_shape[2] as Vector2).x) * s
@@ -904,7 +906,7 @@ func worst_joint_gap() -> float:
 	var worst := 0.0
 	for jn in Layout.JOINTS:
 		var jd: Dictionary = Layout.JOINTS[jn]
-		var at: Vector2 = spawn_at + (jd.at as Vector2) * body_scale
+		var at: Vector2 = spawn_at + ((jd.at as Vector2) + Layout.shift(jn)) * body_scale
 		var la := _rest_local(jd.a, at)
 		var lb := _rest_local(jd.b, at)
 		var gp := (xf2(bodies[jd.a]) * la).distance_to(xf2(bodies[jd.b]) * lb)
@@ -936,8 +938,8 @@ func _rest_local(pname: String, at: Vector2) -> Vector2:
 func _piece_rest_centre(pname: String) -> Vector2:
 	var shape: Array = Layout.PIECES[pname].shape
 	if shape[0] == "capsule":
-		return (shape[1] + shape[2]) * 0.5 * body_scale
-	return shape[1] * body_scale
+		return ((shape[1] + shape[2]) * 0.5 + Layout.shift(pname)) * body_scale
+	return (shape[1] + Layout.shift(pname)) * body_scale
 
 
 func remove() -> void:

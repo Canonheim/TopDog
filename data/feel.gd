@@ -10,6 +10,8 @@ const PPM := 100.0  # 2D physics pixels per metre (the physics world is in px)
 ## [value, min, max, help]. Order here is the dev panel's order.
 const SPEC := {
 	"body_scale": [0.9, 0.6, 1.3, "Climber size (1.0 = the knight's modelled 2.02 m)"],
+	"shoulder_flare": [0.09, 0.0, 0.3, "Wide shoulders: arms sit this far further out than the model (m, Golemheim's flare). Rebuilds on the next spawn"],
+	"shoulder_drop": [0.05, 0.0, 0.2, "Arms sit this much lower than the model (m). Rebuilds on the next spawn"],
 	"gravity_scale": [0.75, 0.2, 2.0, "Gravity on climbers"],
 	"drag_strength": [1.5, 0.2, 4.0, "The pull on a held hand or foot, capped at this many body-weights (at full gravity)"],
 	"drag_stiffness": [190.0, 20.0, 600.0, "How hard the pull grows with distance (per kg of body, N/m/kg)"],

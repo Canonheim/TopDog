@@ -301,6 +301,13 @@ Parker: "replace the default knight with this skeleton in game".
 - It embedded Golemheim's atlas. Every colour it uses is pixel-identical on the house atlas, so the game copy points at `../palette/house_atlas.png` with nearest sampling.
 - **No colour wash** (Parker: "remove color washing towards colors. People can look the same it's fine. Eventually people will pick their own skins"). Every climber wears the model's own colours; `tint` still colours name tags and cards.
 
+## The wide shoulders (Parker, 2026-11-07)
+
+Parker: "Golemheim has a shoulder offset to make the shoulders wider. Add that into this game so the shoulders are wider and a little lower."
+- `Layout.shift(name)`: every arm piece, its mesh and its shoulder, elbow and wrist joints sit Feel `shoulder_flare` (0.09 m, Golemheim's `SHOULDER_FLARE`) further out and `shoulder_drop` (0.05 m) lower than the model. The chest stays put.
+- The shift is applied wherever rest positions are read: piece centres, mesh placement, joint anchors, limb lengths, `end_point`, the joint-gap check. Both are F1 knobs and take effect on the next spawn. Every machine must use the same values, since puppets and frozen bodies rebuild from the layout.
+- Checked: the full battery passes.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
