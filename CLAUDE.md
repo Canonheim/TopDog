@@ -17,7 +17,7 @@
   `--spike --part=signs`. If Godot or Jolt changes, rerun it first.
 - **The host decides; owners simulate.** Never re-simulate a frozen body: build
   it from the broadcast pose. `Layout.ORDER` is the wire order: never reorder.
-- **Steam:** app 480 with lobby tag `topyourpals` until our own app exists; the
+- **Steam:** app 480 with lobby tag `topdog` until our own app exists; the
   tag in `net.gd` and `lobby_logic.gd` must match. Bump `GAME_VERSION` every build.
 - **Skins** follow the 16 Defaultio piece names; any skin on that contract drops in.
 - Feel numbers live in `data/feel.gd` only (the F1 panel edits the same table).
