@@ -404,6 +404,20 @@ Parker: "Dan took out grabbing people. Put it back in ... the practice partner i
   - `--feel`'s three lean checks now fail ("one held limb moves the body" 0.29 vs 0.30, "arm holds its pose", "body still up after the big lean"). They pass with the old arms-down spawn, so the hands-on-hips start changes that scripted lean. That's for Parker's feel, not a rigged test.
   - Dan's `--bend` failure stays; the eight-live frame time is slow only under a full run.
 
+## The ropes, RING OUT, and the new ring (Parker, 2026-11-08)
+
+- **The ropes bounce** (Parker: "the ropes on the side of the ring to bounce you if you run into them, with more force than you hit them with").
+  - `Climber._tick_ropes`: when any piece of a live climber enters the band at the side ropes (`Climber.rope_x` = the ring's half-width, from y 0.15 to 1.55, within 0.3 m of the rope line) moving outward, the whole climber is thrown back inward at Feel `rope_bounce` (1.5) times its speed, relative motion kept, with a 0.25 s cooldown.
+  - The ropes have no colliders, so they can't be grabbed.
+- **RING OUT** (Parker: "if you hit the ground outside the ring, it says RING OUT! and you are respawned back in the ring after 3 seconds").
+  - The plaza floor outside the ring is solid now (`Stage`, at `PLAZA_GROUND`).
+  - The host sees a climber's lowest piece on it (`Stage.ring_out`), sends "RING OUT!" to every machine (`_rpc_note`), and respawns them `Game.RING_OUT_S` (3 s) later. The name is kept: it's the same character. The practice partner rings out the same way.
+  - `--ring` checks it: in at 4 m/s, back at 5.8; RING OUT at 0.76 s; back 3.01 s later, inside the ring.
+- **The new ring** (Building Maker; Parker asked him directly for "more mexican colors"): rosa mexicano, turquoise, marigold, purple and lime with gold.
+  - The back ropes are split into `ring_rope_back_low/mid/high` (pink, turquoise, gold), so the middle one reads against the skeleton.
+  - Also new: a padded bumper, a scalloped valance, skirt panels with the pug medallion, taped ropes, octagonal turnbuckles, gold post caps, and `ring_steps` outside the right end (visual only).
+  - `ring_canvas` is the canvas alone now, still repainted grey in code.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

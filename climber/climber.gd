@@ -42,6 +42,15 @@ const DEPTH := 0.24  # how thick a box piece is through the plane, for contacts 
 ## strongest at 180 (Feel fold_resistance). Past 180 it helps you through, so a
 ## limb rotated around comes easily and a straight pull back inward doesn't.
 const SLAP_QUIET_S := 0.6  # no slaps for this long after spawning (the feet settle)
+## THE ROPES (Parker 11-08: "the ropes on the side of the ring to bounce you if you
+## run into them, with more force than you hit them with"): the side ropes stand at
+## +-rope_x, between ROPE_LOW and ROPE_HIGH above the canvas. Set by Game from the
+## stage; 0 = no ropes (tests, the dock).
+static var rope_x := 0.0
+const ROPE_LOW := 0.15
+const ROPE_HIGH := 1.55
+const ROPE_COOLDOWN := 0.25
+var _rope_wait := 0.0
 const FOLD_START_DEG := 150.0  # the old stop's angle: everything before it is free
 const FOLD_REACH_DEG := 150.0  # the folded reach the steering keeps clear of the root
 ## The engine's hinge sign conventions, pinned by the --spike "signs" test.
@@ -53,6 +62,7 @@ enum State { LIVE, PUPPET, FROZEN }
 signal froze(climber: Climber)
 signal limb_selected(index: int, release_velocity: Vector3)
 signal grab_lost(climber: Climber, limb: int)
+signal rope_bounced(at: Vector3, speed: float)
 signal grab_made(climber: Climber, limb: int, other: Object)
 signal release_contact(position: Vector3)
 signal exerted
@@ -584,6 +594,7 @@ func _physics_process(delta: float) -> void:
 	if removed or state != State.LIVE:
 		return
 	live_time += delta
+	_tick_ropes(delta)
 	_grunt_wait -= delta / Engine.time_scale
 	_select_active_limb()
 	for i in limbs.size():
@@ -607,6 +618,33 @@ func _physics_process(delta: float) -> void:
 ## and on through) is stuck to or touching the arena or the frozen tower. Two climbers
 ## holding each other in the air can't fly. A rival on another machine counts while
 ## their pull arrives (their machine sends it only while they're grounded).
+## A piece entering the rope zone moving outward throws the whole climber back
+## into the ring at Feel rope_bounce times the speed it hit (relative motion kept).
+func _tick_ropes(delta: float) -> void:
+	_rope_wait -= delta
+	if rope_x <= 0.0 or _rope_wait > 0.0:
+		return
+	var com_v := Vector2.ZERO
+	for b in bodies.values():
+		com_v += Vector2(b.linear_velocity.x, b.linear_velocity.y) * b.mass
+	com_v /= maxf(total_mass, 0.001)
+	for b in bodies.values():
+		var p: Vector3 = (b as Node3D).global_position
+		if absf(p.x) < rope_x - 0.12 or absf(p.x) > rope_x + 0.3 or p.y < ROPE_LOW or p.y > ROPE_HIGH:  # the band at the ropes only
+			continue
+		var side := signf(p.x)
+		var out_speed: float = com_v.x * side
+		if out_speed < 0.3:
+			continue
+		var new_vx: float = -side * out_speed * Feel.get_k("rope_bounce")
+		for o in bodies.values():
+			var rb := o as RigidBody3D
+			rb.linear_velocity.x += new_vx - com_v.x
+		_rope_wait = ROPE_COOLDOWN
+		rope_bounced.emit(Vector3(side * rope_x, p.y, 0.0), out_speed)
+		return
+
+
 func is_attached() -> bool:
 	return not remote_pulls.is_empty() or grounded_locally()
 

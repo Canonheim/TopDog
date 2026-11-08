@@ -41,6 +41,7 @@ const STREAM_HZ := 30.0
 const CLOCK_HZ := 4.0
 const PAUSE_BETWEEN := 1.6  # seconds between turns / rounds
 const FREEZE_REPLY_S := 1.5  # how long the host waits for an owner's final pose
+const RING_OUT_S := 3.0  # down on the plaza: back in the ring after this long (Parker 11-08)
 const PULL_STALE_S := 0.25
 
 var world: Node3D
@@ -74,6 +75,8 @@ var _seq := 0
 var _pending_freeze := {}  # cid -> {"t": float, "verdict_hint": String}
 var _puppet_buf := {}  # cid -> Array of [time, PackedFloat32Array]
 var _last_seq := {}  # cid -> int
+var _ring_out := {}  # cid -> seconds until the RING OUT respawn
+var _partner_out := 0.0  # the practice partner's ring-out countdown
 var _pulls := {}  # cid -> {piece: [Vector2, time]}
 var _remote_grabs := {}  # "cid:limb" -> [target_cid, piece]
 var _com_v := {}  # cid -> previous COM velocity (for pull estimates)
@@ -132,6 +135,8 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array, dent_hits: Vector2i) ->
 	if stage == null:
 		stage = Stage.new(str(settings.get("stage", "dock")))
 		stage.build(world, dress)
+	Climber.rope_x = stage.ring_half() if str(stage.row.get("dress", "")) == "plaza" else 0.0
+	_ring_out.clear()
 	if stage.row.get("dress", "") == "plaza":
 		chair = ChairScript.new()
 		chair.setup(dress, is_host(), dent_hits)
@@ -171,6 +176,14 @@ func _physics_process(delta: float) -> void:
 	_tick_chair(delta)
 	if partner != null and stage.out_of_bounds(partner.centre_of_mass()):
 		_spawn_partner()
+	elif partner != null and stage.ring_out(partner):
+		# The partner rings out too: back in the ring after RING_OUT_S.
+		_partner_out = (_partner_out if _partner_out > 0.0 else RING_OUT_S) - real_delta
+		if _partner_out <= 0.0:
+			_partner_out = 0.0
+			_spawn_partner()
+	else:
+		_partner_out = 0.0
 	if not is_host():
 		return
 	match phase:
@@ -352,6 +365,16 @@ func _check_bounds() -> void:
 			continue
 		var c: Climber = climbers[cid]
 		if c.state == Climber.State.FROZEN:
+			continue
+		if _ring_out.has(cid):
+			_ring_out[cid] = float(_ring_out[cid]) - get_physics_process_delta_time()
+			if float(_ring_out[cid]) <= 0.0:
+				_ring_out.erase(cid)
+				_spawn(pid)
+			continue
+		if stage.ring_out(c):
+			_ring_out[cid] = RING_OUT_S
+			_rpc_note.rpc("RING OUT!")  # every machine: the banner and its sound
 			continue
 		if stage.out_of_bounds(c.centre_of_mass()):
 			# To every machine (its banner carries the fall sound): Parker 11-08, "All

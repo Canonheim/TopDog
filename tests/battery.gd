@@ -1658,3 +1658,61 @@ func _run_chairwear() -> void:
 	g.end_match()
 	g.queue_free()
 	await frames(2)
+
+
+# ================================================================ --ring (Parker 11-08)
+## The side ropes throw you back harder than you hit them; the plaza floor outside
+## the ring is RING OUT, and 3 s later you're back in the ring.
+func _run_ring() -> void:
+	var g := make_game("tower", 1, 60.0, "plaza")
+	var notes: Array = []
+	g.announce.connect(func(text, _big): notes.append(str(text)))
+	if not await wait_phase(g, "turn", 10.0):
+		t("ring: a turn starts", false)
+		return
+	t("ring: the plaza sets the rope line at the ring's edge", absf(Climber.rope_x - g.stage.ring_half()) < 0.001, "%.2f" % Climber.rope_x)
+	var c: Climber = g.live_climbers()[0]
+	# Throw it at the right-hand ropes: standing near them, every piece moving out at 4 m/s.
+	c.release_all()
+	var shift := Vector3(7.6 - c.centre_of_mass().x, 0.4, 0.0)
+	for b in c.bodies.values():
+		var rb := b as RigidBody3D
+		rb.global_position += shift
+		Climber.sync_server(rb)
+		rb.linear_velocity = Vector3(4.0, 0.0, 0.0)
+	var back := 0.0
+	for k in int(1.0 * Engine.physics_ticks_per_second):
+		await get_tree().physics_frame
+		var v := Vector2.ZERO
+		for b in c.bodies.values():
+			v += Vector2(b.linear_velocity.x, b.linear_velocity.y) * b.mass
+		back = minf(back, v.x / c.total_mass)
+	t("ring: the ropes throw you back harder than you hit them (in at 4 m/s)", back < -4.0, "back at %.2f m/s" % back)
+	# Drop it outside the ring onto the plaza stones.
+	c.release_all()
+	var drop := Vector3(12.0 - c.centre_of_mass().x, 0.5 - c.centre_of_mass().y, 0.0)
+	for b in c.bodies.values():
+		var rb := b as RigidBody3D
+		rb.global_position += drop
+		Climber.sync_server(rb)
+		rb.linear_velocity = Vector3.ZERO
+	var cid0 := c.climber_id
+	var t_out := -1.0
+	var t_back := -1.0
+	var tt := 0.0
+	while tt < 6.0:
+		await get_tree().physics_frame
+		tt += 1.0 / Engine.physics_ticks_per_second
+		if t_out < 0.0 and "RING OUT!" in notes:
+			t_out = tt
+		var now: Array = g.live_climbers()
+		if t_out >= 0.0 and not now.is_empty() and (now[0] as Climber).climber_id != cid0:
+			t_back = tt
+			break
+	t("ring: landing on the plaza says RING OUT!", t_out >= 0.0, "%.2f s" % t_out)
+	t("ring: back in the ring about 3 s later", t_back > 0.0 and absf((t_back - t_out) - Game.RING_OUT_S) < 0.3, "%.2f s after" % (t_back - t_out))
+	if t_back > 0.0:
+		var nc: Climber = g.live_climbers()[0]
+		t("ring: the respawn stands in the ring", absf(nc.centre_of_mass().x) < g.stage.ring_half(), "x %.2f" % nc.centre_of_mass().x)
+	g.end_match()
+	g.queue_free()
