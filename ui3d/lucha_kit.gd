@@ -385,6 +385,11 @@ static func papel_flag(c: Color, which := 0) -> Node3D:
 ## A string of papel picado between two points (in the parent's frame).
 static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 	var root := Node3D.new()
+	# HUNG ON THE STRING (Parker 11-08: the flags "should be following the string as
+	# if they were actually hung up"): each flag hangs straight down from the line,
+	# its face turned to lie along the string's run, not flat to the screen.
+	var run := Vector2(b.x - a.x, b.z - a.z)
+	var yaw := -atan2(run.y, run.x) if run.length() > 0.001 else 0.0
 	var prev := a
 	for i in n + 1:
 		var f := float(i) / n
@@ -398,6 +403,7 @@ static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 		if i > 0 and i < n:
 			var flag := papel_flag(FLAG_COLOURS[i % FLAG_COLOURS.size()], i)
 			flag.position = p
+			flag.rotation.y = yaw
 			flag.rotation.z = randf_range(-0.08, 0.08)
 			flag.set_meta("sway", randf() * TAU)
 			root.add_child(flag)

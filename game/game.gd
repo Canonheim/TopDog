@@ -232,7 +232,7 @@ func _rpc_phase(p: String, p_clock: float, p_line: float, p_round: int, pid: int
 	round_n = p_round
 	phase_changed.emit(phase)
 	if p == "turn":
-		announce.emit("%s's turn" % player_name(pid), true)
+		pass  # announced by _rpc_spawn, with the name the new climber gets
 	elif p == "round":
 		announce.emit("Round %d" % p_round, true)
 
@@ -250,7 +250,22 @@ func _spawn(pid: int, index := 0) -> void:
 	feet.x += signf(feet.x) * float(index / 2) * 1.1  # Scramble: pairs fan out along each side
 	var cid := _cid_next
 	_cid_next += 1
-	_rpc_spawn.rpc(pid, cid, feet)
+	# A NEW NAME FOR EVERY CLIMBER (Parker 11-08): a player with a random name gets
+	# a fresh one each time they climb; a real (Steam) name stays. The host picks,
+	# so every machine shows the same.
+	var r := roster_entry(pid)
+	var nm := str(r.get("name", "?"))
+	if bool(r.get("random", false)) and _is_new_character(pid):
+		nm = NameGen.make()
+	_rpc_spawn.rpc(pid, cid, feet, nm)
+
+
+## A new character climbs (first spawn, or after the last one locked in and froze);
+## a respawn after a fall is the same character, keeping the name.
+func _is_new_character(pid: int) -> bool:
+	if not live.has(pid) or not climbers.has(live[pid]):
+		return true
+	return (climbers[live[pid]] as Climber).state == Climber.State.FROZEN
 
 
 func _spawn_side() -> int:
@@ -267,10 +282,13 @@ func _spawn_side() -> int:
 
 
 @rpc("authority", "call_local", "reliable")
-func _rpc_spawn(pid: int, cid: int, feet: Vector2) -> void:
+func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 	var r := roster_entry(pid)
 	if r.is_empty():
 		return
+	r.name = nm  # banners, tags and results follow the climber now climbing
+	if phase == "turn" and _is_new_character(pid):
+		announce.emit("%s's turn" % nm, true)
 	if live.has(pid) and climbers.has(live[pid]):
 		var old: Climber = climbers[live[pid]]
 		if old.state != Climber.State.FROZEN:
@@ -279,7 +297,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2) -> void:
 	c.climber_id = cid
 	c.player_id = pid
 	c.owner_peer = int(r.peer)
-	c.display_name = str(r.name)
+	c.display_name = nm
 	c.tint = r.tint if r.tint is Color else Color.WHITE
 	add_child(c)
 	c.build(feet, world, KNIGHT if dress else null)
@@ -808,6 +826,8 @@ func _tick_pulls_out(c: Climber, delta: float, send: bool) -> void:
 	_com_v[c.climber_id] = v
 	if mine.is_empty() or not send:
 		return
+	if not c.grounded_locally():
+		return  # nobody solid in my group: no pull to send (THE GROUNDED GROUP)
 	var accel := (v - prev) / maxf(delta, 0.0001)
 	var g := Vector2(0, -9.8 * Feel.climber_gravity(true))
 	# What holds me up: m (a - g), shared over every attachment I have.

@@ -378,6 +378,30 @@ Parker: "Dan took out grabbing people. Put it back in ... the practice partner i
 - The practice partner is a live climber, so he can be grabbed. His own limbs still never stick (`practice_partner._try_grab`). `_remove_partner` releases anyone holding him before he respawns.
 - **Tests:** the eight-live blob ("they grabbed each other", 189), the chain, the live-rival and partner grabs in `--grab`, and the network grab in `--net` all pass. The eight-live frame time was 7.4 ms during one full run under load, and 2.7 to 3.1 ms alone. The two `--bend` failures on Dan's limb control are still open.
 
+## Held grabs, no flying, new names, soft folds, hands on hips, hung flags (Parker, 2026-11-08)
+
+- **Grabbing a climber takes a held limb** (Parker: "should work like how it works with the chair, you have to be holding the limb to grab").
+  - `_try_grab_climber`: the active limb's hand or foot takes hold of a live climber it touches, and lets go when the limb is let go or another limb takes over.
+  - Loose limbs stick only to the arena and the frozen tower.
+  - `attach()` still allows any climber (tests, netcode).
+- **THE GROUNDED GROUP** (Parker: "you cannot exert force unless at least one connected person is touching something solid like the ground or tower").
+  - `is_attached()` walks the chain of grabs: me, whoever I hold, whoever holds me (`held_by`), and on through.
+  - Someone in it must be stuck to, or touching with an unheld end, the arena or the frozen tower. The practice partner counts by standing.
+  - Online, a rival counts while their pull arrives, and `_tick_pulls_out` only sends it while the holder is grounded on its own machine (`grounded_locally`), so two airborne players can't fly.
+- **A new name for every climber:** players with a random name (the slot's `random` flag, carried through the rosters) get a fresh `NameGen` name each new character, i.e. first spawn or after a freeze. A respawn after a fall keeps it, and Steam names stay. The host picks and sends it with `_rpc_spawn`, which also announces "X's turn", so banners and tags match.
+- **Elbows and knees turn 360 again, with THE SOFT FOLD** (Parker: "make it so limbs can rotate 360 degrees again but with the resistance").
+  - Dan's ±150 degree stops on the `mid` joints are gone, and so is his hand/foot vs upper-segment collision. A climber's pieces never collide with each other again.
+  - From `FOLD_START_DEG` (150, the old stop) to 180 the joint pushes back, and past 180 it helps through.
+  - Feel `fold_resistance` 3.0 applies to limbs you aren't moving (it keeps a loaded knee up like the old stop). Feel `fold_resistance_held` 0.8 is the lighter hump on the limb you're moving.
+  - The steering still keeps its target out of the folded reach (`FOLD_REACH_DEG` 150), so a straight pull back to the shoulder is resisted and swinging the limb around comes easier.
+- **Hands on hips at spawn** (`_hands_on_hips`, a two-bone solve, elbows out); it replaces `_arms_down`.
+- **The flags hang along their strings** (`LuchaKit.bunting`: each flag is turned about the vertical to the string's run).
+- **Arms in front of the torso:** tried, then reverted on Parker's word.
+- **Tests:**
+  - New and passing: held grabs, no flying, the elbow turning through 180 under a hand-pull twist, and the press stack.
+  - `--feel`'s three lean checks now fail ("one held limb moves the body" 0.29 vs 0.30, "arm holds its pose", "body still up after the big lean"). They pass with the old arms-down spawn, so the hands-on-hips start changes that scripted lean. That's for Parker's feel, not a rigged test.
+  - Dan's `--bend` failure stays; the eight-live frame time is slow only under a full run.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

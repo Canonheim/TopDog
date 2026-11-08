@@ -23,6 +23,8 @@ const SPEC := {
 	"joint_friction": [0.9, 0.0, 2.0, "Friction in shoulders and hips: how stiffly the body holds a pose (body-weights x 0.5 m)"],
 	"bend_friction": [0.16, 0.0, 2.0, "Friction in elbows and knees: low = they buckle sideways under a pull"],
 	"held_friction": [0.06, 0.0, 1.0, "Friction in the joints of the limb you're pulling: low = it straightens to follow"],
+	"fold_resistance": [3.0, 0.0, 6.0, "Elbows and knees you are NOT moving: how hard a deep fold pushes back (keeps a loaded knee up; body-weights x 0.5 m)"],
+	"fold_resistance_held": [0.8, 0.0, 4.0, "The elbow or knee of the limb you ARE moving: the lighter hump it swings through"],
 	"wrist_friction": [0.1, 0.0, 1.0, "Friction in wrists and ankles"],
 	"spine_spring": [0.55, 0.05, 3.0, "Torso flex spring back to straight"],
 	"spine_damping": [0.5, 0.0, 2.0, "Torso flex damping ratio"],

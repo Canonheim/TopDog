@@ -28,8 +28,8 @@ extends Node
 ## motor holding still with a capped torque), so the body keeps whatever pose it's
 ## pushed into, and under a pull the knees and elbows buckle sideways, either way.
 ## The pulled limb's own joints are nearly free so it follows the pull. The torso's
-## two spine joints and the neck are soft springs. A hand or foot can contact
-## its own upper segment at a deep fold.
+## two spine joints and the neck are soft springs. Elbows and knees turn all the
+## way round, through themselves, against THE SOFT FOLD.
 
 const Layout := preload("res://climber/body_layout.gd")
 
@@ -37,6 +37,12 @@ const LAYER_WORLD := 1
 const LAYER_LIVE := 2
 const LAYER_FROZEN := 4
 const DEPTH := 0.24  # how thick a box piece is through the plane, for contacts (m)
+## THE SOFT FOLD (Parker 11-08): elbows and knees turn a full 360 degrees again,
+## but folding through the joint meets resistance from FOLD_START degrees of bend,
+## strongest at 180 (Feel fold_resistance). Past 180 it helps you through, so a
+## limb rotated around comes easily and a straight pull back inward doesn't.
+const FOLD_START_DEG := 150.0  # the old stop's angle: everything before it is free
+const FOLD_REACH_DEG := 150.0  # the folded reach the steering keeps clear of the root
 ## The engine's hinge sign conventions, pinned by the --spike "signs" test.
 const MOTOR_SIGN := -1.0  # Jolt: a positive motor velocity spins the child CW (pinned by --spike signs)
 const LIMIT_FLIP := true  # Jolt: the hinge angle runs clockwise about +z (pinned by --spike signs)
@@ -67,6 +73,7 @@ var bodies := {}  # piece name -> RigidBody3D
 ## LIVE CLIMBERS GRAB EACH OTHER (Parker's call 10; taken out in 0.3.30, put back
 ## 11-08: "Dan took out grabbing people. Put it back in").
 var grabbed_by := 0  # grabs other climbers hold on me (local joints)
+var held_by: Array = []  # the climbers holding me (one entry per grab), for THE GROUNDED GROUP
 var remote_grabbed := 0  # grabs on me reported from other machines
 ## Online: forces other machines' climbers put on my pieces, piece -> Vector2 (N).
 var remote_pulls := {}
@@ -198,20 +205,16 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 				mesh.global_transform = keep
 	if visual != null:
 		visual.queue_free()
-	# Connected shapes overlap at their hinge. Let only the non-adjacent pair
-	# within each limb collide. Other limbs and the torso can cross its path.
-	var upper_by_end := {}
-	for limb in Layout.LIMBS:
-		upper_by_end[limb.end] = limb.up
+	# No self-collision: a climber's own pieces pass through each other, limbs fold
+	# through themselves (Parker 11-07, again 11-08: "go through each other
+	# completely"). THE SOFT FOLD in the joints is the only resistance.
 	var names := Layout.ORDER
 	for i in names.size():
 		for j in range(i + 1, names.size()):
-			if upper_by_end.get(names[i]) == names[j] or upper_by_end.get(names[j]) == names[i]:
-				continue
 			bodies[names[i]].add_collision_exception_with(bodies[names[j]])
 	_build_joints(feet)
 	_build_limbs()
-	_arms_down()
+	_hands_on_hips()
 	set_tint(tint)
 
 
@@ -219,6 +222,47 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 ## (0.46 m wide, not 1.8 m), so spawns next to each other or next to the barrel
 ## don't start tangled. Each arm swings 90 degrees about its shoulder, pieces and
 ## joints together, before the first physics tick.
+## HANDS ON HIPS (Parker 11-08: "when climber spawns, their hands are on their
+## hips"): each arm is solved as two bones before the first physics tick. The
+## shoulder stays, the hand goes to the side of the pelvis, the elbow bends
+## outward. Forearm and hand turn together (wrist straight).
+func _hands_on_hips() -> void:
+	var pelvis: RigidBody3D = bodies["pelvis"]
+	var P := pos2(pelvis)
+	var half_w := 0.22 * body_scale
+	for ld in Layout.LIMBS:
+		if not bool(ld.arm):
+			continue
+		var side := -1.0 if ld.id == "arm_l" else 1.0  # screen side
+		var S0: Vector2 = joints[ld.root].at
+		var E0: Vector2 = joints[ld.mid].at
+		var hand: RigidBody3D = bodies[ld.end]
+		var H0 := pos2(hand)
+		var l1 := S0.distance_to(E0)
+		var l2 := E0.distance_to(H0)
+		var T := P + Vector2(side * (half_w + 0.06 * body_scale), 0.03 * body_scale)
+		var d := clampf(S0.distance_to(T), absf(l1 - l2) + 0.001, l1 + l2 - 0.001)
+		var to_t := (T - S0).normalized()
+		var a := acos(clampf((l1 * l1 + d * d - l2 * l2) / (2.0 * l1 * d), -1.0, 1.0))
+		# Two elbow solutions: take the one further out from the body.
+		var e1 := S0 + to_t.rotated(a) * l1
+		var e2 := S0 + to_t.rotated(-a) * l1
+		var E := e1 if absf(e1.x - P.x) > absf(e2.x - P.x) else e2
+		var th1 := (E - S0).angle() - (E0 - S0).angle()
+		var th2 := (T - E).angle() - (H0 - E0).angle()
+		_turn_piece(bodies[ld.up], S0, S0, th1)
+		_turn_piece(bodies[ld.lo], E0, E, th2)
+		_turn_piece(hand, E0, E, th2)
+
+
+## Turn a piece by `th` about its old pivot, and carry it to the new pivot.
+func _turn_piece(b: RigidBody3D, pivot_old: Vector2, pivot_new: Vector2, th: float) -> void:
+	var p := pos2(b)
+	var q := pivot_new + (p - pivot_old).rotated(th)
+	b.global_transform = Transform3D(Basis(Vector3.BACK, angle_of(b) + th), Vector3(q.x, q.y, 0.0))
+	sync_server(b)
+
+
 func _arms_down() -> void:
 	for ld in Layout.LIMBS:
 		if not bool(ld.arm):
@@ -260,9 +304,9 @@ func _build_joints(feet: Vector2) -> void:
 		# Hinge axis = local z of both frames; frames at the anchor, unrotated.
 		PhysicsServer3D.joint_make_hinge(rid, a.get_rid(), Transform3D(Basis(), a.to_local(at3)), b.get_rid(), Transform3D(Basis(), b.to_local(at3)))
 		PhysicsServer3D.joint_disable_collisions_between_bodies(rid, true)
-		# The whole limb can revolve about the shoulder or hip. Stops between
-		# adjacent pieces keep them from folding through their shared hinge.
-		if jd.kind in ["spine", "neck", "mid"]:
+		# Every limb joint turns freely all the way round (Parker 11-07, again 11-08);
+		# folding an elbow or knee through itself meets THE SOFT FOLD instead of a stop.
+		if jd.kind in ["spine", "neck"]:
 			set_hinge_limits(rid, float(lim[0]), float(lim[1]))
 		else:
 			lim = [-360.0, 360.0]
@@ -334,7 +378,7 @@ func _build_limbs() -> void:
 		var end_pt: Vector2 = Layout.end_point(ld.end) * s
 		var upper_length := root_at.distance_to(mid_at)
 		var lower_length := mid_at.distance_to(end_pt)
-		var fold_angle: float = joints[ld.mid].hi
+		var fold_angle := deg_to_rad(FOLD_REACH_DEG)
 		var folded_reach := Vector2(upper_length, 0) + Vector2.from_angle(fold_angle) * lower_length
 		var end_shape: Array = Layout.PIECES[ld.end].shape
 		var end_r: float = (end_shape[2] if end_shape[0] == "circle" else (end_shape[2] as Vector2).x) * s
@@ -556,12 +600,53 @@ func _physics_process(delta: float) -> void:
 			(bodies[pn] as RigidBody3D).apply_central_force(Vector3(f.x, f.y, 0.0))
 
 
+## THE GROUNDED GROUP (Parker 11-08: "you cannot exert force unless at least one
+## connected person is touching something solid like the ground or tower"): I can
+## drive only if someone in my chain of grabs (me, whoever I hold, whoever holds me,
+## and on through) is stuck to or touching the arena or the frozen tower. Two climbers
+## holding each other in the air can't fly. A rival on another machine counts while
+## their pull arrives (their machine sends it only while they're grounded).
 func is_attached() -> bool:
-	if grabbed_by > 0 or remote_grabbed > 0:
-		return true  # a climber someone holds can still drive (Parker's call 10)
-	for l in limbs:
-		if l.grab.is_valid():
+	return not remote_pulls.is_empty() or grounded_locally()
+
+
+## THE GROUNDED GROUP on this machine only (what the network pull is sent on, so
+## two airborne rivals on two machines can't hold each other up either).
+func grounded_locally() -> bool:
+	var seen := {self: true}
+	var queue: Array = [self]
+	while not queue.is_empty():
+		var c: Climber = queue.pop_back()
+		if c.touches_solid():
 			return true
+		var next: Array = c.held_by.duplicate()
+		for l in c.limbs:
+			if l.grab.is_valid() and l.grab_climber != null:
+				next.append(l.grab_climber)
+		for o in next:
+			if o != null and is_instance_valid(o) and not seen.has(o) and o.state != State.FROZEN:
+				seen[o] = true
+				queue.append(o)
+	return false
+
+
+## Stuck to the arena or the frozen tower, or an end piece touching either.
+func touches_solid() -> bool:
+	for l in limbs:
+		if l.grab.is_valid() and (l.grab_climber == null or not is_instance_valid(l.grab_climber) or l.grab_climber.state == State.FROZEN):
+			return true
+	for l in limbs:
+		if l.held:
+			continue  # a limb you're lifting off doesn't hold you up
+		var end: RigidBody3D = bodies.get(l.def.end)
+		if end == null or not end.contact_monitor:
+			continue
+		for o in end.get_colliding_bodies():
+			if not (o is RigidBody3D and o.has_meta("climber")):
+				return true  # the arena (static world)
+			var oc: Climber = o.get_meta("climber")
+			if oc != self and oc.state == State.FROZEN:
+				return true
 	return false
 
 
@@ -619,8 +704,14 @@ func _tick_limb(i: int, delta: float) -> void:
 		l.cursor = limb_end(i)  # steering starts from where the hand is
 	elif just_released:
 		l.regrip = 0.0  # release: plant it right now if it's on something
+		# A climber is only held while the limb is (like the chair, Parker 11-08).
+		if l.grab.is_valid() and l.grab_climber != null and is_instance_valid(l.grab_climber) and l.grab_climber.state != State.FROZEN:
+			release(i)
+			l.regrip = 0.0
 	l.held = held
 	l.regrip = maxf(0.0, l.regrip - delta)
+	if held and not l.grab.is_valid():
+		_try_grab_climber(i)
 	if not held and not l.grab.is_valid() and l.regrip <= 0.0:
 		_try_grab(i)
 		if just_released and l.grab.is_valid():
@@ -636,7 +727,7 @@ func _try_grab(i: int) -> void:
 	var hits := end.get_colliding_bodies()
 	if hits.is_empty():
 		return
-	# Prefer solid ground (world and tower) over a live rival, then the nearest.
+	# Solid ground and the frozen tower; the nearest wins.
 	var best: Object = null
 	var best_score := INF
 	for o in hits:
@@ -645,10 +736,8 @@ func _try_grab(i: int) -> void:
 		var score := 0.0
 		if o is RigidBody3D and o.has_meta("climber"):
 			var oc: Climber = o.get_meta("climber")
-			if oc == self:
-				continue
-			if oc.state != State.FROZEN:
-				score += 1000.0
+			if oc == self or oc.state != State.FROZEN:
+				continue  # a live climber is grabbed only by a held limb (_try_grab_climber)
 		if o is Node3D:
 			score += (o as Node3D).global_position.distance_to(end.global_position) * 0.001
 		if score < best_score:
@@ -656,6 +745,23 @@ func _try_grab(i: int) -> void:
 			best = o
 	if best != null:
 		attach(i, best)
+
+
+## GRABBING A CLIMBER (Parker 11-08: "Grabbing players or the practice dummy should
+## work like how it works with the chair, you have to be holding the limb to grab"):
+## the held limb's hand or foot takes hold of a live climber it touches, and lets go
+## when the limb is let go (or another limb takes over).
+func _try_grab_climber(i: int) -> void:
+	var l: Dictionary = limbs[i]
+	var end: RigidBody3D = bodies[l.def.end]
+	if not end.contact_monitor:
+		return
+	for o in end.get_colliding_bodies():
+		if o is RigidBody3D and o.has_meta("climber"):
+			var oc: Climber = o.get_meta("climber")
+			if oc != self and oc.state != State.FROZEN and not oc.removed:
+				attach(i, o)
+				return
 
 
 ## Stick limb i's end to `other` (a PhysicsBody3D) right where it is.
@@ -695,6 +801,7 @@ func attach(i: int, other: Object) -> void:
 			l.grab_piece = other.get_meta("piece")
 			if oc.state != State.FROZEN:
 				oc.grabbed_by += 1
+				oc.held_by.append(self)
 	grab_made.emit(self, i, other)
 
 
@@ -710,6 +817,7 @@ func release(i: int) -> void:
 	var oc = l.grab_climber
 	if oc != null and is_instance_valid(oc) and oc.state != State.FROZEN:
 		oc.grabbed_by = maxi(0, oc.grabbed_by - 1)
+		oc.held_by.erase(self)
 	l.grab_other = null
 	l.grab_climber = null
 	l.grab_piece = ""
@@ -760,6 +868,8 @@ func _tick_joints(attached: bool, dt: float) -> void:
 	var f_mid := Feel.get_k("bend_friction") * weight * 0.5
 	var f_held := Feel.get_k("held_friction") * weight * 0.5
 	var f_end := Feel.get_k("wrist_friction") * weight * 0.5
+	var f_fold := Feel.get_k("fold_resistance") * weight * 0.5
+	var f_fold_held := Feel.get_k("fold_resistance_held") * weight * 0.5
 	var spine_w := Feel.get_k("spine_spring") * 20.0
 	var neck_w := Feel.get_k("neck_spring") * 20.0
 	for jn in joints:
@@ -786,6 +896,16 @@ func _tick_joints(attached: bool, dt: float) -> void:
 					torque = f_end
 			"mid":
 				torque = f_held if held_joints.has(jn) else f_mid
+				# THE SOFT FOLD: deep in a fold the joint pushes back toward straight
+				# (and past 180, on through), capped so a strong swing still carries.
+				var bend := rad_to_deg(absf(rel))
+				if bend > FOLD_START_DEG:
+					var depth := smoothstep(FOLD_START_DEG, 180.0, bend)
+					want_w = -signf(rel) * 6.0
+					# The limb you're moving meets a lighter hump you can swing through;
+					# every other knee and elbow holds a load like the old stop did (it
+					# keeps the body up), and still turns through under enough of one.
+					torque = maxf(torque, (f_fold_held if held_joints.has(jn) else f_fold) * depth)
 			_:
 				torque = f_held if held_joints.has(jn) else f_root
 		if _neutral_angles.has(jn):
@@ -948,6 +1068,7 @@ func freeze() -> void:
 		rb.collision_layer = LAYER_FROZEN
 	state = State.FROZEN
 	grabbed_by = 0
+	held_by.clear()
 	remote_grabbed = 0
 	remote_pulls.clear()
 	for g in _glyphs:

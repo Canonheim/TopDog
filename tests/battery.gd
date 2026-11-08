@@ -342,9 +342,9 @@ func _spike_eight() -> void:
 	var ticks := int(20.0 * Engine.physics_ticks_per_second)
 	var rival_grabs := [0]
 	for c in cs:
-		c.grab_made.connect(func(_c, _l, o):
-			if o is RigidBody3D and o.has_meta("climber"):
-				rival_grabs[0] += 1)
+		c.grab_made.connect(func(gc, gl, o):
+			if o is RigidBody3D and o.has_meta("climber") and not gc.limbs[gl].held:
+				rival_grabs[0] += 1)  # a LOOSE limb taking a live climber (held ones may)
 	for i in ticks:
 		if i % 30 == 0:
 			for c in cs:
@@ -364,7 +364,7 @@ func _spike_eight() -> void:
 	var avg := sum / ticks
 	t("eight live: 20 s welded into a blob (every unheld limb sticks), joints under 12 cm", worst_gap < 0.12, "worst %.4f m" % worst_gap)
 	t("eight live: all sane (finite, in the plane)", ok)
-	t("eight live: they grabbed each other", rival_grabs[0] > 0, rival_grabs[0])
+	t("eight live: loose limbs never grab a live climber (only a held limb does, Parker 11-08)", rival_grabs[0] == 0, rival_grabs[0])
 	t("eight live: physics frame under 6 ms on average (eight welded climbers)", avg < 6.0, "avg %.3f ms, worst %.3f ms" % [avg, worst_ms])
 
 
@@ -484,7 +484,7 @@ func _run_grab() -> void:
 	await frames(1)
 	t("grab: a held climber counts as attached (Parker's rule 10)", e.is_attached() and e.stuck_count() == 0)
 	h.release(2)
-	t("grab: releasing a rival un-counts it", e.grabbed_by == 0 and not e.is_attached())
+	t("grab: releasing a rival un-counts it", e.grabbed_by == 0 and e.held_by.is_empty())  # (it still stands on the deck: touching solid counts, 11-08)
 	# The practice partner is a live climber too (Parker 11-08: "You should be able
 	# to grab him"): a hand that touches him sticks, and he counts the grab.
 	var pp: Climber = load("res://climber/practice_partner.gd").new()
@@ -499,6 +499,29 @@ func _run_grab() -> void:
 	t("grab: the practice partner can be grabbed (and counts it)", g2.limbs[1].grab.is_valid() and g2.limbs[1].grab_climber == pp and pp.grabbed_by == 1)
 	g2.release_all()
 	pp.remove()
+	# A HELD limb takes hold of a climber it touches and lets go with the button
+	# (like the chair); a loose one never does. And THE GROUNDED GROUP: two climbers
+	# holding each other in the air can't drive (no flying).
+	var x1 := spawn(Vector2(10.0, 6.0))
+	var x2 := spawn(Vector2(10.0, 6.0))  # overlapping: x1's hand is inside x2
+	var xd: Drivers.ScriptDriver = x1.driver
+	await frames(1)
+	var loose_grabbed: bool = x1.limbs[0].grab.is_valid() and x1.limbs[0].grab_climber == x2
+	xd.set_limb(0, true)
+	var held_grabbed := false
+	for k in 30:
+		await get_tree().physics_frame
+		if x1.limbs[0].grab.is_valid() and x1.limbs[0].grab_climber == x2:
+			held_grabbed = true
+			break
+	var air_attached: bool = x1.is_attached() or x2.is_attached()
+	xd.set_limb(0, false)
+	await frames(2)
+	var let_go: bool = x1.limbs[0].grab_climber != x2
+	t("grab: a held limb grabs a climber it touches; a loose one doesn't; letting go releases", held_grabbed and not loose_grabbed and let_go, "held %s, loose %s, let go %s" % [held_grabbed, loose_grabbed, let_go])
+	t("grab: two climbers holding each other in the air can't drive (the grounded group)", held_grabbed and not air_attached)
+	x1.remove()
+	x2.remove()
 
 
 func _run_frozen() -> void:
@@ -1105,6 +1128,31 @@ func _run_feel() -> void:
 	t("feel: one held foot lifts the hanging body (COM rises 15 cm or more)", frise > 0.15, "%.2f m" % frise)
 	fd.clear()
 	await seconds(0.3)
+	# THE SOFT FOLD (Parker 11-08): an elbow turns all the way round (no stop), but a
+	# deep fold pushes back. Twist a forearm hard and steadily: it must pass 180.
+	var tw := spawn(Vector2(14.0, 8.0))
+	for b in tw.bodies.values():
+		(b as RigidBody3D).gravity_scale = 0.0
+	tw.attach(1, bar_at(tw.limb_end(1)))  # the other hand on a bar: attached, so the held arm drives
+	(tw.driver as Drivers.ScriptDriver).set_limb(0, true)  # the twisted arm is the one held
+	await frames(2)
+	var ej: Dictionary = tw.joints["elbow_l"]
+	var last := wrapf(Climber.angle_of(ej.b) - Climber.angle_of(ej.a), -PI, PI)
+	var start := last
+	var turned := 0.0  # the elbow's unwrapped turn
+	for k in int(2.0 * Engine.physics_ticks_per_second):
+		var fore: RigidBody3D = tw.bodies["arm_l_lo"]
+		var up: RigidBody3D = tw.bodies["arm_l_up"]
+		var tq := fore.mass * 9.8 * 8.0  # about a held hand's pull at the elbow
+		fore.apply_torque(Vector3(0, 0, tq))
+		up.apply_torque(Vector3(0, 0, -tq))  # a twist across the elbow, not a spin of the body
+		await get_tree().physics_frame
+		var rel := wrapf(Climber.angle_of(ej.b) - Climber.angle_of(ej.a), -PI, PI)
+		turned += angle_difference(last, rel)
+		last = rel
+	t("feel: an elbow turns through 180 under a steady twist (360 degrees, no stop)", absf(start + turned) > PI, "turned %.0f deg from %.0f" % [rad_to_deg(turned), rad_to_deg(start)])
+	t("feel: a deep fold pushes back (Feel fold_resistance is on)", Feel.get_k("fold_resistance") > 0.0)
+	tw.remove()
 	# 5. Loose in the air, a held limb isn't pulled anywhere.
 	var air := spawn(Vector2(4.0, 6.0))
 	var ad: Drivers.ScriptDriver = air.driver
