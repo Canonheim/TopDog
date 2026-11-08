@@ -210,7 +210,7 @@ func _card_count() -> int:
 func _fill_friends() -> void:
 	var m: Menu3D = ui.menus.friends
 	m.clear_items()
-	var rows: Array = Net.friends_in_game() if Net.has_method("friends_in_game") else []
+	var rows: Array = Net.friends_in_game()
 	if not Net.steam_ok:
 		set_status("Steam isn't running: start Steam and restart to play with friends.")
 	elif rows.is_empty():

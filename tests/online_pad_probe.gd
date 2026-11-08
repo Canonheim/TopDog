@@ -5,6 +5,7 @@ extends Node
 const SteamInputScript := preload("res://core/steam_input.gd")
 var si: Node
 var fails := 0
+var _main: Node
 
 func _ready() -> void:
 	var main = load("res://game/main.tscn").instantiate()
@@ -17,6 +18,7 @@ func _ready() -> void:
 	main.show_screen("online")
 	await get_tree().create_timer(0.4).timeout
 	var vp := get_viewport()
+	_main = main
 	var seen: Array = [_f(vp)]
 	for step in ["menu_down", "menu_right", "menu_down", "menu_down", "menu_up"]:
 		await _press(step)
@@ -50,6 +52,11 @@ func _press(action: String) -> void:
 	si.devices[3000].buttons[action] = false
 	for i in 3: await get_tree().process_frame
 
+## The focused item: the 3D belt menu's when one owns the screen, else the flat page's.
 func _f(vp: Viewport) -> String:
+	var lucha = _main.get("lucha") if _main != null else null
+	if lucha != null and lucha.menus.has(_main.screen) and lucha.menus[_main.screen].visible:
+		var m = lucha.menus[_main.screen]
+		return "3d:%d %s" % [m.focus, str(m.items[m.focus].label) if m.focus >= 0 and m.focus < m.items.size() else "?"]
 	var f := vp.gui_get_focus_owner()
 	return f.text if f is Button else ("none" if f == null else f.get_class())
