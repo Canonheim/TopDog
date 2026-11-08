@@ -21,3 +21,9 @@
 | `tools/steam/upload_build.bat` | Golemheim `tools/steam/upload_build.bat` | App and depot IDs as settings; refuses until set |
 | Body measurements in `climber/body_layout.gd` | Golemheim `scripts/segmented_body.gd` joint constants and the Metal Knight's piece bounds | Re-expressed as a planar ragdoll |
 | Two-bone solve in `climber/climber.gd` | The idea of Golemheim's `_solve_chain` | Rewritten in 2D |
+
+## Downloaded
+
+| Ours | Source | Licence | Date |
+|---|---|---|---|
+| `fonts/luckiest_guy/LuckiestGuy-Regular.ttf` | Luckiest Guy by Astigmatic (Brian J. Bonislawsky), Google Fonts' own repository: https://github.com/google/fonts/tree/main/apache/luckiestguy (fonts.google.com/specimen/Luckiest+Guy) | Apache License 2.0 (`fonts/luckiest_guy/LICENSE.txt`; Google Fonts lists it as APACHE2, not OFL) | 2026-11-07, Parker's OK |
