@@ -1,5 +1,5 @@
 extends Node
-## Screenshots of the 3D screens: -- --open=local|pause|results|hud --shot=PATH
+## Screenshots of the 3D screens: -- --open=local|pause|results|hud|clock|pinata --shot=PATH
 func _ready() -> void:
 	var open := "title"
 	var shot := ""
@@ -27,6 +27,10 @@ func _ready() -> void:
 			main.game.host_start({"mode": "tower", "timer": 60.0, "spawn": "alternate", "stage": "plaza"},
 				[{"pid": 0, "name": "Parker the Barrel-Hugger", "tint": Color.RED, "peer": 1, "slot": 0}])
 			main.show_screen("hud")
+		"pinata":
+			# The title, the camera swung back to the plaza, and the pinata burst.
+			await get_tree().create_timer(0.6).timeout
+			main.lucha.burst_pinata()
 		"hud", "pause", "results":
 			main._start_practice()
 			await get_tree().create_timer(2.0).timeout

@@ -29,6 +29,11 @@ var menus := {}  # id -> Menu3D
 var current := ""
 var _clouds: Array = []
 var _flags: Array = []
+var _bell: Node3D  # the ring bell beside the clock (the kit's bell)
+var _bell_t := -1.0  # seconds since it was struck; < 0 = still
+var _pinata: Node3D  # the pinata over the plaza (the kit's pinata)
+var _pinata_burst := false
+const PAPEL := [Color("#E0287A"), Color("#1FB8AE"), Color("#FFC928"), Color("#7CC83A"), Color("#8A3FC0"), Color("#F28A1E")]
 var _hud: Node3D
 var _clock_text: Node3D
 var _clock_val := -1
@@ -75,6 +80,8 @@ func show_screen(id: String) -> bool:
 		else:
 			menus[k].close()
 	_hud.visible = id in ["hud", "pause"]
+	if id == "title":
+		_rehang_pinata()
 	_cards.visible = id == "local"
 	_podium.visible = id == "results"
 	if _winner_poster != null:
@@ -145,6 +152,8 @@ func _build_plaza() -> void:
 	for k in 3:
 		var b := LuchaKit.bunting(Vector3(-18 + k * 12, 6.5, -9.0), Vector3(-6 + k * 12, 6.8, -9.0), 9, 0.9)
 		plaza.add_child(b)
+		if k == 1:
+			_hang_pinata(plaza, Vector3(0, 5.8, -9.0))
 		for f in b.get_children():
 			if f.has_meta("sway"):
 				_flags.append(f)
@@ -374,6 +383,17 @@ func _build_hud() -> void:
 	buckle.position = Vector3(0, 2.25, 0)
 	buckle.name = "Buckle"
 	_hud.add_child(buckle)
+	# The ring bell right of the clock: struck at every turn and round.
+	_bell = LuchaKit.kit_model("bell")
+	if _bell == null:
+		_bell = Node3D.new()
+		var dome := LuchaKit.ball(0.14, LuchaKit.GOLD, Vector3(0, 0.23, 0.02))
+		dome.name = "bell_dome"
+		_bell.add_child(dome)
+	_bell.scale = Vector3.ONE * 1.9
+	_bell.position = Vector3(1.25, 1.85, 0.05)
+	buckle.add_child(_bell)
+	_bell.position -= buckle.position
 	_info = Node3D.new()
 	_info.position = Vector3(-5.6, 2.55, 0)
 	_hud.add_child(_info)
@@ -407,6 +427,10 @@ func _on_announce(text: String, big: bool) -> void:
 	if _banner == null:
 		return
 	var low := text.to_lower()
+	if low.ends_with("'s turn") or low.begins_with("round "):
+		ring_bell()
+	if low.contains("tops") or low.contains("top dog"):
+		burst_pinata()
 	if low.contains("locked in") or low.contains("made it") or low.contains("tops") or low.contains("top dog"):
 		confetti(low.contains("tops") or low.contains("top dog"))
 	for ch in _banner.get_children():
@@ -441,17 +465,16 @@ func confetti(big := false) -> void:
 		p.explosiveness = 0.85
 		p.amount = 160 if big else 70
 		p.lifetime = 3.2 if big else 2.2
-		var qm := QuadMesh.new()
-		qm.size = Vector2(0.09, 0.05)
-		p.mesh = qm
+		p.mesh = _confetti_mesh(int(randi() % 4))
 		var m := StandardMaterial3D.new()
 		m.vertex_color_use_as_albedo = true
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		m.cull_mode = BaseMaterial3D.CULL_DISABLED
 		p.material_override = m
 		var grad := Gradient.new()
-		grad.offsets = PackedFloat32Array([0.0, 0.2, 0.4, 0.6, 0.8])
-		grad.colors = PackedColorArray([LuchaKit.RED, LuchaKit.GOLD, LuchaKit.BLUE, LuchaKit.MAGENTA, LuchaKit.TURQUOISE])
+		grad.offsets = PackedFloat32Array([0.0, 0.17, 0.34, 0.5, 0.67, 0.84])
+		grad.colors = PackedColorArray(PAPEL)
+		grad.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
 		p.color_initial_ramp = grad
 		p.direction = Vector3(-side * 0.6, 1.0, 0.0)
 		p.spread = 55.0
@@ -474,6 +497,7 @@ func confetti(big := false) -> void:
 
 func _process(delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
+	_festive_tick(delta, t)
 	for c in _clouds:
 		var n: Node3D = c
 		n.position.x += float(n.get_meta("speed")) * delta
@@ -537,3 +561,111 @@ func _process(delta: float) -> void:
 			_banner.position.y += delta * 9.0
 			if _banner.position.y > 5.0:
 				_banner.visible = false
+
+
+# ---------------------------------------------------------------- the festive pieces
+
+static var _confetti_meshes: Array = []
+
+
+## A kit confetti piece's mesh (a..d); a small card when the kit has none.
+static func _confetti_mesh(i: int) -> Mesh:
+	if _confetti_meshes.is_empty():
+		var k := LuchaKit.kit_model("confetti")
+		if k != null:
+			for n in ["confetti_a", "confetti_b", "confetti_c", "confetti_d"]:
+				var mi := k.find_child(n, true, false) as MeshInstance3D
+				if mi != null and mi.mesh != null:
+					_confetti_meshes.append(mi.mesh)
+			k.free()
+		if _confetti_meshes.is_empty():
+			var qm := QuadMesh.new()
+			qm.size = Vector2(0.09, 0.05)
+			_confetti_meshes.append(qm)
+	return _confetti_meshes[i % _confetti_meshes.size()]
+
+
+func ring_bell() -> void:
+	_bell_t = 0.0
+	Sound.play("lock", -6.0, 1.25)
+
+
+func _hang_pinata(parent: Node3D, at: Vector3) -> void:
+	_pinata = LuchaKit.kit_model("pinata")
+	if _pinata == null:
+		_pinata = Node3D.new()
+		_pinata.add_child(LuchaKit.ball(0.55, LuchaKit.MAGENTA, Vector3(0, -0.7, 0)))
+	_pinata.scale = Vector3.ONE * 1.2
+	_pinata.position = at
+	parent.add_child(_pinata)
+
+
+## A win: the pinata bursts into confetti; it hangs again on the next game.
+func burst_pinata() -> void:
+	if _pinata == null or _pinata_burst:
+		return
+	_pinata_burst = true
+	var p := CPUParticles3D.new()
+	p.one_shot = true
+	p.explosiveness = 0.95
+	p.amount = 80
+	p.lifetime = 4.0
+	p.mesh = _confetti_mesh(2)
+	var m := StandardMaterial3D.new()
+	m.vertex_color_use_as_albedo = true
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
+	p.material_override = m
+	var grad := Gradient.new()
+	grad.offsets = PackedFloat32Array([0.0, 0.17, 0.34, 0.5, 0.67, 0.84])
+	grad.colors = PackedColorArray(PAPEL)
+	grad.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
+	p.color_initial_ramp = grad
+	p.direction = Vector3.DOWN
+	p.spread = 180.0
+	p.initial_velocity_min = 2.0
+	p.initial_velocity_max = 5.0
+	p.gravity = Vector3(0, -3.0, 0)
+	p.angular_velocity_min = -360.0
+	p.angular_velocity_max = 360.0
+	p.angle_max = 360.0
+	p.scale_amount_min = 1.2
+	p.scale_amount_max = 2.2
+	_pinata.get_parent().add_child(p)
+	p.position = _pinata.position + Vector3(0, -0.9, 0)
+	p.emitting = true
+	p.finished.connect(p.queue_free)
+	for n in ["pinata_body", "pinata_tassels"]:
+		var part := _pinata.find_child(n, true, false) as Node3D
+		if part != null:
+			part.visible = false
+
+
+func _rehang_pinata() -> void:
+	if _pinata == null or not _pinata_burst:
+		return
+	_pinata_burst = false
+	for ch in _pinata.find_children("*", "Node3D", true, false):
+		(ch as Node3D).visible = true
+
+
+## The bell's hammer swing and dome shake, and the pinata's slow sway.
+func _festive_tick(delta: float, t: float) -> void:
+	if _bell != null and _bell_t >= 0.0:
+		_bell_t += delta
+		var hammer := _bell.find_child("bell_hammer", true, false) as Node3D
+		var dome := _bell.find_child("bell_dome", true, false) as Node3D
+		if hammer != null:
+			# -40 degrees back, then a 0.12 s strike to +10, then home.
+			var a := 0.0
+			if _bell_t < 0.12:
+				a = lerpf(-40.0, 10.0, _bell_t / 0.12)
+			elif _bell_t < 0.4:
+				a = lerpf(10.0, 0.0, (_bell_t - 0.12) / 0.28)
+			hammer.rotation.z = deg_to_rad(a)
+		if dome != null:
+			dome.rotation.z = (sin(_bell_t * 90.0) * 0.12) if _bell_t > 0.1 and _bell_t < 0.3 else 0.0
+		if _bell_t > 0.5:
+			_bell_t = -1.0
+	if _pinata != null:
+		_pinata.rotation.z = deg_to_rad(6.0) * sin(t * TAU / 3.0)
