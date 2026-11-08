@@ -9,21 +9,49 @@ extends RefCounted
 ## All of it is cel-shaded (CelPass) and inked by the outline pass.
 
 const KIT_DIR := "res://kit/models/"
+const BELT_KIT_SCALE := 1.25  # the kit belt (1.82 m) at menu size: a 1.25 m label face
 
-# The palette: lucha poster colours.
-const GOLD := Color(0.9, 0.66, 0.16)
-const GOLD_DARK := Color(0.72, 0.48, 0.1)
-const RED := Color(0.86, 0.16, 0.18)
-const BLUE := Color(0.12, 0.42, 0.86)
-const PINK := Color(0.95, 0.35, 0.62)
+# The palette: lucha poster colours, matched to the Top Dog Kit as built (the UI
+# creator's sRGB values, 2026-11-07).
+const GOLD := Color("#FFC928")  # letter gold
+const GOLD_METAL := Color("#F2BC36")
+const GOLD_LIGHT := Color("#FFDF70")
+const GOLD_DARK := Color("#B8862A")
+const RED := Color("#B8202C")  # label red
+const MAGENTA := Color("#D81E6A")  # banner magenta
+const BLUE := Color("#2659D8")  # mask blue
+const STRAP_BLUE := Color("#2F5FB8")  # belt strap
+const TURQUOISE := Color("#1FB8AE")
+const CREAM := Color("#FFF2D0")
+const PINK := MAGENTA
 const GREEN := Color(0.2, 0.7, 0.35)
-const CREAM := Color(0.93, 0.9, 0.8)
 const INK := Color(0.12, 0.08, 0.06)
-const LEATHER := Color(0.42, 0.08, 0.07)
+const LEATHER := RED  # belt-plate lettering
 const SILVER := Color(0.82, 0.84, 0.88)
-const FLAG_COLOURS := [RED, GOLD, BLUE, PINK, GREEN, Color(0.6, 0.3, 0.85), Color(1.0, 0.55, 0.15)]
+const FLAG_COLOURS := [RED, GOLD, BLUE, MAGENTA, TURQUOISE, GREEN, Color(1.0, 0.55, 0.15)]
+## The kit's cloud cards and their built widths (m), for scaling to a wanted width.
+const CLOUDS := {"cloud_a": 8.3, "cloud_b": 10.45, "cloud_c": 4.25, "cloud_d": 9.6, "cloud_e": 5.6}
 
 static var _font: Font = null
+
+
+## Tint one named part of a kit model (a near-white part on the atlas): its own copy
+## of the cel material with `color` set, so the shared material stays untouched.
+static func tint_part(root: Node, part: String, c: Color) -> void:
+	var n := root.find_child(part, true, false)
+	if n == null or not (n is MeshInstance3D):
+		return
+	var mi := n as MeshInstance3D
+	for si in mi.mesh.get_surface_count():
+		var m := mi.get_active_material(si)
+		if m is ShaderMaterial:
+			var d: ShaderMaterial = m.duplicate()
+			d.set_shader_parameter("color", c)
+			mi.set_surface_override_material(si, d)
+
+
+static func kit_model_exists(name: String) -> bool:
+	return ResourceLoader.exists(KIT_DIR + name + ".glb")
 
 
 ## A kit model if it's been delivered, else null.
@@ -121,7 +149,13 @@ static func poster_text(s: String, size: float, face: Color, back := INK, depth 
 static func title_logo() -> Node3D:
 	var k := kit_model("title_logo")
 	if k != null:
-		return k
+		# Built 3.3 x 1.01 m (r2) with its origin at the bottom centre: scale it up and
+		# centre it on the header spot.
+		var holder := Node3D.new()
+		k.scale = Vector3.ONE * 1.45
+		k.position = Vector3(0, -1.006 * 1.45 * 0.5, 0)
+		holder.add_child(k)
+		return holder
 	var root := Node3D.new()
 	var slab := box(Vector3(4.3, 1.55, 0.18), RED, Vector3(0, 0.05, -0.2))
 	root.add_child(slab)
@@ -148,6 +182,10 @@ static func title_logo() -> Node3D:
 static func mask_icon(face := RED, trim := GOLD) -> Node3D:
 	var k := kit_model("mask_icon")
 	if k != null:
+		# Built ~0.71 x 0.49 m, origin the head's centre; the hood is near-white
+		# so it takes the player's colour. (The placeholder is ~0.64 tall: match it.)
+		tint_part(k, "mask_hood", face)
+		k.scale = Vector3.ONE * 1.1
 		return k
 	var root := Node3D.new()
 	var head := ball(0.32, face)
@@ -217,7 +255,23 @@ static func _prism(pts: PackedVector2Array, depth: float) -> ArrayMesh:
 static func belt_button(width := 2.2) -> Node3D:
 	var k := kit_model("belt_button")
 	if k != null:
-		return k
+		# Built: plate + a 1 m strap segment, 1.82 m across; the label face is flat,
+		# 1.0 x 0.26 m at z 0.046; the pug crest (belt_crest) stands 0.5 m above.
+		var holder := Node3D.new()
+		var s := BELT_KIT_SCALE
+		k.scale = Vector3.ONE * s
+		holder.add_child(k)
+		var crest := k.find_child("belt_crest", true, false)
+		holder.set_meta("face_z", 0.046 * s)
+		holder.set_meta("face_w", 1.0 * s)
+		holder.set_meta("height", 0.614 * s)  # the plate, top rim to bottom point (-0.345..+0.269), crest hidden
+		holder.set_meta("width", 1.82 * s)
+		holder.set_meta("text_color", CREAM)  # the kit's label face is red: cream letters
+		holder.set_meta("text_back", INK)
+		if crest != null:
+			holder.set_meta("crest", crest)
+			(crest as Node3D).visible = false
+		return holder
 	var root := Node3D.new()
 	var strap := box(Vector3(width + 1.2, 0.26, 0.05), LEATHER, Vector3(0, 0, -0.04))
 	root.add_child(strap)
@@ -239,6 +293,12 @@ static func belt_button(width := 2.2) -> Node3D:
 static func card_frame(face := CREAM, band := RED) -> Node3D:
 	var k := kit_model("card_frame")
 	if k != null:
+		# Built 1.2 x 1.6 m body (origin its centre), a 0.45 m mask crest above, ribbon
+		# tails 0.2 m out. The band (and its tails) and the device strip are
+		# near-white: they take the player's colour.
+		tint_part(k, "card_band", band)
+		tint_part(k, "card_strip", band.darkened(0.15))
+		k.set_meta("kit", true)
 		return k
 	var root := Node3D.new()
 	root.add_child(box(Vector3(1.3, 1.7, 0.05), INK, Vector3(0, 0, -0.03)))
@@ -250,10 +310,21 @@ static func card_frame(face := CREAM, band := RED) -> Node3D:
 
 ## A4: a papel picado flag (a thin paper rectangle with a scalloped bottom; the
 ## real ones from the kit have cut patterns).
-static func papel_flag(c: Color) -> Node3D:
+static func papel_flag(c: Color, which := 0) -> Node3D:
+	# The kit file holds five cut flags in a row (flag_a..flag_e, origin at each
+	# flag's top centre) and a string: take one flag out and zero its offset.
 	var k := kit_model("papel_picado")
 	if k != null:
-		return k
+		var nm := "flag_" + "abcde"[which % 5]
+		var f := k.find_child(nm, true, false) as Node3D
+		if f != null:
+			var holder := Node3D.new()
+			f.get_parent().remove_child(f)
+			holder.add_child(f)
+			f.position = Vector3.ZERO
+			k.queue_free()
+			return holder
+		k.queue_free()
 	var pts := PackedVector2Array([Vector2(-0.22, 0), Vector2(0.22, 0)])
 	for i in range(6, -1, -1):
 		var x := -0.22 + i * (0.44 / 6.0)
@@ -281,7 +352,7 @@ static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 			seg.rotate_object_local(Vector3.RIGHT, PI * 0.5)
 			root.add_child(seg)
 		if i > 0 and i < n:
-			var flag := papel_flag(FLAG_COLOURS[i % FLAG_COLOURS.size()])
+			var flag := papel_flag(FLAG_COLOURS[i % FLAG_COLOURS.size()], i)
 			flag.position = p
 			flag.rotation.z = randf_range(-0.08, 0.08)
 			flag.set_meta("sway", randf() * TAU)
@@ -292,10 +363,12 @@ static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 
 ## C1: a flat swirl cloud card (the stylized sky): overlapping cream lobes with
 ## spiral curls on the top, all flat, inked by the outline pass.
-static func swirl_cloud(width: float) -> Node3D:
-	var k := kit_model("cloud_a")
+static func swirl_cloud(width: float, which := 0) -> Node3D:
+	var names := CLOUDS.keys()
+	var nm: String = names[which % names.size()]
+	var k := kit_model(nm)
 	if k != null:
-		k.scale = Vector3.ONE * (width / 8.0)
+		k.scale = Vector3.ONE * (width / float(CLOUDS[nm]))
 		return k
 	var root := Node3D.new()
 	var lobes := int(clampf(width / 1.8, 3, 7))

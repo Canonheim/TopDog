@@ -17,9 +17,11 @@ extends Node3D
 ## Every piece comes from the Top Dog Kit when delivered, else a placeholder
 ## (LuchaKit), so the real models drop in by file name.
 
-const MENU_DIST := 9.0
-const UI_SCALE := 0.72  # the 3D menus at this size leave the stage and the plaza in view
+const MENU_DIST := 6.0  # in front of the ring's apron at every camera distance
+const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
 const OWNED := ["title", "local", "pause", "results"]
+const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
+const CARD_DY := 2.3  # and 2.05 m with its mask crest
 
 var main: Node
 var cam: Camera3D
@@ -55,6 +57,7 @@ func setup(p_main: Node) -> void:
 	_build_hud()
 	_restyle_line()
 	main.game.announce.connect(_on_announce)
+	no_shadows(cam)  # UI never casts shadows into the world (the menus' words ghosted on the apron)
 	Players.joined.connect(func(_s): _refresh_cards())
 	Players.left.connect(func(_s): _refresh_cards())
 
@@ -77,6 +80,8 @@ func show_screen(id: String) -> bool:
 		_refresh_cards()
 	if id == "results":
 		_fill_results()
+		_raise_podium()
+	no_shadows(cam)
 	if id == "title":
 		Sound.play("lock", -4.0)
 	return id in OWNED
@@ -93,7 +98,7 @@ func _build_sky() -> void:
 	rng.seed = 21
 	for i in 9:
 		var w := rng.randf_range(9.0, 18.0)
-		var c := LuchaKit.swirl_cloud(w)
+		var c := LuchaKit.swirl_cloud(w, i)
 		c.position = Vector3(rng.randf_range(-70.0, 70.0), rng.randf_range(9.0, 26.0), rng.randf_range(-95.0, -70.0))
 		c.set_meta("speed", rng.randf_range(0.4, 1.0))
 		sky.add_child(c)
@@ -121,16 +126,16 @@ func _build_plaza() -> void:
 			house.add_child(LuchaKit.box(Vector3(1.0, 2.0, 0.2), Color(0.45, 0.28, 0.16), Vector3(0, 1.0, 2.05)))
 			for wx in [-w * 0.3, w * 0.3]:
 				house.add_child(LuchaKit.box(Vector3(0.8, 0.9, 0.2), Color(0.25, 0.4, 0.6), Vector3(wx, h * 0.65, 2.05)))
-		house.position = Vector3(x + w * 0.5, 0.0, -16.0 - float(i % 2) * 2.5)
+		house.position = Vector3(x + w * 0.5, Stage.PLAZA_GROUND, -16.0 - float(i % 2) * 2.5)
 		plaza.add_child(house)
 		if i % 2 == 1:
 			var palm := _palm()
-			palm.position = Vector3(x + w + 0.4, 0.0, -12.5)
+			palm.position = Vector3(x + w + 0.4, Stage.PLAZA_GROUND, -12.5)
 			plaza.add_child(palm)
 		x += w + 0.6
 		i += 1
 	# The plaza floor between the dock and the houses.
-	plaza.add_child(LuchaKit.box(Vector3(70, 0.4, 14), Color(0.86, 0.78, 0.6), Vector3(0, -0.3, -16)))
+	plaza.add_child(LuchaKit.box(Vector3(70, 0.4, 14), Color(0.86, 0.78, 0.6), Vector3(0, Stage.PLAZA_GROUND - 0.2, -16)))
 	# Papel picado strung across, in front of the houses.
 	for k in 3:
 		var b := LuchaKit.bunting(Vector3(-18 + k * 12, 6.5, -9.0), Vector3(-6 + k * 12, 6.8, -9.0), 9, 0.9)
@@ -185,13 +190,13 @@ func _build_menus() -> void:
 	menus.title = t
 	# PLAY TOGETHER
 	var l := _menu()
-	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.2, 0))
+	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
 	l.column_x = -2.4
 	l.top_y = 1.25
 	var mode_ids := ["tower", "scramble"]
 	l.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "tower")))), func(i): Net.settings.mode = mode_ids[i])
 	l.add_choice("CLOCK", ["40 S", "1 MIN", "1:30"], maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0)))), func(i): Net.settings.timer = Modes.TIMERS[i])
-	l.add_choice("SPAWNS", ["ALTERNATE", "LEFT", "RIGHT", "RANDOM"], maxi(0, Modes.SPAWNS.find(str(Net.settings.get("spawn", "alternate")))), func(i): Net.settings.spawn = Modes.SPAWNS[i])
+	l.add_choice("SPAWN", ["SWAP", "LEFT", "RIGHT", "RANDOM"], maxi(0, Modes.SPAWNS.find(str(Net.settings.get("spawn", "alternate")))), func(i): Net.settings.spawn = Modes.SPAWNS[i])
 	l.add_button("FIGHT!", main._start_local)
 	l.add_button("REMOVE LAST", func():
 		if not Players.slots.is_empty():
@@ -232,12 +237,12 @@ func _build_menus() -> void:
 	# Player cards (Play together) and the podium (results) hang in the same frame.
 	_cards = Node3D.new()
 	cam.add_child(_cards)
-	_cards.position = Vector3(0.6, 0.9, -MENU_DIST)
+	_cards.position = Vector3(0.2, 0.75, -MENU_DIST)
 	_cards.scale = Vector3.ONE * UI_SCALE
 	_cards.visible = false
 	_podium = Node3D.new()
 	cam.add_child(_podium)
-	_podium.position = Vector3(1.4, -1.6, -MENU_DIST)
+	_podium.position = Vector3(1.4, -1.15, -MENU_DIST)
 	_podium.scale = Vector3.ONE * UI_SCALE
 	_podium.visible = false
 	var pod := LuchaKit.kit_model("podium")
@@ -261,21 +266,21 @@ func _refresh_cards() -> void:
 	for s in mini(Players.slots.size(), 8):
 		var slot: Dictionary = Players.slots[s]
 		var card := LuchaKit.card_frame(LuchaKit.CREAM, slot.tint)
-		card.position = Vector3((s % 4) * 1.45, -(s / 4) * 1.85, 0)
+		card.position = Vector3((s % 4) * CARD_DX, -(s / 4) * CARD_DY, 0)
 		card.rotation.z = sin(s * 1.7) * 0.05
 		var num := LuchaKit.poster_text("P%d" % (s + 1), 0.24, LuchaKit.CREAM, LuchaKit.INK, 0.04)
-		num.position = Vector3(0, 0.63, 0.06)
+		num.position = Vector3(0, 0.56, 0.06)  # on the band (y 0.37..0.71)
 		card.add_child(num)
 		var m := LuchaKit.mask_icon(slot.tint, LuchaKit.GOLD)
 		m.scale = Vector3.ONE * 0.75
-		m.position = Vector3(0, 0.12, 0.08)
+		m.position = Vector3(0, -0.04, 0.12)  # on the panel (y -0.50..0.25)
 		card.add_child(m)
 		var nm := str(slot.name).split(" the ")
 		var who := LuchaKit.poster_text(nm[0].to_upper(), 0.13, LuchaKit.INK, LuchaKit.CREAM, 0.02)
-		who.position = Vector3(0, -0.42, 0.05)
+		who.position = Vector3(0, -0.4, 0.06)
 		card.add_child(who)
 		var dev := LuchaKit.poster_text(Players.device_label(int(slot.device)).to_upper(), 0.07, LuchaKit.CREAM, LuchaKit.INK, 0.015)
-		dev.position = Vector3(0, -0.74, 0.06)
+		dev.position = Vector3(0, -0.63, 0.06)  # on the strip (y -0.71..-0.55)
 		card.add_child(dev)
 		_cards.add_child(card)
 		card.scale = Vector3.ONE * 0.01
@@ -283,12 +288,39 @@ func _refresh_cards() -> void:
 	if Players.slots.size() < 8:
 		var s := Players.slots.size()
 		var empty := LuchaKit.card_frame(Color(0.9, 0.86, 0.78), LuchaKit.INK)
-		empty.position = Vector3((s % 4) * 1.45, -(s / 4) * 1.85, 0)
+		empty.position = Vector3((s % 4) * CARD_DX, -(s / 4) * CARD_DY, 0)
 		var join := LuchaKit.poster_text("PRESS A\nOR SPACE", 0.12, LuchaKit.RED, LuchaKit.CREAM, 0.02)
 		join.position = Vector3(0, 0.05, 0.05)
 		empty.add_child(join)
 		empty.set_meta("pulse", true)
 		_cards.add_child(empty)
+	no_shadows(_cards)
+
+
+## Everything under `n` stops casting shadows (UI pieces hang in the sun's light).
+static func no_shadows(n: Node) -> void:
+	if n is GeometryInstance3D:
+		(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for ch in n.get_children():
+		no_shadows(ch)
+
+
+## The kit podium's three steps rise one at a time (3rd, 2nd, then the winner's),
+## each from its own base, with a bounce.
+func _raise_podium() -> void:
+	var k := 0
+	for nm in ["podium_3", "podium_2", "podium_1"]:
+		var step := _podium.find_child(nm, true, false) as Node3D
+		if step == null:
+			continue
+		if not step.has_meta("home"):
+			step.set_meta("home", step.position)
+		var home: Vector3 = step.get_meta("home")
+		step.position = home + Vector3(0, -1.2, 0)
+		var tw := create_tween()
+		tw.tween_interval(0.25 + k * 0.3)
+		tw.tween_property(step, "position", home, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		k += 1
 
 
 func _fill_results() -> void:
@@ -307,7 +339,7 @@ func _fill_results() -> void:
 	var y := 1.2
 	for pid in order.slice(0, 4):
 		var line := LuchaKit.poster_text("%s  %.2f M" % [str(main.game.player_name(int(pid))).split(" the ")[0].to_upper(), float(best[pid])], 0.24, LuchaKit.CREAM, LuchaKit.INK, 0.04)
-		line.position = Vector3(1.4, y, 0)
+		line.position = Vector3(0.0, y, 0)
 		_winner_poster.add_child(line)
 		y -= 0.32
 	cam.add_child(_winner_poster)
@@ -341,7 +373,7 @@ func _build_hud() -> void:
 	_info.position = Vector3(-5.6, 2.55, 0)
 	_hud.add_child(_info)
 	_clock_text = Node3D.new()
-	_clock_text.position = Vector3(0, 2.25, 0.12)
+	_clock_text.position = Vector3(0, 2.25, 0.075)  # just proud of the kit's face (z 0.06)
 	_hud.add_child(_clock_text)
 	_banner = Node3D.new()
 	_banner.position = Vector3(0, 1.2, 0.3)
@@ -369,22 +401,70 @@ func _restyle_line() -> void:
 func _on_announce(text: String, big: bool) -> void:
 	if _banner == null:
 		return
+	var low := text.to_lower()
+	if low.contains("locked in") or low.contains("made it") or low.contains("tops") or low.contains("top dog"):
+		confetti(low.contains("tops") or low.contains("top dog"))
 	for ch in _banner.get_children():
 		ch.queue_free()
 	var t := text.to_upper()
 	var size := (0.42 if big else 0.26) * (1.0 if t.length() < 22 else 0.7)
 	var band := LuchaKit.box(Vector3(minf(t.length() * size * 0.62 + 0.8, 8.0), size * 1.9, 0.04), LuchaKit.RED if big else LuchaKit.BLUE, Vector3(0, 0, -0.08))
 	_banner.add_child(band)
-	var flagline := LuchaKit.bunting(Vector3(-band.mesh.size.x * 0.5, size * 1.0, -0.05), Vector3(band.mesh.size.x * 0.5, size * 1.0, -0.05), int(band.mesh.size.x / 0.5), 0.05)
+	# The flags hang from a string ABOVE the band (the kit's 0.6 m cut flags behind
+	# the words made them hard to read).
+	var top := size * 0.95 + 0.62
+	var flagline := LuchaKit.bunting(Vector3(-band.mesh.size.x * 0.5, top, -0.05), Vector3(band.mesh.size.x * 0.5, top, -0.05), int(band.mesh.size.x / 0.5), 0.05)
 	_banner.add_child(flagline)
 	var words := LuchaKit.poster_text(t, size, LuchaKit.GOLD if big else LuchaKit.CREAM, LuchaKit.INK, 0.06)
 	_banner.add_child(words)
 	_banner.visible = true
+	no_shadows(_banner)
 	_banner.position = Vector3(0, 4.5, 0.3)
 	_banner.rotation.z = randf_range(-0.12, 0.12)
 	var tw := create_tween()
-	tw.tween_property(_banner, "position", Vector3(0, 1.3, 0.3), 0.4).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	tw.tween_property(_banner, "position", Vector3(0, 0.8, 0.3), 0.4).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	_banner_t = 2.4 if big else 1.8
+
+
+## A burst of confetti and streamers from the top of the frame (a lock-in, or a
+## bigger, longer one for the winner). Kit confetti pieces replace the paper when
+## delivered.
+func confetti(big := false) -> void:
+	for side in ([-1.0, 1.0] if big else [0.0]):
+		var p := CPUParticles3D.new()
+		p.one_shot = true
+		p.explosiveness = 0.85
+		p.amount = 160 if big else 70
+		p.lifetime = 3.2 if big else 2.2
+		var qm := QuadMesh.new()
+		qm.size = Vector2(0.09, 0.05)
+		p.mesh = qm
+		var m := StandardMaterial3D.new()
+		m.vertex_color_use_as_albedo = true
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+		p.material_override = m
+		var grad := Gradient.new()
+		grad.offsets = PackedFloat32Array([0.0, 0.2, 0.4, 0.6, 0.8])
+		grad.colors = PackedColorArray([LuchaKit.RED, LuchaKit.GOLD, LuchaKit.BLUE, LuchaKit.MAGENTA, LuchaKit.TURQUOISE])
+		p.color_initial_ramp = grad
+		p.direction = Vector3(-side * 0.6, 1.0, 0.0)
+		p.spread = 55.0
+		p.initial_velocity_min = 3.0
+		p.initial_velocity_max = 7.0
+		p.gravity = Vector3(0, -4.0, 0)
+		p.damping_min = 1.0
+		p.damping_max = 2.0
+		p.angular_velocity_min = -360.0
+		p.angular_velocity_max = 360.0
+		p.angle_max = 360.0
+		p.scale_amount_min = 0.7
+		p.scale_amount_max = 1.6
+		cam.add_child(p)
+		p.position = Vector3(side * 2.6, -0.6 if big else 0.6, -5.0)
+		p.emitting = true
+		p.finished.connect(p.queue_free)
+	Sound.play("clap", -4.0)
 
 
 func _process(delta: float) -> void:
@@ -436,9 +516,11 @@ func _process(delta: float) -> void:
 			for ch in _clock_text.get_children():
 				ch.queue_free()
 			if v >= 0:
-				var col := LuchaKit.RED if v <= 10 else LuchaKit.GOLD
-				var num := LuchaKit.text3d(str(v), 0.42, col, 0.06)
+				var on_kit := LuchaKit.kit_model_exists("clock_buckle")
+				var col := LuchaKit.RED if v <= 10 else (LuchaKit.INK if on_kit else LuchaKit.GOLD)
+				var num := LuchaKit.text3d(str(v), 0.34 if on_kit else 0.42, col, 0.03)
 				_clock_text.add_child(num)
+				no_shadows(num)
 				if v <= 10:
 					_clock_text.scale = Vector3.ONE * 1.35
 					create_tween().tween_property(_clock_text, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK)

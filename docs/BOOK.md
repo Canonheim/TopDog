@@ -242,6 +242,15 @@ Parker: "my controller is not working online". His global "Steam Input for Xbox 
 
 **Proved live on Parker's machine (Steam running, app 480):** the manifest was accepted, his Xbox One controller showed up with our action set current, every action reported `active: true`, and `arm_l`'s origin was 116 (XBoxOne_X). Button presses themselves can only be tested by hand. The controller list is read twice a second (GodotSteam logs every `getConnectedControllers` call).
 
+## 0.3.0 (Parker, 2026-11-07): the Second Director's look merged, pushed to GitHub
+
+Parker: "combine what second director has been working on with the new updated working game and push all to Github" (github.com/canonheim/TopDog).
+
+- Merged `luchador-ui` at aebe719 into main (clean): the plaza ring stage, confetti on lock-ins and wins, the kit's player cards, mask emblem, clock buckle, results podium and papel picado, and the re-landed logo and belt. With 0.2.2's Steam Input controller fix.
+- `GAME_VERSION` 0.3.0. The kit's newer `palm.glb` was left out: not yet tested in the game by its owner.
+- Checked: lint (32 scripts), every battery, the pad check, the exported build's title, match and a Steam-on boot (manifest accepted, "Steam Input: 1 controller [Xbox One]").
+- Playtest zip `builds/TopDog_playtest_0.3.0.zip`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

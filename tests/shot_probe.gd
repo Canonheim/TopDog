@@ -20,6 +20,13 @@ func _ready() -> void:
 			Players.add_player(Players.KBM, "Parker the Barrel-Hugger")
 			Players.add_player(1000, "Matilda the Goose-Toppler")
 			Players.add_player(1001, "Yorick the Anvil-Wrangler")
+		"clock":
+			Players.clear_players()
+			Players.add_player(Players.ANY, "Parker the Barrel-Hugger")
+			main.local_mode = true
+			main.game.host_start({"mode": "tower", "timer": 60.0, "spawn": "alternate", "stage": "plaza"},
+				[{"pid": 0, "name": "Parker the Barrel-Hugger", "tint": Color.RED, "peer": 1, "slot": 0}])
+			main.show_screen("hud")
 		"hud", "pause", "results":
 			main._start_practice()
 			await get_tree().create_timer(2.0).timeout
