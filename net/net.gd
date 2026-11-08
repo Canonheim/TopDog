@@ -27,7 +27,7 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.3.0"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.3.1"  # bump on every build: RPC tables move between builds
 const ENET_PORT := 7788
 const MAX_MACHINES := 8
 const MAX_CLIMBERS := 8
@@ -235,6 +235,29 @@ func join_steam(lobby_id: int) -> void:
 	Steam.joinLobby(lobby_id)
 
 
+## THE FRIENDS LIST (lifted from Golemheim's friends_in_game): Steam friends running
+## this game right now, [{id, name, lobby}], those in a joinable game first. lobby 0
+## means playing but not in a game you can join. Empty without Steam.
+func friends_in_game() -> Array:
+	var out: Array = []
+	ensure_steam()
+	if not steam_ok:
+		return out
+	var app := int(Steam.getAppID())
+	var flag := int(Steam.FRIEND_FLAG_IMMEDIATE)
+	for i in int(Steam.getFriendCount(flag)):
+		var sid := int(Steam.getFriendByIndex(i, flag))
+		var gp: Dictionary = Steam.getFriendGamePlayed(sid)
+		if gp.is_empty() or int(gp.get("id", 0)) != app:
+			continue
+		out.append({"id": sid, "name": str(Steam.getFriendPersonaName(sid)), "lobby": int(gp.get("lobby", 0))})
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		if (int(a.lobby) != 0) != (int(b.lobby) != 0):
+			return int(a.lobby) != 0
+		return str(a.name).naturalnocasecmp_to(str(b.name)) < 0)
+	return out
+
+
 func invite_friends() -> void:
 	if not steam_ok or steam_lobby == 0:
 		return
@@ -283,6 +306,12 @@ func _on_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) 
 		_pending_lobby = false
 		return
 	steam_lobby = lobby_id
+	if str(Steam.getLobbyData(lobby_id, "game")) != LOBBY_TAG:
+		Steam.leaveLobby(lobby_id)
+		steam_lobby = 0
+		_pending_lobby = false
+		status.emit("That friend is in a different game.")
+		return
 	var v := str(Steam.getLobbyData(lobby_id, "version"))
 	if v != GAME_VERSION:
 		Steam.leaveLobby(lobby_id)

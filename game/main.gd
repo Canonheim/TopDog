@@ -583,7 +583,10 @@ func _screen_online() -> Control:
 	UiKit.button(row, "Host (public)", func(): _ensure_player(); Net.host_steam(Net.VIS_PUBLIC))
 	UiKit.button(row, "Host (friends)", func(): _ensure_player(); Net.host_steam(Net.VIS_FRIENDS))
 	UiKit.button(row, "Host (invite only)", func(): _ensure_player(); Net.host_steam(Net.VIS_INVITE))
-	UiKit.button(box, "Refresh the lobby list", func(): Net.request_lobby_list())
+	var finds := HBoxContainer.new()
+	box.add_child(finds)
+	UiKit.button(finds, "Join a friend", func(): _ensure_player(); _fill_friends())
+	UiKit.button(finds, "Refresh the lobby list", func(): Net.request_lobby_list())
 	var sc := ScrollContainer.new()
 	sc.custom_minimum_size = Vector2(900, 260)
 	box.add_child(sc)
@@ -605,6 +608,35 @@ func _screen_online() -> Control:
 	box.add_child(_online_status)
 	UiKit.button(box, "Back", func(): show_screen("title"))
 	return c
+
+
+## Join a friend: your Steam friends playing Top Dog, each with a Join button for
+## the game they're in (a friend not in a game says so).
+func _fill_friends() -> void:
+	for ch in _lobby_list.get_children():
+		ch.queue_free()
+	var friends: Array = Net.friends_in_game()
+	if friends.is_empty():
+		var l := Label.new()
+		l.text = "No friends are playing Top Dog right now." if Net.steam_ok else "Steam isn't running."
+		_lobby_list.add_child(l)
+		return
+	for f in friends:
+		var row := HBoxContainer.new()
+		_lobby_list.add_child(row)
+		var l := Label.new()
+		l.text = str(f.name) + ("" if int(f.lobby) != 0 else "   (playing, not in a game)")
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(l)
+		var b := UiKit.button(row, "Join", func(): Net.join_steam(int(f.lobby)))
+		b.disabled = int(f.lobby) == 0
+	call_deferred("_focus_first_in", _lobby_list)
+
+
+func _focus_first_in(n: Control) -> void:
+	var f := UiKit.first_focus(n)
+	if f != null:
+		f.grab_focus()
 
 
 func _ensure_player() -> void:

@@ -194,9 +194,9 @@ func _spike_limits() -> void:
 		head.apply_torque(Vector3(0, 0, -push * head.mass * 9.8 * 0.4))
 		await get_tree().physics_frame
 		worst = maxf(worst, c.worst_limit_excess())
-	t("limits: joints shoved with 2x an arm's weight overshoot under 8 deg (loose friction joints)", worst < 8.0, "worst %.1f deg" % worst)
+	t("limits: spine and neck shoved with 2x an arm's weight overshoot under 8 deg (limbs are free, no limits)", worst < 8.0, "worst %.1f deg" % worst)
 	await frames(240)
-	t("limits: back inside every limit once let go", c.worst_limit_excess() < 1.0, "%.2f deg" % c.worst_limit_excess())
+	t("limits: spine and neck back inside their limits once let go", c.worst_limit_excess() < 1.0, "%.2f deg" % c.worst_limit_excess())
 
 
 func _spike_hang() -> void:
@@ -204,10 +204,17 @@ func _spike_hang() -> void:
 	var bar := bar_at(c.limb_end(0))
 	c.attach(0, bar)
 	var worst := 0.0
+	var worst_at := 0
+	var late := 0.0  # the last 20 s: after the drop from the spawn pose has settled
 	for i in int(30.0 * Engine.physics_ticks_per_second):
 		await get_tree().physics_frame
-		worst = maxf(worst, c.worst_joint_gap())
-	t("hang: 30 s by one hand, joints stay under 2 cm", worst < 0.02, "worst %.4f m (%s)" % [worst, c.last_worst_gap_joint])
+		var g := c.worst_joint_gap()
+		if g > worst:
+			worst = g
+			worst_at = i
+		if i > 10 * Engine.physics_ticks_per_second:
+			late = maxf(late, g)
+	t("hang: 30 s by one hand, joints stay under 2 cm", worst < 0.02, "worst %.4f m (%s) at tick %d, last 20 s %.4f m" % [worst, c.last_worst_gap_joint, worst_at, late])
 	t("hang: the hand is still stuck", c.limbs[0].grab.is_valid())
 	t("hang: the body settles under the bar (a stiff body is a slow pendulum)", c.linear_speed() < 0.25, "%.3f m/s" % c.linear_speed())
 	t("hang: nothing left the plane", finite_body(c))
@@ -252,7 +259,7 @@ func _spike_fling() -> void:
 		bar.queue_free()
 		await frames(1)
 	t("fling: 20 hard drags and releases, no joint opens past 8 cm", worst < 0.08, "worst %.4f m" % worst)
-	t("fling: limits hold under hard drags (under 40 deg over; Jolt's limits give under a full-strength pull)", worst_lim < 40.0, "worst %.1f deg" % worst_lim)
+	t("fling: spine and neck limits hold under hard drags (under 40 deg over; limbs are free)", worst_lim < 40.0, "worst %.1f deg" % worst_lim)
 	t("fling: nothing explodes (finite, in the plane, under 40 m/s)", bad == 0 and max_speed < 40.0, "bad %d, top %.1f m/s" % [bad, max_speed])
 	t("fling: the swings actually fling (half travel > 0.5 m)", flown >= 10, "%d/20" % flown)
 

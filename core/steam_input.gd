@@ -10,7 +10,7 @@ extends Node
 ## back each frame. This also stays right when Top Dog has its own app ID.
 ##
 ## The layout (every controller type): X left hand, A right hand, Y left foot,
-## B right foot, Start lock in, Back pause, either stick steers, d-pad and the left
+## B right foot, Start lock in, Back pause, the LEFT stick steers (the right is unbound), d-pad and the left
 ## stick move menus, A selects, B goes back.
 ##
 ## Each Steam controller shows up in Players as device STEAM_DEV_BASE + index, read
@@ -207,7 +207,6 @@ func _config(controller_type: String) -> String:
 		'\t"localization"\n\t{\n\t\t"english"\n\t\t{\n\t\t\t"Set_Game"\t\t"Top Dog"\n\t\t}\n\t}\n' + \
 		_group(0, "four_buttons", diamond) + _group(1, "dpad", dpad) + \
 		_group(2, "joystick_move", "", "steer") + _group(3, "switches", switches) + \
-		_group(4, "joystick_move", "", "steer") + \
 		'\t"preset"\n\t{\n\t\t"id"\t\t"0"\n\t\t"name"\t\t"Game"\n\t\t"group_source_bindings"\n\t\t{\n' + \
-		'\t\t\t"0"\t\t"button_diamond active"\n\t\t\t"1"\t\t"dpad active"\n\t\t\t"2"\t\t"left_joystick active"\n\t\t\t"3"\t\t"switch active"\n\t\t\t"4"\t\t"right_joystick active"\n' + \
+		'\t\t\t"0"\t\t"button_diamond active"\n\t\t\t"1"\t\t"dpad active"\n\t\t\t"2"\t\t"left_joystick active"\n\t\t\t"3"\t\t"switch active"\n' + \
 		'\t\t}\n\t}\n\t"settings"\n\t{\n\t}\n}\n'

@@ -251,6 +251,18 @@ Parker: "combine what second director has been working on with the new updated w
 - Checked: lint (32 scripts), every battery, the pad check, the exported build's title, match and a Steam-on boot (manifest accepted, "Steam Input: 1 controller [Xbox One]").
 - Playtest zip `builds/TopDog_playtest_0.3.0.zip`.
 
+## 0.3.1 (Parker, 2026-11-07): left stick only, free limbs, Join a friend, the pad on the Online page
+
+Parker: "the right stick should not control it, it should be the left stick", "the UI is not working with controller in the online page ... make sure controller works everywhere", "Make a Join Friends button", and limbs "should be able to just move 360 degrees with no limits and go through each other completely".
+
+- **The left stick only.** `Players.stick` reads the left stick; the Steam layout no longer binds the right stick (`core/steam_input.gd`).
+- **Free limbs.** Shoulders, elbows, wrists, hips, knees and ankles have no hinge limits; only the two spine joints and the neck keep theirs. Limbs already passed through each other (a climber's pieces don't collide). The limit checks in `--spike limits` and `--spike fling` now cover the spine and neck only.
+- **Join a friend.** `Net.friends_in_game()` lists Steam friends running the game; the Online page's "Join a friend" button lists them with Join buttons. A joined lobby whose `game` tag isn't ours is refused ("That friend is in a different game."): on app 480 friends may be in other games.
+- **The pad on the Online page.** `tests/online_pad_probe.tscn` drives the page with a stand-in Steam controller (d-pad, left stick, B back): every control is reached and B returns to the title. It passes, so if Parker's pad still fails there, the readout line ("Steam Input: N controllers, last: ...") says which side is deaf.
+- **The 3D Online and Lobby screens** were handed to the Second Director and the UI creator (in progress on `luchador-ui`).
+- **Jolt position steps 8 → 16.** With the wrist free, the whole body hung off one hand stretched that wrist 2.4 cm (0.8 cm when it was limited); 16 steps hold it to 0.3 cm (`--spike --part=hang`, which now also prints the settled stretch).
+- `GAME_VERSION` 0.3.1.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

@@ -243,7 +243,13 @@ func _build_joints(feet: Vector2) -> void:
 		# Hinge axis = local z of both frames; frames at the anchor, unrotated.
 		PhysicsServer3D.joint_make_hinge(rid, a.get_rid(), Transform3D(Basis(), a.to_local(at3)), b.get_rid(), Transform3D(Basis(), b.to_local(at3)))
 		PhysicsServer3D.joint_disable_collisions_between_bodies(rid, true)
-		set_hinge_limits(rid, float(lim[0]), float(lim[1]))
+		# Limbs turn freely all the way round, as the reference game's do (Parker
+		# 2026-11-07: "move 360 degrees with no limits and go through each other").
+		# Only the torso's two spine joints and the neck keep their limits.
+		if jd.kind == "spine" or jd.kind == "neck":
+			set_hinge_limits(rid, float(lim[0]), float(lim[1]))
+		else:
+			lim = [-360.0, 360.0]
 		PhysicsServer3D.hinge_joint_set_flag(rid, PhysicsServer3D.HINGE_JOINT_FLAG_ENABLE_MOTOR, true)
 		PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, 0.0)
 		PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, 0.0)

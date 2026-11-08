@@ -43,7 +43,7 @@ pointing/emulate_touch_from_mouse=false
 
 3d/physics_engine="Jolt Physics"
 jolt_physics_3d/simulation/velocity_steps=20
-jolt_physics_3d/simulation/position_steps=8
+jolt_physics_3d/simulation/position_steps=16
 
 common/physics_ticks_per_second=120
 common/max_physics_steps_per_frame=12
