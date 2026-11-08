@@ -1,6 +1,8 @@
 extends Node3D
 
 const COUNT := 7
+const CAPACITY := 10.0
+var _cutoff: Tween
 var _bag: Array[int] = []
 var _take := 0
 var _body: AudioStreamPlayer3D
@@ -24,7 +26,7 @@ func next_take() -> int:
 	return _bag.pop_back()
 
 
-func start(take: int, pitch: float) -> void:
+func start(take: int, pitch: float, budget: float = CAPACITY) -> void:
 	if active():
 		return
 	_take = take
@@ -33,11 +35,26 @@ func start(take: int, pitch: float) -> void:
 	_tail = load(path + "tail.wav")
 	_body = Sound.contact_player(loop, pitch, self)
 	_body.play()
+	# Schedule the cutoff on each listener so packet latency cannot extend a hold.
+	var fade_time := minf(0.045, budget)
+	_cutoff = _body.create_tween().set_ignore_time_scale(true)
+	_cutoff.tween_interval(budget - fade_time)
+	_cutoff.tween_property(_body, "volume_linear", 0.0, fade_time)
+	_cutoff.tween_callback(_finish_empty)
+
+
+func _finish_empty() -> void:
+	_body.stop()
+	_body.queue_free()
+	_body = null
+	_cutoff = null
 
 
 func release() -> void:
 	if not active():
 		return
+	_cutoff.kill()
+	_cutoff = null
 	var body := _body
 	_body = null
 	var ending := Sound.contact_player(_tail, body.pitch_scale, self)

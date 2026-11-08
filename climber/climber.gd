@@ -46,6 +46,7 @@ enum State { LIVE, PUPPET, FROZEN }
 signal froze(climber: Climber)
 signal grab_made(climber: Climber, limb: int, other: Object)
 signal release_contact(position: Vector3)
+signal exerted
 signal grab_lost(climber: Climber, limb: int)
 
 var state := State.LIVE
@@ -74,6 +75,7 @@ var removed := false
 var remote_pulls := {}
 
 var _shape_geo := {}  # piece -> [kind, data...] for height reads (local, m)
+var _grunt_wait := 2.0
 var _active_limb := -1
 var _buttons_down := [false, false, false, false]
 var _gravity_scale := -1.0
@@ -518,6 +520,7 @@ func _physics_process(delta: float) -> void:
 	if removed or state != State.LIVE:
 		return
 	live_time += delta
+	_grunt_wait -= delta / Engine.time_scale
 	_select_active_limb()
 	for i in limbs.size():
 		_tick_limb(i, delta)
@@ -759,6 +762,7 @@ func _tick_joints(attached: bool, dt: float) -> void:
 			continue
 		var aim = driver.aim(self, i)
 		var target := _aim_target(i, aim)
+		_try_exertion(i, aim)
 		var end: RigidBody3D = bodies[l.def.end]
 		var p := pos2(end)
 		var v := Vector2(end.linear_velocity.x, end.linear_velocity.y)
@@ -810,6 +814,24 @@ func _drive_swing(aim: Variant, target_error: Vector2, reach: float, cap: float)
 ## starts where the hand was when the button went down.
 func drag_target(i: int) -> Vector2:
 	return _aim_target(i, driver.aim(self, i) if driver != null else null)
+
+
+func _try_exertion(i: int, aim: Variant) -> void:
+	# Only the live driver's actively steered limb calls this. Measure ascent at the torso.
+	if _grunt_wait >= 0.0 or not (aim is Dictionary) or stuck_count() == 0:
+		return
+	var chest: RigidBody3D = bodies["chest"]
+	if chest.linear_velocity.y <= 500.0 / Feel.PPM:
+		return
+	var up := 0.0
+	if aim.has("dir"):
+		up = (aim.dir as Vector2).normalized().y * clampf(aim.mag, 0.0, 1.0)
+	elif aim.has("point"):
+		var reach: float = (limbs[i].l1 + limbs[i].l2) * Feel.get_k("stick_reach")
+		up = (((aim.point as Vector2) - limb_root(i)) / reach).limit_length(1.0).y
+	if up > 0.5:
+		_grunt_wait = randf_range(1.5, 3.5)
+		exerted.emit()
 
 
 func _aim_target(i: int, aim: Variant) -> Vector2:

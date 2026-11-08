@@ -11,7 +11,12 @@ const SFX := {
 		"grab_slap_17", "grab_slap_18", "grab_slap_19", "grab_slap_20",
 	],
 	"grip": ["grip"],
-	"strain": ["grunt_jump_1", "grunt_jump_2", "grunt_jump_3"],
+	"strain": [
+		"dog_exertion_02", "dog_exertion_03", "dog_exertion_04", "dog_exertion_05",
+		"dog_exertion_07", "dog_exertion_08", "dog_exertion_09", "dog_exertion_10",
+		"dog_exertion_11", "dog_exertion_12", "dog_exertion_13", "dog_exertion_14",
+		"dog_exertion_15", "dog_exertion_16", "dog_exertion_17", "dog_exertion_18",
+	],
 	"thud": ["thud", "land_soft", "hit_flesh"],
 	"hurt": ["hurt_1", "hurt_2", "hurt_3", "hurt_4"],
 	"fall": ["yell_1", "yell_2", "yell_3"],
@@ -99,6 +104,14 @@ func play(kind: String, volume_db := 0.0, pitch := 1.0) -> void:
 			pl.pitch_scale = pitch * randf_range(0.94, 1.06)
 			pl.play()
 			return
+
+
+func play_exertion(clip: String, chest: Node3D) -> void:
+	if clip not in SFX["strain"]:
+		return
+	var player := contact_player(_streams[clip], 1.0, chest)
+	player.finished.connect(player.queue_free)
+	player.play()
 
 
 func play_grab(clip: String, at: Vector3, pitch: float, host: Node) -> void:

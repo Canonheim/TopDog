@@ -948,7 +948,7 @@ func _to_title(reason: String) -> void:
 
 
 func _screen_controls() -> Control:
-	var c := UiKit.panel_screen("Controls", "Hands and feet stick to whatever they touch. Hold a limb's button to pick it up and steer it with the stick or mouse; let go to plant it. You can only move a limb while another is stuck, or a pal is holding you. Lock in above the line!")
+	var c := UiKit.panel_screen("Controls", "Hands and feet stick to whatever they touch. Hold a limb's button to pick it up and steer it with the stick or mouse; let go to plant it. You can only move a limb while another is stuck, or a pal is holding you. Touch the stage or the stack while above the line to lock in!")
 	var box: VBoxContainer = c.get_meta("box")
 	var grid := GridContainer.new()
 	grid.columns = 5

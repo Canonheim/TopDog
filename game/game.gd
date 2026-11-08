@@ -70,6 +70,8 @@ var _pulls := {}  # cid -> {piece: [Vector2, time]}
 var _remote_grabs := {}  # "cid:limb" -> [target_cid, piece]
 var _com_v := {}  # cid -> previous COM velocity (for pull estimates)
 var _round_fail_tops := {}  # pid -> top (scramble: who failed this round, how high)
+var _fart_fuel := {}  # Seconds remaining, by player across respawns.
+var _fart_down := {}
 var _now := 0.0
 
 
@@ -103,6 +105,8 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	settings = p_settings
 	mode = Modes.row(str(settings.get("mode", "tower")))
 	practice = bool(mode.get("practice", false))
+	_fart_fuel.clear()
+	_fart_down.clear()
 	roster = p_roster
 	for c in climbers.values():
 		c.remove()
@@ -146,6 +150,7 @@ func player_name(pid: int) -> String:
 func _physics_process(delta: float) -> void:
 	var real_delta := delta / Engine.time_scale
 	_now += real_delta
+	_tick_fart_meters(real_delta)
 	_tick_owned(delta, real_delta)
 	_tick_puppets()
 	if not is_host():
@@ -273,6 +278,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2) -> void:
 			c.driver = Drivers.LocalDriver.new(c.local_slot)
 			if dress:
 				c.set_glyphs(Glyphs.limb_glyphs(c.local_slot))
+		c.exerted.connect(func(): _rpc_exertion.rpc(cid, Sound.SFX["strain"].pick_random()))
 		c.release_contact.connect(func(at: Vector3):
 			_rpc_slap.rpc(cid, at, Sound.pick_grab(), randf_range(0.92, 1.08)))
 		c.grab_made.connect(_on_grab_made)
@@ -316,6 +322,33 @@ func _check_bounds() -> void:
 # ---------------------------------------------------------------- lock-ins
 
 ## Owners: Lock In pressed above the line. The host decides.
+func _tick_fart_meters(seconds: float) -> void:
+	for player in roster:
+		if int(player.peer) != me():
+			continue
+		var pid := int(player.pid)
+		var c: Climber = climbers.get(live.get(pid, -1))
+		var can_play := c != null and c.state == Climber.State.LIVE and c.local_slot >= 0
+		var slot := c.local_slot if can_play else int(player.get("slot", -1))
+		var held := Players.fart_held(slot)
+		var fuel: float = _fart_fuel.get(pid, FartVoice.CAPACITY)
+		var pressed := held and not _fart_down.has(pid)
+		if not held:
+			if can_play and fuel > 0.0 and _fart_down.get(pid, -1) == c.climber_id:
+				_rpc_fart.rpc(c.climber_id, 0, 1.0, 0.0)
+			_fart_down.erase(pid)
+			_fart_fuel[pid] = minf(FartVoice.CAPACITY, fuel + seconds * 0.5)
+			continue
+		if pressed:
+			_fart_down[pid] = c.climber_id if can_play else -1
+		if not can_play or fuel <= 0.0 or _fart_down[pid] != c.climber_id:
+			continue
+		if pressed:
+			var voice: FartVoice = c.bodies["pelvis"].get_node("FartVoice")
+			_rpc_fart.rpc(c.climber_id, voice.next_take(), randf_range(0.84, 1.18), fuel)
+		_fart_fuel[pid] = 0.0 if fuel <= seconds + 0.000001 else fuel - seconds
+
+
 func _tick_owned(delta: float, real_delta: float) -> void:
 	_stream_t -= real_delta
 	var send := _stream_t <= 0.0
@@ -326,13 +359,6 @@ func _tick_owned(delta: float, real_delta: float) -> void:
 		var c: Climber = climbers[cid]
 		if c.state != Climber.State.LIVE or c.owner_peer != me():
 			continue
-		if c.local_slot >= 0:
-			var voice: FartVoice = c.bodies["pelvis"].get_node("FartVoice")
-			var held := Players.fart_held(c.local_slot)
-			if held and not voice.active():
-				_rpc_fart.rpc(cid, voice.next_take(), randf_range(0.84, 1.18))
-			elif not held and voice.active():
-				_rpc_fart.rpc(cid, 0, 1.0)
 		if c.driver != null and c.driver.lock_pressed() and (phase == "turn" or phase == "round"):
 			if c.top_height() > line + LOCK_MARGIN:
 				if is_host():
@@ -366,11 +392,48 @@ func _rpc_lock_request(cid: int, pose: PackedFloat32Array) -> void:
 	_judge_lock(cid, pose)
 
 
+## Test the submitted pose against this match's permanent supports. A remote
+## puppet's displayed transform lags its owner, and welded ends ignore collisions
+## with their anchor, so neither puppet position nor contact-monitor lists suffice.
+func _pose_on_support(c: Climber, pose: PackedFloat32Array) -> bool:
+	if stage == null or pose.size() != Layout.ORDER.size() * 3:
+		return false
+	var space := world.get_world_3d().direct_space_state
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.collision_mask = Climber.LAYER_WORLD | Climber.LAYER_FROZEN
+	query.margin = 0.022  # Allow solver separation at resting and welded contacts.
+	for i in Layout.ORDER.size():
+		var body: RigidBody3D = c.bodies[Layout.ORDER[i]]
+		var col := body.get_child(0) as CollisionShape3D
+		var k := i * 3
+		var xf := Transform3D(Basis(Vector3.BACK, pose[k + 2]), Vector3(pose[k], pose[k + 1], 0))
+		query.shape = col.shape
+		query.transform = xf * col.transform
+		for hit in space.intersect_shape(query):
+			var other: CollisionObject3D = hit.collider
+			if stage.bodies.has(other):
+				return true
+			if not other.has_meta("climber"):
+				continue
+			var support := other.get_meta("climber") as Climber
+			if support != null and climbers.get(support.climber_id) == support and tower.has(support.climber_id):
+				return true
+	return false
+
+
+func _valid_lock_pose(pose: PackedFloat32Array) -> bool:
+	if pose.size() != Layout.ORDER.size() * 3:
+		return false
+	for value in pose:
+		if not is_finite(value):
+			return false
+	return true
+
 func _judge_lock(cid: int, pose: PackedFloat32Array) -> void:
 	var c: Climber = climbers.get(cid)
 	if c == null or c.state == Climber.State.FROZEN or _pending_freeze.has(cid):
 		return
-	if not (phase == "turn" or phase == "round"):
+	if not (phase == "turn" or phase == "round") or not _valid_lock_pose(pose):
 		return
 	var top := c.pose_top(pose)
 	if top <= line + LOCK_MARGIN:
@@ -423,6 +486,8 @@ func _rpc_final_pose(cid: int, pose: PackedFloat32Array) -> void:
 		return
 	if climbers.has(cid) and climbers[cid].owner_peer != multiplayer.get_remote_sender_id():
 		return
+	if not _valid_lock_pose(pose):
+		return
 	_pending_freeze.erase(cid)
 	_broadcast_freeze(cid, pose, "time")
 	if _pending_freeze.is_empty():
@@ -447,7 +512,15 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String) -> void:
 	if c == null:
 		return
 	var top := c.pose_top(pose)
-	var made := top > line + LOCK_MARGIN
+	var grounded := _pose_on_support(c, pose)
+	if why == "locked" and not grounded:
+		var note := "Touch the stage or the stack to lock in!"
+		if c.owner_peer == me():
+			announce.emit(note, false)
+		else:
+			_rpc_note.rpc_id(c.owner_peer, note)
+		return
+	var made := grounded and top > line + LOCK_MARGIN
 	var verdict := "made" if made else "out"
 	if why == "left":
 		verdict = "out"
@@ -458,12 +531,12 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String) -> void:
 	var new_line := line
 	if why == "locked" and mode.line == "raise":
 		new_line = maxf(line, top)
-	_rpc_freeze.rpc(cid, pose, verdict, why, top, new_line)
+	_rpc_freeze.rpc(cid, pose, verdict, why, top, new_line, grounded)
 	# The host's rule follow-ups.
 	var pid := c.player_id
 	if verdict == "out":
 		alive[pid] = false
-		_round_fail_tops[pid] = top
+		_round_fail_tops[pid] = top if grounded else 0.0
 	if made:
 		best[pid] = maxf(float(best.get(pid, 0.0)), top)
 	if mode.live == "turns":
@@ -481,19 +554,23 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String) -> void:
 
 
 @rpc("authority", "call_local", "reliable")
-func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: String, top: float, new_line: float) -> void:
+func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: String, top: float, new_line: float, grounded: bool) -> void:
 	var c: Climber = climbers.get(cid)
 	if c == null:
 		return
-	if c.state == Climber.State.FROZEN:
-		c.state = Climber.State.LIVE  # re-pose a body its owner froze early
-	c.apply_pose(pose)
-	c.freeze()
-	_snap_static(c)
-	tower.append(cid)
-	_puppet_buf.erase(cid)
-	line = maxf(line, new_line)
 	var who := c.display_name
+	if grounded:
+		if c.state == Climber.State.FROZEN:
+			c.state = Climber.State.LIVE  # re-pose a body its owner froze early
+		c.apply_pose(pose)
+		c.freeze()
+		_snap_static(c)
+		tower.append(cid)
+		_puppet_buf.erase(cid)
+	else:
+		live.erase(c.player_id)
+		_drop_climber(cid)
+	line = maxf(line, new_line)
 	match verdict:
 		"made":
 			announce.emit("%s locked in at %.2f m!" % [who, top] if why == "locked" else "%s made it: %.2f m" % [who, top], false)
@@ -637,13 +714,20 @@ func _audio_climber(cid: int) -> Climber:
 
 
 @rpc("any_peer", "call_local", "reliable")
+func _rpc_exertion(cid: int, clip: String) -> void:
+	var c := _audio_climber(cid)
+	if c != null:
+		Sound.play_exertion(clip, c.bodies["chest"])
+
+
+@rpc("any_peer", "call_local", "reliable")
 func _rpc_slap(cid: int, at: Vector3, clip: String, pitch: float) -> void:
 	if _audio_climber(cid) != null and at.is_finite() and pitch >= 0.92 and pitch <= 1.08:
 		Sound.play_grab(clip, at, pitch, world)
 
 
 @rpc("any_peer", "call_local", "reliable")
-func _rpc_fart(cid: int, take: int, pitch: float) -> void:
+func _rpc_fart(cid: int, take: int, pitch: float, budget: float) -> void:
 	var c := _audio_climber(cid)
 	if c == null:
 		return
@@ -651,7 +735,8 @@ func _rpc_fart(cid: int, take: int, pitch: float) -> void:
 	if take == 0:
 		voice.release()
 	elif take >= 1 and take <= FartVoice.COUNT and pitch >= 0.84 and pitch <= 1.18:
-		voice.start(take, pitch)
+		if budget > 0.0 and budget <= FartVoice.CAPACITY:
+			voice.start(take, pitch, budget)
 
 
 # ================================================================ grabbing across machines

@@ -396,6 +396,44 @@ func _spike_chain() -> void:
 
 # ================================================================ P2: --grab, --frozen
 
+func _run_exertion() -> void:
+	var c := spawn(Vector2(0, 4))
+	var d: Drivers.ScriptDriver = c.driver
+	var chest: RigidBody3D = c.bodies["chest"]
+	c.attach(0, bar_at(c.limb_end(0)))
+	var events := [0]
+	c.exerted.connect(func(): events[0] += 1)
+	chest.linear_velocity.y = 5.1
+	d.set_limb(3, true, Vector2(0, 1), 1.0)  # Climber input is y-up.
+	c._physics_process(0.01)
+	t("grunt: two-second opening delay", events[0] == 0 and c._grunt_wait > 1.9)
+	c._grunt_wait = -1.0
+	d.set_limb(3, false)
+	c._physics_process(0.01)
+	t("grunt: rising while gripping without steering stays quiet", events[0] == 0)
+	d.set_limb(3, true, Vector2(0, 1), 0.5)
+	c._physics_process(0.01)
+	t("grunt: half input stays quiet", events[0] == 0)
+	d.set_limb(3, true, Vector2(0, 1), 1.0)
+	chest.linear_velocity.y = 5.0
+	c._physics_process(0.01)
+	t("grunt: speed threshold is strict", events[0] == 0)
+	chest.linear_velocity.y = 5.1
+	c._physics_process(0.01)
+	t("grunt: rising pull fires once and rolls a 1.5 to 3.5 second cooldown", events[0] == 1 and c._grunt_wait >= 1.5 and c._grunt_wait <= 3.5)
+	c._physics_process(0.01)
+	t("grunt: continuous pulling respects cooldown", events[0] == 1)
+	c._grunt_wait = -1.0
+	c.release_all()
+	c.remote_grabbed = 1
+	c._physics_process(0.01)
+	t("grunt: another player's grip alone does not count", events[0] == 1)
+	c.attach(0, bar_at(c.limb_end(0)))
+	d.point_limb(3, true, c.limb_root(3) + Vector2(0, 2))
+	c._physics_process(0.01)
+	t("grunt: mouse aim uses upward reach", events[0] == 2)
+
+
 func _run_grab() -> void:
 	ground()
 	var c := spawn(Vector2(0, 0.05))
@@ -480,27 +518,60 @@ func wait_phase(g: Game, ph: String, max_s := 30.0) -> bool:
 	return false
 
 
-## Lift a live climber so its feet sit `above` metres over the line, and press
-## Lock In. (A rules test, not a climbing test: --climb does the climbing.)
-func lift_and_lock(g: Game, pid: int, above := 0.4) -> Climber:
+## Put the lowest piece onto the barrel or the topmost frozen piece, matching
+## the geometry on every peer. The "airborne" variant is well clear of the stack.
+func lift_and_lock(g: Game, pid: int, above := 0.4, airborne := false) -> Climber:
 	var c: Climber = g.climbers[g.live[pid]]
 	c.release_all()
 	for l in c.limbs:
-		l.regrip = 2.0  # stay loose in the air for the check
+		l.regrip = 2.0
 	var p := c.pose()
-	var low := INF
-	for i in range(1, p.size(), 3):
-		low = minf(low, p[i])
-	var dy := g.line + above - low + 0.2
-	for i in range(1, p.size(), 3):
-		p[i] += dy
-	for i in range(0, p.size(), 3):
-		p[i] = p[i] - c.spawn_at.x + 2.5 * signf(c.spawn_at.x)
+	var support := Vector2(0.0, g.stage.barrel_top)
+	for cid in g.tower:
+		var frozen: Climber = g.climbers[cid]
+		for piece in Layout.ORDER:
+			var y := frozen.piece_top(piece)
+			if y > support.y:
+				support = Vector2(Climber.pos2(frozen.bodies[piece]).x, y)
+	var bottom := Vector2(0.0, INF)
+	for i in Layout.ORDER.size():
+		var k := 3 * i
+		var y := -c.top_of(Layout.ORDER[i], Transform2D(p[k + 2] + PI, Vector2(0, -p[k + 1])))
+		if y < bottom.y:
+			bottom = Vector2(p[k], y)
+	if airborne:
+		support = Vector2(6.0, g.line + 2.0)
+	elif above < 0:
+		support = Vector2(-6.0, 0.0)
+	var offset := support - bottom - Vector2(0, 0.008)
+	for k in range(0, p.size(), 3):
+		p[k] += offset.x
+		p[k + 1] += offset.y
 	c.apply_pose(p)
 	(g.bot_drivers[pid] as Drivers.ScriptDriver).lock = true
 	await frames(3)
 	return c
 
+
+func _run_groundlock() -> void:
+	for id in ["tower", "scramble", "practice"]:
+		var g := make_game(id, 1, 50.0)
+		await wait_phase(g, "round" if id == "scramble" else "turn")
+		var c := await lift_and_lock(g, 0, 0.4, true)
+		t("%s: an above-line airborne lock is refused" % id, c.state == Climber.State.LIVE and g.tower.is_empty() and g.best[0] == 0.0)
+		await lift_and_lock(g, 0)
+		t("%s: contact with the barrel accepts the lock" % id, c.state == Climber.State.FROZEN and g.tower.size() == 1)
+		g.end_match()
+		g.queue_free()
+		await frames(2)
+	var timed := make_game("tower", 1, 50.0)
+	await wait_phase(timed, "turn")
+	await lift_and_lock(timed, 0, 0.4, true)
+	timed._time_up()
+	t("timeout: an airborne pose cannot score or become a new platform", not timed.alive[0] and timed.best[0] == 0.0 and timed.tower.is_empty() and timed.live.is_empty())
+	timed.end_match()
+	timed.queue_free()
+	await frames(2)
 
 func _run_tower() -> void:
 	var g := make_game("tower", 3, 3.0)
@@ -688,6 +759,15 @@ func _run_net() -> void:
 		a0 != null and b1 != null and a0.state == Climber.State.LIVE and b1.state == Climber.State.LIVE
 		and a1.state == Climber.State.PUPPET and b0.state == Climber.State.PUPPET)
 	# A client makes a contact and holds RB. Both peers hear the same take.
+	var grunts := []
+	for m in machines:
+		var climber: Climber = m.game.climbers[b1.climber_id]
+		climber.bodies["chest"].child_entered_tree.connect(func(node):
+			if node is AudioStreamPlayer3D:
+				grunts.append(node.stream.resource_path.get_file().get_basename()))
+	b1.exerted.emit()
+	await frames(8)
+	t("net: all three peers play the same approved exertion take", grunts.size() == 3 and grunts.count(grunts[0]) == 3 and grunts[0] in Sound.SFX["strain"])
 	var slaps := []
 	for m in machines:
 		m.world.child_entered_tree.connect(func(node):
@@ -708,6 +788,14 @@ func _run_net() -> void:
 	Players.fake[1099].buttons.fart = false
 	await seconds(0.55)
 	t("net: releasing RB clears the sustain and finishes the tail everywhere", voices.all(func(v): return not v.active() and v.get_child_count() == 0))
+	# A partly refilled tank must cut off on the owner, host and spectator while RB stays down.
+	B._fart_fuel[b1.player_id] = 0.25
+	Players.fake[1099].buttons.fart = true
+	await seconds(0.10)
+	t("net: partial tank plays on every peer", voices.all(func(v): return v.active()))
+	await seconds(0.30)
+	t("net: tank exhaustion silences every peer until release", B._fart_fuel[b1.player_id] == 0.0 and voices.all(func(v): return not v.active() and v.get_child_count() == 0))
+	Players.fake[1099].buttons.fart = false
 	b1.local_slot = -1
 	Players.fake.erase(1099)
 	Players.clear_players()
@@ -724,6 +812,9 @@ func _run_net() -> void:
 	await seconds(0.4)
 	t("net: releasing un-counts it on the other machine", a0.remote_grabbed == 0)
 	# The client locks in above the line: the host decides, both freeze it the same.
+	await lift_and_lock(B, 1, 0.5, true)
+	await seconds(0.3)
+	t("net: host rejects airborne lock from a remote client", b1.state == Climber.State.LIVE and a1.state == Climber.State.PUPPET and A.tower.is_empty())
 	var line_before := A.line
 	await lift_and_lock(B, 1, 0.5)
 	await seconds(0.5)
