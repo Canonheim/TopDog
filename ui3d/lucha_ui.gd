@@ -57,6 +57,7 @@ func setup(p_main: Node) -> void:
 	_build_hud()
 	_restyle_line()
 	main.game.announce.connect(_on_announce)
+	no_shadows(cam)  # UI never casts shadows into the world (the menus' words ghosted on the apron)
 	Players.joined.connect(func(_s): _refresh_cards())
 	Players.left.connect(func(_s): _refresh_cards())
 
@@ -79,6 +80,8 @@ func show_screen(id: String) -> bool:
 		_refresh_cards()
 	if id == "results":
 		_fill_results()
+		_raise_podium()
+	no_shadows(cam)
 	if id == "title":
 		Sound.play("lock", -4.0)
 	return id in OWNED
@@ -239,7 +242,7 @@ func _build_menus() -> void:
 	_cards.visible = false
 	_podium = Node3D.new()
 	cam.add_child(_podium)
-	_podium.position = Vector3(1.4, -1.6, -MENU_DIST)
+	_podium.position = Vector3(1.4, -1.15, -MENU_DIST)
 	_podium.scale = Vector3.ONE * UI_SCALE
 	_podium.visible = false
 	var pod := LuchaKit.kit_model("podium")
@@ -291,6 +294,33 @@ func _refresh_cards() -> void:
 		empty.add_child(join)
 		empty.set_meta("pulse", true)
 		_cards.add_child(empty)
+	no_shadows(_cards)
+
+
+## Everything under `n` stops casting shadows (UI pieces hang in the sun's light).
+static func no_shadows(n: Node) -> void:
+	if n is GeometryInstance3D:
+		(n as GeometryInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	for ch in n.get_children():
+		no_shadows(ch)
+
+
+## The kit podium's three steps rise one at a time (3rd, 2nd, then the winner's),
+## each from its own base, with a bounce.
+func _raise_podium() -> void:
+	var k := 0
+	for nm in ["podium_3", "podium_2", "podium_1"]:
+		var step := _podium.find_child(nm, true, false) as Node3D
+		if step == null:
+			continue
+		if not step.has_meta("home"):
+			step.set_meta("home", step.position)
+		var home: Vector3 = step.get_meta("home")
+		step.position = home + Vector3(0, -1.2, 0)
+		var tw := create_tween()
+		tw.tween_interval(0.25 + k * 0.3)
+		tw.tween_property(step, "position", home, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		k += 1
 
 
 func _fill_results() -> void:
@@ -309,7 +339,7 @@ func _fill_results() -> void:
 	var y := 1.2
 	for pid in order.slice(0, 4):
 		var line := LuchaKit.poster_text("%s  %.2f M" % [str(main.game.player_name(int(pid))).split(" the ")[0].to_upper(), float(best[pid])], 0.24, LuchaKit.CREAM, LuchaKit.INK, 0.04)
-		line.position = Vector3(1.4, y, 0)
+		line.position = Vector3(0.0, y, 0)
 		_winner_poster.add_child(line)
 		y -= 0.32
 	cam.add_child(_winner_poster)
@@ -385,6 +415,7 @@ func _on_announce(text: String, big: bool) -> void:
 	var words := LuchaKit.poster_text(t, size, LuchaKit.GOLD if big else LuchaKit.CREAM, LuchaKit.INK, 0.06)
 	_banner.add_child(words)
 	_banner.visible = true
+	no_shadows(_banner)
 	_banner.position = Vector3(0, 4.5, 0.3)
 	_banner.rotation.z = randf_range(-0.12, 0.12)
 	var tw := create_tween()
@@ -486,6 +517,7 @@ func _process(delta: float) -> void:
 				var col := LuchaKit.RED if v <= 10 else (LuchaKit.INK if on_kit else LuchaKit.GOLD)
 				var num := LuchaKit.text3d(str(v), 0.34 if on_kit else 0.42, col, 0.03)
 				_clock_text.add_child(num)
+				no_shadows(num)
 				if v <= 10:
 					_clock_text.scale = Vector3.ONE * 1.35
 					create_tween().tween_property(_clock_text, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK)
