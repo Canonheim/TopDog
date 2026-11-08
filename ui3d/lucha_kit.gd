@@ -130,11 +130,11 @@ static func poster_text(s: String, size: float, face: Color, back := INK, depth 
 static func title_logo() -> Node3D:
 	var k := kit_model("title_logo")
 	if k != null:
-		# Built 3.3 x 1.16 m with its origin at the bottom centre: scale it up and
+		# Built 3.3 x 1.01 m (r2) with its origin at the bottom centre: scale it up and
 		# centre it on the header spot.
 		var holder := Node3D.new()
 		k.scale = Vector3.ONE * 1.45
-		k.position = Vector3(0, -1.155 * 1.45 * 0.5, 0)
+		k.position = Vector3(0, -1.006 * 1.45 * 0.5, 0)
 		holder.add_child(k)
 		return holder
 	var root := Node3D.new()
@@ -241,7 +241,7 @@ static func belt_button(width := 2.2) -> Node3D:
 		var crest := k.find_child("belt_crest", true, false)
 		holder.set_meta("face_z", 0.046 * s)
 		holder.set_meta("face_w", 1.0 * s)
-		holder.set_meta("height", 0.671 * s)  # the plate's points, top to bottom (-0.402..+0.269)
+		holder.set_meta("height", 0.614 * s)  # the plate, top rim to bottom point (-0.345..+0.269), crest hidden
 		holder.set_meta("width", 1.82 * s)
 		holder.set_meta("text_color", CREAM)  # the kit's label face is red: cream letters
 		holder.set_meta("text_back", INK)
