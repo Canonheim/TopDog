@@ -362,23 +362,40 @@ func _spike_eight() -> void:
 	for c in cs:
 		ok = ok and finite_body(c)
 	var avg := sum / ticks
-	t("eight live: jostling for 20 s, joints under 12 cm", worst_gap < 0.12, "worst %.4f m" % worst_gap)
+	t("eight live: 20 s welded into a blob (every unheld limb sticks), joints under 12 cm", worst_gap < 0.12, "worst %.4f m" % worst_gap)
 	t("eight live: all sane (finite, in the plane)", ok)
-	t("eight live: nobody grabs another live climber", rival_grabs[0] == 0, rival_grabs[0])
-	t("eight live: physics frame under 6 ms on average (eight climbers)", avg < 6.0, "avg %.3f ms, worst %.3f ms" % [avg, worst_ms])
+	t("eight live: they grabbed each other", rival_grabs[0] > 0, rival_grabs[0])
+	t("eight live: physics frame under 6 ms on average (eight welded climbers)", avg < 6.0, "avg %.3f ms, worst %.3f ms" % [avg, worst_ms])
 
 
 ## A hangs from B, B from C, C from a bar. C freezes: nobody drops.
 func _spike_chain() -> void:
 	var cC := spawn(Vector2(0, 7.0))
 	var bar := bar_at(cC.limb_end(0))
+	# Measure the built pose before it swings. The model's stored hand is in a T-pose.
+	var hand_off := cC.limb_end(0) - cC.spawn_at
 	cC.attach(0, bar)
-	var cB := spawn(Vector2(0, 4))
+	await seconds(2.0)
+	var cB := spawn(cC.limb_end(2) - hand_off)
 	cB.attach(0, cC.bodies["foot_l"])
-	t("chain: a grounded live climber cannot anchor another player", not cB.is_attached())
+	await seconds(2.0)
+	var cA := spawn(cB.limb_end(2) - hand_off)
+	cA.attach(0, cB.bodies["foot_l"])
+	await seconds(3.0)
+	t("chain: C is held by B, B by A (grabbed_by counts)", cC.grabbed_by >= 1 and cB.grabbed_by >= 1, "%d %d" % [cC.grabbed_by, cB.grabbed_by])
+	var b_hand := cB.limb_end(0)
 	cC.freeze()
-	cB.attach(0, cC.bodies["foot_l"])
-	t("chain: the same piece is grabbable after lock-in", cB.is_attached())
+	var worst_slip := 0.0
+	var worst_gap := 0.0
+	for i in int(3.0 * Engine.physics_ticks_per_second):
+		await get_tree().physics_frame
+		worst_slip = maxf(worst_slip, cB.limb_end(0).distance_to(b_hand))
+		worst_gap = maxf(worst_gap, maxf(cA.worst_joint_gap(), cB.worst_joint_gap()))
+	t("chain: after C freezes, B and A still hold on", cB.limbs[0].grab.is_valid() and cA.limbs[0].grab.is_valid())
+	t("chain: B's hand stays on C's frozen foot (under 6 cm)", worst_slip < 0.06, "%.4f m" % worst_slip)
+	t("chain: joints hold through the freeze (under 13 cm, two stiff climbers on one wrist)", worst_gap < 0.13, "%.4f m" % worst_gap)
+	t("chain: B still counts as attached (A holds it, it holds C)", cB.is_attached())
+
 
 # ================================================================ P2: --grab, --frozen
 
@@ -411,8 +428,9 @@ func _run_exertion() -> void:
 	t("grunt: continuous pulling respects cooldown", events[0] == 1)
 	c._grunt_wait = -1.0
 	c.release_all()
+	c.remote_grabbed = 1
 	c._physics_process(0.01)
-	t("grunt: no actual grip does not count", events[0] == 1)
+	t("grunt: another player's grip alone does not count", events[0] == 1)
 	c.attach(0, bar_at(c.limb_end(0)))
 	d.point_limb(3, true, c.limb_root(3) + Vector2(0, 2))
 	c._physics_process(0.01)
@@ -461,7 +479,26 @@ func _run_grab() -> void:
 	h.attach(1, f.bodies["chest"])
 	t("grab: a frozen climber can be held", h.limbs[1].grab.is_valid())
 	h.attach(2, e.bodies["chest"])
-	t("grab: a live rival is never a grip", not h.limbs[2].grab.is_valid())
+	t("grab: a live rival can be held, and counts the grab", h.limbs[2].grab.is_valid() and e.grabbed_by == 1)
+	e.release_all()
+	await frames(1)
+	t("grab: a held climber counts as attached (Parker's rule 10)", e.is_attached() and e.stuck_count() == 0)
+	h.release(2)
+	t("grab: releasing a rival un-counts it", e.grabbed_by == 0 and not e.is_attached())
+	# The practice partner is a live climber too (Parker 11-08: "You should be able
+	# to grab him"): a hand that touches him sticks, and he counts the grab.
+	var pp: Climber = load("res://climber/practice_partner.gd").new()
+	pp.climber_id = _next_id
+	_next_id += 1
+	add_child(pp)
+	pp.build(Vector2(6.0, 3.0), world, null)
+	var g2 := spawn(Vector2(6.0, 5.5))
+	g2.attach(0, bar_at(g2.limb_end(0)))
+	await frames(2)
+	g2.attach(1, pp.bodies["chest"])
+	t("grab: the practice partner can be grabbed (and counts it)", g2.limbs[1].grab.is_valid() and g2.limbs[1].grab_climber == pp and pp.grabbed_by == 1)
+	g2.release_all()
+	pp.remove()
 
 
 func _run_frozen() -> void:
@@ -841,8 +878,14 @@ func _run_net() -> void:
 	await seconds(1.0)
 	var lag := a0.centre_of_mass().distance_to(b0.centre_of_mass())
 	t("net: the puppet follows the real body (within 25 cm at rest)", lag < 0.25, "%.3f m" % lag)
+	# Grab across machines: the client's hand holds the host climber's puppet.
 	b1.attach(0, b0.bodies["chest"])
-	t("net: a remote puppet cannot be used as a foothold", not b1.limbs[0].grab.is_valid())
+	await seconds(0.5)
+	t("net: the host's climber learns it's held (counts as attached)", a0.remote_grabbed == 1 and a0.is_attached(), a0.remote_grabbed)
+	t("net: the holder's pull arrives on the held climber's machine", not a0.remote_pulls.is_empty(), a0.remote_pulls)
+	b1.release(0)
+	await seconds(0.4)
+	t("net: releasing un-counts it on the other machine", a0.remote_grabbed == 0)
 	# The client locks in above the line: the host decides, both freeze it the same.
 	await lift_and_lock(B, 1, 0.5, true)
 	await seconds(0.3)

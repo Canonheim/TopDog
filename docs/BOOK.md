@@ -365,6 +365,19 @@ Parker, with a reference picture (`Top Dog Kit\docs\cloud_reference_parker.png`)
 - **The clouds skip the house ink** (`LuchaKit.skip_ink`: an unshaded, alpha atlas material, drawn after the ink pass). Their grey line is their outline; a black ink edge fought it.
 - The Building Maker's re-landed `plaza_church` came in with the same sync, placed by its measured front.
 
+## Grabbing climbers, put back (Parker, 2026-11-08)
+
+Parker: "Dan took out grabbing people. Put it back in ... the practice partner is where I noticed it. You should be able to grab him."
+- Dan's 0.3.30 (84a41ba) made only the arena and the frozen stack grippable. It also removed `grabbed_by` / `remote_grabbed`, the network pulls, `grab_lost`, `pull_cap` and the grab tests.
+- All restored from that commit, with his chairs and partner kept:
+  - `_try_grab` takes live climbers again (solid ground and the tower still win);
+  - `attach` counts the grab on a live climber;
+  - `is_attached` counts being held (Parker's call 10);
+  - `game.gd`'s "grabbing across machines" section (`_on_grab_made`, `_rpc_grabbed`, `_tick_pulls_out`, `_rpc_pull`) is back;
+  - Feel `pull_cap` is back.
+- The practice partner is a live climber, so he can be grabbed. His own limbs still never stick (`practice_partner._try_grab`). `_remove_partner` releases anyone holding him before he respawns.
+- **Tests:** the eight-live blob ("they grabbed each other", 189), the chain, the live-rival and partner grabs in `--grab`, and the network grab in `--net` all pass. The eight-live frame time was 7.4 ms during one full run under load, and 2.7 to 3.1 ms alone. The two `--bend` failures on Dan's limb control are still open.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

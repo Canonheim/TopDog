@@ -10,6 +10,8 @@ extends Node
 ##   its 16 piece poses at 30 Hz. Everyone else shows it as a solid puppet.
 ## - A freeze is decided by the host, posed by the owner, and broadcast as one pose
 ##   that every machine builds the same static body from: towers match everywhere.
+## - Grabbing a rival on another machine: you ride their puppet at once, and your
+##   pull is sent to their machine and applied to their real body (capped).
 ## - Chair hits are judged by the host and applied to the struck piece on its owner's machine.
 ##
 ## Offline, Godot's OfflineMultiplayerPeer makes us peer 1 and the authority, and
@@ -39,6 +41,7 @@ const STREAM_HZ := 30.0
 const CLOCK_HZ := 4.0
 const PAUSE_BETWEEN := 1.6  # seconds between turns / rounds
 const FREEZE_REPLY_S := 1.5  # how long the host waits for an owner's final pose
+const PULL_STALE_S := 0.25
 
 var world: Node3D
 var dress := true  # build the 3D knights and stage dressing
@@ -71,6 +74,9 @@ var _seq := 0
 var _pending_freeze := {}  # cid -> {"t": float, "verdict_hint": String}
 var _puppet_buf := {}  # cid -> Array of [time, PackedFloat32Array]
 var _last_seq := {}  # cid -> int
+var _pulls := {}  # cid -> {piece: [Vector2, time]}
+var _remote_grabs := {}  # "cid:limb" -> [target_cid, piece]
+var _com_v := {}  # cid -> previous COM velocity (for pull estimates)
 var _round_fail_tops := {}  # pid -> top (scramble: who failed this round, how high)
 var _fart_fuel := {}  # Seconds remaining, by player across respawns.
 var _fart_down := {}
@@ -293,6 +299,8 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2) -> void:
 		c.exerted.connect(func(): _rpc_exertion.rpc(cid, Sound.SFX["strain"].pick_random()))
 		c.release_contact.connect(func(at: Vector3):
 			_rpc_slap.rpc(cid, at, Sound.pick_grab(), randf_range(0.92, 1.08)))
+		c.grab_made.connect(_on_grab_made)
+		c.grab_lost.connect(_on_grab_lost)
 		if chair != null and not is_host():
 			c.limb_selected.connect(func(i: int, velocity: Vector3): _rpc_chair_limb.rpc_id(1, cid, i, velocity))
 	else:
@@ -380,8 +388,20 @@ func _tick_owned(real_delta: float) -> void:
 					_rpc_lock_request.rpc_id(1, cid, c.pose())
 			else:
 				announce.emit("Get above the line to lock in!", false)
+		_tick_pulls_out(c, real_delta, send)
 		if send and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
 			_rpc_pose.rpc(cid, _seq, c.pose())
+	# Remote pulls on my climbers that went stale stop pulling.
+	for cid in _pulls.keys():
+		if not climbers.has(cid):
+			_pulls.erase(cid)
+			continue
+		var pc: Climber = climbers[cid]
+		pc.remote_pulls.clear()
+		for piece in _pulls[cid].keys():
+			var e: Array = _pulls[cid][piece]
+			if _now - float(e[1]) < PULL_STALE_S:
+				pc.remote_pulls[piece] = e[0]
 	if send and chair != null and is_host() and multiplayer.get_peers().size() > 0:
 		_rpc_chair_pose.rpc(chair.holder, chair.limb, chair.grip_point, chair.global_transform, chair.hit_count)
 @rpc("any_peer", "call_remote", "reliable")
@@ -740,6 +760,78 @@ func _rpc_fart(cid: int, take: int, pitch: float, budget: float) -> void:
 			voice.start(take, pitch, budget)
 
 
+# ================================================================ grabbing across machines
+
+func _on_grab_made(c: Climber, limb: int, other: Object) -> void:
+	if not (other is RigidBody3D and other.has_meta("climber")):
+		return
+	var oc: Climber = other.get_meta("climber")
+	if oc.state != Climber.State.PUPPET or oc.owner_peer == me():
+		return
+	_remote_grabs["%d:%d" % [c.climber_id, limb]] = [oc.climber_id, str(other.get_meta("piece"))]
+	_rpc_grabbed.rpc_id(oc.owner_peer, oc.climber_id, 1)
+
+
+func _on_grab_lost(c: Climber, limb: int) -> void:
+	var key := "%d:%d" % [c.climber_id, limb]
+	if not _remote_grabs.has(key):
+		return
+	var g: Array = _remote_grabs[key]
+	_remote_grabs.erase(key)
+	var oc: Climber = climbers.get(g[0])
+	if oc != null:
+		_rpc_grabbed.rpc_id(oc.owner_peer, g[0], -1)
+
+
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_grabbed(cid: int, delta_n: int) -> void:
+	var c: Climber = climbers.get(cid)
+	if c == null or c.owner_peer != me() or c.state != Climber.State.LIVE:
+		return
+	c.remote_grabbed = maxi(0, c.remote_grabbed + clampi(delta_n, -1, 1))
+
+
+## My climber hangs on a rival's puppet: estimate the pull through each such grab
+## (my weight and acceleration, shared over my attachments) and send it to the
+## rival's machine, which applies it to their real body.
+func _tick_pulls_out(c: Climber, delta: float, send: bool) -> void:
+	var mine: Array = []
+	for i in c.limbs.size():
+		var key := "%d:%d" % [c.climber_id, i]
+		if _remote_grabs.has(key) and c.limbs[i].grab.is_valid():
+			mine.append(_remote_grabs[key])
+	var v := Vector2.ZERO
+	for b in c.bodies.values():
+		v += Vector2(b.linear_velocity.x, b.linear_velocity.y) * b.mass
+	v /= maxf(c.total_mass, 0.001)
+	var prev: Vector2 = _com_v.get(c.climber_id, v)
+	_com_v[c.climber_id] = v
+	if mine.is_empty() or not send:
+		return
+	var accel := (v - prev) / maxf(delta, 0.0001)
+	var g := Vector2(0, -9.8 * Feel.climber_gravity(true))
+	# What holds me up: m (a - g), shared over every attachment I have.
+	var n := maxi(1, c.stuck_count())
+	var hold := c.total_mass * (accel - g) / float(n)
+	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
+	var pull := (-hold).limit_length(cap)  # what I do to what I hold
+	for g2 in mine:
+		var oc: Climber = climbers.get(g2[0])
+		if oc != null:
+			_rpc_pull.rpc_id(oc.owner_peer, int(g2[0]), str(g2[1]), pull)
+
+
+@rpc("any_peer", "call_remote", "unreliable")
+func _rpc_pull(cid: int, piece: String, force: Vector2) -> void:
+	var c: Climber = climbers.get(cid)
+	if c == null or c.owner_peer != me() or c.state != Climber.State.LIVE:
+		return
+	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
+	if not _pulls.has(cid):
+		_pulls[cid] = {}
+	_pulls[cid][piece] = [force.limit_length(cap), _now]
+
+
 # ================================================================ leaving
 
 func _on_peer_left(id: int) -> void:
@@ -777,6 +869,12 @@ func _clear_arena_props() -> void:
 
 
 func _remove_partner() -> void:
+	# Anyone holding the partner lets go first: never leave a joint on a freed body.
+	for o in climbers.values():
+		var oc: Climber = o
+		for i in oc.limbs.size():
+			if oc.limbs[i].grab_climber == partner:
+				oc.release(i)
 	partner.remove()
 	partner = null
 
