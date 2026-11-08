@@ -139,7 +139,6 @@ const HOUSE_W := {"a": 4.8, "b": 5.2, "c": 3.8}
 const HILL_TERRACES := [  # [front z, depth, top above the stones, half-width]
 	[-22.0, 7.0, 2.0, 38.0], [-29.0, 7.0, 4.6, 32.0], [-36.0, 7.0, 7.4, 25.0], [-43.0, 7.0, 10.4, 18.0],
 ]
-const CHURCH_Z := -22.6  # the church's front line, on the first terrace
 const CHURCH_CLEAR := 8.5  # no hill houses within this of x 0 on the first two terraces
 const STONE := Color("#C2A878")
 const DRY_GRASS := Color("#8E9A5C")  # lit, the cel band reads it a dry green
@@ -196,9 +195,11 @@ func _build_plaza() -> void:
 				palm.scale = Vector3.ONE * 0.85
 				plaza.add_child(palm)
 			x += float(HOUSE_W[kind]) + gap
-	# The church at the centre back, on the first terrace.
+	# The church at the centre back, on the first terrace: its foremost part (the
+	# kit's steps, the stand-in's towers) stops at the terrace's front edge.
 	var church := _church()
-	church.position = Vector3(0, gy + float(HILL_TERRACES[0][2]), CHURCH_Z)
+	var reach := float(church.get_meta("front_reach"))
+	church.position = Vector3(0, gy + float(HILL_TERRACES[0][2]), float(HILL_TERRACES[0][0]) - reach - 0.05)
 	plaza.add_child(church)
 	# Far ridges: flat cards in the haze blues, so the land meets something at the horizon.
 	for r in [[-140.0, -260.0, 300.0, 52.0, RIDGE_FAR], [120.0, -240.0, 280.0, 44.0, RIDGE_FAR], [-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR]]:
@@ -212,12 +213,12 @@ func _build_plaza() -> void:
 	# Papel picado strung between poles, a little back from the stage.
 	for px in BUNTING_POLES:
 		plaza.add_child(_bunting_pole(Vector3(px, gy, BUNTING_Z)))
-	var tie_y := gy + float(HILL_TERRACES[0][2]) + 10.6  # just under the belfries
+	var ties: Array = church.get_meta("anchors")  # the belfries' outer faces, church-local
 	var strings := [
 		[Vector3(-18.0, 6.5, BUNTING_Z), Vector3(-6.0, 6.8, BUNTING_Z), 9, 0.9],
 		[Vector3(6.0, 6.8, BUNTING_Z), Vector3(18.0, 6.5, BUNTING_Z), 9, 0.9],
-		[Vector3(-6.0, 6.8, BUNTING_Z), Vector3(-CHURCH_TOWER_X, tie_y, CHURCH_Z), 7, 0.6],
-		[Vector3(6.0, 6.8, BUNTING_Z), Vector3(CHURCH_TOWER_X, tie_y, CHURCH_Z), 7, 0.6],
+		[Vector3(-6.0, 6.8, BUNTING_Z), church.position + (ties[0] as Vector3), 8, 0.6],
+		[Vector3(6.0, 6.8, BUNTING_Z), church.position + (ties[1] as Vector3), 8, 0.6],
 	]
 	for st in strings:
 		var b := LuchaKit.bunting(st[0], st[1], st[2], st[3])
@@ -249,14 +250,21 @@ const CHURCH_TRIM := Color("#E6D8B4")
 
 
 ## THE CHURCH: the plaza's landmark at the centre back. The kit's `plaza_church`
-## if it lands; until then two `bell_tower`s (kit or stand-in) at x +-5 with a
-## nave and a gabled facade between them, built here. Origin at the facade's
-## foot, front +Z.
+## (the Building Maker's, 11-08: origin at the nave's centre on the ground, the
+## steps reaching local z +4.95, the bunting tied at the belfries' outer faces,
+## (+-6.2, 14.6, 2.0)); else two `bell_tower`s (kit or stand-in) at x +-5 with a
+## nave and a gabled facade between them, built here, origin at the facade's foot.
+## Either way the node carries metas `front_reach` (its foremost local z) and
+## `anchors` (the two string ties, local).
 func _church() -> Node3D:
 	var k := LuchaKit.kit_model("plaza_church")
 	if k != null:
+		k.set_meta("front_reach", 4.95)
+		k.set_meta("anchors", [Vector3(-6.2, 14.6, 2.0), Vector3(6.2, 14.6, 2.0)])
 		return k
 	var root := Node3D.new()
+	root.set_meta("front_reach", 0.55)  # the towers' fronts
+	root.set_meta("anchors", [Vector3(-CHURCH_TOWER_X, 10.6, 0.0), Vector3(CHURCH_TOWER_X, 10.6, 0.0)])
 	var face_w := CHURCH_TOWER_X * 2.0 - 3.4  # between the towers
 	var body_h := 9.0
 	# The nave behind, and the facade: a stone wall, a cream cornice, a gable.
