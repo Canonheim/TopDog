@@ -19,7 +19,7 @@ extends Node3D
 
 const MENU_DIST := 6.0  # in front of the ring's apron at every camera distance
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
-const OWNED := ["title", "local", "pause", "results"]
+const OWNED := ["title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat"]
 const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
 const CARD_DY := 2.3  # and 2.05 m with its mask crest
 
@@ -39,6 +39,7 @@ var _banner_t := 0.0
 var _cards: Node3D
 var _podium: Node3D
 var _winner_poster: Node3D
+var online: LuchaOnline
 
 
 func setup(p_main: Node) -> void:
@@ -54,6 +55,8 @@ func setup(p_main: Node) -> void:
 	_build_sky()
 	_build_plaza()
 	_build_menus()
+	online = LuchaOnline.new(self)
+	online.build()
 	_build_hud()
 	_restyle_line()
 	main.game.announce.connect(_on_announce)
@@ -84,6 +87,8 @@ func show_screen(id: String) -> bool:
 	no_shadows(cam)
 	if id == "title":
 		Sound.play("lock", -4.0)
+	if online != null:
+		online.on_screen(id)
 	return id in OWNED
 
 

@@ -441,8 +441,9 @@ func show_screen(id: String) -> void:
 		pad_nav.active = id != "hud"
 	# Screens the 3D front end owns: its menu shows, the flat one stays hidden.
 	if lucha != null and lucha.show_screen(id):
-		screens[id].visible = false
-		if pad_nav != null:
+		if screens.has(id):
+			screens[id].visible = false
+		if pad_nav != null and id != "online_flat":
 			pad_nav.screen_root = null
 	if id == "online":
 		Net.ensure_steam()
@@ -847,6 +848,8 @@ func _back() -> void:
 	match screen:
 		"local", "online":
 			show_screen("title")
+		"friends", "browse", "online_flat":
+			show_screen("online")
 		"controls":
 			show_screen(_controls_back)
 		"options":

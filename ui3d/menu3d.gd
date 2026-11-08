@@ -52,6 +52,29 @@ func add_choice(label: String, options: Array, index: int, on_change: Callable) 
 	return _add({"kind": "choice", "label": label, "options": options, "index": index, "on_change": on_change})
 
 
+## A belt that flips through options with left / right and does something with the
+## shown option on A / Enter / click (HOST  PUBLIC, CHAT  HELLO!).
+func add_choice_button(label: String, options: Array, index: int, cb: Callable) -> int:
+	return _add({"kind": "choice_button", "label": label, "options": options, "index": index, "on_change": Callable(), "cb": cb})
+
+
+## Rebuilt lists (friends, lobbies, members): lay the belts out again and keep the
+## menu open, with no drop-in, the focus kept in range.
+func refresh() -> void:
+	_layout()
+	_set_pickable(visible)
+	if not _live(focus):
+		focus = _next_live(-1, 1)
+	for it in items:
+		if it.node != null:
+			it.node.position = it.node.get_meta("home")
+	no_shadows_here()
+
+
+func no_shadows_here() -> void:
+	LuchaUI.no_shadows(self)
+
+
 func add_spacer() -> void:
 	items.append({"kind": "spacer", "node": null})
 
@@ -98,7 +121,7 @@ func _relabel(i: int) -> void:
 	for ch in it.text_node.get_children():
 		ch.queue_free()
 	var s: String = it.label
-	if it.kind == "choice":
+	if it.kind == "choice" or it.kind == "choice_button":
 		s = "%s  %s" % [it.label, str(it.options[it.index])]  # left / right flips it; the stars on the belt say so
 	# Fit the words to the belt's label face (the kit's face, or the placeholder plate).
 	var belt: Node3D = it.belt
@@ -225,7 +248,7 @@ func _cycle(dir: int) -> void:
 	if not _live(focus):
 		return
 	var it: Dictionary = items[focus]
-	if it.kind != "choice":
+	if it.kind != "choice" and it.kind != "choice_button":
 		return
 	it.index = wrapi(it.index + dir, 0, it.options.size())
 	_relabel(focus)
@@ -245,6 +268,10 @@ func _activate(i: int) -> void:
 	Sound.play("clap", -6.0)
 	_punch(i)
 	activated.emit(i)
+	if it.kind == "choice_button":
+		if it.cb.is_valid():
+			it.cb.call(it.index)
+		return
 	if it.cb.is_valid():
 		it.cb.call()
 
