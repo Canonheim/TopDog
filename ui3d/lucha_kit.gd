@@ -119,37 +119,31 @@ const TITLE_FONT := "res://fonts/luckiest_guy/LuckiestGuy-Regular.ttf"
 static var _font_checked := false
 
 
-## Extruded 3D letters: unshaded, drawn with alpha so the ink skips them.
-static func text3d(s: String, size: float, c: Color, depth := 0.06) -> MeshInstance3D:
+## THE LETTERS SKIP THE INK (Parker 11-07: "add an alpha channel to just the
+## letters so they dont get the outlines"). A UI word is a flat Label3D: alpha,
+## unshaded, drawn in the transparent pass, after the house ink (which reads only
+## opaque depth and normals), so it is never inked and covers any ink behind it.
+## Label3D, not an extruded TextMesh: the title font draws its letters from
+## overlapping outlines, which TextMesh fills wrong (ONLINE read ONUNE).
+static func text3d(s: String, size: float, c: Color, _depth := 0.06, priority := 1) -> Label3D:
 	if not _font_checked:
 		_font_checked = true
 		if ResourceLoader.exists(TITLE_FONT):
 			_font = load(TITLE_FONT)
-	var mi := MeshInstance3D.new()
-	var tm := TextMesh.new()
-	tm.text = s
-	tm.font_size = 64
-	tm.pixel_size = size / 64.0
-	tm.depth = depth
-	tm.curve_step = 1.5
+	var lb := Label3D.new()
+	lb.text = s
+	lb.font_size = 96
+	lb.pixel_size = size / 96.0
+	lb.modulate = c
+	lb.outline_size = 0
+	lb.shaded = false
+	lb.double_sided = false
+	lb.render_priority = priority
+	lb.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	lb.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if _font != null:
-		tm.font = _font
-	mi.mesh = tm
-	mi.material_override = letter_mat(c)
-	return mi
-
-
-## THE LETTERS SKIP THE INK (Parker 11-07: "add an alpha channel to just the
-## letters so they dont get the outlines"). The house ink runs before the
-## transparent pass and reads only opaque depth and normals: a letter drawn with
-## alpha is never inked, and its fill covers any ink behind it. Unshaded, so the
-## sun never washes a word out.
-static func letter_mat(c: Color) -> StandardMaterial3D:
-	var m := StandardMaterial3D.new()
-	m.albedo_color = c
-	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	return m
+		lb.font = _font
+	return lb
 
 
 ## A kit model's word objects (letters_*) out of the ink: the atlas colours, alpha.
@@ -168,10 +162,10 @@ static func letters_skip_ink(root: Node, prefix := "letters_") -> void:
 static func poster_text(s: String, size: float, face: Color, back := INK, depth := 0.08) -> Node3D:
 	var root := Node3D.new()
 	# A drop-shadow copy, down and right, pushed back: the lucha poster's fat edge.
-	var b := text3d(s, size, back, depth * 1.5)
-	b.position = Vector3(size * 0.05, -size * 0.07, -depth * 0.9)
+	var b := text3d(s, size, back, depth * 1.5, 0)
+	b.position = Vector3(size * 0.05, -size * 0.07, -0.004)
 	root.add_child(b)
-	var f := text3d(s, size, face, depth)
+	var f := text3d(s, size, face, depth, 1)
 	f.name = "face"
 	root.add_child(f)
 	return root
