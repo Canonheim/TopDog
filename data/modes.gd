@@ -43,4 +43,4 @@ static func row(id: String) -> Dictionary:
 
 
 static func default_settings() -> Dictionary:
-	return {"mode": "tower", "timer": 60.0, "spawn": "alternate", "stage": "dock"}
+	return {"mode": "tower", "timer": 60.0, "spawn": "alternate", "stage": "plaza"}

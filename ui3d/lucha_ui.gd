@@ -17,8 +17,8 @@ extends Node3D
 ## Every piece comes from the Top Dog Kit when delivered, else a placeholder
 ## (LuchaKit), so the real models drop in by file name.
 
-const MENU_DIST := 9.0
-const UI_SCALE := 0.72  # the 3D menus at this size leave the stage and the plaza in view
+const MENU_DIST := 6.0  # in front of the ring's apron at every camera distance
+const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
 const OWNED := ["title", "local", "pause", "results"]
 
 var main: Node
@@ -121,16 +121,16 @@ func _build_plaza() -> void:
 			house.add_child(LuchaKit.box(Vector3(1.0, 2.0, 0.2), Color(0.45, 0.28, 0.16), Vector3(0, 1.0, 2.05)))
 			for wx in [-w * 0.3, w * 0.3]:
 				house.add_child(LuchaKit.box(Vector3(0.8, 0.9, 0.2), Color(0.25, 0.4, 0.6), Vector3(wx, h * 0.65, 2.05)))
-		house.position = Vector3(x + w * 0.5, 0.0, -16.0 - float(i % 2) * 2.5)
+		house.position = Vector3(x + w * 0.5, Stage.PLAZA_GROUND, -16.0 - float(i % 2) * 2.5)
 		plaza.add_child(house)
 		if i % 2 == 1:
 			var palm := _palm()
-			palm.position = Vector3(x + w + 0.4, 0.0, -12.5)
+			palm.position = Vector3(x + w + 0.4, Stage.PLAZA_GROUND, -12.5)
 			plaza.add_child(palm)
 		x += w + 0.6
 		i += 1
 	# The plaza floor between the dock and the houses.
-	plaza.add_child(LuchaKit.box(Vector3(70, 0.4, 14), Color(0.86, 0.78, 0.6), Vector3(0, -0.3, -16)))
+	plaza.add_child(LuchaKit.box(Vector3(70, 0.4, 14), Color(0.86, 0.78, 0.6), Vector3(0, Stage.PLAZA_GROUND - 0.2, -16)))
 	# Papel picado strung across, in front of the houses.
 	for k in 3:
 		var b := LuchaKit.bunting(Vector3(-18 + k * 12, 6.5, -9.0), Vector3(-6 + k * 12, 6.8, -9.0), 9, 0.9)
@@ -369,6 +369,9 @@ func _restyle_line() -> void:
 func _on_announce(text: String, big: bool) -> void:
 	if _banner == null:
 		return
+	var low := text.to_lower()
+	if low.contains("locked in") or low.contains("made it") or low.contains("tops") or low.contains("top dog"):
+		confetti(low.contains("tops") or low.contains("top dog"))
 	for ch in _banner.get_children():
 		ch.queue_free()
 	var t := text.to_upper()
@@ -385,6 +388,47 @@ func _on_announce(text: String, big: bool) -> void:
 	var tw := create_tween()
 	tw.tween_property(_banner, "position", Vector3(0, 1.3, 0.3), 0.4).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	_banner_t = 2.4 if big else 1.8
+
+
+## A burst of confetti and streamers from the top of the frame (a lock-in, or a
+## bigger, longer one for the winner). Kit confetti pieces replace the paper when
+## delivered.
+func confetti(big := false) -> void:
+	for side in ([-1.0, 1.0] if big else [0.0]):
+		var p := CPUParticles3D.new()
+		p.one_shot = true
+		p.explosiveness = 0.85
+		p.amount = 160 if big else 70
+		p.lifetime = 3.2 if big else 2.2
+		var qm := QuadMesh.new()
+		qm.size = Vector2(0.09, 0.05)
+		p.mesh = qm
+		var m := StandardMaterial3D.new()
+		m.vertex_color_use_as_albedo = true
+		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+		p.material_override = m
+		var grad := Gradient.new()
+		grad.offsets = PackedFloat32Array([0.0, 0.2, 0.4, 0.6, 0.8])
+		grad.colors = PackedColorArray([LuchaKit.RED, LuchaKit.GOLD, LuchaKit.BLUE, LuchaKit.MAGENTA, LuchaKit.TURQUOISE])
+		p.color_initial_ramp = grad
+		p.direction = Vector3(-side * 0.6, 1.0, 0.0)
+		p.spread = 55.0
+		p.initial_velocity_min = 3.0
+		p.initial_velocity_max = 7.0
+		p.gravity = Vector3(0, -4.0, 0)
+		p.damping_min = 1.0
+		p.damping_max = 2.0
+		p.angular_velocity_min = -360.0
+		p.angular_velocity_max = 360.0
+		p.angle_max = 360.0
+		p.scale_amount_min = 0.7
+		p.scale_amount_max = 1.6
+		cam.add_child(p)
+		p.position = Vector3(side * 2.6, -0.6 if big else 0.6, -5.0)
+		p.emitting = true
+		p.finished.connect(p.queue_free)
+	Sound.play("clap", -4.0)
 
 
 func _process(delta: float) -> void:

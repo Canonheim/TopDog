@@ -75,7 +75,7 @@ func _ready() -> void:
 	Net.settings_changed.connect(_refresh_lobby)
 	Net.lobby_list.connect(_fill_lobby_list)
 	Players.joined.connect(func(_s): _refresh_local(); Net.update_local_players())
-	game.stage = Stage.new("dock")
+	game.stage = Stage.new("plaza")
 	game.stage.build(world, true)
 	lucha = LuchaUI.new()
 	lucha.name = "LuchaUI"
@@ -171,7 +171,7 @@ func _demo() -> void:
 	Players.clear_players()
 	Players.add_player(Players.ANY, "Parker the Barrel-Hugger")
 	local_mode = true
-	game.host_start({"mode": "scramble", "timer": 60.0, "spawn": "alternate", "stage": "dock"},
+	game.host_start({"mode": "scramble", "timer": 60.0, "spawn": "alternate", "stage": "plaza"},
 		[{"pid": 0, "name": Players.slots[0].name, "tint": Players.slots[0].tint, "peer": 1, "slot": 0}])
 	show_screen("hud")
 

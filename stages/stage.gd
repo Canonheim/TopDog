@@ -9,7 +9,13 @@ const BARREL_MODEL := preload("res://models/barrel.glb")
 ## Stage rows: deck half-width, barrel scale, spawn x, bounds.
 const STAGES := {
 	"dock": {"name": "The Dock", "deck_half": 9.0, "barrel_scale": 2.1, "spawn_x": 5.5, "kill_y": -4.0, "side_x": 16.0},
+	# THE PLAZA RING (Parker's picture): the same flat 18 m deck and barrel, dressed as
+	# a wrestling ring on a raised stage in a sunny plaza. Fall off the apron and you
+	# drop to the plaza stones (out, respawn), like falling in the sea.
+	"plaza": {"name": "The Plaza Ring", "deck_half": 9.0, "barrel_scale": 2.1, "spawn_x": 5.5, "kill_y": -4.0, "side_x": 16.0, "dress": "plaza"},
 }
+## The plaza's ground level (the ring's canvas is y = 0, its stage stands on this).
+const PLAZA_GROUND := -1.1
 
 ## The barrel's profile at the plane: (half-width, height) pairs, bottom to top,
 ## at scale 1.0 (staves bulge 0.44 at the middle, 0.40 at the rims; 0.96 tall).
@@ -43,7 +49,10 @@ func build(world: Node3D, dress := true) -> void:
 	barrel_top = BARREL_PROFILE[-1].y * bs
 	barrel_half = BARREL_PROFILE[2].x * bs
 	if dress:
-		_dress(world, half, bs)
+		if str(row.get("dress", "dock")) == "plaza":
+			_dress_plaza(world, half, bs)
+		else:
+			_dress(world, half, bs)
 
 
 func spawn_point(side: int) -> Vector2:
@@ -165,5 +174,77 @@ func _dress(vis: Node3D, half: float, bs: float) -> void:
 
 
 ## Dressing built in code is born cel (the house look); the ink outlines it.
+## The plaza ring: a raised stage with a star-painted apron skirt, a canvas floor,
+## padded corner posts with turnbuckles, red / white / blue ropes along the back and
+## the sides (none across the front, the camera's side), the barrel in the middle,
+## and plaza stones all round. The kit's `ring` replaces the ring when delivered.
+func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
+	var root := Node3D.new()
+	root.name = "PlazaRing"
+	vis.add_child(root)
+	var barrel: Node3D = BARREL_MODEL.instantiate()
+	root.add_child(barrel)
+	barrel.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5).scaled(Vector3.ONE * bs), Vector3.ZERO)
+	CelPass.celify(barrel)
+	var kit := LuchaKit.kit_model("ring")
+	var depth := 3.4  # shallow: the front apron must stay out of the camera's lower frame
+	var gy := PLAZA_GROUND
+	if kit != null:
+		# Built 9 m square on its canvas top: stretch it along the 18 m deck.
+		kit.scale = Vector3(half * 2.0 / 9.0, 1.0, depth / 9.0)
+		root.add_child(kit)
+	else:
+		var w := half * 2.0
+		# The stage block and its skirt panels, then the canvas and its rim.
+		# The stage block stops under the canvas (its top showed as a dark strip).
+		root.add_child(_boxm(Vector3(w + 0.3, -gy - 0.12, depth + 0.3), LuchaKit.INK, Vector3(0, (gy - 0.12) * 0.5, 0)))
+		var skirt := [LuchaKit.BLUE, LuchaKit.RED, LuchaKit.BLUE, LuchaKit.RED, LuchaKit.BLUE, LuchaKit.RED]
+		for k in skirt.size():
+			var pw := w / skirt.size()
+			var panel := _boxm(Vector3(pw - 0.04, -gy - 0.12, 0.06), skirt[k], Vector3(-half + pw * (k + 0.5), gy * 0.5, depth * 0.5 + 0.17))
+			root.add_child(panel)
+			var star := LuchaKit.star_mesh(0.28, LuchaKit.GOLD)
+			star.position = Vector3(-half + pw * (k + 0.5), gy * 0.5, depth * 0.5 + 0.3)
+			root.add_child(star)
+		root.add_child(_boxm(Vector3(w, 0.08, depth), Color(0.74, 0.77, 0.82), Vector3(0, -0.04, 0)))  # canvas, toned down (it glared white)
+		root.add_child(_boxm(Vector3(w + 0.36, 0.14, 0.18), LuchaKit.CREAM, Vector3(0, -0.02, depth * 0.5 + 0.06)))
+		root.add_child(_boxm(Vector3(w + 0.36, 0.14, 0.18), LuchaKit.CREAM, Vector3(0, -0.02, -depth * 0.5 - 0.06)))
+		# Corner posts, turnbuckle pads and the ropes.
+		var pz := depth * 0.5 - 0.1
+		var post_h := 1.75
+		var corners := [Vector2(-half, -pz), Vector2(half, -pz), Vector2(-half, pz), Vector2(half, pz)]
+		for c in corners:
+			var post := LuchaKit.cyl(0.11, post_h, LuchaKit.SILVER, Vector3(c.x, post_h * 0.5, c.y))
+			root.add_child(post)
+			for k in 3:
+				var pad := LuchaKit.box(Vector3(0.3, 0.22, 0.3), [LuchaKit.RED, LuchaKit.CREAM, LuchaKit.BLUE][k], Vector3(c.x, 0.5 + k * 0.45, c.y))
+				root.add_child(pad)
+		# Ring ropes in blue and white, thin: never red, which is the height line's colour.
+		var ropes := [LuchaKit.BLUE, LuchaKit.CREAM, LuchaKit.BLUE]
+		for k in 3:
+			var y := 0.5 + k * 0.45
+			root.add_child(LuchaKit.cyl(0.022, half * 2.0, ropes[k], Vector3(0, y, -pz), Vector3.RIGHT))
+			for sx in [-1.0, 1.0]:
+				root.add_child(LuchaKit.cyl(0.022, pz * 2.0, ropes[k], Vector3(sx * half, y, 0), Vector3.BACK))
+		# Ring steps at one corner.
+		for k in 3:
+			root.add_child(_boxm(Vector3(1.2, 0.36, 0.6), Color(0.3, 0.3, 0.34), Vector3(half + 0.8, gy + 0.18 + k * 0.36, pz - 0.3 - k * 0.6)))
+	# The plaza stones, out to the houses and forward under the camera.
+	root.add_child(_boxm(Vector3(90.0, 0.3, 40.0), Color(0.82, 0.72, 0.56), Vector3(0, gy - 0.15, -4.0)))
+	for k in 14:
+		var tile := _boxm(Vector3(2.8, 0.02, 2.8), Color(0.76, 0.65, 0.5), Vector3(-19.6 + k * 3.0, gy + 0.01, 4.5 + float(k % 2) * 3.0))
+		root.add_child(tile)
+
+
+func _boxm(size: Vector3, c: Color, at: Vector3) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = size
+	mi.mesh = bm
+	mi.material_override = CelPass.cel_material(c)
+	mi.position = at
+	return mi
+
+
 func _mat(c: Color, _rough: float) -> ShaderMaterial:
 	return CelPass.cel_material(c)
