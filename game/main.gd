@@ -194,23 +194,25 @@ func _build_world() -> void:
 	var e := Environment.new()
 	var sky := Sky.new()
 	var sm := ProceduralSkyMaterial.new()
-	sm.sky_top_color = Color(0.32, 0.55, 0.85)
-	sm.sky_horizon_color = Color(0.78, 0.86, 0.92)
-	sm.ground_horizon_color = Color(0.6, 0.7, 0.75)
-	sm.ground_bottom_color = Color(0.15, 0.3, 0.4)
+	# A bright cartoon sea-adventure blue (Parker 11-07): deep clean blue overhead,
+	# lighter toward the horizon, no grey haze.
+	sm.sky_top_color = Color("#1E6BFF")
+	sm.sky_horizon_color = Color("#8FD0FF")
+	sm.ground_horizon_color = Color("#8FD0FF")
+	sm.ground_bottom_color = Color("#1E5FD0")
+	sm.sky_curve = 0.12
 	sm.sun_angle_max = 20.0
 	sky.sky_material = sm
 	e.background_mode = Environment.BG_SKY
 	e.sky = sky
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	e.ambient_light_energy = 0.9
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	e.fog_enabled = true
-	e.fog_light_color = Color(0.75, 0.84, 0.92)
-	e.fog_density = 0.0035
-	e.fog_aerial_perspective = 0.4
-	e.glow_enabled = true
-	e.glow_intensity = 0.25
+	# The matte cel look (Parker 11-07: "so much bloom"): NO GLOW, no fog, ambient
+	# from a light grey half mixed with the sky (Golemheim's island). Linear, not
+	# Golemheim's AgX: AgX drained the poster reds, golds and the cartoon sky.
+	e.ambient_light_color = Color(0.85, 0.845, 0.853)
+	e.ambient_light_sky_contribution = 0.5
+	e.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	e.fog_enabled = false
+	e.glow_enabled = false
 	env.environment = e
 	add_child(env)
 	CelPass.add_outline_pass(self)  # the house ink (Forward+ only; headless runs get none)
@@ -225,16 +227,13 @@ func _build_world() -> void:
 	cam.position = _cam_target
 	cam.current = true
 	add_child(cam)
-	# The line: a glowing bar across the deck, and its label.
+	# The line: a bright bar across the deck (unshaded, no emission), and its label.
 	line_bar = MeshInstance3D.new()
 	var bm := BoxMesh.new()
 	bm.size = Vector3(30, 0.035, 0.05)
 	line_bar.mesh = bm
 	var lm := StandardMaterial3D.new()
 	lm.albedo_color = Color(1.0, 0.85, 0.25)
-	lm.emission_enabled = true
-	lm.emission = Color(1.0, 0.75, 0.2)
-	lm.emission_energy_multiplier = 2.5
 	lm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	line_bar.material_override = lm
 	line_bar.position = Vector3(0, 1.6, 0.35)

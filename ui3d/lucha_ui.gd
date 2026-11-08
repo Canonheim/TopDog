@@ -51,12 +51,10 @@ func setup(p_main: Node) -> void:
 	main = p_main
 	cam = main.cam
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	# Bright poster colours bloom under the default glow: keep glow for real lights.
+	# No bloom anywhere (Parker 11-07): the matte cel look.
 	for ch in main.get_children():
 		if ch is WorldEnvironment and (ch as WorldEnvironment).environment != null:
-			var e := (ch as WorldEnvironment).environment
-			e.glow_intensity = 0.12
-			e.glow_hdr_threshold = 1.4
+			(ch as WorldEnvironment).environment.glow_enabled = false
 	_build_sky()
 	_build_plaza()
 	_build_menus()
@@ -152,8 +150,8 @@ func _build_plaza() -> void:
 	for k in 3:
 		var b := LuchaKit.bunting(Vector3(-18 + k * 12, 6.5, -9.0), Vector3(-6 + k * 12, 6.8, -9.0), 9, 0.9)
 		plaza.add_child(b)
-		if k == 1:
-			_hang_pinata(plaza, Vector3(0, 5.8, -9.0))
+		if k == 2:
+			_hang_pinata(plaza, Vector3(8.0, 6.05, -9.0))  # on the right-hand string, clear of the HUD clock
 		for f in b.get_children():
 			if f.has_meta("sway"):
 				_flags.append(f)
@@ -390,10 +388,10 @@ func _build_hud() -> void:
 		var dome := LuchaKit.ball(0.14, LuchaKit.GOLD, Vector3(0, 0.23, 0.02))
 		dome.name = "bell_dome"
 		_bell.add_child(dome)
-	_bell.scale = Vector3.ONE * 1.9
-	_bell.position = Vector3(1.25, 1.85, 0.05)
-	buckle.add_child(_bell)
-	_bell.position -= buckle.position
+	_bell.scale = Vector3.ONE * 1.15
+	_bell.position = Vector3(1.05, 2.0, 0.05)
+	_bell.visible = false
+	_hud.add_child(_bell)
 	_info = Node3D.new()
 	_info.position = Vector3(-5.6, 2.55, 0)
 	_hud.add_child(_info)
@@ -520,6 +518,8 @@ func _process(delta: float) -> void:
 		var g: Game = main.game
 		var show := g.phase in ["turn", "round"] and not g.practice
 		_hud.get_node("Buckle").visible = show
+		if _bell != null:
+			_bell.visible = show
 		# The who's-climbing line, as a small poster at the top left.
 		var info := ""
 		match g.phase:
@@ -565,11 +565,11 @@ func _process(delta: float) -> void:
 
 # ---------------------------------------------------------------- the festive pieces
 
-static var _confetti_meshes: Array = []
+var _confetti_meshes: Array = []
 
 
 ## A kit confetti piece's mesh (a..d); a small card when the kit has none.
-static func _confetti_mesh(i: int) -> Mesh:
+func _confetti_mesh(i: int) -> Mesh:
 	if _confetti_meshes.is_empty():
 		var k := LuchaKit.kit_model("confetti")
 		if k != null:

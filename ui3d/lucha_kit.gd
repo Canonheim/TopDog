@@ -113,8 +113,18 @@ static func ball(r: float, c: Color, at := Vector3.ZERO) -> MeshInstance3D:
 	return mi
 
 
-## Extruded 3D letters (real geometry, so they're lit and inked like everything else).
+## The title font (Luckiest Guy, Apache 2.0, res://fonts/luckiest_guy/, see docs/PROVENANCE.md) when
+## it's in the project; Godot's default font until then.
+const TITLE_FONT := "res://fonts/luckiest_guy/LuckiestGuy-Regular.ttf"
+static var _font_checked := false
+
+
+## Extruded 3D letters: unshaded, drawn with alpha so the ink skips them.
 static func text3d(s: String, size: float, c: Color, depth := 0.06) -> MeshInstance3D:
+	if not _font_checked:
+		_font_checked = true
+		if ResourceLoader.exists(TITLE_FONT):
+			_font = load(TITLE_FONT)
 	var mi := MeshInstance3D.new()
 	var tm := TextMesh.new()
 	tm.text = s
@@ -125,8 +135,32 @@ static func text3d(s: String, size: float, c: Color, depth := 0.06) -> MeshInsta
 	if _font != null:
 		tm.font = _font
 	mi.mesh = tm
-	mi.material_override = mat(c)
+	mi.material_override = letter_mat(c)
 	return mi
+
+
+## THE LETTERS SKIP THE INK (Parker 11-07: "add an alpha channel to just the
+## letters so they dont get the outlines"). The house ink runs before the
+## transparent pass and reads only opaque depth and normals: a letter drawn with
+## alpha is never inked, and its fill covers any ink behind it. Unshaded, so the
+## sun never washes a word out.
+static func letter_mat(c: Color) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = c
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	return m
+
+
+## A kit model's word objects (letters_*) out of the ink: the atlas colours, alpha.
+static func letters_skip_ink(root: Node, prefix := "letters_") -> void:
+	var m := StandardMaterial3D.new()
+	m.albedo_texture = CelPass.ATLAS
+	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	for n in root.find_children(prefix + "*", "MeshInstance3D", true, false):
+		(n as MeshInstance3D).material_override = m
 
 
 ## Words with a fat dark backing (the lucha poster look): letters over a deeper,
@@ -147,7 +181,7 @@ static func poster_text(s: String, size: float, face: Color, back := INK, depth 
 
 ## A1: the TOP DOG logo.
 static func title_logo() -> Node3D:
-	var k := kit_model("title_logo")
+	var k := kit_model("title_logo")  # the logo keeps its ink, letters too (Parker 11-07)
 	if k != null:
 		# Built 3.3 x 1.01 m (r2) with its origin at the bottom centre: scale it up and
 		# centre it on the header spot.

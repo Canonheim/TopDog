@@ -28,6 +28,9 @@ const OUTLINE_HOST := preload("res://shaders/cel/outline_compositor.gd")
 # resources, so the twin survives scene changes and identical walls keep sharing one material)
 static var _twins := {}
 static var _outline_fx: CompositorEffect = null
+## Top Dog (Parker 11-07): "We don't want to use emissive right now for anything."
+## Nothing self-lights: the atlas glow mask and glTF emissive are both ignored.
+const NO_EMISSION := true
 
 
 ## Walk a scene and cel every opaque StandardMaterial3D surface. ShaderMaterials (already cel, particles, water)
@@ -77,7 +80,8 @@ static func palette_material() -> ShaderMaterial:
 	cel.shader = SHADER
 	cel.set_shader_parameter("color", Color.WHITE)
 	cel.set_shader_parameter("base_texture", ATLAS)
-	cel.set_shader_parameter("emission_texture", ATLAS_EMIT)
+	if not NO_EMISSION:
+		cel.set_shader_parameter("emission_texture", ATLAS_EMIT)
 	cel.set_shader_parameter("surface_texture", ATLAS_SURFACE)
 	_metal_specular(cel, Color.WHITE, 0.0, 1.0)
 	return cel
@@ -100,13 +104,14 @@ static func _build_cel(src: StandardMaterial3D) -> ShaderMaterial:
 		cel.set_shader_parameter("use_vertex_color", true)
 	# a flat emissive factor (a per-colour file not yet on the atlas) self-lights its surface through `emission`;
 	# the energy is glTF's emissive strength
-	if src.emission_enabled:
+	if src.emission_enabled and not NO_EMISSION:
 		cel.set_shader_parameter("emission", src.emission)
 		cel.set_shader_parameter("emission_energy", src.emission_energy_multiplier)
 	# THE COLOUR ATLAS: a PALETTE material wears the ONE shared atlas, its glow and its shine (the masks)
 	if is_palette(src):
 		cel.set_shader_parameter("base_texture", ATLAS)
-		cel.set_shader_parameter("emission_texture", ATLAS_EMIT)
+		if not NO_EMISSION:
+			cel.set_shader_parameter("emission_texture", ATLAS_EMIT)
 		cel.set_shader_parameter("surface_texture", ATLAS_SURFACE)
 	# ALWAYS, never behind a metal gate: the shader defaults ship a grey glint and rim (THE PLASTIC LAW)
 	_metal_specular(cel, src.albedo_color, src.metallic, src.roughness)
