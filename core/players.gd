@@ -44,6 +44,7 @@ const DEFAULT_PAD := {
 	"arm_r": [{"pad": JOY_BUTTON_A}, {}],
 	"leg_l": [{"pad": JOY_BUTTON_Y}, {}],
 	"leg_r": [{"pad": JOY_BUTTON_B}, {}],
+	"fart": [{"pad": JOY_BUTTON_RIGHT_SHOULDER}, {}],
 	"lock": [{"pad": JOY_BUTTON_START}, {}],
 	"pause": [{"pad": JOY_BUTTON_BACK}, {}],
 }
@@ -210,6 +211,10 @@ func limb_held(s: int, limb: int) -> bool:
 	if s < 0 or s >= slots.size():
 		return false
 	return _action(slots[s].device, ACTIONS[limb])
+
+
+func fart_held(s: int) -> bool:
+	return s >= 0 and s < slots.size() and _action(slots[s].device, "fart")
 
 
 func lock_pressed(s: int) -> bool:

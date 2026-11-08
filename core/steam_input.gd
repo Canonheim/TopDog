@@ -19,7 +19,7 @@ extends Node
 
 const STEAM_DEV_BASE := 3000
 const ACTION_SET := "Game"
-const DIGITAL := ["arm_l", "arm_r", "leg_l", "leg_r", "lock", "pause", "menu_up", "menu_down", "menu_left", "menu_right", "menu_select", "menu_back"]
+const DIGITAL := ["fart", "arm_l", "arm_r", "leg_l", "leg_r", "lock", "pause", "menu_up", "menu_down", "menu_left", "menu_right", "menu_select", "menu_back"]
 const DIR := "user://steam_input"
 
 var ok := false  # Steam Input initialised with our manifest
@@ -167,7 +167,7 @@ func _manifest(configurations: String) -> String:
 	for a in DIGITAL:
 		buttons += '\t\t\t\t"%s"\t\t"#Action_%s"\n' % [a, a]
 	var loc := '\t\t\t"Set_Game"\t\t"Top Dog"\n\t\t\t"Action_steer"\t\t"Steer the held limb"\n'
-	var names := {"arm_l": "Left hand", "arm_r": "Right hand", "leg_l": "Left foot", "leg_r": "Right foot", "lock": "Lock in", "pause": "Pause",
+	var names := {"fart": "Fart", "arm_l": "Left hand", "arm_r": "Right hand", "leg_l": "Left foot", "leg_r": "Right foot", "lock": "Lock in", "pause": "Pause",
 		"menu_up": "Menu up", "menu_down": "Menu down", "menu_left": "Menu left", "menu_right": "Menu right", "menu_select": "Menu select", "menu_back": "Menu back"}
 	for a in DIGITAL:
 		loc += '\t\t\t"Action_%s"\t\t"%s"\n' % [a, names[a]]
@@ -201,7 +201,7 @@ func _config(controller_type: String) -> String:
 	var dpad := _press("dpad_north", ["menu_up"]) + _press("dpad_south", ["menu_down"]) + \
 		_press("dpad_west", ["menu_left"]) + _press("dpad_east", ["menu_right"])
 	# Start and Back: Steam names them button_escape (Start / Menu) and button_menu (Back / View).
-	var switches := _press("button_escape", ["lock"]) + _press("button_menu", ["pause"])
+	var switches := _press("right_bumper", ["fart"]) + _press("button_escape", ["lock"]) + _press("button_menu", ["pause"])
 	return '"controller_mappings"\n{\n\t"version"\t\t"3"\n\t"revision"\t\t"1"\n\t"title"\t\t"Top Dog"\n\t"description"\t\t"Top Dog default layout"\n' + \
 		'\t"creator"\t\t"0"\n\t"progenitor"\t\t""\n\t"url"\t\t""\n\t"export_type"\t\t"unknown"\n\t"controller_type"\t\t"%s"\n' % controller_type + \
 		'\t"major_revision"\t\t"0"\n\t"minor_revision"\t\t"0"\n\t"Timestamp"\t\t"0"\n' + \

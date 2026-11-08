@@ -15,9 +15,9 @@ extends Node
 ##   if it's on something, it sticks right there.
 ## - A held limb only DRIVES while you're attached by something else: another hand
 ##   or foot stuck, or another climber holding you. Pick up your last stuck limb
-##   and you fall, holding your pose, until an unheld limb catches.
-## - The torso is three pieces with springy left/right flex. Nothing steers it; the
-##   limbs push on it as they drive.
+##   in midair and you fall. On landing, loose limbs settle into a passive grip.
+## - The torso is three pieces with springy left/right flex. With one grip the
+##   active limb can swing the whole body about the planted end.
 ## - freeze() turns every piece static where it is: the body joins the tower.
 ##
 ## THE DRAG (the reference game's model, read off it by playing it, 2026-11-07):
@@ -74,6 +74,9 @@ var removed := false
 var remote_pulls := {}
 
 var _shape_geo := {}  # piece -> [kind, data...] for height reads (local, m)
+var _active_limb := -1
+var _buttons_down := [false, false, false, false]
+var _gravity_scale := -1.0
 var _root: Node3D
 var _glyphs: Array = []  # per limb: the Sprite3D / Label3D riding the hand or foot
 
@@ -159,7 +162,7 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 		mat.friction = friction_ends if _is_end(pname) else friction_body
 		mat.bounce = Feel.get_k("bounce")
 		body.physics_material_override = mat
-		body.gravity_scale = Feel.get_k("gravity_scale")
+		body.gravity_scale = Feel.climber_gravity(false)
 		body.linear_damp = Feel.get_k("linear_damp")
 		body.angular_damp = Feel.get_k("angular_damp")
 		body.can_sleep = false
@@ -168,10 +171,10 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 		body.axis_lock_angular_y = true
 		body.collision_layer = LAYER_LIVE
 		body.collision_mask = LAYER_WORLD | LAYER_LIVE | LAYER_FROZEN
+		body.contact_monitor = true
+		body.max_contacts_reported = 6
 		if _is_end(pname):
 			body.continuous_cd = true
-			body.contact_monitor = true
-			body.max_contacts_reported = 6
 		body.set_meta("climber", self)
 		body.set_meta("piece", pname)
 		body.add_child(col)
@@ -515,10 +518,16 @@ func _physics_process(delta: float) -> void:
 	if removed or state != State.LIVE:
 		return
 	live_time += delta
-	var attached := is_attached()
+	_select_active_limb()
 	for i in limbs.size():
 		_tick_limb(i, delta)
-	_tick_joints(attached)
+	var attached := is_attached()
+	var gravity := Feel.climber_gravity(attached)
+	if gravity != _gravity_scale:
+		for body: RigidBody3D in bodies.values():
+			body.gravity_scale = gravity
+		_gravity_scale = gravity
+	_tick_joints(attached, delta)
 	for pn in remote_pulls:
 		var f: Vector2 = remote_pulls[pn]
 		if bodies.has(pn):
@@ -542,9 +551,24 @@ func stuck_count() -> int:
 	return n
 
 
+# A fresh press takes over. Older held buttons must be pressed again to unplant.
+# For edges sampled in the same tick, use the first limb in controller order.
+func _select_active_limb() -> void:
+	var pressed := -1
+	for i in limbs.size():
+		var down: bool = driver != null and driver.held(i)
+		if down and not _buttons_down[i] and pressed == -1:
+			pressed = i
+		_buttons_down[i] = down
+	if pressed != -1:
+		_active_limb = pressed
+	elif _active_limb != -1 and not _buttons_down[_active_limb]:
+		_active_limb = -1
+
+
 func _tick_limb(i: int, delta: float) -> void:
 	var l: Dictionary = limbs[i]
-	var held: bool = driver != null and driver.held(i)
+	var held := i == _active_limb
 	var just_released: bool = l.held and not held
 	if held and not l.held:
 		# Press: pick the limb up. It won't stick while held.
@@ -663,14 +687,21 @@ func release_all() -> void:
 var _drag_total := 0.0
 
 
-func _tick_joints(attached: bool) -> void:
-	var g := 9.8 * Feel.get_k("gravity_scale")
-	var dt := 1.0 / float(Engine.physics_ticks_per_second)
+func _touching_solid() -> bool:
+	for body: RigidBody3D in bodies.values():
+		for other in body.get_colliding_bodies():
+			if other.collision_layer & (LAYER_WORLD | LAYER_FROZEN):
+				return true
+	return false
+
+
+func _tick_joints(attached: bool, dt: float) -> void:
+	var g := 9.8 * (Feel.climber_gravity(true) if attached else Feel.get_k("gravity_scale"))
 	var weight := total_mass * g
+	var settling := not attached and _touching_solid()
 	var held_joints := {}
 	for l in limbs:
-		l.driving = l.held and attached
-		if l.held:
+		if l.held and attached:
 			held_joints[l.def.root] = true
 			held_joints[l.def.mid] = true
 			held_joints["wrist_l" if l.def.end == "hand_l" else ("wrist_r" if l.def.end == "hand_r" else ("ankle_l" if l.def.end == "foot_l" else "ankle_r"))] = true
@@ -706,20 +737,19 @@ func _tick_joints(attached: bool) -> void:
 				torque = f_held if held_joints.has(jn) else f_mid
 			_:
 				torque = f_held if held_joints.has(jn) else f_root
+		# On a loose landing, let gravity lower the limbs into a passive grip.
+		if settling and jn != "neck" and not jn.begins_with("spine"):
+			torque = 0.0
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, want_w * MOTOR_SIGN)
 		PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, torque * dt)
 	_drag_total = 0.0
+	for l in limbs:
+		l.driving = l.held and attached
 	if not attached:
 		return
 	# The cap is in body-weights at FULL gravity, so turning gravity down (Feel
 	# gravity_scale) never weakens the hands (Parker 11-07: more force, less gravity).
-	# ONE BUDGET (Parker 11-07: "controlling more than one limb does not give you
-	# more force"): it's shared out among the limbs you're holding.
-	var n_held := 0
-	for l in limbs:
-		if l.held:
-			n_held += 1
-	var cap := Feel.get_k("drag_strength") * total_mass * 9.8 / float(maxi(1, n_held))
+	var cap := Feel.get_k("drag_strength") * total_mass * 9.8
 	var vmax := Feel.get_k("drag_max_speed")
 	var k := Feel.get_k("drag_stiffness") * total_mass
 	var c := Feel.get_k("drag_damping") * total_mass
@@ -727,24 +757,50 @@ func _tick_joints(attached: bool) -> void:
 		var l: Dictionary = limbs[i]
 		if not l.held:
 			continue
-		var target := drag_target(i)
+		var aim = driver.aim(self, i)
+		var target := _aim_target(i, aim)
 		var end: RigidBody3D = bodies[l.def.end]
 		var p := pos2(end)
 		var v := Vector2(end.linear_velocity.x, end.linear_velocity.y)
-		var f := ((target - p) * k - v * c).limit_length(cap)
-		# More powerful, not faster: the push along the hand's motion is trimmed so
-		# this tick can't carry it past drag_max_speed (the hand is light: a full
-		# pull adds ~10 m/s in one tick). It can always brake and steer.
-		var sp := v.length()
-		if sp > 0.001:
-			var dir := v / sp
-			var along := f.dot(dir)
-			var room := maxf(0.0, (vmax - sp) * end.mass / dt)
-			if along > room:
-				f -= dir * (along - room)
-		_drag_total += f.length()
+		var swing_force := _drive_swing(aim, target - p, l.l1 + l.l2, cap)
+		# Once a nearly straight limb is pulling past its reach, the light end
+		# piece cannot absorb body-sized damping in one tick without reversing.
+		var reach: float = l.l1 + l.l2
+		var root := limb_root(i)
+		var outward := (target - root) / reach
+		var alignment := (p - root).dot(outward.normalized()) / reach
+		var extended := smoothstep(0.92, 0.99, alignment) * smoothstep(0.94, 1.0, outward.length())
+		var damping := lerpf(c, minf(c, end.mass / dt), extended)
+		var f := ((target - p) * k - v * damping).limit_length(maxf(0, cap - swing_force.length()))
+		# Limit the full velocity change, including sideways steering at speed.
+		# A limb already moving faster from the swing can coast or brake.
+		var next_v := v + f * dt / end.mass
+		next_v = next_v.limit_length(maxf(vmax, v.length()))
+		f = (next_v - v) * end.mass / dt
+		_drag_total += f.length() + swing_force.length()
 		end.apply_central_force(Vector3(f.x, f.y, 0.0))
 
+
+## Use part of the active limb's budget to turn the whole body about its sole grip.
+## Apply the opposite force at the planted end so a moving anchor feels the reaction.
+func _drive_swing(aim: Variant, target_error: Vector2, reach: float, cap: float) -> Vector2:
+	if not (aim is Dictionary) or stuck_count() != 1:
+		return Vector2.ZERO
+	var steer := (target_error / reach).limit_length(1.0)
+	if aim.has("dir"):
+		steer = (aim.dir as Vector2).normalized() * clampf(aim.mag, 0, 1)
+	for anchor in limbs:
+		if not anchor.grab.is_valid():
+			continue
+		var planted: RigidBody3D = bodies[anchor.def.end]
+		var tangent := (centre_of_mass() - pos2(planted)).normalized().orthogonal()
+		var swing := tangent * steer.dot(tangent) * cap * Feel.get_k("swing_share")
+		var force := Vector3(swing.x, swing.y, 0)
+		for piece: RigidBody3D in bodies.values():
+			piece.apply_central_force(force * piece.mass / total_mass)
+		planted.apply_central_force(-force)
+		return swing
+	return Vector2.ZERO
 
 ## Where limb i's held hand or foot is being pulled (world m). The mouse puts it
 ## on its point. A pad's stick POINTS the limb, at once (Parker 11-07: the stick is
@@ -753,8 +809,11 @@ func _tick_joints(attached: bool) -> void:
 ## over the limb's full reach. A resting stick leaves the target where it was. It
 ## starts where the hand was when the button went down.
 func drag_target(i: int) -> Vector2:
+	return _aim_target(i, driver.aim(self, i) if driver != null else null)
+
+
+func _aim_target(i: int, aim: Variant) -> Vector2:
 	var l: Dictionary = limbs[i]
-	var aim = driver.aim(self, i) if driver != null else null
 	if aim is Dictionary:
 		if aim.has("point"):
 			l.cursor = aim.point

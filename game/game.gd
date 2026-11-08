@@ -22,6 +22,7 @@ signal match_over(results: Dictionary)
 signal climber_spawned(c: Climber)
 signal host_left
 
+const FartVoice := preload("res://audio/fart_voice.gd")
 const ClimberScript := preload("res://climber/climber.gd")
 const Drivers := preload("res://climber/drivers.gd")
 const Layout := preload("res://climber/body_layout.gd")
@@ -143,27 +144,28 @@ func player_name(pid: int) -> String:
 # ================================================================ the host's rules
 
 func _physics_process(delta: float) -> void:
-	_now += delta
-	_tick_owned(delta)
+	var real_delta := delta / Engine.time_scale
+	_now += real_delta
+	_tick_owned(delta, real_delta)
 	_tick_puppets()
 	if not is_host():
 		return
 	match phase:
 		"between":
-			_between_t -= delta
+			_between_t -= real_delta
 			if _between_t <= 0.0:
 				_next()
 		"turn", "round":
 			if not practice:
-				clock -= delta
-			_clock_t -= delta
+				clock -= real_delta
+			_clock_t -= real_delta
 			if _clock_t <= 0.0:
 				_clock_t = 1.0 / CLOCK_HZ
 				_rpc_clock.rpc(clock, line)
 			_check_bounds()
 			if clock <= 0.0:
 				_time_up()
-			_tick_pending(delta)
+			_tick_pending(real_delta)
 
 
 func _next() -> void:
@@ -258,6 +260,9 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2) -> void:
 	c.tint = r.tint if r.tint is Color else Color.WHITE
 	add_child(c)
 	c.build(feet, world, KNIGHT if dress else null)
+	var voice := FartVoice.new()
+	c.bodies["pelvis"].add_child(voice)
+	c.froze.connect(func(_cl): voice.release())
 	climbers[cid] = c
 	live[pid] = cid
 	if c.owner_peer == me():
@@ -268,6 +273,8 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2) -> void:
 			c.driver = Drivers.LocalDriver.new(c.local_slot)
 			if dress:
 				c.set_glyphs(Glyphs.limb_glyphs(c.local_slot))
+		c.release_contact.connect(func(at: Vector3):
+			_rpc_slap.rpc(cid, at, Sound.pick_grab(), randf_range(0.92, 1.08)))
 		c.grab_made.connect(_on_grab_made)
 		c.grab_lost.connect(_on_grab_lost)
 	else:
@@ -309,16 +316,23 @@ func _check_bounds() -> void:
 # ---------------------------------------------------------------- lock-ins
 
 ## Owners: Lock In pressed above the line. The host decides.
-func _tick_owned(delta: float) -> void:
-	_stream_t -= delta
+func _tick_owned(delta: float, real_delta: float) -> void:
+	_stream_t -= real_delta
 	var send := _stream_t <= 0.0
 	if send:
-		_stream_t = 1.0 / STREAM_HZ
+		_stream_t += 1.0 / STREAM_HZ
 		_seq += 1
 	for cid in climbers.keys():
 		var c: Climber = climbers[cid]
 		if c.state != Climber.State.LIVE or c.owner_peer != me():
 			continue
+		if c.local_slot >= 0:
+			var voice: FartVoice = c.bodies["pelvis"].get_node("FartVoice")
+			var held := Players.fart_held(c.local_slot)
+			if held and not voice.active():
+				_rpc_fart.rpc(cid, voice.next_take(), randf_range(0.84, 1.18))
+			elif not held and voice.active():
+				_rpc_fart.rpc(cid, 0, 1.0)
 		if c.driver != null and c.driver.lock_pressed() and (phase == "turn" or phase == "round"):
 			if c.top_height() > line + LOCK_MARGIN:
 				if is_host():
@@ -613,6 +627,33 @@ static func _lerp_pose(a: PackedFloat32Array, b: PackedFloat32Array, f: float) -
 	return out
 
 
+# The owner selects the take and pitch once for every listener.
+func _audio_climber(cid: int) -> Climber:
+	var c: Climber = climbers.get(cid)
+	if c == null or c.removed or c.state == Climber.State.FROZEN:
+		return null
+	var sender := multiplayer.get_remote_sender_id()
+	return c if c.owner_peer == (sender if sender != 0 else me()) else null
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _rpc_slap(cid: int, at: Vector3, clip: String, pitch: float) -> void:
+	if _audio_climber(cid) != null and at.is_finite() and pitch >= 0.92 and pitch <= 1.08:
+		Sound.play_grab(clip, at, pitch, world)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _rpc_fart(cid: int, take: int, pitch: float) -> void:
+	var c := _audio_climber(cid)
+	if c == null:
+		return
+	var voice: FartVoice = c.bodies["pelvis"].get_node("FartVoice")
+	if take == 0:
+		voice.release()
+	elif take >= 1 and take <= FartVoice.COUNT and pitch >= 0.84 and pitch <= 1.18:
+		voice.start(take, pitch)
+
+
 # ================================================================ grabbing across machines
 
 func _on_grab_made(c: Climber, limb: int, other: Object) -> void:
@@ -662,7 +703,7 @@ func _tick_pulls_out(c: Climber, delta: float, send: bool) -> void:
 	if mine.is_empty() or not send:
 		return
 	var accel := (v - prev) / maxf(delta, 0.0001)
-	var g := Vector2(0, -9.8 * Feel.get_k("gravity_scale"))
+	var g := Vector2(0, -9.8 * Feel.climber_gravity(true))
 	# What holds me up: m (a - g), shared over every attachment I have.
 	var n := maxi(1, c.stuck_count())
 	var hold := c.total_mass * (accel - g) / float(n)
@@ -716,3 +757,4 @@ func end_match() -> void:
 	live.clear()
 	tower.clear()
 	phase = "idle"
+	phase_changed.emit(phase)

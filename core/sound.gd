@@ -66,18 +66,22 @@ func _ready() -> void:
 
 
 func _pick_stream(kind: String, clips: Array) -> AudioStream:
-	if kind != "grab":
-		return _streams.get(clips.pick_random())
+	if kind == "grab":
+		return _streams[pick_grab()]
+	return _streams.get(clips.pick_random())
+
+
+func pick_grab() -> String:
 	if randi_range(1, 100) == 1:
-		return _streams[RARE_GRAB]
+		return RARE_GRAB
 	if _grab_bag.is_empty():
-		_grab_bag = clips.duplicate()
+		_grab_bag = SFX["grab"].duplicate()
 		_grab_bag.erase(RARE_GRAB)
 		_grab_bag.shuffle()
 		if _grab_bag.back() == _last_grab:
 			_grab_bag.push_front(_grab_bag.pop_back())
 	_last_grab = _grab_bag.pop_back()
-	return _streams[_last_grab]
+	return _last_grab
 
 
 func play(kind: String, volume_db := 0.0, pitch := 1.0) -> void:
@@ -95,6 +99,27 @@ func play(kind: String, volume_db := 0.0, pitch := 1.0) -> void:
 			pl.pitch_scale = pitch * randf_range(0.94, 1.06)
 			pl.play()
 			return
+
+
+func play_grab(clip: String, at: Vector3, pitch: float, host: Node) -> void:
+	if clip not in SFX["grab"]:
+		return
+	var player := contact_player(_streams[clip], pitch, host)
+	player.global_position = at
+	player.finished.connect(player.queue_free)
+	player.play()
+
+
+func contact_player(stream: AudioStream, pitch: float, host: Node) -> AudioStreamPlayer3D:
+	var player := AudioStreamPlayer3D.new()
+	player.bus = "Effects"
+	player.stream = stream
+	player.volume_db = -4.0 + linear_to_db(10.5)
+	player.max_db += linear_to_db(8.4)
+	player.unit_size = 6.0
+	player.pitch_scale = pitch
+	host.add_child(player)
+	return player
 
 
 ## A positioned effect in the 3D world.
