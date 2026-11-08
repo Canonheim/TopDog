@@ -87,6 +87,9 @@ func _ready() -> void:
 		call_deferred("_demo")
 	if "--demo-heap" in OS.get_cmdline_user_args():
 		call_deferred("_demo_heap")
+	for a2 in OS.get_cmdline_user_args():
+		if a2.begins_with("--demo-drag="):
+			call_deferred("_demo_drag", a2.get_slice("=", 1))
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shot="):
 			_shot(a.get_slice("=", 1))
@@ -122,6 +125,45 @@ func _demo_heap() -> void:
 		c.freeze()
 		top = maxf(top, c.top_height())
 		game.line = top
+
+
+## Comparison hook: --demo-drag=DIR plays the same moves made on the reference game
+## (hold the left hand with the cursor up-left; then the right hand far up-right;
+## then the left foot out to the side) with a script inside the game, and saves a
+## frame every 0.5 s to DIR. No keys go through Windows.
+func _demo_drag(dir: String) -> void:
+	_demo()
+	await get_tree().create_timer(1.2).timeout
+	var c: Climber = null
+	for cl in game.live_climbers():
+		c = cl
+	if c == null:
+		return
+	var D = load("res://climber/drivers.gd")
+	var d = D.ScriptDriver.new()
+	c.driver = d
+	var plan := [
+		[0.0, func(): d.point_limb(0, true, c.limb_root(0) + Vector2(-0.55, 0.55))],
+		[2.0, func(): d.set_limb(0, false)],
+		[2.5, func(): d.point_limb(1, true, c.limb_root(1) + Vector2(2.6, 1.8))],
+		[5.0, func(): d.set_limb(1, false)],
+		[5.5, func(): d.point_limb(2, true, c.limb_root(2) + Vector2(-0.7, -0.25))],
+		[7.7, func(): d.set_limb(2, false)],
+	]
+	var t := 0.0
+	var k := 0
+	var shot := 0
+	while t < 9.0:
+		while k < plan.size() and t >= float(plan[k][0]):
+			(plan[k][1] as Callable).call()
+			k += 1
+		await RenderingServer.frame_post_draw
+		if int(t * 2.0) >= shot:
+			get_viewport().get_texture().get_image().save_png("%s/drag_%02d.png" % [dir, shot])
+			shot += 1
+		t += get_process_delta_time()
+	print("DEMO-DRAG done, %d frames" % shot)
+	quit_game()
 
 
 ## A battery/screenshot hook: two local bots on the barrel, no menus.
@@ -711,7 +753,7 @@ func _screen_hud() -> Control:
 	var help := Label.new()
 	help.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
 	help.position = Vector2(32, -60)
-	help.text = "Hold a limb's button (X Y A B on a pad, A W S D on the keyboard) to lift it, steer it with the stick or mouse, let go to plant it. Start / Space: lock in. Back / Esc: pause."
+	help.text = "Hold a limb's button to drag it (pad: X A hands, Y B feet; keyboard: A D hands, W S feet) and steer with the stick or mouse. Let go and it sticks. Start / Space: lock in. Back / Esc: pause."
 	help.add_theme_font_size_override("font_size", 20)
 	help.modulate = Color(1, 1, 1, 0.7)
 	c.add_child(help)

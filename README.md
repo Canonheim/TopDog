@@ -16,15 +16,16 @@ played on one plane. Godot 4.7.2, Jolt physics, GodotSteam.
   (until we have our own) Steam takes the controller, so local play stays clear
   of it. You can only move a limb while another is stuck (or a pal
   is holding you). Pick up your last stuck limb and you fall.
-- **Controls (rebindable in Controls):** a face button per limb, laid out like
-  the body.
+- **Controls (rebindable in Controls), the reference game's layout:** holding a
+  limb's button pulls its hand or foot to the cursor (mouse) or the stick's
+  target; the body follows through stiff, bendy joints.
 
   | Action | Pad | Keyboard + mouse |
   |---|---|---|
-  | Left hand | X | A (or left mouse) |
-  | Right hand | Y | W (or right mouse) |
-  | Left foot | A | S |
-  | Right foot | B | D |
+  | Left hand | X | A |
+  | Right hand | A | D |
+  | Left foot | Y | W |
+  | Right foot | B | S |
   | Steer the held limb | either stick | mouse |
   | Lock in | Start | Space / Enter |
   | Pause | Back | Esc |

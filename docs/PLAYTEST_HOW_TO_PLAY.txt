@@ -1,0 +1,49 @@
+TOP DOG - playtest build 0.2.1
+==============================
+
+Climb the barrel, then the tower of everyone who went before you. Grab, fling,
+freeze. Lock in above the line before the clock runs out.
+
+STARTING
+- Double-click TopDog.exe. Keep the two DLL files next to it.
+- Windows may warn about an unknown app (it isn't signed yet): More info > Run anyway.
+- "TopDog (no Steam).bat" starts the game with Steam switched off. Use it if a
+  controller doesn't respond: on Valve's test app Steam can take the controller.
+
+CONTROLS
+Hold a limb's button to grab that hand or foot and drag it toward the stick or
+the mouse. Let go and it sticks to whatever it's touching. You can only move a
+limb while another one is stuck (or a friend is holding you).
+
+                 Controller      Keyboard + mouse
+  Left hand      X               A
+  Right hand     A               D
+  Left foot      Y               W
+  Right foot     B               S
+  Steer          left stick      mouse
+  Lock in        Start           Space
+  Pause          Back            Esc
+
+The buttons are drawn on the hands and feet. Bright = held, green = stuck.
+Keyboard, mouse and controller swap any time in Practice.
+F1 opens the feel panel (every physics number, live) if you want to tinker.
+
+MODES
+- Practice: climb alone, no clock.
+- Play together (this PC): each controller or the keyboard joins as a player.
+- Tower: take turns; lock in above the top before your clock runs out, or
+  you're out (your body stays in the tower).
+- Scramble: everyone at once; every lock-in raises the line.
+
+PLAYING ONLINE TOGETHER
+Both of you need Steam running and logged in.
+1. One of you: Play online > Host. Then Invite friends (or the friend can find
+   the game in the lobby list with Refresh).
+2. The other: Play online > Refresh, and Join the game.
+3. Everyone presses Ready; the host presses Start.
+If Steam won't connect, the LAN option works on the same network (Host on LAN,
+then the other types the host's IP and presses Join on LAN).
+Known: online over Steam with a controller may lose the controller until the
+game has its own Steam app. Keyboard and mouse is safest online for now.
+
+Found a bug? Note what you did right before it, and a screenshot helps.

@@ -24,26 +24,31 @@ const MAX_LOCAL := 8
 
 ## Two binds per action per scheme. A bind is {"key": physical keycode},
 ## {"mouse": button}, {"pad": button} or {"axis": axis} (a trigger).
-## The reference game's layout: a face button per limb, laid out like the body
-## (X left hand, Y right hand, A left foot, B right foot), the stick aims, Start
-## locks in. The keyboard mirrors the diamond on A W S D, the mouse aims, and the
-## mouse buttons double as the hands.
+## The reference game's layout, read off its own controls card and save file on
+## 2026-11-07: hands on the diamond's sides, feet on its top and bottom.
+##   Pad:      X screen-left hand, A screen-right hand, Y left foot, B right foot,
+##             Start ends the turn (Lock in); the left stick steers.
+##   Keyboard: A left hand, D right hand, W left foot, S right foot, Space ends the
+##             turn; the mouse steers.
+## Back / Esc pause (our own; the reference game pauses on Esc too).
 const DEFAULT_KBM := {
-	"arm_l": [{"key": KEY_A}, {"mouse": MOUSE_BUTTON_LEFT}],
-	"arm_r": [{"key": KEY_W}, {"mouse": MOUSE_BUTTON_RIGHT}],
-	"leg_l": [{"key": KEY_S}, {}],
-	"leg_r": [{"key": KEY_D}, {}],
+	"arm_l": [{"key": KEY_A}, {}],
+	"arm_r": [{"key": KEY_D}, {}],
+	"leg_l": [{"key": KEY_W}, {}],
+	"leg_r": [{"key": KEY_S}, {}],
 	"lock": [{"key": KEY_SPACE}, {"key": KEY_ENTER}],
 	"pause": [{"key": KEY_ESCAPE}, {}],
 }
 const DEFAULT_PAD := {
 	"arm_l": [{"pad": JOY_BUTTON_X}, {}],
-	"arm_r": [{"pad": JOY_BUTTON_Y}, {}],
-	"leg_l": [{"pad": JOY_BUTTON_A}, {}],
+	"arm_r": [{"pad": JOY_BUTTON_A}, {}],
+	"leg_l": [{"pad": JOY_BUTTON_Y}, {}],
 	"leg_r": [{"pad": JOY_BUTTON_B}, {}],
 	"lock": [{"pad": JOY_BUTTON_START}, {}],
 	"pause": [{"pad": JOY_BUTTON_BACK}, {}],
 }
+## Saved binds from an older default layout are dropped when this changes.
+const BINDS_VERSION := 3
 const SAVE := "user://binds.cfg"
 
 var binds := {"kbm": {}, "pad": {}}
@@ -314,6 +319,7 @@ static func bind_label(b: Dictionary) -> String:
 
 func save() -> void:
 	var cf := ConfigFile.new()
+	cf.set_value("binds", "version", BINDS_VERSION)
 	cf.set_value("binds", "kbm", binds.kbm)
 	cf.set_value("binds", "pad", binds.pad)
 	cf.save(SAVE)
@@ -323,6 +329,8 @@ func _load() -> void:
 	var cf := ConfigFile.new()
 	if cf.load(SAVE) != OK:
 		return
+	if int(cf.get_value("binds", "version", 0)) != BINDS_VERSION:
+		return  # binds saved under an older default layout: start from the new defaults
 	for scheme in ["kbm", "pad"]:
 		var d = cf.get_value("binds", scheme, null)
 		if d is Dictionary:

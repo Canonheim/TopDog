@@ -190,6 +190,50 @@ Parker: "the legs and arms are like not bending. They should be bending left and
 
 **Test gotcha:** Godot's `Vector2.UP` is (0, -1), screen-style. Our world is y-up: a test stick "up" is `Vector2(0, 1)`. Real pads are flipped in `Players.stick`.
 
+## 0.1.5 (Parker, 2026-11-07): THE DRAG, read off the reference game by playing it
+
+Parker: "Still not right. Make it control like MYF. Make it feel like MYF to play. feel free to boot both games and control both to compare." And: "importantly limbs and body do not collide with each other" (already so: a climber's pieces have collision exceptions between all of them).
+
+**How it was studied.** The reference game was launched from its install and driven with AutoHotkey (keys and mouse) while its window was captured, on 2026-11-07. Its own controls card says: "Hold [Y B X A] to drag appendage. Use [L] to control appendage. [Y B X A] sticks to surfaces automatically." Its save file (`MountSave.sav`) and the glyphs drawn on its climbers give the layout:
+
+| Limb (screen side) | Pad | Keyboard |
+|---|---|---|
+| Left hand | X | A |
+| Right hand | A | D |
+| Left foot | Y | W |
+| Right foot | B | S |
+| End turn (our Lock in) | Start | Space |
+
+That is now our default (`Players.DEFAULT_PAD` / `DEFAULT_KBM`, `BINDS_VERSION` 3 drops older saved binds).
+
+**What it does, watched frame by frame:**
+- Holding a limb **pulls its hand or foot to the cursor**, hard: the hand lands on the cursor tip, the arm straightens toward it, and the whole body leans after it while the feet stay stuck.
+- Out of reach, a red line runs from the hand to the cursor; the body leans hard but the feet hold. The pull is capped.
+- Let go and the limb **keeps its pose**: the joints have friction.
+- Under a pull the knees buckle **sideways**, either way; the body sags bow-legged over time.
+- A foot does the same: it lifts, follows the cursor, the body stands on the other foot, and a free hand that brushes the ground sticks.
+- Its build lists "Weld" and "Revolute" joints and "Setting friction joints": grabs are welds, limbs are revolute joints with friction.
+
+**THE DRAG, built that way** (`Climber._tick_joints`, `drag_target`):
+- No motors aim the limbs any more. A held hand or foot is pulled toward its target by an elastic force (Feel `drag_stiffness` 140 N/m per kg of body, `drag_damping` 12), capped at `drag_strength` 1.15 body-weights, applied only while attached. The mouse puts the target on its point; a pad's stick moves it like a cursor (`hand_speed`), kept within 1.25 reaches of the limb's root.
+- **Every joint has friction** (a Jolt hinge motor holding still with a capped torque): shoulders and hips `joint_friction` 0.5, elbows and knees `bend_friction` 0.28 (0.36 stopped the knees buckling; 0.22 still held the body up), the pulled limb's own joints `held_friction` 0.06 so it follows the pull, wrists and ankles `wrist_friction` 0.1, and **a planted foot's ankle as stiff as a hip** so the body stands over a welded foot. A stuck hand's wrist stays loose so you swing from it. The spine and neck stay soft springs.
+- **Grabs are welds:** a hinge on z locked at its current angle (a free pin let the body topple over its feet at the first lean).
+- `--feel` battery, one check per watched behaviour: spawn standing on stuck feet; a held hand reaches a reachable cursor within 12 cm in 0.6 s; the feet stay stuck; out of reach the body leans 10 cm or more and the feet still hold; the body is still up afterwards; let go and the arm holds its pose; a held foot lifts and follows; the other foot stays; the standing knee buckles sideways; loose in the air a held limb isn't pulled.
+- `--demo-drag=DIR` replays the same moves inside the game and saves a frame every 0.5 s (no keys go through Windows).
+
+**THE KEY-GUARD LAW (an incident).** The first try at driving our own game with AutoHotkey sent a keypress into Parker's browser (a Reddit comment box got a stray "a"; nothing was submitted; he was told). The driver had sent keys even when the game window never came forward. `drive.ahk` now checks the target window is the ACTIVE window before every input and aborts, releasing held keys, if not. Our own game is driven from inside (`--demo-drag`) instead.
+
+## 0.2.1 (Parker, 2026-11-07): the first playtest build, controls + UI merged
+
+Parker: "get the new controls version and the UI updates all together however we have them so far, I need a playable build I can send to my partner so I can play test." And: "make the game default to 40% master volume."
+
+- **Merged** the `luchador-ui` branch (worktree `TopDog-luchador`, commit ad0f725: the 3D luchador front end, the plaza, the luchador theme, the rename to **Top Dog**) into main on top of 0.1.5's drag controls. One conflict, `net.gd`'s tag and version: resolved to tag `topdog` (matching `lobby_logic.gd`) and `GAME_VERSION` 0.2.1.
+- **The Top Dog Kit's models** (title logo, belt button, five clouds) come in by `tools/sync_kit.py`, copied from the uncommitted file in that worktree; it rewrites their atlas uri for `res://kit/models/`. The belt button is the re-landed one (crest backing moved off the plate, golds on SATIN).
+- **The crest crowns the focused belt only** (`Menu3D._process`); on every belt the crests overlapped the labels above.
+- **Master volume defaults to 40%** (`Sound.volumes`). The rename gives the game a new user-data folder, so saved options and binds start fresh.
+- **Export:** `builds/TopDog.exe`; the no-Steam launcher and the upload script follow the new name. The playtest zip is `builds/TopDog_playtest_0.2.1.zip` (exe, the two Steam DLLs, `HOW TO PLAY.txt`, the no-Steam launcher); the how-to is kept as `docs/PLAYTEST_HOW_TO_PLAY.txt`.
+- **Checked:** lint (31 scripts), every battery, the pad driving the 3D menus (D-pad, stick, A, B, keyboard), the exported build's title and match screens, and a clean exit.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

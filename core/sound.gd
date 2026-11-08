@@ -30,7 +30,7 @@ var _pool: Array = []
 var _pool3d: Array = []
 var _music: AudioStreamPlayer
 var _music_id := ""
-var volumes := {"Master": 0.9, "Music": 0.6, "Effects": 0.9}
+var volumes := {"Master": 0.4, "Music": 0.6, "Effects": 0.9}  # Master defaults to 40% (Parker, 2026-11-07)
 
 
 func _ready() -> void:
