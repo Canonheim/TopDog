@@ -45,6 +45,7 @@ enum State { LIVE, PUPPET, FROZEN }
 
 signal froze(climber: Climber)
 signal grab_made(climber: Climber, limb: int, other: Object)
+signal release_contact(position: Vector3)
 signal grab_lost(climber: Climber, limb: int)
 
 var state := State.LIVE
@@ -543,6 +544,7 @@ func stuck_count() -> int:
 func _tick_limb(i: int, delta: float) -> void:
 	var l: Dictionary = limbs[i]
 	var held: bool = driver != null and driver.held(i)
+	var just_released: bool = l.held and not held
 	if held and not l.held:
 		# Press: pick the limb up. It won't stick while held.
 		if l.grab.is_valid():
@@ -550,12 +552,15 @@ func _tick_limb(i: int, delta: float) -> void:
 		l.regrip = 0.0
 		l.hold = _current_rel(i)
 		l.cursor = limb_end(i)  # steering starts from where the hand is
-	elif not held and l.held:
+	elif just_released:
 		l.regrip = 0.0  # release: plant it right now if it's on something
 	l.held = held
 	l.regrip = maxf(0.0, l.regrip - delta)
 	if not held and not l.grab.is_valid() and l.regrip <= 0.0:
 		_try_grab(i)
+		if just_released and l.grab.is_valid():
+			var end: RigidBody3D = bodies[l.def.end]
+			release_contact.emit(end.global_position)
 
 
 func _try_grab(i: int) -> void:

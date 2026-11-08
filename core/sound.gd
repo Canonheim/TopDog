@@ -2,8 +2,14 @@ extends Node
 ## SOUND: buses, one-shot effects and the music. Autoload "Sound".
 ## Buses are built in code: Master > Music, Effects. Volumes save to options.cfg.
 
+const RARE_GRAB := "grab_slap_10"
 const SFX := {
-	"grab": ["slap_1", "slap_2", "slap_3", "slap_4"],
+	"grab": [
+		"grab_slap_01", "grab_slap_02", "grab_slap_03", "grab_slap_05", "grab_slap_06",
+		"grab_slap_07", "grab_slap_08", "grab_slap_09", RARE_GRAB, "grab_slap_11",
+		"grab_slap_12", "grab_slap_13", "grab_slap_14", "grab_slap_15", "grab_slap_16",
+		"grab_slap_17", "grab_slap_18", "grab_slap_19", "grab_slap_20",
+	],
 	"grip": ["grip"],
 	"strain": ["grunt_jump_1", "grunt_jump_2", "grunt_jump_3"],
 	"thud": ["thud", "land_soft", "hit_flesh"],
@@ -26,6 +32,8 @@ const MUSIC := {
 const OPTIONS := "user://options.cfg"
 
 var _streams := {}
+var _grab_bag: Array = []
+var _last_grab := ""
 var _pool: Array = []
 var _pool3d: Array = []
 var _music: AudioStreamPlayer
@@ -57,11 +65,26 @@ func _ready() -> void:
 	_load_options()
 
 
+func _pick_stream(kind: String, clips: Array) -> AudioStream:
+	if kind != "grab":
+		return _streams.get(clips.pick_random())
+	if randi_range(1, 100) == 1:
+		return _streams[RARE_GRAB]
+	if _grab_bag.is_empty():
+		_grab_bag = clips.duplicate()
+		_grab_bag.erase(RARE_GRAB)
+		_grab_bag.shuffle()
+		if _grab_bag.back() == _last_grab:
+			_grab_bag.push_front(_grab_bag.pop_back())
+	_last_grab = _grab_bag.pop_back()
+	return _streams[_last_grab]
+
+
 func play(kind: String, volume_db := 0.0, pitch := 1.0) -> void:
 	var list: Array = SFX.get(kind, [])
 	if list.is_empty():
 		return
-	var s = _streams.get(list.pick_random())
+	var s = _pick_stream(kind, list)
 	if s == null:
 		return
 	for p in _pool:
@@ -79,7 +102,7 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	var list: Array = SFX.get(kind, [])
 	if list.is_empty():
 		return
-	var s = _streams.get(list.pick_random())
+	var s = _pick_stream(kind, list)
 	if s == null:
 		return
 	var host: Node = parent if parent != null else get_tree().current_scene
@@ -92,6 +115,8 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	p.volume_db = volume_db
 	p.pitch_scale = randf_range(0.92, 1.08)
 	p.unit_size = 6.0
+	if kind == "grab":
+		p.max_db += linear_to_db(8.4)  # Preserve the gain increase at close range.
 	host.add_child(p)
 	p.global_position = where
 	p.play()

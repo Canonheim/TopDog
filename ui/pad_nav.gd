@@ -171,7 +171,7 @@ func _edge(dev: int, action: String, down: bool, is_dir: bool) -> void:
 	else:
 		if down:
 			_note(dev, action.trim_prefix("ui_"))
-			if action == "ui_cancel":
+			if active and action == "ui_cancel":
 				back_pressed.emit()
 		_send(action, down)
 

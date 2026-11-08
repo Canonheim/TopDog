@@ -382,8 +382,7 @@ func _on_spawned(c: Climber) -> void:
 	tag.no_depth_test = true
 	world.add_child(tag)
 	tags[c.climber_id] = tag
-	c.grab_made.connect(func(cl, limb, _o): Sound.play_at("grab", Vector3(cl.limb_end(limb).x, cl.limb_end(limb).y, 0), -4.0, world))
-	c.grab_lost.connect(func(_cl, _l): Sound.play("grip", -14.0))
+	c.release_contact.connect(func(at: Vector3): Sound.play_at("grab", at, -4.0 + linear_to_db(10.5), world))
 	c.froze.connect(func(_cl): Sound.play("thud", -6.0))
 
 
