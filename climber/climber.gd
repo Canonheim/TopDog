@@ -28,8 +28,8 @@ extends Node
 ## motor holding still with a capped torque), so the body keeps whatever pose it's
 ## pushed into, and under a pull the knees and elbows buckle sideways, either way.
 ## The pulled limb's own joints are nearly free so it follows the pull. The torso's
-## two spine joints and the neck are soft springs. A climber's own pieces never
-## collide with each other.
+## two spine joints and the neck are soft springs. A hand or foot can contact
+## its own upper segment at a deep fold.
 
 const Layout := preload("res://climber/body_layout.gd")
 
@@ -77,6 +77,7 @@ var remote_pulls := {}
 var _shape_geo := {}  # piece -> [kind, data...] for height reads (local, m)
 var _grunt_wait := 2.0
 var _active_limb := -1
+var _neutral_angles := {}
 var _buttons_down := [false, false, false, false]
 var _gravity_scale := -1.0
 var _root: Node3D
@@ -195,10 +196,16 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 				mesh.global_transform = keep
 	if visual != null:
 		visual.queue_free()
-	# No self-collision: a climber's own pieces pass through each other.
+	# Connected shapes overlap at their hinge. Let only the non-adjacent pair
+	# within each limb collide. Other limbs and the torso can cross its path.
+	var upper_by_end := {}
+	for limb in Layout.LIMBS:
+		upper_by_end[limb.end] = limb.up
 	var names := Layout.ORDER
 	for i in names.size():
 		for j in range(i + 1, names.size()):
+			if upper_by_end.get(names[i]) == names[j] or upper_by_end.get(names[j]) == names[i]:
+				continue
 			bodies[names[i]].add_collision_exception_with(bodies[names[j]])
 	_build_joints(feet)
 	_build_limbs()
@@ -251,10 +258,9 @@ func _build_joints(feet: Vector2) -> void:
 		# Hinge axis = local z of both frames; frames at the anchor, unrotated.
 		PhysicsServer3D.joint_make_hinge(rid, a.get_rid(), Transform3D(Basis(), a.to_local(at3)), b.get_rid(), Transform3D(Basis(), b.to_local(at3)))
 		PhysicsServer3D.joint_disable_collisions_between_bodies(rid, true)
-		# Limbs turn freely all the way round, as the reference game's do (Parker
-		# 2026-11-07: "move 360 degrees with no limits and go through each other").
-		# Only the torso's two spine joints and the neck keep their limits.
-		if jd.kind == "spine" or jd.kind == "neck":
+		# The whole limb can revolve about the shoulder or hip. Stops between
+		# adjacent pieces keep them from folding through their shared hinge.
+		if jd.kind in ["spine", "neck", "mid"]:
 			set_hinge_limits(rid, float(lim[0]), float(lim[1]))
 		else:
 			lim = [-360.0, 360.0]
@@ -324,12 +330,17 @@ func _build_limbs() -> void:
 		var root_at: Vector2 = (Layout.JOINTS[ld.root].at + Layout.shift(ld.root)) * s
 		var mid_at: Vector2 = (Layout.JOINTS[ld.mid].at + Layout.shift(ld.mid)) * s
 		var end_pt: Vector2 = Layout.end_point(ld.end) * s
+		var upper_length := root_at.distance_to(mid_at)
+		var lower_length := mid_at.distance_to(end_pt)
+		var fold_angle: float = joints[ld.mid].hi
+		var folded_reach := Vector2(upper_length, 0) + Vector2.from_angle(fold_angle) * lower_length
 		var end_shape: Array = Layout.PIECES[ld.end].shape
 		var end_r: float = (end_shape[2] if end_shape[0] == "circle" else (end_shape[2] as Vector2).x) * s
 		limbs.append({
 			"def": ld,
-			"l1": root_at.distance_to(mid_at),
-			"l2": mid_at.distance_to(end_pt),
+			"l1": upper_length,
+			"l2": lower_length,
+			"min_reach": folded_reach.length(),
 			"end_r": end_r,
 			"held": false,
 			"grab": RID(),  # pin joint RID while stuck
@@ -337,7 +348,6 @@ func _build_limbs() -> void:
 			"grab_climber": null,  # its climber, if it is one
 			"grab_piece": "",
 			"regrip": 0.0,
-			"hold": [0.0, 0.0],  # root/mid targets kept while the stick rests
 			"cursor": Vector2.ZERO,  # where a held hand or foot is being steered (world m)
 			"driving": false,
 		})
@@ -578,7 +588,7 @@ func _tick_limb(i: int, delta: float) -> void:
 		if l.grab.is_valid():
 			release(i)
 		l.regrip = 0.0
-		l.hold = _current_rel(i)
+		_neutral_angles.clear()
 		l.cursor = limb_end(i)  # steering starts from where the hand is
 	elif just_released:
 		l.regrip = 0.0  # release: plant it right now if it's on something
@@ -702,12 +712,21 @@ func _tick_joints(attached: bool, dt: float) -> void:
 	var g := 9.8 * (Feel.climber_gravity(true) if attached else Feel.get_k("gravity_scale"))
 	var weight := total_mass * g
 	var settling := not attached and _touching_solid()
+	var aim = driver.aim(self, _active_limb) if attached and _active_limb >= 0 and driver != null else null
 	var held_joints := {}
 	for l in limbs:
 		if l.held and attached:
 			held_joints[l.def.root] = true
 			held_joints[l.def.mid] = true
 			held_joints["wrist_l" if l.def.end == "hand_l" else ("wrist_r" if l.def.end == "hand_r" else ("ankle_l" if l.def.end == "foot_l" else "ankle_r"))] = true
+	# A centered stick holds joint angles relative to the body. Pulling toward
+	# the old world-space cursor here makes a bent wrist or ankle chase it.
+	if aim != null or held_joints.is_empty():
+		_neutral_angles.clear()
+	elif _neutral_angles.is_empty():
+		for jn in held_joints:
+			var j: Dictionary = joints[jn]
+			_neutral_angles[jn] = angle_of(j.b) - angle_of(j.a)
 	var f_root := Feel.get_k("joint_friction") * weight * 0.5
 	var f_mid := Feel.get_k("bend_friction") * weight * 0.5
 	var f_held := Feel.get_k("held_friction") * weight * 0.5
@@ -740,6 +759,9 @@ func _tick_joints(attached: bool, dt: float) -> void:
 				torque = f_held if held_joints.has(jn) else f_mid
 			_:
 				torque = f_held if held_joints.has(jn) else f_root
+		if _neutral_angles.has(jn):
+			want_w = 30.0 * angle_difference(rel, _neutral_angles[jn])
+			torque = f_root
 		# On a loose landing, let gravity lower the limbs into a passive grip.
 		if settling and jn != "neck" and not jn.begins_with("spine"):
 			torque = 0.0
@@ -748,7 +770,7 @@ func _tick_joints(attached: bool, dt: float) -> void:
 	_drag_total = 0.0
 	for l in limbs:
 		l.driving = l.held and attached
-	if not attached:
+	if not attached or aim == null:
 		return
 	# The cap is in body-weights at FULL gravity, so turning gravity down (Feel
 	# gravity_scale) never weakens the hands (Parker 11-07: more force, less gravity).
@@ -760,21 +782,22 @@ func _tick_joints(attached: bool, dt: float) -> void:
 		var l: Dictionary = limbs[i]
 		if not l.held:
 			continue
-		var aim = driver.aim(self, i)
 		var target := _aim_target(i, aim)
 		_try_exertion(i, aim)
 		var end: RigidBody3D = bodies[l.def.end]
 		var p := pos2(end)
 		var v := Vector2(end.linear_velocity.x, end.linear_velocity.y)
 		var swing_force := _drive_swing(aim, target - p, l.l1 + l.l2, cap)
-		# Once a nearly straight limb is pulling past its reach, the light end
-		# piece cannot absorb body-sized damping in one tick without reversing.
+		# A light end needs timestep-safe braking throughout a reachable stick
+		# command. Beyond reach, retain the tuned swing until the limb straightens.
 		var reach: float = l.l1 + l.l2
 		var root := limb_root(i)
 		var outward := (target - root) / reach
 		var alignment := (p - root).dot(outward.normalized()) / reach
 		var extended := smoothstep(0.92, 0.99, alignment) * smoothstep(0.94, 1.0, outward.length())
-		var damping := lerpf(c, minf(c, end.mass / dt), extended)
+		var reachable := 1.0 - smoothstep(1.0, 1.04, outward.length()) if aim.has("dir") else 0.0
+		var folded := 1.0 - smoothstep(l.min_reach, float(l.min_reach) + 0.05 * reach, target.distance_to(root))
+		var damping := lerpf(c, minf(c, end.mass / dt), maxf(folded, maxf(reachable, extended)))
 		var f := ((target - p) * k - v * damping).limit_length(maxf(0, cap - swing_force.length()))
 		# Limit the full velocity change, including sideways steering at speed.
 		# A limb already moving faster from the swing can coast or brake.
@@ -810,7 +833,7 @@ func _drive_swing(aim: Variant, target_error: Vector2, reach: float, cap: float)
 ## on its point. A pad's stick POINTS the limb, at once (Parker 11-07: the stick is
 ## instant, as in the reference game): the target sits out from the limb's root
 ## (shoulder or hip) in the stick's direction, at the stick's push times a little
-## over the limb's full reach. A resting stick leaves the target where it was. It
+## over the limb's full reach. A resting stick suspends the pull and holds the pose. The cursor
 ## starts where the hand was when the button went down.
 func drag_target(i: int) -> Vector2:
 	return _aim_target(i, driver.aim(self, i) if driver != null else null)
@@ -838,10 +861,18 @@ func _aim_target(i: int, aim: Variant) -> Vector2:
 	var l: Dictionary = limbs[i]
 	if aim is Dictionary:
 		if aim.has("point"):
-			l.cursor = aim.point
+			var root := limb_root(i)
+			var offset: Vector2 = aim.point - root
+			if offset.length() < l.min_reach:
+				# At the pivot itself, keep the direction the limb already faces.
+				var direction := offset.normalized() if not offset.is_zero_approx() else (limb_end(i) - root).normalized()
+				l.cursor = root + direction * float(l.min_reach)
+			else:
+				l.cursor = aim.point
 		elif aim.has("dir"):
 			var reach: float = (l.l1 + l.l2) * Feel.get_k("stick_reach")
-			l.cursor = limb_root(i) + (aim.dir as Vector2).normalized() * clampf(float(aim.mag), 0.0, 1.0) * reach
+			var radius := maxf(l.min_reach, clampf(float(aim.mag), 0.0, 1.0) * reach)
+			l.cursor = limb_root(i) + (aim.dir as Vector2).normalized() * radius
 	return l.cursor
 
 
@@ -858,15 +889,6 @@ func _end_stuck(joint_name: String) -> bool:
 		if l.grab.is_valid() and (l.def.end as String) == Layout.JOINTS[joint_name].b:
 			return true
 	return false
-
-
-func _current_rel(i: int) -> Array:
-	var l: Dictionary = limbs[i]
-	var r: Dictionary = joints.get(l.def.root, {})
-	var m: Dictionary = joints.get(l.def.mid, {})
-	if r.is_empty() or m.is_empty():
-		return [0.0, 0.0]
-	return [wrapf(angle_of(r.b) - angle_of(r.a), -PI, PI), wrapf(angle_of(m.b) - angle_of(m.a), -PI, PI)]
 
 
 ## World position (y-up m) of limb i's root joint and end.

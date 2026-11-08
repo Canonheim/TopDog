@@ -194,7 +194,7 @@ func _spike_limits() -> void:
 		head.apply_torque(Vector3(0, 0, -push * head.mass * 9.8 * 0.4))
 		await get_tree().physics_frame
 		worst = maxf(worst, c.worst_limit_excess())
-	t("limits: spine and neck shoved with 2x an arm's weight overshoot under 8 deg (limbs are free, no limits)", worst < 8.0, "worst %.1f deg" % worst)
+	t("limits: joint overshoot stays under 8 deg during a loaded hang", worst < 8.0, "worst %.1f deg" % worst)
 	await frames(240)
 	t("limits: spine and neck back inside their limits once let go", c.worst_limit_excess() < 1.0, "%.2f deg" % c.worst_limit_excess())
 
@@ -259,7 +259,7 @@ func _spike_fling() -> void:
 		bar.queue_free()
 		await frames(1)
 	t("fling: 20 hard drags and releases, no joint opens past 8 cm", worst < 0.08, "worst %.4f m" % worst)
-	t("fling: spine and neck limits hold under hard drags (under 40 deg over; limbs are free)", worst_lim < 40.0, "worst %.1f deg" % worst_lim)
+	t("fling: joint limits hold under hard drags (under 40 deg over)", worst_lim < 40.0, "worst %.1f deg" % worst_lim)
 	t("fling: nothing explodes (finite, in the plane, under 40 m/s)", bad == 0 and max_speed < 40.0, "bad %d, top %.1f m/s" % [bad, max_speed])
 	t("fling: the swings actually fling (half travel > 0.5 m)", flown >= 10, "%d/20" % flown)
 
@@ -672,9 +672,9 @@ func _run_climb() -> void:
 	await seconds(0.5)
 	var y0 := c.centre_of_mass().y
 	var log := ["standing at x %.2f: feet stuck %s %s, near hand stuck %s" % [c.centre_of_mass().x, c.limbs[2].grab.is_valid(), c.limbs[3].grab.is_valid(), c.limbs[0].grab.is_valid()]]
-	d.point_limb(0, true, Vector2(bx + 0.12, 1.75))  # pick the near hand up: lift it clear of the side first
+	d.point_limb(0, true, Vector2(bx + 0.25, 1.95))  # pick the near hand up: lift it clear of the side first
 	await seconds(0.8)
-	d.point_limb(0, true, Vector2(bx - 0.03, 1.75))  # then press it onto the side, high
+	d.point_limb(0, true, Vector2(bx - 0.20, 1.95))  # then press it onto the side, high
 	await seconds(0.4)
 	log.append("hand reaching: end at %s" % c.limb_end(0))
 	d.set_limb(0, false)
@@ -1213,6 +1213,15 @@ func _run_pace() -> void:
 
 
 func _run_fullreach() -> void:
+	await _check_reach(1.0)
+
+
+func _run_partialreach() -> void:
+	for magnitude in [Feel.get_k("stick_deadzone") + 0.001, 0.35, 0.5, 0.65, 0.8, 0.86, 0.88, 0.89, 0.9, 0.91, 0.99]:
+		await _check_reach(magnitude)
+
+
+func _check_reach(magnitude: float) -> void:
 	var main := preload("res://game/main.gd").new()
 	main.screen = "hud"
 	main._on_phase("turn")
@@ -1227,7 +1236,7 @@ func _run_fullreach() -> void:
 			c.attach(j, bar)
 		var d: Drivers.ScriptDriver = c.driver
 		var dir := Vector2(-1.0 if i % 2 == 0 else 1.0, 0.6 if i < 2 else -0.6).normalized()
-		d.set_limb(i, true, dir)
+		d.set_limb(i, true, dir, magnitude)
 		await seconds(2.0)
 		var end: RigidBody3D = c.bodies[c.limbs[i].def.end]
 		var previous := c.limb_end(i) - c.limb_root(i)
@@ -1250,10 +1259,90 @@ func _run_fullreach() -> void:
 			previous_angle = angle
 			last_turn = turn
 		var extension := previous.dot(dir) / float(c.limbs[i].l1 + c.limbs[i].l2)
-		t("full reach: a sustained pull extends the limb smoothly", extension > 0.90 and jitter < 0.003 and twist < deg_to_rad(3.0), "limb %d, %.0f%% reach, %.1f mm and %.1f deg frame-step variation" % [i, 100 * extension, jitter * 1000, rad_to_deg(twist)])
+		var minimum := float(c.limbs[i].min_reach) / float(c.limbs[i].l1 + c.limbs[i].l2)
+		var expected := clampf(magnitude * Feel.get_k("stick_reach"), minimum, 1.0)
+		t("a sustained pull reaches the stick target smoothly", absf(extension - expected) < 0.10 and jitter < 0.003 and twist < deg_to_rad(3.0), "limb %d, %.1f%% stick, %.0f%% reach, %.1f mm and %.1f deg frame-step variation" % [i, 100 * magnitude, 100 * extension, jitter * 1000, rad_to_deg(twist)])
 		c.remove()
 		for bar in anchors:
 			bar.queue_free()
 		await frames(2)
 	main._on_phase("over")
 	main.free()
+
+
+func _run_neutral() -> void:
+	for i in 4:
+		var c := spawn(Vector2(0, 5))
+		var anchors := []
+		for j in ([2, 3] if i < 2 else [1 - (i % 2), i ^ 1]):
+			var bar := bar_at(c.limb_end(j))
+			anchors.append(bar)
+			c.attach(j, bar)
+		var d: Drivers.ScriptDriver = c.driver
+		var base: RigidBody3D = c.joints[c.limbs[i].def.root].a
+		var end: RigidBody3D = c.bodies[c.limbs[i].def.end]
+		for action in ["press", "recenter", "reselect bent limb"]:
+			if action == "reselect bent limb":
+				d.set_limb(i, false)
+				await frames(3)
+			elif action == "recenter":
+				d.set_limb(i, true, Vector2(1 if i % 2 else -1, 0.4), 0.45)
+				await frames(40)
+				t("neutral: steering resumes without a second press", c._drag_total > 0.0)
+			d.set_limb(i, true)
+			await frames(2)
+			var rest := base.to_local(end.global_position)
+			var rotation := Climber.angle_of(end) - Climber.angle_of(base)
+			var drift := 0.0
+			var twist := 0.0
+			var drag := 0.0
+			for tick in 120:
+				await frames(1)
+				drag = maxf(drag, c._drag_total)
+				if tick >= 24:
+					drift = maxf(drift, rest.distance_to(base.to_local(end.global_position)))
+					twist = maxf(twist, absf(angle_difference(rotation, Climber.angle_of(end) - Climber.angle_of(base))))
+			t("neutral: selected limb waits in its body-relative pose", drag == 0 and drift < 0.05 and twist < deg_to_rad(12), "limb %d, %s, %.3f m, %.1f deg, %.1f N drag" % [i, action, drift, rad_to_deg(twist), drag])
+		c.remove()
+		for bar in anchors:
+			bar.queue_free()
+		await frames(2)
+
+
+func _run_selffold() -> void:
+	for i in 4:
+		var c := spawn(Vector2(0, 6))
+		var ld: Dictionary = c.limbs[i].def
+		c.set_physics_process(false)
+		for name in c.bodies:
+			var b: RigidBody3D = c.bodies[name]
+			b.gravity_scale = 0
+			b.freeze = name not in [ld.up, ld.lo, ld.end]
+		var root: Dictionary = c.joints[ld.root]
+		var mid: Dictionary = c.joints[ld.mid]
+		for j in [root, mid]:
+			PhysicsServer3D.hinge_joint_set_param(j.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, 2.0)
+		PhysicsServer3D.hinge_joint_set_param(root.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, 5.0 * Climber.MOTOR_SIGN)
+		var previous := Climber.angle_of(root.b)
+		var travel := 0.0
+		for tick in 220:
+			await frames(1)
+			var angle := Climber.angle_of(root.b)
+			travel += angle_difference(previous, angle)
+			previous = angle
+		t("fold: the whole limb can revolve past 360 degrees", travel > TAU, "%s %.0f deg" % [ld.id, rad_to_deg(travel)])
+		PhysicsServer3D.hinge_joint_set_param(root.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, 0)
+		for direction in [1.0, -1.0]:
+			PhysicsServer3D.hinge_joint_set_param(mid.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, direction * 7.0 * Climber.MOTOR_SIGN)
+			var worst := 0.0
+			var at_stop := 0.0
+			for tick in 180:
+				await frames(1)
+				var fold := rad_to_deg(angle_difference(Climber.angle_of(mid.a), Climber.angle_of(mid.b)))
+				worst = maxf(worst, absf(fold))
+				if tick == 159:
+					at_stop = fold
+				if tick == 179:
+					t("fold: the joint bends then stalls under sustained drive", absf(fold * direction - rad_to_deg(mid.hi)) < 5 and worst < rad_to_deg(mid.hi) + 5 and absf(fold - at_stop) < 3, "%s %.0f deg, max %.0f" % [ld.mid, fold, worst])
+		c.remove()
+		await frames(2)
