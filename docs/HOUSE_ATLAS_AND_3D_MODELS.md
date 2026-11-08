@@ -19,7 +19,7 @@ and (for Top Dog, by Parker's call) **no emissive colours at all**.
 | The pass that applies the look to loaded models | `scripts/cel_pass.gd` (class `CelPass`) | yes |
 | Named-colour lookup in GDScript | `scripts/atlas_map.gd` | yes |
 | The game's copies of the UI/plaza models | `kit/models/*.glb` | yes |
-| The climber (Metal Knight) and the barrel | `models/metal_knight.glb`, `models/barrel.glb` | yes |
+| The climber (Skeleton Knight, the default; Metal Knight kept) and the barrel | `models/skeleton_knight.glb`, `models/metal_knight.glb`, `models/barrel.glb` | yes |
 | The **Top Dog Kit**: one build script per model, previews, the parts list | Parker's machine, `Desktop\Clod Things\Top Dog Kit\` | **no** |
 | The **House Style 3D Kit**: the atlas tools, gates, checker, the full style guide and recipe book | Parker's machine, `Desktop\House Style 3D Kit\` | **no** |
 
@@ -203,15 +203,22 @@ The ink reads only opaque depth and normals, so anything drawn in the transparen
 
 ## The climber's model (skins)
 
-The climber is the **Metal Knight**, `models/metal_knight.glb`, split into **16 pieces with fixed mesh
-names** (the "Defaultio" contract):
+The default climber is the **Skeleton Knight**, `models/skeleton_knight.glb` (`Game.KNIGHT`). The Metal Knight,
+`models/metal_knight.glb`, is kept. Both are split into **16 pieces with fixed mesh names** (the "Defaultio"
+contract):
 
 `Head`, `Chest`, `Navel`, `Pelvis`, `Shoulder`, `Wrist`, `Hand`, `L_Shoulder`, `L_Wrist`, `L_Hand`, `Thigh`,
 `Shin`, `Foot`, `L_Thigh`, `L_Shin`, `L_Foot`.
 
 - Each piece is one physics body (`climber/body_layout.gd` lists each with its shape and mass).
 - Any skin built on those 16 names drops in piece by piece.
-- Each player's knight is washed toward their colour (`Climber.set_tint`).
+- **No colour wash:** every climber wears the model's own colours. Players will pick skins later; the player
+  colour is only on name tags and cards.
+- **A skin that embeds its own atlas** (the Skeleton Knight came with Golemheim's) can point at the shared one
+  instead, if every colour it uses is pixel-identical there: set its image to the uri
+  `../palette/house_atlas.png` and its sampler to nearest.
+- The arm pieces render `shoulder_flare` further out and `shoulder_drop` lower than modelled
+  (`Layout.shift()`). Model to the contract; the game applies the offset.
 
 ## Checklist for a new model
 

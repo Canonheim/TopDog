@@ -7,9 +7,11 @@ how the 3D models and the look work, read `docs/HOUSE_ATLAS_AND_3D_MODELS.md`.
 ## What it is
 
 A **physics climbing party game**: grab, fling, freeze, and top your pals. Each player controls a ragdoll
-luchador-style knight **one limb per button**. You start at a barrel in a wrestling ring in a sunny Mexican
+climber (the Skeleton Knight for now) **one limb per button**. You start at a barrel in a wrestling ring in a sunny Mexican
 plaza and climb. When your turn ends, your body **freezes where it is and becomes part of the tower**, so
 the next climber goes up over you. Lock in above the line before the clock runs out, or you're out.
+The first line sits 0.45 m above the barrel's top (`Stage.FIRST_LINE_ABOVE`), out of a standing climber's
+reach.
 
 It's Parker's spiritual successor to a classic limb-per-button climbing party game. **Never name that game
 in files, commits or the build.** Call it "the reference game". Copy its mechanics only: never its art,
@@ -42,6 +44,13 @@ names, characters, music, sounds, text or levels.
 Holding a limb **pulls its hand or foot toward the target** with a strong, capped elastic force, and the body
 follows through stiff, bendy joints.
 
+- **One budget:** the cap (`drag_strength`, 2.4 body-weights at full gravity) is **shared among the held
+  limbs**, so holding more limbs never pulls harder. One held limb gets all of it and can drag the whole body.
+- **Power, not speed:** a held hand or foot is never pushed faster than `drag_max_speed` (12.5 m/s). The trim
+  looks one physics tick ahead, because the hand is light.
+- **Lower gravity:** `gravity_scale` 0.75. The pull is measured at full gravity, so lowering gravity never
+  weakens it.
+
 - **Mouse:** the target is the mouse point.
 - **Pad:** the **left stick points the limb instantly**. The target sits out from the shoulder or hip in the
   stick's direction, at the stick's push times `stick_reach` limb lengths (half a push reaches halfway out).
@@ -67,7 +76,7 @@ last drives it. F1 opens the live **feel panel**, which shows every physics numb
 
 ### Modes (`data/modes.gd`, one row each)
 
-- **Tower:** players take turns. Lock in above the tower's top before your clock runs out, or you're out
+- **Tower:** players take turns. Lock in above the line (the first line, then the tower's top) before your clock runs out, or you're out
   (your body stays in the tower). The last one in wins.
 - **Scramble:** everyone climbs at once on the same timer. Every lock-in above the line raises it, so it's a
   race to the easy spots. The round ends when everyone still in has locked in, and the next round starts at
@@ -96,7 +105,7 @@ last drives it. F1 opens the live **feel panel**, which shows every physics numb
 | `game/main.gd`, `main.tscn` | the app: world, camera, screens, pause, quit, music by screen |
 | `game/game.gd` | one match (offline, host or client): turns, clocks, the line, lock-ins, freezes, results |
 | `climber/climber.gd` | one physical climber: 16 rigid bodies, 15 hinges, the limb rule, the drag, glyphs |
-| `climber/body_layout.gd` | the 16 pieces (shape, mass, mesh name) and 15 joints, measured from the Metal Knight |
+| `climber/body_layout.gd` | the 16 pieces (shape, mass, mesh name) and 15 joints, measured from the Metal Knight; `Layout.shift()` (the wide shoulders) |
 | `climber/drivers.gd` | who aims a climber: a player's device, a script (tests), or a remote puppet |
 | `core/players.gd` (autoload `Players`) | local player slots, devices, bindings, `stick()` (left stick only), aim |
 | `core/steam_input.gd` | reads controllers through Steam Input using Top Dog's own action manifest |
@@ -113,7 +122,7 @@ last drives it. F1 opens the live **feel panel**, which shows every physics numb
 | `ui3d/menu3d.gd` | 3D belt menus with focus, pad and mouse navigation |
 | `ui3d/lucha_kit.gd` | builds the UI pieces from kit models (by file name), with stand-ins; `text3d`, words out of the ink |
 | `kit/models/` | the UI and plaza models from the Top Dog Kit (synced by `tools/sync_kit.py`) |
-| `models/` | `metal_knight.glb` (the climber, 16 named pieces) and `barrel.glb` |
+| `models/` | `skeleton_knight.glb` (the default climber), `metal_knight.glb` (kept), both 16 named pieces, and `barrel.glb` |
 | `palette/`, `shaders/cel/`, `scripts/cel_pass.gd` | the house look: colour atlas, cel shader, ink outline |
 | `fonts/luckiest_guy/` | the title font (Apache 2.0) |
 | `audio/` | music and SFX |
@@ -125,6 +134,10 @@ last drives it. F1 opens the live **feel panel**, which shows every physics numb
 
 ### The physics
 
+- **The wide shoulders** (Golemheim's shoulder flare): every arm piece, its mesh and its shoulder, elbow and wrist
+  joints sit `shoulder_flare` (0.05 m) further out and `shoulder_drop` (0.05 m) lower than the model
+  (`Layout.shift()`). Both are F1 knobs, applied on the next spawn. Every machine must use the same values,
+  because puppets and frozen bodies rebuild from the layout.
 - **Jolt at 120 Hz**, `velocity_steps=20`, `position_steps=16`. 16 was raised from 8 because a free wrist
   stretched 2.4 cm when hanging by one hand.
 - Each piece is a `RigidBody3D` with linear z and angular x/y locked.
@@ -230,6 +243,7 @@ godot --path . res://tests/online3d_probe.tscn -- --no-steam
   loading.
 - **Bumping across machines is one-way:** only grabs send force.
 - **No spectating mid-match.** Late joiners are refused.
-- **The climbers:** muscular luchadors in animal masks are coming from another artist, as skins on the 16-piece
-  contract.
+- **The climbers:** the Skeleton Knight is the default. Muscular luchadors in animal masks are coming from another
+  artist, as skins on the 16-piece contract; players will pick their own skins then. Until then everyone looks
+  the same: there's no colour wash, and the player colour is only on name tags and cards.
 - **A full feel pass** after playtests. Every number is on F1 and in `data/feel.gd`.
