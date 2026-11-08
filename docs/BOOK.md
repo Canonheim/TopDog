@@ -336,6 +336,21 @@ Parker: "the camera should match what it does in MYF, where it looks at you, not
 - **The pause menu in front of everything:** it rides `LuchaUI.PAUSE_DIST` (1.2 m) from the lens instead of 6 m, scaled to the same size on screen. While paused, the overlays that draw over everything on purpose are hidden: the limb glyphs (`Climber.set_glyphs_visible`), name tags, the LINE label and the match HUD with its turn banner.
 - **Open:** two `--bend` checks fail on Dan's merged limb control (a steered knee folds only to 17 degrees; a pushed stick moved the hand 1.5 m). They're his tuning, for him to look at. `pad_probe` failed 7 once right after a battery and passed on three runs since.
 
+## The town light pass (Parker, 2026-11-08)
+
+Parker: "have the EM make the town look nicer and the building maker make the buildings nicer. Move the hanging flags slightly back and give them poles to hang on. For this pass, don't spend toooo much effort on it." Two new makers, Top Dog only from now on: the Environment Maker (local_d4a0612b) and the Building Maker (local_a1eb062d), both reporting to Top Dog's Windy.
+- **The Environment Maker, `env-pass` d00f76d** (only `ui3d/lucha_ui.gd` `_build_plaza` and its helpers):
+  - the papel picado moved back from z -9 to -11.5, on 4 wooden poles with crossbars, gold balls and stone feet; the piñata stays on the right-hand string;
+  - the plaza row is a table of kit houses, staggered in depth with no gaps;
+  - a bell tower at x -6.5, off-centre so the climber keeps sky behind;
+  - a four-terrace hill town to about 18 m;
+  - land to the horizon with hazy ridges, so the "sea" under the town is gone;
+  - a new frame probe, `tests/env_shot_probe.tscn -- --no-steam --out=DIR`.
+- **The Building Maker** re-made `plaza_house_a/b/c` as drop-ins: quoins, string courses, a two-step cornice, eave tile ends, panelled shutters, window hoods, flower boxes, railed balconies, an awning, chimneys and a lantern. It also built `bell_tower` (18.2 m, with an open belfry, a clock and a striped dome; its bell is the object `tower_bell`, pivot y 13.4). Synced with `tools/sync_kit.py`.
+- **The full plan for a bigger pass** is in `Top Dog Kit\docs\ENVIRONMENT_PLAN.md` (options A, B and C, with questions for Parker), parked.
+- **Open:** the ring canvas still reads pure white (a UI creator fix), and at 5 m the flag string sits behind the climber's chest.
+- **Checked:** lint 39, battery `--tower --climb --net`, and the frames in `Top Dog Kit\previews\env_pass\merged\`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
