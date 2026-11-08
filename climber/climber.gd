@@ -41,6 +41,7 @@ const DEPTH := 0.24  # how thick a box piece is through the plane, for contacts 
 ## but folding through the joint meets resistance from FOLD_START degrees of bend,
 ## strongest at 180 (Feel fold_resistance). Past 180 it helps you through, so a
 ## limb rotated around comes easily and a straight pull back inward doesn't.
+const SLAP_QUIET_S := 0.6  # no slaps for this long after spawning (the feet settle)
 const FOLD_START_DEG := 150.0  # the old stop's angle: everything before it is free
 const FOLD_REACH_DEG := 150.0  # the folded reach the steering keeps clear of the root
 ## The engine's hinge sign conventions, pinned by the --spike "signs" test.
@@ -710,13 +711,17 @@ func _tick_limb(i: int, delta: float) -> void:
 			l.regrip = 0.0
 	l.held = held
 	l.regrip = maxf(0.0, l.regrip - delta)
+	var was_stuck: bool = l.grab.is_valid()
 	if held and not l.grab.is_valid():
 		_try_grab_climber(i)
 	if not held and not l.grab.is_valid() and l.regrip <= 0.0:
 		_try_grab(i)
-		if just_released and l.grab.is_valid():
-			var end: RigidBody3D = bodies[l.def.end]
-			release_contact.emit(end.global_position)
+	# THE SLAP on every catch (Parker 11-08: "anytime a hand connects, it should make
+	# the noise", held or not: a flung limb landing, a held one grabbing someone),
+	# except the feet settling onto the canvas at spawn.
+	if l.grab.is_valid() and not was_stuck and live_time > SLAP_QUIET_S:
+		var end: RigidBody3D = bodies[l.def.end]
+		release_contact.emit(end.global_position)
 
 
 func _try_grab(i: int) -> void:

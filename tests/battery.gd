@@ -451,6 +451,14 @@ func _run_grab() -> void:
 	d.set_limb(2, false)
 	await frames(4)
 	t("grab: letting go over the deck plants it again", c.limbs[2].grab.is_valid())
+	# THE SLAP on every catch, held or not (Parker 11-08): a climber dropped from the
+	# air, holding nothing, slaps when its limbs catch the deck.
+	var sl := spawn(Vector2(-6.0, 2.5))
+	var slaps := [0]
+	sl.release_contact.connect(func(_at): slaps[0] += 1)
+	await seconds(2.0)
+	t("grab: a loose limb catching the deck slaps (no button held)", slaps[0] > 0 and sl.stuck_count() > 0, "%d slaps, %d stuck" % [slaps[0], sl.stuck_count()])
+	sl.remove()
 	# THE PRESS STACK (Parker 11-08): hold A (right hand), press X (left hand): X
 	# rules. Let go of X with A still held: A rules again.
 	d.set_limb(1, true)

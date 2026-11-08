@@ -397,6 +397,7 @@ Parker: "Dan took out grabbing people. Put it back in ... the practice partner i
 - **Hands on hips at spawn** (`_hands_on_hips`, a two-bone solve, elbows out); it replaces `_arms_down`.
 - **The flags hang along their strings** (`LuchaKit.bunting`: each flag is turned about the vertical to the string's run).
 - **Arms in front of the torso:** tried, then reverted on Parker's word.
+- **The slap on every catch** (Parker: "anytime a hand connects, it should make the noise"): any new stick, whether held or loose (a flung limb landing, a held one grabbing someone), emits `release_contact` and plays the slap, broadcast online. The first `SLAP_QUIET_S` (0.6 s) after a spawn is silent, while the feet settle. `--grab` checks a dropped climber slaps.
 - **Tests:**
   - New and passing: held grabs, no flying, the elbow turning through 180 under a hand-pull twist, and the press stack.
   - `--feel`'s three lean checks now fail ("one held limb moves the body" 0.29 vs 0.30, "arm holds its pose", "body still up after the big lean"). They pass with the old arms-down spawn, so the hands-on-hips start changes that scripted lean. That's for Parker's feel, not a rigged test.
