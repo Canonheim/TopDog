@@ -348,7 +348,14 @@ Parker: "have the EM make the town look nicer and the building maker make the bu
   - a new frame probe, `tests/env_shot_probe.tscn -- --no-steam --out=DIR`.
 - **The Building Maker** re-made `plaza_house_a/b/c` as drop-ins: quoins, string courses, a two-step cornice, eave tile ends, panelled shutters, window hoods, flower boxes, railed balconies, an awning, chimneys and a lantern. It also built `bell_tower` (18.2 m, with an open belfry, a clock and a striped dome; its bell is the object `tower_bell`, pivot y 13.4). Synced with `tools/sync_kit.py`.
 - **The full plan for a bigger pass** is in `Top Dog Kit\docs\ENVIRONMENT_PLAN.md` (options A, B and C, with questions for Parker), parked.
-- **Open:** the ring canvas still reads pure white (a UI creator fix), and at 5 m the flag string sits behind the climber's chest.
+- **Second pass, env-pass 1cd18c5:**
+  - the canvas is overridden to warm grey `Stage.CANVAS` #ADA28E, so the skeleton's legs read;
+  - the flags hang at z -12.6, one span each side plus strings up to the church towers, and none crosses the climbing column at x 0;
+  - the piñata hangs mid-span at x 12;
+  - house heights are staggered too (scale 0.92 to 1.08);
+  - the twin-tower church stands at the centre back.
+- **The Building Maker's `plaza_church`** (22 m, twin towers with bells `bell_l` / `bell_r`, a talavera dome) is synced and replaces the code stand-in by name.
+- **Open:** the white middle rope still crosses the pelvis. The back ropes are one mesh, so recolouring it means the UI creator re-lands `ring`.
 - **Checked:** lint 39, battery `--tower --climb --net`, and the frames in `Top Dog Kit\previews\env_pass\merged\`.
 
 ## Record
