@@ -358,6 +358,13 @@ Parker: "have the EM make the town look nicer and the building maker make the bu
 - **Open:** the white middle rope still crosses the pelvis. The back ropes are one mesh, so recolouring it means the UI creator re-lands `ring`.
 - **Checked:** lint 39, battery `--tower --climb --net`, and the frames in `Top Dog Kit\previews\env_pass\merged\`.
 
+## The clouds, version 2 (Parker, 2026-11-08)
+
+Parker, with a reference picture (`Top Dog Kit\docs\cloud_reference_parker.png`): "make some more rounded clouds with a gray outline that flows into the swirls".
+- The UI creator re-made `cloud_a`..`e` (10 review rounds against the reference): rounded overlapping lobes, a soft grey line (#9CA8BA) that rolls into the swirls, and a two-step blue-grey shade along the base. The widths changed: 8.6, 8.6, 5.1, 7.9, 8.6 (`LuchaKit.CLOUDS`).
+- **The clouds skip the house ink** (`LuchaKit.skip_ink`: an unshaded, alpha atlas material, drawn after the ink pass). Their grey line is their outline; a black ink edge fought it.
+- The Building Maker's re-landed `plaza_church` came in with the same sync, placed by its measured front.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

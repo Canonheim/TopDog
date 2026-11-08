@@ -30,7 +30,7 @@ const LEATHER := RED  # belt-plate lettering
 const SILVER := Color(0.82, 0.84, 0.88)
 const FLAG_COLOURS := [RED, GOLD, BLUE, MAGENTA, TURQUOISE, GREEN, Color(1.0, 0.55, 0.15)]
 ## The kit's cloud cards and their built widths (m), for scaling to a wanted width.
-const CLOUDS := {"cloud_a": 8.3, "cloud_b": 10.45, "cloud_c": 4.25, "cloud_d": 9.6, "cloud_e": 5.6}
+const CLOUDS := {"cloud_a": 8.6, "cloud_b": 8.6, "cloud_c": 5.1, "cloud_d": 7.9, "cloud_e": 8.6}  # v2 widths (11-08)
 
 static var _font: Font = null
 
@@ -144,6 +144,12 @@ static func text3d(s: String, size: float, c: Color, _depth := 0.06, priority :=
 	if _font != null:
 		lb.font = _font
 	return lb
+
+
+## A whole kit model out of the ink: its atlas colours, unshaded, drawn in the
+## transparent pass (after the ink, which reads only opaque depth and normals).
+static func skip_ink(root: Node) -> void:
+	letters_skip_ink(root, "")
 
 
 ## A kit model's word objects (letters_*) out of the ink: the atlas colours, alpha.
@@ -398,6 +404,9 @@ static func swirl_cloud(width: float, which := 0) -> Node3D:
 	var k := kit_model(nm)
 	if k != null:
 		k.scale = Vector3.ONE * (width / float(CLOUDS[nm]))
+		# The clouds' own grey line is their outline, curling into the swirls (Parker
+		# 11-08): out of the house ink, or a black edge fights it.
+		skip_ink(k)
 		return k
 	var root := Node3D.new()
 	var lobes := int(clampf(width / 1.8, 3, 7))
