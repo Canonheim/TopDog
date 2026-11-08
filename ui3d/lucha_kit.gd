@@ -298,6 +298,7 @@ static func card_frame(face := CREAM, band := RED) -> Node3D:
 		# near-white: they take the player's colour.
 		tint_part(k, "card_band", band)
 		tint_part(k, "card_strip", band.darkened(0.15))
+		tint_part(k, "card_crest", band)  # the mask crest wears the player's colour too
 		k.set_meta("kit", true)
 		return k
 	var root := Node3D.new()
@@ -414,4 +415,197 @@ static func _spiral(r: float, c: Color) -> Node3D:
 		seg.rotation.z = (p - prev).angle()
 		root.add_child(seg)
 		prev = p
+	return root
+
+
+# ---------------------------------------------------------------- E: the online parts
+
+const GREY := Color(0.55, 0.55, 0.58)
+const ROW_SCALE := 1.25  # kit rows at menu size, like the belts
+
+
+## A row plate grown to menu size: its metas (width, height, stop_x) grow with it.
+static func _scale_row(root: Node3D, s: float) -> Node3D:
+	root.scale = Vector3.ONE * s
+	root.set_meta("width", float(root.get_meta("width")) * s)
+	root.set_meta("height", float(root.get_meta("height")) * s)
+	var xs: Array = []
+	for x in root.get_meta("stop_x"):
+		xs.append(float(x) * s)
+	root.set_meta("stop_x", xs)
+	return root
+
+
+## Words fitted to a face `w` wide (letters shrink to fit, never past `max_size`).
+static func fit_text(s: String, w: float, max_size: float, face := CREAM, back := INK) -> Node3D:
+	var size := minf(max_size, w * 0.94 / maxf(1.0, s.length() * 0.62))
+	return poster_text(s, size, face, back, 0.02)
+
+
+## The focus rings of a kit part, hidden (Menu3D shows the focused one).
+static func _focus_rings(root: Node3D, names: Array) -> Array:
+	var out: Array = []
+	for n in names:
+		var f := root.find_child(n, true, false) as Node3D
+		if f == null:
+			f = box(Vector3(0.1, 0.1, 0.01), MAGENTA)  # a stand-in so the stop still exists
+			root.add_child(f)
+		f.visible = false
+		out.append(f)
+	return out
+
+
+## A placeholder plate for a missing part: a gold rim and a coloured face.
+static func _plate(w: float, h: float, c: Color) -> Node3D:
+	var r := Node3D.new()
+	r.add_child(box(Vector3(w + 0.08, h + 0.08, 0.04), GOLD, Vector3(0, 0, 0.02)))
+	r.add_child(box(Vector3(w, h, 0.04), c, Vector3(0, 0, 0.04)))
+	return r
+
+
+## E6: a row of small belts (HOST: PUBLIC / FRIENDS / INVITE), a tag above, one
+## focus stop per belt. Menu3D row plate: metas width, height, stop_x, focus_nodes.
+static func belt_small_row(tag: String, options: Array) -> Node3D:
+	var root := Node3D.new()
+	var n := options.size()
+	var gap := 1.3
+	var xs: Array = []
+	var rings: Array = []
+	for i in n:
+		var x := (i - (n - 1) * 0.5) * gap
+		xs.append(x)
+		var k := kit_model("belt_small")
+		if k == null:
+			k = _plate(1.2, 0.4, RED)
+		k.position = Vector3(x, 0, 0)
+		root.add_child(k)
+		rings.append_array(_focus_rings(k, ["belt_small_focus"]))
+		var t := fit_text(str(options[i]), 0.8, 0.15)
+		t.position = Vector3(x, 0, 0.065)
+		root.add_child(t)
+	var tg := poster_text(tag, 0.17, GOLD, RED, 0.03)
+	tg.position = Vector3(xs[0] - 0.6 + tag.length() * 0.05, 0.36, 0.04)
+	root.add_child(tg)
+	root.set_meta("width", gap * n)
+	root.set_meta("height", 0.72)
+	root.set_meta("stop_x", xs)
+	root.set_meta("focus_nodes", rings)
+	return _scale_row(root, 1.1)
+
+
+## E2: a Join a Friend row: avatar disc, name, a JOIN plate (or WAIT, greyed).
+static func friend_row(name_s: String, sub: String, can_join: bool) -> Node3D:
+	var k := kit_model("friend_row")
+	var root := Node3D.new()
+	if k == null:
+		k = _plate(3.0, 0.58, Color("#1E2C5C"))
+	root.add_child(k)
+	var rings := _focus_rings(k, ["friend_row_focus", "friend_join_focus"])
+	if not can_join:
+		tint_part(k, "friend_join_face", GREY)
+	var nm := fit_text(name_s, 1.4, 0.2, RED, INK)
+	nm.position = Vector3(-0.08, 0.06, 0.065)
+	root.add_child(nm)
+	var sb := fit_text(sub, 1.4, 0.1, INK, CREAM)
+	sb.position = Vector3(-0.08, -0.15, 0.065)
+	root.add_child(sb)
+	var j := fit_text("JOIN" if can_join else "WAIT", 0.55, 0.16)
+	j.position = Vector3(1.01, 0, 0.07)
+	root.add_child(j)
+	# The avatar disc: the name's first letter on it until Steam's picture comes.
+	var initial := poster_text(name_s.left(1), 0.2, INK, CREAM, 0.02)
+	initial.position = Vector3(-1.1, 0, 0.065)
+	initial.name = "initial"
+	root.add_child(initial)
+	root.set_meta("avatar", k.find_child("friend_avatar", true, false))
+	root.set_meta("width", 3.0)
+	root.set_meta("height", 0.58)
+	root.set_meta("stop_x", [-0.3, 1.01])
+	root.set_meta("focus_nodes", rings)
+	return _scale_row(root, ROW_SCALE)
+
+
+## E1: a Browse row: name + mode, count, and JOIN / FULL / OLDER.
+static func lobby_row(name_s: String, mode_s: String, count_s: String, join_s: String, can_join: bool) -> Node3D:
+	var k := kit_model("lobby_row")
+	var root := Node3D.new()
+	if k == null:
+		k = _plate(3.2, 0.44, Color("#1E2C5C"))
+	root.add_child(k)
+	var rings := _focus_rings(k, ["lobby_row_focus", "lobby_join_focus"])
+	if not can_join:
+		tint_part(k, "lobby_join_face", GREY)
+	var nm := fit_text(name_s, 1.9, 0.16, RED, INK)
+	nm.position = Vector3(-0.5, 0.06, 0.06)
+	root.add_child(nm)
+	var md := fit_text(mode_s, 1.9, 0.09, INK, CREAM)
+	md.position = Vector3(-0.5, -0.11, 0.06)
+	root.add_child(md)
+	var ct := fit_text(count_s, 0.38, 0.16)
+	ct.position = Vector3(0.78, 0, 0.065)
+	root.add_child(ct)
+	var j := fit_text(join_s, 0.42, 0.13)
+	j.position = Vector3(1.265, 0, 0.065)
+	root.add_child(j)
+	root.set_meta("width", 3.2)
+	root.set_meta("height", 0.44)
+	root.set_meta("stop_x", [-0.3, 1.265])
+	root.set_meta("focus_nodes", rings)
+	return _scale_row(root, ROW_SCALE)
+
+
+## E3: the READY badge; grey seal and WAIT when not ready.
+static func ready_stamp(ready: bool) -> Node3D:
+	var k := kit_model("ready_stamp")
+	var root := Node3D.new()
+	if k == null:
+		k = _plate(0.68, 0.2, TURQUOISE)
+	root.add_child(k)
+	if not ready:
+		tint_part(k, "ready_seal", GREY)
+	var t := fit_text("READY" if ready else "WAIT", 0.62, 0.13, RED, CREAM)
+	t.position = Vector3(0, 0, 0.07)
+	root.add_child(t)
+	return root
+
+
+## E4: a chat bubble, speaker over message (mirror = tail on the right).
+static func chat_bubble(who: String, text: String, mirror := false) -> Node3D:
+	var k := kit_model("chat_bubble")
+	var root := Node3D.new()
+	if k == null:
+		k = _plate(1.8, 0.5, CREAM)
+	if mirror:
+		k.scale.x = -1.0
+	root.add_child(k)
+	if who != "":
+		var w := fit_text(who, 1.5, 0.14, RED, INK)
+		w.position = Vector3(0, 0.11, 0.06)
+		root.add_child(w)
+	var t := fit_text(text, 1.55, 0.17, INK, CREAM)
+	t.position = Vector3(0, -0.08 if who != "" else 0.0, 0.06)
+	root.add_child(t)
+	return root
+
+
+## E8 / E5: the status sign (a few lines) and ribbon (one short line).
+static func sign_board() -> Node3D:
+	var k := kit_model("sign_board")
+	return k if k != null else _plate(2.4, 0.6, RED)
+
+
+static func status_ribbon() -> Node3D:
+	var k := kit_model("status_ribbon")
+	return k if k != null else _plate(3.4, 0.4, Color("#1E2C5C"))
+
+
+## E7: the < > cue beside a picker; points +X (dir -1 turns it round).
+static func picker_arrow(dir := 1) -> Node3D:
+	var k := kit_model("picker_arrow")
+	if k == null:
+		k = star_mesh(0.14, GOLD) as Node3D
+	var root := Node3D.new()
+	root.add_child(k)
+	if dir < 0:
+		root.rotation.z = PI
 	return root

@@ -18,8 +18,10 @@ extends RefCounted
 ##
 ## Typing (an IP, typed chat) still uses the flat Online page ("TYPE AN IP").
 
-const PAGE := 6
-const SIGN_W := 4.9  # the status sign, in board units (x UI_SCALE on screen)
+const PAGE := 4  # rows per page (friends, games): they fit above REFRESH and BACK
+const SIGN_SCALE := 2.05  # the kit sign (2.4 m) at board size
+const RIBBON_SCALE := 1.45
+const SIGN_W := 2.4 * SIGN_SCALE
 
 var ui: LuchaUI
 var main: Node
@@ -32,6 +34,8 @@ var _lobby_ready_item := -1
 var _status_node: Node3D
 var _board: Node3D  # cards + chat on the lobby; rows on browse/friends
 var _chat_board: Node3D
+## Tests only: stand-in friends rows ([{id, name, lobby}]) in place of Steam's.
+var test_friends = null
 
 
 func _init(p_ui: LuchaUI) -> void:
@@ -45,12 +49,14 @@ func build() -> void:
 	o.set_header(LuchaKit.poster_text("PLAY ONLINE", 0.48, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
 	o.column_x = -2.4
 	o.top_y = 1.25
-	o.add_choice_button("HOST", ["PUBLIC", "FRIENDS", "INVITE ONLY"], 0, func(i):
+	var hi := o.add_row(LuchaKit.belt_small_row("HOST A GAME", ["PUBLIC", "FRIENDS", "INVITE"]), func(i):
 		main._ensure_player()
 		Net.host_steam([Net.VIS_PUBLIC, Net.VIS_FRIENDS, Net.VIS_INVITE][i]))
+	o.items[hi].label = "HOST"
 	o.add_button("JOIN A FRIEND", func(): main.show_screen("friends"))
 	o.add_button("BROWSE GAMES", func(): main.show_screen("browse"))
-	o.add_choice_button("LAN", ["HOST", "JOIN THIS PC", "TYPE AN IP"], 0, _lan)
+	var li := o.add_row(LuchaKit.belt_small_row("LAN", ["HOST", "THIS PC", "TYPE IP"]), _lan)
+	o.items[li].label = "LAN"
 	o.add_button("BACK", func(): main.show_screen("title"))
 	ui.menus.online = o
 	# FRIENDS
@@ -155,16 +161,29 @@ func _redraw_status() -> void:
 		ch.queue_free()
 	if status_text == "":
 		return
-	# A red sign with a gold rim, the words wrapped onto it (never cut off).
-	var lines := wrap_words(status_text, 32, 3)
-	var h := lines.size() * 0.3 + 0.26
+	# A short line rides the kit's ribbon; longer news goes on the sign board,
+	# wrapped onto its cream face (never cut off).
 	var sign := Node3D.new()
-	sign.add_child(LuchaKit.box(Vector3(SIGN_W + 0.16, h + 0.16, 0.08), LuchaKit.GOLD, Vector3(SIGN_W * 0.5, -h * 0.5, -0.06)))
-	sign.add_child(LuchaKit.box(Vector3(SIGN_W, h, 0.1), LuchaKit.RED, Vector3(SIGN_W * 0.5, -h * 0.5, 0)))
-	for i in lines.size():
-		var t := LuchaKit.poster_text(lines[i], 0.18, LuchaKit.CREAM, LuchaKit.INK, 0.03)
-		t.position = Vector3(SIGN_W * 0.5, -0.27 - i * 0.3, 0.07)
+	var lines := wrap_words(status_text, 30, 3)
+	if lines.size() == 1 and status_text.length() <= 26:
+		var rb := LuchaKit.status_ribbon()
+		rb.scale = Vector3.ONE * RIBBON_SCALE
+		rb.position = Vector3(SIGN_W * 0.5, -0.32, 0)
+		sign.add_child(rb)
+		var t := LuchaKit.fit_text(lines[0], 2.5 * RIBBON_SCALE, 0.2, LuchaKit.RED, LuchaKit.INK)
+		t.position = Vector3(SIGN_W * 0.5, -0.32, 0.04 * RIBBON_SCALE + 0.03)
 		sign.add_child(t)
+	else:
+		var sb := LuchaKit.sign_board()
+		sb.scale = Vector3.ONE * SIGN_SCALE
+		sb.position = Vector3(SIGN_W * 0.5, -0.3 * SIGN_SCALE, 0)
+		sign.add_child(sb)
+		var step := 0.27
+		var top := -0.3 * SIGN_SCALE + (lines.size() - 1) * step * 0.5
+		for i in lines.size():
+			var t := LuchaKit.fit_text(lines[i], 1.9 * SIGN_SCALE, 0.19, LuchaKit.RED, LuchaKit.INK)
+			t.position = Vector3(SIGN_W * 0.5, top - i * step, 0.05 * SIGN_SCALE + 0.03)
+			sign.add_child(t)
 	_status_node.add_child(sign)
 	LuchaUI.no_shadows(sign)
 
@@ -210,8 +229,8 @@ func _card_count() -> int:
 func _fill_friends() -> void:
 	var m: Menu3D = ui.menus.friends
 	m.clear_items()
-	var rows: Array = Net.friends_in_game()
-	if not Net.steam_ok:
+	var rows: Array = test_friends if test_friends != null else Net.friends_in_game()
+	if rows.is_empty() and not Net.steam_ok:
 		set_status("Steam isn't running: start Steam and restart to play with friends.")
 	elif rows.is_empty():
 		set_status("No friends playing Top Dog right now. Invite one from Steam!")
@@ -222,13 +241,16 @@ func _fill_friends() -> void:
 		var fr: Dictionary = rows[k]
 		var nm := str(fr.get("name", "?")).to_upper().left(16)
 		var lobby := int(fr.get("lobby", 0))
-		if lobby != 0:
-			m.add_button("JOIN %s" % nm, func():
-				main._ensure_player()
-				set_status("Joining %s..." % str(fr.get("name", "")))
-				Net.join_steam(lobby))
-		else:
-			m.add_button("%s (NOT IN A GAME)" % nm, func(): set_status("%s is playing, but not in a game yet." % str(fr.get("name", ""))))
+		var plate := LuchaKit.friend_row(nm, "IN A GAME" if lobby != 0 else "PLAYING, NOT IN A GAME", lobby != 0)
+		_load_avatar(plate, int(fr.get("id", 0)))
+		var ri := m.add_row(plate, func(_stop):
+			if lobby == 0:
+				set_status("%s is playing, but not in a game yet." % str(fr.get("name", "")))
+				return
+			main._ensure_player()
+			set_status("Joining %s..." % str(fr.get("name", "")))
+			Net.join_steam(lobby))
+		m.items[ri].label = "FRIEND %s" % nm
 	if rows.size() > start + PAGE:
 		m.add_button("MORE FRIENDS", func(): _friends_page += 1; _fill_friends())
 	if Net.steam_ok:
@@ -254,14 +276,17 @@ func _fill_browse() -> void:
 	var start := _browse_page * PAGE
 	for k in range(start, mini(_browse_rows.size(), start + PAGE)):
 		var r: Dictionary = _browse_rows[k]
-		var label := "%s  %s  %s" % [str(r.get("name", "?")).to_upper().left(14), str(r.get("count_text", "")), str(r.get("mode_line", "")).to_upper()]
-		if bool(r.get("joinable", false)):
-			m.add_button(label, func():
-				main._ensure_player()
-				set_status("Joining %s..." % str(r.get("name", "")))
-				Net.join_steam(int(r.get("id", 0))))
-		else:
-			m.add_button(label, func(): set_status(str(r.get("reason", r.get("short", "Can't join")))))
+		var ok := bool(r.get("joinable", false))
+		var plate := LuchaKit.lobby_row(str(r.get("name", "?")).to_upper().left(20), str(r.get("mode_line", "")).to_upper(),
+			str(r.get("count_text", "")), "JOIN" if ok else str(r.get("short", "NO")).to_upper().left(6), ok)
+		var ri := m.add_row(plate, func(_stop):
+			if not ok:
+				set_status(str(r.get("reason", r.get("short", "Can't join"))))
+				return
+			main._ensure_player()
+			set_status("Joining %s..." % str(r.get("name", "")))
+			Net.join_steam(int(r.get("id", 0))))
+		m.items[ri].label = "GAME %s" % str(r.get("name", "?"))
 	if _browse_rows.size() > start + PAGE:
 		m.add_button("MORE GAMES", func(): _browse_page += 1; _fill_browse())
 	m.add_button("REFRESH", func():
@@ -344,8 +369,10 @@ func _fill_cards() -> void:
 			var who := LuchaKit.poster_text(str(p.get("name", "?")).split(" the ")[0].to_upper(), 0.13, LuchaKit.INK, LuchaKit.CREAM, 0.02)
 			who.position = Vector3(0, -0.4, 0.06)
 			card.add_child(who)
-			var stamp := LuchaKit.poster_text("READY!" if ready else "...", 0.11, LuchaKit.CREAM, LuchaKit.INK, 0.02)
-			stamp.position = Vector3(0, -0.63, 0.06)
+			var stamp := LuchaKit.ready_stamp(ready)
+			stamp.position = Vector3(0.5, -0.8, 0.12)
+			stamp.scale = Vector3.ONE * 0.85
+			stamp.rotation.z = -0.18
 			card.add_child(stamp)
 			_board.add_child(card)
 			n += 1
@@ -353,7 +380,7 @@ func _fill_cards() -> void:
 
 
 func _on_chat(who: String, text: String) -> void:
-	chat_lines.append(("%s: %s" % [who, text]) if who != "" else text)
+	chat_lines.append([who, text])
 	while chat_lines.size() > 3:
 		chat_lines.pop_front()
 	if ui.current == "lobby":
@@ -363,11 +390,50 @@ func _on_chat(who: String, text: String) -> void:
 func _fill_chat() -> void:
 	for ch in _chat_board.get_children():
 		ch.queue_free()
-	var y := 0.0
-	for line in chat_lines:
-		var s: String = line if line.length() <= 40 else line.left(37) + "..."
-		var t := LuchaKit.poster_text(s.to_upper(), 0.17, LuchaKit.CREAM, LuchaKit.INK, 0.02)
-		t.position = Vector3(s.length() * 0.053, y, 0)
-		_chat_board.add_child(t)
-		y -= 0.27
+	# The last three lines as the kit's bubbles, side by side, newest on the right.
+	for i in chat_lines.size():
+		var who: String = str(chat_lines[i][0]).to_upper()
+		var text: String = str(chat_lines[i][1]).to_upper()
+		if text.length() > 22:
+			text = text.left(20) + "..."
+		var b := LuchaKit.chat_bubble(who.split(" THE ")[0].left(16), text, i % 2 == 1)
+		b.position = Vector3(0.95 + i * 2.0, 0, 0)
+		_chat_board.add_child(b)
 	LuchaUI.no_shadows(_chat_board)
+
+
+# ---------------------------------------------------------------- avatars
+
+## The friend's Steam picture on the row's avatar disc, when Steam hands it over
+## (GodotSteam: getPlayerAvatar -> avatar_loaded). Until then the initial shows.
+var _avatar_wait := {}  # steam id -> [plate]
+
+
+func _load_avatar(plate: Node3D, sid: int) -> void:
+	if sid == 0 or not Net.steam_ok or not Steam.has_signal("avatar_loaded") or not Steam.has_method("getPlayerAvatar"):
+		return
+	if not Steam.is_connected("avatar_loaded", _on_avatar):
+		Steam.connect("avatar_loaded", _on_avatar)
+	if not _avatar_wait.has(sid):
+		_avatar_wait[sid] = []
+	_avatar_wait[sid].append(plate)
+	Steam.getPlayerAvatar(Steam.AVATAR_MEDIUM, sid)
+
+
+func _on_avatar(sid: int, size: int, data: PackedByteArray) -> void:
+	if not _avatar_wait.has(sid) or size <= 0 or data.size() < size * size * 4:
+		return
+	var img := Image.create_from_data(size, size, false, Image.FORMAT_RGBA8, data)
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = ImageTexture.create_from_image(img)
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	for plate in _avatar_wait[sid]:
+		if not is_instance_valid(plate):
+			continue
+		var disc = plate.get_meta("avatar") if plate.has_meta("avatar") else null
+		if disc is MeshInstance3D:
+			(disc as MeshInstance3D).material_override = mat
+			var ini := (plate as Node3D).get_node_or_null("initial")
+			if ini != null:
+				ini.visible = false
+	_avatar_wait.erase(sid)

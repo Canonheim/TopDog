@@ -57,6 +57,9 @@ func _f(vp: Viewport) -> String:
 	var lucha = _main.get("lucha") if _main != null else null
 	if lucha != null and lucha.menus.has(_main.screen) and lucha.menus[_main.screen].visible:
 		var m = lucha.menus[_main.screen]
-		return "3d:%d %s" % [m.focus, str(m.items[m.focus].label) if m.focus >= 0 and m.focus < m.items.size() else "?"]
+		if m.focus < 0 or m.focus >= m.items.size():
+			return "3d:?"
+		var it: Dictionary = m.items[m.focus]
+		return "3d:%d %s%s" % [m.focus, str(it.label), (" stop %d" % int(it.stop)) if it.kind == "row" else ""]
 	var f := vp.gui_get_focus_owner()
 	return f.text if f is Button else ("none" if f == null else f.get_class())

@@ -39,9 +39,36 @@ func _ready() -> void:
 	_check("B on browse goes back to online", main.screen == "online", main.screen)
 	# HOST flips left / right before it hosts.
 	online.focus = 0
-	var before: int = online.items[0].index
+	await _wait(0.3)
+	_check("HOST shows its focus ring on PUBLIC", _ring_on(online, 0, 0))
 	await _tap(JOY_BUTTON_DPAD_RIGHT)
-	_check("left / right flips HOST between public, friends and invite", online.items[0].index != before, "%d -> %d" % [before, online.items[0].index])
+	_check("right walks HOST to the FRIENDS belt and its ring", online.items[0].stop == 1 and _ring_on(online, 0, 1), online.items[0].stop)
+	await _tap(JOY_BUTTON_DPAD_LEFT)
+	# Friends as kit rows: two stops each (the row, then JOIN).
+	main.lucha.online.test_friends = [{"id": 0, "name": "Matilda", "lobby": 77}, {"id": 0, "name": "Yorick", "lobby": 0}]
+	main.show_screen("friends")
+	await _wait(0.8)
+	var fr: Menu3D = main.lucha.menus.friends
+	_check("friends come in as kit rows", fr.items.size() >= 4 and fr.items[0].kind == "row", fr.items.size())
+	fr.focus = 0
+	await _tap(JOY_BUTTON_DPAD_RIGHT)
+	_check("right on a friend row lands on its JOIN plate", fr.items[0].stop == 1 and _ring_on(fr, 0, 1))
+	await _shot("friends_rows")
+	main.lucha.online.test_friends = null
+	await _tap(JOY_BUTTON_B)
+	await _wait(0.5)
+	# Games as kit rows.
+	main.show_screen("browse")
+	Net.lobby_list.emit([
+		{"id": 5, "name": "Parker's ring", "count_text": "3/8", "mode_line": "Tower", "joinable": true, "reason": "", "short": ""},
+		{"id": 6, "name": "Big Barrel Bash", "count_text": "8/8", "mode_line": "Scramble", "joinable": false, "reason": "That game is full.", "short": "Full"},
+	])
+	await _wait(0.8)
+	var br: Menu3D = main.lucha.menus.browse
+	_check("games come in as kit rows", br.items.size() >= 4 and br.items[0].kind == "row", br.items.size())
+	await _shot("browse_rows")
+	await _tap(JOY_BUTTON_B)
+	await _wait(0.5)
 	# A lobby with stand-in members (offline we're the host).
 	Net.members = {
 		1: {"name": "Parker", "players": [{"name": "Parker the Barrel-Hugger", "tint": NameGen.tint(0), "slot": 0}], "ready": true},
@@ -59,6 +86,16 @@ func _ready() -> void:
 	Net.members = {}
 	print("ONLINE3D RESULT fails=", fails)
 	get_tree().quit(fails)
+
+
+func _ring_on(m: Menu3D, i: int, stop: int) -> bool:
+	var rings: Array = (m.items[i].belt as Node3D).get_meta("focus_nodes", [])
+	if rings.size() <= stop:
+		return false
+	for k in rings.size():
+		if (rings[k] as Node3D).visible != (k == stop):
+			return false
+	return true
 
 
 func _check(label: String, ok: bool, extra = "") -> void:

@@ -7,6 +7,9 @@ extends Node3D
 ##
 ## Items: add_button(label, callback) / add_choice(label, options, index, on_change)
 ## / add_spacer(). A choice cycles with left/right (or a click on its sides).
+## add_row(plate, cb): a kit row (friend / lobby row, a row of small belts) with
+## focus stops left to right; left/right walks the stops, A calls cb(stop). The
+## plate brings its own focus rings (meta focus_nodes) and stop centres (stop_x).
 
 signal activated(index: int)
 
@@ -75,6 +78,10 @@ func no_shadows_here() -> void:
 	LuchaUI.no_shadows(self)
 
 
+func add_row(plate: Node3D, cb: Callable, stop := 0) -> int:
+	return _add({"kind": "row", "label": "", "cb": cb, "plate": plate, "stop": stop, "custom_text": true})
+
+
 func add_spacer() -> void:
 	items.append({"kind": "spacer", "node": null})
 
@@ -89,8 +96,21 @@ func clear_items() -> void:
 
 func _add(it: Dictionary) -> int:
 	var root := Node3D.new()
-	var belt := LuchaKit.belt_button(BELT_W)
+	var belt: Node3D = it.get("plate", null)
+	if belt == null:
+		belt = LuchaKit.belt_button(BELT_W)
 	root.add_child(belt)
+	if it.kind == "choice" or it.kind == "choice_button":
+		# The < > cues either side: left / right flips this one.
+		var half: float = float(belt.get_meta("width", BELT_W)) * 0.5 + 0.22
+		var arrows: Array = []
+		for d in [-1, 1]:
+			var a := LuchaKit.picker_arrow(d)
+			a.position = Vector3(d * half, 0, 0.05)
+			a.visible = false
+			root.add_child(a)
+			arrows.append(a)
+		it.arrows = arrows
 	it.belt = belt
 	var txt := Node3D.new()
 	root.add_child(txt)
@@ -101,7 +121,7 @@ func _add(it: Dictionary) -> int:
 	area.monitoring = false
 	var col := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
-	bs.size = Vector3(BELT_W + 0.2, 0.55, 0.3)
+	bs.size = Vector3(float(belt.get_meta("width", BELT_W)) + 0.2, maxf(0.55, float(belt.get_meta("height", 0.55))), 0.3)
 	col.shape = bs
 	area.add_child(col)
 	root.add_child(area)
@@ -120,6 +140,8 @@ func _relabel(i: int) -> void:
 	var it: Dictionary = items[i]
 	for ch in it.text_node.get_children():
 		ch.queue_free()
+	if it.get("custom_text", false):
+		return  # the plate carries its own words
 	var s: String = it.label
 	if it.kind == "choice" or it.kind == "choice_button":
 		s = "%s  %s" % [it.label, str(it.options[it.index])]  # left / right flips it; the stars on the belt say so
@@ -210,12 +232,17 @@ func _unhandled_input(event: InputEvent) -> void:
 		if h != -1 and h != focus:
 			focus = h
 			Sound.play("ui_hover", -14.0)
+		if h != -1 and items[h].kind == "row":
+			items[h].stop = _stop_at(h, (event as InputEventMouseMotion).position)
 	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		var h := _pick((event as InputEventMouseButton).position)
 		if h != -1:
 			focus = h
 			var it: Dictionary = items[h]
-			if it.kind == "choice":
+			if it.kind == "row":
+				it.stop = _stop_at(h, (event as InputEventMouseButton).position)
+				_activate(h)
+			elif it.kind == "choice":
 				# A click on the belt's left half steps back, right half steps on.
 				var local := _ray_local(h, (event as InputEventMouseButton).position)
 				_cycle(-1 if local.x < 0.0 else 1)
@@ -244,10 +271,27 @@ func _move(dir: int) -> void:
 	Sound.play("ui_hover", -12.0)
 
 
+func _stop_at(i: int, screen_pos: Vector2) -> int:
+	var xs: Array = (items[i].belt as Node3D).get_meta("stop_x", [0.0])
+	var x := _ray_local(i, screen_pos).x
+	var best := 0
+	for k in xs.size():
+		if absf(float(xs[k]) - x) < absf(float(xs[best]) - x):
+			best = k
+	return best
+
+
 func _cycle(dir: int) -> void:
 	if not _live(focus):
 		return
 	var it: Dictionary = items[focus]
+	if it.kind == "row":
+		var n: int = ((it.belt as Node3D).get_meta("stop_x", [0.0]) as Array).size()
+		var to := clampi(int(it.stop) + dir, 0, n - 1)
+		if to != it.stop:
+			it.stop = to
+			Sound.play("ui_hover", -12.0)
+		return
 	if it.kind != "choice" and it.kind != "choice_button":
 		return
 	it.index = wrapi(it.index + dir, 0, it.options.size())
@@ -268,6 +312,10 @@ func _activate(i: int) -> void:
 	Sound.play("clap", -6.0)
 	_punch(i)
 	activated.emit(i)
+	if it.kind == "row":
+		if it.cb.is_valid():
+			it.cb.call(int(it.stop))
+		return
 	if it.kind == "choice_button":
 		if it.cb.is_valid():
 			it.cb.call(it.index)
@@ -319,17 +367,27 @@ func _process(delta: float) -> void:
 		if it.node == null:
 			continue
 		var n: Node3D = it.node
-		var want := 1.12 if i == focus else 1.0
+		var want := (1.04 if it.kind == "row" else 1.12) if i == focus else 1.0
+		var rings = (it.belt as Node3D).get_meta("focus_nodes") if (it.belt as Node3D).has_meta("focus_nodes") else null
+		if rings != null:
+			for k in (rings as Array).size():
+				if is_instance_valid(rings[k]):
+					(rings[k] as Node3D).visible = i == focus and k == int(it.get("stop", 0))
+		if it.has("arrows"):
+			for a in it.arrows:
+				(a as Node3D).visible = i == focus
+				(a as Node3D).scale = Vector3.ONE * (1.0 + 0.12 * sin(t * 8.0))
 		if _open_t > 0.6:
 			n.scale = n.scale.lerp(Vector3.ONE * want, 1.0 - exp(-delta * 12.0))
 		n.rotation.z = (sin(t * 5.0 + i) * 0.035) if i == focus else lerpf(n.rotation.z, sin(t * 1.3 + i * 0.7) * 0.01, 0.1)
 		# The kit belt's pug crest shows on the selected belt only (they stack tight).
-		var crest = (it.belt as Node3D).get_meta("crest", null)
+		var crest = (it.belt as Node3D).get_meta("crest") if (it.belt as Node3D).has_meta("crest") else null
 		if crest != null and is_instance_valid(crest):
 			(crest as Node3D).visible = i == focus
 	# The kit belt carries its own selection mark (the pug crest): no mask cursor then.
 	if cursor != null and _live(focus):
-		cursor.visible = (items[focus].belt as Node3D).get_meta("crest", null) == null
+		var fb := items[focus].belt as Node3D
+		cursor.visible = not fb.has_meta("crest") and not fb.has_meta("focus_nodes")
 	if cursor != null and cursor.visible and _live(focus) and _open_t > 0.3:
 		var home: Vector3 = items[focus].node.get_meta("home")
 		var bw: float = (items[focus].belt as Node3D).get_meta("width", BELT_W)
