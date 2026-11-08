@@ -289,8 +289,11 @@ func _spike_limp() -> void:
 	t("limp: the deselected hand catches on contact despite its button staying down", c.limbs[0].grab_other == next_bar)
 	d.set_limb(2, false)
 	await frames(2)
-	t("limp: releasing the selection leaves the older hand planted", not c.limbs[0].held and c.limbs[0].grab_other == next_bar)
+	t("limp: releasing the selection hands control back to the older hand still held (the press stack)", c.limbs[0].held and not c.limbs[0].grab.is_valid() and c.active_limb() == 0)
 	next_bar.queue_free()
+	d.set_limb(0, false)  # let go of the other buttons: only the stuck hand's press is new
+	d.set_limb(3, false)
+	await frames(2)  # the bar is gone before anything can catch it again
 	c.release(0)
 	d.set_limb(1, true, Vector2.UP, 1.0)
 	await frames(2)
@@ -430,6 +433,21 @@ func _run_grab() -> void:
 	d.set_limb(2, false)
 	await frames(4)
 	t("grab: letting go over the deck plants it again", c.limbs[2].grab.is_valid())
+	# THE PRESS STACK (Parker 11-08): hold A (right hand), press X (left hand): X
+	# rules. Let go of X with A still held: A rules again.
+	d.set_limb(1, true)
+	await frames(2)
+	var a_first: bool = c.active_limb() == 1
+	d.set_limb(0, true)
+	await frames(2)
+	var x_takes: bool = c.active_limb() == 0 and c.limbs[0].held and not c.limbs[1].held
+	d.set_limb(0, false)
+	await frames(2)
+	var a_back: bool = c.active_limb() == 1 and c.limbs[1].held
+	d.set_limb(1, false)
+	await frames(2)
+	t("grab: the press stack (hold A, press X: X rules; let go of X: A rules again)", a_first and x_takes and a_back and c.active_limb() == -1, "A %s, X takes %s, A back %s, none after %s" % [a_first, x_takes, a_back, c.active_limb() == -1])
+	await seconds(0.5)
 	# A frozen climber is grabbable, and so is a live one.
 	var f := spawn(Vector2(2.0, 0.05))
 	await seconds(1.0)

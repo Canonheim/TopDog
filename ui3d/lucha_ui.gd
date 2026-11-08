@@ -18,6 +18,7 @@ extends Node3D
 ## (LuchaKit), so the real models drop in by file name.
 
 const MENU_DIST := 6.0  # in front of the ring's apron at every camera distance
+const PAUSE_DIST := 1.2  # the pause menu, nearer than anything in the world
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
 const OWNED := ["title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat"]
 const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
@@ -77,7 +78,7 @@ func show_screen(id: String) -> bool:
 			menus[k].open()
 		else:
 			menus[k].close()
-	_hud.visible = id in ["hud", "pause"]
+	_hud.visible = id == "hud"  # hidden under the pause menu (Parker 11-08: the menu in front of everything)
 	if id == "title":
 		_rehang_pinata()
 	_cards.visible = id == "local"
@@ -230,6 +231,12 @@ func _build_menus() -> void:
 		if Net.online:
 			Net.leave()
 		main._to_title(""))
+	# IN FRONT OF EVERYTHING (Parker 11-08: "make the menu draw in front of everything
+	# when paused"): the follow camera sits close to the play, so the pause menu
+	# rides PAUSE_DIST from the lens instead of MENU_DIST, scaled to the same size on
+	# screen: nothing in the world can come between it and the camera.
+	p.position = Vector3(0, 0, -PAUSE_DIST)
+	p.scale = Vector3.ONE * UI_SCALE * PAUSE_DIST / MENU_DIST
 	menus.pause = p
 	# RESULTS
 	var r := _menu()

@@ -379,6 +379,13 @@ func set_tint(c: Color) -> void:
 ## bright when held, on a white disc when stuck to something (Parker 11-07: half
 ## the old size, "a white background to indicate they are attached").
 ## items: [{"tex": Texture2D or null, "text"}].
+## The glyphs draw over everything (no depth test): hidden under the pause menu.
+func set_glyphs_visible(on: bool) -> void:
+	for g in _glyphs:
+		if is_instance_valid(g) and g.visible != on:
+			g.visible = on
+
+
 func set_glyphs(items: Array) -> void:
 	for g in _glyphs:
 		if is_instance_valid(g):
@@ -550,24 +557,31 @@ func stuck_count() -> int:
 	return n
 
 
-# A fresh press takes over. Older held buttons must be pressed again to unplant.
-# For edges sampled in the same tick, use the first limb in controller order.
+# THE PRESS STACK (Parker 11-08): one limb is active at a time, the most recent
+# press still held. Hold A, press X: X takes over. Let go of X with A still down:
+# A takes over again, as if you never stopped holding it. Edges sampled in the
+# same tick: the first limb in controller order ends on top.
 func active_limb() -> int:
 	return _active_limb
 
 
+var _press_stack: Array[int] = []
+
+
 func _select_active_limb() -> void:
 	var previous := _active_limb
-	var pressed := -1
+	var fresh: Array[int] = []
 	for i in limbs.size():
 		var down: bool = driver != null and driver.held(i)
-		if down and not _buttons_down[i] and pressed == -1:
-			pressed = i
+		if down and not _buttons_down[i]:
+			fresh.append(i)
+		elif not down and _buttons_down[i]:
+			_press_stack.erase(i)
 		_buttons_down[i] = down
-	if pressed != -1:
-		_active_limb = pressed
-	elif _active_limb != -1 and not _buttons_down[_active_limb]:
-		_active_limb = -1
+	for k in range(fresh.size() - 1, -1, -1):  # lowest index pushed last: on top
+		_press_stack.erase(fresh[k])
+		_press_stack.append(fresh[k])
+	_active_limb = _press_stack.back() if not _press_stack.is_empty() else -1
 	if previous != _active_limb:
 		var velocity := Vector3.ZERO
 		if previous >= 0:

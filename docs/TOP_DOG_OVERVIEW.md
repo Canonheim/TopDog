@@ -39,6 +39,11 @@ names, characters, music, sounds, text or levels.
 - Limbs turn a **full 360°** with no joint limits and pass through each other. The climber's own pieces never
   collide with each other. Only the spine and neck have limits.
 
+### One active limb: the press stack
+
+Only one limb is in control at a time: the most recent button press that's still held. Hold A, press X: X is
+in control. Let go of X while still holding A: A takes control again, as if you'd never stopped holding it.
+
 ### The drag
 
 Holding a limb **pulls its hand or foot toward the target** with a strong, capped elastic force, and the body
@@ -88,8 +93,9 @@ last drives it. F1 opens the live **feel panel**, which shows every physics numb
 
 ### The camera
 
-In play it follows the live climbers, close (a climber fills about half the screen), not the whole tower.
+In play it follows the live climbers, close (`FOLLOW_HALF_H` 2.05 m), not the whole tower.
 The line comes into view as you climb toward it. In menus and between turns it frames the tower top.
+Paused, the menu rides 1.2 m from the lens, so nothing in the world covers it, and the glyphs, tags and HUD are hidden.
 
 ### Local and online
 

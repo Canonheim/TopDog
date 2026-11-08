@@ -33,7 +33,7 @@ var paused := false
 var feel_panel: Control
 var _cam_target := Vector3(0, 2, 14)
 var _cam_fov := 34.0
-const FOLLOW_HALF_H := 1.75  # in play: the camera shows at least this many metres above and below you
+const FOLLOW_HALF_H := 2.05  # in play: the camera shows at least this many metres above and below you
 var _last_tick_s := -1
 var _lobby_list: VBoxContainer
 var _online_status: Label
@@ -316,8 +316,8 @@ func _tick_camera(delta: float) -> void:
 		lo = lo.min(p)
 		hi = hi.max(p)
 	if follow:
-		lo -= Vector2(1.0, 1.0)
-		hi += Vector2(1.0, 1.2)
+		lo -= Vector2(1.2, 1.15)
+		hi += Vector2(1.2, 1.35)
 	else:
 		lo -= Vector2(1.6, 1.0)
 		hi += Vector2(1.6, 1.4)
@@ -334,7 +334,7 @@ func _tick_camera(delta: float) -> void:
 	cam.look_at(Vector3(cam.position.x, cam.position.y - 0.3, 0.0), Vector3.UP)
 	line_bar.position.y = lerpf(line_bar.position.y, line_y, 1.0 - exp(-delta * 8.0))
 	line_bar.visible = game.phase in ["turn", "round", "between"]
-	line_label.visible = line_bar.visible
+	line_label.visible = line_bar.visible and screen != "pause"
 	line_label.position = Vector3(cam.position.x - half_h * aspect * 0.62, line_bar.position.y + 0.3, 0.4)
 	line_label.text = "LINE  %.2f m" % line_y
 
@@ -387,7 +387,8 @@ func _tick_tags() -> void:
 			continue
 		var head: RigidBody3D = c.bodies["head"]
 		tag.global_position = head.global_position + Vector3(0, 0.38, 0.3)
-		tag.visible = c.state != Climber.State.FROZEN
+		tag.visible = c.state != Climber.State.FROZEN and screen != "pause"
+		c.set_glyphs_visible(screen != "pause")  # nothing over the pause menu
 
 
 func _on_spawned(c: Climber) -> void:

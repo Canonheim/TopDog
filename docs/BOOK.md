@@ -325,6 +325,17 @@ Parker: "the camera should match what it does in MYF, where it looks at you, not
 - New `--feel` checks: hanging by one hand, one held hand pulls the body up (1.42 m), and one held foot lifts it (0.64 m). Both were already near those numbers before, because the limb's reach limits them. So if a climb move still fails, it's a different situation from these two (Parker to say which).
 - Full battery passes.
 
+## 0.3.32+: the press stack, the camera a step back, the pause menu on top (Parker, 2026-11-08)
+
+- **Merged Dan's 0.3.13 to 0.3.31:** his limb pull with the swing around one grip, gravity multipliers, grounded lock-ins, arena chairs, the practice partner. Parker: "throw out my changes on the power, main's take precedence here, but keep my camera changes". So the 3.5 cap and the out-of-reach full pull are gone, and the follow camera stays.
+- **THE PRESS STACK** (`Climber._select_active_limb`). Parker: "Only one limb can be active at once, the most recent limb held ... hold A and then press X, X will be the one in control, then let go of X, A still being held, A should now be in control."
+  - The active limb is the most recent press still held. Releasing it hands control back to the next-newest held button, which picks its limb up again.
+  - Same-tick presses: the first limb in controller order ends on top.
+  - Dan's rule (an older held button had to be pressed again) is replaced; its `limp` check was updated, and `--grab` checks the A, X, release X sequence.
+- **The camera a step back:** `FOLLOW_HALF_H` 1.75 → 2.05, padding 1.2 wide and 1.15 / 1.35.
+- **The pause menu in front of everything:** it rides `LuchaUI.PAUSE_DIST` (1.2 m) from the lens instead of 6 m, scaled to the same size on screen. While paused, the overlays that draw over everything on purpose are hidden: the limb glyphs (`Climber.set_glyphs_visible`), name tags, the LINE label and the match HUD with its turn banner.
+- **Open:** two `--bend` checks fail on Dan's merged limb control (a steered knee folds only to 17 degrees; a pushed stick moved the hand 1.5 m). They're his tuning, for him to look at. `pad_probe` failed 7 once right after a battery and passed on three runs since.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
