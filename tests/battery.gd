@@ -792,12 +792,15 @@ func _run_net() -> void:
 	t("net: remote release drops the same chair", A.chair.holder == -1 and B.chair.holder == -1)
 	var chair_sounds := []
 	for m in machines:
+		var heard := []
+		chair_sounds.append(heard)
 		m.world.child_entered_tree.connect(func(node):
 			if node is AudioStreamPlayer3D:
-				chair_sounds.append(node.stream.resource_path.get_file().get_basename()))
+				heard.append(node.stream.resource_path.get_file().get_basename()))
 	var test_hit := {"piece": "chest", "offset": Vector3.ZERO, "impulse": Vector3.RIGHT, "speed": A.chair.LIGHT_HIT_MAX_SPEED}
 	for kind in ["chair_light", "chair_heavy", "chair_break"]:
-		chair_sounds.clear()
+		for heard in chair_sounds:
+			heard.clear()
 		if kind == "chair_heavy":
 			test_hit.speed += 0.01
 		elif kind == "chair_break":
@@ -808,7 +811,12 @@ func _run_net() -> void:
 		if kind != "chair_break":
 			var expected := before_hits + int(kind == "chair_heavy")
 			t("net: wear matches the slam at the sound boundary", A.chair.hit_count == expected and B.chair.hit_count == expected)
-		t("net: synchronized chair cue " + kind, chair_sounds.size() == 3 and chair_sounds[0] in Sound.SFX[kind] and chair_sounds.count(chair_sounds[0]) == 3)
+		var expected_cues := ["chair_heavy", "chair_break"] if kind == "chair_break" else [kind]
+		for heard in chair_sounds:
+			var correct: bool = heard == chair_sounds[0] and heard.size() == expected_cues.size()
+			for cue in mini(heard.size(), expected_cues.size()):
+				correct = correct and heard[cue] in Sound.SFX[expected_cues[cue]]
+			t("net: synchronized chair cue sequence " + kind, correct, heard)
 	await seconds(0.12)
 	t("net: the final hit removes the chair for host, client and spectator", A.chair == null and B.chair == null and machines[2].game.chair == null)
 	# The stream: the client's puppet follows the host's real body.

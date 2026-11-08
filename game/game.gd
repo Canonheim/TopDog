@@ -856,12 +856,12 @@ func _apply_chair_hits(hits: Dictionary) -> void:
 			_chair_impact(victim, hit.piece, hit.offset, hit.impulse)
 		else:
 			_rpc_chair_impact.rpc_id(victim.owner_peer, id, hit.piece, hit.offset, hit.impulse)
-		if chair.hit_count == ChairScript.BREAK_HITS:
-			_rpc_chair_broke.rpc(chair.global_transform, hit.impulse, Sound.SFX["chair_break"].pick_random())
-			return
 		var sound_kind := "chair_heavy" if heavy else "chair_light"
 		var at: Vector3 = victim.bodies[hit.piece].to_global(hit.offset)
 		_rpc_chair_sound.rpc(sound_kind, Sound.SFX[sound_kind].pick_random(), at)
+		if chair.hit_count == ChairScript.BREAK_HITS:
+			_rpc_chair_broke.rpc(chair.global_transform, hit.impulse, Sound.SFX["chair_break"].pick_random())
+			return
 
 
 @rpc("authority", "call_local", "reliable")
