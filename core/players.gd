@@ -237,7 +237,7 @@ func limb_aim(s: int, climber, limb: int):
 		return _mouse_aim() if last_device == KBM else null
 	if st.length() < Feel.get_k("stick_deadzone"):
 		return null  # the hand stays where it was steered
-	var mag := inverse_lerp(Feel.get_k("stick_deadzone"), 1.0, minf(st.length(), 1.0))
+	var mag := minf(st.length(), 1.0)  # the push is the reach: half a push, half way out
 	return {"dir": st.normalized(), "mag": mag}
 
 
