@@ -36,6 +36,7 @@ var _pinata: Node3D  # the pinata over the plaza (the kit's pinata)
 var _pinata_burst := false
 const PAPEL := [Color("#E0287A"), Color("#1FB8AE"), Color("#FFC928"), Color("#7CC83A"), Color("#8A3FC0"), Color("#F28A1E")]
 var _hud: Node3D
+var hud_bottom: LuchaHudBottom
 var _clock_text: Node3D
 var _clock_val := -1
 var _info: Node3D
@@ -405,6 +406,9 @@ func _build_hud() -> void:
 	_clock_text = Node3D.new()
 	_clock_text.position = Vector3(0, 2.25, 0.075)  # just proud of the kit's face (z 0.06)
 	_hud.add_child(_clock_text)
+	# The bottom: the climber's nameplate and the height odometer (Parker 11-08).
+	hud_bottom = LuchaHudBottom.new(main)
+	_hud.add_child(hud_bottom)
 	_banner = Node3D.new()
 	_banner.position = Vector3(0, 1.2, 0.3)
 	_banner.visible = false
@@ -525,6 +529,7 @@ func _process(delta: float) -> void:
 		var g: Game = main.game
 		var show := g.phase in ["turn", "round"] and not g.practice
 		_hud.get_node("Buckle").visible = show
+		hud_bottom.tick(delta)
 		if _bell != null:
 			_bell.visible = show
 		# The who's-climbing line, as a small poster at the top left.
