@@ -146,6 +146,12 @@ const DRY_GRASS := Color("#8E9A5C")  # lit, the cel band reads it a dry green
 const LAND := Color("#C9BE92")
 const RIDGE_NEAR := Color("#B4C9EC")  # haze blues: the far ridges sit back by colour (no fog in the look)
 const RIDGE_FAR := Color("#CCDBF3")
+## The far mountains: [x, z, width, height, fallback colour, yaw].
+const FAR_RIDGES := [
+	[-140.0, -260.0, 300.0, 52.0, RIDGE_FAR, 0.2],
+	[120.0, -240.0, 280.0, 44.0, RIDGE_FAR, -0.24],
+	[-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR, -0.12],
+]
 const POLE_WOOD := Color("#6A4128")
 const BUNTING_Z := -12.6  # the houses' awnings reach about z -13.4
 const BUNTING_POLES := [-18.0, -6.0, 6.0, 18.0]
@@ -159,6 +165,7 @@ func _build_plaza() -> void:
 	# Land to the horizon (just under the stones), and the plaza floor out to the hill.
 	plaza.add_child(LuchaKit.box(Vector3(4000, 0.2, 4000), LAND, Vector3(0, gy - 0.12, -1980)))
 	plaza.add_child(LuchaKit.box(Vector3(80, 0.4, 20), Color(0.86, 0.78, 0.6), Vector3(0, gy - 0.2, -14)))
+	_pave(plaza, gy)
 	# The plaza row.
 	for row in PLAZA_ROW:
 		var house := _house(str(row[1]))
@@ -202,10 +209,24 @@ func _build_plaza() -> void:
 	var reach := float(church.get_meta("front_reach"))
 	church.position = Vector3(0, gy + float(HILL_TERRACES[0][2]), float(HILL_TERRACES[0][0]) - reach - 0.05)
 	plaza.add_child(church)
-	# Far ridges: flat cards in the haze blues, so the land meets something at the horizon.
-	for r in [[-140.0, -260.0, 300.0, 52.0, RIDGE_FAR], [120.0, -240.0, 280.0, 44.0, RIDGE_FAR], [-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR]]:
+	# Far mountains (Parker 11-08: "large cardboard cut outs of mountains"): the
+	# kit's mountain_cutout_a/b/c, scaled to each ridge's width and height, stood
+	# with a slight yaw and lean like set dressing propped on the horizon. If the
+	# kit pieces are missing, plain flat cards in the haze blues stand in.
+	for i in FAR_RIDGES.size():
+		var r: Array = FAR_RIDGES[i]
 		var w: float = r[2]
 		var rh: float = r[3]
+		var cut := LuchaKit.kit_model("mountain_cutout_" + "abc"[i])
+		if cut != null:
+			var bb := _local_aabb(cut)
+			var sx := w / maxf(bb.size.x, 0.01)
+			var sy := rh / maxf(bb.size.y, 0.01)
+			cut.scale = Vector3(sx, sy, (sx + sy) * 0.5)
+			cut.rotation = Vector3(-0.04, float(r[5]), 0.0)  # leaned back a touch, turned enough to show the kraft edge
+			cut.position = Vector3(r[0], gy - 0.2 - bb.position.y * sy, r[1])
+			plaza.add_child(cut)
+			continue
 		var pts := PackedVector2Array([Vector2(-w * 0.5, 0), Vector2(-w * 0.3, rh * 0.55), Vector2(-w * 0.12, rh * 0.8),
 			Vector2(0, rh), Vector2(w * 0.1, rh * 0.72), Vector2(w * 0.28, rh * 0.85), Vector2(w * 0.5, 0)])
 		var ridge := LuchaKit._extrude(pts, 4.0, r[4])
@@ -230,6 +251,73 @@ func _build_plaza() -> void:
 	# Mid-span on the right, where the string sags lowest: it hangs in front of a
 	# house wall, not on a roof ridge, and clear of the HUD clock.
 	_hang_pinata(plaza, Vector3(12.0, 5.75, BUNTING_Z))
+
+
+## THE PAVING (Parker 11-08: "a paved street in front of the houses", like
+## Golemheim's; then "flat like in the image so ink doesnt hit it"): a street of
+## small setts in running bond in front of the houses, a raised kerb, then the
+## square in big slabs. The stones are FLAT quads 5 mm over a grout bed, so the
+## joints are colour only and the ink, which draws depth and normal edges, leaves
+## them alone. Only the kerb stands proud. One MultiMesh per stone tone.
+const STREET_Z := Vector2(-13.8, -9.95)  # the street, from the house fronts to the kerb
+const SQUARE_Z := Vector2(-9.55, 16.2)  # the square, from the kerb to past the camera
+const PAVE_HALF_X := 42.0
+const GROUT := Color("#7A6C5A")
+const KERB := Color("#D9CBB0")
+const STONE_TONES := [Color("#C4B192"), Color("#B9A585"), Color("#AE9978"), Color("#CBBB9E")]  # warm sandstone: the sun lifts these a step
+
+
+func _pave(parent: Node3D, gy: float) -> void:
+	var z0 := STREET_Z.x - 0.1
+	var z1 := SQUARE_Z.y + 0.1
+	parent.add_child(LuchaKit.box(Vector3(PAVE_HALF_X * 2.0 + 0.4, 0.02, z1 - z0), GROUT, Vector3(0, gy + 0.01, (z0 + z1) * 0.5)))
+	var kz := (STREET_Z.y + SQUARE_Z.x) * 0.5
+	parent.add_child(LuchaKit.box(Vector3(PAVE_HALF_X * 2.0, 0.12, SQUARE_Z.x - STREET_Z.y - 0.06), KERB, Vector3(0, gy + 0.08, kz)))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 31
+	var lots: Array = []
+	for t in STONE_TONES:
+		lots.append([])
+	# The street: setts 0.9 x 0.6, each row shifted half a sett.
+	_lay(lots, rng, gy, STREET_Z, Vector2(0.9, 0.6), true)
+	# The square: slabs 1.6 m, in a straight grid.
+	_lay(lots, rng, gy, SQUARE_Z, Vector2(1.6, 1.6), false)
+	for i in STONE_TONES.size():
+		var xs: Array = lots[i]
+		if xs.is_empty():
+			continue
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		var pm := PlaneMesh.new()
+		pm.size = Vector2.ONE
+		mm.mesh = pm
+		mm.instance_count = xs.size()
+		for k in xs.size():
+			mm.set_instance_transform(k, xs[k])
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		mmi.material_override = LuchaKit.mat(STONE_TONES[i])
+		parent.add_child(mmi)
+
+
+## One stone per cell over a z band, each a flat unit quad scaled to the cell
+## less the joint, sorted into a tone's lot. `bond` shifts every other row half a stone.
+func _lay(lots: Array, rng: RandomNumberGenerator, gy: float, band: Vector2, cell: Vector2, bond: bool) -> void:
+	var joint := 0.07
+	var rows := int(floor((band.y - band.x) / cell.y))
+	var dz := (band.y - band.x) / rows
+	for r in rows:
+		var zc := band.x + (r + 0.5) * dz
+		var shift := cell.x * 0.5 if bond and r % 2 == 1 else 0.0
+		var x := -PAVE_HALF_X - shift
+		while x < PAVE_HALF_X:
+			var xa := maxf(x, -PAVE_HALF_X)
+			var xb := minf(x + cell.x, PAVE_HALF_X)
+			if xb - xa > joint * 2.0:
+				var basis := Basis.from_scale(Vector3(xb - xa - joint, 1.0, dz - joint))
+				var xf := Transform3D(basis, Vector3((xa + xb) * 0.5, gy + 0.025, zc))  # flush: 5 mm over the grout
+				(lots[rng.randi() % lots.size()] as Array).append(xf)
+			x += cell.x
 
 
 ## A kit plaza house (a, b or c), or a plain stand-in.
@@ -268,6 +356,20 @@ static func _front_z(root: Node3D) -> float:
 		var bb: AABB = xf * m.mesh.get_aabb()
 		front = maxf(front, bb.end.z)
 	return front if front > -INF else 0.0
+
+
+## The merged box of a model's meshes in its own frame (before it's in the tree).
+static func _local_aabb(root: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		if m.mesh == null:
+			continue
+		var bb: AABB = _local_xf(root, m) * m.mesh.get_aabb()
+		out = bb if first else out.merge(bb)
+		first = false
+	return out
 
 
 static func _local_xf(root: Node3D, n: Node3D) -> Transform3D:
