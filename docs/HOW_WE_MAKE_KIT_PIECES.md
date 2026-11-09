@@ -200,6 +200,21 @@ If you must break the contract, say so to Top Dog first. Once code is tied to an
   real depth do get ink, which is how you outline something on purpose.
 - **Gold is satin metal**: bells, knobs, caps. Everything else is matte.
 
+### No modelled plants on buildings (Parker, 11-08)
+
+"Tell the BM not to model plants onto his houses, if he wants a plant, have him tell the UI guy where he wants them and
+to have UI guy build them."
+- Buildings carry planters (window boxes, pots, ledges) but **no plants**: no flowers, leaves or vines modelled on.
+- Each plant spot gets a **marker object**: a tiny mesh buried 2 mm inside the planter, so it never shows (the checker
+  allows meshes only). Its **origin** is the plant's base centre, facing +Z out of the building. Name it by kind:
+  - `plant_box_N`: flowers along a window box, the marker at the box's top centre, with local x along the box;
+  - `plant_pot_N`: a potted plant on a ledge, step, balcony or parapet;
+  - `plant_vine_N`: a climbing or hanging plant, the marker at the top it hangs from;
+  - the church's `pot_spot_1..4` predate the rule and stay as they are.
+- `plaza_house_lib.marker(kind, x, y, z)` makes one.
+- Brief the UI creator with the kinds, counts and the space each plant must fit. The Environment Maker wires the
+  plants onto the markers in code.
+
 ### Shape craft
 
 - **Depth makes a facade.** A flat wall with flat windows reads as a slab. What made the plaza houses read:
@@ -278,9 +293,10 @@ in `docs\` (the Building Maker uses `docs\BUILDING_MAKER_NOTES.md`) and tell Par
 
 | Piece | Source | Notes |
 |---|---|---|
-| `plaza_house_a`, `_b`, `_c`, `_d` | `plaza_house_lib.py` + `build_plaza_house_<x>.py` | variants are rows of `VARIANTS`; d is the flat-roofed one (parapet, loggia) |
+| `plaza_house_a`, `_b`, `_c`, `_d`, `_d_tan`, `_e` | `plaza_house_lib.py` + `build_plaza_house_<x>.py` | variants are rows of `VARIANTS`; d (and its tan twin) has the flat roof, parapet and loggia; e has its gable to the square and a wooden balcony; plant_* markers on all |
 | `bell_tower` | `build_bell_tower.py` (on `plaza_house_lib`) | not placed at the moment |
 | `plaza_church` | `build_plaza_church.py` | twin towers, talavera dome, a rusticated stone plinth (`plinth()`); origin at the facade's foot |
+| `palm_b`, `palm_c` | `palm_lib.py` + `build_palm_<x>.py` | the original `palm` is the UI creator's `build_palm.py` |
 | `ring` | `ring_design.py` (shapely) + `build_ring.py` | Mexican colours, green top rope |
 | `mountain_cutout_a`, `_b`, `_c` | `mountain_design.py` (shapely) + `mountain_lib.py` | cardboard, 10 m unit, scaled to the slots in code |
 | `cloud_a` .. `cloud_e` | `cloud_card_design.py` (shapely) + `build_cloud_<x>.py` | cardboard, on dowels |
