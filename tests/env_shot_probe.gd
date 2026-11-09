@@ -11,6 +11,8 @@ const CAMS := [
 	["play_20m", Vector3(0, 20.27, 6.71), Vector3(0, 19.97, 0.0)],
 	["wide", Vector3(0, 6.0, 40.0), Vector3(0, 6.0, 0.0)],
 	["street", Vector3(9.0, 3.2, 1.0), Vector3(3.0, -0.4, -12.0)],  # down across the paving to the houses
+	["aerial", Vector3(0, 38.0, 34.0), Vector3(0, 0.0, -14.0)],  # three-quarter view of the whole square
+	["plan", Vector3(0, 95.0, -14.0), Vector3(0, 0.0, -14.01), Vector3(0, 0, -1)],  # straight down (up = -z)
 ]
 
 
@@ -31,7 +33,7 @@ func _ready() -> void:
 	get_tree().root.add_child(cam)
 	for c in CAMS:
 		cam.position = c[1]
-		cam.look_at(c[2], Vector3.UP)
+		cam.look_at(c[2], c[3] if c.size() > 3 else Vector3.UP)
 		cam.make_current()
 		await get_tree().create_timer(0.4).timeout
 		await _shot(out + "/env_" + str(c[0]) + ".png")

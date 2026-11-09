@@ -127,30 +127,44 @@ func _build_sky() -> void:
 		_clouds.append(c)
 
 
-## THE TOWN (the environment pass, 2026-11-08). The follow camera sits 6.7 m out
-## and climbs with the climber, so the town has to fill the frame at every height:
-## - the plaza row: the kit houses edge to edge at z -16 to -18, set back by turns;
-## - the church at the centre back: a code facade between two of the kit's
-##   `bell_tower`s, the landmark at 10 to 19 m; the climber keeps the facade and the
-##   sky between the towers behind him (the kit's `plaza_church`, if it ever lands,
-##   replaces the whole thing);
-## - the hill town: four terraces climbing behind the plaza with houses on each,
-##   so rooftops pass you as you climb (to about 18 m);
-## - land to the horizon and far ridges (the sky's dark lower half read as sea);
-## - the papel picado on poles at z -12.6: one span each side, and a string from
-##   each inner pole up to its church tower, so no string crosses the climbing
-##   column; the pinata hangs mid-span on the right, in front of a wall.
-const PLAZA_ROW := [  # [x centre, kit house (a 4.8, b 5.2, c 3.8 wide), z, height scale]
-	[-31.95, "b", -17.2, 1.04], [-26.85, "a", -16.4, 0.94], [-22.25, "c", -17.8, 1.08], [-17.45, "b", -16.6, 0.96],
-	[-12.15, "a", -17.6, 1.06], [-7.55, "c", -16.2, 0.92], [-2.75, "b", -17.0, 0.95], [2.6, "a", -16.4, 0.93],
-	[7.2, "c", -17.6, 1.05], [11.95, "b", -16.2, 0.94], [17.25, "a", -17.4, 1.08], [21.85, "c", -16.6, 0.96],
-	[26.65, "b", -17.8, 1.06], [31.75, "a", -16.6, 0.95],
+## THE TOWN IN THE ROUND (Parker 11-08: "the town arranged in more of a semi circle
+## around the ring. So the church is more visible and the ring feel like it might
+## be more in the town and the town isn't just a grid"). Everything is laid out on
+## arcs about one centre, ARC_C, just behind the ring:
+## - the first ring of kit houses faces the centre, from ARC_FIRST to ARC_LAST each
+##   side, so its wings come forward on both sides of the ring; a street opens
+##   between the houses on each side (ARC_STREETS);
+## - the church stands in the gap at the back on a raised forecourt with steps,
+##   nothing in front of it, scaled up as the centrepiece (CHURCH_SCALE);
+## - the hill town climbs behind in concentric terraces (TERRACES), houses facing
+##   the centre, an amphitheatre round the square;
+## - the ground: a round plaza of concentric sett courses, a raised kerbed pavement
+##   along the house fronts, sett streets running out between the houses to steps
+##   up the first terrace, slabs on the forecourt. Flat-coloured: the stones are flat
+##   quads 5 mm over a grout bed, so the ink leaves the joints alone; only kerbs and
+##   steps stand proud (Parker: "flat like in the image so ink doesnt hit it");
+## - the papel picado on poles round the plaza: strings along the arc and up to the
+##   church towers, none across the climbing column.
+## Gameplay never touches this: the ring, the deck, the plaza floor collider (on the
+## play plane), the line poles at x +-12 and the cameras are the stage's and main's.
+const ARC_C := Vector2(0.0, -2.5)  # the town's centre, (x, z)
+const ARC_FRONT := 23.0  # the first ring's house fronts, from ARC_C
+const ARC_FIRST := 24.0  # degrees from the back axis: the church's gap inside this (the first houses meet the forecourt)
+const ARC_LAST := 94.0  # the wings stop here (z about -1 at x +-24: clear of the play cameras)
+const ARC_STREETS := [62.0]  # a street opens here each side (degrees)
+const STREET_W := 4.2
+const PLAZA_R := 21.4  # the plaza's stones; the pavement runs from here to the house fronts
+const WALK_H := 0.14  # the pavement and kerb, proud of the plaza
+const TERRACES := [  # [front radius, top above the stones, angular half-range (deg), start (deg)]
+	[29.5, 1.6, 100.0, 17.0], [36.5, 4.0, 100.0, 17.0], [43.5, 6.6, 98.0, 0.0], [50.5, 9.4, 92.0, 0.0],
 ]
+const TERRACE_OUT := 58.0  # every terrace runs out to here, so none floats
+const CHURCH_SCALE := 1.25
+const CHURCH_FRONT_Z := -25.6  # the church's steps on the forecourt
+const FORECOURT := Rect2(-9.0, -45.0, 18.0, 25.4)  # (x, z, w, d): from z -45 to the top step at -19.6
+const FORECOURT_H := 1.0
 const HOUSE_W := {"a": 4.8, "b": 5.2, "c": 3.8}
-const HILL_TERRACES := [  # [front z, depth, top above the stones, half-width]
-	[-22.0, 7.0, 2.0, 38.0], [-29.0, 7.0, 4.6, 32.0], [-36.0, 7.0, 7.4, 25.0], [-43.0, 7.0, 10.4, 18.0],
-]
-const CHURCH_CLEAR := 8.5  # no hill houses within this of x 0 on the first two terraces
+const HOUSE_D := 4.75
 const STONE := Color("#C2A878")
 const DRY_GRASS := Color("#8E9A5C")  # lit, the cel band reads it a dry green
 const LAND := Color("#C9BE92")
@@ -163,8 +177,19 @@ const FAR_RIDGES := [
 	[-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR, -0.12],
 ]
 const POLE_WOOD := Color("#6A4128")
-const BUNTING_Z := -12.6  # the houses' awnings reach about z -13.4
-const BUNTING_POLES := [-18.0, -6.0, 6.0, 18.0]
+const POLE_R := 19.0  # the papel picado poles stand round the plaza at this radius
+const POLE_DEG := [36.0, 58.0, 80.0]  # each side
+const GROUT := Color("#7A6C5A")
+const KERB := Color("#D9CBB0")
+const WALK := Color("#CDBFA4")
+const STONE_TONES := [Color("#C4B192"), Color("#B9A585"), Color("#AE9978"), Color("#CBBB9E")]  # warm sandstone: the sun lifts these a step
+const SLAB_TONES := [Color("#D3C4A8"), Color("#C8B89A")]
+
+
+## A point on the town's arcs: radius r, angle deg from the back axis (+ is right).
+static func _arc_pt(r: float, deg: float) -> Vector2:
+	var a := deg_to_rad(deg)
+	return ARC_C + Vector2(sin(a), -cos(a)) * r
 
 
 func _build_plaza() -> void:
@@ -172,53 +197,90 @@ func _build_plaza() -> void:
 	plaza.name = "Plaza"
 	main.world.add_child(plaza)
 	var gy := Stage.PLAZA_GROUND
-	# Land to the horizon (just under the stones), and the plaza floor out to the hill.
-	plaza.add_child(LuchaKit.box(Vector3(4000, 0.2, 4000), LAND, Vector3(0, gy - 0.12, -1980)))
-	plaza.add_child(LuchaKit.box(Vector3(80, 0.4, 20), Color(0.86, 0.78, 0.6), Vector3(0, gy - 0.2, -14)))
-	_pave(plaza, gy)
-	# The plaza row.
-	for row in PLAZA_ROW:
-		var house := _house(str(row[1]))
-		house.position = Vector3(float(row[0]), gy, float(row[2]))
-		house.scale = Vector3(1.0, float(row[3]), 1.0)  # a little stagger in the roofline
-		plaza.add_child(house)
-	for px in [-20.2, -9.7, 9.4, 20.0]:
-		var palm := _palm()
-		palm.position = Vector3(px, gy, -12.8)
-		plaza.add_child(palm)
-	# The hill town: terraces with a stone face and a dry-grass top, houses along each.
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 8
-	for k in HILL_TERRACES.size():
-		var t: Array = HILL_TERRACES[k]
-		var zf: float = t[0]
-		var d: float = t[1]
-		var top: float = t[2]
-		var hw: float = t[3]
-		plaza.add_child(LuchaKit.box(Vector3(hw * 2.0, top + 0.5, d), STONE, Vector3(0, gy + (top - 0.5) * 0.5, zf - d * 0.5)))
-		plaza.add_child(LuchaKit.box(Vector3(hw * 2.0 - 0.4, 0.12, d - 0.2), DRY_GRASS, Vector3(0, gy + top + 0.06, zf - d * 0.5 - 0.1)))
-		var x := -hw + 3.0 + rng.randf_range(0.0, 2.0)
-		while x < hw - 3.0:
+	# Land to the horizon, just under the stones.
+	plaza.add_child(LuchaKit.box(Vector3(4000, 0.2, 4000), LAND, Vector3(0, gy - 0.12, -1980)))
+	_pave(plaza, gy)
+	# The first ring of houses, facing the centre.
+	for side in [-1.0, 1.0]:
+		var deg := ARC_FIRST
+		while true:
+			# A street's mouth: jump past it rather than build across it.
+			for s in ARC_STREETS:
+				var lo := float(s) - rad_to_deg(STREET_W * 0.5 / ARC_FRONT)
+				var hi := float(s) + rad_to_deg(STREET_W * 0.5 / ARC_FRONT)
+				if deg + rad_to_deg(5.2 / ARC_FRONT) > lo and deg < hi:
+					deg = hi
 			var kind: String = ["a", "b", "c"][rng.randi() % 3]
-			# The church's spot on the first two terraces stays clear.
-			if not (k < 2 and absf(x) < CHURCH_CLEAR):
+			var w := float(HOUSE_W[kind])
+			var half_deg := rad_to_deg(w * 0.5 / ARC_FRONT)
+			var centre := deg + half_deg
+			if centre + half_deg > ARC_LAST:
+				break
+			var house := _house(kind)
+			_place_facing(house, ARC_FRONT + HOUSE_D * 0.5, side * centre, gy)
+			house.scale = Vector3(1.0, rng.randf_range(0.92, 1.08), 1.0)  # a little stagger in the roofline
+			plaza.add_child(house)
+			deg = centre + half_deg + rad_to_deg(0.18 / ARC_FRONT)
+	# Palms in planters at the street mouths and the wings' ends.
+	for side in [-1.0, 1.0]:
+		for d in [46.0, 76.0]:
+			var p := _arc_pt(PLAZA_R - 1.2, side * d)
+			var palm := _palm()
+			palm.position = Vector3(p.x, gy, p.y)
+			plaza.add_child(palm)
+			plaza.add_child(LuchaKit.cyl(0.7, 0.5, KERB, Vector3(p.x, gy + 0.25, p.y)))
+	# The church on its forecourt.
+	_forecourt(plaza, gy)
+	var church := _church()
+	church.scale = Vector3.ONE * CHURCH_SCALE
+	var reach := float(church.get_meta("front_reach")) * CHURCH_SCALE
+	church.position = Vector3(0, gy + FORECOURT_H, CHURCH_FRONT_Z - reach)
+	plaza.add_child(church)
+	# The hill town: concentric terraces, a stone face and a dry-grass top, houses
+	# along each facing the centre; the church's notch and the streets' landings kept clear.
+	for k in TERRACES.size():
+		var t: Array = TERRACES[k]
+		var r0: float = t[0]
+		var top: float = t[1]
+		var span: float = t[2]
+		var start: float = t[3]
+		for side in [-1.0, 1.0]:
+			var a0: float = side * start
+			var a1: float = side * span
+			plaza.add_child(_arc_prism(r0, TERRACE_OUT, minf(a0, a1), maxf(a0, a1), gy, top, STONE))
+			plaza.add_child(_arc_prism(r0 + 0.2, TERRACE_OUT, minf(a0, a1), maxf(a0, a1), gy + top, 0.1, DRY_GRASS))
+		var rr := r0 + 2.9
+		var deg := -span + 3.0
+		while deg < span - 3.0:
+			var kind: String = ["a", "b", "c"][rng.randi() % 3]
+			var w := float(HOUSE_W[kind])
+			var half_deg := rad_to_deg(w * 0.5 / rr)
+			var c := deg + half_deg
+			var p := _arc_pt(rr, c)
+			var clear := true
+			if absf(c) < start + half_deg + 1.0:
+				clear = false  # the church's notch
+			if absf(p.x) < 10.5 and k <= 2:
+				clear = false  # behind the church
+			if k == 0:
+				for s in ARC_STREETS:
+					if absf(absf(c) - float(s)) < rad_to_deg(3.6 / rr):
+						clear = false  # the street's landing
+			if clear:
 				var h := _house(kind)
-				h.position = Vector3(x, gy + top, zf - 2.7 - rng.randf_range(0.0, 0.8))
+				_place_facing(h, rr + rng.randf_range(0.0, 0.6), c, gy + top)
 				h.scale = Vector3.ONE * (0.92 - k * 0.04)  # a touch smaller up the hill, for depth
 				plaza.add_child(h)
 			var gap := rng.randf_range(1.0, 3.6)
-			if gap > 2.6 and k < 3:  # a palm in the wider gaps
+			if gap > 2.7 and k < 3 and clear:
+				var pp := _arc_pt(r0 + 1.4, c + half_deg + rad_to_deg(gap * 0.5 / rr))
 				var palm := _palm()
-				palm.position = Vector3(x + float(HOUSE_W[kind]) * 0.5 + gap * 0.5, gy + top, zf - 1.6)
+				palm.position = Vector3(pp.x, gy + top, pp.y)
 				palm.scale = Vector3.ONE * 0.85
 				plaza.add_child(palm)
-			x += float(HOUSE_W[kind]) + gap
-	# The church at the centre back, on the first terrace: its foremost part (the
-	# kit's steps, the stand-in's towers) stops at the terrace's front edge.
-	var church := _church()
-	var reach := float(church.get_meta("front_reach"))
-	church.position = Vector3(0, gy + float(HILL_TERRACES[0][2]), float(HILL_TERRACES[0][0]) - reach - 0.05)
-	plaza.add_child(church)
+			deg = c + half_deg + rad_to_deg(gap / rr)
 	# Far mountains (Parker 11-08: "large cardboard cut outs of mountains"): the
 	# kit's mountain_cutout_a/b/c, scaled to each ridge's width and height, stood
 	# with a slight yaw and lean like set dressing propped on the horizon. If the
@@ -242,57 +304,226 @@ func _build_plaza() -> void:
 		var ridge := LuchaKit._extrude(pts, 4.0, r[4])
 		ridge.position = Vector3(r[0], gy - 0.2, r[1])
 		plaza.add_child(ridge)
-	# Papel picado strung between poles, a little back from the stage.
-	for px in BUNTING_POLES:
-		plaza.add_child(_bunting_pole(Vector3(px, gy, BUNTING_Z)))
+	# Papel picado round the plaza: poles on a circle, strings along the arc between
+	# them, and one from each inner pole up to its church tower.
+	var tops := {}
+	for side in [-1.0, 1.0]:
+		for d in POLE_DEG:
+			var p := _arc_pt(POLE_R, side * d)
+			plaza.add_child(_bunting_pole(Vector3(p.x, gy, p.y)))
+			tops[side * d] = Vector3(p.x, 6.8, p.y)
 	var ties: Array = church.get_meta("anchors")  # the belfries' outer faces, church-local
-	var strings := [
-		[Vector3(-18.0, 6.5, BUNTING_Z), Vector3(-6.0, 6.8, BUNTING_Z), 9, 0.9],
-		[Vector3(6.0, 6.8, BUNTING_Z), Vector3(18.0, 6.5, BUNTING_Z), 9, 0.9],
-		[Vector3(-6.0, 6.8, BUNTING_Z), church.position + (ties[0] as Vector3), 8, 0.6],
-		[Vector3(6.0, 6.8, BUNTING_Z), church.position + (ties[1] as Vector3), 8, 0.6],
-	]
+	var strings: Array = []
+	for side in [-1.0, 1.0]:
+		for i in POLE_DEG.size() - 1:
+			strings.append([tops[side * POLE_DEG[i]], tops[side * POLE_DEG[i + 1]], 8, 0.8])
+		var tie: Vector3 = church.position + (ties[0 if side < 0 else 1] as Vector3) * CHURCH_SCALE
+		strings.append([tops[side * POLE_DEG[0]], tie, 9, 0.7])
 	for st in strings:
 		var b := LuchaKit.bunting(st[0], st[1], st[2], st[3])
 		plaza.add_child(b)
 		for f in b.find_children("*", "Node3D", true, false):
 			if f.has_meta("sway"):
 				_flags.append(f)
-	# Mid-span on the right, where the string sags lowest: it hangs in front of a
-	# house wall, not on a roof ridge, and clear of the HUD clock.
-	_hang_pinata(plaza, Vector3(12.0, 5.75, BUNTING_Z))
+	# The pinata mid-span on the right-hand inner string, clear of the HUD clock.
+	var pa: Vector3 = tops[POLE_DEG[0]]
+	var pb: Vector3 = tops[POLE_DEG[1]]
+	var mid := (pa + pb) * 0.5
+	_hang_pinata(plaza, Vector3(mid.x, mid.y - 0.85, mid.z))
 
 
-## THE PAVING (Parker 11-08: "a paved street in front of the houses", like
-## Golemheim's; then "flat like in the image so ink doesnt hit it"): a street of
-## small setts in running bond in front of the houses, a raised kerb, then the
-## square in big slabs. The stones are FLAT quads 5 mm over a grout bed, so the
-## joints are colour only and the ink, which draws depth and normal edges, leaves
-## them alone. Only the kerb stands proud. One MultiMesh per stone tone.
-const STREET_Z := Vector2(-13.8, -9.95)  # the street, from the house fronts to the kerb
-const SQUARE_Z := Vector2(-9.55, 16.2)  # the square, from the kerb to past the camera
-const PAVE_HALF_X := 42.0
-const GROUT := Color("#7A6C5A")
-const KERB := Color("#D9CBB0")
-const STONE_TONES := [Color("#C4B192"), Color("#B9A585"), Color("#AE9978"), Color("#CBBB9E")]  # warm sandstone: the sun lifts these a step
+## Stand a +Z-facing model on the arc at radius r, angle deg, facing the centre.
+func _place_facing(n: Node3D, r: float, deg: float, y: float) -> void:
+	var p := _arc_pt(r, deg)
+	n.position = Vector3(p.x, y, p.y)
+	n.rotation.y = -deg_to_rad(deg)
 
 
+## A solid annular sector about ARC_C: radius r0..r1, angles a0..a1 (degrees),
+## from y up by h: a top, the inner and outer faces and the two ends, flat per
+## facet (no bottom: it stands on the ground). Built here rather than through
+## LuchaKit._prism, whose winding suits upright cards, not a floor plan.
+func _arc_prism(r0: float, r1: float, a0: float, a1: float, y: float, h: float, c: Color) -> MeshInstance3D:
+	var n := maxi(2, int(ceil((a1 - a0) / 2.0)))
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var y1 := y + h
+	for i in n:
+		var da := lerpf(a0, a1, float(i) / n)
+		var db := lerpf(a0, a1, float(i + 1) / n)
+		var ia := _arc_pt(r0, da)
+		var ib := _arc_pt(r0, db)
+		var oa := _arc_pt(r1, da)
+		var ob := _arc_pt(r1, db)
+		_quad(st, Vector3(ia.x, y1, ia.y), Vector3(ib.x, y1, ib.y), Vector3(ob.x, y1, ob.y), Vector3(oa.x, y1, oa.y), Vector3.UP)
+		var mi_ := (ia + ib) * 0.5
+		var nin := Vector3(ARC_C.x - mi_.x, 0, ARC_C.y - mi_.y).normalized()
+		_quad(st, Vector3(ia.x, y, ia.y), Vector3(ib.x, y, ib.y), Vector3(ib.x, y1, ib.y), Vector3(ia.x, y1, ia.y), nin)
+		_quad(st, Vector3(oa.x, y, oa.y), Vector3(ob.x, y, ob.y), Vector3(ob.x, y1, ob.y), Vector3(oa.x, y1, oa.y), -nin)
+	for end in [[a0, -1.0], [a1, 1.0]]:
+		var d: float = end[0]
+		var ar := deg_to_rad(d)
+		var tn := Vector3(cos(ar), 0, sin(ar)) * float(end[1])  # along the arc, outward at this end
+		var pi_ := _arc_pt(r0, d)
+		var po := _arc_pt(r1, d)
+		_quad(st, Vector3(pi_.x, y, pi_.y), Vector3(po.x, y, po.y), Vector3(po.x, y1, po.y), Vector3(pi_.x, y1, pi_.y), tn)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = LuchaKit.mat(c)
+	return mi
+
+
+## A flat quad a-b-c-d facing n (two triangles, each wound to face n).
+static func _quad(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, d: Vector3, n: Vector3) -> void:
+	_tri(st, a, b, c, n)
+	_tri(st, a, c, d, n)
+
+
+## One triangle facing n: Godot's front faces wind clockwise seen from the front,
+## so the cross product of the edges must point away from n.
+static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, n: Vector3) -> void:
+	if (b - a).cross(c - a).dot(n) > 0.0:
+		var t := b
+		b = c
+		c = t
+	st.set_normal(n)
+	st.add_vertex(a)
+	st.set_normal(n)
+	st.add_vertex(b)
+	st.set_normal(n)
+	st.add_vertex(c)
+
+
+## The church's forecourt: a raised stone floor in the arc's back gap, slabbed on
+## top, with a flight of steps down to the square.
+func _forecourt(parent: Node3D, gy: float) -> void:
+	var f := FORECOURT
+	parent.add_child(LuchaKit.box(Vector3(f.size.x, FORECOURT_H, f.size.y), KERB, Vector3(f.position.x + f.size.x * 0.5, gy + FORECOURT_H * 0.5, f.position.y + f.size.y * 0.5)))
+	var steps := 4
+	var rise := FORECOURT_H / steps
+	for s in steps:
+		var depth := 0.42
+		var z := f.end.y + depth * (steps - s) - depth * 0.5
+		parent.add_child(LuchaKit.box(Vector3(12.0, rise * (s + 1), depth), KERB, Vector3(0, gy + rise * (s + 1) * 0.5, z)))
+	# Slabs on top: a grout skin and flat 1.6 m slabs, as on the square.
+	var top := gy + FORECOURT_H
+	parent.add_child(LuchaKit.box(Vector3(f.size.x - 0.2, 0.01, f.size.y - 0.2), GROUT, Vector3(0, top + 0.005, f.position.y + f.size.y * 0.5)))
+	var lots: Array = [[], []]
+	var x := f.position.x + 0.1
+	while x + 1.6 <= f.end.x:
+		var z := f.position.y + 0.1
+		while z + 1.6 <= f.end.y:
+			(lots[(int(x * 7.0 + z * 3.0) & 1)] as Array).append(_stone_xf(Vector3(x + 0.8, top + 0.015, z + 0.8), 1.53, 1.53, 0.0))
+			z += 1.6
+		x += 1.6
+	_commit_stones(parent, lots, SLAB_TONES)
+
+
+## THE PAVING, in the round: the plaza in concentric sett courses about ARC_C, a
+## raised pavement with a kerb along the house fronts, and the streets in setts
+## running out between the houses to steps up the first terrace.
 func _pave(parent: Node3D, gy: float) -> void:
-	var z0 := STREET_Z.x - 0.1
-	var z1 := SQUARE_Z.y + 0.1
-	parent.add_child(LuchaKit.box(Vector3(PAVE_HALF_X * 2.0 + 0.4, 0.02, z1 - z0), GROUT, Vector3(0, gy + 0.01, (z0 + z1) * 0.5)))
-	var kz := (STREET_Z.y + SQUARE_Z.x) * 0.5
-	parent.add_child(LuchaKit.box(Vector3(PAVE_HALF_X * 2.0, 0.12, SQUARE_Z.x - STREET_Z.y - 0.06), KERB, Vector3(0, gy + 0.08, kz)))
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 31
 	var lots: Array = []
 	for t in STONE_TONES:
 		lots.append([])
-	# The street: setts 0.9 x 0.6, each row shifted half a sett.
-	_lay(lots, rng, gy, STREET_Z, Vector2(0.9, 0.6), true)
-	# The square: slabs 1.6 m, in a straight grid.
-	_lay(lots, rng, gy, SQUARE_Z, Vector2(1.6, 1.6), false)
-	for i in STONE_TONES.size():
+	var y := gy + 0.025  # flush: 5 mm over the grout
+	# The grout bed under the round plaza.
+	var bed := LuchaKit.cyl(PLAZA_R, 0.02, GROUT, Vector3(ARC_C.x, gy + 0.01, ARC_C.y))
+	((bed.mesh) as CylinderMesh).radial_segments = 128
+	parent.add_child(bed)
+	# Concentric courses, 0.62 m wide; every seventh course a band of paler stone.
+	var joint := 0.07
+	var course := 0.62
+	var r := 1.0
+	var ci := 0
+	while r + course <= PLAZA_R:
+		var rc := r + course * 0.5
+		var n := maxi(6, int(round(TAU * rc / 0.95)))
+		var phase := rng.randf() * TAU
+		for i in n:
+			var a := phase + TAU * float(i) / n
+			var p := ARC_C + Vector2(sin(a), -cos(a)) * rc
+			# The ring's stage covers the middle: no stones under it.
+			if absf(p.x) < 9.5 and absf(p.y) < 2.0:
+				continue
+			var xf := _stone_xf(Vector3(p.x, y, p.y), TAU * rc / n - joint, course - joint, -a)
+			var lot := 3 if ci % 7 == 3 else rng.randi() % 3
+			(lots[lot] as Array).append(xf)
+		r += course
+		ci += 1
+	# The pavement along the house fronts, and its kerb.
+	for side in [-1.0, 1.0]:
+		var segs := _walk_segments()
+		for sg in segs:
+			var a0: float = side * sg.x
+			var a1: float = side * sg.y
+			parent.add_child(_arc_prism(PLAZA_R, ARC_FRONT + 0.4, minf(a0, a1), maxf(a0, a1), gy, WALK_H, WALK))
+			parent.add_child(_arc_prism(PLAZA_R - 0.05, PLAZA_R + 0.25, minf(a0, a1), maxf(a0, a1), gy, WALK_H + 0.02, KERB))
+	# The streets: setts in running bond along each street, out to steps up the first terrace.
+	var t0: Array = TERRACES[0]
+	var land: float = t0[0]
+	for side in [-1.0, 1.0]:
+		for s in ARC_STREETS:
+			var deg: float = side * float(s)
+			var yaw := -deg_to_rad(deg)
+			var basis := Basis(Vector3.UP, yaw)
+			var r_in := PLAZA_R - 0.2
+			var steps_d := 2.4
+			var r_out := land - steps_d
+			var mid := _arc_pt((r_in + r_out) * 0.5, deg)
+			var bed2 := LuchaKit.box(Vector3(STREET_W, 0.02, r_out - r_in), GROUT, Vector3(mid.x, gy + 0.01, mid.y))
+			bed2.rotation.y = yaw
+			parent.add_child(bed2)
+			var row := 0
+			var dist := r_in
+			while dist + 0.6 <= r_out:
+				var shift := 0.45 if row % 2 == 1 else 0.0
+				var x := -STREET_W * 0.5 - shift
+				while x < STREET_W * 0.5:
+					var xa := maxf(x, -STREET_W * 0.5)
+					var xb := minf(x + 0.9, STREET_W * 0.5)
+					if xb - xa > 0.15:
+						var c := _arc_pt(dist + 0.3, deg)
+						var off := basis * Vector3((xa + xb) * 0.5, 0, 0)
+						(lots[rng.randi() % 3] as Array).append(_stone_xf(Vector3(c.x + off.x, y, c.y + off.z), xb - xa - joint, 0.6 - joint, yaw))
+					x += 0.9
+				dist += 0.6
+				row += 1
+			# The steps up to the terrace.
+			var top: float = t0[1]
+			var nst := 6
+			for k in nst:
+				var rr := r_out + steps_d * (k + 0.5) / nst
+				var c := _arc_pt(rr, deg)
+				var hh := top * float(k + 1) / nst
+				var stp := LuchaKit.box(Vector3(STREET_W, hh, steps_d / nst), KERB, Vector3(c.x, gy + hh * 0.5, c.y))
+				stp.rotation.y = yaw
+				parent.add_child(stp)
+	_commit_stones(parent, lots, STONE_TONES)
+
+
+## The pavement's runs (degrees, one side): the house arc, broken at each street.
+func _walk_segments() -> Array:
+	var out: Array = []
+	var lo := ARC_FIRST - 1.0
+	for s in ARC_STREETS:
+		var half := rad_to_deg(STREET_W * 0.5 / PLAZA_R)
+		out.append(Vector2(lo, float(s) - half))
+		lo = float(s) + half
+	out.append(Vector2(lo, ARC_LAST + 1.0))
+	return out
+
+
+## One flat stone: a unit quad scaled to w x d, turned by yaw, at p.
+static func _stone_xf(p: Vector3, w: float, d: float, yaw: float) -> Transform3D:
+	return Transform3D(Basis(Vector3.UP, yaw) * Basis.from_scale(Vector3(w, 1.0, d)), p)
+
+
+## The stones as one MultiMesh of flat quads per tone.
+func _commit_stones(parent: Node3D, lots: Array, tones: Array) -> void:
+	for i in tones.size():
 		var xs: Array = lots[i]
 		if xs.is_empty():
 			continue
@@ -306,28 +537,8 @@ func _pave(parent: Node3D, gy: float) -> void:
 			mm.set_instance_transform(k, xs[k])
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
-		mmi.material_override = LuchaKit.mat(STONE_TONES[i])
+		mmi.material_override = LuchaKit.mat(tones[i])
 		parent.add_child(mmi)
-
-
-## One stone per cell over a z band, each a flat unit quad scaled to the cell
-## less the joint, sorted into a tone's lot. `bond` shifts every other row half a stone.
-func _lay(lots: Array, rng: RandomNumberGenerator, gy: float, band: Vector2, cell: Vector2, bond: bool) -> void:
-	var joint := 0.07
-	var rows := int(floor((band.y - band.x) / cell.y))
-	var dz := (band.y - band.x) / rows
-	for r in rows:
-		var zc := band.x + (r + 0.5) * dz
-		var shift := cell.x * 0.5 if bond and r % 2 == 1 else 0.0
-		var x := -PAVE_HALF_X - shift
-		while x < PAVE_HALF_X:
-			var xa := maxf(x, -PAVE_HALF_X)
-			var xb := minf(x + cell.x, PAVE_HALF_X)
-			if xb - xa > joint * 2.0:
-				var basis := Basis.from_scale(Vector3(xb - xa - joint, 1.0, dz - joint))
-				var xf := Transform3D(basis, Vector3((xa + xb) * 0.5, gy + 0.025, zc))  # flush: 5 mm over the grout
-				(lots[rng.randi() % lots.size()] as Array).append(xf)
-			x += cell.x
 
 
 ## A kit plaza house (a, b or c), or a plain stand-in.

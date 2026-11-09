@@ -338,8 +338,10 @@ func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
 		# Ring steps at one corner.
 		for k in 3:
 			root.add_child(_boxm(Vector3(1.2, 0.36, 0.6), Color(0.3, 0.3, 0.34), Vector3(half + 0.8, gy + 0.18 + k * 0.36, pz - 0.3 - k * 0.6)))
-	# The plaza stones, out to the houses and forward under the camera.
-	root.add_child(_boxm(Vector3(90.0, 0.3, 40.0), Color(0.82, 0.72, 0.56), Vector3(0, gy - 0.15, -4.0)))
+	# The stones under the ring's stage only: the round plaza, its pavements and
+	# streets are LuchaUI's (the town in the round, 11-08), and a big slab here
+	# showed as a pale rectangle past the plaza's edge.
+	root.add_child(_boxm(Vector3(20.0, 0.3, 4.6), Color(0.82, 0.72, 0.56), Vector3(0, gy - 0.16, 0.0)))
 	# (The paving over the stones is LuchaUI._pave: the street, the kerb and the square.)
 
 
