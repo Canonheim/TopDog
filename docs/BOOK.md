@@ -459,6 +459,17 @@ Parker: "just get rid of the old stuff, no new checks at this time". Removed fiv
 
 The full battery is green except the eight-live frame time, which runs over 6 ms only under a full run's load and passes alone.
 
+## The town in the round (Parker, 2026-11-08)
+
+Parker: "I want the town arranged in more of a semi circle around the ring. So the church is more visible and the ring feel like it might be more in the town and the town isn't just a grid ... The ground and streets will def need a re work." The Environment Maker, env-pass 9d3a64d (`ui3d/lucha_ui.gd`, `stages/stage.gd` visual slab only, `tests/env_shot_probe.gd`):
+- **The arc:** everything is laid on arcs about (0, -2.5), just behind the ring. The first ring of kit houses faces the centre from 24° to 94° each side, so the wings come forward round the ring, with a street opening between houses on each side at 62°.
+- **The church:** the centrepiece in the arc's back gap, scaled 1.25, on a raised slabbed forecourt with steps down to the square. It's clear at every play height and shows through the ropes at ground level.
+- **The hill town:** four concentric terraces behind, houses facing the centre, an amphitheatre.
+- **The ground, reworked:** a round plaza of concentric sett courses (a paler band every seventh), a raised kerbed pavement along the house fronts, sett streets out to steps up the first terrace, and a slabbed forecourt. It's all flat-coloured (flat quads over a grout bed); only the kerbs and steps stand proud.
+- **The papel picado poles** stand on a circle round the plaza, and the strings run along the arc and up to the church towers.
+- **Unchanged:** gameplay (the ring, deck, plaza floor collider, RING OUT, the line poles; the round plaza covers the whole floor collider) and all the kit models. The church needed no work.
+- **Checks:** lint, and `--ring --tower --climb --scramble`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

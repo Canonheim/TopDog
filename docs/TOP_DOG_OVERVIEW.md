@@ -105,6 +105,10 @@ Paused, the menu rides 1.2 m from the lens, so nothing in the world covers it, a
 - There's no tooltip text in play: the controls live on the Controls screen.
 - Both are pinned to their corners from the screen's width each frame (`LuchaHudBottom._to_corners`), so they hold at any aspect.
 
+### The town
+
+The Plaza Ring sits in a round plaza with the town wrapped round it in a semicircle: the church on a forecourt at the back of the arc, kit houses facing the ring, a terraced hill town behind (an amphitheatre), papel picado on poles round the plaza, and cardboard cut-out mountains and clouds behind. All of it is built in `LuchaUI._build_plaza` from the Top Dog Kit's models. Gameplay is only the ring and the plaza floor (`Stage`).
+
 ### The ring
 
 - The side ropes throw you back at 1.5x the speed you hit them, and spring with a boing.
