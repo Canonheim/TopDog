@@ -279,9 +279,8 @@ func _build_plaza() -> void:
 	rng.seed = 8
 	var kinds := _house_kinds()
 	_placed = {}
-	var stones: Array = []  # flat setts and slabs by tone
-	for t in STONE_TONES:
-		stones.append([])
+	var stones: Array = []  # (unused: the paving goes to the one flat paving mesh, _pave_begin)
+	_pave_begin()
 	var bricks: Array = []
 	for t in BRICK_TONES:
 		bricks.append([])
@@ -332,10 +331,10 @@ func _build_plaza() -> void:
 		var run := mouth.distance_to(t0_face)
 		var stair_len := 2.4
 		var bed_c := mouth - axis * ((run - stair_len) * 0.5)
-		var bed := LuchaKit.box(Vector3(STREET_W + 0.2, 0.02, run - stair_len + 0.2), GROUT, Vector3(bed_c.x * side, gy + 0.01, bed_c.y))
+		var bed := LuchaKit.box(Vector3(STREET_W + 0.2, 0.022, run - stair_len + 0.2), GROUT, Vector3(bed_c.x * side, gy + 0.011, bed_c.y))
 		bed.rotation.y = atan2(axis.x * side, axis.y)
 		plaza.add_child(bed)
-		_lay_strip(stones, rng, mouth, -axis, run - stair_len, STREET_W, side, gy + 0.025)
+		_lay_strip(stones, rng, mouth, -axis, run - stair_len, STREET_W, side, gy + PAVE_Y)
 		_stairs(plaza, t0_face, axis, side, gy, gy + float(TERRACES[0][1]), STREET_W - 0.4)
 		# Palms in round planters at the street's mouth and at the wing's end.
 		for pt in [_lens(street_t - 0.06, -1.1), _lens(street_t + 0.06, -1.1), _lens(0.93, -1.6)]:
@@ -346,7 +345,7 @@ func _build_plaza() -> void:
 	# The hill.
 	for k in TERRACES.size():
 		_terrace(plaza, k, gy, rng, kinds, stones, bricks, street_t)
-	_commit_stones(plaza, stones, STONE_TONES)
+	_pave_commit(plaza)
 	_commit_walls(plaza, bricks, BRICK_TONES)
 	# Far mountains (Parker 11-08: "large cardboard cut outs of mountains").
 	for i in FAR_RIDGES.size():
@@ -397,76 +396,64 @@ func _build_plaza() -> void:
 
 
 ## The square: a grout bed over the whole lens, then courses that follow its
-## shape, each a smaller copy of the edge (so they run straight across the flat
-## back and fan out toward the points). Stones skip the ring's stage.
-func _pave_square(parent: Node3D, gy: float, stones: Array, rng: RandomNumberGenerator) -> void:
+## shape, each the band between two smaller copies of the edge (so they run
+## straight across the flat back and fan out toward the points), down to the
+## centre. Every course is sampled at the same t, so neighbouring courses share
+## their edge vertex for vertex: one flat, watertight paving.
+func _pave_square(parent: Node3D, gy: float, _stones: Array, rng: RandomNumberGenerator) -> void:
 	var outline := PackedVector2Array()
 	for i in 161:
 		outline.append(_lens(lerpf(-1.0, 1.0, float(i) / 160.0), 0.0))
 	for i in range(159, 0, -1):
 		outline.append(_lens(lerpf(-1.0, 1.0, float(i) / 160.0), 0.0, true))
-	parent.add_child(_flat_poly(outline, gy + 0.02, GROUT))  # 5 mm under the setts: a deeper step inks at grazing angles
+	parent.add_child(_flat_poly(outline, gy + PAVE_Y - 0.002, GROUT))  # only seen through a hairline, if anywhere
+	var ts := PackedFloat32Array()
+	for i in 181:
+		ts.append(-cos(PI * float(i) / 180.0))  # denser toward the points, where the lens turns fastest
 	var ds := 0.62 / LENS_B
-	var joint := 0.07
-	var s := 1.0 - ds * 0.5
+	var s_hi := 1.0
 	var ci := 0
-	while LENS_B * s > 2.6:
+	while s_hi > 0.0001:
+		var s_lo := maxf(s_hi - ds, 0.0)
+		if s_lo < ds * 0.6:
+			s_lo = 0.0  # the last course runs into the centre
 		for front in [false, true]:
-			var pts := PackedVector2Array()
-			for i in 301:
-				pts.append(_lens_s(lerpf(-1.0, 1.0, float(i) / 300.0), s, front))
-			var cum := PackedFloat32Array([0.0])
-			for i in range(1, pts.size()):
-				cum.append(cum[i - 1] + pts[i].distance_to(pts[i - 1]))
-			var total: float = cum[cum.size() - 1]
-			var n := maxi(4, int(round(total / 0.95)))
-			var phase := rng.randf()
-			var ts := PackedFloat32Array()
-			ts.resize(pts.size())
-			var path := [pts, cum, ts]
-			for i in n:
-				var d := (float(i) + phase) * total / n
-				var at: Array = _at(path, d)
-				var p: Vector2 = at[0]
-				if absf(p.x) < 9.6 and absf(p.y) < 2.0:
-					continue  # under the ring's stage
-				var tan: Vector2 = at[1]
-				# The course's width: how far the edge lens sits from the centre here.
-				var t_here := clampf(p.x / maxf(LENS_A * s, 0.01), -1.0, 1.0)
-				var edge := _lens_s(t_here, 1.0, front)
-				var wid := maxf(edge.distance_to(ARC_C) * ds - joint, 0.3)
-				var lot := 3 if ci % 7 == 3 else rng.randi() % 3
-				(stones[lot] as Array).append(_stone_xf(Vector3(p.x, gy + 0.025, p.y), total / n - joint, wid, atan2(-tan.y, tan.x)))
-		s -= ds
+			var a := PackedVector3Array()
+			var b := PackedVector3Array()
+			for t in ts:
+				var pa := _lens_s(t, s_hi, front)
+				var pb := _lens_s(t, s_lo, front)
+				a.append(Vector3(pa.x, gy + PAVE_Y, pa.y))
+				b.append(Vector3(pb.x, gy + PAVE_Y, pb.y))
+			_pave_band(a, b, rng, 0.95, 0.07, rng.randf(), 3 if ci % 7 == 3 else -1)
+		s_hi = s_lo
 		ci += 1
 
 
-## The church's plot: setts in straight courses from the square's flat back edge
-## to behind the church (so the square's setts run on up to its steps), led by a
-## course of the paler band stone along the edge.
-func _church_plot(parent: Node3D, gy: float, stones: Array) -> void:
+## The church's plot: setts in courses from the square's back edge to behind
+## the church (so the square's setts run on up to its steps), each course the
+## edge's own curve stepped back, led by a course of the paler band stone.
+func _church_plot(parent: Node3D, gy: float, _stones: Array) -> void:
 	var x0 := -GARDEN.position.x - 0.1
 	var x1 := GARDEN.position.x + 0.1
 	var z_edge := ARC_C.y - LENS_B
 	var z_back := ARC_C.y - LENS_B - 20.0
-	parent.add_child(LuchaKit.box(Vector3(x1 - x0, 0.018, z_edge - z_back + 0.6), GROUT, Vector3(0, gy + 0.009, (z_edge + z_back) * 0.5 + 0.3)))  # just under the square's bed
-	var z := z_edge + 0.3
+	parent.add_child(LuchaKit.box(Vector3(x1 - x0, 0.02, z_edge - z_back + 0.6), GROUT, Vector3(0, gy + PAVE_Y - 0.012, (z_edge + z_back) * 0.5 + 0.3)))  # under the paving
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 41
+	var n := 70
 	var row := 0
-	while z - 0.62 > z_back:
-		var shift := 0.475 if row % 2 == 1 else 0.0
-		var x := x0 - shift
-		while x < x1:
-			var xa := maxf(x, x0)
-			var xb := minf(x + 0.95, x1)
-			if xb - xa > 0.2:
-				var c := Vector2((xa + xb) * 0.5, z - 0.31)
-				# Only behind the square's edge (the square's own courses cover the rest).
-				var t := clampf(c.x / LENS_A, -1.0, 1.0)
-				if c.y < _lens(t, 0.0).y - 0.05:
-					var lot := 3 if row == 0 else (int(xa * 13.0 + row * 7.0) % 3)
-					(stones[lot] as Array).append(_stone_xf(Vector3(c.x, gy + 0.025, c.y), xb - xa - 0.07, 0.55, 0.0))
-			x += 0.95
-		z -= 0.62
+	var back := 0.0
+	while back + 0.62 <= z_edge - z_back:
+		var a := PackedVector3Array()
+		var b := PackedVector3Array()
+		for i in n + 1:
+			var x := lerpf(x0, x1, float(i) / n)
+			var ez := _lens(clampf(x / LENS_A, -1.0, 1.0), 0.0).y
+			a.append(Vector3(x, gy + PAVE_Y, ez - back))
+			b.append(Vector3(x, gy + PAVE_Y, ez - back - 0.62))
+		_pave_band(a, b, rng, 0.95, 0.07, 0.5 if row % 2 == 1 else 0.0, 3 if row == 0 else -1)
+		back += 0.62
 		row += 1
 
 
@@ -544,11 +531,12 @@ func _terrace(parent: Node3D, k: int, gy: float, rng: RandomNumberGenerator, kin
 				parent.add_child(_band(o, o + PARAPET_W, ta, tb, side, top, top + PARAPET_H, PARAPET, false))
 			d0 = (gp as Vector2).y
 		# The lane: a grout strip and setts in running bond along the terrace.
-		parent.add_child(_band(o + PARAPET_W, o + LANE_W, t0_face, LENS_T1, side, top, top + 0.022, GROUT, false))
-		var lane_o := o + PARAPET_W + 0.05
-		while lane_o + 0.6 <= o + LANE_W:
-			_lay_curve(stones, rng, _path(lane_o + 0.3, x0, LENS_T1), side, top + 0.027, 0.9, 0.53)
-			lane_o += 0.6
+		parent.add_child(_band(o + PARAPET_W, o + LANE_W, t0_face, LENS_T1, side, top, top + PAVE_Y - 0.002, GROUT, false))
+		var nb := maxi(1, int(round((LANE_W - PARAPET_W) / 0.6)))
+		for bi in nb:
+			var oa := o + PARAPET_W + (LANE_W - PARAPET_W) * float(bi) / nb
+			var ob := o + PARAPET_W + (LANE_W - PARAPET_W) * float(bi + 1) / nb
+			_lay_curve(stones, rng, [oa, ob, x0], side, top + PAVE_Y, 0.9, 0.0)
 		# Lamps and benches along the lane, clear of the stairs.
 		var lane := _path(o + PARAPET_W + 0.35, x0, LENS_T1)
 		var dl := 4.0
@@ -675,40 +663,172 @@ func _flat_poly(pts: PackedVector2Array, y: float, c: Color) -> MeshInstance3D:
 	return mi
 
 
-## Setts along a path: stones of length l and width w, end to end.
-func _lay_curve(stones: Array, rng: RandomNumberGenerator, path: Array, side: float, y: float, l: float, w: float) -> void:
-	var total := _len(path)
-	var d := rng.randf() * l
-	while d + l * 0.5 < total:
-		var at: Array = _at(path, d)
-		var p: Vector2 = at[0]
-		var tan: Vector2 = at[1]
-		var yaw := atan2(-tan.y * 1.0, tan.x * side)
-		(stones[rng.randi() % 3] as Array).append(_stone_xf(Vector3(p.x * side, y, p.y), l - 0.07, w, yaw))
-		d += l
+## Setts along a lane: a flat band between the lens offsets band[0] and band[1],
+## from x = band[2] out to the lane's end, stones of length l in running bond.
+func _lay_curve(_stones: Array, rng: RandomNumberGenerator, band: Array, side: float, y: float, l: float, _w_unused: float) -> void:
+	var oa: float = band[0]
+	var ob: float = band[1]
+	var x0: float = band[2]
+	var a := PackedVector3Array()
+	var b := PackedVector3Array()
+	var n := 140
+	for i in n + 1:
+		var f := float(i) / n
+		var pa := _lens(lerpf(x0 / (LENS_A + oa), LENS_T1, f), oa)
+		var pb := _lens(lerpf(x0 / (LENS_A + ob), LENS_T1, f), ob)
+		a.append(Vector3(pa.x * side, y, pa.y))
+		b.append(Vector3(pb.x * side, y, pb.y))
+	_pave_band(a, b, rng, l, 0.07, rng.randf())
 
 
 ## Setts in running bond over a straight strip from `start` along dir (right
-## frame), `length` long and `width` wide.
-func _lay_strip(stones: Array, rng: RandomNumberGenerator, start: Vector2, dir: Vector2, length: float, width: float, side: float, y: float) -> void:
+## frame), `length` long and `width` wide: rows across the strip, each a flat band.
+func _lay_strip(_stones: Array, rng: RandomNumberGenerator, start: Vector2, dir: Vector2, length: float, width: float, side: float, y: float) -> void:
 	var across := Vector2(-dir.y, dir.x)
-	var dw := Vector2(dir.x * side, dir.y)
-	var aw := Vector2(across.x * side, across.y)
-	var yaw := atan2(-aw.y, aw.x)
 	var row := 0
-	var r := 0.3
-	while r + 0.3 <= length:
-		var shift := 0.45 if row % 2 == 1 else 0.0
-		var x := -width * 0.5 - shift
-		while x < width * 0.5:
-			var xa := maxf(x, -width * 0.5)
-			var xb := minf(x + 0.9, width * 0.5)
-			if xb - xa > 0.2:
-				var c := Vector2(start.x * side, start.y) + dw * r + aw * ((xa + xb) * 0.5)
-				(stones[rng.randi() % 3] as Array).append(_stone_xf(Vector3(c.x, y, c.y), xb - xa - 0.07, 0.53, yaw))
-			x += 0.9
+	var r := 0.0
+	while r + 0.6 <= length + 0.001:
+		var a := PackedVector3Array()
+		var b := PackedVector3Array()
+		for i in 9:
+			var x := lerpf(-width * 0.5, width * 0.5, float(i) / 8.0)
+			var pa := start + dir * r + across * x
+			var pb := start + dir * (r + 0.6) + across * x
+			a.append(Vector3(pa.x * side, y, pa.y))
+			b.append(Vector3(pb.x * side, y, pb.y))
+		_pave_band(a, b, rng, 0.9, 0.07, 0.5 if row % 2 == 1 else 0.0)
 		r += 0.6
 		row += 1
+
+
+## THE FLAT PAVING (Parker 11-08: "They should all be the same height as the grout
+## under them too, should all be flat, so it looks more like vector art and no ink
+## hits the tiles"). All the paving is ONE mesh in one plane: each band (a course
+## or a row) is cut into stones and joints that share their edges exactly, the
+## joints in grout, the stones in the sandstone tones. Coplanar faces that share
+## edges give the ink no depth or normal step, so it draws only the paving's
+## outer edge. Five surfaces: four stone tones and the grout.
+const PAVE_Y := 0.024  # the paving's plane, above the stones' ground
+var _pave_st: Array = []
+
+
+func _pave_begin() -> void:
+	_pave_st = []
+	for i in STONE_TONES.size() + 1:
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.set_normal(Vector3.UP)
+		_pave_st.append(st)
+
+
+## One flat triangle into surface i, wound to face up.
+func _pave_tri(i: int, a: Vector3, b: Vector3, c: Vector3) -> void:
+	var st: SurfaceTool = _pave_st[i]
+	if (b - a).cross(c - a).y > 0.0:
+		var t := b
+		b = c
+		c = t
+	st.add_vertex(a)
+	st.add_vertex(b)
+	st.add_vertex(c)
+
+
+func _pave_quad(i: int, a: Vector3, b: Vector3, c: Vector3, d: Vector3) -> void:
+	_pave_tri(i, a, b, c)
+	_pave_tri(i, a, c, d)
+
+
+## A band between polylines a and b (same count, matched points): a grout border
+## along each side (half a joint wide), and between them stones about stone_len
+## long (each a random tone, or `tone`) separated by joints, all sharing edges.
+## `phase` (0..1) shifts where the first stone starts, for running bond.
+func _pave_band(a: PackedVector3Array, b: PackedVector3Array, rng: RandomNumberGenerator, stone_len: float, joint: float, phase: float, tone := -1) -> void:
+	var n := a.size()
+	if n < 2:
+		return
+	var grout := STONE_TONES.size()
+	var pa := PackedVector3Array()
+	var pb := PackedVector3Array()
+	var cum := PackedFloat32Array([0.0])
+	for k in n:
+		var w := a[k].distance_to(b[k])
+		var f := clampf(joint * 0.5 / maxf(w, 0.0001), 0.0, 0.45)
+		pa.append(a[k].lerp(b[k], f))
+		pb.append(a[k].lerp(b[k], 1.0 - f))
+		if k > 0:
+			cum.append(cum[k - 1] + ((pa[k] + pb[k]) * 0.5).distance_to((pa[k - 1] + pb[k - 1]) * 0.5))
+	var total: float = cum[n - 1]
+	if total < 0.01:
+		return
+	# The stones and joints along the band: [start, end, tone or -1 for a joint].
+	var runs: Array = []
+	var d := -phase * stone_len
+	while d < total:
+		var e := d + stone_len * rng.randf_range(0.85, 1.15)
+		runs.append([d, e, tone if tone >= 0 else rng.randi() % 3])
+		runs.append([e, e + joint, -1])
+		d = e + joint
+	# Stations: every sample and every cut, in order.
+	var stations: Array = []
+	for k in n:
+		stations.append(cum[k])
+	for r in runs:
+		for x in [float(r[0]), float(r[1])]:
+			if x > 0.0 and x < total:
+				stations.append(x)
+	stations.sort()
+	var k := 0
+	var ri := 0
+	for si in stations.size() - 1:
+		var u: float = stations[si]
+		var v: float = stations[si + 1]
+		if v - u < 0.0005:
+			continue
+		var m := (u + v) * 0.5
+		while ri < runs.size() - 1 and float(runs[ri][1]) < m:
+			ri += 1
+		var surf: int = int(runs[ri][2])
+		if surf < 0:
+			surf = grout
+		while k < n - 2 and cum[k + 1] < u:
+			k += 1
+		var ku := k
+		var kv := k
+		while kv < n - 2 and cum[kv + 1] < v:
+			kv += 1
+		var fu := clampf((u - cum[ku]) / maxf(cum[ku + 1] - cum[ku], 0.000001), 0.0, 1.0)
+		var fv := clampf((v - cum[kv]) / maxf(cum[kv + 1] - cum[kv], 0.000001), 0.0, 1.0)
+		var a_u := a[ku].lerp(a[ku + 1], fu)
+		var a_v := a[kv].lerp(a[kv + 1], fv)
+		var pa_u := pa[ku].lerp(pa[ku + 1], fu)
+		var pa_v := pa[kv].lerp(pa[kv + 1], fv)
+		var pb_u := pb[ku].lerp(pb[ku + 1], fu)
+		var pb_v := pb[kv].lerp(pb[kv + 1], fv)
+		var b_u := b[ku].lerp(b[ku + 1], fu)
+		var b_v := b[kv].lerp(b[kv + 1], fv)
+		_pave_quad(grout, a_u, a_v, pa_v, pa_u)
+		_pave_quad(surf, pa_u, pa_v, pb_v, pb_u)
+		_pave_quad(grout, pb_u, pb_v, b_v, b_u)
+
+
+## The paving's surfaces as one mesh: one material per tone, no shadow cast.
+func _pave_commit(parent: Node3D) -> void:
+	var mesh := ArrayMesh.new()
+	var mats: Array = []
+	for i in _pave_st.size():
+		var st: SurfaceTool = _pave_st[i]
+		var before := mesh.get_surface_count()
+		st.commit(mesh)
+		if mesh.get_surface_count() > before:
+			mats.append(LuchaKit.mat(STONE_TONES[i] if i < STONE_TONES.size() else GROUT))
+	for i in mats.size():
+		mesh.surface_set_material(i, mats[i])
+	var mi := MeshInstance3D.new()
+	mi.name = "Paving"
+	mi.mesh = mesh
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	parent.add_child(mi)
+	_pave_st = []
 
 
 ## Bricks on a retaining wall's exposed face, in running bond, 4 mm proud of
