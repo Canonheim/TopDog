@@ -900,6 +900,9 @@ func _process(delta: float) -> void:
 		_clock_text.position = CLOCK_AT + Vector3(0, 0, 0.075) + lift
 		if _bell != null:
 			_bell.position = BELL_AT + lift
+		# The who's-climbing label repeats the banner's news, and its tail covers it:
+		# it waits too.
+		_info.visible = not (_banner != null and _banner.visible)
 		hud_bottom.tick(delta)
 		if _bell != null:
 			_bell.visible = show
