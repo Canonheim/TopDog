@@ -428,9 +428,9 @@ static func swirl_cloud(width: float, which := 0) -> Node3D:
 	var k := kit_model(nm)
 	if k != null:
 		k.scale = Vector3.ONE * (width / float(CLOUDS[nm]))
-		# The clouds' own grey line is their outline, curling into the swirls (Parker
-		# 11-08): out of the house ink, or a black edge fights it.
-		skip_ink(k)
+		# The cardboard cut-out clouds (Building Maker, 11-08) take the normal house
+		# ink and cel shading, like every other cut-out (v2's own grey outline needed
+		# skip_ink; these don't, and stacked alpha cards would sort wrong).
 		return k
 	var root := Node3D.new()
 	var lobes := int(clampf(width / 1.8, 3, 7))

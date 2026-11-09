@@ -427,6 +427,18 @@ Parker: "Dan took out grabbing people. Put it back in ... the practice partner i
 - **The bottom text is gone** (Parker: "The tooltips and dev stuff? Get rid of it"). The controls hint label is removed, and the flat "Above the line! Lock in" prompt is hidden.
 - **Ordered:** a HUD nameplate for the current climber's name, sized for the longest name ("Winifred the Drawbridge-Scrambler", 33 characters), and an odometer height counter with rolling drum wheels (references in `Top Dog Kit\docs\`). The UI creator makes the parts and the Second Director wires them, with the lock-in prompt in 3D.
 
+## The cardboard sky, the paved plaza, the HUD bottom (Parker, 2026-11-08)
+
+- **Cardboard mountains** (Parker: "large cardboard cut outs of mountains instead of just blank shapes"). The Building Maker's `mountain_cutout_a/b/c` have hand-cut cards, a corrugated kraft edge, painted haze-blue faces with snow and tree lines, and braces and sandbags behind. The Environment Maker scales them to the old ridge slots, leaned and yawed a little. m5 has smaller snow caps.
+- **Cardboard clouds** (Parker: "make the clouds look like cardboard cut outs ... complete redesign as BM sees fit"). The Building Maker redesigned `cloud_a..e` as puffy cards with a kraft edge, a pale stacked back card and a dowel stick. They're back on the normal house ink and cel shading (`skip_ink` dropped).
+- **The paved plaza** (Parker to the Environment Maker: "a paved street in front of the houses ... flat so ink doesnt hit it ... raised geometry for like a curb"): `LuchaUI._pave` lays flat setts and slabs in four sandstone tones over a grout bed (one MultiMesh per tone), with a raised kerb at z -9.75.
+- **The HUD bottom** (the Second Director wired the UI creator's parts):
+  - the climber's name on `hud_nameplate` (long names shrink to fit);
+  - your height on `hud_odometer`, with rolling drums 00.00-99.99 m;
+  - `hud_lockin_tab` and the end gems turn lime above the line;
+  - `tests/hud_probe.tscn` checks it.
+- **Balcony French doors** on plaza houses b and c, and the ring's top rope is lime green (Parker).
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
