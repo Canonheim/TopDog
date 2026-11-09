@@ -17,7 +17,7 @@ plane. Godot 4.7.2, Jolt physics, GodotSteam.
 ## Quick start
 
 Open the folder in Godot 4.7.2 (Forward+) and press Play. Or export with
-`godot --headless --path . --export-release "Windows Desktop" builds/TopDog.exe`.
+`godot --headless --path . --export-release "Windows Desktop" builds/TopDog/TopDog.exe` (one build, overwritten each time; see the overview).
 
 | Action | Pad | Keyboard + mouse |
 |---|---|---|
