@@ -36,6 +36,8 @@ const Layout := preload("res://climber/body_layout.gd")
 const LAYER_WORLD := 1
 const LAYER_LIVE := 2
 const LAYER_FROZEN := 4
+const LAYER_PROP := 8
+const SOLID_MASK := LAYER_WORLD | LAYER_LIVE | LAYER_FROZEN
 const DEPTH := 0.24  # how thick a box piece is through the plane, for contacts (m)
 ## THE SOFT FOLD (Parker 11-08): elbows and knees turn a full 360 degrees again,
 ## but folding through the joint meets resistance from FOLD_START degrees of bend,
@@ -199,7 +201,7 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 		body.axis_lock_angular_x = true
 		body.axis_lock_angular_y = true
 		body.collision_layer = LAYER_LIVE
-		body.collision_mask = LAYER_WORLD | LAYER_LIVE | LAYER_FROZEN
+		body.collision_mask = SOLID_MASK | LAYER_PROP
 		body.contact_monitor = true
 		body.max_contacts_reported = 6
 		if _is_end(pname):
@@ -754,6 +756,8 @@ func touches_solid() -> bool:
 		if end == null or not end.contact_monitor:
 			continue
 		for o in end.get_colliding_bodies():
+			if (o.collision_layer & SOLID_MASK) == 0:
+				continue
 			if not (o is RigidBody3D and o.has_meta("climber")):
 				return true  # the arena (static world)
 			var oc: Climber = o.get_meta("climber")
@@ -845,7 +849,7 @@ func _try_grab(i: int) -> void:
 	var best: Object = null
 	var best_score := INF
 	for o in hits:
-		if o == null or o == end:
+		if o == null or o == end or (o.collision_layer & SOLID_MASK) == 0:
 			continue
 		var score := 0.0
 		if o is RigidBody3D and o.has_meta("climber"):
@@ -909,6 +913,8 @@ func _tick_live_contact(i: int, dt: float) -> void:
 
 ## Stick limb i's end to `other` (a PhysicsBody3D) right where it is.
 func attach(i: int, other: Object) -> void:
+	if other is CollisionObject3D and (other.collision_layer & SOLID_MASK) == 0:
+		return
 	if other.has_meta("climber") and other.get_meta("climber") == self:
 		return
 	var l: Dictionary = limbs[i]

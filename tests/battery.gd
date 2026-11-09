@@ -802,7 +802,7 @@ func _run_net() -> void:
 	B.bot_drivers[1] = Drivers.ScriptDriver.new()
 	var roster := [{"pid": 0, "name": "Host bot", "tint": Color.RED, "peer": 1, "slot": 0},
 		{"pid": 1, "name": "Client bot", "tint": Color.BLUE, "peer": cid_peer, "slot": 0}]
-	A.host_start({"mode": "scramble", "timer": 6.0, "spawn": "alternate", "stage": "plaza"}, roster)
+	A.host_start({"mode": "scramble", "timer": 9.0, "spawn": "alternate", "stage": "plaza"}, roster)
 	await wait_phase(A, "round", 6.0)
 	await wait_phase(B, "round", 3.0)
 	await frames(30)
@@ -858,7 +858,9 @@ func _run_net() -> void:
 	# Let the client pick up the host-owned chair using the normal limb selection.
 	t("net: the arena chair exists on host and client without a practice NPC", A.chair != null and B.chair != null and A.partner == null and B.partner == null)
 	var client_hand: RigidBody3D = a1.bodies["hand_l"]
-	var setup_pose := b1.pose()
+	var host_standing_pose := a0.pose()
+	var standing_pose := b1.pose()
+	var setup_pose := standing_pose.duplicate()
 	var offset := A.chair.global_position - client_hand.global_position
 	for k in range(0, setup_pose.size(), 3):
 		setup_pose[k] += offset.x
@@ -880,7 +882,9 @@ func _run_net() -> void:
 		chair_sounds.append(heard)
 		m.world.child_entered_tree.connect(func(node):
 			if node is AudioStreamPlayer3D:
-				heard.append(node.stream.resource_path.get_file().get_basename()))
+				var clip: String = node.stream.resource_path.get_file().get_basename()
+				if clip in Sound.SFX.chair_light or clip in Sound.SFX.chair_heavy or clip in Sound.SFX.chair_break:
+					heard.append(clip))
 	var test_hit := {"piece": "chest", "offset": Vector3.ZERO, "impulse": Vector3.RIGHT, "speed": A.chair.LIGHT_HIT_MAX_SPEED}
 	for kind in ["chair_light", "chair_heavy", "chair_break"]:
 		for heard in chair_sounds:
@@ -926,6 +930,14 @@ func _run_net() -> void:
 		l.regrip = 1.2
 	await seconds(0.2)
 	t("net: release clears the remote contact and load", a0.remote_grabbed == 0 and a0.remote_pulls.is_empty())
+	# Reset the pose after the impact fixture so the lock check uses a standing
+	# player tall enough to clear the line, regardless of their landing angle.
+	b1.apply_pose(standing_pose)
+	for body: RigidBody3D in b1.bodies.values():
+		body.linear_velocity = Vector3.ZERO
+		body.angular_velocity = Vector3.ZERO
+	if b1.knockout_left > 0:
+		await seconds(b1.knockout_left + 0.1)
 	# The client locks in above the line: the host decides, both freeze it the same.
 	await lift_and_lock(B, 1, 0.5, true)
 	await seconds(0.3)
@@ -936,6 +948,13 @@ func _run_net() -> void:
 	t("net: the client's lock-in froze it on both machines", b1.state == Climber.State.FROZEN and a1.state == Climber.State.FROZEN)
 	t("net: the line rose on both machines", A.line > line_before and absf(A.line - B.line) < 0.0001, "%.3f %.3f" % [A.line, B.line])
 	t("net: the frozen body is identical on both machines", _pose_diff(a1.pose(), b1.pose()) < 0.0001, "%.6f" % _pose_diff(a1.pose(), b1.pose()))
+	# Put the host back on its feet after the contact-load fixture; timeout
+	# freezes a supported climber, while an unsupported one is removed.
+	a0.release_all()
+	a0.apply_pose(host_standing_pose)
+	for body: RigidBody3D in a0.bodies.values():
+		body.linear_velocity = Vector3.ZERO
+		body.angular_velocity = Vector3.ZERO
 	# The host's climber runs out the clock: frozen and out, identical on both.
 	await wait_phase(A, "over", 10.0)
 	await seconds(0.5)
@@ -1537,7 +1556,7 @@ func _run_chair() -> void:
 	if g.chair.holder == c.climber_id:
 		d.set_limb(2, true, Vector2(-1, 1).normalized())
 		await frames(30)
-		t("chair: held without mass or collision load", foot.mass == piece_mass and g.chair.freeze and g.chair.collision_mask == 0)
+		t("chair: held without mass or collision load", foot.mass == piece_mass and not g.chair.freeze and g.chair.collision_mask == Climber.SOLID_MASK and g.chair.get_collision_exceptions().has(foot))
 		var head: RigidBody3D = npc.bodies["head"]
 		# Independently rotating a wrist/ankle in place must never flip the prop.
 		for tick in 100:
@@ -1921,6 +1940,63 @@ func _run_practicespacing() -> void:
 	g._spawn(0)
 	var next: Climber = g.climbers[g.live[0]]
 	t("spawn: next turn clears the frozen player too", not next.pose_bounds(next.pose()).intersects(player.pose_bounds(player.pose())))
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+
+
+func _run_chairsolid() -> void:
+	var g := make_game("practice", 1, 60, "plaza")
+	await wait_phase(g, "turn")
+	var chair := g.chair
+	var c: Climber = g.climbers[g.live[0]]
+	var hand: RigidBody3D = c.bodies["hand_l"]
+	t("chair solid: the floating model is solid before pickup", chair.in_bubble and chair.collision_layer == Climber.LAYER_PROP and chair.collision_mask == Climber.SOLID_MASK)
+	c.attach(0, chair)
+	t("chair solid: a chair contact never creates a climbing anchor", c.limbs[0].grab_other != chair)
+	var wall := static_box(Vector2(-4, 3), Vector2(0.05, 2))
+	g.set_physics_process(false)
+	chair.global_position = Vector3(-4.65, 3, 0)
+	chair.pick_up(c, 0)
+	chair.grip_point = Vector3.ZERO
+	# Pull across a wall for half a second. The prop must stay on its near side.
+	var reached_barrier := false
+	for tick in 60:
+		chair.follow(c, 1.0 / 120)
+		await frames(1)
+		reached_barrier = reached_barrier or chair.get_colliding_bodies().has(wall)
+	t("chair solid: a held chair cannot be steered through scenery", reached_barrier and chair.global_position.x < -4.0, chair.global_position)
+	chair.drop(c, 1.0 / 120)
+	chair.release_carrier_when_clear()
+	t("chair solid: former carrier collides again after separation", not chair.get_collision_exceptions().has(hand))
+	wall.collision_layer = Climber.LAYER_FROZEN
+	chair.global_position = Vector3(-4.8, 3, 0)
+	Climber.sync_server(chair)
+	chair.linear_velocity = Vector3.RIGHT * 12.0
+	await frames(18)
+	t("chair solid: a thrown chair is stopped by the frozen layer", chair.global_position.x < -4.0)
+	# A real throw at a live target should generate a solid contact and heavy hit.
+	var head: RigidBody3D = g.partner.bodies["head"]
+	chair.global_transform = Transform3D(Basis.IDENTITY, head.global_position + Vector3(-0.85, 0.36, 0))
+	Climber.sync_server(chair)
+	chair.previous = chair.global_transform
+	chair.linear_velocity = Vector3.RIGHT * 8
+	chair.angular_velocity = Vector3.ZERO
+	var contact := false
+	var heavy := false
+	for tick in 35:
+		await frames(1)
+		for other in chair.get_colliding_bodies():
+			if other.has_meta("climber") and other.get_meta("climber") == g.partner:
+				contact = true
+		var hits := chair.sweep_hits(1.0 / 120, c.climber_id)
+		if hits.has(-2):
+			heavy = heavy or hits[-2].speed > chair.LIGHT_HIT_MAX_SPEED
+	t("chair solid: a throw collides with a live body and registers a heavy hit", contact and heavy, [contact, heavy])
+	chair.global_position = Vector3(Climber.rope_x - 0.3, 0.8, 0)
+	chair.linear_velocity = Vector3.RIGHT * 4
+	chair.tick_ropes(1.0 / 120)
+	t("chair solid: an outward throw rebounds in the rope band", chair.linear_velocity.x < -4)
 	g.end_match()
 	g.queue_free()
 	await frames(2)

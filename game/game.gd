@@ -1026,9 +1026,7 @@ func _tick_chair(dt: float) -> void:
 		return
 	var carrier: Climber = climbers.get(chair.holder)
 	if not is_host():
-		if carrier != null and carrier.state != Climber.State.FROZEN and chair.limb >= 0:
-			chair.follow(carrier, dt)
-		elif chair.holder == -1:
+		if not chair.in_bubble:
 			chair.global_transform = chair.global_transform.interpolate_with(chair.loose_target, 1.0 - exp(-30.0 * dt))
 		return
 	if chair.holder != -1:
@@ -1036,11 +1034,14 @@ func _tick_chair(dt: float) -> void:
 			chair.drop(carrier, dt)
 		else:
 			chair.follow(carrier, dt)
+			chair.tick_ropes(dt)
 			_apply_chair_hits(chair.sweep_hits(dt, carrier.climber_id))
 	elif stage.out_of_bounds(Climber.pos2(chair)):
 		chair.float_above(chair_spawn_top)
 	else:
 		if not chair.in_bubble:
+			chair.release_carrier_when_clear()
+			chair.tick_ropes(dt)
 			chair.settle()
 		if chair.thrower != -1:
 			_apply_chair_hits(chair.sweep_hits(dt, chair.thrower))
@@ -1119,6 +1120,10 @@ func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose:
 		return
 	if chair.holder != cid or chair.limb != limb:
 		chair.global_transform = pose
+		if cid >= 0 or in_bubble:
+			chair.set_carrier(climbers.get(cid))
+	if cid < 0 and not in_bubble:
+		chair.release_carrier_when_clear()
 	chair.in_bubble = in_bubble
 	chair.holder = cid
 	chair.limb = limb

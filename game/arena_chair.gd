@@ -24,7 +24,9 @@ var in_bubble := true:
 		if bubble != null:
 			bubble.visible = value
 			_pose_pickup()
-		set_process(value and bubble != null)
+		set_physics_process(value)
+		if collider != null and not value:
+			collider.transform = Transform3D.IDENTITY
 var bubble: MeshInstance3D
 const HIT_SPEED := 1.8
 const LIGHT_HIT_MAX_SPEED := 4.5  # Contact-point speed in m/s.
@@ -40,14 +42,17 @@ var carry_spin := 0.0
 var last_hand := Vector3.ZERO
 var carrier_rids: Array[RID] = []
 var loose_target := Transform3D.IDENTITY
+var rope_wait := 0.0
+var exceptions: Array[PhysicsBody3D] = []
+var collider: CollisionShape3D
 
 
 func setup(draw_model: bool, thresholds: Vector2i) -> void:
 	dent_hits = thresholds
 	hit_shape.size = SIZE
-	var col := CollisionShape3D.new()
-	col.shape = hit_shape
-	add_child(col)
+	collider = CollisionShape3D.new()
+	collider.shape = hit_shape
+	add_child(collider)
 	if draw_model:
 		_show_stage(0)
 		bubble = MeshInstance3D.new()
@@ -61,39 +66,43 @@ func setup(draw_model: bool, thresholds: Vector2i) -> void:
 		bubble.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(bubble)
 	axis_lock_linear_z = true
-	collision_layer = 0
-	collision_mask = Climber.LAYER_WORLD | Climber.LAYER_FROZEN
+	collision_layer = Climber.LAYER_PROP
+	freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
 	contact_monitor = true
-	max_contacts_reported = 4
+	max_contacts_reported = 24
 	continuous_cd = true
 	mass = 0.7
 	freeze = true
-	collision_mask = 0
+	collision_mask = Climber.SOLID_MASK
 	loose_target = transform
 	previous = transform
 
 
 func _ready() -> void:
-	set_process(in_bubble and bubble != null)
+	set_physics_process(in_bubble)
 
 
-func _process(delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	float_time += delta
 	_pose_pickup()
 
 
 func _pose_pickup() -> void:
-	# Animate only the render nodes. The pickup body is also the network and grip anchor.
+	# The solid box turns with the folded model; the bubble is decorative.
 	var offset := global_basis.inverse() * Vector3.UP * (BOB_HEIGHT * sin(float_time * BOB_RATE))
-	bubble.position = offset
-	model.position = offset + Vector3.DOWN * SIZE.y * 0.5
-	model.rotation.y = fmod(float_time * TURN_RATE, TAU)
-
+	var angle := fmod(float_time * TURN_RATE, TAU)
+	collider.transform = Transform3D(Basis(Vector3.UP, angle), offset)
+	if bubble != null:
+		bubble.position = offset
+		model.position = offset + Vector3.DOWN * SIZE.y * 0.5
+		model.rotation.y = angle
 
 func float_above(top: Vector2) -> void:
 	in_bubble = true
+	set_carrier(null)
+	collision_layer = Climber.LAYER_PROP
 	freeze = true
-	collision_mask = 0
+	collision_mask = Climber.SOLID_MASK
 	thrower = -1
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
@@ -158,26 +167,42 @@ func _show_stage(stage: int) -> void:
 
 func can_reach(c: Climber, i: int) -> bool:
 	var end := c.limb_end(i)
-	var p := to_local(Vector3(end.x, end.y, 0))
+	var p := collider.to_local(Vector3(end.x, end.y, 0))
 	return p.distance_to(p.clamp(-SIZE * 0.5, SIZE * 0.5)) <= float(c.limbs[i].end_r) + 0.02
 
 
 func pick_up(c: Climber, i: int) -> void:
 	var end: RigidBody3D = c.bodies[c.limbs[i].def.end]
-	grip_point = to_local(end.global_position).clamp(-SIZE * 0.5, SIZE * 0.5)
-	carrier_rids.clear()
-	for body: RigidBody3D in c.bodies.values():
-		carrier_rids.append(body.get_rid())
-	last_hand = end.global_position
+	var pickup_pose := collider.global_transform
 	in_bubble = false
+	global_transform = pickup_pose
+	grip_point = to_local(end.global_position).clamp(-SIZE * 0.5, SIZE * 0.5)
+	set_carrier(c)
+	last_hand = end.global_position
 	holder = c.climber_id
 	thrower = -1
 	limb = i
-	freeze = true
-	collision_mask = 0
+	freeze = false
+	gravity_scale = 0.0
+	collision_layer = Climber.LAYER_PROP
+	collision_mask = Climber.SOLID_MASK
+	sleeping = false
 	previous = global_transform
 	carry_velocity = Vector3.ZERO
 	carry_spin = 0
+
+
+func set_carrier(c: Climber) -> void:
+	for body in exceptions:
+		if is_instance_valid(body):
+			remove_collision_exception_with(body)
+	exceptions.clear()
+	carrier_rids.clear()
+	if c != null:
+		for body: RigidBody3D in c.bodies.values():
+			add_collision_exception_with(body)
+			exceptions.append(body)
+			carrier_rids.append(body.get_rid())
 
 
 func follow(c: Climber, dt: float) -> void:
@@ -188,13 +213,17 @@ func follow(c: Climber, dt: float) -> void:
 	if grip_point.y > 0:
 		direction = -direction
 	var facing := Basis(Vector3.BACK, direction.angle() - PI * 0.5)
-	var basis_next := global_basis.slerp(facing, 1.0 - exp(-14.0 * dt)).orthonormalized()
-	# Follow the steady lower limb rather than the independently spinning wrist.
-	# Keep the broad face in front of the body mesh while held.
-	var grip := end.global_position + Vector3.BACK * 0.12
-	var previous_grip := global_transform * grip_point
-	grip = previous_grip.lerp(grip, 1.0 - exp(-55.0 * dt))
-	global_transform = Transform3D(basis_next, grip - basis_next * grip_point)
+	# Drive only the prop. The physics solver can stop or slide it against a
+	# blocker without transferring the chair's weight back to the carrier.
+	var rotation_error := (facing * global_basis.inverse()).get_rotation_quaternion()
+	if rotation_error.w < 0:
+		rotation_error = -rotation_error
+	var angle := rotation_error.get_angle()
+	var spin := rotation_error.get_axis() * minf(angle * 14.0, 16.0) if angle > 0.0001 else Vector3.ZERO
+	var grip_error := end.global_position - to_global(grip_point)
+	var velocity := grip_error * 36.0 - spin.cross(global_basis * grip_point)
+	linear_velocity = Vector3(velocity.x, velocity.y, 0).limit_length(13.0)
+	angular_velocity = spin
 	var hand_velocity := (end.global_position - last_hand) / dt
 	carry_velocity = carry_velocity.lerp(hand_velocity, 1.0 - exp(-35.0 * dt))
 	last_hand = end.global_position
@@ -213,13 +242,48 @@ func drop(c: Climber, dt: float) -> void:
 	holder = -1
 	limb = -1
 	freeze = false
-	collision_mask = Climber.LAYER_WORLD | Climber.LAYER_FROZEN
-	global_position.z = 0
+	gravity_scale = 1.0
+	collision_mask = Climber.SOLID_MASK
+	collision_layer = Climber.LAYER_PROP
 	Climber.sync_server(self)
 	linear_velocity = Vector3(carry_velocity.x, carry_velocity.y, 0).limit_length(8)
 	angular_velocity = Vector3.BACK * clampf(carry_spin, -10, 10)
 	previous = global_transform
 	sleeping = false
+
+
+func release_carrier_when_clear() -> void:
+	if exceptions.is_empty():
+		return
+	var query := PhysicsShapeQueryParameters3D.new()
+	query.shape = hit_shape
+	query.transform = global_transform
+	query.margin = 0.025
+	query.collision_mask = Climber.LAYER_LIVE | Climber.LAYER_FROZEN
+	for contact in get_world_3d().direct_space_state.intersect_shape(query, 128):
+		if carrier_rids.has(contact.rid):
+			return
+	set_carrier(null)
+
+
+func tick_ropes(dt: float) -> void:
+	rope_wait = maxf(0.0, rope_wait - dt)
+	if Climber.rope_x <= 0:
+		return
+	var p := global_position
+	var half := SIZE * 0.5
+	var extent := global_basis.x.abs() * half.x + global_basis.y.abs() * half.y + global_basis.z.abs() * half.z
+	var edge := absf(p.x) + extent.x
+	var side := signf(p.x)
+	if edge < Climber.rope_x - 0.12 or absf(p.x) > Climber.rope_x + 0.3 or p.y + extent.y < Climber.ROPE_LOW or p.y - extent.y > Climber.ROPE_HIGH:
+		return
+	if rope_wait > 0:
+		if holder >= 0 and linear_velocity.x * side > 0:
+			linear_velocity.x = 0.0
+		return
+	if linear_velocity.x * side > 0.3:
+		linear_velocity.x *= -Feel.get_k("rope_bounce")
+		rope_wait = Climber.ROPE_COOLDOWN
 
 
 func settle() -> void:
@@ -251,6 +315,7 @@ func sweep_hits(dt: float, excluded_id: int) -> Dictionary:
 	if travel / dt >= HIT_SPEED:
 		var query := PhysicsShapeQueryParameters3D.new()
 		query.shape = hit_shape
+		query.margin = 0.012  # Include resting separation at a physical impact.
 		query.collision_mask = Climber.LAYER_LIVE
 		var space := get_world_3d().direct_space_state
 		var steps := clampi(ceili(travel / 0.06), 1, 24)
@@ -293,6 +358,7 @@ func _expire_hits(dt: float) -> void:
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = hit_shape
 	query.transform = global_transform
+	query.margin = 0.025
 	query.collision_mask = Climber.LAYER_LIVE
 	query.exclude = carrier_rids
 	for result in get_world_3d().direct_space_state.intersect_shape(query, 128):
