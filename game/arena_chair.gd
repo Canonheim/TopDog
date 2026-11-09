@@ -62,7 +62,7 @@ func setup(draw_model: bool, thresholds: Vector2i) -> void:
 	previous = transform
 
 
-func float_above(line: float) -> void:
+func float_above(top: Vector2) -> void:
 	in_bubble = true
 	if bubble != null:
 		bubble.show()
@@ -71,7 +71,7 @@ func float_above(line: float) -> void:
 	thrower = -1
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO
-	global_transform = Transform3D(Basis(Vector3.BACK, -0.18), Vector3(0, line + PICKUP_HEIGHT, 0))
+	global_transform = Transform3D(Basis(Vector3.BACK, -0.18), Vector3(top.x, top.y + PICKUP_HEIGHT, 0))
 	previous = global_transform
 	loose_target = global_transform
 

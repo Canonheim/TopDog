@@ -28,6 +28,8 @@ const PartnerScript := preload("res://climber/practice_partner.gd")
 var chair: ChairScript
 var chair_debris: Node3D
 var partner: PartnerScript
+var chair_generation := 0
+var chair_spawn_top := Vector2.ZERO
 var remote_chair_limbs := {}
 
 const FartVoice := preload("res://audio/fart_voice.gd")
@@ -79,7 +81,6 @@ var _ring_out := {}  # cid -> seconds until the RING OUT respawn
 var _partner_out := 0.0  # the practice partner's ring-out countdown
 var _pulls := {}  # cid -> {piece: [Vector2, time]}
 var _remote_grabs := {}  # "cid:limb" -> [target_cid, piece]
-var _com_v := {}  # cid -> previous COM velocity (for pull estimates)
 var _round_fail_tops := {}  # pid -> top (scramble: who failed this round, how high)
 var _fart_fuel := {}  # Seconds remaining, by player across respawns.
 var _fart_down := {}
@@ -108,11 +109,11 @@ func me() -> int:
 
 ## Host / offline: start a match. roster entries: {pid, name, tint, peer, slot}.
 func host_start(p_settings: Dictionary, p_roster: Array) -> void:
-	_rpc_start.rpc(p_settings, p_roster, Vector2i(randi_range(8, 10), randi_range(11, 13)))
+	_rpc_start.rpc(p_settings, p_roster)
 
 
 @rpc("authority", "call_local", "reliable")
-func _rpc_start(p_settings: Dictionary, p_roster: Array, dent_hits: Vector2i) -> void:
+func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	_clear_arena_props()
 	settings = p_settings
 	mode = Modes.row(str(settings.get("mode", "tower")))
@@ -120,11 +121,7 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array, dent_hits: Vector2i) ->
 	_fart_fuel.clear()
 	_fart_down.clear()
 	roster = p_roster
-	for c in climbers.values():
-		c.remove()
-	climbers.clear()
-	live.clear()
-	tower.clear()
+	_clear_climbers()
 	alive.clear()
 	best.clear()
 	locked.clear()
@@ -137,11 +134,6 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array, dent_hits: Vector2i) ->
 		stage.build(world, dress)
 	Climber.rope_x = stage.ring_half() if str(stage.row.get("dress", "")) == "plaza" else 0.0
 	_ring_out.clear()
-	if stage.row.get("dress", "") == "plaza":
-		chair = ChairScript.new()
-		chair.setup(dress, dent_hits)
-		world.add_child(chair)
-		chair.float_above(stage.first_line)
 	if practice and multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
 		_spawn_partner()
 	line = stage.first_line
@@ -210,6 +202,8 @@ func _next() -> void:
 	if _game_decided(still):
 		_finish()
 		return
+	if stage.row.get("dress", "") == "plaza":
+		_rpc_spawn_chair.rpc(chair_generation + 1, _chair_tower_top(), Vector2i(randi_range(8, 10), randi_range(11, 13)))
 	if mode.live == "turns":
 		# Next player still in, in order.
 		for k in turn_order.size():
@@ -224,10 +218,8 @@ func _next() -> void:
 		locked.clear()
 		_round_fail_tops.clear()
 		_rpc_phase.rpc("round", float(settings.get("timer", 60.0)), line if round_n > 1 else stage.first_line, round_n, -1)
-		var n := 0
 		for pid in still:
-			_spawn(pid, n)
-			n += 1
+			_spawn(pid)
 
 
 func _game_decided(still: Array) -> bool:
@@ -258,10 +250,60 @@ func _rpc_clock(p_clock: float, p_line: float) -> void:
 		line = maxf(line, p_line)
 
 
-func _spawn(pid: int, index := 0) -> void:
-	var side := _spawn_side()
-	var feet := stage.spawn_point(side)
-	feet.x += signf(feet.x) * float(index / 2) * 1.1  # Scramble: pairs fan out along each side
+## Resolve on the host before broadcasting. Read body poses directly so a climber
+## created earlier in this same physics tick already occupies its space.
+func _open_spawn(preferred: Vector2) -> Vector2:
+	var scale_factor := Feel.get_k("body_scale")
+	# Shoulder offset, an outward-folded upper arm, and its capsule radius.
+	var half_width := (0.73 + Feel.get_k("shoulder_flare")) * scale_factor
+	var height := 2.05 * scale_factor
+	var edge := stage.ring_half() - half_width - 0.16
+	var inside := stage.barrel_half + half_width + 0.16
+	var blocked: Array[Rect2] = []
+	var actors := climbers.values()
+	if is_instance_valid(partner) and not partner.removed:
+		actors.append(partner)
+	for c: Climber in actors:
+		var bounds := c.pose_bounds(c.pose())
+		var buffer: Array = _puppet_buf.get(c.climber_id, [])
+		if not buffer.is_empty():
+			bounds = bounds.merge(c.pose_bounds(buffer.back()[1]))
+		blocked.append(bounds.grow(0.16))
+	var y := preferred.y
+	while true:
+		var candidates := [clampf(preferred.x, -edge, edge), -edge, edge, -inside, inside]
+		var spans: Array[Vector2] = []
+		var next_y := INF
+		for b in blocked:
+			if b.end.y < y or b.position.y > y + height:
+				continue
+			var span := Vector2(b.position.x - half_width, b.end.x + half_width)
+			spans.append(span)
+			candidates.append(span.x - 0.001)
+			candidates.append(span.y + 0.001)
+			next_y = minf(next_y, b.end.y + 0.01)
+		var distance := INF
+		var best := 0.0
+		for x: float in candidates:
+			if absf(x) < inside or absf(x) > edge or absf(x - preferred.x) >= distance:
+				continue
+			var free := true
+			for span in spans:
+				if x >= span.x and x <= span.y:
+					free = false
+					break
+			if free:
+				best = x
+				distance = absf(x - preferred.x)
+		if is_finite(distance):
+			return Vector2(best, y)
+		# A completely packed floor can still accept a separated spawn above it.
+		y = next_y
+	return preferred
+
+
+func _spawn(pid: int) -> void:
+	var feet := _open_spawn(stage.spawn_point(_spawn_side()))
 	var cid := _cid_next
 	_cid_next += 1
 	# A NEW NAME FOR EVERY CLIMBER (Parker 11-08): a player with a random name gets
@@ -355,6 +397,8 @@ func _drop_climber(cid: int) -> void:
 			if oc.limbs[i].grab_climber == c:
 				oc.release(i)
 	_puppet_buf.erase(cid)
+	_last_seq.erase(cid)
+	_pulls.erase(cid)
 	c.remove()
 
 
@@ -433,7 +477,8 @@ func _tick_owned(real_delta: float) -> void:
 					_rpc_lock_request.rpc_id(1, cid, c.pose())
 			else:
 				announce.emit("Get above the line to lock in!", false)
-		_tick_pulls_out(c, real_delta, send)
+		if send:
+			_send_contact_loads(c)
 		if send and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
 			_rpc_pose.rpc(cid, _seq, c.pose(), c.touches_solid())
 	# Remote pulls on my climbers that went stale stop pulling.
@@ -443,12 +488,14 @@ func _tick_owned(real_delta: float) -> void:
 			continue
 		var pc: Climber = climbers[cid]
 		pc.remote_pulls.clear()
-		for piece in _pulls[cid].keys():
-			var e: Array = _pulls[cid][piece]
-			if _now - float(e[1]) < PULL_STALE_S:
-				pc.remote_pulls[piece] = e[0]
+		pc.remote_support = false
+		for key in _pulls[cid]:
+			var sample: Dictionary = _pulls[cid][key]
+			if sample.has("time") and _now - float(sample.time) < PULL_STALE_S:
+				pc.remote_pulls[key] = sample
+				pc.remote_support = pc.remote_support or sample.supported
 	if send and chair != null and is_host() and multiplayer.get_peers().size() > 0:
-		_rpc_chair_pose.rpc(chair.holder, chair.limb, chair.grip_point, chair.global_transform, chair.hit_count, chair.in_bubble)
+		_rpc_chair_pose.rpc(chair_generation, chair.holder, chair.limb, chair.grip_point, chair.global_transform, chair.hit_count, chair.in_bubble)
 @rpc("any_peer", "call_remote", "reliable")
 func _rpc_lock_request(cid: int, pose: PackedFloat32Array) -> void:
 	if not is_host() or not climbers.has(cid):
@@ -721,7 +768,7 @@ func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool) -
 		return
 	if c.owner_peer != multiplayer.get_remote_sender_id():
 		return  # only the owner streams a climber
-	if seq <= int(_last_seq.get(cid, -1)):
+	if seq <= int(_last_seq.get(cid, -1)) or not _valid_lock_pose(pose):
 		return  # stale or duplicate: unreliable lanes arrive out of order
 	c.puppet_on_support = on_support
 	_last_seq[cid] = seq
@@ -826,7 +873,7 @@ func _on_grab_made(c: Climber, limb: int, other: Object) -> void:
 	if oc.state != Climber.State.PUPPET or oc.owner_peer == me():
 		return
 	_remote_grabs["%d:%d" % [c.climber_id, limb]] = [oc.climber_id, str(other.get_meta("piece"))]
-	_rpc_grabbed.rpc_id(oc.owner_peer, oc.climber_id, 1)
+	_rpc_grabbed.rpc_id(oc.owner_peer, oc.climber_id, c.climber_id, limb, true)
 
 
 func _on_grab_lost(c: Climber, limb: int) -> void:
@@ -837,59 +884,45 @@ func _on_grab_lost(c: Climber, limb: int) -> void:
 	_remote_grabs.erase(key)
 	var oc: Climber = climbers.get(g[0])
 	if oc != null:
-		_rpc_grabbed.rpc_id(oc.owner_peer, g[0], -1)
+		_rpc_grabbed.rpc_id(oc.owner_peer, g[0], c.climber_id, limb, false)
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _rpc_grabbed(cid: int, delta_n: int) -> void:
+func _rpc_grabbed(cid: int, source_id: int, limb: int, connected: bool) -> void:
 	var c: Climber = climbers.get(cid)
-	if c == null or c.owner_peer != me() or c.state != Climber.State.LIVE:
+	var source: Climber = climbers.get(source_id)
+	if c == null or source == null or c.owner_peer != me() or source.owner_peer != multiplayer.get_remote_sender_id() or limb < 0 or limb >= 4:
 		return
-	c.remote_grabbed = maxi(0, c.remote_grabbed + clampi(delta_n, -1, 1))
+	var key := Vector2i(source_id, limb)
+	if not _pulls.has(cid):
+		_pulls[cid] = {}
+	if connected:
+		_pulls[cid][key] = {}
+	else:
+		_pulls[cid].erase(key)
+		c.remote_pulls.erase(key)
+	c.remote_grabbed = _pulls[cid].size()
 
 
-## My climber hangs on a rival's puppet: estimate the pull through each such grab
-## (my weight and acceleration, shared over my attachments) and send it to the
-## rival's machine, which applies it to their real body.
-func _tick_pulls_out(c: Climber, delta: float, send: bool) -> void:
-	var mine: Array = []
+func _send_contact_loads(c: Climber) -> void:
 	for i in c.limbs.size():
-		var key := "%d:%d" % [c.climber_id, i]
-		if _remote_grabs.has(key) and c.limbs[i].grab.is_valid():
-			mine.append(_remote_grabs[key])
-	var v := Vector2.ZERO
-	for b in c.bodies.values():
-		v += Vector2(b.linear_velocity.x, b.linear_velocity.y) * b.mass
-	v /= maxf(c.total_mass, 0.001)
-	var prev: Vector2 = _com_v.get(c.climber_id, v)
-	_com_v[c.climber_id] = v
-	if mine.is_empty() or not send:
-		return
-	if not c.grounded_locally():
-		return  # nobody solid in my group: no pull to send (THE GROUNDED GROUP)
-	var accel := (v - prev) / maxf(delta, 0.0001)
-	var g := Vector2(0, -9.8 * Feel.climber_gravity(true))
-	# What holds me up: m (a - g), shared over every attachment I have.
-	var n := maxi(1, c.stuck_count())
-	var hold := c.total_mass * (accel - g) / float(n)
-	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
-	var pull := (c.wrestling_force - hold).limit_length(cap)  # what I do to what I hold
-	for g2 in mine:
-		var oc: Climber = climbers.get(g2[0])
-		if oc != null:
-			_rpc_pull.rpc_id(oc.owner_peer, int(g2[0]), str(g2[1]), pull)
+		var l: Dictionary = c.limbs[i]
+		var target: Climber = l.grab_climber
+		if is_instance_valid(target) and target.state == Climber.State.PUPPET:
+			_rpc_pull.rpc_id(target.owner_peer, target.climber_id, c.climber_id, i, l.grab_piece, l.contact_offset, l.contact_force, c.grounded_locally())
 
 
 @rpc("any_peer", "call_remote", "unreliable")
-func _rpc_pull(cid: int, piece: String, force: Vector2) -> void:
+func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vector3, force: Vector3, supported: bool) -> void:
 	var c: Climber = climbers.get(cid)
-	if c == null or c.owner_peer != me() or c.state != Climber.State.LIVE:
+	var source: Climber = climbers.get(source_id)
+	var key := Vector2i(source_id, limb)
+	if c == null or source == null or c.owner_peer != me() or source.owner_peer != multiplayer.get_remote_sender_id() or c.state != Climber.State.LIVE:
+		return
+	if not _pulls.has(cid) or not _pulls[cid].has(key) or not c.bodies.has(piece) or not offset.is_finite() or not force.is_finite():
 		return
 	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
-	if not _pulls.has(cid):
-		_pulls[cid] = {}
-	_pulls[cid][piece] = [force.limit_length(cap), _now]
-
+	_pulls[cid][key] = {"piece": piece, "offset": offset, "force": force.limit_length(cap), "supported": supported, "time": _now}
 
 # ================================================================ leaving
 
@@ -915,16 +948,43 @@ func _on_peer_left(id: int) -> void:
 		_finish()
 
 
-func _clear_arena_props() -> void:
+func _chair_tower_top() -> Vector2:
+	var highest := Vector2(0, -INF)
+	for cid in tower:
+		var climber: Climber = climbers[cid]
+		for piece in climber.bodies:
+			var height := climber.piece_top(piece)
+			if height > highest.y:
+				var body: RigidBody3D = climber.bodies[piece]
+				highest = Vector2(body.global_position.x, height)
+	return Vector2(0, stage.first_line) if tower.is_empty() else highest
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_spawn_chair(generation: int, top: Vector2, dent_hits: Vector2i) -> void:
+	_clear_chair()
+	chair_generation = generation
+	chair_spawn_top = top
+	chair = ChairScript.new()
+	chair.setup(dress, dent_hits)
+	world.add_child(chair)
+	chair.float_above(top)
+
+
+func _clear_chair() -> void:
 	if is_instance_valid(chair_debris):
 		chair_debris.queue_free()
 	chair_debris = null
 	if is_instance_valid(chair):
 		chair.queue_free()
 		chair = null
+	remote_chair_limbs.clear()
+
+
+func _clear_arena_props() -> void:
+	_clear_chair()
 	if is_instance_valid(partner):
 		_remove_partner()
-	remote_chair_limbs.clear()
 
 
 func _remove_partner() -> void:
@@ -941,11 +1001,12 @@ func _remove_partner() -> void:
 func _spawn_partner() -> void:
 	if is_instance_valid(partner):
 		_remove_partner()
+	var feet := _open_spawn(Vector2(3.2, 0.05))
 	partner = PartnerScript.new()
 	partner.climber_id = -2
 	partner.display_name = "Practice partner"
 	add_child(partner)
-	partner.build(Vector2(3.2, 0.05), world, KNIGHT if dress else null)
+	partner.build(feet, world, KNIGHT if dress else null)
 
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -977,11 +1038,9 @@ func _tick_chair(dt: float) -> void:
 			chair.follow(carrier, dt)
 			_apply_chair_hits(chair.sweep_hits(dt, carrier.climber_id))
 	elif stage.out_of_bounds(Climber.pos2(chair)):
-		chair.float_above(line)
+		chair.float_above(chair_spawn_top)
 	else:
-		if chair.in_bubble:
-			chair.float_above(line)
-		else:
+		if not chair.in_bubble:
 			chair.settle()
 		if chair.thrower != -1:
 			_apply_chair_hits(chair.sweep_hits(dt, chair.thrower))
@@ -1055,8 +1114,8 @@ func _rpc_chair_impact(cid: int, piece: String, local_offset: Vector3, impulse: 
 
 
 @rpc("authority", "call_remote", "unreliable_ordered")
-func _rpc_chair_pose(cid: int, limb: int, point: Vector3, pose: Transform3D, hit_count: int, in_bubble: bool) -> void:
-	if chair == null:
+func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose: Transform3D, hit_count: int, in_bubble: bool) -> void:
+	if chair == null or generation != chair_generation:
 		return
 	if chair.holder != cid or chair.limb != limb:
 		chair.global_transform = pose
@@ -1069,12 +1128,20 @@ func _rpc_chair_pose(cid: int, limb: int, point: Vector3, pose: Transform3D, hit
 	chair.loose_target = pose
 	chair.set_hit_count(hit_count)
 
-func end_match() -> void:
-	_clear_arena_props()
+func _clear_climbers() -> void:
 	for c in climbers.values():
 		c.remove()
 	climbers.clear()
 	live.clear()
 	tower.clear()
+	_puppet_buf.clear()
+	_last_seq.clear()
+	_pulls.clear()
+	_pending_freeze.clear()
+
+
+func end_match() -> void:
+	_clear_arena_props()
+	_clear_climbers()
 	phase = "idle"
 	phase_changed.emit(phase)

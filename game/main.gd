@@ -26,8 +26,6 @@ var hud_clock: Label
 var hud_info: Label
 var hud_hint: Label
 var line_bar: MeshInstance3D
-var line_label: Label3D
-var tags := {}  # cid -> Label3D
 var local_mode := true  # this match was started from Local play
 var paused := false
 var feel_panel: Control
@@ -35,6 +33,7 @@ var _cam_target := Vector3(0, 2, 14)
 var _cam_fov := 34.0
 const FOLLOW_HALF_H := 2.05  # in play: the camera shows at least this many metres above and below you
 var _last_tick_s := -1
+var _lobby_back := "online"
 var _lobby_list: VBoxContainer
 var _online_status: Label
 var _lobby_members: VBoxContainer
@@ -244,20 +243,14 @@ func _build_world() -> void:
 	line_bar.material_override = lm
 	line_bar.position = Vector3(0, 1.6, 0.35)
 	world.add_child(line_bar)
-	line_label = Label3D.new()
-	line_label.text = "TOP"
-	line_label.font_size = 64
-	line_label.pixel_size = 0.006
-	line_label.modulate = Color(1, 0.9, 0.4)
-	line_label.outline_size = 12
-	line_label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	world.add_child(line_label)
 
 
 func _process(delta: float) -> void:
 	_tick_camera(delta)
 	_tick_hud(delta)
-	_tick_tags()
+	for cid in game.climbers:
+		var climber: Climber = game.climbers[cid]
+		climber.set_glyphs_visible(screen != "pause")
 	if screen == "local":
 		var dev := Players.poll_join()
 		if dev != -2:
@@ -297,24 +290,29 @@ func _unhandled_input(event: InputEvent) -> void:
 # ---------------------------------------------------------------- camera
 
 func _tick_camera(delta: float) -> void:
-	var pts: Array = []
-	for c in game.live_climbers():
-		pts.append((c as Climber).centre_of_mass())
-	var top := game.tower_top() if game.stage != null else 1.6
-	var line_y := game.line if game.phase != "idle" else top
-	if pts.is_empty():
-		pts.append(Vector2(0, top))
+	var live := game.live_climbers()
+	var top := 1.6
+	if game.stage != null and (live.is_empty() or game.phase == "idle"):
+		top = game.tower_top()
+	var line_y := top if game.phase == "idle" else game.line
 	var lo := Vector2(INF, INF)
 	var hi := Vector2(-INF, -INF)
 	# THE FOLLOW CAMERA (Parker 11-07: "it looks at you, not at you and the whole
 	# structure", as the reference game does): in play the camera frames only the
 	# live climbers, close. With nobody live (menus, between turns) it frames the
 	# tower top and the line as before, so the 3D menus riding the camera stay put.
-	var follow := not game.live_climbers().is_empty() and game.phase in ["turn", "round"]
-	var frame: Array = pts if follow else pts + [Vector2(-2.0, maxf(0.0, line_y - 3.0)), Vector2(2.0, line_y + 0.8)]
-	for p in frame:
-		lo = lo.min(p)
-		hi = hi.max(p)
+	var follow := not live.is_empty() and game.phase in ["turn", "round"]
+	for climber: Climber in live:
+		var point := climber.centre_of_mass()
+		lo = lo.min(point)
+		hi = hi.max(point)
+	if live.is_empty():
+		lo = Vector2(0, top)
+		hi = lo
+	if not follow:
+		for point in [Vector2(-2.0, maxf(0.0, line_y - 3.0)), Vector2(2.0, line_y + 0.8)]:
+			lo = lo.min(point)
+			hi = hi.max(point)
 	if follow:
 		lo -= Vector2(1.2, 1.15)
 		hi += Vector2(1.2, 1.35)
@@ -334,9 +332,6 @@ func _tick_camera(delta: float) -> void:
 	cam.look_at(Vector3(cam.position.x, cam.position.y - 0.3, 0.0), Vector3.UP)
 	line_bar.position.y = lerpf(line_bar.position.y, line_y, 1.0 - exp(-delta * 8.0))
 	line_bar.visible = game.phase in ["turn", "round", "between"]
-	line_label.visible = false  # the line is a string of flags now (Parker 11-08)
-	line_label.position = Vector3(cam.position.x - half_h * aspect * 0.62, line_bar.position.y + 0.3, 0.4)
-	line_label.text = "LINE  %.2f m" % line_y
 
 
 # ---------------------------------------------------------------- HUD
@@ -373,35 +368,12 @@ func _tick_hud(delta: float) -> void:
 	for c in game.live_climbers():
 		var cl: Climber = c
 		if cl.owner_peer == game.me() and cl.top_height() > game.line + Game.LOCK_MARGIN:
-			hint = "Above the line! Lock in: Space / A"
-	hud_hint.text = hint.replace("Space / A", "Space / Start")
-
-
-func _tick_tags() -> void:
-	for cid in tags.keys():
-		var c: Climber = game.climbers.get(cid)
-		var tag: Label3D = tags[cid]
-		if c == null or not is_instance_valid(c) or c.bodies.is_empty():
-			tag.queue_free()
-			tags.erase(cid)
-			continue
-		var head: RigidBody3D = c.bodies["head"]
-		tag.global_position = head.global_position + Vector3(0, 0.38, 0.3)
-		tag.visible = false  # no name over the head (Parker 11-08): the nameplate and the banner carry it
-		c.set_glyphs_visible(screen != "pause")  # nothing over the pause menu
+			hint = "Above the line! Lock in: Space / Start"
+			break
+	hud_hint.text = hint
 
 
 func _on_spawned(c: Climber) -> void:
-	var tag := Label3D.new()
-	tag.text = c.display_name
-	tag.font_size = 40
-	tag.pixel_size = 0.005
-	tag.outline_size = 10
-	tag.modulate = c.tint.lightened(0.3)
-	tag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	tag.no_depth_test = true
-	world.add_child(tag)
-	tags[c.climber_id] = tag
 	c.froze.connect(func(_cl): Sound.play("thud", -6.0))
 
 
@@ -713,6 +685,7 @@ func _fill_lobby_list(rows: Array) -> void:
 
 
 func _on_session_started() -> void:
+	_lobby_back = screen if screen in ["online", "online_flat", "friends", "browse", "title"] else "online"
 	local_mode = false
 	show_screen("lobby")
 
@@ -750,7 +723,7 @@ func _screen_lobby() -> Control:
 	UiKit.button(actions, "Ready", func(): Net.set_ready(not bool(Net.members.get(Net.me(), {}).get("ready", false))))
 	UiKit.button(actions, "Start", _start_online)
 	UiKit.button(actions, "Invite friends", func(): Net.invite_friends())
-	UiKit.button(actions, "Leave", func(): Net.leave(); _to_title(""))
+	UiKit.button(actions, "Leave", _leave_lobby)
 	_lobby_status = Label.new()
 	_lobby_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_lobby_status.custom_minimum_size = Vector2(1000, 0)
@@ -923,6 +896,13 @@ func quit_game() -> void:
 	get_tree().quit()
 
 
+func _leave_lobby() -> void:
+	Net.leave()
+	game.end_match()
+	local_mode = true
+	show_screen(_lobby_back)
+
+
 ## Back one level: B on any pad, or Escape.
 func _back() -> void:
 	if not _rebind_wait.is_empty():
@@ -930,6 +910,8 @@ func _back() -> void:
 	match screen:
 		"local", "online":
 			show_screen("title")
+		"lobby":
+			_leave_lobby()
 		"friends", "browse", "online_flat":
 			show_screen("online")
 		"controls":
@@ -963,7 +945,7 @@ func _to_title(reason: String) -> void:
 
 
 func _screen_controls() -> Control:
-	var c := UiKit.panel_screen("Controls", "Hold a limb button and steer with the stick or mouse. Release to plant it. Hold a rival and pull while either of you is braced to peel them off the tower. Hard hits can knock you out. Grab the floating chair with a held limb and release to drop it. Lock in above the line while touching the stage or stack.")
+	var c := UiKit.panel_screen("Controls", "Hold a limb button and steer with the stick or mouse. Release to plant it. Plant a hand or foot on another player to climb or pull together. Hard tension breaks the contact. Hard hits can knock you out. Grab the floating chair with a held limb and release to drop it. Lock in above the line while touching the stage or stack.")
 	var box: VBoxContainer = c.get_meta("box")
 	var grid := GridContainer.new()
 	grid.columns = 5

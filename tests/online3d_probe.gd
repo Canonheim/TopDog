@@ -74,7 +74,7 @@ func _ready() -> void:
 		1: {"name": "Parker", "players": [{"name": "Parker the Barrel-Hugger", "tint": NameGen.tint(0), "slot": 0}], "ready": true},
 		2: {"name": "Pal", "players": [{"name": "Matilda the Goose-Toppler", "tint": NameGen.tint(1), "slot": 0}, {"name": "Yorick the Anvil-Wrangler", "tint": NameGen.tint(2), "slot": 1}], "ready": false},
 	}
-	main.show_screen("lobby")
+	main._on_session_started()
 	Net.chat_line.emit("Pal", "Hello!")
 	Net.chat_line.emit("Parker", "Ready!")
 	Net.chat_line.emit("", "Pal joined")
@@ -83,6 +83,8 @@ func _ready() -> void:
 	var lobby: Menu3D = main.lucha.menus.lobby
 	_check("the host's lobby leads with FIGHT!", lobby.items.size() > 0 and str(lobby.items[0].label) == "FIGHT!")
 	await _shot("lobby")
+	await _tap(JOY_BUTTON_B)
+	_check("raw B leaves the lobby and returns to its opener", main.screen == "online" and not Net.online, main.screen)
 	Net.members = {}
 	print("ONLINE3D RESULT fails=", fails)
 	get_tree().quit(fails)

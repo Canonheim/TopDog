@@ -1663,7 +1663,6 @@ func _restyle_line() -> void:
 	for f in string.find_children("*", "Node3D", true, false):
 		if f.has_meta("sway"):
 			_flags.append(f)
-	(main.line_label as Label3D).visible = false
 	# THE LINE POLES (Parker 11-08: "long decorative poles on either side of the
 	# ring holding up the line and those poles constantly grow as the line moves
 	# up"): a pole at each end of the string, standing on the plaza, its shaft

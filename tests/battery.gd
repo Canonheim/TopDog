@@ -215,7 +215,7 @@ func _spike_hang() -> void:
 		if i > 10 * Engine.physics_ticks_per_second:
 			late = maxf(late, g)
 	t("hang: 30 s by one hand, joints stay under 2 cm", worst < 0.02, "worst %.4f m (%s) at tick %d, last 20 s %.4f m" % [worst, c.last_worst_gap_joint, worst_at, late])
-	t("hang: the hand is still stuck", c.limbs[0].grab.is_valid())
+	t("hang: the hand is still stuck", (c.limbs[0].grab_other != null))
 	t("hang: the body settles under the bar (a stiff body is a slow pendulum)", c.linear_speed() < 0.25, "%.3f m/s" % c.linear_speed())
 	t("hang: nothing left the plane", finite_body(c))
 
@@ -276,20 +276,20 @@ func _spike_limp() -> void:
 	t("limp: held limbs don't drive while loose in the air", not any_drive and not c.is_attached())
 	bar_at(c.limb_end(1))  # the unheld right hand touches a bar
 	await frames(3)
-	t("limp: an unheld hand touching a bar sticks by itself", c.limbs[1].grab.is_valid())
+	t("limp: an unheld hand touching a bar sticks by itself", (c.limbs[1].grab_other != null))
 	await frames(1)
 	t("limp: simultaneous presses select exactly one limb", c.limbs[0].driving and not c.limbs[2].held and not c.limbs[3].held)
 	d.set_limb(2, false)
 	await frames(2)
 	d.set_limb(2, true)
 	await frames(2)
-	t("limp: a new press takes over and preserves the passive grip", c.limbs[2].driving and not c.limbs[0].held and c.limbs[1].grab.is_valid())
+	t("limp: a new press takes over and preserves the passive grip", c.limbs[2].driving and not c.limbs[0].held and (c.limbs[1].grab_other != null))
 	var next_bar := bar_at(c.limb_end(0))
 	await frames(4)
 	t("limp: the deselected hand catches on contact despite its button staying down", c.limbs[0].grab_other == next_bar)
 	d.set_limb(2, false)
 	await frames(2)
-	t("limp: releasing the selection hands control back to the older hand still held (the press stack)", c.limbs[0].held and not c.limbs[0].grab.is_valid() and c.active_limb() == 0)
+	t("limp: releasing the selection hands control back to the older hand still held (the press stack)", c.limbs[0].held and not (c.limbs[0].grab_other != null) and c.active_limb() == 0)
 	next_bar.queue_free()
 	d.set_limb(0, false)  # let go of the other buttons: only the stuck hand's press is new
 	d.set_limb(3, false)
@@ -297,7 +297,7 @@ func _spike_limp() -> void:
 	c.release(0)
 	d.set_limb(1, true, Vector2.UP, 1.0)
 	await frames(2)
-	t("limp: picking up the last stuck limb drops you (nothing drives)", not c.limbs[1].grab.is_valid() and not c.is_attached())
+	t("limp: picking up the last stuck limb drops you (nothing drives)", not (c.limbs[1].grab_other != null) and not c.is_attached())
 
 
 ## 20 climbers dropped in a heap on a block and frozen one by one, then one live.
@@ -343,7 +343,7 @@ func _spike_eight() -> void:
 	var rival_grabs := [0]
 	for c in cs:
 		c.grab_made.connect(func(gc, gl, o):
-			if o is RigidBody3D and o.has_meta("climber") and not gc.limbs[gl].held:
+			if o is RigidBody3D and o.has_meta("climber") and gc.limbs[gl].held:
 				rival_grabs[0] += 1)  # a LOOSE limb taking a live climber (held ones may)
 	for i in ticks:
 		if i % 30 == 0:
@@ -364,7 +364,7 @@ func _spike_eight() -> void:
 	var avg := sum / ticks
 	t("eight live: 20 s welded into a blob (every unheld limb sticks), joints under 12 cm", worst_gap < 0.12, "worst %.4f m" % worst_gap)
 	t("eight live: all sane (finite, in the plane)", ok)
-	t("eight live: loose limbs never grab a live climber (only a held limb does, Parker 11-08)", rival_grabs[0] == 0, rival_grabs[0])
+	t("eight live: steered limbs never stick to live players", rival_grabs[0] == 0, rival_grabs[0])
 	t("eight live: physics frame under 6 ms on average (eight welded climbers)", avg < 6.0, "avg %.3f ms, worst %.3f ms" % [avg, worst_ms])
 
 
@@ -391,7 +391,7 @@ func _spike_chain() -> void:
 		await get_tree().physics_frame
 		worst_slip = maxf(worst_slip, cB.limb_end(0).distance_to(b_hand))
 		worst_gap = maxf(worst_gap, maxf(cA.worst_joint_gap(), cB.worst_joint_gap()))
-	t("chain: after C freezes, B and A still hold on", cB.limbs[0].grab.is_valid() and cA.limbs[0].grab.is_valid())
+	t("chain: after C freezes, B and A still hold on", (cB.limbs[0].grab_other != null) and (cA.limbs[0].grab_other != null))
 	t("chain: B's hand stays on C's frozen foot (under 6 cm)", worst_slip < 0.06, "%.4f m" % worst_slip)
 	t("chain: joints hold through the freeze (under 13 cm, two stiff climbers on one wrist)", worst_gap < 0.13, "%.4f m" % worst_gap)
 	t("chain: B still counts as attached (A holds it, it holds C)", cB.is_attached())
@@ -442,15 +442,15 @@ func _run_grab() -> void:
 	var c := spawn(Vector2(0, 0.05))
 	var d: Drivers.ScriptDriver = c.driver
 	await seconds(0.6)  # the feet settle the last few cm onto the deck
-	t("grab: unheld feet on the deck stick by themselves (you start standing)", c.limbs[2].grab.is_valid() and c.limbs[3].grab.is_valid())
+	t("grab: unheld feet on the deck stick by themselves (you start standing)", (c.limbs[2].grab_other != null) and (c.limbs[3].grab_other != null))
 	d.set_limb(2, true)  # press: pick the left foot up
 	await frames(2)
-	t("grab: pressing a stuck limb's button picks it up", not c.limbs[2].grab.is_valid())
+	t("grab: pressing a stuck limb's button picks it up", not (c.limbs[2].grab_other != null))
 	await seconds(0.5)
-	t("grab: a held limb can't stick while held", not c.limbs[2].grab.is_valid())
+	t("grab: a held limb can't stick while held", not (c.limbs[2].grab_other != null))
 	d.set_limb(2, false)
 	await frames(4)
-	t("grab: letting go over the deck plants it again", c.limbs[2].grab.is_valid())
+	t("grab: letting go over the deck plants it again", (c.limbs[2].grab_other != null))
 	# THE SLAP on every catch, held or not (Parker 11-08): a climber dropped from the
 	# air, holding nothing, slaps when its limbs catch the deck.
 	var sl := spawn(Vector2(-6.0, 2.5))
@@ -485,9 +485,9 @@ func _run_grab() -> void:
 	move(bar, h.limb_end(0))
 	h.attach(0, bar)
 	h.attach(1, f.bodies["chest"])
-	t("grab: a frozen climber can be held", h.limbs[1].grab.is_valid())
+	t("grab: a frozen climber can be held", (h.limbs[1].grab_other != null))
 	h.attach(2, e.bodies["chest"])
-	t("grab: a live rival can be held, and counts the grab", h.limbs[2].grab.is_valid() and e.grabbed_by == 1)
+	t("grab: a live rival can be held, and counts the grab", (h.limbs[2].grab_other != null) and e.grabbed_by == 1)
 	e.release_all()
 	await frames(1)
 	t("grab: a held climber counts as attached (Parker's rule 10)", e.is_attached() and e.stuck_count() == 0)
@@ -504,30 +504,23 @@ func _run_grab() -> void:
 	g2.attach(0, bar_at(g2.limb_end(0)))
 	await frames(2)
 	g2.attach(1, pp.bodies["chest"])
-	t("grab: the practice partner can be grabbed (and counts it)", g2.limbs[1].grab.is_valid() and g2.limbs[1].grab_climber == pp and pp.grabbed_by == 1)
+	t("grab: the practice partner can be grabbed (and counts it)", (g2.limbs[1].grab_other != null) and g2.limbs[1].grab_climber == pp and pp.grabbed_by == 1)
 	g2.release_all()
 	pp.remove()
-	# A HELD limb takes hold of a climber it touches and lets go with the button
-	# (like the chair); a loose one never does. And THE GROUNDED GROUP: two climbers
-	# holding each other in the air can't drive (no flying).
-	var x1 := spawn(Vector2(10.0, 6.0))
-	var x2 := spawn(Vector2(10.0, 6.0))  # overlapping: x1's hand is inside x2
+	# Start with the hand held away, then allow it to plant on the other player.
+	var x1 := spawn(Vector2(10, 6))
+	var x2 := spawn(Vector2(10, 6))
 	var xd: Drivers.ScriptDriver = x1.driver
-	await frames(1)
-	var loose_grabbed: bool = x1.limbs[0].grab.is_valid() and x1.limbs[0].grab_climber == x2
 	xd.set_limb(0, true)
-	var held_grabbed := false
-	for k in 30:
-		await get_tree().physics_frame
-		if x1.limbs[0].grab.is_valid() and x1.limbs[0].grab_climber == x2:
-			held_grabbed = true
-			break
-	var air_attached: bool = x1.is_attached() or x2.is_attached()
+	await frames(3)
+	t("player contact: the steered hand does not grab", x1.limbs[0].grab_other == null)
 	xd.set_limb(0, false)
 	await frames(2)
-	var let_go: bool = x1.limbs[0].grab_climber != x2
-	t("grab: a held limb grabs a climber it touches; a loose one doesn't; letting go releases", held_grabbed and not loose_grabbed and let_go, "held %s, loose %s, let go %s" % [held_grabbed, loose_grabbed, let_go])
-	t("grab: two climbers holding each other in the air can't drive (the grounded group)", held_grabbed and not air_attached)
+	t("player contact: releasing on a live body plants the hand", x1.limbs[0].grab_climber == x2)
+	t("player contact: an airborne pair cannot power locomotion", not x1.is_attached() and not x2.is_attached())
+	xd.set_limb(0, true)
+	await frames(2)
+	t("player contact: pressing the limb lifts it off again", x1.limbs[0].grab_other == null)
 	x1.remove()
 	x2.remove()
 
@@ -734,7 +727,7 @@ func _run_climb() -> void:
 	c.apply_pose(p)
 	await seconds(0.5)
 	var y0 := c.centre_of_mass().y
-	var log := ["standing at x %.2f: feet stuck %s %s, near hand stuck %s" % [c.centre_of_mass().x, c.limbs[2].grab.is_valid(), c.limbs[3].grab.is_valid(), c.limbs[0].grab.is_valid()]]
+	var log := ["standing at x %.2f: feet stuck %s %s, near hand stuck %s" % [c.centre_of_mass().x, (c.limbs[2].grab_other != null), (c.limbs[3].grab_other != null), (c.limbs[0].grab_other != null)]]
 	d.point_limb(0, true, Vector2(bx + 0.25, 1.95))  # pick the near hand up: lift it clear of the side first
 	await seconds(0.8)
 	d.point_limb(0, true, Vector2(bx - 0.20, 1.95))  # then press it onto the side, high
@@ -742,7 +735,7 @@ func _run_climb() -> void:
 	log.append("hand reaching: end at %s" % c.limb_end(0))
 	d.set_limb(0, false)
 	await frames(8)
-	var hand_on: bool = c.limbs[0].grab.is_valid() and c.limbs[0].grab_other != null and c.limbs[0].grab_other.has_meta("stage")
+	var hand_on: bool = (c.limbs[0].grab_other != null) and c.limbs[0].grab_other != null and c.limbs[0].grab_other.has_meta("stage")
 	log.append("hand stuck on the barrel: %s" % hand_on)
 	d.point_limb(2, true, Vector2(bx + 0.12, 0.7))  # near foot up, clear of the side
 	await seconds(0.7)
@@ -750,7 +743,7 @@ func _run_climb() -> void:
 	await seconds(0.4)
 	d.set_limb(2, false)
 	await frames(8)
-	var foot_on: bool = c.limbs[2].grab.is_valid()
+	var foot_on: bool = (c.limbs[2].grab_other != null)
 	log.append("near foot stuck: %s at %s" % [foot_on, c.limb_end(2)])
 	await seconds(0.5)
 	var y1 := c.centre_of_mass().y
@@ -914,14 +907,25 @@ func _run_net() -> void:
 	await seconds(1.0)
 	var lag := a0.centre_of_mass().distance_to(b0.centre_of_mass())
 	t("net: the puppet follows the real body (within 25 cm at rest)", lag < 0.25, "%.3f m" % lag)
-	# Grab across machines: the client's hand holds the host climber's puppet.
-	b1.attach(0, b0.bodies["chest"])
-	await seconds(0.5)
-	t("net: the host's climber learns it's held (counts as attached)", a0.remote_grabbed == 1 and a0.is_attached(), a0.remote_grabbed)
-	t("net: the holder's pull arrives on the held climber's machine", not a0.remote_pulls.is_empty(), a0.remote_pulls)
-	b1.release(0)
-	await seconds(0.4)
-	t("net: releasing un-counts it on the other machine", a0.remote_grabbed == 0)
+	# Put the player's left hand against the near side of the remote right hand.
+	b1.release_all()
+	var near_pose := b1.pose()
+	var shift := b0.limb_end(1) + Vector2(0.10, 0) - b1.limb_end(0)
+	for k in range(0, near_pose.size(), 3):
+		near_pose[k] += shift.x
+		near_pose[k + 1] += shift.y
+	b1.apply_pose(near_pose)
+	for l in b1.limbs:
+		l.regrip = 1.2
+	b1.attach(0, b0.bodies["hand_r"])
+	await seconds(0.12)
+	t("net: an owner receives the remote surface contact", a0.remote_grabbed >= 1 and b1.limbs[0].grab_climber == b0, a0.remote_grabbed)
+	t("net: a load arrives for the touched body piece", a0.remote_pulls.values().any(func(v): return v.piece == "hand_r"), a0.remote_pulls)
+	b1.release_all()
+	for l in b1.limbs:
+		l.regrip = 1.2
+	await seconds(0.2)
+	t("net: release clears the remote contact and load", a0.remote_grabbed == 0 and a0.remote_pulls.is_empty())
 	# The client locks in above the line: the host decides, both freeze it the same.
 	await lift_and_lock(B, 1, 0.5, true)
 	await seconds(0.3)
@@ -941,6 +945,9 @@ func _run_net() -> void:
 	for m in machines:
 		m.game.set_physics_process(false)
 		m.game.end_match()
+		t("net: leaving releases the retired climbers' network state",
+			m.game._puppet_buf.is_empty() and m.game._last_seq.is_empty()
+			and m.game._pulls.is_empty() and m.game._pending_freeze.is_empty())
 	host_peer.close()
 	client_peer.close()
 	spectator_peer.close()
@@ -1031,7 +1038,7 @@ func _run_feel() -> void:
 	var d: Drivers.ScriptDriver = c.driver
 	await seconds(1.0)
 	var head := c.piece_top("head")
-	t("feel: you spawn standing, both feet stuck", head > 1.5 and c.limbs[2].grab.is_valid() and c.limbs[3].grab.is_valid(), "head top %.2f" % head)
+	t("feel: you spawn standing, both feet stuck", head > 1.5 and (c.limbs[2].grab_other != null) and (c.limbs[3].grab_other != null), "head top %.2f" % head)
 	# 1. Hold the left hand with the cursor up and out to the side, within reach.
 	var S := c.limb_root(0)
 	var reach: float = c.limbs[0].l1 + c.limbs[0].l2
@@ -1046,14 +1053,14 @@ func _run_feel() -> void:
 	t("feel: power, not speed: a held hand never outruns drag_max_speed", peak < Feel.get_k("drag_max_speed") + 1.0, "peak %.2f m/s" % peak)
 	var miss := c.limb_end(0).distance_to(goal)
 	t("feel: a held hand jumps to the cursor (within 12 cm in 0.6 s)", miss < 0.12, "%.3f m off" % miss)
-	t("feel: the feet stay stuck while you reach", c.limbs[2].grab.is_valid() and c.limbs[3].grab.is_valid())
+	t("feel: the feet stay stuck while you reach", (c.limbs[2].grab_other != null) and (c.limbs[3].grab_other != null))
 	# 2. Out of reach: the body leans after the hand, the feet hold, nothing flies.
 	var com0 := c.centre_of_mass()
 	d.point_limb(0, true, S + Vector2(-2.5, 1.5))
 	await seconds(1.0)
 	var lean := com0.x - c.centre_of_mass().x
 	t("feel: out of reach, the body leans after the hand (COM 10 cm or more toward it)", lean > 0.10, "%.2f m" % lean)
-	t("feel: out of reach, the feet still hold (no flying)", c.limbs[2].grab.is_valid() and c.limbs[3].grab.is_valid())
+	t("feel: out of reach, the feet still hold (no flying)", (c.limbs[2].grab_other != null) and (c.limbs[3].grab_other != null))
 	# 3. Let go.
 	d.set_limb(0, false)
 	await seconds(1.0)
@@ -1075,8 +1082,8 @@ func _run_feel() -> void:
 	var fgoal := H + Vector2(-0.6, -0.35)
 	d.point_limb(2, true, fgoal)
 	await seconds(0.8)
-	t("feel: a held foot lifts off and follows the cursor (within 20 cm)", c.limb_end(2).distance_to(fgoal) < 0.20 and not c.limbs[2].grab.is_valid(), "%.3f m off" % c.limb_end(2).distance_to(fgoal))
-	t("feel: the other foot stays stuck", c.limbs[3].grab.is_valid())
+	t("feel: a held foot lifts off and follows the cursor (within 20 cm)", c.limb_end(2).distance_to(fgoal) < 0.20 and not (c.limbs[2].grab_other != null), "%.3f m off" % c.limb_end(2).distance_to(fgoal))
+	t("feel: the other foot stays stuck", (c.limbs[3].grab_other != null))
 	var lo := INF
 	var hi := -INF
 	for k in 120:
@@ -1333,6 +1340,10 @@ func _run_floor() -> void:
 			if c.limbs[3].driving or c._drag_total > 0.001:
 				powered_ticks += 1
 	t("floor: B cannot propel a body resting on the deck without a grip", supported_ticks > 0 and powered_ticks == 0, "%d powered ticks out of %d supported" % [powered_ticks, supported_ticks])
+	for tick in 120:
+		if c.stuck_count() > 0:
+			break
+		await frames(1)
 	t("floor: an inactive extremity settles into a grip on the deck", c.stuck_count() > 0)
 
 
@@ -1506,7 +1517,7 @@ func _run_chair() -> void:
 	t("practice: chair and upright partner spawn outside the scoring roster", g.chair != null and npc != null and g.live.size() == 1 and npc.piece_top("head") > 1.40, npc.piece_top("head"))
 	var d: Drivers.ScriptDriver = c.driver
 	c.attach(0, npc.bodies["chest"])
-	t("practice: partner can be grappled", c.limbs[0].grab.is_valid())
+	t("practice: partner can be grappled", (c.limbs[0].grab_other != null))
 	c.release_all()
 	t("chair: pickup floats over the center line", g.chair.in_bubble and g.chair.freeze and is_zero_approx(g.chair.position.x) and g.chair.position.y > g.line)
 	var setup_pose := c.pose()
@@ -1603,25 +1614,38 @@ func _run_wrestling() -> void:
 	for i in 5:
 		c._incoming_pull = c.total_mass * 9.8 * 0.5
 		c._physics_process(0.01)
-	t("wrestling: a light tug preserves a tower grip", c.limbs[2].grab.is_valid())
+	t("wrestling: a light tug preserves a tower grip", (c.limbs[2].grab_other != null))
 	for i in 12:
 		c._incoming_pull = c.total_mass * 9.8 * 3.0
 		c._physics_process(0.01)
-	t("wrestling: a sustained hard pull peels the live grip", not c.limbs[2].grab.is_valid() and c.limbs[2].regrip > 0)
-	var attacker := spawn(Vector2(0.6,0.05))
-	attacker.attach(2,floor_body)
-	var drive: Drivers.ScriptDriver = attacker.driver
-	drive.set_limb(0,true,Vector2.LEFT)
-	attacker._select_active_limb()
-	attacker._tick_limb(0,0.01)
-	attacker.attach(0,c.bodies["chest"])
-	c.attach(2,ground.bodies["chest"])
-	for i in 60:
-		attacker._physics_process(0.01)
-		c._physics_process(0.01)
-		if not c.limbs[2].grab.is_valid():
+	t("wrestling: a sustained hard pull peels the live grip", not (c.limbs[2].grab_other != null) and c.limbs[2].regrip > 0)
+	var attacker := spawn(Vector2(0.6, 0.05))
+	attacker.attach(2, floor_body)
+	var end: RigidBody3D = attacker.bodies["hand_l"]
+	var target: RigidBody3D = c.bodies["chest"]
+	attacker.attach(0, target)
+	var original := target.global_position
+	target.global_position.x += 0.035
+	attacker._tick_live_contact(0, 1.0 / 120)
+	t("player contact: a modest tug transfers force and holds", attacker.limbs[0].grab_climber == c and attacker.limbs[0].contact_force.x < -1.0)
+	# Load the connection enough to peel the target from its footing while
+	# the live contact remains intact. Hold the displacement fixed for this load test.
+	c.attach(2, ground.bodies["chest"])
+	var pull_per_metre := (attacker.limbs[0].contact_force as Vector3).length() / 0.035
+	target.global_position = original + Vector3.RIGHT * (1.4 * c.total_mass * 9.8 / pull_per_metre)
+	for tick in 100:
+		if c.limbs[2].grab_other == null or attacker.limbs[0].grab_other == null:
 			break
-	t("wrestling: steering a grapple breaks a rival's planted grip", not c.limbs[2].grab.is_valid() and attacker.wrestling_force.length() > 0)
+		attacker._tick_live_contact(0, 1.0 / 120)
+		c._physics_process(1.0 / 120)
+	t("player contact: a sustained shove can peel the opponent off their footing", c.limbs[2].grab_other == null and attacker.limbs[0].grab_climber == c, "foot free %s, contact load %.1f N" % [c.limbs[2].grab_other == null, attacker.limbs[0].contact_force.length()])
+	target.global_position = original + Vector3.RIGHT * 0.27
+	for tick in 24:
+		if attacker.limbs[0].grab_other == null:
+			break
+		attacker._tick_live_contact(0, 1.0 / 120)
+	t("player contact: continued tension peels only the loaded live contact", attacker.limbs[0].grab_other == null and attacker.limbs[0].regrip > 0 and attacker.limbs[2].grab_other == floor_body)
+	target.global_position = original
 	attacker.release_all()
 	c.attach(2,floor_body)
 	c.knock_out()
@@ -1775,3 +1799,128 @@ func _run_ring() -> void:
 		t("ring: the respawn stands in the ring", absf(nc.centre_of_mass().x) < g.stage.ring_half(), "x %.2f" % nc.centre_of_mass().x)
 	g.end_match()
 	g.queue_free()
+
+
+func _run_roundchair() -> void:
+	for mode_id in ["tower", "scramble"]:
+		var g := make_game(mode_id, 2, 30.0, "plaza")
+		var active_phase := "turn" if mode_id == "tower" else "round"
+		if not await wait_phase(g, active_phase, 5.0):
+			t("opening phase starts", false, mode_id)
+			return
+		var generation := g.chair_generation
+		var c: Climber = g.climbers[g.live[0]]
+		c.set_glyphs([{"text": "X"}])
+		t("live climber displays its glyph", c._glyphs[0].visible)
+		g._rpc_chair_broke(g.chair.global_transform, Vector3.RIGHT, Sound.SFX["chair_break"][0])
+		await lift_and_lock(g, 0)
+		c.set_glyphs_visible(true)
+		t("locked climber has no glyphs after visibility refresh", c._glyphs.is_empty())
+		if mode_id == "scramble":
+			t("first lock does not replenish the chair mid-round", g.chair == null)
+			await lift_and_lock(g, 1)
+		await wait_phase(g, active_phase, 5.0)
+		t("next play restores a fresh chair", g.chair != null and g.chair_generation == generation + 1, mode_id)
+		if g.chair != null:
+			t("bubble floats over the frozen tower", g.chair.in_bubble and g.chair.hit_count == 0 and is_equal_approx(g.chair.position.y, g.tower_top() + g.chair.PICKUP_HEIGHT))
+			g._rpc_chair_pose(generation, -1, -1, Vector3.ZERO, Transform3D.IDENTITY, 10, false)
+			t("late chair pose cannot damage the new chair", g.chair.in_bubble and g.chair.hit_count == 0)
+		g.end_match()
+		g.queue_free()
+		await frames(2)
+
+
+func _run_teamtoss() -> void:
+	var base := spawn(Vector2(0, 7))
+	base.attach(0, bar_at(base.limb_end(0)))
+	var partner := spawn(Vector2(0, 5))
+	var pose := partner.pose()
+	# One hand on the anchor player's foot, the rest of the partner below it.
+	for k in range(0, pose.size(), 3):
+		var local := (Vector2(pose[k], pose[k + 1]) - partner.limb_end(0)).rotated(PI)
+		var p := base.limb_end(3) + local + Vector2(0.07, -0.02)
+		pose[k] = p.x
+		pose[k + 1] = p.y
+		pose[k + 2] += PI
+	partner.apply_pose(pose)
+	for l in partner.limbs:
+		l.regrip = 3.0
+	for l in base.limbs:
+		l.regrip = 3.0
+	partner.attach(0, base.bodies["foot_r"])
+	var drive: Drivers.ScriptDriver = base.driver
+	var release_speed := -INF
+	drive.set_limb(3, true, Vector2(0, 1))
+	for tick in 150:
+		await frames(1)
+		if partner.limbs[0].grab_other == null:
+			break
+		release_speed = 0
+		for body: RigidBody3D in partner.bodies.values():
+			release_speed += body.linear_velocity.y * body.mass / partner.total_mass
+		if release_speed > 0.6:
+			break
+	var connected: bool = partner.limbs[0].grab_other == base.bodies["foot_r"]
+	(partner.driver as Drivers.ScriptDriver).set_limb(0, true)
+	await frames(2)
+	var launch := partner.centre_of_mass().y
+	var peak := launch
+	for tick in 60:
+		await frames(1)
+		peak = maxf(peak, partner.centre_of_mass().y)
+	t("team toss: a planted teammate gains lift and coasts after button release", connected and release_speed > 0.5 and peak > launch + 0.035, "upward %.2f m/s, free rise %.2f m" % [release_speed, peak - launch])
+
+
+func _run_spawnspacing() -> void:
+	for side in ["left", "right", "random", "alternate"]:
+		var g := make_game("scramble", 8, 60, "plaza")
+		g.settings.spawn = side
+		await wait_phase(g, "round")
+		var occupied := []
+		var clear := true
+		for c: Climber in g.live_climbers():
+			for feet: Vector2 in occupied:
+				clear = clear and c.spawn_at.distance_to(feet) >= 1.0
+			occupied.append(c.spawn_at)
+		t("spawn: eight simultaneous entrants have separate positions", clear and occupied.size() == 8, side)
+		# Respawn one entrant while another is standing on the preferred spawn.
+		g.settings.spawn = "right"
+		var blocker: Climber = g.climbers[g.live[0]]
+		var p := blocker.pose()
+		var slide := g.stage.spawn_point(1).x - blocker.spawn_at.x
+		for k in range(0, p.size(), 3):
+			p[k] += slide
+		blocker.apply_pose(p)
+		g._spawn(1)
+		var respawn: Climber = g.climbers[g.live[1]]
+		t("spawn: a respawn avoids another player's current pose", respawn.spawn_at.distance_to(g.stage.spawn_point(1)) >= 1.0, respawn.spawn_at)
+		g.end_match()
+		g.queue_free()
+		await frames(2)
+
+
+func _run_practicespacing() -> void:
+	var g := make_game("practice", 1, 60, "plaza")
+	await wait_phase(g, "turn")
+	var player: Climber = g.climbers[g.live[0]]
+	var shape := player.pose()
+	var delta_x := 3.2 - player.spawn_at.x
+	for k in range(0, shape.size(), 3):
+		shape[k] += delta_x
+	player.apply_pose(shape)
+	g._spawn_partner()
+	t("spawn: practice partner avoids the current player", not g.partner.pose_bounds(g.partner.pose()).intersects(player.pose_bounds(player.pose())))
+	# A previous turn's frozen climber still occupies the preferred spawn position.
+	shape = player.pose()
+	for k in range(0, shape.size(), 3):
+		shape[k] += 5.5 - 3.2
+	player.apply_pose(shape)
+	player.freeze()
+	g.tower.append(player.climber_id)
+	g.settings.spawn = "right"
+	g._spawn(0)
+	var next: Climber = g.climbers[g.live[0]]
+	t("spawn: next turn clears the frozen player too", not next.pose_bounds(next.pose()).intersects(player.pose_bounds(player.pose())))
+	g.end_match()
+	g.queue_free()
+	await frames(2)

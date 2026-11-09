@@ -363,6 +363,7 @@ static func papel_flag(c: Color, which := 0) -> Node3D:
 		var f := k.find_child(nm, true, false) as Node3D
 		if f != null:
 			var holder := Node3D.new()
+			f.owner = null
 			f.get_parent().remove_child(f)
 			holder.add_child(f)
 			f.position = Vector3.ZERO

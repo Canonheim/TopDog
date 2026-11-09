@@ -320,9 +320,7 @@ func _fill_lobby() -> void:
 			Net.set_ready(not bool(Net.members.get(Net.me(), {}).get("ready", false))))
 	m.add_choice_button("SAY", Net.CHAT_PRESETS.map(func(t): return str(t).to_upper()), 0, func(i): Net.send_chat(Net.CHAT_PRESETS[i]))
 	m.add_button("INVITE FRIENDS", func(): Net.invite_friends())
-	m.add_button("LEAVE", func():
-		Net.leave()
-		main._to_title(""))
+	m.add_button("LEAVE", main._leave_lobby)
 	m.refresh()
 	m.focus = clampi(keep, 0, m.items.size() - 1)
 	_fill_cards()
