@@ -34,7 +34,7 @@ const FartVoice := preload("res://audio/fart_voice.gd")
 const ClimberScript := preload("res://climber/climber.gd")
 const Drivers := preload("res://climber/drivers.gd")
 const Layout := preload("res://climber/body_layout.gd")
-const KNIGHT := preload("res://models/skeleton_knight.glb")  # the default climber (Parker 11-07: the skeleton knight; metal_knight.glb kept)
+const KNIGHT := preload("res://models/defaultio.glb")  # the default 16-piece climber
 
 const LOCK_MARGIN := 0.02  # metres above the line a lock-in must clear
 const STREAM_HZ := 30.0

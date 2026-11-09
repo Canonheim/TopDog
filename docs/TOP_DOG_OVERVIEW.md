@@ -7,7 +7,7 @@ how the 3D models and the look work, read `docs/HOUSE_ATLAS_AND_3D_MODELS.md`.
 ## What it is
 
 A **physics climbing party game**: grab, fling, freeze, and top your pals. Each player controls a ragdoll
-climber (the Skeleton Knight for now) **one limb per button**. You start at a barrel in a wrestling ring in a sunny Mexican
+climber (Defaultio) **one limb per button**. You start at a barrel in a wrestling ring in a sunny Mexican
 plaza and climb. When your turn ends, your body **freezes where it is and becomes part of the tower**, so
 the next climber goes up over you. Lock in above the line before the clock runs out, or you're out.
 The first line sits 0.8 m above the barrel's top (`Stage.FIRST_LINE_ABOVE`; its hanging flags clear the barrel), out of a standing climber's
@@ -151,7 +151,7 @@ The Plaza Ring sits in a plaza shaped like half a football, with the town wrappe
 | `ui3d/menu3d.gd` | 3D belt menus with focus, pad and mouse navigation |
 | `ui3d/lucha_kit.gd` | builds the UI pieces from kit models (by file name), with stand-ins; `text3d`, words out of the ink |
 | `kit/models/` | the UI and plaza models from the Top Dog Kit (synced by `tools/sync_kit.py`) |
-| `models/` | `skeleton_knight.glb` (the default climber), `metal_knight.glb` (kept), both 16 named pieces, and `barrel.glb` |
+| `models/` | `defaultio.glb` (the default climber), `skeleton_knight.glb` and `metal_knight.glb` (alternate 16-piece models), and `barrel.glb` |
 | `palette/`, `shaders/cel/`, `scripts/cel_pass.gd` | the house look: colour atlas, cel shader, ink outline |
 | `fonts/luckiest_guy/` | the title font (Apache 2.0) |
 | `audio/` | music and SFX |
@@ -281,7 +281,7 @@ title screen's corner ("BUILD x.y.z").
   loading.
 - **Bumping across machines is one-way:** only grabs send force.
 - **No spectating mid-match.** Late joiners are refused.
-- **The climbers:** the Skeleton Knight is the default. Muscular luchadors in animal masks are coming from another
+- **The climbers:** Defaultio is the default. Muscular luchadors in animal masks are coming from another
   artist, as skins on the 16-piece contract; players will pick their own skins then. Until then everyone looks
   the same: there's no colour wash, and the player colour is only on name tags and cards.
 - **A full feel pass** after playtests. Every number is on F1 and in `data/feel.gd`.

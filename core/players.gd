@@ -127,7 +127,7 @@ func add_player(device: int, pname := "") -> int:
 	if slots.size() >= MAX_LOCAL or slot_of_device(device) != -1:
 		return -1
 	var s := slots.size()
-	slots.append({"device": device, "name": pname if pname != "" else NameGen.make(), "random": pname == "", "skin": "skeleton_knight", "tint": NameGen.tint(s)})
+	slots.append({"device": device, "name": pname if pname != "" else NameGen.make(), "random": pname == "", "skin": "defaultio", "tint": NameGen.tint(s)})
 	joined.emit(s)
 	return s
 
