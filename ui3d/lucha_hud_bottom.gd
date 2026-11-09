@@ -5,10 +5,12 @@ extends Node3D
 ## the longest names. Also have a height counter down there ... built like an old
 ## Odometer with the rotating wheels with the numbers on them."
 ##
-## nameplate  the climbing climber's name on the kit's hud_nameplate (its
-##            nameplate_face), fitted for 33 letters; in Scramble your own climber,
-##            else "ROUND N". Its nameplate_lockin tab says LOCK IN! when your
-##            climber is above the line.
+## nameplate  on the kit's hud_nameplate (its nameplate_face), fitted for 33
+##            letters: THE NAME CYCLE (Parker 11-09) turns every NAME_CYCLE_S
+##            through the climber's name, the round and its player's Steam name
+##            (the climbing climber in turns modes, your own in Classic). Its
+##            nameplate_lockin tab says LOCK IN! when your climber is above the
+##            line, held a moment either way so it never flickers.
 ## odometer   your climber's top height, 00.00 to 99.99 m, on the kit's
 ##            hud_odometer: four drums (odo_wheel_*), digits 0-9 round each; the
 ##            right drum turns smoothly and each drum to its left rolls over as the
@@ -30,6 +32,13 @@ const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
 const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
 const LOCK_TEXT := "LOCK IN!"
+const NAME_CYCLE_S := 2.5  # THE NAME CYCLE: each of name / round / Steam name shows this long
+## THE STEADY TAB (Parker 11-09: the lock-in "was flashing oddly"): your climber must be
+## above the line this long before the tab pops, and off it this long before it drops,
+## so a hand flickering on and off a hold at the line doesn't flash it.
+const LOCK_UP_S := 0.12
+const LOCK_DOWN_S := 0.35
+var _lock_hold := 0.0  # how long the raw lock-in state has disagreed with the tab
 const NAME_DROP := 0.09  # of the face height: the name's capitals on the gems' line
 
 var main: Node
@@ -294,15 +303,19 @@ func tick(delta: float) -> void:
 		if cl.owner_peer == me and (mine == null or cl.top_height() > mine.top_height()):
 			mine = cl
 	var who: Climber = climbing if g.mode.get("live", "turns") == "turns" else mine
-	if who != null:
-		set_name_text(who.display_name)
-	elif g.mode.get("live", "turns") == "all":
-		set_name_text("ROUND %d" % g.round_n)
+	set_name_text(name_cycle_text(g, who))
 	var h_src: Climber = who if who != null else mine
 	if h_src != null:
 		set_height(test_height if test_height >= 0.0 else maxf(0.0, h_src.top_height()), delta)
-	var above := mine != null and mine.top_height() > g.line + Game.LOCK_MARGIN and mine.touches_solid()
-	_set_popped(above)
+	var raw := mine != null and mine.top_height() > g.line + Game.LOCK_MARGIN and mine.touches_solid()
+	if raw == popped:
+		_lock_hold = 0.0
+	else:
+		_lock_hold += delta
+		if _lock_hold >= (LOCK_UP_S if raw else LOCK_DOWN_S):
+			_lock_hold = 0.0
+			_set_popped(raw)
+	var above := popped
 	if above and not _toaster:
 		_lock.scale = Vector3.ONE * (1.0 + 0.05 * sin(Time.get_ticks_msec() / 1000.0 * 8.0))
 	if _gems != null and above != _gems_lit:
@@ -310,6 +323,35 @@ func tick(delta: float) -> void:
 		var gm := _gems as MeshInstance3D
 		if gm != null:
 			gm.material_override = CelPass.cel_material(Color("#7CC83A") if above else Color("#D8262E"))
+
+
+## THE NAME CYCLE: the lines the plate turns through for `who` (null: nobody of
+## yours is climbing, so just the round and your Steam name), and the one showing now.
+func name_cycle(g: Game, who: Climber) -> Array:
+	var lines: Array = []
+	var peer: int = who.owner_peer if who != null else g.me()
+	if who != null:
+		lines.append(who.display_name)
+	if not bool(g.mode.get("practice", false)):
+		lines.append("ROUND %d" % maxi(1, g.round_n))
+	var steam := steam_name(peer)
+	if steam != "" and not lines.has(steam):
+		lines.append(steam)
+	return lines
+
+
+func name_cycle_text(g: Game, who: Climber) -> String:
+	var lines := name_cycle(g, who)
+	if lines.is_empty():
+		return ""
+	return str(lines[int(Time.get_ticks_msec() / (NAME_CYCLE_S * 1000.0)) % lines.size()])
+
+
+## A machine's Steam name: the lobby's member list online, this machine's own offline.
+static func steam_name(peer: int) -> String:
+	if Net.members.has(peer):
+		return str(Net.members[peer].get("name", ""))
+	return Net.my_name()
 
 
 ## A mesh's box in another node's space (both may be scaled kit pieces).

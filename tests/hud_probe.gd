@@ -31,7 +31,16 @@ func _ready() -> void:
 	await get_tree().create_timer(2.0).timeout
 	var hb: LuchaHudBottom = main.lucha.hud_bottom
 	_check("the bottom shows in a turn", hb.is_visible_in_tree())
-	_check("the nameplate names the climber in full, never clipped", hb._name_shown == "BARTHOLOMEW THE EXCEEDINGLY LONG-NAMED", hb._name_shown)
+	# THE NAME CYCLE (Parker 11-09): the climber's name, the round, the Steam name.
+	var lines: Array = hb.name_cycle(main.game, main.game.live_climbers()[0])
+	var steam := LuchaHudBottom.steam_name(1)
+	_check("the nameplate cycles the climber's name, the round and the Steam name", lines.size() >= 2 and lines[0] == "Bartholomew the Exceedingly Long-Named" and str(lines[1]).begins_with("ROUND ") and (steam == "" or lines.has(steam)), lines)
+	_check("...and shows one of them in full, never clipped", lines.map(func(x): return str(x).to_upper()).has(hb._name_shown), hb._name_shown)
+	var seen := {}
+	for k in int(LuchaHudBottom.NAME_CYCLE_S * lines.size() * 10.0) + 2:
+		await get_tree().create_timer(0.1).timeout
+		seen[hb._name_shown] = true
+	_check("...turning through every line", seen.size() == lines.size(), seen.keys())
 	_check("the odometer has four drums", hb._drums.size() == 4, hb._drums.size())
 	_check("below the line the toast is down in its slot", not hb.popped and hb._lock.position.y < 0.1, hb._lock.position.y)
 	await _shot("hud_bottom")
@@ -62,11 +71,23 @@ func _ready() -> void:
 	main.world.add_child(rival)
 	player.limbs[0].grab_other = rival
 	player.limbs[0].grab_climber = rival
-	hb.tick(0.0)
+	hb.tick(0.5)
 	_check("holding a live climber hides LOCK IN", not hb.popped)
 	rival.state = Climber.State.FROZEN
-	hb.tick(0.0)
+	hb.tick(0.5)
 	_check("holding the frozen tower shows LOCK IN", hb.popped)
+	# THE STEADY TAB (Parker 11-09: "flashing oddly"): a hold flickering live / frozen
+	# every frame at the line never drops the tab.
+	var flips := 0
+	var was: bool = hb.popped
+	for k in 30:
+		rival.state = Climber.State.LIVE if k % 2 == 0 else Climber.State.FROZEN
+		hb.tick(1.0 / 60.0)
+		if hb.popped != was:
+			flips += 1
+			was = hb.popped
+	_check("a lock-in flickering every frame doesn't flash the tab", flips == 0, "%d flips" % flips)
+	rival.state = Climber.State.FROZEN
 	player.limbs[0].grab_other = null
 	player.limbs[0].grab_climber = null
 	rival.queue_free()
