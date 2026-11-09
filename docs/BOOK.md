@@ -495,6 +495,12 @@ Parker: "make the ground by the church and the street blend better ... the layou
 - **The pots belong to the plant maker** (Parker: "building maker should not have the pots, the pots belong to the one making the plants"). `plant_pot_a/b/c` carry their pot (pot_body + pot_plant, origin at the base), and the houses carry no loose pots, only markers on the slab and parapet tops. Window boxes stay on the houses, with the UI creator's geraniums in them.
 - **Flat paving like vector art** (Parker: "the same height as the grout under them too, should all be flat, so it looks more like vector art and no ink hits the tiles"). Every paved surface (the square, the church front, the streets, the terrace lanes) is now ONE flat surface: stones and joints are coloured areas in a single plane, sharing their edges. Before, each stone floated 4-5 mm over the grout and got its own outline; now the ink draws only the paving's outer edge (env-pass 769e84b).
 
+## The stuck A button online (Parker, 2026-11-09)
+
+Parker: "the A button on my controller is being registered as always held in game, when I am not holding it. Make sure the game can tell when you are NOT holding a button too" (seen online in Scramble).
+- **Cause:** once Steam Input has the controllers, it reads them itself and Godot's own joypad state stops updating. A press that was down when Steam took over (A, from the menus) stays "pressed" in `Input` forever. The ANY slot (online and Practice) read both Steam's devices and those raw pads, so the right hand stayed held.
+- **Fix** (`core/players.gd`): while Steam has controllers (`_steam_live`), raw joypads are not read. That applies to `_action` (the ANY loop and any raw device), `stick`, and `devices()` for joining. Steam's per-frame action state sees releases. PadNav already did this for the menus.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

@@ -167,7 +167,7 @@ func poll_join() -> int:
 
 func devices() -> Array:
 	var out: Array = [KBM]
-	out.append_array(Input.get_connected_joypads())
+	out.append_array(_raw_pads())  # while Steam has the pads, only its devices join
 	out.append_array(steam_devices())
 	out.append_array(fake.keys())
 	return out
@@ -250,7 +250,7 @@ func limb_aim(s: int, climber, limb: int):
 func stick(dev: int) -> Vector2:
 	if dev == ANY:
 		var best := Vector2.ZERO
-		for p in Input.get_connected_joypads() + steam_devices():
+		for p in _raw_pads() + steam_devices():
 			var v := stick(p)
 			if v.length() > best.length():
 				best = v
@@ -259,6 +259,8 @@ func stick(dev: int) -> Vector2:
 		return Net.steam_input.stick(dev) if Net.steam_input != null else Vector2.ZERO
 	if fake.has(dev):
 		return fake[dev].get("stick", Vector2.ZERO)
+	if _steam_live():
+		return Vector2.ZERO  # stale while Steam reads the pad
 	# The LEFT stick steers; the right stick does nothing (Parker 2026-11-07).
 	return Vector2(Input.get_joy_axis(dev, JOY_AXIS_LEFT_X), -Input.get_joy_axis(dev, JOY_AXIS_LEFT_Y))
 
@@ -277,11 +279,26 @@ func _mouse_aim():
 	return {"point": Vector2(hit.x, hit.y)}
 
 
+## THE STALE PAD (Parker 11-09: "the A button on my controller is being registered as
+## always held in game, when I am not holding it"): once Steam Input has the pads, it
+## reads them itself and Godot's own joypad state stops updating. A button that was
+## down when Steam took over stays "pressed" forever in Input. So while Steam has
+## controllers, the raw joypads are not read at all (PadNav does the same): Steam's
+## per-frame action state is the only truth, and it sees releases.
+func _steam_live() -> bool:
+	var si = Net.steam_input if Net.get("steam_input") != null else null
+	return si != null and si.count() > 0
+
+
+func _raw_pads() -> Array:
+	return [] if _steam_live() else Input.get_connected_joypads()
+
+
 func _action(dev: int, action: String) -> bool:
 	if dev == ANY:
 		if _action(KBM, action):
 			return true
-		for p in Input.get_connected_joypads():
+		for p in _raw_pads():
 			if _action(p, action):
 				return true
 		for p in steam_devices():
@@ -292,6 +309,8 @@ func _action(dev: int, action: String) -> bool:
 		return Net.steam_input != null and Net.steam_input.button(dev, action)
 	if fake.has(dev):
 		return fake[dev].get("buttons", {}).get(action, false)
+	if dev != KBM and _steam_live():
+		return false  # a raw pad's state is stale while Steam reads it (above)
 	var scheme: String = "kbm" if dev == KBM else "pad"
 	for b in binds[scheme].get(action, []):
 		if _bind_down(dev, b):
