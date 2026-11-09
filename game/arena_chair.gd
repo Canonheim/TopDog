@@ -84,6 +84,7 @@ func setup(draw_model: bool, thresholds: Vector2i) -> void:
 		var ink := ShaderMaterial.new()
 		ink.shader = preload("res://shaders/bubble_hull.gdshader")
 		ink.set_shader_parameter("inner_radius", sphere.radius)
+		ink.set_shader_parameter("ink", Color.WHITE)  # white, Parker 11-09
 		hull.material_override = ink
 		hull.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		bubble.add_child(hull)
