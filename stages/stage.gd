@@ -82,21 +82,67 @@ func spawn_point(side: int) -> Vector2:
 func bounce_rope(side: float, speed: float) -> void:
 	if ring_kit == null or not is_instance_valid(ring_kit):
 		return
-	var rope := ring_kit.find_child("ring_ropes_right" if side > 0.0 else "ring_ropes_left", true, false) as Node3D
-	if rope == null:
+	var rope := ring_kit.find_child("ring_ropes_right" if side > 0.0 else "ring_ropes_left", true, false) as MeshInstance3D
+	if rope == null or rope.mesh == null:
 		return
-	if not rope.has_meta("rest_x"):
-		rope.set_meta("rest_x", rope.position.x)
-	var rest: float = rope.get_meta("rest_x")
+	# THE FLEX (Parker 11-08: "the middle needs to flex but the sides connected to
+	# the posts should stay connected to the posts"): the rope's own mesh bends on a
+	# sine along its length, zero at both posts, most in the middle. The rest mesh
+	# is kept; the bent one is rebuilt each frame of the spring only.
+	if not rope.has_meta("rest_mesh"):
+		rope.set_meta("rest_mesh", rope.mesh)
+		var mats: Array = []
+		for si in rope.mesh.get_surface_count():
+			mats.append(rope.get_surface_override_material(si))
+		rope.set_meta("rest_mats", mats)
 	var push := clampf(speed * 0.06, 0.08, 0.4)
 	if rope.has_meta("tween"):
 		var old: Tween = rope.get_meta("tween")
 		if old != null and old.is_valid():
 			old.kill()
+	var flex := func(a: float) -> void: _flex_rope(rope, side * a)
 	var tw := rope.create_tween()
-	tw.tween_property(rope, "position:x", rest + side * push, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.tween_property(rope, "position:x", rest, 0.7).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw.tween_method(flex, 0.0, push, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_method(flex, push, 0.0, 0.7).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	tw.tween_callback(func() -> void: _rest_rope(rope))
 	rope.set_meta("tween", tw)
+
+
+## Bend a side rope's mesh out by `dx` at its middle (sine along local z, the
+## rope's length, so its ends at the posts don't move).
+func _flex_rope(rope: MeshInstance3D, dx: float) -> void:
+	var rest: Mesh = rope.get_meta("rest_mesh")
+	var bb := rest.get_aabb()
+	var z0 := bb.position.z
+	var span := maxf(bb.size.z, 0.001)
+	var bent := ArrayMesh.new()
+	for si in rest.get_surface_count():
+		var arrays := rest.surface_get_arrays(si)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var out := PackedVector3Array()
+		out.resize(verts.size())
+		for k in verts.size():
+			var v := verts[k]
+			v.x += dx * sin(PI * clampf((v.z - z0) / span, 0.0, 1.0))
+			out[k] = v
+		arrays[Mesh.ARRAY_VERTEX] = out
+		bent.add_surface_from_arrays(rest.surface_get_primitive_type(si), arrays)
+		bent.surface_set_material(si, rest.surface_get_material(si))
+	rope.mesh = bent
+	_rope_mats(rope)
+
+
+func _rest_rope(rope: MeshInstance3D) -> void:
+	if is_instance_valid(rope) and rope.has_meta("rest_mesh"):
+		rope.mesh = rope.get_meta("rest_mesh")
+		_rope_mats(rope)
+
+
+func _rope_mats(rope: MeshInstance3D) -> void:
+	var mats: Array = rope.get_meta("rest_mats", [])
+	for si in mini(mats.size(), rope.mesh.get_surface_count()):
+		if mats[si] != null:
+			rope.set_surface_override_material(si, mats[si])
 
 
 ## The ring's half-width (the side ropes stand at +-this).

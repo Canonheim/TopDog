@@ -19,6 +19,8 @@ extends Node3D
 
 const MENU_DIST := 6.0  # in front of the ring's apron at every camera distance
 const PAUSE_DIST := 1.2  # the pause menu, nearer than anything in the world
+const LINE_HALF_W := 12.0  # the line's flag string spans the ring and the tower
+const LINE_Z := -0.8  # behind the play plane (the line node sits at z 0.35)
 const BANNER_Y := 2.55  # the turn / announcement banner, high on the HUD (its flags reach the top)
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
 const OWNED := ["title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat"]
@@ -31,6 +33,7 @@ var menus := {}  # id -> Menu3D
 var current := ""
 var _clouds: Array = []
 var _flags: Array = []
+var _line_poles: Array = []  # the two growing poles holding up the line's flag string
 var _bell: Node3D  # the ring bell beside the clock (the kit's bell)
 var _bell_t := -1.0  # seconds since it was struck; < 0 = still
 var _pinata: Node3D  # the pinata over the plaza (the kit's pinata)
@@ -735,20 +738,40 @@ func _build_hud() -> void:
 
 
 ## The height line becomes a red ring rope with knotted ends.
+## THE LINE IS A STRING OF FLAGS (Parker 11-08: "get rid of the big red and yellow
+## line height indicator. Make the line a string of flags"): papel picado across
+## the ring at the line's height, riding the line node up and down, hung just behind
+## the play plane so the flags don't cover the climbers. No bar, no LINE label.
 func _restyle_line() -> void:
 	var bar: MeshInstance3D = main.line_bar
-	var cm := CylinderMesh.new()
-	cm.top_radius = 0.045
-	cm.bottom_radius = 0.045
-	cm.height = 30.0
-	cm.radial_segments = 12
-	bar.mesh = cm
-	bar.rotation = Vector3(0, 0, PI * 0.5)
-	bar.material_override = CelPass.cel_material(LuchaKit.RED)
-	var lbl: Label3D = main.line_label
-	lbl.modulate = LuchaKit.GOLD
-	lbl.outline_modulate = LuchaKit.RED
-	lbl.outline_size = 18
+	bar.mesh = null
+	bar.material_override = null
+	var string := LuchaKit.bunting(Vector3(-LINE_HALF_W, 0.0, LINE_Z), Vector3(LINE_HALF_W, 0.0, LINE_Z), int(LINE_HALF_W * 2.0 / 0.55), 0.12)
+	string.name = "LineFlags"
+	bar.add_child(string)
+	for f in string.find_children("*", "Node3D", true, false):
+		if f.has_meta("sway"):
+			_flags.append(f)
+	(main.line_label as Label3D).visible = false
+	# THE LINE POLES (Parker 11-08: "long decorative poles on either side of the
+	# ring holding up the line and those poles constantly grow as the line moves
+	# up"): a pole at each end of the string, standing on the plaza, its shaft
+	# stretched every frame to the line's height (_tick_line_poles).
+	for sx in [-1.0, 1.0]:
+		var pole := Node3D.new()
+		pole.position = Vector3(sx * LINE_HALF_W, Stage.PLAZA_GROUND, bar.position.z + LINE_Z)
+		var shaft := LuchaKit.cyl(0.11, 1.0, POLE_WOOD, Vector3(0, 0.5, 0))
+		shaft.name = "shaft"
+		var stripes := Node3D.new()  # gold bands every metre, added as the pole grows
+		stripes.name = "bands"
+		var cap := LuchaKit.ball(0.2, LuchaKit.GOLD, Vector3.ZERO)
+		cap.name = "cap"
+		pole.add_child(LuchaKit.cyl(0.26, 0.35, Color("#9EA6A6"), Vector3(0, 0.175, 0)))  # the stone foot
+		pole.add_child(shaft)
+		pole.add_child(stripes)
+		pole.add_child(cap)
+		main.world.add_child(pole)
+		_line_poles.append(pole)
 
 
 func _on_announce(text: String, big: bool) -> void:
@@ -832,6 +855,7 @@ func _process(delta: float) -> void:
 		n.position.x += float(n.get_meta("speed")) * delta
 		if n.position.x > 80.0:
 			n.position.x = -80.0
+	_tick_line_poles()
 	for f in _flags:
 		var n: Node3D = f
 		# Swing about the string only (the hanger's local x): no sideways rock.
@@ -1001,3 +1025,29 @@ func _festive_tick(delta: float, t: float) -> void:
 			_bell_t = -1.0
 	if _pinata != null:
 		_pinata.rotation.z = deg_to_rad(6.0) * sin(t * TAU / 3.0)
+
+
+## The line poles reach the line's height (from the plaza), carry a gold band every
+## metre of their height, and hide with the line between matches.
+func _tick_line_poles() -> void:
+	if _line_poles.is_empty():
+		return
+	var bar: MeshInstance3D = main.line_bar
+	var top: float = bar.position.y + 0.05
+	for p in _line_poles:
+		var pole: Node3D = p
+		pole.visible = bar.visible
+		if not pole.visible:
+			continue
+		var h := maxf(top - pole.position.y, 0.5)
+		var shaft := pole.get_node("shaft") as Node3D
+		shaft.scale = Vector3(1.0, h, 1.0)
+		shaft.position.y = h * 0.5
+		(pole.get_node("cap") as Node3D).position.y = h + 0.14
+		var bands := pole.get_node("bands") as Node3D
+		var want := int(h)  # one band per whole metre
+		while bands.get_child_count() < want:
+			var k := bands.get_child_count() + 1
+			bands.add_child(LuchaKit.cyl(0.125, 0.12, LuchaKit.GOLD, Vector3(0, float(k), 0)))
+		for i in bands.get_child_count():
+			(bands.get_child(i) as Node3D).visible = i < want
