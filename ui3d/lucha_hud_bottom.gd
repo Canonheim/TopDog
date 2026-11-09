@@ -18,10 +18,19 @@ extends Node3D
 const DIGIT_STEP := TAU / 10.0
 const PLATE_AT := Vector3(-1.4, -2.8, 0.0)  # HUD units (x UI_SCALE on screen)
 const ODO_AT := Vector3(4.55, -2.8, 0.0)
+## THE CORNERS (Parker 11-08: "the new name plate in the bottom left of the screen
+## and the new odometer height thing in the bottom right"): each frame the plate's
+## left edge and the odometer's right edge sit CORNER_MARGIN in from the screen's
+## edges, at any aspect. HUD_HALF_H: the HUD's visible half-height in HUD units.
+const HUD_HALF_H := 3.8
+const CORNER_MARGIN := 0.35
+const PLATE_HALF_W := 2.96 * 0.5 * KIT_SCALE  # the kit plate's half-width in HUD units
+const ODO_HALF_W := 1.9 * 0.5 * ODO_SCALE
 const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
 const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
 const LOCK_TEXT := "LOCK IN! A/SPACE"
+const NAME_DROP := 0.09  # of the face height: the name's capitals on the gems' line
 
 var main: Node
 var _plate: Node3D
@@ -83,7 +92,9 @@ func _build_plate() -> void:
 		_face_h = box.size.y
 		_face_c = box.get_center() + Vector3(0, 0, box.size.z * 0.5 + 0.012)
 	_name_node = Node3D.new()
-	_name_node.position = _face_c
+	# A Label3D centres its whole line box (descender room included), so capitals
+	# sit high: drop the name a little so it lines up with the end gems (Parker 11-08).
+	_name_node.position = _face_c - Vector3(0, _face_h * NAME_DROP, 0)
 	_plate.add_child(_name_node)
 	# The LOCK IN tab above the plate's left end: the climber's foot glyphs draw
 	# over the middle of the screen. The kit's tab sits on the kit plate's top
@@ -272,6 +283,7 @@ func tick(delta: float) -> void:
 	visible = g.phase in ["turn", "round", "between"]
 	if not visible:
 		return
+	_to_corners()
 	var me := g.me()
 	var mine: Climber = null
 	var climbing: Climber = null
@@ -316,3 +328,50 @@ static func _rel(n: Node3D, space: Node3D) -> Transform3D:
 			xf = (p as Node3D).transform * xf
 		p = p.get_parent()
 	return xf
+
+
+func _to_corners() -> void:
+	var vp := get_viewport()
+	if vp == null:
+		return
+	var size := vp.get_visible_rect().size
+	var half_w := HUD_HALF_H * size.x / maxf(size.y, 1.0)
+	if _plate != null:
+		_plate.position.x = -half_w + CORNER_MARGIN + PLATE_HALF_W
+	if _odo != null:
+		_odo.position.x = half_w - CORNER_MARGIN - ODO_HALF_W
+	# The plate's bottom on the odometer's bottom AS THE CAMERA SEES THEM (Parker
+	# 11-08). The odometer is a deep box, so its front edge is nearer the lens and
+	# reads lower: match the two front-bottom edges' screen heights, not model y.
+	if _plate != null and _odo != null and main != null and main.cam != null:
+		var cam: Camera3D = main.cam
+		var inv := cam.global_transform.affine_inverse()
+		var ob := _bottom_front(_odo)
+		var o := inv * (_odo.global_transform * Vector3(0.0, ob.x, ob.y))
+		var pb := _bottom_front(_plate)
+		var pp := inv * (_plate.global_transform * Vector3(0.0, pb.x, pb.y))
+		if o.z < -0.01 and pp.z < -0.01:
+			var target_y := o.y / -o.z * -pp.z  # the plate edge's cam-space y on the odometer's screen line
+			var parent_scale := (_plate.get_parent() as Node3D).global_transform.basis.get_scale().y if _plate.get_parent() is Node3D else 1.0
+			_plate.position.y += (target_y - pp.y) / maxf(parent_scale, 0.0001)
+
+
+## The bottom-front edge of a model's meshes, local to it (before its own
+## transform): Vector2(lowest y, front z).
+static func _bottom_front(root: Node3D) -> Vector2:
+	var low := INF
+	var front := -INF
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		if m.mesh == null or not m.visible:
+			continue
+		var xf := Transform3D.IDENTITY
+		var cur: Node = m
+		while cur != null and cur != root:
+			if cur is Node3D:
+				xf = (cur as Node3D).transform * xf
+			cur = cur.get_parent()
+		var bb: AABB = xf * m.mesh.get_aabb()
+		low = minf(low, bb.position.y)
+		front = maxf(front, bb.end.z)
+	return Vector2(low if low < INF else 0.0, front if front > -INF else 0.0)

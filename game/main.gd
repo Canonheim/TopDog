@@ -387,7 +387,7 @@ func _tick_tags() -> void:
 			continue
 		var head: RigidBody3D = c.bodies["head"]
 		tag.global_position = head.global_position + Vector3(0, 0.38, 0.3)
-		tag.visible = c.state != Climber.State.FROZEN and screen != "pause"
+		tag.visible = false  # no name over the head (Parker 11-08): the nameplate and the banner carry it
 		c.set_glyphs_visible(screen != "pause")  # nothing over the pause menu
 
 

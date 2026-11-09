@@ -99,10 +99,11 @@ Paused, the menu rides 1.2 m from the lens, so nothing in the world covers it, a
 
 ### The HUD bottom
 
-- **The nameplate** shows the climbing climber's name; long names shrink to fit.
-- **The odometer** shows your height on rolling drums: 00.00 to 99.99 m, then whole metres 0100 to 9999 with the decimal point gone.
+- **The nameplate** (bottom-left corner) shows the climbing climber's name; long names shrink to fit.
+- **The odometer** (bottom-right corner) shows your height on rolling drums: 00.00 to 99.99 m, then whole metres 0100 to 9999 with the decimal point gone.
 - **The LOCK IN tab** pops out of the nameplate like toast when you're above the line, and the nameplate's end gems turn lime.
 - There's no tooltip text in play: the controls live on the Controls screen.
+- Both are pinned to their corners from the screen's width each frame (`LuchaHudBottom._to_corners`), so they hold at any aspect.
 
 ### The ring
 

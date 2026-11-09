@@ -19,6 +19,7 @@ extends Node3D
 
 const MENU_DIST := 6.0  # in front of the ring's apron at every camera distance
 const PAUSE_DIST := 1.2  # the pause menu, nearer than anything in the world
+const BANNER_Y := 2.55  # the turn / announcement banner, high on the HUD (its flags reach the top)
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
 const OWNED := ["title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat"]
 const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
@@ -778,7 +779,8 @@ func _on_announce(text: String, big: bool) -> void:
 	_banner.position = Vector3(0, 4.5, 0.3)
 	_banner.rotation.z = randf_range(-0.12, 0.12)
 	var tw := create_tween()
-	tw.tween_property(_banner, "position", Vector3(0, 0.8, 0.3), 0.4).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	# High on the screen, above the climber's head (Parker 11-08), not across it.
+	tw.tween_property(_banner, "position", Vector3(0, BANNER_Y, 0.3), 0.4).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 	_banner_t = 2.4 if big else 1.8
 
 
