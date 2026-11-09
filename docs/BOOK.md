@@ -442,6 +442,14 @@ Parker: "Dan took out grabbing people. Put it back in ... the practice partner i
 - **The odometer past 100 m** (Parker: "the '.' drop[s] and the meter counter keep[s] going at 100"). `drum_values` reads whole metres from 100 m (0100-9999) and `odo_point`, the kit's decimal point split out, hides. The UI creator evened the drum gaps so four digits read evenly. `hud_probe` checks 150 m and 1234 m.
 - **Mountains m6:** deeper blue-grey on the far pair (the sun washed them near-white) and b's dotted ink line gone.
 
+## The line as flags on growing poles, ropes that bend, the kit banner (Parker, 2026-11-08)
+
+- **The line is a string of flags** (Parker: "get rid of the big red and yellow line height indicator. Make the line a string of flags"). `LuchaUI._restyle_line` drops the red bar's mesh and hides the LINE label, then hangs papel picado across ±12 m at the line's height, just behind the play plane (`LINE_Z`), waving with the plaza flags.
+- **The line poles** (Parker: "long decorative poles on either side of the ring holding up the line and those poles constantly grow as the line moves up"). `_tick_line_poles`: a wooden pole at each end of the string on the plaza, its shaft stretched every frame to the line, with a gold band for each whole metre and a gold cap.
+- **The first line starts higher** (Parker: "start just a little higher so the flags clear the barrel"): `Stage.FIRST_LINE_ABOVE` 0.45 → 0.8 m, so the line is at 2.82 m.
+- **The ropes bend** (Parker: "the middle needs to flex but the sides connected to the posts should stay connected to the posts"). `Stage.bounce_rope` rebuilds the side rope's mesh each frame of the spring, bent on a sine along its length (zero at both posts); the rest mesh comes back after. `--ring` checks a 0.22 m bow and the return.
+- **The kit banner** (the UI creator's `hud_banner` / `hud_banner_note`, wired by the Second Director): it slams in at the top centre, and the clock and bell wait above the frame until it leaves (Parker's call). No name tags over heads.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

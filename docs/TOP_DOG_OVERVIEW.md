@@ -10,7 +10,7 @@ A **physics climbing party game**: grab, fling, freeze, and top your pals. Each 
 climber (the Skeleton Knight for now) **one limb per button**. You start at a barrel in a wrestling ring in a sunny Mexican
 plaza and climb. When your turn ends, your body **freezes where it is and becomes part of the tower**, so
 the next climber goes up over you. Lock in above the line before the clock runs out, or you're out.
-The first line sits 0.45 m above the barrel's top (`Stage.FIRST_LINE_ABOVE`), out of a standing climber's
+The first line sits 0.8 m above the barrel's top (`Stage.FIRST_LINE_ABOVE`; its hanging flags clear the barrel), out of a standing climber's
 reach.
 
 It's Parker's spiritual successor to a classic limb-per-button climbing party game. **Never name that game

@@ -638,7 +638,7 @@ func _run_groundlock() -> void:
 
 func _run_tower() -> void:
 	var g := make_game("tower", 3, 3.0)
-	t("tower: the first line is out of a standing reach (barrel top + 0.45)", absf(g.line - (g.stage.barrel_top + Stage.FIRST_LINE_ABOVE)) < 0.001 and g.tower_top() >= g.line - 0.001, "line %.2f, barrel %.2f" % [g.line, g.stage.barrel_top])
+	t("tower: the first line is out of a standing reach (barrel top + FIRST_LINE_ABOVE)", absf(g.line - (g.stage.barrel_top + Stage.FIRST_LINE_ABOVE)) < 0.001 and g.tower_top() >= g.line - 0.001, "line %.2f, barrel %.2f" % [g.line, g.stage.barrel_top])
 	var plan := {0: [true, true, true], 1: [true, false], 2: [false]}  # per pid, per turn: lock above?
 	var turns := {0: 0, 1: 0, 2: 0}
 	var line_before := 0.0

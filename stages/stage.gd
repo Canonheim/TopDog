@@ -30,7 +30,7 @@ var ring_kit: Node3D = null  # the kit ring, once dressed (its ropes animate)
 ## THE FIRST LINE: the line before anyone is in the tower sits this far above the
 ## barrel's top, out of a standing climber's reach (Parker 11-07: "I can reach
 ## straight up at spawn and touch it").
-const FIRST_LINE_ABOVE := 0.45
+const FIRST_LINE_ABOVE := 0.8  # was 0.45; raised so the line's hanging flags clear the barrel (Parker 11-08)
 var first_line := 0.0
 var barrel_half := 0.0
 var bodies: Array = []
