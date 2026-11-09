@@ -30,6 +30,7 @@ const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
 const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
 const LOCK_TEXT := "LOCK IN! A/SPACE"
+const NAME_DROP := 0.06  # of the face height: the name's capitals on the gems' line
 
 var main: Node
 var _plate: Node3D
@@ -91,7 +92,9 @@ func _build_plate() -> void:
 		_face_h = box.size.y
 		_face_c = box.get_center() + Vector3(0, 0, box.size.z * 0.5 + 0.012)
 	_name_node = Node3D.new()
-	_name_node.position = _face_c
+	# A Label3D centres its whole line box (descender room included), so capitals
+	# sit high: drop the name a little so it lines up with the end gems (Parker 11-08).
+	_name_node.position = _face_c - Vector3(0, _face_h * NAME_DROP, 0)
 	_plate.add_child(_name_node)
 	# The LOCK IN tab above the plate's left end: the climber's foot glyphs draw
 	# over the middle of the screen. The kit's tab sits on the kit plate's top
