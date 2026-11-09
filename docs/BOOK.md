@@ -450,6 +450,15 @@ Parker: "Dan took out grabbing people. Put it back in ... the practice partner i
 - **The ropes bend** (Parker: "the middle needs to flex but the sides connected to the posts should stay connected to the posts"). `Stage.bounce_rope` rebuilds the side rope's mesh each frame of the spring, bent on a sine along its length (zero at both posts); the rest mesh comes back after. `--ring` checks a 0.22 m bow and the return.
 - **The kit banner** (the UI creator's `hud_banner` / `hud_banner_note`, wired by the Second Director): it slams in at the top centre, and the clock and bell wait above the frame until it leaves (Parker's call). No name tags over heads.
 
+## Outdated checks removed (Parker, 2026-11-08)
+
+Parker: "just get rid of the old stuff, no new checks at this time". Removed five checks written for rules that have since changed:
+- `--bend` "a steered knee folds to follow the foot": it steered a hand and a foot at once, which the press stack (one active limb) no longer allows;
+- `--bend` "a pushed stick moves the hand that way": a single-grip climber, where Dan's swing about one grip now redirects the push;
+- `--feel` "one held limb moves the whole body", "let go, and the arm holds its new pose" and "after the big lean the body is still up": they were written for the arms-down spawn, and the hands-on-hips start changes that scripted lean.
+
+The full battery is green except the eight-live frame time, which runs over 6 ms only under a full run's load and passes alone.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

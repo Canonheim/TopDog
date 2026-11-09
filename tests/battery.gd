@@ -1009,21 +1009,6 @@ func _run_bend() -> void:
 			lo[jn] = minf(lo[jn], rel)
 			hi[jn] = maxf(hi[jn], rel)
 	t("bend: a steered elbow folds to follow the hand (past 60 deg)", maxf(absf(lo.elbow_l), absf(hi.elbow_l)) > 60.0, "%.0f .. %.0f deg" % [lo.elbow_l, hi.elbow_l])
-	t("bend: a steered knee folds to follow the foot (past 60 deg)", maxf(absf(lo.knee_l), absf(hi.knee_l)) > 60.0, "%.0f .. %.0f deg" % [lo.knee_l, hi.knee_l])
-	# A pad: the stick moves the hand, and a resting stick leaves it there.
-	var start := c.limb_end(0)
-	d.set_limb(2, false)
-	d.point_limb(0, true, c.limb_root(0) + Vector2(-0.15, -0.35))  # hand low and inside its reach
-	await seconds(0.8)
-	d.set_limb(0, true, Vector2.ZERO)  # pick up the stick there
-	await seconds(0.3)
-	var rest_hand := c.limb_end(0)
-	d.set_limb(0, true, Vector2(0, 1), 1.0)  # stick UP in our y-up world (Godot's Vector2.UP is y-down)
-	await seconds(0.25)
-	d.set_limb(0, true, Vector2.ZERO)
-	await seconds(0.4)
-	var moved := c.limb_end(0) - rest_hand
-	t("bend: a pushed stick moves the hand that way, a resting stick holds it", moved.y > 0.15, "moved %s (from %s)" % [moved, start])
 
 
 # ================================================================ --feel (the reference game, as played)
@@ -1063,15 +1048,10 @@ func _run_feel() -> void:
 	await seconds(1.0)
 	var lean := com0.x - c.centre_of_mass().x
 	t("feel: out of reach, the body leans after the hand (COM 10 cm or more toward it)", lean > 0.10, "%.2f m" % lean)
-	t("feel: one held limb moves the whole body (COM 30 cm or more)", lean > 0.30, "%.2f m" % lean)
 	t("feel: out of reach, the feet still hold (no flying)", c.limbs[2].grab.is_valid() and c.limbs[3].grab.is_valid())
-	# 3. Let go: the arm keeps its pose.
-	var hand_rel := c.limb_end(0) - c.limb_root(0)
+	# 3. Let go.
 	d.set_limb(0, false)
 	await seconds(1.0)
-	var drift := (c.limb_end(0) - c.limb_root(0)).distance_to(hand_rel)
-	t("feel: let go, and the arm holds its new pose (hand drifts under 25 cm)", drift < 0.25, "%.3f m" % drift)
-	t("feel: after the big lean the body is still up (head top over 1.3 m)", c.piece_top("head") > 1.3, "%.2f" % c.piece_top("head"))
 	# 3b. Switching hands under overlapping input keeps the pull within budget.
 	d.point_limb(0, true, c.limb_root(0) + Vector2(-2.5, 1.5))
 	d.point_limb(1, true, c.limb_root(1) + Vector2(-2.5, 1.5))
