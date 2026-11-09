@@ -254,6 +254,12 @@ Parker wanted the backdrops to look "like large cardboard cut outs".
 - **Freestyle ink in the bench renders isn't the game's ink.** The bench outlines things the game won't, and the other
   way round. Trust in-game frames.
 - **Pale colours at range go white** in the sunlit cel band.
+- **A flat roof exposes what a pitched roof hid.** On house d, the walls' top and the cornice's top sat flush at roof
+  height; a roof deck laid over them fixed it.
+- **A plain dark band at the foot of a big building reads as a slab.** The church needed a real plinth: a footing,
+  rusticated block courses over darker joints, a moulded cap.
+- **Where runs of blocks meet at a corner,** let one run butt against the other; never leave the end of one flush with
+  the face of the next.
 
 ## 9. Handing off a piece
 
@@ -272,9 +278,9 @@ in `docs\` (the Building Maker uses `docs\BUILDING_MAKER_NOTES.md`) and tell Par
 
 | Piece | Source | Notes |
 |---|---|---|
-| `plaza_house_a`, `_b`, `_c` | `plaza_house_lib.py` + `build_plaza_house_<x>.py` | variants are rows of `VARIANTS` |
+| `plaza_house_a`, `_b`, `_c`, `_d` | `plaza_house_lib.py` + `build_plaza_house_<x>.py` | variants are rows of `VARIANTS`; d is the flat-roofed one (parapet, loggia) |
 | `bell_tower` | `build_bell_tower.py` (on `plaza_house_lib`) | not placed at the moment |
-| `plaza_church` | `build_plaza_church.py` | twin towers, talavera dome; origin at the facade's foot |
+| `plaza_church` | `build_plaza_church.py` | twin towers, talavera dome, a rusticated stone plinth (`plinth()`); origin at the facade's foot |
 | `ring` | `ring_design.py` (shapely) + `build_ring.py` | Mexican colours, green top rope |
 | `mountain_cutout_a`, `_b`, `_c` | `mountain_design.py` (shapely) + `mountain_lib.py` | cardboard, 10 m unit, scaled to the slots in code |
 | `cloud_a` .. `cloud_e` | `cloud_card_design.py` (shapely) + `build_cloud_<x>.py` | cardboard, on dowels |
