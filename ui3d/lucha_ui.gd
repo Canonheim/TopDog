@@ -134,7 +134,7 @@ func _build_sky() -> void:
 ## - the first ring of kit houses faces the centre, from ARC_FIRST to ARC_LAST each
 ##   side, so its wings come forward on both sides of the ring; a street opens
 ##   between the houses on each side (ARC_STREETS);
-## - the church stands in the gap at the back on a raised forecourt with steps,
+## - the church stands in the gap at the back at street level on a paved forecourt,
 ##   nothing in front of it, scaled up as the centrepiece (CHURCH_SCALE);
 ## - the hill town climbs behind in concentric terraces (TERRACES), houses facing
 ##   the centre, an amphitheatre round the square;
@@ -161,8 +161,7 @@ const TERRACES := [  # [front radius, top above the stones, angular half-range (
 const TERRACE_OUT := 58.0  # every terrace runs out to here, so none floats
 const CHURCH_SCALE := 1.25
 const CHURCH_FRONT_Z := -25.6  # the church's steps on the forecourt
-const FORECOURT := Rect2(-9.0, -45.0, 18.0, 25.4)  # (x, z, w, d): from z -45 to the top step at -19.6
-const FORECOURT_H := 1.0
+const FORECOURT := Rect2(-9.6, -45.0, 19.2, 24.0)  # (x, z, w, d): the church's paved gap, at street level
 const HOUSE_W := {"a": 4.8, "b": 5.2, "c": 3.8}
 const HOUSE_D := 4.75
 const STONE := Color("#C2A878")
@@ -237,7 +236,7 @@ func _build_plaza() -> void:
 	var church := _church()
 	church.scale = Vector3.ONE * CHURCH_SCALE
 	var reach := float(church.get_meta("front_reach")) * CHURCH_SCALE
-	church.position = Vector3(0, gy + FORECOURT_H, CHURCH_FRONT_Z - reach)
+	church.position = Vector3(0, gy, CHURCH_FRONT_Z - reach)  # on the street, like the houses
 	plaza.add_child(church)
 	# The hill town: concentric terraces, a stone face and a dry-grass top, houses
 	# along each facing the centre; the church's notch and the streets' landings kept clear.
@@ -395,26 +394,26 @@ static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, n: Vector3
 	st.add_vertex(c)
 
 
-## The church's forecourt: a raised stone floor in the arc's back gap, slabbed on
-## top, with a flight of steps down to the square.
+## The church's forecourt, at street level (Parker 11-08: "make the church not on
+## a raised pedistal but on street level with the other houses"): flat 1.6 m slabs
+## in the arc's back gap, from the round plaza's edge back past the church, on a
+## grout skin just under the plaza's, so the two pavings meet without a seam
+## fighting. Slabs that would overlap the plaza's courses are left out.
 func _forecourt(parent: Node3D, gy: float) -> void:
 	var f := FORECOURT
-	parent.add_child(LuchaKit.box(Vector3(f.size.x, FORECOURT_H, f.size.y), KERB, Vector3(f.position.x + f.size.x * 0.5, gy + FORECOURT_H * 0.5, f.position.y + f.size.y * 0.5)))
-	var steps := 4
-	var rise := FORECOURT_H / steps
-	for s in steps:
-		var depth := 0.42
-		var z := f.end.y + depth * (steps - s) - depth * 0.5
-		parent.add_child(LuchaKit.box(Vector3(12.0, rise * (s + 1), depth), KERB, Vector3(0, gy + rise * (s + 1) * 0.5, z)))
-	# Slabs on top: a grout skin and flat 1.6 m slabs, as on the square.
-	var top := gy + FORECOURT_H
-	parent.add_child(LuchaKit.box(Vector3(f.size.x - 0.2, 0.01, f.size.y - 0.2), GROUT, Vector3(0, top + 0.005, f.position.y + f.size.y * 0.5)))
+	parent.add_child(LuchaKit.box(Vector3(f.size.x, 0.01, f.size.y), GROUT, Vector3(f.position.x + f.size.x * 0.5, gy + 0.005, f.position.y + f.size.y * 0.5)))
 	var lots: Array = [[], []]
-	var x := f.position.x + 0.1
-	while x + 1.6 <= f.end.x:
-		var z := f.position.y + 0.1
-		while z + 1.6 <= f.end.y:
-			(lots[(int(x * 7.0 + z * 3.0) & 1)] as Array).append(_stone_xf(Vector3(x + 0.8, top + 0.015, z + 0.8), 1.53, 1.53, 0.0))
+	var x := f.position.x
+	while x + 1.6 <= f.end.x + 0.01:
+		var z := f.position.y
+		while z + 1.6 <= f.end.y + 0.01:
+			# Every corner outside the plaza's courses, or the slab is skipped.
+			var outside := true
+			for c in [Vector2(x, z), Vector2(x + 1.6, z), Vector2(x, z + 1.6), Vector2(x + 1.6, z + 1.6)]:
+				if c.distance_to(ARC_C) < PLAZA_R + 0.05:
+					outside = false
+			if outside:
+				(lots[(int(x * 7.0 + z * 3.0) & 1)] as Array).append(_stone_xf(Vector3(x + 0.8, gy + 0.025, z + 0.8), 1.53, 1.53, 0.0))
 			z += 1.6
 		x += 1.6
 	_commit_stones(parent, lots, SLAB_TONES)
