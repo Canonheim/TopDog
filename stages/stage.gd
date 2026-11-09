@@ -294,9 +294,7 @@ func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
 			root.add_child(_boxm(Vector3(1.2, 0.36, 0.6), Color(0.3, 0.3, 0.34), Vector3(half + 0.8, gy + 0.18 + k * 0.36, pz - 0.3 - k * 0.6)))
 	# The plaza stones, out to the houses and forward under the camera.
 	root.add_child(_boxm(Vector3(90.0, 0.3, 40.0), Color(0.82, 0.72, 0.56), Vector3(0, gy - 0.15, -4.0)))
-	for k in 14:
-		var tile := _boxm(Vector3(2.8, 0.02, 2.8), Color(0.76, 0.65, 0.5), Vector3(-19.6 + k * 3.0, gy + 0.01, 4.5 + float(k % 2) * 3.0))
-		root.add_child(tile)
+	# (The paving over the stones is LuchaUI._pave: the street, the kerb and the square.)
 
 
 func _boxm(size: Vector3, c: Color, at: Vector3) -> MeshInstance3D:
