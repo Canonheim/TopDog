@@ -18,6 +18,14 @@ extends Node3D
 const DIGIT_STEP := TAU / 10.0
 const PLATE_AT := Vector3(-1.4, -2.8, 0.0)  # HUD units (x UI_SCALE on screen)
 const ODO_AT := Vector3(4.55, -2.8, 0.0)
+## THE CORNERS (Parker 11-08: "the new name plate in the bottom left of the screen
+## and the new odometer height thing in the bottom right"): each frame the plate's
+## left edge and the odometer's right edge sit CORNER_MARGIN in from the screen's
+## edges, at any aspect. HUD_HALF_H: the HUD's visible half-height in HUD units.
+const HUD_HALF_H := 3.8
+const CORNER_MARGIN := 0.35
+const PLATE_HALF_W := 2.96 * 0.5 * KIT_SCALE  # the kit plate's half-width in HUD units
+const ODO_HALF_W := 1.9 * 0.5 * ODO_SCALE
 const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
 const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
@@ -272,6 +280,7 @@ func tick(delta: float) -> void:
 	visible = g.phase in ["turn", "round", "between"]
 	if not visible:
 		return
+	_to_corners()
 	var me := g.me()
 	var mine: Climber = null
 	var climbing: Climber = null
@@ -316,3 +325,15 @@ static func _rel(n: Node3D, space: Node3D) -> Transform3D:
 			xf = (p as Node3D).transform * xf
 		p = p.get_parent()
 	return xf
+
+
+func _to_corners() -> void:
+	var vp := get_viewport()
+	if vp == null:
+		return
+	var size := vp.get_visible_rect().size
+	var half_w := HUD_HALF_H * size.x / maxf(size.y, 1.0)
+	if _plate != null:
+		_plate.position.x = -half_w + CORNER_MARGIN + PLATE_HALF_W
+	if _odo != null:
+		_odo.position.x = half_w - CORNER_MARGIN - ODO_HALF_W
