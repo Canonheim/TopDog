@@ -43,6 +43,7 @@ const DEPTH := 0.24  # how thick a box piece is through the plane, for contacts 
 ## but folding through the joint meets resistance from FOLD_START degrees of bend,
 ## strongest at 180 (Feel fold_resistance). Past 180 it helps you through, so a
 ## limb rotated around comes easily and a straight pull back inward doesn't.
+const ANKLE_LIMIT_DEG := 30.0  # feet turn at most this far either way from the shin (Parker 11-09)
 const SLAP_QUIET_S := 0.6  # no slaps for this long after spawning (the feet settle)
 ## THE ROPES (Parker 11-08: "the ropes on the side of the ring to bounce you if you
 ## run into them, with more force than you hit them with"): the side ropes stand at
@@ -326,6 +327,12 @@ func _build_joints(feet: Vector2) -> void:
 		# Every limb joint turns freely all the way round (Parker 11-07, again 11-08);
 		# folding an elbow or knee through itself meets THE SOFT FOLD instead of a stop.
 		if jd.kind in ["spine", "neck"]:
+			set_hinge_limits(rid, float(lim[0]), float(lim[1]))
+		elif jn.begins_with("ankle"):
+			# THE ANKLE STOP (Parker 11-09: "the feet keep breaking at the ankles ...
+			# so they don't turn more than 30 degrees in either direction"). Tried on
+			# the wrists too: a stiff wrist cost the reach (16 cm short) and the climb.
+			lim = [-ANKLE_LIMIT_DEG, ANKLE_LIMIT_DEG]
 			set_hinge_limits(rid, float(lim[0]), float(lim[1]))
 		else:
 			lim = [-360.0, 360.0]

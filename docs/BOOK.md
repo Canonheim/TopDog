@@ -501,6 +501,12 @@ Parker: "the A button on my controller is being registered as always held in gam
 - **Cause:** once Steam Input has the controllers, it reads them itself and Godot's own joypad state stops updating. A press that was down when Steam took over (A, from the menus) stays "pressed" in `Input` forever. The ANY slot (online and Practice) read both Steam's devices and those raw pads, so the right hand stayed held.
 - **Fix** (`core/players.gd`): while Steam has controllers (`_steam_live`), raw joypads are not read. That applies to `_action` (the ANY loop and any raw device), `stick`, and `devices()` for joining. Steam's per-frame action state sees releases. PadNav already did this for the menus.
 
+## The ankle stop (Parker, 2026-11-09)
+
+Parker: "the feet keep breaking at the ankles. Add some rotational limits to the feet so they don't turn more than 30 degrees in either direction." The ankles have a hinge limit of ±`Climber.ANKLE_LIMIT_DEG` (30°), from the build pose. `--feel` checks a foot twisted hard tops out at about 30°.
+
+Also tried on the wrists ("do the same on the hands"), first always on and then only while the hand is free. Either way it broke reaching: a held hand ended 16 cm short of the cursor, because a stiff wrist can't pivot the hand to point at it. The out-of-reach lean dropped, and with the stop always on, the climb onto the barrel failed. Not shipped; it's Parker's call.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

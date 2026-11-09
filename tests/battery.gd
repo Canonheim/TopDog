@@ -1172,6 +1172,24 @@ func _run_feel() -> void:
 	t("feel: an elbow turns through 180 under a steady twist (360 degrees, no stop)", absf(start + turned) > PI, "turned %.0f deg from %.0f" % [rad_to_deg(turned), rad_to_deg(start)])
 	t("feel: a deep fold pushes back (Feel fold_resistance is on)", Feel.get_k("fold_resistance") > 0.0)
 	tw.remove()
+	# THE ANKLE STOP (Parker 11-09): twist a foot hard both ways; its ankle stays
+	# within the 30 degree stop (a few degrees of give under the shove).
+	var ak := spawn(Vector2(18.0, 8.0))
+	for b in ak.bodies.values():
+		(b as RigidBody3D).gravity_scale = 0.0
+	await frames(2)
+	var aj: Dictionary = ak.joints["ankle_l"]
+	var worst_ankle := 0.0
+	for k in int(1.6 * Engine.physics_ticks_per_second):
+		var foot: RigidBody3D = ak.bodies["foot_l"]
+		var shin: RigidBody3D = ak.bodies["leg_l_lo"]
+		var tq := foot.mass * 9.8 * 3.0 * (1.0 if k < 96 else -1.0)
+		foot.apply_torque(Vector3(0, 0, tq))
+		shin.apply_torque(Vector3(0, 0, -tq))
+		await get_tree().physics_frame
+		worst_ankle = maxf(worst_ankle, absf(rad_to_deg(wrapf(Climber.angle_of(aj.b) - Climber.angle_of(aj.a), -PI, PI))))
+	t("feel: a foot twisted hard stays within the ankle stop (30 deg, a little give)", worst_ankle < Climber.ANKLE_LIMIT_DEG + 6.0, "worst %.1f deg" % worst_ankle)
+	ak.remove()
 	# 5. Loose in the air, a held limb isn't pulled anywhere.
 	var air := spawn(Vector2(4.0, 6.0))
 	var ad: Drivers.ScriptDriver = air.driver
