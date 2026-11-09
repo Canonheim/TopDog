@@ -908,8 +908,13 @@ func _house_kinds() -> Array:
 ## same row, including across a gap left for stairs or a street. Only a different
 ## style counts; a rescaled or mirrored copy would still look the same.
 func _pick_kind(kinds: Array, rng: RandomNumberGenerator, last: String) -> String:
+	# A colourway (d_tan) is the same building as its base (d): the same
+	# silhouette side by side still reads as a repeat, so they count as one.
+	var families := {}
+	for k in kinds:
+		families[str(k).get_slice("_", 0)] = true
 	var kind: String = kinds[rng.randi() % kinds.size()]
-	while kind == last and kinds.size() > 1:
+	while families.size() > 1 and last != "" and kind.get_slice("_", 0) == last.get_slice("_", 0):
 		kind = kinds[rng.randi() % kinds.size()]
 	return kind
 
