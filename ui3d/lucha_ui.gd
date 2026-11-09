@@ -19,7 +19,7 @@ extends Node3D
 
 const MENU_DIST := 6.0  # in front of the ring's apron at every camera distance
 const PAUSE_DIST := 1.2  # the pause menu, nearer than anything in the world
-const BANNER_KIT_SCALE := 1.8  # the kit's hud_banner at HUD size (small news x0.72)
+const BANNER_KIT_SCALE := 2.0  # the kit's hud_banner at HUD size (notes x0.85)
 const BANNER_Y := 2.55  # the turn / announcement banner, high on the HUD (its flags reach the top)
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
 const OWNED := ["title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat"]
@@ -45,6 +45,11 @@ var _info: Node3D
 var _info_text := ""
 var _banner: Node3D
 var _banner_t := 0.0
+var _clock_up := 0.0  # how far the clock and bell are lifted out of the frame
+var _clock_drop_t := 0.0
+const CLOCK_AT := Vector3(0, 2.25, 0)
+const BELL_AT := Vector3(1.05, 2.0, 0.05)
+const CLOCK_HIDE_UP := 2.6  # above the top of the frame
 var _cards: Node3D
 var _podium: Node3D
 var _winner_poster: Node3D
@@ -765,11 +770,14 @@ func _on_announce(text: String, big: bool) -> void:
 	for ch in _banner.get_children():
 		ch.queue_free()
 	var t := text.to_upper()
-	var kit := LuchaKit.kit_model("hud_banner")
+	# The UI creator's wrestling-show title card (Parker 11-08: "have UI guy
+	# redesign it"): red for the big calls, royal blue for the notes; the words
+	# fitted to banner_face, so long lines shrink.
+	var kit := LuchaKit.kit_model("hud_banner" if big else "hud_banner_note")
+	if kit == null and not big:
+		kit = LuchaKit.kit_model("hud_banner")
 	if kit != null:
-		# The UI creator's banner (Parker 11-08: "have UI guy redesign it"): the words
-		# fitted to banner_face, so long lines shrink; small news rides smaller.
-		kit.scale = Vector3.ONE * (BANNER_KIT_SCALE if big else BANNER_KIT_SCALE * 0.72)
+		kit.scale = Vector3.ONE * (BANNER_KIT_SCALE if big else BANNER_KIT_SCALE * 0.85)
 		_banner.add_child(kit)
 		var face := kit.find_child("banner_face", true, false) as MeshInstance3D
 		var fc := Vector3(0, 0, 0.08)
@@ -780,7 +788,7 @@ func _on_announce(text: String, big: bool) -> void:
 			fc = fb.get_center() + Vector3(0, 0, fb.size.z * 0.5 + 0.006)
 			fw = fb.size.x * 0.94
 			fh = fb.size.y
-		var words := LuchaKit.fit_text(t, fw * 1.1, fh * 0.8, LuchaKit.GOLD if big else LuchaKit.CREAM, LuchaKit.INK)
+		var words := LuchaKit.fit_text(t, fw * 1.1, fh * 0.8, LuchaKit.RED if big else Color("#1E2C5C"), LuchaKit.INK)
 		words.position = fc
 		kit.add_child(words)
 	else:
@@ -798,7 +806,7 @@ func _on_announce(text: String, big: bool) -> void:
 	# High on the screen, above the climber's head (Parker 11-08). It drops in from
 	# above the frame with a slam and a little swing, and later flies back up.
 	_banner.position = Vector3(0, BANNER_Y + 2.2, 0.3)
-	_banner.rotation.z = randf_range(-0.1, 0.1)
+	_banner.rotation.z = randf_range(-0.08, 0.08)  # the tails read best within about 6 degrees
 	_banner.scale = Vector3.ONE
 	var tw := create_tween()
 	tw.tween_property(_banner, "position", Vector3(0, BANNER_Y, 0.3), 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -872,6 +880,26 @@ func _process(delta: float) -> void:
 		var g: Game = main.game
 		var show := g.phase in ["turn", "round"] and not g.practice
 		_hud.get_node("Buckle").visible = show
+		# Parker 11-08: "The clock does not come down from the top of the screen
+		# until the banner leaves." While a banner shows, the clock and bell wait
+		# above the frame; after it flies out they drop back in with a bounce.
+		var want_up := CLOCK_HIDE_UP if (_banner != null and _banner.visible) else 0.0
+		if want_up > _clock_up:
+			_clock_up = minf(want_up, _clock_up + delta * 14.0)  # out of the way fast
+		elif want_up < _clock_up:
+			_clock_drop_t += delta
+			# Falls in, overshoots a touch and settles (a short damped bounce).
+			_clock_up = maxf(0.0, _clock_up - delta * 9.0)
+		if want_up > 0.0:
+			_clock_drop_t = 0.0
+		var bounce := 0.0
+		if _clock_up == 0.0 and _clock_drop_t > 0.0 and _clock_drop_t < 0.6:
+			bounce = sin(_clock_drop_t * 18.0) * 0.12 * exp(-_clock_drop_t * 7.0)
+		var lift := Vector3(0, _clock_up + bounce, 0)
+		_hud.get_node("Buckle").position = CLOCK_AT + lift
+		_clock_text.position = CLOCK_AT + Vector3(0, 0, 0.075) + lift
+		if _bell != null:
+			_bell.position = BELL_AT + lift
 		hud_bottom.tick(delta)
 		if _bell != null:
 			_bell.visible = show
