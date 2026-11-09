@@ -35,7 +35,7 @@ var in_bubble := true:
 		if collider != null and not value:
 			collider.transform = Transform3D.IDENTITY
 var bubble: MeshInstance3D
-const BUBBLE_INK := 0.0175  # the bubble's outline width, metres
+const BUBBLE_INK := 0.01  # the bubble's outline width, metres
 const HIT_SPEED := 1.8
 const LIGHT_HIT_MAX_SPEED := 4.5  # Contact-point speed in m/s.
 var holder := -1
