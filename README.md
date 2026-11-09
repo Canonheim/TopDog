@@ -10,6 +10,7 @@ plane. Godot 4.7.2, Jolt physics, GodotSteam.
   controls and modes, the code layout, physics, netcode, controllers, testing and building.
 - **[docs/HOUSE_ATLAS_AND_3D_MODELS.md](docs/HOUSE_ATLAS_AND_3D_MODELS.md)**: the shared colour atlas, how
   3D models are made and brought into the game, and the cel-shaded, inked look.
+- **[docs/HOW_WE_MAKE_KIT_PIECES.md](docs/HOW_WE_MAKE_KIT_PIECES.md)**: the art team's working method and taste for new kit pieces (written by the Building Maker for Astra). The master copy lives in the Top Dog Kit's `docs\`.
 - **[docs/BOOK.md](docs/BOOK.md)**: every decision and the full record, newest at the bottom.
 - **[CLAUDE.md](CLAUDE.md)**: the working rules for LLM sessions.
 
