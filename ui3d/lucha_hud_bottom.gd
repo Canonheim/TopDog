@@ -35,7 +35,8 @@ var _face_c := Vector3.ZERO  # the name face's centre, plate space
 var _lock: Node3D
 var _lock_text: Node3D
 var _odo: Node3D
-var _drums: Array = []  # left to right: tens, units, tenths, hundredths
+var _drums: Array = []  # left to right: tens, units, tenths, hundredths (thousands to units past 100 m)
+var _odo_point: Node3D = null  # the kit's decimal point, hidden past 100 m
 var _shown_h := 0.0
 var _digit_colour := LuchaKit.INK
 
@@ -189,7 +190,9 @@ func _stand_in_odometer() -> Node3D:
 		w.add_child(LuchaKit.cyl(0.3, 0.46, LuchaKit.CREAM, Vector3.ZERO, Vector3.RIGHT))
 		root.add_child(w)
 	# The decimal point between the units and the tenths.
-	root.add_child(LuchaKit.ball(0.05, LuchaKit.RED, Vector3(0, -0.22, 0.32)))
+	var dot := LuchaKit.ball(0.05, LuchaKit.RED, Vector3(0, -0.22, 0.32))
+	dot.name = "odo_point"
+	root.add_child(dot)
 	var m := LuchaKit.fit_text("M", 0.3, 0.3, LuchaKit.GOLD, LuchaKit.INK)
 	m.position = Vector3(1.45, -0.18, 0.05)
 	root.add_child(m)
@@ -198,8 +201,11 @@ func _stand_in_odometer() -> Node3D:
 
 ## Drum values (0..10, continuous) for a height: the right drum turns with the
 ## hundredths; each drum to its left steps on as the one beside it passes 9.
+## PAST 100 m (Parker 11-08: "the '.' drop[s] and the meter counter keep[s] going
+## at 100 with the decimal places being replaced"): the four drums read whole
+## metres, 0100 to 9999, the right drum turning with the metres.
 static func drum_values(h: float) -> Array:
-	var x := clampf(h, 0.0, 99.99) * 100.0
+	var x := clampf(h, 0.0, 99.99) * 100.0 if h < 100.0 else clampf(h, 100.0, 9999.0)
 	var out: Array = [0.0, 0.0, 0.0, 0.0]
 	out[3] = fmod(x, 10.0)
 	var lower: float = out[3]
@@ -216,6 +222,11 @@ func set_height(h: float, delta: float) -> void:
 	if absf(_shown_h - h) < 0.0005:
 		_shown_h = h
 	var vals := drum_values(_shown_h)
+	# The decimal point goes away once the drums read whole metres.
+	if _odo_point == null and _odo != null:
+		_odo_point = _odo.find_child("odo_point", true, false) as Node3D
+	if _odo_point != null:
+		_odo_point.visible = _shown_h < 100.0
 	for i in _drums.size():
 		var spin := (_drums[i] as Node3D).get_node("digits") as Node3D
 		spin.rotation.x = -float(vals[i]) * DIGIT_STEP

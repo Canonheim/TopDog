@@ -16,7 +16,9 @@ func _ready() -> void:
 	v = LuchaHudBottom.drum_values(9.995)
 	_check("9.995 m rolls every drum halfway (0.5 9.5 9.5 9.5)", _near(v, [0.5, 9.5, 9.5, 9.5], 0.02), v)
 	v = LuchaHudBottom.drum_values(150.0)
-	_check("past 99.99 m it holds at 99.99", _near(v, [9.0, 9.0, 9.0, 9.0], 0.02), v)
+	_check("past 100 m the drums read whole metres: 150 m reads 0 1 5 0", _near(v, [0.0, 1.0, 5.0, 0.0], 0.02), v)
+	v = LuchaHudBottom.drum_values(1234.0)
+	_check("1234 m reads 1 2 3 4", _near(v, [1.0, 2.0, 3.0, 4.0], 0.02), v)
 	var main = load("res://game/main.tscn").instantiate()
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(0.8).timeout
