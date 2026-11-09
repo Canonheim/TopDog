@@ -43,6 +43,8 @@ const TAB_UP_Y := 0.30  # the face clear, its foot still in the slot
 var _lock_text: Node3D
 var _odo: Node3D
 var _drums: Array = []  # left to right: tens, units, tenths, hundredths (thousands to units past 100 m)
+## Tests only: a height to show in place of the climber's (-1 = the climber's).
+var test_height := -1.0
 var _odo_point: Node3D = null  # the kit's decimal point, hidden past 100 m
 var _shown_h := 0.0
 var _digit_colour := LuchaKit.INK
@@ -286,7 +288,7 @@ func tick(delta: float) -> void:
 		set_name_text("ROUND %d" % g.round_n)
 	var h_src: Climber = who if who != null else mine
 	if h_src != null:
-		set_height(maxf(0.0, h_src.top_height()), delta)
+		set_height(test_height if test_height >= 0.0 else maxf(0.0, h_src.top_height()), delta)
 	var above := mine != null and mine.top_height() > g.line + Game.LOCK_MARGIN
 	_set_popped(above)
 	if above and not _toaster:
