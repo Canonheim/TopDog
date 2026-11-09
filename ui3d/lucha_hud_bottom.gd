@@ -75,7 +75,6 @@ func _init(p_main: Node) -> void:
 
 func _ready() -> void:
 	_build_plate()
-	_build_odometer()
 	LuchaUI.no_shadows(self)
 
 

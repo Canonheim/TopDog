@@ -987,11 +987,11 @@ func _send_contact_loads(c: Climber) -> void:
 		var l: Dictionary = c.limbs[i]
 		var target: Climber = l.grab_climber
 		if is_instance_valid(target) and target.state == Climber.State.PUPPET:
-			_rpc_pull.rpc_id(target.owner_peer, target.climber_id, c.climber_id, i, l.grab_piece, l.contact_offset, l.contact_force, c.grounded_locally())
+			_rpc_pull.rpc_id(target.owner_peer, target.climber_id, c.climber_id, i, l.grab_piece, l.contact_offset, l.contact_force, c.grounded_locally(), c.touches_solid())
 
 
 @rpc("any_peer", "call_remote", "unreliable")
-func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vector3, force: Vector3, supported: bool) -> void:
+func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vector3, force: Vector3, supported: bool, directly_supported: bool = false) -> void:
 	var c: Climber = climbers.get(cid)
 	var source: Climber = climbers.get(source_id)
 	var key := Vector2i(source_id, limb)
@@ -1000,7 +1000,7 @@ func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vecto
 	if not _pulls.has(cid) or not _pulls[cid].has(key) or not c.bodies.has(piece) or not offset.is_finite() or not force.is_finite():
 		return
 	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
-	_pulls[cid][key] = {"piece": piece, "offset": offset, "force": force.limit_length(cap), "supported": supported, "time": _now}
+	_pulls[cid][key] = {"piece": piece, "offset": offset, "force": force.limit_length(cap), "supported": supported, "directly_supported": directly_supported, "time": _now}
 
 # ================================================================ leaving
 
@@ -1193,7 +1193,7 @@ func _chair_impact(victim: Climber, piece_name: String, local_offset: Vector3, i
 	var piece: RigidBody3D = victim.bodies.get(piece_name)
 	if piece == null:
 		return
-	if impulse.length() / piece.mass >= (4.5 if piece_name == "head" else 6.0):
+	if piece_name == "head" and impulse.length() / piece.mass >= 4.5:
 		victim.knock_out()
 	if victim == partner:
 		partner.stagger_time = 0.5

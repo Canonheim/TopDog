@@ -2049,7 +2049,7 @@ func _tick_hud_occlusion(delta: float) -> void:
 	if is_instance_valid(main.game.partner):
 		climbers.append(main.game.partner)
 	for c: Climber in climbers:
-		if c.removed:
+		if c.removed or c.state not in [Climber.State.LIVE, Climber.State.PUPPET]:
 			continue
 		var bounds := c.pose_bounds(c.pose())
 		var projected := Rect2()
@@ -2063,9 +2063,7 @@ func _tick_hud_occlusion(delta: float) -> void:
 			first = false
 		if not first:
 			actors.append(projected.grow(8.0))
-	var groups: Array = _hud.get_children()
-	groups.erase(hud_bottom)
-	groups.append_array(hud_bottom.get_children())
+	var groups: Array = hud_bottom.get_children()
 	for group: Node3D in groups:
 		if not group.is_visible_in_tree():
 			continue

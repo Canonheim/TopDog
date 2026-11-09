@@ -657,7 +657,7 @@ func _physics_process(delta: float) -> void:
 		if piece != null:
 			var force: Vector3 = load_info.force
 			piece.apply_force(force, piece.global_basis * (load_info.offset as Vector3))
-			_incoming_pull = maxf(_incoming_pull, force.length())
+			_incoming_pull = maxf(_incoming_pull, force.length() * (1.0 if load_info.get("directly_supported", false) else 0.2))
 	_tick_slip()
 	if knockout_left > 0:
 		knockout_left = maxf(0, knockout_left - delta)
@@ -719,14 +719,18 @@ func knock_out() -> void:
 ## into the ring at Feel rope_bounce times the speed it hit (relative motion kept).
 func _tick_ropes(delta: float) -> void:
 	_rope_wait -= delta
-	if rope_x <= 0.0 or _rope_wait > 0.0:
+	if rope_x <= 0.0:
 		return
 	var pieces := bodies.values()
 	var com_v := Vector2.ZERO
 	var velocity_ready := false
 	for b in pieces:
 		var p: Vector3 = (b as Node3D).global_position
-		if absf(p.x) < rope_x - 0.12 or absf(p.x) > rope_x + 0.3 or p.y < ROPE_LOW or p.y > ROPE_HIGH:  # the band at the ropes only
+		var body := b as RigidBody3D
+		var side := signf(p.x)
+		var outward := body.linear_velocity.x * side
+		var reach := 0.3 + maxf(0.0, outward) * delta
+		if absf(p.x) < rope_x - 0.22 or absf(p.x) > rope_x + reach or p.y < ROPE_LOW or p.y > ROPE_HIGH:
 			continue
 		if not velocity_ready:
 			for piece: RigidBody3D in pieces:
@@ -734,7 +738,15 @@ func _tick_ropes(delta: float) -> void:
 				com_v += Vector2(v.x, v.y) * piece.mass
 			com_v /= maxf(total_mass, 0.001)
 			velocity_ready = true
-		var side := signf(p.x)
+		# Resist individual limbs even during the audiovisual bounce cooldown.
+		# A slow limb can otherwise pass through while the body's average speed is zero.
+		if outward > 0.0:
+			body.linear_velocity.x = -side * maxf(0.3, outward * 0.5)
+		if absf(p.x) > rope_x + 0.12:
+			body.global_position.x = side * (rope_x + 0.12)
+			sync_server(body)
+		if _rope_wait > 0.0:
+			continue
 		var out_speed: float = com_v.x * side
 		if out_speed < 0.3:
 			continue
@@ -744,7 +756,6 @@ func _tick_ropes(delta: float) -> void:
 			rb.linear_velocity.x += new_vx - com_v.x
 		_rope_wait = ROPE_COOLDOWN
 		rope_bounced.emit(Vector3(side * rope_x, p.y, 0.0), out_speed)
-		return
 
 
 func is_attached() -> bool:
@@ -938,7 +949,7 @@ func _tick_live_contact(i: int, dt: float) -> void:
 	l.contact_force = -force
 	if rival.state == State.LIVE:
 		other.apply_force(-force, lever)
-		rival._incoming_pull = maxf(rival._incoming_pull, force.length())
+		rival._incoming_pull = maxf(rival._incoming_pull, force.length() * (1.0 if touches_solid() else 0.2))
 
 ## Stick limb i's end to `other` (a PhysicsBody3D) right where it is.
 func attach(i: int, other: Object) -> void:
