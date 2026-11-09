@@ -10,6 +10,7 @@ const CAMS := [
 	["play_15m", Vector3(0, 15.27, 6.71), Vector3(0, 14.97, 0.0)],
 	["play_20m", Vector3(0, 20.27, 6.71), Vector3(0, 19.97, 0.0)],
 	["wide", Vector3(0, 6.0, 40.0), Vector3(0, 6.0, 0.0)],
+	["street", Vector3(9.0, 3.2, 1.0), Vector3(3.0, -0.4, -12.0)],  # down across the paving to the houses
 ]
 
 
