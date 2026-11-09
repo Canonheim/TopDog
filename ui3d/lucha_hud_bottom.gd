@@ -33,6 +33,13 @@ var _gems: Node3D  # the kit's nameplate_lockin: red, lime when you can lock in
 var _gems_lit := false
 var _face_c := Vector3.ZERO  # the name face's centre, plate space
 var _lock: Node3D
+var _toaster := false  # the kit's tab: pops out of the nameplate's slot
+var _pop_tween: Tween
+## True while the LOCK IN tab is up (tests read it).
+var popped := false
+const TAB_X := -0.78  # the toaster tab in plate space (the UI creator's numbers)
+const TAB_DOWN_Y := 0.05  # in the pocket, below the lip
+const TAB_UP_Y := 0.30  # the face clear, its foot still in the slot
 var _lock_text: Node3D
 var _odo: Node3D
 var _drums: Array = []  # left to right: tens, units, tenths, hundredths
@@ -80,8 +87,12 @@ func _build_plate() -> void:
 	# edge (plate space, built at the plate's scale); else a gold box, HUD space.
 	var kit_tab := LuchaKit.kit_model("hud_lockin_tab") if _gems != null else null
 	if kit_tab != null:
+		# THE TOASTER (Parker 11-08: "make the part that says lock in a toaster pop
+		# up that comes out of the main name plate"): the tab lives in the plate's
+		# slot and only its y moves, down in the pocket or popped up.
 		_lock = kit_tab
-		_lock.position = Vector3(-0.75, 0.285, 0.0)
+		_toaster = true
+		_lock.position = Vector3(TAB_X, TAB_DOWN_Y, 0.0)
 		_plate.add_child(_lock)
 		var tf := _lock.find_child("lockin_tab_face", true, false) as MeshInstance3D
 		var fc := Vector3(0, 0, 0.072)
@@ -89,7 +100,7 @@ func _build_plate() -> void:
 		var fh := 0.116
 		if tf != null:
 			var fb := _local_aabb(tf, _lock)
-			fc = fb.get_center() + Vector3(0, 0, fb.size.z * 0.5 + 0.006)
+			fc = fb.get_center() + Vector3(0, 0, fb.size.z * 0.5 + 0.004)
 			fw = fb.size.x * 0.92
 			fh = fb.size.y
 		# The title font runs narrower than fit_text's guess: let it use the face.
@@ -105,7 +116,26 @@ func _build_plate() -> void:
 		_lock_text.position = Vector3(0, 0, 0.075)
 		_lock.add_child(_lock_text)
 		add_child(_lock)
-	_lock.visible = false
+	_lock.visible = _toaster  # the toaster's tab hides in its slot; the stand-in hides
+
+
+## Pop the toast up (above the line) or drop it back in the slot.
+func _set_popped(up: bool) -> void:
+	if up == popped:
+		return
+	popped = up
+	if not _toaster:
+		_lock.visible = up
+		return
+	if _pop_tween != null and _pop_tween.is_valid():
+		_pop_tween.kill()
+	_pop_tween = create_tween()
+	if up:
+		# Out fast, past the top (to about 0.34) and settle at 0.30: ease-out-back.
+		_pop_tween.tween_property(_lock, "position:y", TAB_UP_Y, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		Sound.play("lock", -10.0, 1.8)  # a little spring ding
+	else:
+		_pop_tween.tween_property(_lock, "position:y", TAB_DOWN_Y, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 
 func set_name_text(s: String) -> void:
@@ -247,8 +277,8 @@ func tick(delta: float) -> void:
 	if h_src != null:
 		set_height(maxf(0.0, h_src.top_height()), delta)
 	var above := mine != null and mine.top_height() > g.line + Game.LOCK_MARGIN
-	_lock.visible = above
-	if above:
+	_set_popped(above)
+	if above and not _toaster:
 		_lock.scale = Vector3.ONE * (1.0 + 0.05 * sin(Time.get_ticks_msec() / 1000.0 * 8.0))
 	if _gems != null and above != _gems_lit:
 		_gems_lit = above

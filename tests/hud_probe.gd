@@ -31,10 +31,11 @@ func _ready() -> void:
 	_check("the bottom shows in a turn", hb.is_visible_in_tree())
 	_check("the nameplate names the climber in full, never clipped", hb._name_shown == "BARTHOLOMEW THE EXCEEDINGLY LONG-NAMED", hb._name_shown)
 	_check("the odometer has four drums", hb._drums.size() == 4, hb._drums.size())
+	_check("below the line the toast is down in its slot", not hb.popped and hb._lock.position.y < 0.1, hb._lock.position.y)
 	await _shot("hud_bottom")
 	main.game.line = -5.0
 	await get_tree().create_timer(0.4).timeout
-	_check("above the line the LOCK IN tab shows", hb._lock.is_visible_in_tree())
+	_check("above the line the LOCK IN toast pops up", hb.popped and hb._lock.position.y > 0.25, hb._lock.position.y)
 	await _shot("hud_lockin")
 	print("HUD RESULT fails=", fails)
 	get_tree().quit(fails)
