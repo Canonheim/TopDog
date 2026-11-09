@@ -145,6 +145,12 @@ const DRY_GRASS := Color("#8E9A5C")  # lit, the cel band reads it a dry green
 const LAND := Color("#C9BE92")
 const RIDGE_NEAR := Color("#B4C9EC")  # haze blues: the far ridges sit back by colour (no fog in the look)
 const RIDGE_FAR := Color("#CCDBF3")
+## The far mountains: [x, z, width, height, fallback colour, yaw].
+const FAR_RIDGES := [
+	[-140.0, -260.0, 300.0, 52.0, RIDGE_FAR, 0.2],
+	[120.0, -240.0, 280.0, 44.0, RIDGE_FAR, -0.24],
+	[-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR, -0.12],
+]
 const POLE_WOOD := Color("#6A4128")
 const BUNTING_Z := -12.6  # the houses' awnings reach about z -13.4
 const BUNTING_POLES := [-18.0, -6.0, 6.0, 18.0]
@@ -201,10 +207,24 @@ func _build_plaza() -> void:
 	var reach := float(church.get_meta("front_reach"))
 	church.position = Vector3(0, gy + float(HILL_TERRACES[0][2]), float(HILL_TERRACES[0][0]) - reach - 0.05)
 	plaza.add_child(church)
-	# Far ridges: flat cards in the haze blues, so the land meets something at the horizon.
-	for r in [[-140.0, -260.0, 300.0, 52.0, RIDGE_FAR], [120.0, -240.0, 280.0, 44.0, RIDGE_FAR], [-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR]]:
+	# Far mountains (Parker 11-08: "large cardboard cut outs of mountains"): the
+	# kit's mountain_cutout_a/b/c, scaled to each ridge's width and height, stood
+	# with a slight yaw and lean like set dressing propped on the horizon. If the
+	# kit pieces are missing, plain flat cards in the haze blues stand in.
+	for i in FAR_RIDGES.size():
+		var r: Array = FAR_RIDGES[i]
 		var w: float = r[2]
 		var rh: float = r[3]
+		var cut := LuchaKit.kit_model("mountain_cutout_" + "abc"[i])
+		if cut != null:
+			var bb := _local_aabb(cut)
+			var sx := w / maxf(bb.size.x, 0.01)
+			var sy := rh / maxf(bb.size.y, 0.01)
+			cut.scale = Vector3(sx, sy, (sx + sy) * 0.5)
+			cut.rotation = Vector3(-0.04, float(r[5]), 0.0)  # leaned back a touch, turned enough to show the kraft edge
+			cut.position = Vector3(r[0], gy - 0.2 - bb.position.y * sy, r[1])
+			plaza.add_child(cut)
+			continue
 		var pts := PackedVector2Array([Vector2(-w * 0.5, 0), Vector2(-w * 0.3, rh * 0.55), Vector2(-w * 0.12, rh * 0.8),
 			Vector2(0, rh), Vector2(w * 0.1, rh * 0.72), Vector2(w * 0.28, rh * 0.85), Vector2(w * 0.5, 0)])
 		var ridge := LuchaKit._extrude(pts, 4.0, r[4])
@@ -267,6 +287,20 @@ static func _front_z(root: Node3D) -> float:
 		var bb: AABB = xf * m.mesh.get_aabb()
 		front = maxf(front, bb.end.z)
 	return front if front > -INF else 0.0
+
+
+## The merged box of a model's meshes in its own frame (before it's in the tree).
+static func _local_aabb(root: Node3D) -> AABB:
+	var out := AABB()
+	var first := true
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		if m.mesh == null:
+			continue
+		var bb: AABB = _local_xf(root, m) * m.mesh.get_aabb()
+		out = bb if first else out.merge(bb)
+		first = false
+	return out
 
 
 static func _local_xf(root: Node3D, n: Node3D) -> Transform3D:
