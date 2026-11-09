@@ -253,9 +253,11 @@ func _build_plaza() -> void:
 
 
 ## THE PAVING (Parker 11-08: "a paved street in front of the houses", like
-## Golemheim's): a street of small setts laid in running bond in front of the
-## houses, a kerb, then the square in big slabs, all on a dark grout bed so every
-## joint reads and the ink draws each stone. Slabs are MultiMeshes, one per tone.
+## Golemheim's; then "flat like in the image so ink doesnt hit it"): a street of
+## small setts in running bond in front of the houses, a raised kerb, then the
+## square in big slabs. The stones are FLAT quads 5 mm over a grout bed, so the
+## joints are colour only and the ink, which draws depth and normal edges, leaves
+## them alone. Only the kerb stands proud. One MultiMesh per stone tone.
 const STREET_Z := Vector2(-13.8, -9.95)  # the street, from the house fronts to the kerb
 const SQUARE_Z := Vector2(-9.55, 16.2)  # the square, from the kerb to past the camera
 const PAVE_HALF_X := 42.0
@@ -285,9 +287,9 @@ func _pave(parent: Node3D, gy: float) -> void:
 			continue
 		var mm := MultiMesh.new()
 		mm.transform_format = MultiMesh.TRANSFORM_3D
-		var bm := BoxMesh.new()
-		bm.size = Vector3.ONE
-		mm.mesh = bm
+		var pm := PlaneMesh.new()
+		pm.size = Vector2.ONE
+		mm.mesh = pm
 		mm.instance_count = xs.size()
 		for k in xs.size():
 			mm.set_instance_transform(k, xs[k])
@@ -297,8 +299,8 @@ func _pave(parent: Node3D, gy: float) -> void:
 		parent.add_child(mmi)
 
 
-## One stone per cell over a z band, each a unit box scaled to the cell less the
-## joint, sorted into a tone's lot. `bond` shifts every other row half a stone.
+## One stone per cell over a z band, each a flat unit quad scaled to the cell
+## less the joint, sorted into a tone's lot. `bond` shifts every other row half a stone.
 func _lay(lots: Array, rng: RandomNumberGenerator, gy: float, band: Vector2, cell: Vector2, bond: bool) -> void:
 	var joint := 0.07
 	var rows := int(floor((band.y - band.x) / cell.y))
@@ -311,9 +313,8 @@ func _lay(lots: Array, rng: RandomNumberGenerator, gy: float, band: Vector2, cel
 			var xa := maxf(x, -PAVE_HALF_X)
 			var xb := minf(x + cell.x, PAVE_HALF_X)
 			if xb - xa > joint * 2.0:
-				var h := 0.06 + rng.randf_range(0.0, 0.012)  # hand-laid: a few stand a hair proud
-				var basis := Basis.from_scale(Vector3(xb - xa - joint, h, dz - joint))
-				var xf := Transform3D(basis, Vector3((xa + xb) * 0.5, gy + 0.02 + h * 0.5, zc))
+				var basis := Basis.from_scale(Vector3(xb - xa - joint, 1.0, dz - joint))
+				var xf := Transform3D(basis, Vector3((xa + xb) * 0.5, gy + 0.025, zc))  # flush: 5 mm over the grout
 				(lots[rng.randi() % lots.size()] as Array).append(xf)
 			x += cell.x
 
