@@ -907,16 +907,38 @@ func _house_kinds() -> Array:
 ## each other are the same"): a style other than the last house placed in the
 ## same row, including across a gap left for stairs or a street. Only a different
 ## style counts; a rescaled or mirrored copy would still look the same.
+## How often each building family comes up, relative to 1 (Parker 11-08:
+## "there's too many of those green and tan houses"): the flat-roofed d family
+## (d and d_tan together) at half the others.
+const HOUSE_WEIGHT := {"d": 0.5}
+
+
 func _pick_kind(kinds: Array, rng: RandomNumberGenerator, last: String) -> String:
 	# A colourway (d_tan) is the same building as its base (d): the same
 	# silhouette side by side still reads as a repeat, so they count as one.
+	# Pick a family by weight (never the last one's), then a colourway in it.
 	var families := {}
 	for k in kinds:
-		families[str(k).get_slice("_", 0)] = true
-	var kind: String = kinds[rng.randi() % kinds.size()]
-	while families.size() > 1 and last != "" and kind.get_slice("_", 0) == last.get_slice("_", 0):
-		kind = kinds[rng.randi() % kinds.size()]
-	return kind
+		var fam := str(k).get_slice("_", 0)
+		if not families.has(fam):
+			families[fam] = []
+		(families[fam] as Array).append(str(k))
+	var last_fam := last.get_slice("_", 0) if last != "" else ""
+	var total := 0.0
+	for fam in families:
+		if fam != last_fam or families.size() == 1:
+			total += float(HOUSE_WEIGHT.get(fam, 1.0))
+	var roll := rng.randf() * total
+	var chosen: String = families.keys()[0]
+	for fam in families:
+		if fam == last_fam and families.size() > 1:
+			continue
+		chosen = fam
+		roll -= float(HOUSE_WEIGHT.get(fam, 1.0))
+		if roll <= 0.0:
+			break
+	var ways: Array = families[chosen]
+	return str(ways[rng.randi() % ways.size()])
 
 
 ## A house style's width along the street: the known kit widths, or measured from
