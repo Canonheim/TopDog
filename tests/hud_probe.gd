@@ -35,6 +35,16 @@ func _ready() -> void:
 	_check("the odometer has four drums", hb._drums.size() == 4, hb._drums.size())
 	_check("below the line the toast is down in its slot", not hb.popped and hb._lock.position.y < 0.1, hb._lock.position.y)
 	await _shot("hud_bottom")
+	# A banner up top lifts the clock out of the frame; it drops back after.
+	main.lucha._on_announce("Winifred the Drawbridge-Scrambler's turn", true)
+	await get_tree().create_timer(0.6).timeout
+	_check("with a banner up, the clock waits above the frame", main.lucha._clock_up > 2.0, main.lucha._clock_up)
+	await _shot("hud_banner_up")
+	main.lucha._on_announce("The line moved! Climb higher.", false)
+	await get_tree().create_timer(0.6).timeout
+	await _shot("hud_banner_note")
+	await get_tree().create_timer(4.0).timeout
+	_check("after the banner flies out, the clock is back", main.lucha._clock_up == 0.0 and not main.lucha._banner.visible, main.lucha._clock_up)
 	main.game.line = -5.0
 	await get_tree().create_timer(0.4).timeout
 	_check("above the line the LOCK IN toast pops up", hb.popped and hb._lock.position.y > 0.25, hb._lock.position.y)
