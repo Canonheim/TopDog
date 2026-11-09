@@ -26,6 +26,11 @@ var in_bubble := true:
 	set(value):
 		if in_bubble == value:
 			return
+		if not value and bubble != null and is_inside_tree():
+			var burst := preload("res://game/bubble_pop.gd").new()
+			get_parent().add_child(burst)
+			burst.global_transform = bubble.global_transform
+			Sound.play_at("bubble_pop", bubble.global_position, 0.0, get_parent(), Sound.SFX["bubble_pop"].pick_random())
 		in_bubble = value
 		float_time = 0.0
 		if bubble != null:

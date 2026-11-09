@@ -512,11 +512,7 @@ func set_glyphs(items: Array) -> void:
 			lb.no_depth_test = true
 			lb.render_priority = 20
 			node = lb
-		# Feet sit close together: their glyphs step outward so both read.
-		var side := 0.0
-		if not bool(limbs[i].def.arm):
-			side = -0.16 if limbs[i].def.id == "leg_l" else 0.16
-		node.position = Vector3(side, -0.04 if not bool(limbs[i].def.arm) else 0.0, 0.3)
+		node.position = Vector3(0.0, 0.0, 0.3)
 		end.add_child(node)
 		# The stuck look: the glyph baked onto a white disc with a dark rim (one image,
 		# so no sorting between two see-through sprites), swapped in while stuck.

@@ -95,7 +95,28 @@ func bounce_rope(side: float, speed: float) -> void:
 		for si in rope.mesh.get_surface_count():
 			mats.append(rope.get_surface_override_material(si))
 		rope.set_meta("rest_mats", mats)
+	# One voice per side, owned by the rope so teardown also stops playback.
+	var voice := rope.get_node_or_null("TensionSound") as AudioStreamPlayer3D
+	if voice == null:
+		voice = AudioStreamPlayer3D.new()
+		voice.name = "TensionSound"
+		voice.bus = "Effects"
+		voice.unit_size = 6.0
+		voice.max_db += linear_to_db(2.0)
+		rope.add_child(voice)
+	var choices: Array = Sound.SFX["rope"].duplicate()
+	choices.erase(rope.get_meta("last_creak", ""))
+	var clip: String = choices.pick_random()
+	rope.set_meta("last_creak", clip)
+	voice.stop()
+	voice.stream = Sound._streams.get(clip)
+	voice.volume_db = -80.0
+	voice.position = Vector3(0.0, 0.95, 0.0)
+	rope.set_meta("creak_gain", 2.0 * clampf(speed / 4.0, 0.5, 1.6))
+	if voice.stream != null:
+		voice.play()
 	var push := clampf(speed * 0.06, 0.08, 0.4)
+	rope.set_meta("peak_flex", push)
 	if rope.has_meta("tween"):
 		var old: Tween = rope.get_meta("tween")
 		if old != null and old.is_valid():
@@ -111,6 +132,11 @@ func bounce_rope(side: float, speed: float) -> void:
 ## Bend a side rope's mesh out by `dx` at its middle (sine along local z, the
 ## rope's length, so its ends at the posts don't move).
 func _flex_rope(rope: MeshInstance3D, dx: float) -> void:
+	var voice := rope.get_node_or_null("TensionSound") as AudioStreamPlayer3D
+	if voice != null:
+		# Follow actual deformation, including the rebound; silence at rest.
+		var stretch := clampf(absf(dx) / float(rope.get_meta("peak_flex", 0.4)), 0.0, 1.0)
+		voice.volume_db = linear_to_db(maxf(0.0001, stretch * float(rope.get_meta("creak_gain", 1.0))))
 	var rest: Mesh = rope.get_meta("rest_mesh")
 	var bb := rest.get_aabb()
 	var z0 := bb.position.z
@@ -134,6 +160,9 @@ func _flex_rope(rope: MeshInstance3D, dx: float) -> void:
 
 func _rest_rope(rope: MeshInstance3D) -> void:
 	if is_instance_valid(rope) and rope.has_meta("rest_mesh"):
+		var voice := rope.get_node_or_null("TensionSound") as AudioStreamPlayer3D
+		if voice != null:
+			voice.stop()
 		rope.mesh = rope.get_meta("rest_mesh")
 		_rope_mats(rope)
 

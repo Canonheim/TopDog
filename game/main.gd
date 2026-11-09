@@ -382,7 +382,7 @@ func _tick_hud(delta: float) -> void:
 	var hint := ""
 	for c in game.live_climbers():
 		var cl: Climber = c
-		if cl.owner_peer == game.me() and cl.top_height() > game.line + Game.LOCK_MARGIN:
+		if cl.owner_peer == game.me() and cl.top_height() > game.line + Game.LOCK_MARGIN and cl.touches_solid():
 			hint = "Above the line! Lock in: Space / Start"
 			break
 	hud_hint.text = hint

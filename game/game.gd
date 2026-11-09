@@ -849,7 +849,6 @@ func _rpc_chair_rope(at: Vector3, speed: float) -> void:
 
 
 func _play_rope(at: Vector3, speed: float) -> void:
-	Sound.play_at("rope", at, linear_to_db(clampf(speed / 4.0, 0.5, 1.6)), world)
 	if stage != null:
 		stage.bounce_rope(signf(at.x), clampf(speed, 0.0, 20.0))
 
@@ -1136,6 +1135,8 @@ func _rpc_chair_impact(cid: int, piece: String, local_offset: Vector3, impulse: 
 func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose: Transform3D, hit_count: int, in_bubble: bool) -> void:
 	if chair == null or generation != chair_generation:
 		return
+	# Capture the old floating bubble position before applying the carried pose.
+	chair.in_bubble = in_bubble
 	if chair.holder != cid or chair.limb != limb:
 		chair.clear_grip()
 		chair.freeze = true  # loose replicas follow the host snapshots
@@ -1144,7 +1145,6 @@ func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose:
 			chair.set_carrier(climbers.get(cid))
 	if cid < 0 and not in_bubble:
 		chair.release_carrier_when_clear()
-	chair.in_bubble = in_bubble
 	chair.holder = cid
 	chair.limb = limb
 	chair.grip_point = point

@@ -1871,15 +1871,18 @@ func _run_ring() -> void:
 		if rope != null:
 			rope_peak = maxf(rope_peak, rope.mesh.get_aabb().size.x - rest_w)
 	t("ring: the ropes throw you back harder than you hit them (in at 4 m/s)", back < -4.0, "back at %.2f m/s" % back)
-	t("ring: the bounce is told (signal) and has its sound (placeholder boing)", bounces[0] > 0 and Sound._streams.has("rope_boing"), "%d bounces" % bounces[0])
+	t("ring: the bounce is told (signal) and has five tension sounds", bounces[0] > 0 and Sound.SFX["rope"].size() == 5 and Sound._streams.has("rope_tension_05"), "%d bounces" % bounces[0])
 	await seconds(0.6)
 	var settled: bool = rope != null and rope.mesh == rope.get_meta("rest_mesh", null)
+	var rope_voice := rope.get_node_or_null("TensionSound") as AudioStreamPlayer3D
+	t("ring: creak stops when rope settles", rope_voice != null and not rope_voice.playing)
 	var ends_still: bool = rope != null and absf(rope.position.x) < 99.0  # the node never moves: only its middle bends
 	t("ring: the side rope's middle bows out with the hit (its ends stay on the posts) and settles back", rope != null and rope_peak > 0.05 and settled and ends_still, "bowed %.2f m, back %s" % [rope_peak, settled])
 	# Inspect the strands halfway from the centre badges to each fixed post.
 	for side in [-1, 1]:
 		g.stage.bounce_rope(side, 4.0)
 	await seconds(0.055)
+	t("ring: creak plays while rope is stretched", rope_voice != null and rope_voice.playing and rope_voice.volume_db > -20.0)
 	for side in [-1, 1]:
 		var strand_mesh: MeshInstance3D = g.stage.ring_kit.find_child("ring_ropes_right" if side > 0 else "ring_ropes_left", true, false)
 		var rest: Mesh = strand_mesh.get_meta("rest_mesh")

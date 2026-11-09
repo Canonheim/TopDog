@@ -4,6 +4,7 @@ extends Node
 
 const RARE_GRAB := "grab_slap_10"
 const SFX := {
+	"bubble_pop": ["bubble_pop_01", "bubble_pop_02", "bubble_pop_03"],
 	"chair_light": ["big_slam_01", "big_slam_02"],
 	"chair_heavy": ["big_slam_03", "big_slam_04"],
 	"chair_break": ["chair_break_01", "chair_break_02", "chair_break_03", "chair_break_04", "chair_break_05", "chair_break_06"],
@@ -21,7 +22,7 @@ const SFX := {
 		"dog_exertion_15", "dog_exertion_16", "dog_exertion_17", "dog_exertion_18",
 	],
 	"thud": ["thud", "land_soft", "hit_flesh"],
-	"rope": ["rope_boing"],  # PLACEHOLDER (Parker 11-08: Dan replaces it)
+	"rope": ["rope_tension_01", "rope_tension_02", "rope_tension_03", "rope_tension_04", "rope_tension_05"],
 	"hurt": ["hurt_1", "hurt_2", "hurt_3", "hurt_4"],
 	"fall": ["yell_1", "yell_2", "yell_3"],
 	"lock": ["lock_bell"],
@@ -150,6 +151,8 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	var chair_boost_db := linear_to_db(5.0) if kind in ["chair_light", "chair_heavy", "chair_break"] else 0.0
 	if kind == "chair_heavy":
 		chair_boost_db += linear_to_db(1.2)
+	if kind == "bubble_pop":
+		chair_boost_db += linear_to_db(3.0)
 	volume_db += chair_boost_db
 	var host: Node = parent if parent != null else get_tree().current_scene
 	if host == null:

@@ -29,7 +29,7 @@ const ODO_HALF_W := 1.9 * 0.5 * ODO_SCALE
 const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
 const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
-const LOCK_TEXT := "LOCK IN! A/SPACE"
+const LOCK_TEXT := "LOCK IN!"
 const NAME_DROP := 0.09  # of the face height: the name's capitals on the gems' line
 
 var main: Node
@@ -301,7 +301,7 @@ func tick(delta: float) -> void:
 	var h_src: Climber = who if who != null else mine
 	if h_src != null:
 		set_height(test_height if test_height >= 0.0 else maxf(0.0, h_src.top_height()), delta)
-	var above := mine != null and mine.top_height() > g.line + Game.LOCK_MARGIN
+	var above := mine != null and mine.top_height() > g.line + Game.LOCK_MARGIN and mine.touches_solid()
 	_set_popped(above)
 	if above and not _toaster:
 		_lock.scale = Vector3.ONE * (1.0 + 0.05 * sin(Time.get_ticks_msec() / 1000.0 * 8.0))

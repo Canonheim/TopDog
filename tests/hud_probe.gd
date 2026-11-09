@@ -49,6 +49,27 @@ func _ready() -> void:
 	await get_tree().create_timer(0.4).timeout
 	_check("above the line the LOCK IN toast pops up", hb.popped and hb._lock.position.y > 0.25, hb._lock.position.y)
 	await _shot("hud_lockin")
+	var player: Climber = main.game.live_climbers()[0]
+	player.release_all()
+	player.set_physics_process(false)
+	for body: RigidBody3D in player.bodies.values():
+		body.freeze = true
+		body.global_position += Vector3(0, 15, 0)
+		Climber.sync_server(body)
+	await get_tree().create_timer(0.4).timeout
+	_check("airborne above the line hides LOCK IN", not hb.popped)
+	var rival: Climber = preload("res://climber/climber.gd").new()
+	main.world.add_child(rival)
+	player.limbs[0].grab_other = rival
+	player.limbs[0].grab_climber = rival
+	hb.tick(0.0)
+	_check("holding a live climber hides LOCK IN", not hb.popped)
+	rival.state = Climber.State.FROZEN
+	hb.tick(0.0)
+	_check("holding the frozen tower shows LOCK IN", hb.popped)
+	player.limbs[0].grab_other = null
+	player.limbs[0].grab_climber = null
+	rival.queue_free()
 	# Past 100 m: whole metres, the decimal point hidden.
 	hb.test_height = 150.0
 	await get_tree().create_timer(1.2).timeout
