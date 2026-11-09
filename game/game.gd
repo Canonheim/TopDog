@@ -332,6 +332,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 			_rpc_slap.rpc(cid, at, Sound.pick_grab(), randf_range(0.92, 1.08)))
 		c.grab_made.connect(_on_grab_made)
 		c.grab_lost.connect(_on_grab_lost)
+		c.rope_bounced.connect(func(at: Vector3, speed: float): _rpc_rope.rpc(cid, at, speed))
 		if chair != null and not is_host():
 			c.limb_selected.connect(func(i: int, velocity: Vector3): _rpc_chair_limb.rpc_id(1, cid, i, velocity))
 	else:
@@ -782,6 +783,17 @@ func _rpc_exertion(cid: int, clip: String) -> void:
 	var c := _audio_climber(cid)
 	if c != null:
 		Sound.play_exertion(clip, c.bodies["chest"])
+
+
+## A rope bounce, on every machine: the placeholder boing at the rope, and the
+## rope's spring (Parker 11-08).
+@rpc("any_peer", "call_local", "reliable")
+func _rpc_rope(cid: int, at: Vector3, speed: float) -> void:
+	if _audio_climber(cid) == null or not at.is_finite():
+		return
+	Sound.play_at("rope", at, linear_to_db(clampf(speed / 4.0, 0.5, 1.6)), world)
+	if stage != null:
+		stage.bounce_rope(signf(at.x), clampf(speed, 0.0, 20.0))
 
 
 @rpc("any_peer", "call_local", "reliable")

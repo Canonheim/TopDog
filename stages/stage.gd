@@ -26,6 +26,7 @@ const BARREL_PROFILE := [
 
 var row: Dictionary
 var barrel_top := 0.0
+var ring_kit: Node3D = null  # the kit ring, once dressed (its ropes animate)
 ## THE FIRST LINE: the line before anyone is in the tower sits this far above the
 ## barrel's top, out of a standing climber's reach (Parker 11-07: "I can reach
 ## straight up at spawn and touch it").
@@ -73,6 +74,29 @@ func build(world: Node3D, dress := true) -> void:
 
 func spawn_point(side: int) -> Vector2:
 	return Vector2(float(row.spawn_x) * (1.0 if side > 0 else -1.0), 0.05)
+
+
+## THE ROPE BOUNCE (Parker 11-08: "the ropes need to have a bouncing animation when
+## they bounce you"): the side's ropes are knocked outward by the hit, then spring
+## back with an elastic wobble. side: -1 left, +1 right; speed: the hit (m/s).
+func bounce_rope(side: float, speed: float) -> void:
+	if ring_kit == null or not is_instance_valid(ring_kit):
+		return
+	var rope := ring_kit.find_child("ring_ropes_right" if side > 0.0 else "ring_ropes_left", true, false) as Node3D
+	if rope == null:
+		return
+	if not rope.has_meta("rest_x"):
+		rope.set_meta("rest_x", rope.position.x)
+	var rest: float = rope.get_meta("rest_x")
+	var push := clampf(speed * 0.06, 0.08, 0.4)
+	if rope.has_meta("tween"):
+		var old: Tween = rope.get_meta("tween")
+		if old != null and old.is_valid():
+			old.kill()
+	var tw := rope.create_tween()
+	tw.tween_property(rope, "position:x", rest + side * push, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(rope, "position:x", rest, 0.7).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	rope.set_meta("tween", tw)
 
 
 ## The ring's half-width (the side ropes stand at +-this).
@@ -226,6 +250,7 @@ func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
 		# Built at the stage's size (18 x 3.42 m, canvas top at y 0, origin its
 		# centre, apron dropping 0.9 m): it goes in at scale 1.
 		root.add_child(kit)
+		ring_kit = kit
 		# The canvas in a mid warm grey: the kit's near-white read pure white in
 		# the sun and swallowed the climber's pale legs (environment pass 11-08).
 		var canvas := kit.find_child("ring_canvas", true, false) as MeshInstance3D

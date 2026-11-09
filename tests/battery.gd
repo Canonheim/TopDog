@@ -1664,7 +1664,7 @@ func _run_chairwear() -> void:
 ## The side ropes throw you back harder than you hit them; the plaza floor outside
 ## the ring is RING OUT, and 3 s later you're back in the ring.
 func _run_ring() -> void:
-	var g := make_game("tower", 1, 60.0, "plaza")
+	var g := make_game("tower", 1, 60.0, "plaza", true)  # dressed: the kit ring and its ropes
 	var notes: Array = []
 	g.announce.connect(func(text, _big): notes.append(str(text)))
 	if not await wait_phase(g, "turn", 10.0):
@@ -1672,6 +1672,11 @@ func _run_ring() -> void:
 		return
 	t("ring: the plaza sets the rope line at the ring's edge", absf(Climber.rope_x - g.stage.ring_half()) < 0.001, "%.2f" % Climber.rope_x)
 	var c: Climber = g.live_climbers()[0]
+	var bounces := [0]
+	c.rope_bounced.connect(func(_at, _sp): bounces[0] += 1)
+	var rope: Node3D = g.stage.ring_kit.find_child("ring_ropes_right", true, false) if g.stage.ring_kit != null else null
+	var rope_rest := rope.position.x if rope != null else 0.0
+	var rope_peak := 0.0
 	# Throw it at the right-hand ropes: standing near them, every piece moving out at 4 m/s.
 	c.release_all()
 	var shift := Vector3(7.6 - c.centre_of_mass().x, 0.4, 0.0)
@@ -1687,7 +1692,13 @@ func _run_ring() -> void:
 		for b in c.bodies.values():
 			v += Vector2(b.linear_velocity.x, b.linear_velocity.y) * b.mass
 		back = minf(back, v.x / c.total_mass)
+		if rope != null:
+			rope_peak = maxf(rope_peak, rope.position.x - rope_rest)
 	t("ring: the ropes throw you back harder than you hit them (in at 4 m/s)", back < -4.0, "back at %.2f m/s" % back)
+	t("ring: the bounce is told (signal) and has its sound (placeholder boing)", bounces[0] > 0 and Sound._streams.has("rope_boing"), "%d bounces" % bounces[0])
+	await seconds(0.6)
+	var settled := absf(rope.position.x - rope_rest) < 0.02 if rope != null else false
+	t("ring: the side rope springs out with the hit and settles back", rope != null and rope_peak > 0.05 and settled, "out %.2f m, back %s" % [rope_peak, settled])
 	# Drop it outside the ring onto the plaza stones.
 	c.release_all()
 	var drop := Vector3(12.0 - c.centre_of_mass().x, 0.5 - c.centre_of_mass().y, 0.0)
