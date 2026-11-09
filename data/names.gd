@@ -8,7 +8,7 @@ const FIRST := [
 	"Quentin", "Roderick", "Sigurd", "Tobias", "Ulric", "Valen", "Wystan", "Yorick",
 	"Agnes", "Beatrix", "Cecily", "Edith", "Gisela", "Hilda", "Isolde", "Matilda",
 	"Rowena", "Sibyl", "Winifred", "Elspeth", "Maud", "Odette", "Brunhild", "Tamsin",
-	"Dango",
+	"Dango", "Benny", "Alec", "Yordun", "Colin", "Nick", "Anthony",
 ]
 const THING := [
 	"Barrel", "Ladder", "Turnip", "Goose", "Bucket", "Anvil", "Cabbage", "Kettle",
