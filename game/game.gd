@@ -73,6 +73,7 @@ var practice := false
 
 var _cid_next := 1
 var _spawn_n := 0
+var _last_spawn_sides := {}  # pid -> actual side of their most recent spawn
 var _between_t := 0.0
 var _clock_t := 0.0
 var _stream_t := 0.0
@@ -117,7 +118,7 @@ func host_start(p_settings: Dictionary, p_roster: Array) -> void:
 		return
 	var match_settings := p_settings.duplicate(true)
 	var choice := str(match_settings.get("base", "random"))
-	match_settings.resolved_base = ["barrel", "cactus"].pick_random() if choice == "random" else choice
+	match_settings.resolved_base = Modes.STARTING_BASES.pick_random() if choice == "random" else choice
 	_rpc_start.rpc(match_settings, p_roster)
 
 
@@ -154,6 +155,7 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	turn_i = -1
 	round_n = 0
 	_spawn_n = 0
+	_last_spawn_sides.clear()
 	phase = "between"
 	_between_t = 0.8
 	phase_changed.emit(phase)
@@ -233,8 +235,9 @@ func _next() -> void:
 		_rpc_phase.rpc("round", float(settings.get("timer", 60.0)), line if round_n > 1 else stage.first_line, round_n, -1)
 		var pair := _next_pair() if mode.get("round_robin", false) else still
 		_rpc_round_players.rpc(pair)
-		for pid in pair:
-			_spawn(pid)
+		var sides := _classic_spawn_sides(pair) if mode.get("round_robin", false) else []
+		for i in pair.size():
+			_spawn(pair[i], sides[i] if not sides.is_empty() else 0)
 
 
 func round_matchup() -> String:
@@ -340,8 +343,28 @@ func _open_spawn(preferred: Vector2) -> Vector2:
 	return preferred
 
 
-func _spawn(pid: int) -> void:
-	var feet := _open_spawn(stage.spawn_point(_spawn_side()))
+## Resolve both preferences together so a same-side history becomes a fair coin toss.
+func _classic_spawn_sides(pair: Array) -> Array:
+	var first := int(_last_spawn_sides.get(pair[0], 0))
+	var second := int(_last_spawn_sides.get(pair[1], 0))
+	var side: int
+	if first != 0 and first != second:
+		side = -first
+	elif second != 0 and first == 0:
+		side = second
+	else:
+		side = -1 if randf() < 0.5 else 1
+	return [side, -side]
+
+
+func _spawn(pid: int, preferred_side := 0) -> void:
+	var side := preferred_side
+	if side == 0:
+		if mode.get("round_robin", false) and _last_spawn_sides.has(pid):
+			side = -int(_last_spawn_sides[pid])
+		else:
+			side = _spawn_side()
+	var feet := _open_spawn(stage.spawn_point(side))
 	var cid := _cid_next
 	_cid_next += 1
 	# A NEW NAME FOR EVERY CLIMBER (Parker 11-08): a player with a random name gets
@@ -380,6 +403,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 	var r := roster_entry(pid)
 	if r.is_empty():
 		return
+	_last_spawn_sides[pid] = -1 if feet.x < 0.0 else 1
 	r.name = nm  # banners, tags and results follow the climber now climbing
 	if phase == "turn" and _is_new_character(pid):
 		announce.emit("%s's turn" % nm, true)

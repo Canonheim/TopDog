@@ -4,6 +4,8 @@ extends RefCounted
 ## touch) and, when there's a 3D root, the dressing (what you see). The 2D outline
 ## of every solid is its 3D shape cut at the play plane (z = 0).
 
+const DONKEY_MODEL := preload("res://kit/models/donkey_base.glb")
+
 const CACTUS_MODEL := preload("res://kit/models/potted_saguaro.glb")
 
 const BARREL_MODEL := preload("res://models/barrel.glb")
@@ -72,7 +74,7 @@ func build(world: Node3D, dress := true) -> void:
 
 ## Swap only the starting support, leaving the ring and its scenery in place.
 func set_base(world: Node3D, selected: String) -> void:
-	var chosen := selected if selected in ["barrel", "cactus"] else "barrel"
+	var chosen := selected if selected in Modes.STARTING_BASES else "barrel"
 	if is_instance_valid(base_root) and chosen == base_id:
 		return
 	for body in base_bodies:
@@ -95,7 +97,7 @@ func set_base(world: Node3D, selected: String) -> void:
 		base_bodies.append(_static_poly(base_root, pts, 0.9, 0.6))
 		barrel_top = 0.96 * bs
 		barrel_half = 0.445 * bs
-	else:
+	elif base_id == "cactus":
 		# The reduced pot and cactus are authored in metres, origin on the canvas.
 		# Separate convex pieces preserve the gaps underneath both raised arms.
 		var profiles := [
@@ -109,9 +111,32 @@ func set_base(world: Node3D, selected: String) -> void:
 				base_bodies.append(_static_poly(base_root, convex, 0.9, 0.22 if i == 0 else 0.10))
 		barrel_top = 1.796
 		barrel_half = 0.62
+	else:
+		var shape_source: Node3D = DONKEY_MODEL.instantiate()
+		barrel_top = 0.0
+		barrel_half = 0.0
+		# Project the principal mesh volumes onto the gameplay plane. Separate
+		# limbs leave the space under the belly open for players to pass through.
+		for mesh: MeshInstance3D in shape_source.find_children("*", "MeshInstance3D", true, false):
+			var part := str(mesh.name)
+			if part.contains("eye") or part.contains("nostril") or part.contains("inner") or part.contains("hoof_edge") or part.ends_with("_brow") or part.ends_with("_mouth") or part == "dark_mane":
+				continue
+			var outline := PackedVector2Array()
+			for si in mesh.mesh.get_surface_count():
+				var points: PackedVector3Array = mesh.mesh.surface_get_arrays(si)[Mesh.ARRAY_VERTEX]
+				for point in points:
+					outline.append(Vector2(point.x, point.y))
+					barrel_top = maxf(barrel_top, point.y)
+					barrel_half = maxf(barrel_half, absf(point.x))
+			var hull := Geometry2D.convex_hull(outline)
+			if hull.size() > 3:
+				hull.resize(hull.size() - 1)  # the convex hull repeats its first vertex
+				base_bodies.append(_static_poly(base_root, hull, 0.9, 0.18))
+		shape_source.free()
 	first_line = barrel_top + FIRST_LINE_ABOVE
 	if base_dressed:
-		var visual: Node3D = (CACTUS_MODEL if base_id == "cactus" else BARREL_MODEL).instantiate()
+		var models := {"barrel": BARREL_MODEL, "cactus": CACTUS_MODEL, "donkey": DONKEY_MODEL}
+		var visual: Node3D = models[base_id].instantiate()
 		base_root.add_child(visual)
 		if base_id == "barrel":
 			visual.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5).scaled(Vector3.ONE * float(row.barrel_scale)), Vector3.ZERO)

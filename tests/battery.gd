@@ -817,11 +817,12 @@ func _run_net() -> void:
 	B.bot_drivers[1] = Drivers.ScriptDriver.new()
 	var roster := [{"pid": 0, "name": "Host bot", "tint": Color.RED, "peer": 1, "slot": 0},
 		{"pid": 1, "name": "Client bot", "tint": Color.BLUE, "peer": cid_peer, "slot": 0}]
-	A.host_start({"mode": "scramble", "timer": 9.0, "spawn": "alternate", "stage": "plaza"}, roster)
+	A.host_start({"mode": "scramble", "timer": 9.0, "spawn": "alternate", "stage": "plaza", "base": "barrel"}, roster)
 	await wait_phase(A, "round", 6.0)
 	await wait_phase(B, "round", 3.0)
 	await frames(30)
 	t("net: all peers use the host-selected starting base", machines.all(func(m): return m.game.stage.base_id == A.settings.resolved_base))
+	t("net: actual spawn sides agree across all peers", machines.all(func(m): return m.game._last_spawn_sides == A._last_spawn_sides))
 	t("net: all peers receive the same active pair", machines.all(func(m): return m.game.round_players == [0, 1]))
 	t("net: both machines start the round", A.phase == "round" and B.phase == "round", "%s %s" % [A.phase, B.phase])
 	var a0: Climber = A.climbers.get(A.live.get(0, -1))
@@ -2250,19 +2251,26 @@ func _run_startingbase() -> void:
 	var g := make_game("tower", 1, 60, "plaza", true)
 	await wait_phase(g, "turn")
 	var selected: String = g.stage.base_id
-	t("base: host resolves random once", selected in ["barrel", "cactus"] and g.settings.resolved_base == selected)
+	t("base: host resolves random once", selected in Modes.STARTING_BASES and g.settings.resolved_base == selected)
 	var resolved := {}
 	for i in 24:
 		g.host_start({"mode": "tower", "timer": 60.0, "stage": "plaza", "base": "random"}, g.roster)
 		resolved[g.stage.base_id] = true
-	t("base: random can choose both supports", resolved.size() == 2)
-	for choice in ["barrel", "cactus"]:
+	t("base: random can choose every support", resolved.size() == Modes.STARTING_BASES.size())
+	for choice in Modes.STARTING_BASES:
 		g.host_start({"mode": "tower", "timer": 60.0, "stage": "plaza", "base": choice}, g.roster)
 		await wait_phase(g, "turn")
 		var support: Node3D = g.stage.base_root
-		var highest: float = 2.016 if choice == "barrel" else 1.796
+		var highest: float = {"barrel": 2.016, "cactus": 1.796, "donkey": 2.133462}[choice]
 		t("base: forced choice uses matching support height", g.stage.base_id == choice and is_equal_approx(g.stage.barrel_top, highest) and is_equal_approx(g.stage.first_line, highest + Stage.FIRST_LINE_ABOVE), choice)
 		t("base: support has live stage collisions", not g.stage.base_bodies.is_empty() and g.stage.base_bodies.all(func(b): return g.stage.bodies.has(b) and b.is_inside_tree()), choice)
+		if choice == "donkey":
+			await frames(2)
+			var space := world.get_world_3d().direct_space_state
+			var back_ray := PhysicsRayQueryParameters3D.create(Vector3(0,1.7,0), Vector3(0,0.6,0), Climber.LAYER_WORLD)
+			var gap_ray := PhysicsRayQueryParameters3D.create(Vector3(-0.3,0.4,0), Vector3(0.15,0.4,0), Climber.LAYER_WORLD)
+			t("base: donkey back supports climbing with an open gap below", not space.intersect_ray(back_ray).is_empty() and space.intersect_ray(gap_ray).is_empty())
+			t("base: donkey remains stationary", g.stage.base_bodies.all(func(b): return b is StaticBody3D))
 		g._next()
 		t("base: a new turn keeps the same base", is_instance_valid(support) and g.stage.base_root == support and g.stage.base_id == choice, choice)
 	g.end_match()
@@ -2290,3 +2298,38 @@ func _run_classicdisconnect() -> void:
 		g.end_match()
 		g.queue_free()
 		await frames(2)
+
+
+func _run_classicspawns() -> void:
+	var g := make_game("scramble", 2, 50.0)
+	g.host_start({"mode": "scramble", "timer": 50.0, "stage": "dock", "base": "barrel"}, g.roster)
+	await wait_phase(g, "round", 5.0)
+	var first := g._last_spawn_sides.duplicate()
+	t("Classic spawns: first duel starts on opposite sides", first[0] == -first[1])
+	for pid in [0, 1]:
+		await lift_and_lock(g, pid)
+	await wait_phase(g, "round", 5.0)
+	t("Classic spawns: both entrants lock before rematch", g.round_n == 2)
+	t("Classic spawns: rematch swaps each player's actual previous side", g._last_spawn_sides[0] == -first[0] and g._last_spawn_sides[1] == -first[1])
+	g.set_physics_process(false)
+	g._last_spawn_sides = {0: -1, 1: 1}
+	t("Classic spawns: histories follow player IDs, not pair order", g._classic_spawn_sides([1, 0]) == [-1, 1])
+	g._last_spawn_sides = {0: -1}
+	t("Classic spawns: newcomer accommodates returning player's swap", g._classic_spawn_sides([0, 1]) == [1, -1] and g._classic_spawn_sides([1, 0]) == [-1, 1])
+	for previous in [-1, 1]:
+		g._last_spawn_sides = {0: previous, 1: previous}
+		var seen := {}
+		var opposite := true
+		for attempt in 128:
+			var sides := g._classic_spawn_sides([0, 1])
+			seen[sides[0]] = true
+			opposite = opposite and sides[0] == -sides[1]
+		t("Classic spawns: same-side history randomly assigns opposite sides", opposite and seen.size() == 2)
+	g._last_spawn_sides = {0: -1, 1: 1}
+	g._spawn(0)
+	var respawn: Climber = g.climbers[g.live[0]]
+	t("Classic spawns: history records collision-resolved position", g._last_spawn_sides[0] == (-1 if respawn.spawn_at.x < 0 else 1))
+	g.host_start(g.settings, g.roster)
+	t("Classic spawns: new match clears previous sides", g._last_spawn_sides.is_empty())
+	g.end_match()
+	g.queue_free()

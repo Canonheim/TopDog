@@ -456,7 +456,7 @@ func _on_over(res: Dictionary) -> void:
 func preview_base(choice: String) -> void:
 	if game == null or game.stage == null or game.phase != "idle":
 		return
-	var selected := str(["barrel", "cactus"].pick_random()) if choice == "random" else choice
+	var selected := str(Modes.STARTING_BASES.pick_random()) if choice == "random" else choice
 	game.stage.set_base(world, selected)
 
 
