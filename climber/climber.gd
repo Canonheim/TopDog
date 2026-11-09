@@ -44,6 +44,11 @@ const DEPTH := 0.24  # how thick a box piece is through the plane, for contacts 
 ## strongest at 180 (Feel fold_resistance). Past 180 it helps you through, so a
 ## limb rotated around comes easily and a straight pull back inward doesn't.
 const ANKLE_LIMIT_DEG := 30.0  # feet turn at most this far either way from the shin (Parker 11-09)
+const WRIST_LIMIT_DEG := 30.0  # hands the same from the forearm (Parker 11-09, with THE SLIP)
+## THE SLIP (Parker 11-09): a stuck hand or foot turns on what it holds once its wrist
+## or ankle comes this close to the stop, so the body still swings all the way round it.
+const SLIP_EDGE_DEG := 3.0
+const WRIST_CLOSE_RATE := 4.0  # a let-go hand's stop closes back to 30 degrees this fast (rad/s)
 const SLAP_QUIET_S := 0.6  # no slaps for this long after spawning (the feet settle)
 ## THE ROPES (Parker 11-08: "the ropes on the side of the ring to bounce you if you
 ## run into them, with more force than you hit them with"): the side ropes stand at
@@ -111,6 +116,7 @@ var _buttons_down := [false, false, false, false]
 var _gravity_scale := -1.0
 var _root: Node3D
 var _glyphs: Array = []  # per limb: the Sprite3D / Label3D riding the hand or foot
+var _hand_meshes := {}  # hand piece -> [mesh, its rest transform on the body]: THE DRAWN WRIST
 
 
 # ---------------------------------------------------------------- frames
@@ -223,6 +229,8 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 				mesh.get_parent().remove_child(mesh)
 				body.add_child(mesh)
 				mesh.global_transform = keep
+				if pname.begins_with("hand"):
+					_hand_meshes[pname] = [mesh, mesh.transform]
 	if visual != null:
 		visual.queue_free()
 	# No self-collision: a climber's own pieces pass through each other, limbs fold
@@ -328,11 +336,14 @@ func _build_joints(feet: Vector2) -> void:
 		# folding an elbow or knee through itself meets THE SOFT FOLD instead of a stop.
 		if jd.kind in ["spine", "neck"]:
 			set_hinge_limits(rid, float(lim[0]), float(lim[1]))
-		elif jn.begins_with("ankle"):
-			# THE ANKLE STOP (Parker 11-09: "the feet keep breaking at the ankles ...
-			# so they don't turn more than 30 degrees in either direction"). Tried on
-			# the wrists too: a stiff wrist cost the reach (16 cm short) and the climb.
-			lim = [-ANKLE_LIMIT_DEG, ANKLE_LIMIT_DEG]
+		elif jn.begins_with("ankle") or jn.begins_with("wrist"):
+			# THE ANKLE AND WRIST STOPS (Parker 11-09: "the feet keep breaking at the
+			# ankles ... so they don't turn more than 30 degrees in either direction",
+			# then the hands too). A stuck end SLIPS on its hold at the stop (_tick_slip),
+			# so the stop shapes the look without pinning the body to one angle. The
+			# hand you are steering drops its stop while held (_tick_slip, THE DRAWN WRIST).
+			var stop := ANKLE_LIMIT_DEG if jn.begins_with("ankle") else WRIST_LIMIT_DEG
+			lim = [-stop, stop]
 			set_hinge_limits(rid, float(lim[0]), float(lim[1]))
 		else:
 			lim = [-360.0, 360.0]
@@ -366,6 +377,7 @@ func _build_joints(feet: Vector2) -> void:
 			"rid": rid, "a": a, "b": b, "kind": jd.kind, "at": at,
 			"lo": deg_to_rad(float(lim[0])), "hi": deg_to_rad(float(lim[1])),
 			"ieff": ieff, "ieff_other": other, "local_a": xf2(a).affine_inverse() * at,
+			"win": deg_to_rad(float(lim[1])), "stop_on": true,  # a wrist's live stop window (rad)
 		}
 
 
@@ -422,6 +434,9 @@ func _build_limbs() -> void:
 			"end_offset": Vector3.ZERO, "contact_offset": Vector3.ZERO, "last_anchor": Vector3.ZERO,
 			"contact_force": Vector3.ZERO, "strain_time": 0.0, "peeled_from": 0,
 			"regrip": 0.0,
+			"end_joint": ("wrist" if ld.arm else "ankle") + (ld.id as String).substr((ld.id as String).length() - 2),
+			"grab_rel0": 0.0,  # the end's angle against its hold when it stuck (rad)
+			"slipping": false,  # THE SLIP: the weld is turning as a friction pivot
 			"cursor": Vector2.ZERO,  # where a held hand or foot is being steered (world m)
 			"driving": false,
 		})
@@ -580,6 +595,7 @@ static func _on_disc(tex: Texture2D, disc := true) -> Texture2D:
 
 
 func _process(_delta: float) -> void:
+	_draw_wrists()
 	if _glyphs.is_empty():
 		return
 	for i in _glyphs.size():
@@ -608,6 +624,31 @@ func _process(_delta: float) -> void:
 		g.scale = Vector3.ONE * sc
 
 
+## THE DRAWN WRIST (Parker 11-09): a hand's mesh is drawn turned back within the
+## wrist stop, about the wrist, whatever the physics hand is doing (the steered hand's
+## wrist is free, and remote puppets show the owner's pose). Within the stop it rests.
+func _draw_wrists() -> void:
+	for pname in _hand_meshes:
+		var entry: Array = _hand_meshes[pname]
+		var mesh := entry[0] as Node3D
+		if not is_instance_valid(mesh):
+			continue
+		var wj: Dictionary = joints.get("wrist" + (pname as String).substr(4), {})
+		if wj.is_empty():
+			continue
+		var hand := wj.b as RigidBody3D
+		var rel := wrapf(angle_of(hand) - angle_of(wj.a), -PI, PI)
+		var stop := deg_to_rad(WRIST_LIMIT_DEG)
+		var back := clampf(rel, -stop, stop) - rel
+		if absf(back) < 0.001:
+			mesh.transform = entry[1]
+			continue
+		var w2 := xf2(wj.a) * (wj.local_a as Vector2)
+		var pivot := hand.to_local(Vector3(w2.x, w2.y, 0.0))
+		var turn := Transform3D(Basis(Vector3.BACK, back), pivot - Basis(Vector3.BACK, back) * pivot)
+		mesh.transform = turn * (entry[1] as Transform3D)
+
+
 # ---------------------------------------------------------------- tick
 
 func _physics_process(delta: float) -> void:
@@ -621,6 +662,7 @@ func _physics_process(delta: float) -> void:
 			var force: Vector3 = load_info.force
 			piece.apply_force(force, piece.global_basis * (load_info.offset as Vector3))
 			_incoming_pull = maxf(_incoming_pull, force.length())
+	_tick_slip()
 	if knockout_left > 0:
 		knockout_left = maxf(0, knockout_left - delta)
 		_incoming_pull = 0
@@ -945,6 +987,8 @@ func attach(i: int, other: Object) -> void:
 		# removed on release, is reversible.
 		PhysicsServer3D.joint_disable_collisions_between_bodies(rid, false)
 		l.grab = rid
+		l.grab_rel0 = angle_of(end) - angle_of(ob)
+		l.slipping = false
 	end.add_collision_exception_with(ob)
 	l.grab_other = other
 	l.grab_climber = null
@@ -958,6 +1002,68 @@ func attach(i: int, other: Object) -> void:
 				oc.grabbed_by += 1
 				oc.held_by.append(self)
 	grab_made.emit(self, i, other)
+
+
+## THE SLIP (Parker 11-09: "make it so the foot that is connected to the ground rotates
+## on the ground as you move if you hit the rotational limit, so you have full freedom
+## again ... Add this to the hands as well"). A weld is a hinge locked at one angle. When
+## a stuck end's wrist or ankle comes SLIP_EDGE_DEG short of its stop, the weld unlocks
+## into a FRICTION PIVOT as stiff as that joint (a foot's ankle holds like a hip, a
+## hand's wrist stays loose), so the end turns on its hold with the limb and the body
+## keeps its full swing, but stands exactly as firmly as a free ankle held it. Off the
+## stop again, the weld locks where the end now sits. (A free turn with no friction let
+## the standing body topple over its feet.)
+func _tick_slip() -> void:
+	var weight := total_mass * 9.8 * Feel.climber_gravity(true)
+	# THE DRAWN WRIST: the hand you steer turns freely (a stopped one handed its whole
+	# swing to the body, which toppled on a plain reach); its mesh is drawn within the
+	# stop instead (_draw_wrists). Let go, and the real stop closes back in from wherever
+	# the hand is, WRIST_CLOSE_RATE at a time, rather than snapping it.
+	for l: Dictionary in limbs:
+		if not bool(l.def.arm):
+			continue
+		var wj: Dictionary = joints[l.end_joint]
+		var stop: float = wj.hi
+		if l.held:
+			if wj.stop_on:
+				wj.stop_on = false
+				PhysicsServer3D.hinge_joint_set_flag(wj.rid, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, false)
+			continue
+		var bend := absf(wrapf(angle_of(wj.b) - angle_of(wj.a), -PI, PI))
+		var win: float = wj.win
+		if not wj.stop_on:
+			win = maxf(stop, bend + 0.01)
+		win = maxf(stop, minf(win, bend + 0.01) - WRIST_CLOSE_RATE / Engine.physics_ticks_per_second)
+		if not wj.stop_on or not is_equal_approx(win, float(wj.win)):
+			wj.win = win
+			set_hinge_limits(wj.rid, -rad_to_deg(win), rad_to_deg(win))
+			wj.stop_on = true
+	for l: Dictionary in limbs:
+		if not (l.grab as RID).is_valid():
+			continue
+		var jn: String = l.end_joint
+		var jd: Dictionary = joints[jn]
+		var edge: float = jd.hi - deg_to_rad(SLIP_EDGE_DEG)
+		var rel := wrapf(angle_of(jd.b) - angle_of(jd.a), -PI, PI)
+		var at_stop := absf(rel) >= edge
+		if at_stop:
+			var friction := Feel.get_k("joint_friction" if jn.begins_with("ankle") else "wrist_friction") * weight * 0.5
+			if not l.slipping:
+				l.slipping = true
+				PhysicsServer3D.hinge_joint_set_flag(l.grab, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, false)
+				PhysicsServer3D.hinge_joint_set_flag(l.grab, PhysicsServer3D.HINGE_JOINT_FLAG_ENABLE_MOTOR, true)
+				PhysicsServer3D.hinge_joint_set_param(l.grab, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, 0.0)
+			PhysicsServer3D.hinge_joint_set_param(l.grab, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, friction / Engine.physics_ticks_per_second)
+		elif l.slipping and absf(rel) < edge - deg_to_rad(1.0):
+			# Lock again where the end sits now (the weld's angle is the end's CCW turn
+			# against its hold since it stuck).
+			l.slipping = false
+			var hold := l.grab_other as Node3D
+			var turn := wrapf(angle_of(bodies[l.def.end]) - angle_of(hold) - float(l.grab_rel0), -PI, PI)
+			PhysicsServer3D.hinge_joint_set_flag(l.grab, PhysicsServer3D.HINGE_JOINT_FLAG_ENABLE_MOTOR, false)
+			PhysicsServer3D.hinge_joint_set_param(l.grab, PhysicsServer3D.HINGE_JOINT_LIMIT_LOWER, turn)
+			PhysicsServer3D.hinge_joint_set_param(l.grab, PhysicsServer3D.HINGE_JOINT_LIMIT_UPPER, turn)
+			PhysicsServer3D.hinge_joint_set_flag(l.grab, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, true)
 
 
 func release(i: int) -> void:
@@ -1365,6 +1471,13 @@ func worst_limit_excess() -> float:
 	for jn in joints:
 		var j: Dictionary = joints[jn]
 		var rel := wrapf(angle_of(j.b) - angle_of(j.a), -PI, PI)
+		if jn.begins_with("wrist"):
+			# THE DRAWN WRIST: a steered hand's stop is open on purpose, and a let-go
+			# one's closes in from where it was; judge a wrist by its live window.
+			if not j.stop_on:
+				continue
+			worst = maxf(worst, absf(rel) - float(j.win))
+			continue
 		worst = maxf(worst, maxf(rel - j.hi, j.lo - rel))
 	return rad_to_deg(worst)
 

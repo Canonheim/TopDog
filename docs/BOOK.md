@@ -505,7 +505,16 @@ Parker: "the A button on my controller is being registered as always held in gam
 
 Parker: "the feet keep breaking at the ankles. Add some rotational limits to the feet so they don't turn more than 30 degrees in either direction." The ankles have a hinge limit of ±`Climber.ANKLE_LIMIT_DEG` (30°), from the build pose. `--feel` checks a foot twisted hard tops out at about 30°.
 
-Also tried on the wrists ("do the same on the hands"), first always on and then only while the hand is free. Either way it broke reaching: a held hand ended 16 cm short of the cursor, because a stiff wrist can't pivot the hand to point at it. The out-of-reach lean dropped, and with the stop always on, the climb onto the barrel failed. Not shipped; it's Parker's call.
+Also tried on the wrists ("do the same on the hands"), first always on and then only while the hand is free. Either way it broke reaching: a held hand ended 16 cm short of the cursor, because a stiff wrist can't pivot the hand to point at it. The out-of-reach lean dropped, and with the stop always on, the climb onto the barrel failed. Not shipped then.
+
+### The slip and the drawn wrist (Parker, 2026-11-09, later)
+
+Parker: the ankle stop "changed how the climbing feels as you cannot rotate freely around the foot you connect with anymore. Make it so the foot that is connected to the ground rotates on the ground as you move if you hit the rotational limit ... Add this to the hands as well."
+
+- **The slip** (`Climber._tick_slip`). A stuck hand or foot is a weld: a hinge locked at one angle. When its ankle or wrist comes within `SLIP_EDGE_DEG` (3°) of the 30° stop, the weld unlocks into a **friction pivot**, as stiff as that joint: a foot holds like a hip (`joint_friction`), a hand stays loose (`wrist_friction`). The end turns on its hold with the limb, so the body swings all the way round it. Back off the stop, the weld locks where the end now sits. A first try that moved the lock freely (no friction) let the standing body topple over its feet.
+- **Wrists: 30° stops (`WRIST_LIMIT_DEG`), except the hand you're steering.** A hard stop on the steered hand hands its whole swing to the body: on a plain reach the shoulder fell 0.64 m sideways, past the hand (knee buckling). A soft spring stop was too weak (wrist at 110°) and broke the climb, and pulling the hand at the wrist tipped the body too. So while held, its stop is off and it moves exactly as before. Let go, and the stop closes back in from wherever the wrist is (`WRIST_CLOSE_RATE`, 4 rad/s), so it never snaps.
+- **The drawn wrist** (`Climber._draw_wrists`, every frame, puppets too). A hand's mesh is drawn turned back about the wrist to within 30°, so the steered hand never looks broken.
+- **Checks in `--feel`:** a stuck foot and a stuck hand twisted hard each swing over 60° past the stop both ways, with the joint itself staying within the stop. A hand bent 100° is drawn at 30°.
 
 ## Record
 

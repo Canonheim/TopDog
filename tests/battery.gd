@@ -1195,6 +1195,67 @@ func _run_feel() -> void:
 		worst_ankle = maxf(worst_ankle, absf(rad_to_deg(wrapf(Climber.angle_of(aj.b) - Climber.angle_of(aj.a), -PI, PI))))
 	t("feel: a foot twisted hard stays within the ankle stop (30 deg, a little give)", worst_ankle < Climber.ANKLE_LIMIT_DEG + 6.0, "worst %.1f deg" % worst_ankle)
 	ak.remove()
+	# THE SLIP (Parker 11-09): a stuck foot, then a stuck hand, is twisted hard both
+	# ways by its shin / forearm. The limb swings well past the 30 degree stop because
+	# the end turns on its hold, and the ankle / wrist itself stays within the stop.
+	for case in [[2, "leg_l_lo", "ankle_l", "foot"], [0, "arm_l_lo", "wrist_l", "hand"]]:
+		var sc := spawn(Vector2(24.0 + 4.0 * float(case[0]), 8.0))
+		for b in sc.bodies.values():
+			(b as RigidBody3D).gravity_scale = 0.0
+		await frames(2)
+		sc.attach(case[0], bar_at(sc.limb_end(case[0])))
+		await frames(2)
+		var lever: RigidBody3D = sc.bodies[case[1]]
+		var sj: Dictionary = sc.joints[case[2]]
+		var prev := Climber.angle_of(lever)
+		var swung := 0.0
+		var most := 0.0
+		var least := 0.0
+		var back_most := 0.0
+		var worst_stop := 0.0
+		for k in int(4.0 * Engine.physics_ticks_per_second):
+			var tq := lever.mass * 9.8 * 6.0 * (1.0 if k < 2 * Engine.physics_ticks_per_second else -1.0)
+			lever.apply_torque(Vector3(0, 0, tq))
+			await get_tree().physics_frame
+			var now := Climber.angle_of(lever)
+			swung += angle_difference(prev, now)
+			prev = now
+			# Each push measured from where it began (the first can carry the limb a long way round).
+			if k < 2 * Engine.physics_ticks_per_second:
+				most = maxf(most, swung)
+				least = swung
+			else:
+				back_most = minf(back_most, swung - least)
+			worst_stop = maxf(worst_stop, absf(rad_to_deg(wrapf(Climber.angle_of(sj.b) - Climber.angle_of(sj.a), -PI, PI))))
+		t("feel: a stuck %s turns on its hold, so the limb swings past the stop both ways (60 deg+)" % case[3], rad_to_deg(most) > 60.0 and rad_to_deg(back_most) < -60.0 and sc.limbs[case[0]].grab.is_valid(), "%+.0f / %+.0f deg" % [rad_to_deg(most), rad_to_deg(back_most)])
+		t("feel: ...and its %s stays within the stop meanwhile" % case[2].get_slice("_", 0), worst_stop < 36.0, "worst %.1f deg" % worst_stop)
+		sc.remove()
+	# THE DRAWN WRIST (Parker 11-09): the hand you steer turns freely, but its mesh is
+	# drawn within the 30 degree stop. A climber with the model, its left hand turned 100
+	# degrees back about the wrist: the mesh sits 30 degrees off the forearm.
+	var dw: Climber = ClimberScript.new()
+	dw.climber_id = _next_id
+	_next_id += 1
+	add_child(dw)
+	dw.build(Vector2(40.0, 8.0), world, GameScript.KNIGHT)
+	dw.driver = Drivers.ScriptDriver.new()
+	for b in dw.bodies.values():
+		(b as RigidBody3D).gravity_scale = 0.0
+	await frames(2)
+	var dwj: Dictionary = dw.joints["wrist_l"]
+	var dhand: RigidBody3D = dw.bodies["hand_l"]
+	var dw2: Vector2 = Climber.xf2(dwj.a) * (dwj.local_a as Vector2)
+	var dpivot := Vector3(dw2.x, dw2.y, 0.0)
+	var dbent := Basis(Vector3.BACK, deg_to_rad(100.0))
+	dhand.freeze = true
+	dhand.global_transform = Transform3D(dbent * dhand.global_basis, dpivot + dbent * (dhand.global_position - dpivot))
+	dw._draw_wrists()
+	var dmesh: Node3D = dw._hand_meshes["hand_l"][0]
+	var phys := rad_to_deg(wrapf(Climber.angle_of(dhand) - Climber.angle_of(dwj.a), -PI, PI))
+	var dturn: Transform3D = dmesh.transform * (dw._hand_meshes["hand_l"][1] as Transform3D).affine_inverse()
+	var drawn := phys + rad_to_deg(atan2(dturn.basis.x.y, dturn.basis.x.x))
+	t("feel: a hand bent past the stop is drawn at the stop (30 deg)", absf(absf(drawn) - Climber.WRIST_LIMIT_DEG) < 3.0 and absf(phys) > 60.0, "drawn %.1f deg, physics %.1f deg" % [drawn, phys])
+	dw.remove()
 	# 5. Loose in the air, a held limb isn't pulled anywhere.
 	var air := spawn(Vector2(4.0, 6.0))
 	var ad: Drivers.ScriptDriver = air.driver
