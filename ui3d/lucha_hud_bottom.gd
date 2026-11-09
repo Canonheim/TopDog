@@ -18,7 +18,9 @@ extends Node3D
 const LONGEST := 33
 const DIGIT_STEP := TAU / 10.0
 const PLATE_AT := Vector3(-1.4, -3.05, 0.0)  # HUD units (x UI_SCALE on screen)
-const ODO_AT := Vector3(3.55, -3.05, 0.0)
+const ODO_AT := Vector3(4.1, -3.05, 0.0)
+const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) and odometer at HUD size
+const LOCK_AT := Vector3(-3.2, -2.3, 0.0)  # the LOCK IN tab, above the plate's left end
 const LOCK_TEXT := "LOCK IN!  A / SPACE"
 
 var main: Node
@@ -26,6 +28,9 @@ var _plate: Node3D
 var _name_node: Node3D
 var _name_shown := ""
 var _face_w := 6.2
+var _face_h := 0.66
+var _gems: Node3D  # the kit's nameplate_lockin: red, lime when you can lock in
+var _gems_lit := false
 var _face_c := Vector3.ZERO  # the name face's centre, plate space
 var _lock: Node3D
 var _lock_text: Node3D
@@ -52,6 +57,8 @@ func _build_plate() -> void:
 	var face: MeshInstance3D = null
 	if _plate != null:
 		face = _plate.find_child("nameplate_face", true, false) as MeshInstance3D
+		_plate.scale = Vector3.ONE * KIT_SCALE
+		_gems = _plate.find_child("nameplate_lockin", true, false) as Node3D
 	else:
 		_plate = Node3D.new()
 		_plate.add_child(LuchaKit.box(Vector3(6.9, 0.9, 0.08), LuchaKit.GOLD, Vector3(0, 0, -0.02)))
@@ -62,28 +69,22 @@ func _build_plate() -> void:
 	if face != null:
 		var box := _local_aabb(face, _plate)
 		_face_w = box.size.x * 0.92
+		_face_h = box.size.y
 		_face_c = box.get_center() + Vector3(0, 0, box.size.z * 0.5 + 0.012)
 	_name_node = Node3D.new()
 	_name_node.position = _face_c
 	_plate.add_child(_name_node)
-	# The lock-in tab: the kit's, or a gold tab riding the plate's top edge.
-	_lock = _plate.find_child("nameplate_lockin", true, false) as Node3D
-	var tab_c := Vector3(0, 0.78, 0.06)
-	var tab_w := 3.4
-	if _lock == null:
-		_lock = Node3D.new()
-		_lock.add_child(LuchaKit.box(Vector3(3.6, 0.5, 0.08), LuchaKit.GOLD, Vector3(0, 0.78, 0.0)))
-		_plate.add_child(_lock)
-	else:
-		var tb := _local_aabb(_lock, _plate)
-		tab_c = tb.get_center() + Vector3(0, 0, tb.size.z * 0.5 + 0.012)
-		tab_w = tb.size.x * 0.9
-	# The words ride the plate (plate space), shown and hidden with the tab.
-	_lock_text = LuchaKit.fit_text(LOCK_TEXT, tab_w, 0.3, LuchaKit.RED, LuchaKit.INK)
-	_lock_text.position = tab_c
-	_plate.add_child(_lock_text)
+	# The LOCK IN tab above the plate's left end (HUD space): the climber's foot
+	# glyphs draw over the middle of the screen.
+	_lock = Node3D.new()
+	_lock.position = LOCK_AT
+	_lock.add_child(LuchaKit.box(Vector3(3.0, 0.5, 0.08), LuchaKit.GOLD_DARK, Vector3(0, 0, -0.02)))
+	_lock.add_child(LuchaKit.box(Vector3(2.85, 0.38, 0.08), LuchaKit.GOLD, Vector3(0, 0, 0.02)))
+	_lock_text = LuchaKit.fit_text(LOCK_TEXT, 2.7, 0.3, LuchaKit.RED, LuchaKit.INK)
+	_lock_text.position = Vector3(0, 0, 0.075)
+	_lock.add_child(_lock_text)
+	add_child(_lock)
 	_lock.visible = false
-	_lock_text.visible = false
 
 
 func set_name_text(s: String) -> void:
@@ -94,7 +95,7 @@ func set_name_text(s: String) -> void:
 	for ch in _name_node.get_children():
 		ch.queue_free()
 	# The face fits 33 letters; shorter names grow, up to a cap.
-	var t := LuchaKit.fit_text(s, _face_w, 0.42, LuchaKit.CREAM, LuchaKit.INK)
+	var t := LuchaKit.fit_text(s, _face_w, _face_h * 0.7, LuchaKit.RED, LuchaKit.INK)
 	_name_node.add_child(t)
 	LuchaUI.no_shadows(t)
 
@@ -108,6 +109,8 @@ func _build_odometer() -> void:
 		for n in _odo.find_children("odo_wheel_*", "Node3D", true, false):
 			wheels.append(n)
 		wheels.sort_custom(func(a, b): return (a as Node3D).global_position.x < (b as Node3D).global_position.x if a.is_inside_tree() else (a as Node3D).position.x < (b as Node3D).position.x)
+	if _odo != null and wheels.size() >= 4:
+		_odo.scale = Vector3.ONE * KIT_SCALE
 	if _odo == null or wheels.size() < 4:
 		_odo = _stand_in_odometer()
 		wheels.clear()
@@ -121,10 +124,10 @@ func _build_odometer() -> void:
 
 ## A drum's digits: 0-9 round its rim, each facing out, the drum turning about X.
 func _dress_drum(wheel: Node3D) -> Node3D:
-	var r := 0.3
-	var width := 0.4
+	var r: float = wheel.get_meta("radius", 0.3)
+	var width: float = wheel.get_meta("width", 0.4)
 	var mi := wheel as MeshInstance3D
-	if mi != null and mi.mesh != null:
+	if mi != null and mi.mesh != null and not wheel.has_meta("radius"):
 		var bb := mi.mesh.get_aabb()
 		r = maxf(bb.size.y, bb.size.z) * 0.5
 		width = bb.size.x
@@ -133,7 +136,7 @@ func _dress_drum(wheel: Node3D) -> Node3D:
 	wheel.add_child(spin)
 	for k in 10:
 		var a := -k * DIGIT_STEP  # the next digit waits below and rolls up, as on a real odometer
-		var d := LuchaKit.text3d(str(k), minf(width * 0.9, r * 0.95), LuchaKit.INK, 0.0, 2)
+		var d := LuchaKit.text3d(str(k), minf(width * 0.75, r * 0.72), LuchaKit.INK, 0.0, 2)
 		d.position = Vector3(0, r * sin(a), r * cos(a)) * 1.02
 		d.rotation.x = -a
 		spin.add_child(d)
@@ -145,8 +148,13 @@ func _stand_in_odometer() -> Node3D:
 	root.add_child(LuchaKit.box(Vector3(2.5, 0.95, 0.1), Color("#5A2E14"), Vector3(0, 0, -0.32)))
 	root.add_child(LuchaKit.box(Vector3(2.62, 1.05, 0.06), LuchaKit.GOLD, Vector3(0, 0, -0.36)))
 	for i in 4:
-		var w := LuchaKit.cyl(0.3, 0.46, LuchaKit.CREAM, Vector3((i - 1.5) * 0.56, 0, 0), Vector3.RIGHT)
+		# A plain holder (the drum turns about its X), the cylinder laid along X inside.
+		var w := Node3D.new()
 		w.name = "odo_wheel_%d" % (i + 1)
+		w.position = Vector3((i - 1.5) * 0.56, 0, 0)
+		w.set_meta("radius", 0.3)
+		w.set_meta("width", 0.46)
+		w.add_child(LuchaKit.cyl(0.3, 0.46, LuchaKit.CREAM, Vector3.ZERO, Vector3.RIGHT))
 		root.add_child(w)
 	# The decimal point between the units and the tenths.
 	root.add_child(LuchaKit.ball(0.05, LuchaKit.RED, Vector3(0, -0.22, 0.32)))
@@ -208,9 +216,11 @@ func tick(delta: float) -> void:
 		set_height(maxf(0.0, h_src.top_height()), delta)
 	var above := mine != null and mine.top_height() > g.line + Game.LOCK_MARGIN
 	_lock.visible = above
-	_lock_text.visible = above
 	if above:
-		_lock_text.scale = Vector3.ONE * (1.0 + 0.05 * sin(Time.get_ticks_msec() / 1000.0 * 8.0))
+		_lock.scale = Vector3.ONE * (1.0 + 0.05 * sin(Time.get_ticks_msec() / 1000.0 * 8.0))
+	if _gems != null and above != _gems_lit:
+		_gems_lit = above
+		LuchaKit.tint_part(_plate, "nameplate_lockin", Color("#7CC83A") if above else Color("#D8262E"))
 
 
 ## A mesh's box in another node's space (both may be scaled kit pieces).

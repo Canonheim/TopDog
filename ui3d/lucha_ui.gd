@@ -620,6 +620,11 @@ func _build_hud() -> void:
 	# The bottom: the climber's nameplate and the height odometer (Parker 11-08).
 	hud_bottom = LuchaHudBottom.new(main)
 	_hud.add_child(hud_bottom)
+	# 1.3 m from the lens, shrunk to match: the same place on screen, but in front
+	# of the ring's apron, which the follow camera brings nearer than the HUD.
+	var near := 1.3
+	hud_bottom.position = Vector3(0, 0, (MENU_DIST - near) / UI_SCALE)
+	hud_bottom.scale = Vector3.ONE * near / MENU_DIST
 	_banner = Node3D.new()
 	_banner.position = Vector3(0, 1.2, 0.3)
 	_banner.visible = false
