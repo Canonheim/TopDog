@@ -19,6 +19,7 @@ const DOER := [
 	"Hugger", "Climber", "Wrangler", "Toppler", "Stacker", "Clinger", "Dangler", "Flinger",
 	"Grappler", "Scaler", "Wobbler", "Hoister", "Squeezer", "Botherer", "Snatcher", "Tumbler",
 	"Mounter", "Squasher", "Tickler", "Juggler", "Balancer", "Leaper", "Scrambler", "Teeterer",
+	"Fiddler", "Juicer", "Toucher", "Clapper", "Slapper",
 ]
 const TINTS := [
 	Color(0.85, 0.25, 0.22), Color(0.22, 0.45, 0.85), Color(0.95, 0.75, 0.2), Color(0.3, 0.7, 0.35),
