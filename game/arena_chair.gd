@@ -11,7 +11,20 @@ var hit_count := 0
 var model: Node3D
 const SIZE := Vector3(0.49, 1.08, 0.13)
 const PICKUP_HEIGHT := 0.76
-var in_bubble := true
+const TURN_RATE := TAU / 12.0
+const BOB_HEIGHT := 0.045
+const BOB_RATE := TAU / 2.8
+var float_time := 0.0
+var in_bubble := true:
+	set(value):
+		if in_bubble == value:
+			return
+		in_bubble = value
+		float_time = 0.0
+		if bubble != null:
+			bubble.visible = value
+			_pose_pickup()
+		set_process(value and bubble != null)
 var bubble: MeshInstance3D
 const HIT_SPEED := 1.8
 const LIGHT_HIT_MAX_SPEED := 4.5  # Contact-point speed in m/s.
@@ -42,10 +55,8 @@ func setup(draw_model: bool, thresholds: Vector2i) -> void:
 		sphere.radius = 0.67
 		sphere.height = 1.34
 		bubble.mesh = sphere
-		var surface := StandardMaterial3D.new()
-		surface.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		surface.albedo_color = Color(0.47, 0.84, 1.0, 0.21)
-		surface.roughness = 0.16
+		var surface := ShaderMaterial.new()
+		surface.shader = preload("res://shaders/pickup_bubble.gdshader")
 		bubble.material_override = surface
 		bubble.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(bubble)
@@ -62,10 +73,25 @@ func setup(draw_model: bool, thresholds: Vector2i) -> void:
 	previous = transform
 
 
+func _ready() -> void:
+	set_process(in_bubble and bubble != null)
+
+
+func _process(delta: float) -> void:
+	float_time += delta
+	_pose_pickup()
+
+
+func _pose_pickup() -> void:
+	# Animate only the render nodes. The pickup body is also the network and grip anchor.
+	var offset := global_basis.inverse() * Vector3.UP * (BOB_HEIGHT * sin(float_time * BOB_RATE))
+	bubble.position = offset
+	model.position = offset + Vector3.DOWN * SIZE.y * 0.5
+	model.rotation.y = fmod(float_time * TURN_RATE, TAU)
+
+
 func float_above(top: Vector2) -> void:
 	in_bubble = true
-	if bubble != null:
-		bubble.show()
 	freeze = true
 	collision_mask = 0
 	thrower = -1
@@ -144,8 +170,6 @@ func pick_up(c: Climber, i: int) -> void:
 		carrier_rids.append(body.get_rid())
 	last_hand = end.global_position
 	in_bubble = false
-	if bubble != null:
-		bubble.hide()
 	holder = c.climber_id
 	thrower = -1
 	limb = i

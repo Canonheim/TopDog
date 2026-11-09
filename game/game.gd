@@ -1120,8 +1120,6 @@ func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose:
 	if chair.holder != cid or chair.limb != limb:
 		chair.global_transform = pose
 	chair.in_bubble = in_bubble
-	if chair.bubble != null:
-		chair.bubble.visible = in_bubble
 	chair.holder = cid
 	chair.limb = limb
 	chair.grip_point = point
