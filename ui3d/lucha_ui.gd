@@ -199,6 +199,7 @@ func _build_plaza() -> void:
 	var gy := Stage.PLAZA_GROUND
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 8
+	var kinds := _house_kinds()
 	# Land to the horizon, just under the stones.
 	plaza.add_child(LuchaKit.box(Vector3(4000, 0.2, 4000), LAND, Vector3(0, gy - 0.12, -1980)))
 	_pave(plaza, gy)
@@ -212,8 +213,8 @@ func _build_plaza() -> void:
 				var hi := float(s) + rad_to_deg(STREET_W * 0.5 / ARC_FRONT)
 				if deg + rad_to_deg(5.2 / ARC_FRONT) > lo and deg < hi:
 					deg = hi
-			var kind: String = ["a", "b", "c"][rng.randi() % 3]
-			var w := float(HOUSE_W[kind])
+			var kind: String = kinds[rng.randi() % kinds.size()]
+			var w := _house_w(kind)
 			var half_deg := rad_to_deg(w * 0.5 / ARC_FRONT)
 			var centre := deg + half_deg
 			if centre + half_deg > ARC_LAST:
@@ -254,8 +255,8 @@ func _build_plaza() -> void:
 		var rr := r0 + 2.9
 		var deg := -span + 3.0
 		while deg < span - 3.0:
-			var kind: String = ["a", "b", "c"][rng.randi() % 3]
-			var w := float(HOUSE_W[kind])
+			var kind: String = kinds[rng.randi() % kinds.size()]
+			var w := _house_w(kind)
 			var half_deg := rad_to_deg(w * 0.5 / rr)
 			var c := deg + half_deg
 			var p := _arc_pt(rr, c)
@@ -541,12 +542,36 @@ func _commit_stones(parent: Node3D, lots: Array, tones: Array) -> void:
 		parent.add_child(mmi)
 
 
-## A kit plaza house (a, b or c), or a plain stand-in.
+## The house styles to build with: a, b and c always (kit or stand-in), plus any
+## later kit style (d, e...) that's been delivered. A new style mixes in by name.
+func _house_kinds() -> Array:
+	var out := ["a", "b", "c"]
+	for k in ["d", "e", "f"]:
+		if LuchaKit.kit_model_exists("plaza_house_" + k):
+			out.append(k)
+	return out
+
+
+## A house style's width along the street: the known kit widths, or measured from
+## the model's meshes for a newer style.
+var _house_w_cache := {}
+func _house_w(kind: String) -> float:
+	if HOUSE_W.has(kind):
+		return float(HOUSE_W[kind])
+	if not _house_w_cache.has(kind):
+		var m := LuchaKit.kit_model("plaza_house_" + kind)
+		_house_w_cache[kind] = _local_aabb(m).size.x if m != null else 4.8
+		if m != null:
+			m.free()
+	return float(_house_w_cache[kind])
+
+
+## A kit plaza house (a, b, c or a later style), or a plain stand-in.
 func _house(kind: String) -> Node3D:
 	var k := LuchaKit.kit_model("plaza_house_" + kind)
 	if k != null:
 		return k
-	var w := float(HOUSE_W[kind])
+	var w := float(HOUSE_W.get(kind, 4.8))
 	var h := 5.4 if kind == "a" else (5.8 if kind == "b" else 6.8)
 	var house := Node3D.new()
 	house.add_child(LuchaKit.box(Vector3(w, h, 4.6), Color(0.92, 0.82, 0.62), Vector3(0, h * 0.5, 0)))
