@@ -16,6 +16,7 @@ const STAGES := {
 }
 ## The plaza's ground level (the ring's canvas is y = 0, its stage stands on this).
 const PLAZA_GROUND := -0.9  # the kit ring's apron drops 0.9 m to the plaza
+const CANVAS := Color("#ADA28E")  # the ring canvas: mid warm grey, so pale climbers read on it
 
 ## The barrel's profile at the plane: (half-width, height) pairs, bottom to top,
 ## at scale 1.0 (staves bulge 0.44 at the middle, 0.40 at the rims; 0.96 tall).
@@ -42,6 +43,15 @@ func build(world: Node3D, dress := true) -> void:
 	var half: float = row.deck_half
 	# Deck: a long slab, top at y = 0.
 	_static_poly(world, PackedVector2Array([Vector2(-half, 0), Vector2(half, 0), Vector2(half, -1.2), Vector2(-half, -1.2)]), 1.0, 2.0)
+	# THE PLAZA FLOOR outside the ring (Parker 11-08: "if you hit the ground outside
+	# the ring, it says RING OUT!"): the stones the apron drops to, solid, so a
+	# climber lands there instead of falling through.
+	if str(row.get("dress", "")) == "plaza":
+		for sx in [-1.0, 1.0]:
+			var x0: float = sx * half
+			var x1: float = sx * float(row.side_x)
+			var floor := _static_poly(world, PackedVector2Array([Vector2(minf(x0, x1), PLAZA_GROUND), Vector2(maxf(x0, x1), PLAZA_GROUND), Vector2(maxf(x0, x1), PLAZA_GROUND - 1.0), Vector2(minf(x0, x1), PLAZA_GROUND - 1.0)]), 1.0, 2.0)
+			floor.set_meta("plaza_floor", true)
 	# Barrel, standing on the deck at x = 0.
 	var bs: float = row.barrel_scale
 	var pts := PackedVector2Array()
@@ -63,6 +73,23 @@ func build(world: Node3D, dress := true) -> void:
 
 func spawn_point(side: int) -> Vector2:
 	return Vector2(float(row.spawn_x) * (1.0 if side > 0 else -1.0), 0.05)
+
+
+## The ring's half-width (the side ropes stand at +-this).
+func ring_half() -> float:
+	return float(row.deck_half)
+
+
+## RING OUT: is this climber down on the plaza floor outside the ring? (Its lowest
+## piece near the stones, beyond the apron.) Works on live bodies and puppets.
+func ring_out(c) -> bool:
+	if str(row.get("dress", "")) != "plaza":
+		return false
+	for b in c.bodies.values():
+		var p: Vector3 = (b as Node3D).global_position
+		if absf(p.x) > float(row.deck_half) and p.y < PLAZA_GROUND + 0.25:
+			return true
+	return false
 
 
 func out_of_bounds(p: Vector2) -> bool:
@@ -199,6 +226,11 @@ func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
 		# Built at the stage's size (18 x 3.42 m, canvas top at y 0, origin its
 		# centre, apron dropping 0.9 m): it goes in at scale 1.
 		root.add_child(kit)
+		# The canvas in a mid warm grey: the kit's near-white read pure white in
+		# the sun and swallowed the climber's pale legs (environment pass 11-08).
+		var canvas := kit.find_child("ring_canvas", true, false) as MeshInstance3D
+		if canvas != null:
+			canvas.material_override = CelPass.cel_material(CANVAS)
 	else:
 		var w := half * 2.0
 		# The stage block and its skirt panels, then the canvas and its rim.

@@ -342,9 +342,9 @@ func _spike_eight() -> void:
 	var ticks := int(20.0 * Engine.physics_ticks_per_second)
 	var rival_grabs := [0]
 	for c in cs:
-		c.grab_made.connect(func(_c, _l, o):
-			if o is RigidBody3D and o.has_meta("climber"):
-				rival_grabs[0] += 1)
+		c.grab_made.connect(func(gc, gl, o):
+			if o is RigidBody3D and o.has_meta("climber") and not gc.limbs[gl].held:
+				rival_grabs[0] += 1)  # a LOOSE limb taking a live climber (held ones may)
 	for i in ticks:
 		if i % 30 == 0:
 			for c in cs:
@@ -362,23 +362,40 @@ func _spike_eight() -> void:
 	for c in cs:
 		ok = ok and finite_body(c)
 	var avg := sum / ticks
-	t("eight live: jostling for 20 s, joints under 12 cm", worst_gap < 0.12, "worst %.4f m" % worst_gap)
+	t("eight live: 20 s welded into a blob (every unheld limb sticks), joints under 12 cm", worst_gap < 0.12, "worst %.4f m" % worst_gap)
 	t("eight live: all sane (finite, in the plane)", ok)
-	t("eight live: nobody grabs another live climber", rival_grabs[0] == 0, rival_grabs[0])
-	t("eight live: physics frame under 6 ms on average (eight climbers)", avg < 6.0, "avg %.3f ms, worst %.3f ms" % [avg, worst_ms])
+	t("eight live: loose limbs never grab a live climber (only a held limb does, Parker 11-08)", rival_grabs[0] == 0, rival_grabs[0])
+	t("eight live: physics frame under 6 ms on average (eight welded climbers)", avg < 6.0, "avg %.3f ms, worst %.3f ms" % [avg, worst_ms])
 
 
 ## A hangs from B, B from C, C from a bar. C freezes: nobody drops.
 func _spike_chain() -> void:
 	var cC := spawn(Vector2(0, 7.0))
 	var bar := bar_at(cC.limb_end(0))
+	# Measure the built pose before it swings. The model's stored hand is in a T-pose.
+	var hand_off := cC.limb_end(0) - cC.spawn_at
 	cC.attach(0, bar)
-	var cB := spawn(Vector2(0, 4))
+	await seconds(2.0)
+	var cB := spawn(cC.limb_end(2) - hand_off)
 	cB.attach(0, cC.bodies["foot_l"])
-	t("chain: a grounded live climber cannot anchor another player", not cB.is_attached())
+	await seconds(2.0)
+	var cA := spawn(cB.limb_end(2) - hand_off)
+	cA.attach(0, cB.bodies["foot_l"])
+	await seconds(3.0)
+	t("chain: C is held by B, B by A (grabbed_by counts)", cC.grabbed_by >= 1 and cB.grabbed_by >= 1, "%d %d" % [cC.grabbed_by, cB.grabbed_by])
+	var b_hand := cB.limb_end(0)
 	cC.freeze()
-	cB.attach(0, cC.bodies["foot_l"])
-	t("chain: the same piece is grabbable after lock-in", cB.is_attached())
+	var worst_slip := 0.0
+	var worst_gap := 0.0
+	for i in int(3.0 * Engine.physics_ticks_per_second):
+		await get_tree().physics_frame
+		worst_slip = maxf(worst_slip, cB.limb_end(0).distance_to(b_hand))
+		worst_gap = maxf(worst_gap, maxf(cA.worst_joint_gap(), cB.worst_joint_gap()))
+	t("chain: after C freezes, B and A still hold on", cB.limbs[0].grab.is_valid() and cA.limbs[0].grab.is_valid())
+	t("chain: B's hand stays on C's frozen foot (under 6 cm)", worst_slip < 0.06, "%.4f m" % worst_slip)
+	t("chain: joints hold through the freeze (under 13 cm, two stiff climbers on one wrist)", worst_gap < 0.13, "%.4f m" % worst_gap)
+	t("chain: B still counts as attached (A holds it, it holds C)", cB.is_attached())
+
 
 # ================================================================ P2: --grab, --frozen
 
@@ -411,8 +428,9 @@ func _run_exertion() -> void:
 	t("grunt: continuous pulling respects cooldown", events[0] == 1)
 	c._grunt_wait = -1.0
 	c.release_all()
+	c.remote_grabbed = 1
 	c._physics_process(0.01)
-	t("grunt: no actual grip does not count", events[0] == 1)
+	t("grunt: another player's grip alone does not count", events[0] == 1)
 	c.attach(0, bar_at(c.limb_end(0)))
 	d.point_limb(3, true, c.limb_root(3) + Vector2(0, 2))
 	c._physics_process(0.01)
@@ -433,6 +451,14 @@ func _run_grab() -> void:
 	d.set_limb(2, false)
 	await frames(4)
 	t("grab: letting go over the deck plants it again", c.limbs[2].grab.is_valid())
+	# THE SLAP on every catch, held or not (Parker 11-08): a climber dropped from the
+	# air, holding nothing, slaps when its limbs catch the deck.
+	var sl := spawn(Vector2(-6.0, 2.5))
+	var slaps := [0]
+	sl.release_contact.connect(func(_at): slaps[0] += 1)
+	await seconds(2.0)
+	t("grab: a loose limb catching the deck slaps (no button held)", slaps[0] > 0 and sl.stuck_count() > 0, "%d slaps, %d stuck" % [slaps[0], sl.stuck_count()])
+	sl.remove()
 	# THE PRESS STACK (Parker 11-08): hold A (right hand), press X (left hand): X
 	# rules. Let go of X with A still held: A rules again.
 	d.set_limb(1, true)
@@ -461,7 +487,49 @@ func _run_grab() -> void:
 	h.attach(1, f.bodies["chest"])
 	t("grab: a frozen climber can be held", h.limbs[1].grab.is_valid())
 	h.attach(2, e.bodies["chest"])
-	t("grab: a live rival is never a grip", not h.limbs[2].grab.is_valid())
+	t("grab: a live rival can be held, and counts the grab", h.limbs[2].grab.is_valid() and e.grabbed_by == 1)
+	e.release_all()
+	await frames(1)
+	t("grab: a held climber counts as attached (Parker's rule 10)", e.is_attached() and e.stuck_count() == 0)
+	h.release(2)
+	t("grab: releasing a rival un-counts it", e.grabbed_by == 0 and e.held_by.is_empty())  # (it still stands on the deck: touching solid counts, 11-08)
+	# The practice partner is a live climber too (Parker 11-08: "You should be able
+	# to grab him"): a hand that touches him sticks, and he counts the grab.
+	var pp: Climber = load("res://climber/practice_partner.gd").new()
+	pp.climber_id = _next_id
+	_next_id += 1
+	add_child(pp)
+	pp.build(Vector2(6.0, 3.0), world, null)
+	var g2 := spawn(Vector2(6.0, 5.5))
+	g2.attach(0, bar_at(g2.limb_end(0)))
+	await frames(2)
+	g2.attach(1, pp.bodies["chest"])
+	t("grab: the practice partner can be grabbed (and counts it)", g2.limbs[1].grab.is_valid() and g2.limbs[1].grab_climber == pp and pp.grabbed_by == 1)
+	g2.release_all()
+	pp.remove()
+	# A HELD limb takes hold of a climber it touches and lets go with the button
+	# (like the chair); a loose one never does. And THE GROUNDED GROUP: two climbers
+	# holding each other in the air can't drive (no flying).
+	var x1 := spawn(Vector2(10.0, 6.0))
+	var x2 := spawn(Vector2(10.0, 6.0))  # overlapping: x1's hand is inside x2
+	var xd: Drivers.ScriptDriver = x1.driver
+	await frames(1)
+	var loose_grabbed: bool = x1.limbs[0].grab.is_valid() and x1.limbs[0].grab_climber == x2
+	xd.set_limb(0, true)
+	var held_grabbed := false
+	for k in 30:
+		await get_tree().physics_frame
+		if x1.limbs[0].grab.is_valid() and x1.limbs[0].grab_climber == x2:
+			held_grabbed = true
+			break
+	var air_attached: bool = x1.is_attached() or x2.is_attached()
+	xd.set_limb(0, false)
+	await frames(2)
+	var let_go: bool = x1.limbs[0].grab_climber != x2
+	t("grab: a held limb grabs a climber it touches; a loose one doesn't; letting go releases", held_grabbed and not loose_grabbed and let_go, "held %s, loose %s, let go %s" % [held_grabbed, loose_grabbed, let_go])
+	t("grab: two climbers holding each other in the air can't drive (the grounded group)", held_grabbed and not air_attached)
+	x1.remove()
+	x2.remove()
 
 
 func _run_frozen() -> void:
@@ -841,8 +909,14 @@ func _run_net() -> void:
 	await seconds(1.0)
 	var lag := a0.centre_of_mass().distance_to(b0.centre_of_mass())
 	t("net: the puppet follows the real body (within 25 cm at rest)", lag < 0.25, "%.3f m" % lag)
+	# Grab across machines: the client's hand holds the host climber's puppet.
 	b1.attach(0, b0.bodies["chest"])
-	t("net: a remote puppet cannot be used as a foothold", not b1.limbs[0].grab.is_valid())
+	await seconds(0.5)
+	t("net: the host's climber learns it's held (counts as attached)", a0.remote_grabbed == 1 and a0.is_attached(), a0.remote_grabbed)
+	t("net: the holder's pull arrives on the held climber's machine", not a0.remote_pulls.is_empty(), a0.remote_pulls)
+	b1.release(0)
+	await seconds(0.4)
+	t("net: releasing un-counts it on the other machine", a0.remote_grabbed == 0)
 	# The client locks in above the line: the host decides, both freeze it the same.
 	await lift_and_lock(B, 1, 0.5, true)
 	await seconds(0.3)
@@ -1062,6 +1136,31 @@ func _run_feel() -> void:
 	t("feel: one held foot lifts the hanging body (COM rises 15 cm or more)", frise > 0.15, "%.2f m" % frise)
 	fd.clear()
 	await seconds(0.3)
+	# THE SOFT FOLD (Parker 11-08): an elbow turns all the way round (no stop), but a
+	# deep fold pushes back. Twist a forearm hard and steadily: it must pass 180.
+	var tw := spawn(Vector2(14.0, 8.0))
+	for b in tw.bodies.values():
+		(b as RigidBody3D).gravity_scale = 0.0
+	tw.attach(1, bar_at(tw.limb_end(1)))  # the other hand on a bar: attached, so the held arm drives
+	(tw.driver as Drivers.ScriptDriver).set_limb(0, true)  # the twisted arm is the one held
+	await frames(2)
+	var ej: Dictionary = tw.joints["elbow_l"]
+	var last := wrapf(Climber.angle_of(ej.b) - Climber.angle_of(ej.a), -PI, PI)
+	var start := last
+	var turned := 0.0  # the elbow's unwrapped turn
+	for k in int(2.0 * Engine.physics_ticks_per_second):
+		var fore: RigidBody3D = tw.bodies["arm_l_lo"]
+		var up: RigidBody3D = tw.bodies["arm_l_up"]
+		var tq := fore.mass * 9.8 * 8.0  # about a held hand's pull at the elbow
+		fore.apply_torque(Vector3(0, 0, tq))
+		up.apply_torque(Vector3(0, 0, -tq))  # a twist across the elbow, not a spin of the body
+		await get_tree().physics_frame
+		var rel := wrapf(Climber.angle_of(ej.b) - Climber.angle_of(ej.a), -PI, PI)
+		turned += angle_difference(last, rel)
+		last = rel
+	t("feel: an elbow turns through 180 under a steady twist (360 degrees, no stop)", absf(start + turned) > PI, "turned %.0f deg from %.0f" % [rad_to_deg(turned), rad_to_deg(start)])
+	t("feel: a deep fold pushes back (Feel fold_resistance is on)", Feel.get_k("fold_resistance") > 0.0)
+	tw.remove()
 	# 5. Loose in the air, a held limb isn't pulled anywhere.
 	var air := spawn(Vector2(4.0, 6.0))
 	var ad: Drivers.ScriptDriver = air.driver
@@ -1559,3 +1658,61 @@ func _run_chairwear() -> void:
 	g.end_match()
 	g.queue_free()
 	await frames(2)
+
+
+# ================================================================ --ring (Parker 11-08)
+## The side ropes throw you back harder than you hit them; the plaza floor outside
+## the ring is RING OUT, and 3 s later you're back in the ring.
+func _run_ring() -> void:
+	var g := make_game("tower", 1, 60.0, "plaza")
+	var notes: Array = []
+	g.announce.connect(func(text, _big): notes.append(str(text)))
+	if not await wait_phase(g, "turn", 10.0):
+		t("ring: a turn starts", false)
+		return
+	t("ring: the plaza sets the rope line at the ring's edge", absf(Climber.rope_x - g.stage.ring_half()) < 0.001, "%.2f" % Climber.rope_x)
+	var c: Climber = g.live_climbers()[0]
+	# Throw it at the right-hand ropes: standing near them, every piece moving out at 4 m/s.
+	c.release_all()
+	var shift := Vector3(7.6 - c.centre_of_mass().x, 0.4, 0.0)
+	for b in c.bodies.values():
+		var rb := b as RigidBody3D
+		rb.global_position += shift
+		Climber.sync_server(rb)
+		rb.linear_velocity = Vector3(4.0, 0.0, 0.0)
+	var back := 0.0
+	for k in int(1.0 * Engine.physics_ticks_per_second):
+		await get_tree().physics_frame
+		var v := Vector2.ZERO
+		for b in c.bodies.values():
+			v += Vector2(b.linear_velocity.x, b.linear_velocity.y) * b.mass
+		back = minf(back, v.x / c.total_mass)
+	t("ring: the ropes throw you back harder than you hit them (in at 4 m/s)", back < -4.0, "back at %.2f m/s" % back)
+	# Drop it outside the ring onto the plaza stones.
+	c.release_all()
+	var drop := Vector3(12.0 - c.centre_of_mass().x, 0.5 - c.centre_of_mass().y, 0.0)
+	for b in c.bodies.values():
+		var rb := b as RigidBody3D
+		rb.global_position += drop
+		Climber.sync_server(rb)
+		rb.linear_velocity = Vector3.ZERO
+	var cid0 := c.climber_id
+	var t_out := -1.0
+	var t_back := -1.0
+	var tt := 0.0
+	while tt < 6.0:
+		await get_tree().physics_frame
+		tt += 1.0 / Engine.physics_ticks_per_second
+		if t_out < 0.0 and "RING OUT!" in notes:
+			t_out = tt
+		var now: Array = g.live_climbers()
+		if t_out >= 0.0 and not now.is_empty() and (now[0] as Climber).climber_id != cid0:
+			t_back = tt
+			break
+	t("ring: landing on the plaza says RING OUT!", t_out >= 0.0, "%.2f s" % t_out)
+	t("ring: back in the ring about 3 s later", t_back > 0.0 and absf((t_back - t_out) - Game.RING_OUT_S) < 0.3, "%.2f s after" % (t_back - t_out))
+	if t_back > 0.0:
+		var nc: Climber = g.live_climbers()[0]
+		t("ring: the respawn stands in the ring", absf(nc.centre_of_mass().x) < g.stage.ring_half(), "x %.2f" % nc.centre_of_mass().x)
+	g.end_match()
+	g.queue_free()

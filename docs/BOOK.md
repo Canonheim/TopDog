@@ -336,6 +336,88 @@ Parker: "the camera should match what it does in MYF, where it looks at you, not
 - **The pause menu in front of everything:** it rides `LuchaUI.PAUSE_DIST` (1.2 m) from the lens instead of 6 m, scaled to the same size on screen. While paused, the overlays that draw over everything on purpose are hidden: the limb glyphs (`Climber.set_glyphs_visible`), name tags, the LINE label and the match HUD with its turn banner.
 - **Open:** two `--bend` checks fail on Dan's merged limb control (a steered knee folds only to 17 degrees; a pushed stick moved the hand 1.5 m). They're his tuning, for him to look at. `pad_probe` failed 7 once right after a battery and passed on three runs since.
 
+## The town light pass (Parker, 2026-11-08)
+
+Parker: "have the EM make the town look nicer and the building maker make the buildings nicer. Move the hanging flags slightly back and give them poles to hang on. For this pass, don't spend toooo much effort on it." Two new makers, Top Dog only from now on: the Environment Maker (local_d4a0612b) and the Building Maker (local_a1eb062d), both reporting to Top Dog's Windy.
+- **The Environment Maker, `env-pass` d00f76d** (only `ui3d/lucha_ui.gd` `_build_plaza` and its helpers):
+  - the papel picado moved back from z -9 to -11.5, on 4 wooden poles with crossbars, gold balls and stone feet; the piñata stays on the right-hand string;
+  - the plaza row is a table of kit houses, staggered in depth with no gaps;
+  - a bell tower at x -6.5, off-centre so the climber keeps sky behind;
+  - a four-terrace hill town to about 18 m;
+  - land to the horizon with hazy ridges, so the "sea" under the town is gone;
+  - a new frame probe, `tests/env_shot_probe.tscn -- --no-steam --out=DIR`.
+- **The Building Maker** re-made `plaza_house_a/b/c` as drop-ins: quoins, string courses, a two-step cornice, eave tile ends, panelled shutters, window hoods, flower boxes, railed balconies, an awning, chimneys and a lantern. It also built `bell_tower` (18.2 m, with an open belfry, a clock and a striped dome; its bell is the object `tower_bell`, pivot y 13.4). Synced with `tools/sync_kit.py`.
+- **The full plan for a bigger pass** is in `Top Dog Kit\docs\ENVIRONMENT_PLAN.md` (options A, B and C, with questions for Parker), parked.
+- **Second pass, env-pass 1cd18c5:**
+  - the canvas is overridden to warm grey `Stage.CANVAS` #ADA28E, so the skeleton's legs read;
+  - the flags hang at z -12.6, one span each side plus strings up to the church towers, and none crosses the climbing column at x 0;
+  - the piñata hangs mid-span at x 12;
+  - house heights are staggered too (scale 0.92 to 1.08);
+  - the twin-tower church stands at the centre back.
+- **The Building Maker's `plaza_church`** (22 m, twin towers with bells `bell_l` / `bell_r`, a talavera dome) is synced and replaces the code stand-in by name.
+- **Open:** the white middle rope still crosses the pelvis. The back ropes are one mesh, so recolouring it means the UI creator re-lands `ring`.
+- **Checked:** lint 39, battery `--tower --climb --net`, and the frames in `Top Dog Kit\previews\env_pass\merged\`.
+
+## The clouds, version 2 (Parker, 2026-11-08)
+
+Parker, with a reference picture (`Top Dog Kit\docs\cloud_reference_parker.png`): "make some more rounded clouds with a gray outline that flows into the swirls".
+- The UI creator re-made `cloud_a`..`e` (10 review rounds against the reference): rounded overlapping lobes, a soft grey line (#9CA8BA) that rolls into the swirls, and a two-step blue-grey shade along the base. The widths changed: 8.6, 8.6, 5.1, 7.9, 8.6 (`LuchaKit.CLOUDS`).
+- **The clouds skip the house ink** (`LuchaKit.skip_ink`: an unshaded, alpha atlas material, drawn after the ink pass). Their grey line is their outline; a black ink edge fought it.
+- The Building Maker's re-landed `plaza_church` came in with the same sync, placed by its measured front.
+
+## Grabbing climbers, put back (Parker, 2026-11-08)
+
+Parker: "Dan took out grabbing people. Put it back in ... the practice partner is where I noticed it. You should be able to grab him."
+- Dan's 0.3.30 (84a41ba) made only the arena and the frozen stack grippable. It also removed `grabbed_by` / `remote_grabbed`, the network pulls, `grab_lost`, `pull_cap` and the grab tests.
+- All restored from that commit, with his chairs and partner kept:
+  - `_try_grab` takes live climbers again (solid ground and the tower still win);
+  - `attach` counts the grab on a live climber;
+  - `is_attached` counts being held (Parker's call 10);
+  - `game.gd`'s "grabbing across machines" section (`_on_grab_made`, `_rpc_grabbed`, `_tick_pulls_out`, `_rpc_pull`) is back;
+  - Feel `pull_cap` is back.
+- The practice partner is a live climber, so he can be grabbed. His own limbs still never stick (`practice_partner._try_grab`). `_remove_partner` releases anyone holding him before he respawns.
+- **Tests:** the eight-live blob ("they grabbed each other", 189), the chain, the live-rival and partner grabs in `--grab`, and the network grab in `--net` all pass. The eight-live frame time was 7.4 ms during one full run under load, and 2.7 to 3.1 ms alone. The two `--bend` failures on Dan's limb control are still open.
+
+## Held grabs, no flying, new names, soft folds, hands on hips, hung flags (Parker, 2026-11-08)
+
+- **Grabbing a climber takes a held limb** (Parker: "should work like how it works with the chair, you have to be holding the limb to grab").
+  - `_try_grab_climber`: the active limb's hand or foot takes hold of a live climber it touches, and lets go when the limb is let go or another limb takes over.
+  - Loose limbs stick only to the arena and the frozen tower.
+  - `attach()` still allows any climber (tests, netcode).
+- **THE GROUNDED GROUP** (Parker: "you cannot exert force unless at least one connected person is touching something solid like the ground or tower").
+  - `is_attached()` walks the chain of grabs: me, whoever I hold, whoever holds me (`held_by`), and on through.
+  - Someone in it must be stuck to, or touching with an unheld end, the arena or the frozen tower. The practice partner counts by standing.
+  - Online, a rival counts while their pull arrives, and `_tick_pulls_out` only sends it while the holder is grounded on its own machine (`grounded_locally`), so two airborne players can't fly.
+- **A new name for every climber:** players with a random name (the slot's `random` flag, carried through the rosters) get a fresh `NameGen` name each new character, i.e. first spawn or after a freeze. A respawn after a fall keeps it, and Steam names stay. The host picks and sends it with `_rpc_spawn`, which also announces "X's turn", so banners and tags match.
+- **Elbows and knees turn 360 again, with THE SOFT FOLD** (Parker: "make it so limbs can rotate 360 degrees again but with the resistance").
+  - Dan's ±150 degree stops on the `mid` joints are gone, and so is his hand/foot vs upper-segment collision. A climber's pieces never collide with each other again.
+  - From `FOLD_START_DEG` (150, the old stop) to 180 the joint pushes back, and past 180 it helps through.
+  - Feel `fold_resistance` 3.0 applies to limbs you aren't moving (it keeps a loaded knee up like the old stop). Feel `fold_resistance_held` 0.8 is the lighter hump on the limb you're moving.
+  - The steering still keeps its target out of the folded reach (`FOLD_REACH_DEG` 150), so a straight pull back to the shoulder is resisted and swinging the limb around comes easier.
+- **Hands on hips at spawn** (`_hands_on_hips`, a two-bone solve, elbows out); it replaces `_arms_down`.
+- **The flags hang along their strings** (`LuchaKit.bunting`: each flag is turned about the vertical to the string's run).
+- **Arms in front of the torso:** tried, then reverted on Parker's word.
+- **Everyone hears everything** (Parker: "All people should hear all noises like farts and slaps and stuff"). Audit: slaps, farts and grunts were already broadcast (`_rpc_slap`, `_rpc_fart`, `_rpc_exertion`), as were the chair sounds and the lock-in, out and short verdicts (`_rpc_freeze`). The freeze thud plays on every machine. Only "fell off" was raised on the host alone, and it now goes out through `_rpc_note`. Private notes ("climb higher", "touch the stage") stay with their player.
+- **The slap on every catch** (Parker: "anytime a hand connects, it should make the noise"): any new stick, whether held or loose (a flung limb landing, a held one grabbing someone), emits `release_contact` and plays the slap, broadcast online. The first `SLAP_QUIET_S` (0.6 s) after a spawn is silent, while the feet settle. `--grab` checks a dropped climber slaps.
+- **Tests:**
+  - New and passing: held grabs, no flying, the elbow turning through 180 under a hand-pull twist, and the press stack.
+  - `--feel`'s three lean checks now fail ("one held limb moves the body" 0.29 vs 0.30, "arm holds its pose", "body still up after the big lean"). They pass with the old arms-down spawn, so the hands-on-hips start changes that scripted lean. That's for Parker's feel, not a rigged test.
+  - Dan's `--bend` failure stays; the eight-live frame time is slow only under a full run.
+
+## The ropes, RING OUT, and the new ring (Parker, 2026-11-08)
+
+- **The ropes bounce** (Parker: "the ropes on the side of the ring to bounce you if you run into them, with more force than you hit them with").
+  - `Climber._tick_ropes`: when any piece of a live climber enters the band at the side ropes (`Climber.rope_x` = the ring's half-width, from y 0.15 to 1.55, within 0.3 m of the rope line) moving outward, the whole climber is thrown back inward at Feel `rope_bounce` (1.5) times its speed, relative motion kept, with a 0.25 s cooldown.
+  - The ropes have no colliders, so they can't be grabbed.
+- **RING OUT** (Parker: "if you hit the ground outside the ring, it says RING OUT! and you are respawned back in the ring after 3 seconds").
+  - The plaza floor outside the ring is solid now (`Stage`, at `PLAZA_GROUND`).
+  - The host sees a climber's lowest piece on it (`Stage.ring_out`), sends "RING OUT!" to every machine (`_rpc_note`), and respawns them `Game.RING_OUT_S` (3 s) later. The name is kept: it's the same character. The practice partner rings out the same way.
+  - `--ring` checks it: in at 4 m/s, back at 5.8; RING OUT at 0.76 s; back 3.01 s later, inside the ring.
+- **The new ring** (Building Maker; Parker asked him directly for "more mexican colors"): rosa mexicano, turquoise, marigold, purple and lime with gold.
+  - The back ropes are split into `ring_rope_back_low/mid/high` (pink, turquoise, gold), so the middle one reads against the skeleton.
+  - Also new: a padded bumper, a scalloped valance, skirt panels with the pug medallion, taped ropes, octagonal turnbuckles, gold post caps, and `ring_steps` outside the right end (visual only).
+  - `ring_canvas` is the canvas alone now, still repainted grey in code.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

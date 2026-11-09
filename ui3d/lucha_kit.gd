@@ -30,7 +30,9 @@ const LEATHER := RED  # belt-plate lettering
 const SILVER := Color(0.82, 0.84, 0.88)
 const FLAG_COLOURS := [RED, GOLD, BLUE, MAGENTA, TURQUOISE, GREEN, Color(1.0, 0.55, 0.15)]
 ## The kit's cloud cards and their built widths (m), for scaling to a wanted width.
-const CLOUDS := {"cloud_a": 8.3, "cloud_b": 10.45, "cloud_c": 4.25, "cloud_d": 9.6, "cloud_e": 5.6}
+const LOGO_SCALE := 1.25  # the title logo, 25% bigger (Parker 11-08)
+const LOGO_TILT_DEG := 10.0  # tilted clockwise (Parker 11-08)
+const CLOUDS := {"cloud_a": 8.6, "cloud_b": 8.6, "cloud_c": 5.1, "cloud_d": 7.9, "cloud_e": 8.6}  # v2 widths (11-08)
 
 static var _font: Font = null
 
@@ -146,6 +148,12 @@ static func text3d(s: String, size: float, c: Color, _depth := 0.06, priority :=
 	return lb
 
 
+## A whole kit model out of the ink: its atlas colours, unshaded, drawn in the
+## transparent pass (after the ink, which reads only opaque depth and normals).
+static func skip_ink(root: Node) -> void:
+	letters_skip_ink(root, "")
+
+
 ## A kit model's word objects (letters_*) out of the ink: the atlas colours, alpha.
 static func letters_skip_ink(root: Node, prefix := "letters_") -> void:
 	var m := StandardMaterial3D.new()
@@ -182,7 +190,14 @@ static func title_logo() -> Node3D:
 		var holder := Node3D.new()
 		k.scale = Vector3.ONE * 1.45
 		k.position = Vector3(0, -1.006 * 1.45 * 0.5, 0)
-		holder.add_child(k)
+		# Parker 11-08: "about 25% bigger and rotated clockwise about 10 degrees",
+		# on an inner pivot at the logo's centre, so the menu's wobble-in on the
+		# holder never overrides it.
+		var pivot := Node3D.new()
+		pivot.scale = Vector3.ONE * LOGO_SCALE
+		pivot.rotation = Vector3(0, 0, deg_to_rad(-LOGO_TILT_DEG))  # negative z = clockwise as seen
+		pivot.add_child(k)
+		holder.add_child(pivot)
 		return holder
 	var root := Node3D.new()
 	var slab := box(Vector3(4.3, 1.55, 0.18), RED, Vector3(0, 0.05, -0.2))
@@ -370,6 +385,11 @@ static func papel_flag(c: Color, which := 0) -> Node3D:
 ## A string of papel picado between two points (in the parent's frame).
 static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 	var root := Node3D.new()
+	# HUNG ON THE STRING (Parker 11-08: the flags "should be following the string as
+	# if they were actually hung up"): each flag hangs straight down from the line,
+	# its face turned to lie along the string's run, not flat to the screen.
+	var run := Vector2(b.x - a.x, b.z - a.z)
+	var yaw := -atan2(run.y, run.x) if run.length() > 0.001 else 0.0
 	var prev := a
 	for i in n + 1:
 		var f := float(i) / n
@@ -381,11 +401,21 @@ static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 			seg.rotate_object_local(Vector3.RIGHT, PI * 0.5)
 			root.add_child(seg)
 		if i > 0 and i < n:
+			# Two nodes: the hanger sits on the string, turned to its run; the flag
+			# inside swings only about the string's own axis (its local x), as a
+			# flag hinged on a line does (Parker 11-08).
+			# The top edge lies along the string (Parker 11-08: "connected by the top 2
+			# corners to the string"): roll the hanger to the string's slope here (the
+			# sag's tangent), so both top corners sit on the line.
+			var tangent := (b - a) + Vector3(0, -sag * 4.0 * (1.0 - 2.0 * f), 0)
+			var horiz := Vector2(tangent.x, tangent.z).length()
+			var hanger := Node3D.new()
+			hanger.position = p
+			hanger.rotation = Vector3(0.0, yaw, atan2(tangent.y, horiz))
+			root.add_child(hanger)
 			var flag := papel_flag(FLAG_COLOURS[i % FLAG_COLOURS.size()], i)
-			flag.position = p
-			flag.rotation.z = randf_range(-0.08, 0.08)
 			flag.set_meta("sway", randf() * TAU)
-			root.add_child(flag)
+			hanger.add_child(flag)
 		prev = p
 	return root
 
@@ -398,6 +428,9 @@ static func swirl_cloud(width: float, which := 0) -> Node3D:
 	var k := kit_model(nm)
 	if k != null:
 		k.scale = Vector3.ONE * (width / float(CLOUDS[nm]))
+		# The clouds' own grey line is their outline, curling into the swirls (Parker
+		# 11-08): out of the house ink, or a black edge fights it.
+		skip_ink(k)
 		return k
 	var root := Node3D.new()
 	var lobes := int(clampf(width / 1.8, 3, 7))

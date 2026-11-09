@@ -27,7 +27,7 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.3.32"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.3.35"  # bump on every build: RPC tables move between builds
 const ENET_PORT := 7788
 const MAX_MACHINES := 8
 const MAX_CLIMBERS := 8
@@ -393,7 +393,7 @@ func _on_peer_disconnected(id: int) -> void:
 func _local_players() -> Array:
 	var out: Array = []
 	for s in Players.slots.size():
-		out.append({"name": str(Players.slots[s].name), "tint": Players.slots[s].tint, "slot": s})
+		out.append({"name": str(Players.slots[s].name), "random": bool(Players.slots[s].get("random", false)), "tint": Players.slots[s].tint, "slot": s})
 	return out
 
 
@@ -542,7 +542,7 @@ func build_roster() -> Array:
 	ids.sort()
 	for id in ids:
 		for p in members[id].players:
-			roster.append({"pid": pid, "name": p.name, "tint": p.tint, "peer": id, "slot": p.slot})
+			roster.append({"pid": pid, "name": p.name, "random": bool(p.get("random", false)), "tint": p.tint, "peer": id, "slot": p.slot})
 			pid += 1
 	return roster
 

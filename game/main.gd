@@ -610,7 +610,7 @@ func _start_local() -> void:
 	local_mode = true
 	var roster: Array = []
 	for s in Players.slots.size():
-		roster.append({"pid": s, "name": Players.slots[s].name, "tint": Players.slots[s].tint, "peer": 1, "slot": s})
+		roster.append({"pid": s, "name": Players.slots[s].name, "random": Players.slots[s].get("random", false), "tint": Players.slots[s].tint, "peer": 1, "slot": s})
 	game.host_start(Net.settings.duplicate(), roster)
 	show_screen("hud")
 
@@ -621,7 +621,7 @@ func _start_practice() -> void:
 	local_mode = true
 	var s := Net.settings.duplicate()
 	s.mode = "practice"
-	game.host_start(s, [{"pid": 0, "name": Players.slots[0].name, "tint": Players.slots[0].tint, "peer": 1, "slot": 0}])
+	game.host_start(s, [{"pid": 0, "name": Players.slots[0].name, "random": Players.slots[0].get("random", false), "tint": Players.slots[0].tint, "peer": 1, "slot": 0}])
 	show_screen("hud")
 
 
