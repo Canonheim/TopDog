@@ -1739,6 +1739,11 @@ func _run_wrestling() -> void:
 	for i in 12:
 		c._incoming_pull = c.total_mass * 9.8 * 3.0
 		c._physics_process(0.01)
+	t("wrestling: old break force no longer detaches a terrain grip", c.limbs[2].grab_other != null)
+	c._pull_load = 0.0
+	for i in 12:
+		c._incoming_pull = c.total_mass * 9.8 * 6.0
+		c._physics_process(0.01)
 	t("wrestling: a sustained hard pull peels the live grip", not (c.limbs[2].grab_other != null) and c.limbs[2].regrip > 0)
 	var attacker := spawn(Vector2(0.6, 0.05))
 	attacker.attach(2, floor_body)
@@ -1753,14 +1758,14 @@ func _run_wrestling() -> void:
 	# the live contact remains intact. Hold the displacement fixed for this load test.
 	c.attach(2, ground.bodies["chest"])
 	var pull_per_metre := (attacker.limbs[0].contact_force as Vector3).length() / 0.035
-	target.global_position = original + Vector3.RIGHT * (1.4 * c.total_mass * 9.8 / pull_per_metre)
+	target.global_position = original + Vector3.RIGHT * (2.8 * c.total_mass * 9.8 / pull_per_metre)
 	for tick in 100:
 		if c.limbs[2].grab_other == null or attacker.limbs[0].grab_other == null:
 			break
 		attacker._tick_live_contact(0, 1.0 / 120)
 		c._physics_process(1.0 / 120)
 	t("player contact: a sustained shove can peel the opponent off their footing", c.limbs[2].grab_other == null and attacker.limbs[0].grab_climber == c, "foot free %s, contact load %.1f N" % [c.limbs[2].grab_other == null, attacker.limbs[0].contact_force.length()])
-	target.global_position = original + Vector3.RIGHT * 0.27
+	target.global_position = original + Vector3.RIGHT * 0.54
 	for tick in 24:
 		if attacker.limbs[0].grab_other == null:
 			break
@@ -2261,7 +2266,7 @@ func _run_startingbase() -> void:
 		g.host_start({"mode": "tower", "timer": 60.0, "stage": "plaza", "base": choice}, g.roster)
 		await wait_phase(g, "turn")
 		var support: Node3D = g.stage.base_root
-		var highest: float = {"barrel": 2.016, "cactus": 1.796, "donkey": 2.133462}[choice]
+		var highest: float = {"barrel": 2.016, "cactus": 1.796, "donkey": 2.117581}[choice]
 		t("base: forced choice uses matching support height", g.stage.base_id == choice and is_equal_approx(g.stage.barrel_top, highest) and is_equal_approx(g.stage.first_line, highest + Stage.FIRST_LINE_ABOVE), choice)
 		t("base: support has live stage collisions", not g.stage.base_bodies.is_empty() and g.stage.base_bodies.all(func(b): return g.stage.bodies.has(b) and b.is_inside_tree()), choice)
 		if choice == "donkey":

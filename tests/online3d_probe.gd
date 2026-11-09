@@ -91,6 +91,18 @@ func _ready() -> void:
 	await _wait(0.5)
 	_check("all twelve lobby cards are visible", main.lucha.online._board.get_child_count() == 12)
 	await _shot("lobby12")
+	var saved_peer: MultiplayerPeer = multiplayer.multiplayer_peer
+	var guest := ENetMultiplayerPeer.new()
+	guest.create_client("127.0.0.1", 17979)
+	multiplayer.multiplayer_peer = guest
+	main.lucha.online._fill_lobby()
+	var guest_button: Node3D = lobby.items[0].node
+	var guest_scale := guest_button.scale
+	lobby.focus = 1
+	main.lucha.online._on_settings()
+	_check("host settings preserve guest buttons, focus and animation", lobby.items[0].node == guest_button and guest_button.scale == guest_scale and lobby.focus == 1)
+	multiplayer.multiplayer_peer = saved_peer
+	guest.close()
 	await _tap(JOY_BUTTON_B)
 	_check("raw B leaves the lobby and returns to its opener", main.screen == "online" and not Net.online, main.screen)
 	Net.members = {}

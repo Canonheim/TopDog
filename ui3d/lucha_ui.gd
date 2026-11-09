@@ -1557,6 +1557,7 @@ func _raise_podium() -> void:
 
 
 func _fill_results() -> void:
+	_podium.position.x = main.results_podium_focus().x
 	if _winner_poster != null:
 		_winner_poster.queue_free()
 	var res: Dictionary = main.game.results
@@ -1809,6 +1810,7 @@ func _process(delta: float) -> void:
 		n.position.x += float(n.get_meta("speed")) * delta
 		if n.position.x > 80.0:
 			n.position.x = -80.0
+	_tick_hud_occlusion(delta)
 	_tick_line_poles()
 	for f in _flags:
 		var n: Node3D = f
@@ -2036,3 +2038,54 @@ func _tick_line_poles() -> void:
 			bands.add_child(LuchaKit.cyl(0.125, 0.12, LuchaKit.GOLD, Vector3(0, float(k), 0)))
 		for i in bands.get_child_count():
 			(bands.get_child(i) as Node3D).visible = i < want
+
+
+## Fade each HUD section whenever any player's body overlaps it on screen.
+func _tick_hud_occlusion(delta: float) -> void:
+	if _hud == null or not _hud.is_visible_in_tree():
+		return
+	var actors: Array[Rect2] = []
+	var climbers: Array = main.game.climbers.values()
+	if is_instance_valid(main.game.partner):
+		climbers.append(main.game.partner)
+	for c: Climber in climbers:
+		if c.removed:
+			continue
+		var bounds := c.pose_bounds(c.pose())
+		var projected := Rect2()
+		var first := true
+		for point in [bounds.position, Vector2(bounds.end.x, bounds.position.y), bounds.end, Vector2(bounds.position.x, bounds.end.y)]:
+			var world_point := Vector3(point.x, point.y, 0)
+			if cam.is_position_behind(world_point):
+				continue
+			var pixel := cam.unproject_position(world_point)
+			projected = Rect2(pixel, Vector2.ZERO) if first else projected.expand(pixel)
+			first = false
+		if not first:
+			actors.append(projected.grow(8.0))
+	var groups: Array = _hud.get_children()
+	groups.erase(hud_bottom)
+	groups.append_array(hud_bottom.get_children())
+	for group: Node3D in groups:
+		if not group.is_visible_in_tree():
+			continue
+		var meshes: Array = group.find_children("*", "GeometryInstance3D", true, false)
+		if group is GeometryInstance3D:
+			meshes.append(group)
+		var covered := false
+		for mesh: GeometryInstance3D in meshes:
+			if not mesh.is_visible_in_tree():
+				continue
+			var box := mesh.get_aabb()
+			var rect := Rect2()
+			for i in 8:
+				var pixel := cam.unproject_position(mesh.global_transform * box.get_endpoint(i))
+				rect = Rect2(pixel, Vector2.ZERO) if i == 0 else rect.expand(pixel)
+			for actor in actors:
+				if rect.intersects(actor):
+					covered = true
+					break
+			if covered:
+				break
+		for mesh: GeometryInstance3D in meshes:
+			mesh.transparency = lerpf(mesh.transparency, 0.85 if covered else 0.0, 1.0 - exp(-delta * 18.0))

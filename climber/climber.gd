@@ -676,7 +676,7 @@ func _physics_process(delta: float) -> void:
 		_gravity_scale = gravity
 	_tick_joints(attached, delta)
 	# Opposed pulls have to persist through several physics ticks to peel a grip.
-	var load_ratio := _incoming_pull / maxf(1, total_mass * 9.8)
+	var load_ratio := _incoming_pull / maxf(1, total_mass * 9.8 * 2.0)
 	_pull_load = maxf(0, _pull_load + (load_ratio - 0.9) * delta)
 	_incoming_pull = 0
 	if _pull_load >= 0.15:
@@ -926,9 +926,9 @@ func _tick_live_contact(i: int, dt: float) -> void:
 	var stiffness := weight * 24.0
 	var damping := 1.6 * sqrt(stiffness * end.mass)
 	var force := (gap * stiffness + (speed - hand_speed) * damping) / (1.0 + damping * dt / end.mass)
-	var ratio := force.length() / weight
+	var ratio := force.length() / (weight * 2.0)
 	l.strain_time = maxf(0, float(l.strain_time) + dt * (ratio - 1.45))
-	if l.strain_time > 0.055 or gap.length() > 0.30:
+	if l.strain_time > 0.055 or gap.length() > 0.60:
 		l.peeled_from = rival.get_instance_id()
 		release(i)
 		l.regrip = 0.22

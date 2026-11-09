@@ -92,7 +92,7 @@ func build() -> void:
 	_chat_board.scale = Vector3.ONE * LuchaUI.UI_SCALE
 	Net.status.connect(func(t): set_status(t))
 	Net.members_changed.connect(_on_members)
-	Net.settings_changed.connect(_on_members)
+	Net.settings_changed.connect(_on_settings)
 	Net.chat_line.connect(_on_chat)
 	Net.lobby_list.connect(_on_lobby_list)
 
@@ -105,6 +105,20 @@ func _lan(i: int) -> void:
 		Net.join_lan("127.0.0.1")
 	else:
 		main.show_screen("online_flat")
+
+
+func _on_settings() -> void:
+	if ui.current != "lobby":
+		return
+	if Net.is_host():
+		_fill_lobby()
+	else:
+		_update_guest_settings()
+
+
+func _update_guest_settings() -> void:
+	var row := Modes.row(str(Net.settings.get("mode", "scramble")))
+	set_status("%s, %d s clock, %s base. Press I'M READY, the host starts." % [str(row.name), int(Net.settings.get("timer", 60)), str(Net.settings.get("base", "random")).capitalize()])
 
 
 func _on_members() -> void:
@@ -332,8 +346,7 @@ func _fill_lobby() -> void:
 	_fill_chat()
 	_place_boards("lobby")
 	if not host:
-		var mrow := Modes.row(str(Net.settings.get("mode", "scramble")))
-		set_status("%s, %d s clock, %s base. Press I'M READY, the host starts." % [str(mrow.name), int(Net.settings.get("timer", 60)), str(Net.settings.get("base", "random")).capitalize()])
+		_update_guest_settings()
 	elif status_text == "" or status_text.begins_with("Hosting"):
 		set_status("You're hosting. Invite friends, then FIGHT! when everyone's ready.")
 

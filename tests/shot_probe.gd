@@ -15,6 +15,42 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(0.8).timeout
 	match open:
+		"hudfade":
+			main._start_practice()
+			await get_tree().create_timer(1.2).timeout
+			main.set_process(false)
+			main.cam.position = Vector3(0, 6, 9)
+			main.cam.look_at(Vector3(0, 5.5, 0), Vector3.UP)
+			main.game.set_physics_process(false)
+			if main.game.partner != null:
+				main.game.partner.remove()
+				main.game.partner = null
+			var c: Climber = main.game.live_climbers()[0]
+			c.freeze()
+			var plate: Node3D = main.lucha.hud_bottom._plate
+			var pixel: Vector2 = main.cam.unproject_position(plate.global_position)
+			var target: Vector3 = main.cam.project_position(pixel, 9.0)
+			var offset := Vector2(target.x, target.y) - c.centre_of_mass()
+			var pose := c.pose()
+			for k in range(0, pose.size(), 3):
+				pose[k] += offset.x
+				pose[k + 1] += offset.y
+			c.apply_pose(pose)
+			main.lucha._tick_hud_occlusion(1.0)
+			var mesh: GeometryInstance3D = plate.find_children("*", "GeometryInstance3D", true, false)[0]
+			assert(mesh.transparency > 0.8)
+			for k in range(0, pose.size(), 3):
+				pose[k] += 100
+			c.apply_pose(pose)
+			main.lucha._tick_hud_occlusion(1.0)
+			assert(mesh.transparency < 0.01)
+			for k in range(0, pose.size(), 3):
+				pose[k] -= 100
+			c.apply_pose(pose)
+			c.make_puppet()
+			main.lucha._tick_hud_occlusion(1.0)
+			assert(mesh.transparency > 0.8)
+			print("PASS HUD fades for tower and remote climbers, restores when clear")
 		"local":
 			Players.clear_players()
 			Players.fake[1000] = {"buttons": {}, "stick": Vector2.ZERO}
@@ -59,15 +95,16 @@ func _ready() -> void:
 				var initial: Vector3 = main.cam.position
 				main._tick_camera(main.PODIUM_HOLD_SECONDS * Engine.time_scale)
 				assert(main.cam.position.is_equal_approx(initial))
-				main._tick_camera(1.0 * Engine.time_scale)
-				assert(is_equal_approx(initial.distance_to(main.cam.position), main.TOWER_PAN_SPEED))
+				main._tick_camera(main.PODIUM_SHIFT_SECONDS * Engine.time_scale)
+				assert(main.cam.position.is_equal_approx(Vector3(0, 2, 9)))
 				var journey: float = Vector2(0, 1.5).distance_to(Vector2(2, 9)) / main.TOWER_PAN_SPEED
-				main._tick_camera((journey - 1.0) * Engine.time_scale)
-				assert(main.cam.position.is_equal_approx(Vector3(2, 9.5, 9)))
-				main._tick_camera(Engine.time_scale)
-				assert(main.cam.position.y < 9.5)
 				main._tick_camera(journey * Engine.time_scale)
-				assert(main.cam.position.is_equal_approx(initial))
+				assert(main.cam.position.is_equal_approx(Vector3(2, 9.5, 9)))
+				main._tick_camera(journey * Engine.time_scale)
+				assert(main.cam.position.is_equal_approx(Vector3(0, 2, 9)))
+				assert(not main.cam.position.is_equal_approx(initial))
+				main._tick_camera(journey * Engine.time_scale)
+				assert(main.cam.position.is_equal_approx(Vector3(2, 9.5, 9)))
 				main._results_peak = peak
 				main._results_elapsed = 0.0
 				main._tick_camera(0.0)

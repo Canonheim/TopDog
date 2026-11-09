@@ -30,6 +30,7 @@ var local_mode := true  # this match was started from Local play
 var paused := false
 var feel_panel: Control
 const PODIUM_HOLD_SECONDS := 3.0
+const PODIUM_SHIFT_SECONDS := 3.0
 const TOWER_PAN_SPEED := 0.35  # world metres per second
 var _results_elapsed := 0.0
 var _results_peak := Vector2.ZERO
@@ -294,15 +295,25 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ---------------------------------------------------------------- camera
 
+func results_podium_focus() -> Vector2:
+	return Vector2((game.stage.barrel_half if game.stage != null else 1.0) + 2.8, 1.5)
+
+
 func _tick_camera(delta: float) -> void:
 	if screen == "results":
 		_results_elapsed += delta / Engine.time_scale
 		var start := Vector2(0, 1.5)
 		var end := Vector2(_results_peak.x, maxf(start.y, _results_peak.y))
-		var distance := maxf(0.0, _results_elapsed - PODIUM_HOLD_SECONDS) * TOWER_PAN_SPEED
-		var length := start.distance_to(end)
-		var travel := distance if distance <= length else maxf(0.0, 2.0 * length - distance)
-		var focus := start.move_toward(end, travel)
+		var elapsed := maxf(0.0, _results_elapsed - PODIUM_HOLD_SECONDS)
+		var focus := results_podium_focus().lerp(start, smoothstep(0.0, PODIUM_SHIFT_SECONDS, elapsed))
+		if elapsed >= PODIUM_SHIFT_SECONDS:
+			var length := start.distance_to(end)
+			var distance := (elapsed - PODIUM_SHIFT_SECONDS) * TOWER_PAN_SPEED
+			var travel := 0.0
+			if length > 0.001:
+				var cycle := fposmod(distance, length * 2.0)
+				travel = cycle if cycle <= length else 2.0 * length - cycle
+			focus = start.move_toward(end, travel)
 		cam.position = Vector3(focus.x, focus.y + 0.5, 9.0)
 		cam.look_at(Vector3(cam.position.x, focus.y, 0), Vector3.UP)
 		line_bar.visible = false
