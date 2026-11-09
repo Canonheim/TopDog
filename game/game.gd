@@ -840,6 +840,15 @@ func _rpc_exertion(cid: int, clip: String) -> void:
 func _rpc_rope(cid: int, at: Vector3, speed: float) -> void:
 	if _audio_climber(cid) == null or not at.is_finite():
 		return
+	_play_rope(at, speed)
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_chair_rope(at: Vector3, speed: float) -> void:
+	_play_rope(at, speed)
+
+
+func _play_rope(at: Vector3, speed: float) -> void:
 	Sound.play_at("rope", at, linear_to_db(clampf(speed / 4.0, 0.5, 1.6)), world)
 	if stage != null:
 		stage.bounce_rope(signf(at.x), clampf(speed, 0.0, 20.0))
@@ -966,6 +975,9 @@ func _rpc_spawn_chair(generation: int, top: Vector2, dent_hits: Vector2i) -> voi
 	chair_generation = generation
 	chair_spawn_top = top
 	chair = ChairScript.new()
+	if is_host():
+		chair.terrain_struck.connect(_play_chair_impact_sound)
+		chair.rope_struck.connect(func(at: Vector3, speed: float): _rpc_chair_rope.rpc(at, speed))
 	chair.setup(dress, dent_hits)
 	world.add_child(chair)
 	chair.float_above(top)
@@ -1026,6 +1038,8 @@ func _tick_chair(dt: float) -> void:
 		return
 	var carrier: Climber = climbers.get(chair.holder)
 	if not is_host():
+		if chair.grip_joint.is_valid():
+			return
 		if not chair.in_bubble:
 			chair.global_transform = chair.global_transform.interpolate_with(chair.loose_target, 1.0 - exp(-30.0 * dt))
 		return
@@ -1071,12 +1085,16 @@ func _apply_chair_hits(hits: Dictionary) -> void:
 			_chair_impact(victim, hit.piece, hit.offset, hit.impulse)
 		else:
 			_rpc_chair_impact.rpc_id(victim.owner_peer, id, hit.piece, hit.offset, hit.impulse)
-		var sound_kind := "chair_heavy" if heavy else "chair_light"
 		var at: Vector3 = victim.bodies[hit.piece].to_global(hit.offset)
-		_rpc_chair_sound.rpc(sound_kind, Sound.SFX[sound_kind].pick_random(), at)
+		_play_chair_impact_sound(at, hit.speed)
 		if chair.hit_count == ChairScript.BREAK_HITS:
 			_rpc_chair_broke.rpc(chair.global_transform, hit.impulse, Sound.SFX["chair_break"].pick_random())
 			return
+
+
+func _play_chair_impact_sound(at: Vector3, speed: float) -> void:
+	var kind := "chair_heavy" if speed > ChairScript.LIGHT_HIT_MAX_SPEED else "chair_light"
+	_rpc_chair_sound.rpc(kind, Sound.SFX[kind].pick_random(), at)
 
 
 @rpc("authority", "call_local", "reliable")
@@ -1119,6 +1137,8 @@ func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose:
 	if chair == null or generation != chair_generation:
 		return
 	if chair.holder != cid or chair.limb != limb:
+		chair.clear_grip()
+		chair.freeze = true  # loose replicas follow the host snapshots
 		chair.global_transform = pose
 		if cid >= 0 or in_bubble:
 			chair.set_carrier(climbers.get(cid))
@@ -1128,6 +1148,11 @@ func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose:
 	chair.holder = cid
 	chair.limb = limb
 	chair.grip_point = point
+	var carrier: Climber = climbers.get(cid)
+	if carrier != null and limb >= 0 and not chair.grip_joint.is_valid():
+		var end: RigidBody3D = carrier.bodies[carrier.limbs[limb].def.end]
+		chair.global_position = end.global_position - pose.basis * point
+		chair.lock_grip(end)
 	chair.loose_target = pose
 	chair.set_hit_count(hit_count)
 

@@ -27,7 +27,7 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.3.48"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.3.49"  # bump on every build: RPC tables move between builds
 const ENET_PORT := 7788
 const MAX_MACHINES := 8
 const MAX_CLIMBERS := 8
@@ -361,6 +361,7 @@ func join_lan(ip: String) -> void:
 # ================================================================ the session
 
 func _start_session_as_host() -> void:
+	Players.prepare_online(my_name())
 	online = true
 	in_match = false
 	members.clear()
@@ -370,6 +371,7 @@ func _start_session_as_host() -> void:
 
 
 func _on_connected() -> void:
+	Players.prepare_online(my_name())
 	online = true
 	_pending_lobby = false
 	_rpc_hello.rpc_id(1, GAME_VERSION, my_name(), _local_players())

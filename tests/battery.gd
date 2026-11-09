@@ -876,6 +876,8 @@ func _run_net() -> void:
 	(B.bot_drivers[1] as Drivers.ScriptDriver).set_limb(0, false)
 	await seconds(0.25)
 	t("net: remote release drops the same chair", A.chair.holder == -1 and B.chair.holder == -1)
+	# Isolate the scripted character cues from a real terrain slam on landing.
+	A.chair.float_above(Vector2(0, 8))
 	var chair_sounds := []
 	for m in machines:
 		var heard := []
@@ -950,6 +952,9 @@ func _run_net() -> void:
 	t("net: the frozen body is identical on both machines", _pose_diff(a1.pose(), b1.pose()) < 0.0001, "%.6f" % _pose_diff(a1.pose(), b1.pose()))
 	# Put the host back on its feet after the contact-load fixture; timeout
 	# freezes a supported climber, while an unsupported one is removed.
+	# A ring-out during the contact fixture can already have respawned the host.
+	a0 = A.climbers[A.live[0]]
+	b0 = B.climbers[a0.climber_id]
 	a0.release_all()
 	a0.apply_pose(host_standing_pose)
 	for body: RigidBody3D in a0.bodies.values():
@@ -1808,6 +1813,23 @@ func _run_ring() -> void:
 	var settled: bool = rope != null and rope.mesh == rope.get_meta("rest_mesh", null)
 	var ends_still: bool = rope != null and absf(rope.position.x) < 99.0  # the node never moves: only its middle bends
 	t("ring: the side rope's middle bows out with the hit (its ends stay on the posts) and settles back", rope != null and rope_peak > 0.05 and settled and ends_still, "bowed %.2f m, back %s" % [rope_peak, settled])
+	# Inspect the strands halfway from the centre badges to each fixed post.
+	for side in [-1, 1]:
+		g.stage.bounce_rope(side, 4.0)
+	await seconds(0.055)
+	for side in [-1, 1]:
+		var strand_mesh: MeshInstance3D = g.stage.ring_kit.find_child("ring_ropes_right" if side > 0 else "ring_ropes_left", true, false)
+		var rest: Mesh = strand_mesh.get_meta("rest_mesh")
+		var peaks := PackedFloat32Array([0, 0, 0])
+		for si in rest.get_surface_count():
+			var before: PackedVector3Array = rest.surface_get_arrays(si)[Mesh.ARRAY_VERTEX]
+			var after: PackedVector3Array = strand_mesh.mesh.surface_get_arrays(si)[Mesh.ARRAY_VERTEX]
+			for j in before.size():
+				var point := before[j]
+				if absf(point.z) > 0.4 and absf(point.z) < 1.1:
+					var tier := clampi(roundi((point.y - 0.5) / 0.45), 0, 2)
+					peaks[tier] = maxf(peaks[tier], side * (after[j].x - point.x))
+		t("ring: all three side strands flex beyond their centre fittings", peaks[0] > 0.05 and peaks[1] > 0.05 and peaks[2] > 0.05, peaks)
 	# Drop it outside the ring onto the plaza stones.
 	c.release_all()
 	var drop := Vector3(12.0 - c.centre_of_mass().x, 0.5 - c.centre_of_mass().y, 0.0)
@@ -1968,31 +1990,60 @@ func _run_chairsolid() -> void:
 	await wait_phase(g, "turn")
 	var chair := g.chair
 	var c: Climber = g.climbers[g.live[0]]
-	var hand: RigidBody3D = c.bodies["hand_l"]
+	var hand: RigidBody3D = c.bodies["hand_r"]
 	t("chair solid: the floating model is solid before pickup", chair.in_bubble and chair.collision_layer == Climber.LAYER_PROP and chair.collision_mask == Climber.SOLID_MASK)
 	c.attach(0, chair)
 	t("chair solid: a chair contact never creates a climbing anchor", c.limbs[0].grab_other != chair)
 	var wall := static_box(Vector2(-4, 3), Vector2(0.05, 2))
 	g.set_physics_process(false)
-	chair.global_position = Vector3(-4.65, 3, 0)
-	chair.pick_up(c, 0)
-	chair.grip_point = Vector3.ZERO
+	c.release_all()
+	var move := Vector3(-4.72, 3, 0) - hand.global_position
+	for body: RigidBody3D in c.bodies.values():
+		body.global_position += move
+		Climber.sync_server(body)
+		body.linear_velocity = Vector3.RIGHT * 3
+	chair.global_transform = Transform3D(Basis.IDENTITY, hand.global_position + Vector3.RIGHT * 0.19)
+	Climber.sync_server(chair)
+	await frames(2)  # let the teleported kinematic pickup settle before grabbing
+	chair.pick_up(c, 1)
+	var grip_gap := 0.0
 	# Pull across a wall for half a second. The prop must stay on its near side.
 	var reached_barrier := false
 	for tick in 60:
+		hand.apply_central_force(Vector3.RIGHT * 50)
 		chair.follow(c, 1.0 / 120)
 		await frames(1)
+		grip_gap = maxf(grip_gap, hand.global_position.distance_to(chair.to_global(chair.grip_point)))
 		reached_barrier = reached_barrier or chair.get_colliding_bodies().has(wall)
 	t("chair solid: a held chair cannot be steered through scenery", reached_barrier and chair.global_position.x < -4.0, chair.global_position)
+	t("chair solid: a blocked prop stays at the gripping hand", grip_gap < 0.06, grip_gap)
 	chair.drop(c, 1.0 / 120)
+	chair.global_position = Vector3(-6, 6, 0)
+	Climber.sync_server(chair)
+	await frames(2)
 	chair.release_carrier_when_clear()
 	t("chair solid: former carrier collides again after separation", not chair.get_collision_exceptions().has(hand))
+	var terrain_hits := []
+	chair.terrain_struck.connect(func(_at, speed): terrain_hits.append(speed))
+	var wear_before := chair.hit_count
+	wall.global_position = Vector3(-14, 6, 0)
+	Climber.sync_server(wall)
 	wall.collision_layer = Climber.LAYER_FROZEN
-	chair.global_position = Vector3(-4.8, 3, 0)
+	chair.global_transform = Transform3D(Basis.IDENTITY, Vector3(-14.8, 6, 0))
+	chair.angular_velocity = Vector3.ZERO
 	Climber.sync_server(chair)
 	chair.linear_velocity = Vector3.RIGHT * 12.0
 	await frames(18)
-	t("chair solid: a thrown chair is stopped by the frozen layer", chair.global_position.x < -4.0)
+	t("chair solid: a thrown chair is stopped by the frozen layer", chair.global_position.x < -14.0)
+	t("chair solid: a frozen obstacle plays one heavy terrain slam without wear", terrain_hits.size() == 1 and terrain_hits[0] > chair.LIGHT_HIT_MAX_SPEED and chair.hit_count == wear_before, terrain_hits)
+	terrain_hits.clear()
+	wall.collision_layer = Climber.LAYER_WORLD
+	chair.global_transform = Transform3D(Basis.IDENTITY, Vector3(-15, 6, 0))
+	Climber.sync_server(chair)
+	chair.linear_velocity = Vector3.RIGHT * 3
+	chair.angular_velocity = Vector3.ZERO
+	await frames(40)
+	t("chair solid: scenery plays one light slam without wear", terrain_hits.size() == 1 and terrain_hits[0] <= chair.LIGHT_HIT_MAX_SPEED and chair.hit_count == wear_before, terrain_hits)
 	# A real throw at a live target should generate a solid contact and heavy hit.
 	var head: RigidBody3D = g.partner.bodies["head"]
 	chair.global_transform = Transform3D(Basis.IDENTITY, head.global_position + Vector3(-0.85, 0.36, 0))
@@ -2018,3 +2069,95 @@ func _run_chairsolid() -> void:
 	g.end_match()
 	g.queue_free()
 	await frames(2)
+
+
+# Run these two probes in separate processes so both real Net autoloads take the
+# normal handshake path and the client drives an owned climber through LocalDriver.
+func _run_joinpadhost() -> void:
+	var game := GameScript.new()
+	game.world = world
+	game.dress = false
+	add_child(game)
+	Net.host_lan()
+	for tick in 1800:
+		if Net.members.size() >= 2:
+			break
+		await frames(1)
+	var roster := Net.build_roster()
+	t("join pad: host receives a playable client slot", roster.size() == 2)
+	if roster.size() == 2:
+		game.host_start({"mode":"scramble","timer":60.0,"stage":"dock"}, roster)
+		for tick in 1500:
+			if Net.members.size() < 2:
+				break
+			await frames(1)
+	game.end_match()
+	Net.leave()
+
+
+func _run_joinpadclient() -> void:
+	var game := GameScript.new()
+	game.world = world
+	game.dress = false
+	add_child(game)
+	var si := preload("res://core/steam_input.gd").new()
+	Net.add_child(si)
+	Net.steam_input = si
+	si.devices[3000] = {"buttons": {}, "stick": Vector2.ZERO, "gameplay_active":false, "menu_active":false}
+	Players.clear_players()
+	Net.join_lan("127.0.0.1")  # Direct join like an invite, no menu to create a slot.
+	await wait_phase(game, "round", 12.0)
+	var mine: Climber
+	# The round announcement can arrive one packet before the spawn RPC.
+	for tick in 180:
+		for c: Climber in game.live_climbers():
+			if c.owner_peer == Net.me():
+				mine = c
+		if mine != null:
+			break
+		await frames(1)
+	t("join pad: direct join creates a local driver for the client", mine != null and mine.driver is Drivers.LocalDriver and Players.slots.size() == 1)
+	if mine != null:
+		var b := InputEventJoypadButton.new()
+		b.device = 7
+		b.button_index = JOY_BUTTON_X
+		b.pressed = true
+		Input.parse_input_event(b)
+		var axis := InputEventJoypadMotion.new()
+		axis.device = 7
+		axis.axis = JOY_AXIS_LEFT_X
+		axis.axis_value = 0.8
+		Input.parse_input_event(axis)
+		await frames(4)
+		t("join pad: native events steer when Steam has no active bindings", mine.active_limb() == 0 and mine.driver.aim(mine,0).dir.x > 0.9)
+		b.pressed = false
+		Input.parse_input_event(b)
+		await frames(3)
+		t("join pad: native release clears the limb", mine.active_limb() == -1)
+		si.devices[3000].gameplay_active = true
+		si.devices[3000].buttons = {"arm_r":true, "lock":true}
+		si.devices[3000].stick = Vector2(0, 0.85)
+		t("join pad: primary controller cannot also join as a couch player", Players.poll_join() == -2)
+		si.devices[3000].buttons.erase("lock")
+		await frames(4)
+		t("join pad: activating Steam hands off buttons and aim", mine.active_limb() == 1 and mine.driver.aim(mine,1).dir.y > 0.9)
+		si.devices[3000].buttons.clear()
+		await frames(3)
+		t("join pad: Steam release clears the limb", mine.active_limb() == -1)
+	game.end_match()
+	Players.clear_players()
+	Players.add_player(0, "Returning pad")
+	Players.prepare_online("Client")
+	t("join pad: a single returning native player works on Steam", Players.slots.size() == 1 and Players.slots[0].device == Players.ANY and Players.slots[0].name == "Returning pad")
+	Players.clear_players()
+	Players.add_player(1)
+	Players.add_player(0)
+	si.devices[3000].gameplay_active = true
+	si.devices[3000].gamepad_index = 0
+	si.devices[3000].buttons = {"arm_l":true}
+	si.devices[3001] = {"buttons": {"leg_r":true}, "stick": Vector2.RIGHT, "gamepad_index":1}
+	Players.prepare_online("Client")
+	t("join pad: separate local slots keep their own controller after takeover", Players.limb_held(0,3) and not Players.limb_held(0,0) and Players.limb_held(1,0) and not Players.limb_held(1,3))
+	Net.leave()
+	Net.steam_input = null
+	si.queue_free()

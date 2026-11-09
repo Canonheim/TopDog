@@ -62,7 +62,10 @@ var fake := {}
 
 ## The device that spoke last: KBM or a pad id. ANY slots follow it.
 var last_device := KBM
-var _any_dev_shown := KBM
+var _native_fallback := false
+var _native_buttons := {}
+var _native_axes := {}
+var _native_event_pads := []
 
 var _lock_prev := {}
 var _lock_edge := {}
@@ -77,10 +80,28 @@ func _ready() -> void:
 	binds.kbm = DEFAULT_KBM.duplicate(true)
 	binds.pad = DEFAULT_PAD.duplicate(true)
 	_load()
+	Input.joy_connection_changed.connect(func(dev: int, connected: bool):
+		if not connected:
+			_native_event_pads.erase(dev)
+			for table in [_native_buttons, _native_axes]:
+				for key: Vector2i in table.keys():
+					if key.x == dev:
+						table.erase(key))
 
 
 ## Which device spoke last, for the ANY slot and its glyphs.
 func _input(event: InputEvent) -> void:
+	_refresh_native_fallback()
+	if _native_fallback:
+		if event is InputEventJoypadButton or event is InputEventJoypadMotion:
+			if not _native_event_pads.has(event.device):
+				_native_event_pads.append(event.device)
+		if event is InputEventJoypadButton:
+			_native_buttons[Vector2i(event.device, event.button_index)] = event.pressed
+		elif event is InputEventJoypadMotion:
+			_native_axes[Vector2i(event.device, event.axis)] = event.axis_value
+	if (event is InputEventJoypadButton or event is InputEventJoypadMotion) and _steam_live():
+		return  # Steam reports the same physical controller through note_device().
 	var dev := -99
 	if event is InputEventKey or event is InputEventMouseButton:
 		dev = KBM
@@ -107,6 +128,8 @@ func effective_device(slot: int) -> int:
 
 
 func _physics_process(_delta: float) -> void:
+	_refresh_native_fallback()
+	_refresh_pad_routes()
 	for s in slots.size():
 		var dev: int = slots[s].device
 		# A press is kept until something reads it (an edge must never be lost
@@ -122,6 +145,51 @@ func _physics_process(_delta: float) -> void:
 
 
 # ---------------------------------------------------------------- slots
+
+## Invites can connect before any menu creates a player. A solo online climber
+## follows the active backend while keeping its roster index and identity.
+func prepare_online(pname: String) -> void:
+	if slots.is_empty():
+		add_player(ANY, pname)
+	elif slots.size() == 1:
+		slots[0].device = ANY
+		slots[0].erase("native_pad")
+		device_changed.emit(0)
+	_refresh_pad_routes()
+
+
+## When several local players join online, preserve distinct slots as Steam
+## takes over the physical pads. Keep their native IDs for fallback on disconnect.
+func _refresh_pad_routes() -> void:
+	if slots.is_empty() or (slots.size() == 1 and slots[0].device == ANY):
+		return
+	var available := steam_devices()
+	available.sort()
+	for slot in slots:
+		if slot.has("native_pad") and not available.has(slot.device):
+			slot.device = slot.native_pad
+			slot.erase("native_pad")
+	for slot in slots:
+		available.erase(slot.device)
+	for exact_match in [true, false]:
+		for s in slots.size():
+			var slot: Dictionary = slots[s]
+			var raw := int(slot.device)
+			if raw < 0 or raw >= 1000 or available.is_empty():
+				continue
+			var route := -1
+			for dev: int in available:
+				if Net.steam_input.devices[dev].get("gamepad_index", -1) == raw:
+					route = dev
+					break
+			if route < 0:
+				if exact_match:
+					continue
+				route = available.front()
+			slot.native_pad = raw
+			slot.device = route
+			available.erase(route)
+			device_changed.emit(s)
 
 func add_player(device: int, pname := "") -> int:
 	if slots.size() >= MAX_LOCAL or slot_of_device(device) != -1:
@@ -159,9 +227,22 @@ func clear_players() -> void:
 ## For a join screen: a device that pressed its Lock In / A just now and has no
 ## slot yet, or -2 for none.
 func poll_join() -> int:
-	for dev in devices():
-		if slot_of_device(dev) == -1 and _action(dev, "lock"):
-			return dev
+	var connected := devices()
+	var any_slot := slot_of_device(ANY)
+	for dev in connected:
+		if slot_of_device(dev) != -1 or not _action(dev, "lock"):
+			continue
+		if any_slot >= 0:
+			# Start on the primary pad must not create a second climber. Pin
+			# the solo slot only when a genuinely different device joins.
+			var pads := connected.duplicate()
+			pads.erase(KBM)
+			var primary: int = pads.front() if not pads.is_empty() else KBM
+			if dev == primary:
+				continue
+			slots[any_slot].device = primary
+			device_changed.emit(any_slot)
+		return dev
 	return -2
 
 
@@ -176,7 +257,7 @@ func devices() -> Array:
 ## Controllers read through Steam's controller API (when Steam is running).
 func steam_devices() -> Array:
 	var si = Net.steam_input if Net.get("steam_input") != null else null
-	return si.devices.keys() if si != null else []
+	return si.active_devices("gameplay_active") if si != null else []
 
 
 func _is_steam_dev(dev: int) -> bool:
@@ -262,7 +343,7 @@ func stick(dev: int) -> Vector2:
 	if _steam_live():
 		return Vector2.ZERO  # stale while Steam reads the pad
 	# The LEFT stick steers; the right stick does nothing (Parker 2026-11-07).
-	return Vector2(Input.get_joy_axis(dev, JOY_AXIS_LEFT_X), -Input.get_joy_axis(dev, JOY_AXIS_LEFT_Y))
+	return Vector2(_axis_value(dev, JOY_AXIS_LEFT_X), -_axis_value(dev, JOY_AXIS_LEFT_Y))
 
 
 func _mouse_aim():
@@ -287,11 +368,33 @@ func _mouse_aim():
 ## per-frame action state is the only truth, and it sees releases.
 func _steam_live() -> bool:
 	var si = Net.steam_input if Net.get("steam_input") != null else null
-	return si != null and si.count() > 0
+	return si != null and not si.active_devices("gameplay_active").is_empty()
+
+
+func _refresh_native_fallback() -> void:
+	var detected: bool = Net.steam_input != null and Net.steam_input.count() > 0
+	var fallback: bool = detected and not _steam_live()
+	if fallback != _native_fallback:
+		_native_fallback = fallback
+		_native_buttons.clear()
+		_native_axes.clear()
+		_native_event_pads.clear()
+
+
+func _axis_value(dev: int, axis: int) -> float:
+	if _native_fallback:
+		return float(_native_axes.get(Vector2i(dev, axis), 0.0))
+	return Input.get_joy_axis(dev, axis)
 
 
 func _raw_pads() -> Array:
-	return [] if _steam_live() else Input.get_connected_joypads()
+	if _steam_live():
+		return []
+	var pads: Array = Input.get_connected_joypads()
+	for dev in _native_event_pads:
+		if not pads.has(dev):
+			pads.append(dev)
+	return pads
 
 
 func _action(dev: int, action: String) -> bool:
@@ -328,9 +431,11 @@ func _bind_down(dev: int, b: Dictionary) -> bool:
 	if dev == KBM:
 		return false
 	if b.has("pad"):
+		if _native_fallback:
+			return bool(_native_buttons.get(Vector2i(dev, b.pad), false))
 		return Input.is_joy_button_pressed(dev, b.pad)
 	if b.has("axis"):
-		return Input.get_joy_axis(dev, b.axis) >= Feel.get_k("trigger_press")
+		return _axis_value(dev, b.axis) >= Feel.get_k("trigger_press")
 	return false
 
 

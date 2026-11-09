@@ -1,5 +1,12 @@
 extends RigidBody3D
-## The authoritative loose prop collides with the arena. A carried chair has no physical load.
+## The chair and its gripping limb share a fixed physics joint until release.
+signal terrain_struck(at: Vector3, speed: float)
+signal rope_struck(at: Vector3, speed: float)
+
+var grip_joint := RID()
+var terrain_contacts := {}
+var incoming_linear := Vector3.ZERO
+var incoming_angular := Vector3.ZERO
 const MODELS := [
 	preload("res://kit/models/folding_chair.glb"),
 	preload("res://kit/models/folding_chair_damage_1.glb"),
@@ -99,6 +106,8 @@ func _pose_pickup() -> void:
 
 func float_above(top: Vector2) -> void:
 	in_bubble = true
+	clear_grip()
+	terrain_contacts.clear()
 	set_carrier(null)
 	collision_layer = Climber.LAYER_PROP
 	freeze = true
@@ -190,6 +199,7 @@ func pick_up(c: Climber, i: int) -> void:
 	previous = global_transform
 	carry_velocity = Vector3.ZERO
 	carry_spin = 0
+	lock_grip(end)
 
 
 func set_carrier(c: Climber) -> void:
@@ -208,28 +218,67 @@ func set_carrier(c: Climber) -> void:
 func follow(c: Climber, dt: float) -> void:
 	var ld: Dictionary = c.limbs[limb].def
 	var end: RigidBody3D = c.bodies[ld.end]
-	var forearm := end.global_position - (c.bodies[ld.lo] as RigidBody3D).global_position
-	var direction := Vector2(forearm.x, forearm.y)
-	if grip_point.y > 0:
-		direction = -direction
-	var facing := Basis(Vector3.BACK, direction.angle() - PI * 0.5)
-	# Drive only the prop. The physics solver can stop or slide it against a
-	# blocker without transferring the chair's weight back to the carrier.
-	var rotation_error := (facing * global_basis.inverse()).get_rotation_quaternion()
-	if rotation_error.w < 0:
-		rotation_error = -rotation_error
-	var angle := rotation_error.get_angle()
-	var spin := rotation_error.get_axis() * minf(angle * 14.0, 16.0) if angle > 0.0001 else Vector3.ZERO
-	var grip_error := end.global_position - to_global(grip_point)
-	var velocity := grip_error * 36.0 - spin.cross(global_basis * grip_point)
-	linear_velocity = Vector3(velocity.x, velocity.y, 0).limit_length(13.0)
-	angular_velocity = spin
 	var hand_velocity := (end.global_position - last_hand) / dt
 	carry_velocity = carry_velocity.lerp(hand_velocity, 1.0 - exp(-35.0 * dt))
 	last_hand = end.global_position
 
 
+func lock_grip(end: RigidBody3D) -> void:
+	clear_grip()
+	freeze = false
+	gravity_scale = 0.0
+	sleeping = false
+	# Equal hinge limits lock the final rotational axis. The solver can now
+	# transmit a blocked chair's reaction directly into the hand or foot.
+	Climber.sync_server(self)
+	grip_joint = PhysicsServer3D.joint_create()
+	var chair_frame := Transform3D(global_basis.inverse() * end.global_basis, grip_point)
+	PhysicsServer3D.joint_make_hinge(grip_joint, end.get_rid(), Transform3D.IDENTITY, get_rid(), chair_frame)
+	PhysicsServer3D.hinge_joint_set_param(grip_joint, PhysicsServer3D.HINGE_JOINT_LIMIT_LOWER, 0.0)
+	PhysicsServer3D.hinge_joint_set_param(grip_joint, PhysicsServer3D.HINGE_JOINT_LIMIT_UPPER, 0.0)
+	PhysicsServer3D.hinge_joint_set_flag(grip_joint, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, true)
+
+
+func clear_grip() -> void:
+	if grip_joint.is_valid():
+		PhysicsServer3D.free_rid(grip_joint)
+		grip_joint = RID()
+
+
+func _exit_tree() -> void:
+	clear_grip()
+
+
+func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	if in_bubble or not terrain_struck.has_connections():
+		return
+	var touching := {}
+	var strongest := 0.0
+	var at := Vector3.ZERO
+	for i in state.get_contact_count():
+		var other := state.get_contact_collider_object(i) as PhysicsBody3D
+		if other == null or not (other.collision_layer & (Climber.LAYER_WORLD | Climber.LAYER_FROZEN)):
+			continue
+		var id := other.get_instance_id()
+		touching[id] = true
+		if terrain_contacts.has(id):
+			continue
+		var point := state.get_contact_local_position(i)
+		var velocity := incoming_linear + incoming_angular.cross(point - state.transform.origin)
+		var relative := velocity - state.get_contact_collider_velocity_at_position(i)
+		var speed := -relative.dot(state.get_contact_local_normal(i))
+		if speed > strongest:
+			strongest = speed
+			at = point
+	terrain_contacts = touching
+	incoming_linear = state.linear_velocity
+	incoming_angular = state.angular_velocity
+	if strongest >= HIT_SPEED:
+		terrain_struck.emit(at, strongest)
+
+
 func drop(c: Climber, dt: float) -> void:
+	clear_grip()
 	if c != null and not c.removed:
 		var end: RigidBody3D = c.bodies[c.limbs[limb].def.end]
 		var measured := (end.global_position - last_hand) / dt
@@ -282,8 +331,10 @@ func tick_ropes(dt: float) -> void:
 			linear_velocity.x = 0.0
 		return
 	if linear_velocity.x * side > 0.3:
+		var speed := absf(linear_velocity.x)
 		linear_velocity.x *= -Feel.get_k("rope_bounce")
 		rope_wait = Climber.ROPE_COOLDOWN
+		rope_struck.emit(Vector3(side * Climber.rope_x, p.y, 0), speed)
 
 
 func settle() -> void:

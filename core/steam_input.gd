@@ -71,6 +71,14 @@ func _process(delta: float) -> void:
 	if _list_t <= 0.0:
 		_list_t = 0.5
 		_handles = Steam.getConnectedControllers()
+		# The manifest can finish loading after an invite or overlay handoff.
+		if set_handle == 0:
+			set_handle = int(Steam.getActionSetHandle(ACTION_SET))
+		if steer_handle == 0:
+			steer_handle = int(Steam.getAnalogActionHandle("steer"))
+		for action in DIGITAL:
+			if digital_handles.get(action, 0) == 0:
+				digital_handles[action] = int(Steam.getDigitalActionHandle(action))
 	var handles: Array = _handles
 	var seen := {}
 	for h in handles:
@@ -84,20 +92,37 @@ func _process(delta: float) -> void:
 		if set_handle != 0:
 			Steam.activateActionSet(handle, set_handle)
 		var d: Dictionary = devices.get(dev, {"handle": handle, "type": int(Steam.getInputTypeForHandle(handle)), "buttons": {}, "stick": Vector2.ZERO})
+		if not d.has("gamepad_index"):
+			d.gamepad_index = Steam.getGamepadIndexForController(handle) if Steam.has_method("getGamepadIndexForController") else -1
+		var limbs_active := false
+		var menu_active := false
 		for a in DIGITAL:
 			var dd: Dictionary = Steam.getDigitalActionData(handle, digital_handles[a])
-			var down := bool(dd.get("state", false))
+			var active := bool(dd.get("active", false))
+			if a in ["arm_l", "arm_r", "leg_l", "leg_r"]:
+				limbs_active = limbs_active or active
+			if a == "menu_select":
+				menu_active = active
+			var down := active and bool(dd.get("state", false))
 			if down and not d.buttons.get(a, false):
 				_note(dev, a)
 			d.buttons[a] = down
 		var ad: Dictionary = Steam.getAnalogActionData(handle, steer_handle)
 		d.stick = Vector2(float(ad.get("x", 0.0)), float(ad.get("y", 0.0)))  # Steam's joystick y is up, as ours
+		d.gameplay_active = limbs_active and bool(ad.get("active", false))
+		d.menu_active = menu_active
+		if not bool(ad.get("active", false)):
+			d.stick = Vector2.ZERO
 		if d.stick.length() > 0.5 and last_dev != dev:
 			_note(dev, "stick")
 		devices[dev] = d
 	for dev in devices.keys():
 		if not seen.has(dev):
 			devices.erase(dev)
+
+
+func active_devices(flag: String) -> Array:
+	return devices.keys().filter(func(dev): return devices[dev].get(flag, true))
 
 
 func _note(dev: int, what: String) -> void:
