@@ -21,6 +21,7 @@ const SFX := {
 		"dog_exertion_15", "dog_exertion_16", "dog_exertion_17", "dog_exertion_18",
 	],
 	"thud": ["thud", "land_soft", "hit_flesh"],
+	"rope": ["rope_boing"],  # PLACEHOLDER (Parker 11-08: Dan replaces it)
 	"hurt": ["hurt_1", "hurt_2", "hurt_3", "hurt_4"],
 	"fall": ["yell_1", "yell_2", "yell_3"],
 	"lock": ["lock_bell"],

@@ -418,6 +418,15 @@ Parker: "Dan took out grabbing people. Put it back in ... the practice partner i
   - Also new: a padded bumper, a scalloped valance, skirt panels with the pug medallion, taped ropes, octagonal turnbuckles, gold post caps, and `ring_steps` outside the right end (visual only).
   - `ring_canvas` is the canvas alone now, still repainted grey in code.
 
+## The rope spring and boing, and a clean HUD bottom (Parker, 2026-11-08)
+
+- **The ropes spring** (Parker: "the ropes need to have a bouncing animation when they bounce you and put a place holder noise in").
+  - `Climber.rope_bounced` goes to every machine (`_rpc_rope`). Each plays the boing at the rope and calls `Stage.bounce_rope`: that side's rope (`ring_ropes_left/right` on the kit ring) is knocked out by up to 0.4 m with the hit, then springs back on an elastic tween.
+  - The sound is a PLACEHOLDER, `audio/sfx/rope_boing.wav` (Sound "rope"), synthesized for Dan to replace.
+  - `--ring` checks it (a dressed game now): the rope goes out 0.23 m on a 4 m/s hit and settles.
+- **The bottom text is gone** (Parker: "The tooltips and dev stuff? Get rid of it"). The controls hint label is removed, and the flat "Above the line! Lock in" prompt is hidden.
+- **Ordered:** a HUD nameplate for the current climber's name, sized for the longest name ("Winifred the Drawbridge-Scrambler", 33 characters), and an odometer height counter with rolling drum wheels (references in `Top Dog Kit\docs\`). The UI creator makes the parts and the Second Director wires them, with the lock-in prompt in 3D.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

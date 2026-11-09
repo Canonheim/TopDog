@@ -831,6 +831,7 @@ func _screen_hud() -> Control:
 	hud_hint.add_theme_color_override("font_color", Color(1, 0.88, 0.4))
 	hud_hint.add_theme_constant_override("outline_size", 10)
 	hud_hint.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
+	hud_hint.visible = false  # the flat prompt is gone (Parker 11-08); the 3D nameplate shows lock-in
 	c.add_child(hud_hint)
 	var help := Label.new()
 	help.set_anchors_preset(Control.PRESET_BOTTOM_LEFT)
@@ -840,7 +841,9 @@ func _screen_hud() -> Control:
 	help.modulate = Color(1, 1, 1, 0.95)
 	help.add_theme_constant_override("outline_size", 8)  # readable on the light plaza floor
 	help.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
-	c.add_child(help)
+	# Parker 11-08: "The tooltips and dev stuff? Get rid of it." The controls live on
+	# the Controls screen; the bottom becomes the 3D nameplate and odometer.
+	help.free()
 	return c
 
 
