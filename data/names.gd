@@ -8,6 +8,7 @@ const FIRST := [
 	"Quentin", "Roderick", "Sigurd", "Tobias", "Ulric", "Valen", "Wystan", "Yorick",
 	"Agnes", "Beatrix", "Cecily", "Edith", "Gisela", "Hilda", "Isolde", "Matilda",
 	"Rowena", "Sibyl", "Winifred", "Elspeth", "Maud", "Odette", "Brunhild", "Tamsin",
+	"Dango",
 ]
 const THING := [
 	"Barrel", "Ladder", "Turnip", "Goose", "Bucket", "Anvil", "Cabbage", "Kettle",
@@ -25,18 +26,17 @@ const TINTS := [
 ]
 
 
-## WHOLE NAMES, kept as they are (Parker 11-09: "add 'Dango the Wretch' as one of the
-## possible names"). A new climber gets one of these SPECIAL_CHANCE of the time; the
-## rest are built from the lists above (tens of thousands of them, so a name dropped
-## in among those would never come up).
-const SPECIAL := ["Dango the Wretch"]
-const SPECIAL_CHANCE := 1.0 / 40.0
+## TITLES THAT STAND ALONE (Parker 11-09): picked like any THING, but no DOER is added,
+## so anyone can be "Edith the Wretch".
+const ALONE := ["Wretch"]
 
 
 static func make() -> String:
-	if not SPECIAL.is_empty() and randf() < SPECIAL_CHANCE:
-		return SPECIAL.pick_random()
-	return "%s the %s-%s" % [FIRST.pick_random(), THING.pick_random(), DOER.pick_random()]
+	var first: String = FIRST.pick_random()
+	var title: String = (THING + ALONE).pick_random()
+	if title in ALONE:
+		return "%s the %s" % [first, title]
+	return "%s the %s-%s" % [first, title, DOER.pick_random()]
 
 
 static func tint(i: int) -> Color:
