@@ -15,7 +15,6 @@ extends Node3D
 ##            one beside it passes 9 to 0.
 ## Stand-ins (a plate, four drums) until the kit's parts land; they swap in by name.
 
-const LONGEST := 33
 const DIGIT_STEP := TAU / 10.0
 const PLATE_AT := Vector3(-1.4, -2.8, 0.0)  # HUD units (x UI_SCALE on screen)
 const ODO_AT := Vector3(4.55, -2.8, 0.0)
@@ -76,27 +75,47 @@ func _build_plate() -> void:
 	_name_node = Node3D.new()
 	_name_node.position = _face_c
 	_plate.add_child(_name_node)
-	# The LOCK IN tab above the plate's left end (HUD space): the climber's foot
-	# glyphs draw over the middle of the screen.
-	_lock = Node3D.new()
-	_lock.position = LOCK_AT
-	_lock.add_child(LuchaKit.box(Vector3(3.0, 0.5, 0.08), LuchaKit.GOLD_DARK, Vector3(0, 0, -0.02)))
-	_lock.add_child(LuchaKit.box(Vector3(2.85, 0.38, 0.08), LuchaKit.GOLD, Vector3(0, 0, 0.02)))
-	_lock_text = LuchaKit.fit_text(LOCK_TEXT, 2.7, 0.3, LuchaKit.RED, LuchaKit.INK)
-	_lock_text.position = Vector3(0, 0, 0.075)
-	_lock.add_child(_lock_text)
-	add_child(_lock)
+	# The LOCK IN tab above the plate's left end: the climber's foot glyphs draw
+	# over the middle of the screen. The kit's tab sits on the kit plate's top
+	# edge (plate space, built at the plate's scale); else a gold box, HUD space.
+	var kit_tab := LuchaKit.kit_model("hud_lockin_tab") if _gems != null else null
+	if kit_tab != null:
+		_lock = kit_tab
+		_lock.position = Vector3(-0.75, 0.285, 0.0)
+		_plate.add_child(_lock)
+		var tf := _lock.find_child("lockin_tab_face", true, false) as MeshInstance3D
+		var fc := Vector3(0, 0, 0.072)
+		var fw := 1.0
+		var fh := 0.116
+		if tf != null:
+			var fb := _local_aabb(tf, _lock)
+			fc = fb.get_center() + Vector3(0, 0, fb.size.z * 0.5 + 0.006)
+			fw = fb.size.x * 0.92
+			fh = fb.size.y
+		_lock_text = LuchaKit.fit_text(LOCK_TEXT, fw, fh * 0.75, LuchaKit.RED, LuchaKit.INK)
+		_lock_text.position = fc
+		_lock.add_child(_lock_text)
+	else:
+		_lock = Node3D.new()
+		_lock.position = LOCK_AT
+		_lock.add_child(LuchaKit.box(Vector3(3.0, 0.5, 0.08), LuchaKit.GOLD_DARK, Vector3(0, 0, -0.02)))
+		_lock.add_child(LuchaKit.box(Vector3(2.85, 0.38, 0.08), LuchaKit.GOLD, Vector3(0, 0, 0.02)))
+		_lock_text = LuchaKit.fit_text(LOCK_TEXT, 2.7, 0.3, LuchaKit.RED, LuchaKit.INK)
+		_lock_text.position = Vector3(0, 0, 0.075)
+		_lock.add_child(_lock_text)
+		add_child(_lock)
 	_lock.visible = false
 
 
 func set_name_text(s: String) -> void:
-	s = s.to_upper().left(LONGEST)
+	s = s.to_upper()
 	if s == _name_shown:
 		return
 	_name_shown = s
 	for ch in _name_node.get_children():
 		ch.queue_free()
-	# The face fits 33 letters; shorter names grow, up to a cap.
+	# The face fits the longest made-up name (33 letters) at full size; longer ones
+	# (Steam names) shrink to fit, never clipped; shorter ones grow, up to a cap.
 	var t := LuchaKit.fit_text(s, _face_w, _face_h * 0.7, LuchaKit.RED, LuchaKit.INK)
 	_name_node.add_child(t)
 	LuchaUI.no_shadows(t)

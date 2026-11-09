@@ -29,7 +29,7 @@ func _ready() -> void:
 	await get_tree().create_timer(2.0).timeout
 	var hb: LuchaHudBottom = main.lucha.hud_bottom
 	_check("the bottom shows in a turn", hb.is_visible_in_tree())
-	_check("the nameplate names the climber", hb._name_shown.begins_with("BARTHOLOMEW"), hb._name_shown)
+	_check("the nameplate names the climber in full, never clipped", hb._name_shown == "BARTHOLOMEW THE EXCEEDINGLY LONG-NAMED", hb._name_shown)
 	_check("the odometer has four drums", hb._drums.size() == 4, hb._drums.size())
 	await _shot("hud_bottom")
 	main.game.line = -5.0
