@@ -1,5 +1,5 @@
 extends Node
-## Screenshots of the 3D screens: -- --open=local|pause|results|hud|clock|pinata --shot=PATH
+## Screenshots of the 3D screens: -- --open=local|pause|results|hud|clock|pinata|chair --shot=PATH
 func _ready() -> void:
 	var open := "title"
 	var shot := ""
@@ -31,6 +31,17 @@ func _ready() -> void:
 			# The title, the camera swung back to the plaza, and the pinata burst.
 			await get_tree().create_timer(0.6).timeout
 			main.lucha.burst_pinata()
+		"chair":
+			# Practice, then a chair floated in its bubble above the tower (the bubble's ink).
+			main._start_practice()
+			await get_tree().create_timer(2.0).timeout
+			var g = main.game
+			g._rpc_spawn_chair(g.chair_generation + 1, g._chair_tower_top(), Vector2i(9, 12))
+			# Floated between the two climbers, at chest height, so it sits in frame.
+			var mid := Vector2.ZERO
+			for c in g.climbers.values():
+				mid += c.centre_of_mass() / float(g.climbers.size())
+			g.chair.float_above(mid - Vector2(0.0, g.chair.PICKUP_HEIGHT - 0.6))
 		"hud", "pause", "results":
 			main._start_practice()
 			await get_tree().create_timer(2.0).timeout

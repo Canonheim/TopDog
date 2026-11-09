@@ -35,6 +35,7 @@ var in_bubble := true:
 		if collider != null and not value:
 			collider.transform = Transform3D.IDENTITY
 var bubble: MeshInstance3D
+const BUBBLE_INK := 0.035  # the bubble's outline width, metres
 const HIT_SPEED := 1.8
 const LIGHT_HIT_MAX_SPEED := 4.5  # Contact-point speed in m/s.
 var holder := -1
@@ -72,6 +73,20 @@ func setup(draw_model: bool, thresholds: Vector2i) -> void:
 		bubble.material_override = surface
 		bubble.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(bubble)
+		# THE BUBBLE'S INK (Parker 11-09): an inverse hull, a slightly bigger sphere drawn
+		# inside-out; the shader keeps only the rim ring so the chair still shows through.
+		var hull := MeshInstance3D.new()
+		hull.name = "BubbleHull"
+		var shell := SphereMesh.new()
+		shell.radius = sphere.radius + BUBBLE_INK
+		shell.height = shell.radius * 2.0
+		hull.mesh = shell
+		var ink := ShaderMaterial.new()
+		ink.shader = preload("res://shaders/bubble_hull.gdshader")
+		ink.set_shader_parameter("inner_radius", sphere.radius)
+		hull.material_override = ink
+		hull.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		bubble.add_child(hull)
 	axis_lock_linear_z = true
 	collision_layer = Climber.LAYER_PROP
 	freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
