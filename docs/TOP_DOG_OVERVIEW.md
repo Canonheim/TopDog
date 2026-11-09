@@ -107,7 +107,7 @@ Paused, the menu rides 1.2 m from the lens, so nothing in the world covers it, a
 
 ### The town
 
-The Plaza Ring sits in a round plaza with the town wrapped round it in a semicircle: the church on a forecourt at the back of the arc, kit houses facing the ring, a terraced hill town behind (an amphitheatre), papel picado on poles round the plaza, and cardboard cut-out mountains and clouds behind. All of it is built in `LuchaUI._build_plaza` from the Top Dog Kit's models. Gameplay is only the ring and the plaza floor (`Stage`).
+The Plaza Ring sits in a round plaza with the town wrapped round it in a semicircle: the church on a forecourt at the back of the arc, kit houses (four styles, a to d) facing the ring, a terraced hill town behind (an amphitheatre), papel picado on poles round the plaza, and cardboard cut-out mountains and clouds behind. All of it is built in `LuchaUI._build_plaza` from the Top Dog Kit's models. Gameplay is only the ring and the plaza floor (`Stage`).
 
 ### The ring
 
