@@ -85,6 +85,7 @@ var bodies := {}  # piece name -> RigidBody3D
 ## 11-08: "Dan took out grabbing people. Put it back in").
 var grabbed_by := 0  # grabs other climbers hold on me (local joints)
 var held_by: Array = []  # the climbers holding me (one entry per grab), for THE GROUNDED GROUP
+var puppet_on_support := false
 var remote_grabbed := 0  # grabs on me reported from other machines
 ## Online: forces other machines' climbers put on my pieces, piece -> Vector2 (N).
 var remote_pulls := {}
@@ -92,6 +93,11 @@ var joints := {}  # joint name -> Dictionary
 var limbs: Array = []  # per limb: Dictionary (see _build_limbs)
 var total_mass := 0.0
 var spawn_at := Vector2.ZERO
+var knockout_left := 0.0
+var _impact_guard := 0.0
+var _pull_load := 0.0
+var _incoming_pull := 0.0
+var wrestling_force := Vector2.ZERO
 var live_time := 0.0
 var removed := false
 var _shape_geo := {}  # piece -> [kind, data...] for height reads (local, m)
@@ -594,6 +600,33 @@ func _physics_process(delta: float) -> void:
 	if removed or state != State.LIVE:
 		return
 	live_time += delta
+	wrestling_force = Vector2.ZERO
+	_impact_guard = maxf(0, _impact_guard - delta)
+	if knockout_left <= 0 and _impact_guard <= 0 and live_time > 0.65:
+		for pn in ["head", "chest"]:
+			var body: RigidBody3D = bodies[pn]
+			var physics := PhysicsServer3D.body_get_direct_state(body.get_rid())
+			if physics == null:
+				continue
+			for j in physics.get_contact_count():
+				var other := physics.get_contact_collider_object(j)
+				if other == null or (other.has_meta("climber") and other.get_meta("climber") == self):
+					continue
+				var impact := physics.get_contact_impulse(j).length() / body.mass
+				if impact >= (5.5 if pn == "head" else 8.0):
+					knock_out()
+					break
+			if knockout_left > 0:
+				break
+	for pn in remote_pulls:
+		var pull: Vector2 = remote_pulls[pn]
+		if bodies.has(pn):
+			(bodies[pn] as RigidBody3D).apply_central_force(Vector3(pull.x, pull.y, 0))
+			_incoming_pull = maxf(_incoming_pull, pull.length())
+	if knockout_left > 0:
+		knockout_left = maxf(0, knockout_left - delta)
+		_incoming_pull = 0
+		return
 	_tick_ropes(delta)
 	_grunt_wait -= delta / Engine.time_scale
 	_select_active_limb()
@@ -606,10 +639,38 @@ func _physics_process(delta: float) -> void:
 			body.gravity_scale = gravity
 		_gravity_scale = gravity
 	_tick_joints(attached, delta)
-	for pn in remote_pulls:
-		var f: Vector2 = remote_pulls[pn]
-		if bodies.has(pn):
-			(bodies[pn] as RigidBody3D).apply_central_force(Vector3(f.x, f.y, 0.0))
+	# Opposed pulls have to persist through several physics ticks to peel a grip.
+	var load_ratio := _incoming_pull / maxf(1, total_mass * 9.8)
+	_pull_load = maxf(0, _pull_load + (load_ratio - 0.9) * delta)
+	_incoming_pull = 0
+	if _pull_load >= 0.15:
+		_pull_load = 0
+		for i in limbs.size():
+			var grip: Dictionary = limbs[i]
+			if grip.grab.is_valid() and (grip.grab_climber == null or grip.grab_climber.state == State.FROZEN):
+				release(i)
+				grip.regrip = 0.65
+
+
+func knock_out() -> void:
+	if state != State.LIVE or knockout_left > 0 or _impact_guard > 0:
+		return
+	knockout_left = 1.6
+	_impact_guard = knockout_left + 0.8
+	release_all()
+	_active_limb = -1
+	_press_stack.clear()
+	_buttons_down.fill(false)
+	_neutral_angles.clear()
+	limb_selected.emit(-1, Vector3.ZERO)
+	for l in limbs:
+		l.held = false
+		l.driving = false
+	for joint in joints.values():
+		PhysicsServer3D.hinge_joint_set_param(joint.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, 0)
+	_gravity_scale = Feel.climber_gravity(false)
+	for body: RigidBody3D in bodies.values():
+		body.gravity_scale = _gravity_scale
 
 
 ## THE GROUNDED GROUP (Parker 11-08: "you cannot exert force unless at least one
@@ -671,6 +732,8 @@ func grounded_locally() -> bool:
 
 ## Stuck to the arena or the frozen tower, or an end piece touching either.
 func touches_solid() -> bool:
+	if state == State.PUPPET:
+		return puppet_on_support
 	for l in limbs:
 		if l.grab.is_valid() and (l.grab_climber == null or not is_instance_valid(l.grab_climber) or l.grab_climber.state == State.FROZEN):
 			return true
@@ -979,6 +1042,14 @@ func _tick_joints(attached: bool, dt: float) -> void:
 		var end: RigidBody3D = bodies[l.def.end]
 		var p := pos2(end)
 		var v := Vector2(end.linear_velocity.x, end.linear_velocity.y)
+		var rival: Climber = l.grab_climber
+		if is_instance_valid(rival) and rival.state != State.FROZEN:
+			# Use the load of a whole opponent when steering a welded grapple.
+			wrestling_force = ((target - p) * k * 2.5 - v * c).limit_length(cap * 1.6)
+			end.apply_central_force(Vector3(wrestling_force.x, wrestling_force.y, 0))
+			if rival.state == State.LIVE:
+				rival._incoming_pull = maxf(rival._incoming_pull, wrestling_force.length())
+			continue
 		var swing_force := _drive_swing(aim, target - p, l.l1 + l.l2, cap)
 		# A light end needs timestep-safe braking throughout a reachable stick
 		# command. Beyond reach, retain the tuned swing until the limb straightens.

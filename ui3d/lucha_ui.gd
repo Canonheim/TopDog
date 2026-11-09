@@ -1557,6 +1557,33 @@ func _fill_results() -> void:
 	var best: Dictionary = res.get("best", {})
 	var order := best.keys()
 	order.sort_custom(func(a, b): return float(best[a]) > float(best[b]))
+	if w >= 0:
+		order.erase(w)
+		order.push_front(w)
+	for i in 3:
+		var step := _podium.find_child("podium_%d" % (i+1), true, false) as Node3D
+		if step == null:
+			continue
+		var old := step.get_node_or_null("Finisher")
+		if old != null:
+			step.remove_child(old)
+			old.queue_free()
+		if i >= order.size():
+			continue
+		var figure := Game.KNIGHT.instantiate() as Node3D
+		figure.name = "Finisher"
+		figure.rotation.y = PI
+		figure.scale = Vector3.ONE * 0.62
+		figure.position.y = [1.0, 0.7, 0.5][i]
+		for side in [1, -1]:
+			var pivot := Vector3(side * 0.225, 1.582, 0)
+			var turn := Basis(Vector3.BACK, side * (0.82 if i == 0 else -1.17))
+			for limb_name in ["Shoulder", "Wrist", "Hand"]:
+				var limb := figure.find_child(("" if side == 1 else "L_") + limb_name, true, false) as Node3D
+				if limb != null:
+					limb.transform = Transform3D(turn, pivot - turn * pivot) * limb.transform
+		CelPass.celify(figure)
+		step.add_child(figure)
 	var y := 1.2
 	for pid in order.slice(0, 4):
 		var line := LuchaKit.poster_text("%s  %.2f M" % [str(main.game.player_name(int(pid))).split(" the ")[0].to_upper(), float(best[pid])], 0.24, LuchaKit.CREAM, LuchaKit.INK, 0.04)

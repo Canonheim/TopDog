@@ -865,8 +865,13 @@ func _run_net() -> void:
 	# Let the client pick up the host-owned chair using the normal limb selection.
 	t("net: the arena chair exists on host and client without a practice NPC", A.chair != null and B.chair != null and A.partner == null and B.partner == null)
 	var client_hand: RigidBody3D = a1.bodies["hand_l"]
-	A.chair.global_position = client_hand.global_position
-	Climber.sync_server(A.chair)
+	var setup_pose := b1.pose()
+	var offset := A.chair.global_position - client_hand.global_position
+	for k in range(0, setup_pose.size(), 3):
+		setup_pose[k] += offset.x
+		setup_pose[k+1] += offset.y
+	b1.release_all()
+	b1.apply_pose(setup_pose)
 	(B.bot_drivers[1] as Drivers.ScriptDriver).set_limb(0, true)
 	await seconds(0.25)
 	A.chair.set_hit_count(A.chair.dent_hits.y)
@@ -1501,8 +1506,15 @@ func _run_chair() -> void:
 	t("practice: chair and upright partner spawn outside the scoring roster", g.chair != null and npc != null and g.live.size() == 1 and npc.piece_top("head") > 1.40, npc.piece_top("head"))
 	var d: Drivers.ScriptDriver = c.driver
 	c.attach(0, npc.bodies["chest"])
-	t("practice: NPC cannot be used as a grip", not c.limbs[0].grab.is_valid())
-	t("chair: rests flat on a broad face", absf(g.chair.global_basis.z.y) > 0.98)
+	t("practice: partner can be grappled", c.limbs[0].grab.is_valid())
+	c.release_all()
+	t("chair: pickup floats over the center line", g.chair.in_bubble and g.chair.freeze and is_zero_approx(g.chair.position.x) and g.chair.position.y > g.line)
+	var setup_pose := c.pose()
+	var offset := Climber.pos2(g.chair) - c.limb_end(2)
+	for k in range(0, setup_pose.size(), 3):
+		setup_pose[k] += offset.x
+		setup_pose[k+1] += offset.y
+	c.apply_pose(setup_pose)
 	var foot: RigidBody3D = c.bodies["foot_l"]
 	var piece_mass := foot.mass
 	d.point_limb(2, true, Climber.pos2(g.chair) + Vector2(0.18, 0.02))
@@ -1510,7 +1522,7 @@ func _run_chair() -> void:
 		await frames(1)
 		if g.chair.holder == c.climber_id:
 			break
-	t("chair: reaching with an active foot picks up the flat chair", g.chair.holder == c.climber_id)
+	t("chair: reaching with an active foot collects the floating chair", g.chair.holder == c.climber_id)
 	if g.chair.holder == c.climber_id:
 		d.set_limb(2, true, Vector2(-1, 1).normalized())
 		await frames(30)
@@ -1580,6 +1592,61 @@ func _run_chair() -> void:
 	t("practice: leaving removes chair and partner", g.chair == null and g.partner == null)
 	g.queue_free()
 	await frames(2)
+
+
+func _run_wrestling() -> void:
+	var floor_body := static_box(Vector2(0,-0.2), Vector2(8,0.2))
+	var c := spawn(Vector2(0,0.05))
+	var ground := spawn(Vector2(3,0.05))
+	ground.freeze()
+	c.attach(2,ground.bodies["chest"])
+	for i in 5:
+		c._incoming_pull = c.total_mass * 9.8 * 0.5
+		c._physics_process(0.01)
+	t("wrestling: a light tug preserves a tower grip", c.limbs[2].grab.is_valid())
+	for i in 12:
+		c._incoming_pull = c.total_mass * 9.8 * 3.0
+		c._physics_process(0.01)
+	t("wrestling: a sustained hard pull peels the live grip", not c.limbs[2].grab.is_valid() and c.limbs[2].regrip > 0)
+	var attacker := spawn(Vector2(0.6,0.05))
+	attacker.attach(2,floor_body)
+	var drive: Drivers.ScriptDriver = attacker.driver
+	drive.set_limb(0,true,Vector2.LEFT)
+	attacker._select_active_limb()
+	attacker._tick_limb(0,0.01)
+	attacker.attach(0,c.bodies["chest"])
+	c.attach(2,ground.bodies["chest"])
+	for i in 60:
+		attacker._physics_process(0.01)
+		c._physics_process(0.01)
+		if not c.limbs[2].grab.is_valid():
+			break
+	t("wrestling: steering a grapple breaks a rival's planted grip", not c.limbs[2].grab.is_valid() and attacker.wrestling_force.length() > 0)
+	attacker.release_all()
+	c.attach(2,floor_body)
+	c.knock_out()
+	t("KO: all grips release and steering stops", c.knockout_left > 0 and c.stuck_count() == 0 and c.active_limb() == -1)
+	await seconds(2)
+	t("KO: player recovers", c.knockout_left == 0)
+	var faller := spawn(Vector2(-3, 3))
+	var upside_down := faller.pose()
+	for k in range(0,upside_down.size(),3):
+		upside_down[k] = -6.0 - upside_down[k]
+		upside_down[k+1] = 7.8 - upside_down[k+1]
+		upside_down[k+2] += PI
+	faller.apply_pose(upside_down)
+	faller.live_time = 1
+	for body: RigidBody3D in faller.bodies.values():
+		body.linear_velocity = Vector3.DOWN * 11.0
+	var knocked_down := false
+	for tick in 100:
+		await frames(1)
+		if faller.knockout_left > 0:
+			knocked_down = true
+			break
+	t("KO: a hard head-first collision knocks out the climber", knocked_down)
+	ground.knock_out()
+	t("wrestling: locked pieces stay frozen", ground.state == Climber.State.FROZEN and ground.knockout_left == 0)
 
 
 func _run_chairwear() -> void:
