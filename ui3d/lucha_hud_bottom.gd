@@ -21,7 +21,7 @@ const ODO_AT := Vector3(4.55, -2.8, 0.0)
 const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
 const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
-const LOCK_TEXT := "LOCK IN!  A / SPACE"
+const LOCK_TEXT := "LOCK IN! A/SPACE"
 
 var main: Node
 var _plate: Node3D
@@ -92,7 +92,8 @@ func _build_plate() -> void:
 			fc = fb.get_center() + Vector3(0, 0, fb.size.z * 0.5 + 0.006)
 			fw = fb.size.x * 0.92
 			fh = fb.size.y
-		_lock_text = LuchaKit.fit_text(LOCK_TEXT, fw, fh * 0.75, LuchaKit.RED, LuchaKit.INK)
+		# The title font runs narrower than fit_text's guess: let it use the face.
+		_lock_text = LuchaKit.fit_text(LOCK_TEXT, fw * 1.1, fh * 0.95, LuchaKit.RED, LuchaKit.INK)
 		_lock_text.position = fc
 		_lock.add_child(_lock_text)
 	else:
