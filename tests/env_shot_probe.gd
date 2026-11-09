@@ -38,6 +38,19 @@ func _ready() -> void:
 		cam.make_current()
 		await get_tree().create_timer(0.4).timeout
 		await _shot(out + "/env_" + str(c[0]) + ".png")
+	# A close look at a balcony's potted plants: the first plant_pot marker with a
+	# plant on it, seen from 3.2 m in front of its house.
+	for m in main.world.find_children("plant_pot_*", "Node3D", true, false):
+		var spot := m as Node3D
+		if spot.get_child_count() == 0 or spot.global_position.y < 0.5:
+			continue
+		var out_dir := spot.global_transform.basis.z.normalized()
+		cam.position = spot.global_position + out_dir * 3.2 + Vector3(0, 0.6, 0)
+		cam.look_at(spot.global_position + Vector3(0, 0.15, 0), Vector3.UP)
+		cam.make_current()
+		await get_tree().create_timer(0.4).timeout
+		await _shot(out + "/env_balcony.png")
+		break
 	get_tree().paused = false
 	get_tree().quit()
 
