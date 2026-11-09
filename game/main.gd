@@ -334,7 +334,7 @@ func _tick_camera(delta: float) -> void:
 	cam.look_at(Vector3(cam.position.x, cam.position.y - 0.3, 0.0), Vector3.UP)
 	line_bar.position.y = lerpf(line_bar.position.y, line_y, 1.0 - exp(-delta * 8.0))
 	line_bar.visible = game.phase in ["turn", "round", "between"]
-	line_label.visible = line_bar.visible and screen != "pause"
+	line_label.visible = false  # the line is a string of flags now (Parker 11-08)
 	line_label.position = Vector3(cam.position.x - half_h * aspect * 0.62, line_bar.position.y + 0.3, 0.4)
 	line_label.text = "LINE  %.2f m" % line_y
 
