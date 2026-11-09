@@ -486,6 +486,13 @@ Parker: "make the ground by the church and the street blend better ... the layou
 - **Palms:** each palm gets its own heading, lean and size, chosen from `palm`, `palm_b` (tall, curved) and `palm_c` (a fan palm) so neighbours differ (Parker: "not all face exactly the same way").
 - **The church:** blind arches with pot ledges on each tower, `pot_spot_1..4`, carrying the UI creator's `pot_poinsettia_a/b/c`. k2 adds gold ring knockers and fixes the plinth's block courses and pilaster bottoms.
 
+## Fewer green houses, a new blue one, no look-alikes behind, plants by the UI creator (Parker, 2026-11-08)
+
+- **Fewer green and tan houses** (Parker: "there's too many of those green and tan houses"): picks are by building family with weights (`HOUSE_WEIGHT`), and the flat-roofed d family comes up at half weight (env-pass 93347a3).
+- **plaza_house_e** (the Building Maker): a pitched tile roof with its gable to the square, sky blue, red shutters, a full-width wooden balcony. It's picked at full weight.
+- **No look-alike behind** (Parker: "a yellow house with a yellow house behind it? We dont want that"): each house is logged with its on-screen angle from the play camera, and a terrace house avoids the families of the houses in the two rows in front that it overlaps. Look-alike colours count as the same: tan clashes with cream and ochre (de93dc0).
+- **No modelled plants on buildings** (Parker: "tell the BM not to model plants onto his houses ... have UI guy build them"). Every house is re-landed with empty planters and `plant_box_N` / `plant_pot_N` / `plant_vine_N` markers. The UI creator's `plant_box_a/b/c`, `plant_pot_a/b/c` and `plant_vine_a/b` go on them through `_plant_markers()` (3d6f206). They're at default sizes for now; the UI creator re-lands them at the Building Maker's spot sizes under the same names, a plain sync.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
