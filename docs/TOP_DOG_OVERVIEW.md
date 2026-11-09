@@ -97,6 +97,18 @@ In play it follows the live climbers, close (`FOLLOW_HALF_H` 2.05 m), not the wh
 The line comes into view as you climb toward it. In menus and between turns it frames the tower top.
 Paused, the menu rides 1.2 m from the lens, so nothing in the world covers it, and the glyphs, tags and HUD are hidden.
 
+### The HUD bottom
+
+- **The nameplate** shows the climbing climber's name; long names shrink to fit.
+- **The odometer** shows your height on rolling drums: 00.00 to 99.99 m, then whole metres 0100 to 9999 with the decimal point gone.
+- **The LOCK IN tab** pops out of the nameplate like toast when you're above the line, and the nameplate's end gems turn lime.
+- There's no tooltip text in play: the controls live on the Controls screen.
+
+### The ring
+
+- The side ropes throw you back at 1.5x the speed you hit them, and spring with a boing.
+- Touching the plaza floor outside the ring is RING OUT: you're back in the ring 3 s later.
+
 ### Local and online
 
 - **Play together (this PC):** each controller or the keyboard joins as its own player.

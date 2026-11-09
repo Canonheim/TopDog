@@ -438,6 +438,9 @@ Parker: "Dan took out grabbing people. Put it back in ... the practice partner i
   - `hud_lockin_tab` and the end gems turn lime above the line;
   - `tests/hud_probe.tscn` checks it.
 - **Balcony French doors** on plaza houses b and c, and the ring's top rope is lime green (Parker).
+- **The toaster LOCK IN** (Parker to the UI creator: "make the part that says lock in a toaster pop up that comes out of the main name plate"). The tab waits in the nameplate's slot and pops up above the line (0.15 s, ease-out-back, a high "ding" of the lock bell), then drops back below it.
+- **The odometer past 100 m** (Parker: "the '.' drop[s] and the meter counter keep[s] going at 100"). `drum_values` reads whole metres from 100 m (0100-9999) and `odo_point`, the kit's decimal point split out, hides. The UI creator evened the drum gaps so four digits read evenly. `hud_probe` checks 150 m and 1234 m.
+- **Mountains m6:** deeper blue-grey on the far pair (the sun washed them near-white) and b's dotted ink line gone.
 
 ## Record
 
