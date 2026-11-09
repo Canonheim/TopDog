@@ -32,6 +32,8 @@ var in_bubble := true:
 			burst.global_transform = bubble.global_transform
 			Sound.play_at("bubble_pop", bubble.global_position, 0.0, get_parent(), Sound.SFX["bubble_pop"].pick_random())
 		in_bubble = value
+		collision_layer = 0 if value else Climber.LAYER_PROP
+		collision_mask = 0 if value else Climber.SOLID_MASK
 		float_time = 0.0
 		if bubble != null:
 			bubble.visible = value
@@ -94,14 +96,14 @@ func setup(draw_model: bool, thresholds: Vector2i) -> void:
 		hull.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		bubble.add_child(hull)
 	axis_lock_linear_z = true
-	collision_layer = Climber.LAYER_PROP
+	collision_layer = 0 if in_bubble else Climber.LAYER_PROP
 	freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
 	contact_monitor = true
 	max_contacts_reported = 24
 	continuous_cd = true
 	mass = 0.7
 	freeze = true
-	collision_mask = Climber.SOLID_MASK
+	collision_mask = 0 if in_bubble else Climber.SOLID_MASK
 	loose_target = transform
 	previous = transform
 
@@ -130,9 +132,9 @@ func float_above(top: Vector2) -> void:
 	clear_grip()
 	terrain_contacts.clear()
 	set_carrier(null)
-	collision_layer = Climber.LAYER_PROP
+	collision_layer = 0
 	freeze = true
-	collision_mask = Climber.SOLID_MASK
+	collision_mask = 0
 	thrower = -1
 	linear_velocity = Vector3.ZERO
 	angular_velocity = Vector3.ZERO

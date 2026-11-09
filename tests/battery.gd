@@ -576,7 +576,7 @@ func wait_phase(g: Game, ph: String, max_s := 30.0) -> bool:
 
 ## Put the lowest piece onto the barrel or the topmost frozen piece, matching
 ## the geometry on every peer. The "airborne" variant is well clear of the stack.
-func lift_and_lock(g: Game, pid: int, above := 0.4, airborne := false) -> Climber:
+func lift_and_lock(g: Game, pid: int, above := 0.4, airborne := false, request_lock := true) -> Climber:
 	var c: Climber = g.climbers[g.live[pid]]
 	c.release_all()
 	for l in c.limbs:
@@ -604,14 +604,15 @@ func lift_and_lock(g: Game, pid: int, above := 0.4, airborne := false) -> Climbe
 		p[k] += offset.x
 		p[k + 1] += offset.y
 	c.apply_pose(p)
-	(g.bot_drivers[pid] as Drivers.ScriptDriver).lock = true
-	await frames(3)
+	(g.bot_drivers[pid] as Drivers.ScriptDriver).lock = request_lock
+	if request_lock:
+		await frames(3)
 	return c
 
 
 func _run_groundlock() -> void:
 	for id in ["tower", "scramble", "practice"]:
-		var g := make_game(id, 1, 50.0)
+		var g := make_game(id, 2 if id == "scramble" else 1, 50.0)
 		await wait_phase(g, "round" if id == "scramble" else "turn")
 		var c := await lift_and_lock(g, 0, 0.4, true)
 		t("%s: an above-line airborne lock is refused" % id, c.state == Climber.State.LIVE and g.tower.is_empty() and g.best[0] == 0.0)
@@ -620,14 +621,24 @@ func _run_groundlock() -> void:
 		g.end_match()
 		g.queue_free()
 		await frames(2)
-	var timed := make_game("tower", 1, 50.0)
-	await wait_phase(timed, "turn")
-	await lift_and_lock(timed, 0, 0.4, true)
-	timed._time_up()
-	t("timeout: an airborne pose cannot score or become a new platform", not timed.alive[0] and timed.best[0] == 0.0 and timed.tower.is_empty() and timed.live.is_empty())
-	timed.end_match()
-	timed.queue_free()
-	await frames(2)
+	for id in ["tower", "scramble"]:
+		for airborne in [false, true]:
+			var timed := make_game(id, 2 if id == "scramble" else 1, 50.0)
+			var active := "round" if id == "scramble" else "turn"
+			await wait_phase(timed, active)
+			if id == "scramble":
+				await lift_and_lock(timed, 1)
+			var previous := timed.tower.size()
+			await lift_and_lock(timed, 0, 0.4, airborne, false)
+			timed._time_up()
+			if airborne:
+				t("%s timeout: airborne player stays live until supported" % id, timed.alive[0] and timed.best[0] == 0.0 and timed.tower.size() == previous and timed.phase == active)
+				await lift_and_lock(timed, 0, 0.4, false, false)
+				timed._time_up()
+			t("%s timeout: supported above-line player automatically locks in (airborne=%s)" % [id, airborne], timed.alive[0] and timed.best[0] > 0.0 and timed.tower.size() == previous + 1 and timed.phase == "between", [timed.alive, timed.best, timed.tower, timed.phase])
+			timed.end_match()
+			timed.queue_free()
+			await frames(2)
 
 func _run_tower() -> void:
 	var g := make_game("tower", 3, 3.0)
@@ -667,41 +678,45 @@ func _run_tower() -> void:
 
 
 func _run_scramble() -> void:
-	var g := make_game("scramble", 4, 4.0)
-	# Round 1: 0, 1, 2 lock in (each raising the line); 3 never does -> out at the clock.
-	t("scramble: round 1 starts", await wait_phase(g, "round", 6.0))
-	await frames(10)
-	t("scramble: everyone still in is live at once", g.live_climbers().size() == 4, g.live_climbers().size())
-	var line0 := g.line
-	var lines: Array = [line0]
-	for pid in [0, 1, 2]:
-		await lift_and_lock(g, pid, 0.4 + pid * 0.3)
-		lines.append(g.line)
-	var rising := true
-	for i in range(1, lines.size()):
-		rising = rising and lines[i] > lines[i - 1]
-	t("scramble: every lock-in above the line raises it", rising, lines)
-	var c3: Climber = g.climbers[g.live[3]]
-	await lift_and_lock(g, 3, -3.0)  # head still under the line: refused
-	t("scramble: a lock-in under the line is refused", c3.state != Climber.State.FROZEN)
-	await wait_phase(g, "between", 8.0)
-	t("scramble: whoever didn't lock in by the clock is out", not g.alive[3] and g.alive[0] and g.alive[1] and g.alive[2])
-	var r1_max := g.line
-	# Round 2: all three lock in -> the round ends early.
-	t("scramble: round 2 starts", await wait_phase(g, "round", 6.0))
-	await frames(10)
-	t("scramble: round 2 starts at round 1's max height", absf(g.line - r1_max) < 0.001, "%.3f vs %.3f" % [g.line, r1_max])
-	for pid in [2, 0]:
-		await lift_and_lock(g, pid, 0.4)
-	var clock_left := g.clock
-	await lift_and_lock(g, 1, 0.4)
-	t("scramble: the round ends as soon as everyone still in has locked in", g.phase == "between" and clock_left > 1.0, "phase %s, clock was %.2f" % [g.phase, clock_left])
-	# Round 3: only 0 locks in -> 1 and 2 are out -> 0 wins.
-	await wait_phase(g, "round", 6.0)
-	await frames(10)
-	await lift_and_lock(g, 0, 0.4)
-	await wait_phase(g, "over", 10.0)
-	t("scramble: the last one in wins", int(g.results.get("winner", -1)) == 0, g.results)
+	for n in range(2, 13):
+		var pairs := Modes.round_robin(range(n))
+		var seen := {}
+		var counts := {}
+		for pair in pairs:
+			seen[Vector2i(mini(pair[0], pair[1]), maxi(pair[0], pair[1]))] = true
+			for pid in pair:
+				counts[pid] = counts.get(pid, 0) + 1
+		t("Classic: every pair appears once with %d players" % n, seen.size() == n * (n - 1) / 2 and pairs.size() == seen.size() and counts.values().all(func(c): return c == n - 1))
+	t("Classic: exact three-player rotation", Modes.round_robin([0, 1, 2]) == [[0, 1], [1, 2], [2, 0]])
+	t("Classic: default mode and twelve-player limits", Modes.default_settings().mode == "scramble" and Modes.row("scramble").name == "Classic" and Net.MAX_CLIMBERS == 12 and Net.MAX_MACHINES == 12)
+	var saved_members: Dictionary = Net.members.duplicate(true)
+	Net.members = {1: {"players": [{}, {}, {}, {}]}, 2: {"players": [{}, {}, {}, {}]}, 3: {"players": [{}, {}, {}]}}
+	t("lobby: twelfth player fits, thirteenth is refused", Net.can_fit_players(4, 1) and not Net.can_fit_players(4, 2))
+	t("lobby: existing machine may fill but not exceed capacity", Net.can_fit_players(3, 4) and not Net.can_fit_players(3, 5))
+	Net.members = saved_members
+	var g := make_game("scramble", 3, 50.0)
+	for expected in [[0, 1], [1, 2], [2, 0]]:
+		t("Classic: next round starts", await wait_phase(g, "round", 5.0))
+		t("Classic: only the scheduled pair spawns", g.round_players == expected and g.live_climbers().size() == 2 and g.live.size() == 2, g.round_players)
+		var previous := g.tower.size()
+		var before := g.line
+		await lift_and_lock(g, expected[0])
+		t("Classic: first lock raises the line and waits for opponent", g.line > before and g.phase == "round")
+		await lift_and_lock(g, expected[1])
+		t("Classic: both successes survive; spectators do not block round end", g.phase == "between" and g.alive_pids().size() == 3 and g.tower.size() == previous + 2)
+	await wait_phase(g, "round", 5.0)
+	t("Classic: surviving pairs repeat after a full rotation", g.round_players == [0, 1])
+	await lift_and_lock(g, 0)
+	await lift_and_lock(g, 1, -3.0, false, false)
+	g._time_up()
+	t("Classic: missing the line eliminates only that participant", not g.alive[1] and g.alive[0] and g.alive[2] and g.phase == "between")
+	await wait_phase(g, "round", 5.0)
+	t("Classic: eliminated opponents are skipped", g.round_players == [2, 0] and g.live.size() == 2)
+	await lift_and_lock(g, 0)
+	await lift_and_lock(g, 2, -3.0, false, false)
+	g._time_up()
+	await wait_phase(g, "over", 5.0)
+	t("Classic: last survivor wins", int(g.results.get("winner", -1)) == 0)
 	g.end_match()
 	g.queue_free()
 
@@ -806,6 +821,8 @@ func _run_net() -> void:
 	await wait_phase(A, "round", 6.0)
 	await wait_phase(B, "round", 3.0)
 	await frames(30)
+	t("net: all peers use the host-selected starting base", machines.all(func(m): return m.game.stage.base_id == A.settings.resolved_base))
+	t("net: all peers receive the same active pair", machines.all(func(m): return m.game.round_players == [0, 1]))
 	t("net: both machines start the round", A.phase == "round" and B.phase == "round", "%s %s" % [A.phase, B.phase])
 	var a0: Climber = A.climbers.get(A.live.get(0, -1))
 	var a1: Climber = A.climbers.get(A.live.get(1, -1))
@@ -2007,7 +2024,7 @@ func _run_spawnspacing() -> void:
 			for feet: Vector2 in occupied:
 				clear = clear and c.spawn_at.distance_to(feet) >= 1.0
 			occupied.append(c.spawn_at)
-		t("spawn: eight simultaneous entrants have separate positions", clear and occupied.size() == 8, side)
+		t("spawn: Classic entrants have separate positions", clear and occupied.size() == 2, side)
 		# Respawn one entrant while another is standing on the preferred spawn.
 		g.settings.spawn = "right"
 		var blocker: Climber = g.climbers[g.live[0]]
@@ -2057,7 +2074,7 @@ func _run_chairsolid() -> void:
 	var chair := g.chair
 	var c: Climber = g.climbers[g.live[0]]
 	var hand: RigidBody3D = c.bodies["hand_r"]
-	t("chair solid: the floating model is solid before pickup", chair.in_bubble and chair.collision_layer == Climber.LAYER_PROP and chair.collision_mask == Climber.SOLID_MASK)
+	t("chair solid: floating pickup passes through bodies and terrain", chair.in_bubble and chair.collision_layer == 0 and chair.collision_mask == 0)
 	c.attach(0, chair)
 	t("chair solid: a chair contact never creates a climbing anchor", c.limbs[0].grab_other != chair)
 	var wall := static_box(Vector2(-4, 3), Vector2(0.05, 2))
@@ -2227,3 +2244,49 @@ func _run_joinpadclient() -> void:
 	Net.leave()
 	Net.steam_input = null
 	si.queue_free()
+
+
+func _run_startingbase() -> void:
+	var g := make_game("tower", 1, 60, "plaza", true)
+	await wait_phase(g, "turn")
+	var selected: String = g.stage.base_id
+	t("base: host resolves random once", selected in ["barrel", "cactus"] and g.settings.resolved_base == selected)
+	var resolved := {}
+	for i in 24:
+		g.host_start({"mode": "tower", "timer": 60.0, "stage": "plaza", "base": "random"}, g.roster)
+		resolved[g.stage.base_id] = true
+	t("base: random can choose both supports", resolved.size() == 2)
+	for choice in ["barrel", "cactus"]:
+		g.host_start({"mode": "tower", "timer": 60.0, "stage": "plaza", "base": choice}, g.roster)
+		await wait_phase(g, "turn")
+		var support: Node3D = g.stage.base_root
+		var highest: float = 2.016 if choice == "barrel" else 1.796
+		t("base: forced choice uses matching support height", g.stage.base_id == choice and is_equal_approx(g.stage.barrel_top, highest) and is_equal_approx(g.stage.first_line, highest + Stage.FIRST_LINE_ABOVE), choice)
+		t("base: support has live stage collisions", not g.stage.base_bodies.is_empty() and g.stage.base_bodies.all(func(b): return g.stage.bodies.has(b) and b.is_inside_tree()), choice)
+		g._next()
+		t("base: a new turn keeps the same base", is_instance_valid(support) and g.stage.base_root == support and g.stage.base_id == choice, choice)
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+
+
+func _run_classicdisconnect() -> void:
+	var solo := make_game("scramble", 1, 50.0)
+	t("Classic: refuses a solo match", solo.phase == "idle" and solo.roster.is_empty())
+	solo.queue_free()
+	for leaver in [1, 2]:
+		var g := make_game("scramble", 4, 50.0)
+		await wait_phase(g, "round", 5.0)
+		g.roster[leaver].peer = 99
+		await lift_and_lock(g, 0)
+		g._on_peer_left(99)
+		if leaver == 1:
+			t("Classic: opponent disconnect completes a settled duel", g.phase == "between")
+		else:
+			t("Classic: spectator disconnect leaves the duel running", g.phase == "round")
+			await lift_and_lock(g, 1)
+		await wait_phase(g, "round", 5.0)
+		t("Classic: rotation skips disconnected players", not g.round_players.has(leaver) and g.live_climbers().size() == 2)
+		g.end_match()
+		g.queue_free()
+		await frames(2)

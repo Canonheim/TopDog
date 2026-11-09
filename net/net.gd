@@ -27,10 +27,10 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.3.52"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.3.54"  # bump on every build: RPC tables move between builds
 const ENET_PORT := 7788
-const MAX_MACHINES := 8
-const MAX_CLIMBERS := 8
+const MAX_MACHINES := 12
+const MAX_CLIMBERS := 12
 const CHAT_PRESETS := ["Hello!", "Ready!", "Not ready", "Nice one!", "Oops!", "Get off me!", "Hold on!", "GG"]
 
 const VIS_PUBLIC := "public"
@@ -401,10 +401,14 @@ func _local_players() -> Array:
 
 ## Re-send our local players (after a local player joins or leaves in the lobby).
 func update_local_players() -> void:
-	if not online:
+	if not online or in_match:
 		return
 	if is_host():
-		members[1].players = _local_players()
+		var players := _local_players()
+		if not can_fit_players(1, players.size()):
+			status.emit("That lobby is full (12 players maximum).")
+			return
+		members[1].players = players
 		_rpc_members.rpc(members)
 	else:
 		_rpc_players.rpc_id(1, _local_players())
@@ -421,10 +425,11 @@ func _rpc_hello(version: String, pname: String, players: Array) -> void:
 	if in_match:
 		_rpc_refused.rpc_id(id, "That game is mid-match. Try again when it's back in the lobby.")
 		return
-	if members.size() >= MAX_MACHINES or _climber_count() + players.size() > MAX_CLIMBERS:
+	var cleaned := _clean_players(players)
+	if (not members.has(id) and members.size() >= MAX_MACHINES) or not can_fit_players(id, cleaned.size()):
 		_rpc_refused.rpc_id(id, "That lobby is full")
 		return
-	members[id] = {"name": pname.left(32), "players": _clean_players(players), "ready": false}
+	members[id] = {"name": pname.left(32), "players": cleaned, "ready": false}
 	_rpc_members.rpc(members)
 	_rpc_settings.rpc_id(id, settings)
 	_rpc_chat_line.rpc("", "%s joined" % pname.left(32))
@@ -435,7 +440,14 @@ func _rpc_players(players: Array) -> void:
 	var id := multiplayer.get_remote_sender_id()
 	if not is_host() or not members.has(id):
 		return
-	members[id].players = _clean_players(players)
+	if in_match:
+		return
+	var cleaned := _clean_players(players)
+	if not can_fit_players(id, cleaned.size()):
+		_rpc_note_capacity.rpc_id(id)
+		return
+	members[id].players = cleaned
+	members[id].ready = false
 	_rpc_members.rpc(members)
 
 
@@ -445,6 +457,16 @@ func _clean_players(players: Array) -> Array:
 		if p is Dictionary:
 			out.append({"name": str(p.get("name", "Climber")).left(40), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": int(p.get("slot", 0))})
 	return out
+
+
+@rpc("authority", "call_remote", "reliable")
+func _rpc_note_capacity() -> void:
+	status.emit("That lobby is full (12 players maximum).")
+
+
+func can_fit_players(id: int, count: int) -> bool:
+	var previous: Array = members.get(id, {}).get("players", [])
+	return _climber_count() - previous.size() + count <= MAX_CLIMBERS
 
 
 func _climber_count() -> int:
@@ -485,7 +507,7 @@ func all_ready() -> bool:
 	for id in members:
 		if id != 1 and not members[id].ready:
 			return false
-	return _climber_count() >= 1
+	return _climber_count() >= int(Modes.row(str(settings.get("mode", "scramble"))).min_players) and _climber_count() <= MAX_CLIMBERS
 
 
 func send_chat(text: String) -> void:

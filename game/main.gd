@@ -29,8 +29,8 @@ var line_bar: MeshInstance3D
 var local_mode := true  # this match was started from Local play
 var paused := false
 var feel_panel: Control
-const PODIUM_HOLD_SECONDS := 2.5
-const TOWER_PAN_SPEED := 0.7  # world metres per second
+const PODIUM_HOLD_SECONDS := 3.0
+const TOWER_PAN_SPEED := 0.35  # world metres per second
 var _results_elapsed := 0.0
 var _results_peak := Vector2.ZERO
 var _cam_target := Vector3(0, 2, 14)
@@ -83,6 +83,7 @@ func _ready() -> void:
 	Net.members_changed.connect(_refresh_lobby)
 	Net.chat_line.connect(_on_chat)
 	Net.settings_changed.connect(_refresh_lobby)
+	Net.settings_changed.connect(func(): preview_base(str(Net.settings.get("base", "random"))))
 	Net.lobby_list.connect(_fill_lobby_list)
 	Players.joined.connect(func(_s): _refresh_local(); Net.update_local_players())
 	game.stage = Stage.new("plaza")
@@ -299,9 +300,10 @@ func _tick_camera(delta: float) -> void:
 		var start := Vector2(0, 1.5)
 		var end := Vector2(_results_peak.x, maxf(start.y, _results_peak.y))
 		var distance := maxf(0.0, _results_elapsed - PODIUM_HOLD_SECONDS) * TOWER_PAN_SPEED
-		var focus := start.move_toward(end, distance)
-		# Leave the left side of the frame free for the results and menu.
-		cam.position = Vector3(focus.x - 1.45, focus.y + 0.5, 9.0)
+		var length := start.distance_to(end)
+		var travel := distance if distance <= length else maxf(0.0, 2.0 * length - distance)
+		var focus := start.move_toward(end, travel)
+		cam.position = Vector3(focus.x, focus.y + 0.5, 9.0)
 		cam.look_at(Vector3(cam.position.x, focus.y, 0), Vector3.UP)
 		line_bar.visible = false
 		return
@@ -363,7 +365,7 @@ func _tick_hud(delta: float) -> void:
 			var pid: int = game.turn_order[game.turn_i] if game.turn_i >= 0 else -1
 			info = "%s climbing" % game.player_name(pid)
 		"round":
-			info = "Round %d  -  %d climbing" % [game.round_n, game.alive_pids().size() - game.locked.size()]
+			info = "Round %d: %s" % [game.round_n, game.round_matchup()]
 		"between":
 			info = "Get ready..."
 	if game.practice:
@@ -445,17 +447,25 @@ func _on_over(res: Dictionary) -> void:
 	lines.append("")
 	lines.append("Tower: %d climbers, %.2f m tall" % [int(res.get("tower", 0)), float(res.get("top", 0.0))])
 	_results_label.text = "\n".join(lines)
-	await get_tree().create_timer(2.2).timeout
 	show_screen("results")
 	Net.set_in_match(false)
 
 
 # ================================================================ screens
 
+func preview_base(choice: String) -> void:
+	if game == null or game.stage == null or game.phase != "idle":
+		return
+	var selected := str(["barrel", "cactus"].pick_random()) if choice == "random" else choice
+	game.stage.set_base(world, selected)
+
+
 func show_screen(id: String) -> void:
 	if game != null and game.chair != null and (id == "results" or screen == "results"):
 		game.chair.visible = id != "results"
 	screen = id
+	if id in ["local", "lobby"]:
+		preview_base(str(Net.settings.get("base", "random")))
 	if id == "results":
 		_results_elapsed = 0.0
 		_results_peak = game.tower_peak()
@@ -571,7 +581,7 @@ func _screen_local() -> Control:
 	var box: VBoxContainer = c.get_meta("box")
 	_local_list = VBoxContainer.new()
 	box.add_child(_local_list)
-	_settings_box = UiKit.settings_rows(box, Net.settings, func(s): Net.settings = s)
+	_settings_box = UiKit.settings_rows(box, Net.settings, func(s): Net.settings = s; preview_base(str(s.get("base", "random"))))
 	UiKit.button(box, "Start", _start_local)
 	UiKit.button(box, "Remove last player", func():
 		if not Players.slots.is_empty():
@@ -598,6 +608,9 @@ func _refresh_local() -> void:
 
 
 func _start_local() -> void:
+	if Modes.row(str(Net.settings.get("mode", "scramble"))).get("round_robin", false) and Players.slots.size() < 2:
+		_on_announce("Classic needs two players. Use Practice to climb alone.", false)
+		return
 	if Players.slots.is_empty():
 		Players.add_player(Players.KBM)
 	local_mode = true

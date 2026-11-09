@@ -54,12 +54,17 @@ func _ready() -> void:
 				var peak: Vector2 = main._results_peak
 				main._results_peak = Vector2(2, 9)
 				var initial: Vector3 = main.cam.position
-				main._tick_camera(2.5 * Engine.time_scale)
+				main._tick_camera(main.PODIUM_HOLD_SECONDS * Engine.time_scale)
 				assert(main.cam.position.is_equal_approx(initial))
 				main._tick_camera(1.0 * Engine.time_scale)
 				assert(is_equal_approx(initial.distance_to(main.cam.position), main.TOWER_PAN_SPEED))
-				main._tick_camera(30.0 * Engine.time_scale)
-				assert(is_equal_approx(main.cam.position.y, 9.5))
+				var journey: float = Vector2(0, 1.5).distance_to(Vector2(2, 9)) / main.TOWER_PAN_SPEED
+				main._tick_camera((journey - 1.0) * Engine.time_scale)
+				assert(main.cam.position.is_equal_approx(Vector3(2, 9.5, 9)))
+				main._tick_camera(Engine.time_scale)
+				assert(main.cam.position.y < 9.5)
+				main._tick_camera(journey * Engine.time_scale)
+				assert(main.cam.position.is_equal_approx(initial))
 				main._results_peak = peak
 				main._results_elapsed = 0.0
 				main._tick_camera(0.0)

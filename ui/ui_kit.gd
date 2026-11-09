@@ -112,11 +112,11 @@ static func slider(parent: Control, label: String, value: float, lo: float, hi: 
 static func settings_rows(parent: Control, settings: Dictionary, on_change: Callable) -> Dictionary:
 	var s := settings.duplicate()
 	var out := {}
-	var mode_ids := ["tower", "scramble"]
+	var mode_ids := ["scramble", "tower"]
 	var m := OptionButton.new()
 	for id in mode_ids:
 		m.add_item(Modes.row(id).name)
-	m.selected = maxi(0, mode_ids.find(str(s.get("mode", "tower"))))
+	m.selected = maxi(0, mode_ids.find(str(s.get("mode", "scramble"))))
 	var blurb := Label.new()
 	blurb.text = Modes.row(mode_ids[m.selected]).blurb
 	blurb.add_theme_font_size_override("font_size", 22)
@@ -144,6 +144,15 @@ static func settings_rows(parent: Control, settings: Dictionary, on_change: Call
 		s.spawn = Modes.SPAWNS[i]
 		on_change.call(s.duplicate()))
 	parent.add_child(_row("Spawns", sp))
+	var base := OptionButton.new()
+	for label in Modes.BASE_NAMES:
+		base.add_item(label)
+	base.selected = maxi(0, Modes.BASES.find(str(s.get("base", "random"))))
+	base.item_selected.connect(func(i):
+		s.base = Modes.BASES[i]
+		on_change.call(s.duplicate()))
+	parent.add_child(_row("Base", base))
+	out.base = base
 	out.mode = m
 	out.timer = tm
 	out.spawn = sp

@@ -21,9 +21,9 @@ const ROWS := {
 		"min_players": 1,
 	},
 	"scramble": {
-		"name": "Scramble", "blurb": "Everyone at once. Every lock-in raises the line. Race to the easy spots.",
+		"name": "Classic", "blurb": "One versus one. Rotate opponents so everyone plays everyone.",
 		"live": "all", "line": "raise", "round_end": "all_locked", "out": "under", "win": "last",
-		"min_players": 1,
+		"min_players": 2, "round_robin": true,
 	},
 	"practice": {
 		"name": "Practice", "blurb": "Climb alone, no clock pressure. Best height counts.",
@@ -34,13 +34,31 @@ const ROWS := {
 
 const TIMERS := [40.0, 60.0, 90.0]
 const TIMER_NAMES := ["Short (40 s)", "Normal (1 min)", "Long (1 min 30)"]
+const BASES := ["random", "barrel", "cactus"]
+const BASE_NAMES := ["Random", "Barrel", "Cactus"]
+
 const SPAWNS := ["alternate", "left", "right", "random"]
 const SPAWN_NAMES := ["Alternating", "Left side", "Right side", "Random"]
 
 
 static func row(id: String) -> Dictionary:
-	return ROWS.get(id, ROWS.tower)
+	return ROWS.get(id, ROWS.scramble)
 
 
 static func default_settings() -> Dictionary:
-	return {"mode": "tower", "timer": 60.0, "spawn": "alternate", "stage": "plaza"}
+	return {"mode": "scramble", "timer": 60.0, "spawn": "alternate", "stage": "plaza", "base": "random"}
+
+
+## One match for every unordered pair, starting with adjacent lobby players.
+## Three players play 1v2, 2v3, 3v1, in that order.
+static func round_robin(players: Array) -> Array:
+	var pairs: Array = []
+	var seen := {}
+	for gap in range(1, players.size()):
+		for i in players.size():
+			var j := (i + gap) % players.size()
+			var key := Vector2i(mini(i, j), maxi(i, j))
+			if not seen.has(key):
+				seen[key] = true
+				pairs.append([players[i], players[j]])
+	return pairs

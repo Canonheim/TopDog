@@ -208,11 +208,11 @@ static func wrap_words(text: String, width: int, max_lines: int) -> PackedString
 
 ## Where the sign and chat sit: right of the belts; in the lobby, under the cards.
 func _place_boards(id: String) -> void:
-	var rows := 1 if _card_count() <= 4 else 2
-	_board.scale = Vector3.ONE * LuchaUI.UI_SCALE * (1.0 if rows == 1 else 0.62)
+	var rows := clampi(ceili(_card_count() / 4.0), 1, 3)
+	_board.scale = Vector3.ONE * LuchaUI.UI_SCALE * ([1.0, 0.62, 0.46][rows - 1])
 	if id == "lobby":
-		_status_node.position = Vector3(0.1, 0.35 if rows == 1 else 0.05, -LuchaUI.MENU_DIST)
-		_chat_board.position = Vector3(0.15, -0.38 if rows == 1 else -0.62, -LuchaUI.MENU_DIST)
+		_status_node.position = Vector3(0.1, [0.35, 0.05, -0.6][rows - 1], -LuchaUI.MENU_DIST)
+		_chat_board.position = Vector3(0.15, [-0.38, -0.62, -1.27][rows - 1], -LuchaUI.MENU_DIST)
 	else:
 		_status_node.position = Vector3(0.1, 1.0, -LuchaUI.MENU_DIST)
 
@@ -306,8 +306,8 @@ func _fill_lobby() -> void:
 	var me: Dictionary = Net.members.get(Net.me(), {})
 	if host:
 		m.add_button("FIGHT!", _start)
-		var mode_ids := ["tower", "scramble"]
-		m.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "tower")))), func(i):
+		var mode_ids := ["scramble", "tower"]
+		m.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "scramble")))), func(i):
 			var s: Dictionary = Net.settings.duplicate()
 			s.mode = mode_ids[i]
 			Net.set_settings(s))
@@ -315,6 +315,11 @@ func _fill_lobby() -> void:
 			var s: Dictionary = Net.settings.duplicate()
 			s.timer = Modes.TIMERS[i]
 			Net.set_settings(s))
+		m.add_choice("BASE", Modes.BASE_NAMES.map(func(n): return n.to_upper()), maxi(0, Modes.BASES.find(str(Net.settings.get("base", "random")))), func(i):
+			var s: Dictionary = Net.settings.duplicate()
+			s.base = Modes.BASES[i]
+			Net.set_settings(s))
+
 	else:
 		_lobby_ready_item = m.add_button("I'M READY!" if not bool(me.get("ready", false)) else "NOT READY", func():
 			Net.set_ready(not bool(Net.members.get(Net.me(), {}).get("ready", false))))
@@ -327,8 +332,8 @@ func _fill_lobby() -> void:
 	_fill_chat()
 	_place_boards("lobby")
 	if not host:
-		var mrow := Modes.row(str(Net.settings.get("mode", "tower")))
-		set_status("%s, %d s clock. Press I'M READY, the host starts." % [str(mrow.name), int(Net.settings.get("timer", 60))])
+		var mrow := Modes.row(str(Net.settings.get("mode", "scramble")))
+		set_status("%s, %d s clock, %s base. Press I'M READY, the host starts." % [str(mrow.name), int(Net.settings.get("timer", 60)), str(Net.settings.get("base", "random")).capitalize()])
 	elif status_text == "" or status_text.begins_with("Hosting"):
 		set_status("You're hosting. Invite friends, then FIGHT! when everyone's ready.")
 
@@ -336,6 +341,9 @@ func _fill_lobby() -> void:
 func _start() -> void:
 	if not Net.is_host():
 		set_status("Only the host can start.")
+		return
+	if Net._climber_count() < int(Modes.row(str(Net.settings.get("mode", "scramble"))).min_players):
+		set_status("Classic needs at least two players.")
 		return
 	if not Net.all_ready():
 		set_status("Waiting for everyone to press READY.")
@@ -353,7 +361,7 @@ func _fill_cards() -> void:
 		var mem: Dictionary = Net.members[id]
 		var ready: bool = id == 1 or bool(mem.get("ready", false))
 		for p in mem.get("players", []):
-			if n >= 8:
+			if n >= Net.MAX_CLIMBERS:
 				break
 			var tint: Color = p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE
 			var card := LuchaKit.card_frame(LuchaKit.CREAM, tint)

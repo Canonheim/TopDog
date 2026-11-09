@@ -8,7 +8,7 @@ extends RefCounted
 ## thing keeping our lobbies apart from every other game testing there.
 const GAME_TAG := "topdog"
 
-const MODE_NAMES := {"tower": "Tower", "scramble": "Scramble", "practice": "Practice"}
+const MODE_NAMES := {"tower": "Tower", "scramble": "Classic", "practice": "Practice"}
 
 
 ## in:  [{id, game, version, name, host, mode, count, max}]

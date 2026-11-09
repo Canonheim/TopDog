@@ -62,6 +62,9 @@ var phase := "idle"  # idle | turn | round | between | over
 var turn_order: Array = []
 var turn_i := -1
 var round_n := 0
+var round_players: Array = []
+var _pairings: Array = []
+var _pair_i := 0
 var locked := {}  # scramble: pid -> true once locked this round
 var best := {}  # pid -> best locked height
 var results := {}
@@ -109,14 +112,20 @@ func me() -> int:
 
 ## Host / offline: start a match. roster entries: {pid, name, tint, peer, slot}.
 func host_start(p_settings: Dictionary, p_roster: Array) -> void:
-	_rpc_start.rpc(p_settings, p_roster)
+	if p_roster.size() < int(Modes.row(str(p_settings.get("mode", "scramble"))).min_players):
+		announce.emit("Classic needs at least two players. Use Practice to climb alone.", false)
+		return
+	var match_settings := p_settings.duplicate(true)
+	var choice := str(match_settings.get("base", "random"))
+	match_settings.resolved_base = ["barrel", "cactus"].pick_random() if choice == "random" else choice
+	_rpc_start.rpc(match_settings, p_roster)
 
 
 @rpc("authority", "call_local", "reliable")
 func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	_clear_arena_props()
 	settings = p_settings
-	mode = Modes.row(str(settings.get("mode", "tower")))
+	mode = Modes.row(str(settings.get("mode", "scramble")))
 	practice = bool(mode.get("practice", false))
 	_fart_fuel.clear()
 	_fart_down.clear()
@@ -132,12 +141,16 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	if stage == null:
 		stage = Stage.new(str(settings.get("stage", "dock")))
 		stage.build(world, dress)
+	stage.set_base(world, str(settings.get("resolved_base", settings.get("base", "barrel"))))
 	Climber.rope_x = stage.ring_half() if str(stage.row.get("dress", "")) == "plaza" else 0.0
 	_ring_out.clear()
 	if practice and multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
 		_spawn_partner()
 	line = stage.first_line
 	turn_order = roster.map(func(r): return int(r.pid))
+	_pairings = Modes.round_robin(turn_order)
+	_pair_i = 0
+	round_players.clear()
 	turn_i = -1
 	round_n = 0
 	_spawn_n = 0
@@ -218,8 +231,33 @@ func _next() -> void:
 		locked.clear()
 		_round_fail_tops.clear()
 		_rpc_phase.rpc("round", float(settings.get("timer", 60.0)), line if round_n > 1 else stage.first_line, round_n, -1)
-		for pid in still:
+		var pair := _next_pair() if mode.get("round_robin", false) else still
+		_rpc_round_players.rpc(pair)
+		for pid in pair:
 			_spawn(pid)
+
+
+func round_matchup() -> String:
+	if round_players.size() != 2:
+		return ""
+	return "%s vs %s" % [player_name(round_players[0]).split(" the ")[0], player_name(round_players[1]).split(" the ")[0]]
+
+
+func _next_pair() -> Array:
+	for attempt in _pairings.size():
+		var pair: Array = _pairings[_pair_i]
+		_pair_i = (_pair_i + 1) % _pairings.size()
+		if alive.get(pair[0], false) and alive.get(pair[1], false):
+			return pair
+	return []
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_round_players(players: Array) -> void:
+	round_players = players.duplicate()
+	# Frozen bodies remain in climbers/tower, but only this pair is active.
+	live.clear()
+	locked.clear()
 
 
 func _game_decided(still: Array) -> bool:
@@ -572,15 +610,14 @@ func _time_up() -> void:
 		if not climbers.has(cid) or _pending_freeze.has(cid):
 			continue
 		var c: Climber = climbers[cid]
-		if c.state == Climber.State.FROZEN:
+		if c.state == Climber.State.FROZEN or not _pose_on_support(c, c.pose()):
 			continue
 		if c.owner_peer == me():
 			_broadcast_freeze(cid, c.pose(), "time")
 		else:
 			_pending_freeze[cid] = {"t": FREEZE_REPLY_S}
 			_rpc_freeze_now.rpc_id(c.owner_peer, cid)
-	if _pending_freeze.is_empty():
-		_end_of_play()
+	_finish_timeout_if_settled()
 
 
 @rpc("authority", "call_remote", "reliable")
@@ -589,7 +626,6 @@ func _rpc_freeze_now(cid: int) -> void:
 	if c == null or c.owner_peer != me():
 		return
 	var p := c.pose()
-	c.freeze()  # stop here; the host's broadcast snaps every machine to this pose
 	_rpc_final_pose.rpc_id(1, cid, p)
 
 
@@ -603,20 +639,29 @@ func _rpc_final_pose(cid: int, pose: PackedFloat32Array) -> void:
 		return
 	_pending_freeze.erase(cid)
 	_broadcast_freeze(cid, pose, "time")
-	if _pending_freeze.is_empty():
-		_end_of_play()
+	_finish_timeout_if_settled()
 
 
 func _tick_pending(delta: float) -> void:
 	for cid in _pending_freeze.keys():
 		_pending_freeze[cid].t -= delta
 		if _pending_freeze[cid].t <= 0.0:
-			# The owner never answered: freeze the puppet where we last saw it.
+			# The owner never answered: judge only a supported last-known pose.
 			_pending_freeze.erase(cid)
 			if climbers.has(cid):
 				_broadcast_freeze(cid, climbers[cid].pose(), "time")
-			if _pending_freeze.is_empty():
-				_end_of_play()
+	_finish_timeout_if_settled()
+
+
+## Timeout waits for every airborne player to touch solid stage/tower geometry.
+func _finish_timeout_if_settled() -> void:
+	if clock > 0.0 or not _pending_freeze.is_empty():
+		return
+	for cid in live.values():
+		var c: Climber = climbers.get(cid)
+		if c != null and c.state != Climber.State.FROZEN:
+			return
+	_end_of_play()
 
 
 ## Host: judge a freeze and tell everyone. verdict in: "locked" | "time" | "left".
@@ -626,6 +671,8 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String) -> void:
 		return
 	var top := c.pose_top(pose)
 	var grounded := _pose_on_support(c, pose)
+	if why == "time" and not grounded:
+		return
 	if why == "locked" and not grounded:
 		var note := "Touch the stage or the stack to lock in!"
 		if c.owner_peer == me():
@@ -637,8 +684,6 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String) -> void:
 	var verdict := "made" if made else "out"
 	if why == "left":
 		verdict = "out"
-	if why == "time" and mode.live == "all":
-		verdict = "out"  # Scramble: not locked in when the clock runs out = out
 	if practice:
 		verdict = "made" if made else "short"
 	var new_line := line
@@ -651,6 +696,7 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String) -> void:
 		alive[pid] = false
 		_round_fail_tops[pid] = top if grounded else 0.0
 	if made:
+		locked[pid] = true
 		best[pid] = maxf(float(best.get(pid, 0.0)), top)
 	if mode.live == "turns":
 		if why == "locked":
@@ -659,8 +705,8 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String) -> void:
 		if why == "locked":
 			locked[pid] = true
 			var all_in := true
-			for p in alive_pids():
-				if not locked.has(p):
+			for p in round_players:
+				if alive.get(p, false) and not locked.has(p):
 					all_in = false
 			if all_in:
 				_end_of_play()
@@ -954,6 +1000,13 @@ func _on_peer_left(id: int) -> void:
 			_end_of_play()
 	if phase != "over" and _game_decided(alive_pids()):
 		_finish()
+	elif phase == "round":
+		var settled := true
+		for pid in round_players:
+			if alive.get(pid, false) and not locked.has(pid):
+				settled = false
+		if settled:
+			_end_of_play()
 
 
 func tower_peak() -> Vector2:

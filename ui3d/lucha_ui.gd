@@ -46,6 +46,7 @@ var _clock_text: Node3D
 var _clock_val := -1
 var _info: Node3D
 var _info_text := ""
+var _local_start := -1
 var _banner: Node3D
 var _banner_t := 0.0
 var _clock_up := 0.0  # how far the clock and bell are lifted out of the frame
@@ -1407,12 +1408,18 @@ func _build_menus() -> void:
 	var l := _menu()
 	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
 	l.column_x = -2.4
-	l.top_y = 1.25
-	var mode_ids := ["tower", "scramble"]
-	l.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "tower")))), func(i): Net.settings.mode = mode_ids[i])
+	l.top_y = 1.75
+	var mode_ids := ["scramble", "tower"]
+	l.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "scramble")))), func(i):
+		Net.settings.mode = mode_ids[i]
+		_refresh_cards())
 	l.add_choice("CLOCK", ["40 S", "1 MIN", "1:30"], maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0)))), func(i): Net.settings.timer = Modes.TIMERS[i])
 	l.add_choice("SPAWN", ["SWAP", "LEFT", "RIGHT", "RANDOM"], maxi(0, Modes.SPAWNS.find(str(Net.settings.get("spawn", "alternate")))), func(i): Net.settings.spawn = Modes.SPAWNS[i])
-	l.add_button("FIGHT!", main._start_local)
+	l.add_choice("BASE", Modes.BASE_NAMES.map(func(n): return n.to_upper()), maxi(0, Modes.BASES.find(str(Net.settings.get("base", "random")))), func(i):
+		Net.settings.base = Modes.BASES[i]
+		main.preview_base(Modes.BASES[i]))
+
+	_local_start = l.add_button("FIGHT!", main._start_local)
 	l.add_button("REMOVE LAST", func():
 		if not Players.slots.is_empty():
 			Players.remove_player(Players.slots.size() - 1)
@@ -1479,6 +1486,9 @@ func _build_menus() -> void:
 
 
 func _refresh_cards() -> void:
+	if _local_start >= 0 and menus.has("local"):
+		var minimum := int(Modes.row(str(Net.settings.get("mode", "scramble"))).min_players)
+		menus.local.set_label(_local_start, "JOIN 2 TO FIGHT" if Players.slots.size() < minimum else "FIGHT!")
 	if _cards == null:
 		return
 	for ch in _cards.get_children():
@@ -1537,10 +1547,10 @@ func _raise_podium() -> void:
 		if not step.has_meta("home"):
 			step.set_meta("home", step.position)
 		var home: Vector3 = step.get_meta("home")
-		step.position = home + Vector3(0, -1.2, 0)
+		step.position = home + Vector3(0, -7.0, 0)
 		var tw := create_tween()
 		tw.tween_interval(0.25 + k * 0.3)
-		tw.tween_property(step, "position", home, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(step, "position", home, 1.0).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		k += 1
 
 
@@ -1844,7 +1854,7 @@ func _process(delta: float) -> void:
 			"turn":
 				info = "%s CLIMBING" % str(g.player_name(g.turn_order[g.turn_i] if g.turn_i >= 0 else -1)).split(" the ")[0].to_upper()
 			"round":
-				info = "ROUND %d" % g.round_n
+				info = "ROUND %d: %s" % [g.round_n, g.round_matchup().to_upper()]
 			"between":
 				info = "GET READY..."
 		if g.practice:

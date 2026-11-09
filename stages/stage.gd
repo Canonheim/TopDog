@@ -4,6 +4,8 @@ extends RefCounted
 ## touch) and, when there's a 3D root, the dressing (what you see). The 2D outline
 ## of every solid is its 3D shape cut at the play plane (z = 0).
 
+const CACTUS_MODEL := preload("res://kit/models/potted_saguaro.glb")
+
 const BARREL_MODEL := preload("res://models/barrel.glb")
 
 ## Stage rows: deck half-width, barrel scale, spawn x, bounds.
@@ -23,6 +25,11 @@ const CANVAS := Color("#ADA28E")  # the ring canvas: mid warm grey, so pale clim
 const BARREL_PROFILE := [
 	Vector2(0.39, 0.0), Vector2(0.43, 0.24), Vector2(0.445, 0.48), Vector2(0.43, 0.72), Vector2(0.39, 0.96),
 ]
+
+var base_id := "barrel"
+var base_root: Node3D
+var base_bodies: Array = []
+var base_dressed := true
 
 var row: Dictionary
 var barrel_top := 0.0
@@ -53,23 +60,62 @@ func build(world: Node3D, dress := true) -> void:
 			var x1: float = sx * float(row.side_x)
 			var floor := _static_poly(world, PackedVector2Array([Vector2(minf(x0, x1), PLAZA_GROUND), Vector2(maxf(x0, x1), PLAZA_GROUND), Vector2(maxf(x0, x1), PLAZA_GROUND - 1.0), Vector2(minf(x0, x1), PLAZA_GROUND - 1.0)]), 1.0, 2.0)
 			floor.set_meta("plaza_floor", true)
-	# Barrel, standing on the deck at x = 0.
 	var bs: float = row.barrel_scale
-	var pts := PackedVector2Array()
-	for p in BARREL_PROFILE:
-		pts.append(Vector2(-p.x * bs, p.y * bs))
-	for i in range(BARREL_PROFILE.size() - 1, -1, -1):
-		var p: Vector2 = BARREL_PROFILE[i]
-		pts.append(Vector2(p.x * bs, p.y * bs))
-	_static_poly(world, pts, 0.9, 0.6)
-	barrel_top = BARREL_PROFILE[-1].y * bs
-	first_line = barrel_top + FIRST_LINE_ABOVE
-	barrel_half = BARREL_PROFILE[2].x * bs
+	base_dressed = dress
+	set_base(world, base_id)
 	if dress:
 		if str(row.get("dress", "dock")) == "plaza":
 			_dress_plaza(world, half, bs)
 		else:
 			_dress(world, half, bs)
+
+
+## Swap only the starting support, leaving the ring and its scenery in place.
+func set_base(world: Node3D, selected: String) -> void:
+	var chosen := selected if selected in ["barrel", "cactus"] else "barrel"
+	if is_instance_valid(base_root) and chosen == base_id:
+		return
+	for body in base_bodies:
+		bodies.erase(body)
+	base_bodies.clear()
+	if is_instance_valid(base_root):
+		base_root.free()
+	base_id = chosen
+	base_root = Node3D.new()
+	base_root.name = "StartingBase"
+	world.add_child(base_root)
+	if base_id == "barrel":
+		var bs: float = row.barrel_scale
+		var pts := PackedVector2Array()
+		for p in BARREL_PROFILE:
+			pts.append(Vector2(-p.x * bs, p.y * bs))
+		for i in range(BARREL_PROFILE.size() - 1, -1, -1):
+			var p: Vector2 = BARREL_PROFILE[i]
+			pts.append(Vector2(p.x * bs, p.y * bs))
+		base_bodies.append(_static_poly(base_root, pts, 0.9, 0.6))
+		barrel_top = 0.96 * bs
+		barrel_half = 0.445 * bs
+	else:
+		# The reduced pot and cactus are authored in metres, origin on the canvas.
+		# Separate convex pieces preserve the gaps underneath both raised arms.
+		var profiles := [
+			[Vector2(-0.213,0), Vector2(0.213,0), Vector2(0.296,0.324), Vector2(0.284,0.405), Vector2(-0.284,0.405), Vector2(-0.296,0.324)],
+			[Vector2(-0.186,0.315), Vector2(0.186,0.315), Vector2(0.169,1.23), Vector2(0.152,1.61), Vector2(0.125,1.72), Vector2(0.07,1.776), Vector2(0,1.796), Vector2(-0.07,1.776), Vector2(-0.125,1.72), Vector2(-0.152,1.61), Vector2(-0.169,1.23)],
+			[Vector2(-0.12,0.71), Vector2(-0.32,0.71), Vector2(-0.50,0.79), Vector2(-0.62,0.96), Vector2(-0.62,1.22), Vector2(-0.60,1.38), Vector2(-0.565,1.44), Vector2(-0.51,1.46), Vector2(-0.455,1.44), Vector2(-0.42,1.38), Vector2(-0.40,1.00), Vector2(-0.32,0.95), Vector2(-0.12,0.95)],
+			[Vector2(0.13,0.98), Vector2(0.33,0.98), Vector2(0.49,1.04), Vector2(0.588,1.20), Vector2(0.582,1.44), Vector2(0.56,1.57), Vector2(0.524,1.62), Vector2(0.48,1.635), Vector2(0.436,1.62), Vector2(0.40,1.57), Vector2(0.372,1.24), Vector2(0.33,1.20), Vector2(0.13,1.20)]
+		]
+		for i in profiles.size():
+			for convex in Geometry2D.decompose_polygon_in_convex(PackedVector2Array(profiles[i])):
+				base_bodies.append(_static_poly(base_root, convex, 0.9, 0.22 if i == 0 else 0.10))
+		barrel_top = 1.796
+		barrel_half = 0.62
+	first_line = barrel_top + FIRST_LINE_ABOVE
+	if base_dressed:
+		var visual: Node3D = (CACTUS_MODEL if base_id == "cactus" else BARREL_MODEL).instantiate()
+		base_root.add_child(visual)
+		if base_id == "barrel":
+			visual.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5).scaled(Vector3.ONE * float(row.barrel_scale)), Vector3.ZERO)
+		CelPass.celify(visual)
 
 
 func spawn_point(side: int) -> Vector2:
@@ -226,10 +272,6 @@ func _dress(vis: Node3D, half: float, bs: float) -> void:
 	root.name = "StageDressing"
 	vis.add_child(root)
 	# The barrel: the file stands it along -z; tip it upright (+90 deg about x).
-	var barrel: Node3D = BARREL_MODEL.instantiate()
-	root.add_child(barrel)
-	barrel.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5).scaled(Vector3.ONE * bs), Vector3.ZERO)
-	CelPass.celify(barrel)
 	# The deck: planks across the play plane, deep enough to read as 3D.
 	var wood := _mat(Color(0.47, 0.32, 0.2), 0.85)
 	var wood_dark := _mat(Color(0.36, 0.24, 0.15), 0.9)
@@ -314,10 +356,6 @@ func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
 	var root := Node3D.new()
 	root.name = "PlazaRing"
 	vis.add_child(root)
-	var barrel: Node3D = BARREL_MODEL.instantiate()
-	root.add_child(barrel)
-	barrel.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5).scaled(Vector3.ONE * bs), Vector3.ZERO)
-	CelPass.celify(barrel)
 	var kit := LuchaKit.kit_model("ring")
 	var depth := 3.4  # shallow: the front apron must stay out of the camera's lower frame
 	var gy := PLAZA_GROUND

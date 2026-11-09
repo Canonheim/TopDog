@@ -57,16 +57,18 @@ func _ready() -> void:
 	main.lucha.online.test_friends = null
 	await _tap(JOY_BUTTON_B)
 	await _wait(0.5)
-	# Games as kit rows.
+	# Games as kit rows: isolate the fixture from outstanding Steam search replies.
+	Net.lobby_list.disconnect(main.lucha.online._on_lobby_list)
 	main.show_screen("browse")
-	Net.lobby_list.emit([
-		{"id": 5, "name": "Parker's ring", "count_text": "3/8", "mode_line": "Tower", "joinable": true, "reason": "", "short": ""},
-		{"id": 6, "name": "Big Barrel Bash", "count_text": "8/8", "mode_line": "Scramble", "joinable": false, "reason": "That game is full.", "short": "Full"},
+	main.lucha.online._on_lobby_list([
+		{"id": 5, "name": "Parker's ring", "count_text": "3/12", "mode_line": "Tower", "joinable": true, "reason": "", "short": ""},
+		{"id": 6, "name": "Big Barrel Bash", "count_text": "12/12", "mode_line": "Classic", "joinable": false, "reason": "That game is full.", "short": "Full"},
 	])
 	await _wait(0.8)
 	var br: Menu3D = main.lucha.menus.browse
 	_check("games come in as kit rows", br.items.size() >= 4 and br.items[0].kind == "row", br.items.size())
 	await _shot("browse_rows")
+	Net.lobby_list.connect(main.lucha.online._on_lobby_list)
 	await _tap(JOY_BUTTON_B)
 	await _wait(0.5)
 	# A lobby with stand-in members (offline we're the host).
@@ -83,6 +85,12 @@ func _ready() -> void:
 	var lobby: Menu3D = main.lucha.menus.lobby
 	_check("the host's lobby leads with FIGHT!", lobby.items.size() > 0 and str(lobby.items[0].label) == "FIGHT!")
 	await _shot("lobby")
+	for pid in range(3, 12):
+		Net.members[pid] = {"name": "Player %d" % (pid + 1), "players": [{"name": "Player %d" % (pid + 1), "tint": NameGen.tint(pid), "slot": 0}], "ready": true}
+	main.lucha.online._fill_lobby()
+	await _wait(0.5)
+	_check("all twelve lobby cards are visible", main.lucha.online._board.get_child_count() == 12)
+	await _shot("lobby12")
 	await _tap(JOY_BUTTON_B)
 	_check("raw B leaves the lobby and returns to its opener", main.screen == "online" and not Net.online, main.screen)
 	Net.members = {}
