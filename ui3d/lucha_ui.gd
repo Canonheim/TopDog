@@ -1462,9 +1462,9 @@ func _build_menus() -> void:
 	_cards.scale = Vector3.ONE * UI_SCALE
 	_cards.visible = false
 	_podium = Node3D.new()
-	cam.add_child(_podium)
-	_podium.position = Vector3(1.4, -1.15, -MENU_DIST)
-	_podium.scale = Vector3.ONE * UI_SCALE
+	main.world.add_child(_podium)
+	_podium.position = Vector3(0, 0, 1.08)
+	_podium.scale = Vector3.ONE * 1.15
 	_podium.visible = false
 	var pod := LuchaKit.kit_model("podium")
 	if pod == null:
@@ -1573,15 +1573,22 @@ func _fill_results() -> void:
 		var figure := Game.KNIGHT.instantiate() as Node3D
 		figure.name = "Finisher"
 		figure.rotation.y = PI
-		figure.scale = Vector3.ONE * 0.62
+		figure.scale = Vector3.ONE * Feel.get_k("body_scale") / _podium.scale.x
 		figure.position.y = [1.0, 0.7, 0.5][i]
 		for side in [1, -1]:
 			var pivot := Vector3(side * 0.225, 1.582, 0)
-			var turn := Basis(Vector3.BACK, side * (0.82 if i == 0 else -1.17))
+			var turn := Basis(Vector3.BACK, side * (0.82 if i == 0 else deg_to_rad(-42.0)))
+			var shoulder_pose := Transform3D(turn, pivot - turn * pivot)
+			var forearm_pose := shoulder_pose
+			if i > 0:
+				# Fold the forearm back toward the hip around the posed elbow.
+				var elbow := Vector3(side * 0.625, pivot.y, 0)
+				var forearm_turn := Basis(Vector3.BACK, side * deg_to_rad(-138.0))
+				forearm_pose = Transform3D(forearm_turn, shoulder_pose * elbow - forearm_turn * elbow)
 			for limb_name in ["Shoulder", "Wrist", "Hand"]:
 				var limb := figure.find_child(("" if side == 1 else "L_") + limb_name, true, false) as Node3D
 				if limb != null:
-					limb.transform = Transform3D(turn, pivot - turn * pivot) * limb.transform
+					limb.transform = (shoulder_pose if limb_name == "Shoulder" else forearm_pose) * limb.transform
 		CelPass.celify(figure)
 		step.add_child(figure)
 	var y := 1.2
@@ -1591,7 +1598,7 @@ func _fill_results() -> void:
 		_winner_poster.add_child(line)
 		y -= 0.32
 	cam.add_child(_winner_poster)
-	_winner_poster.position = Vector3(0, 0, -MENU_DIST)
+	_winner_poster.position = Vector3(-1.3, 0, -MENU_DIST)
 	_winner_poster.scale = Vector3.ONE * UI_SCALE
 	_winner_poster.visible = true
 	var tw := create_tween()

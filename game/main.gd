@@ -29,6 +29,10 @@ var line_bar: MeshInstance3D
 var local_mode := true  # this match was started from Local play
 var paused := false
 var feel_panel: Control
+const PODIUM_HOLD_SECONDS := 2.5
+const TOWER_PAN_SPEED := 0.7  # world metres per second
+var _results_elapsed := 0.0
+var _results_peak := Vector2.ZERO
 var _cam_target := Vector3(0, 2, 14)
 var _cam_fov := 34.0
 const FOLLOW_HALF_H := 2.05  # in play: the camera shows at least this many metres above and below you
@@ -290,6 +294,17 @@ func _unhandled_input(event: InputEvent) -> void:
 # ---------------------------------------------------------------- camera
 
 func _tick_camera(delta: float) -> void:
+	if screen == "results":
+		_results_elapsed += delta / Engine.time_scale
+		var start := Vector2(0, 1.5)
+		var end := Vector2(_results_peak.x, maxf(start.y, _results_peak.y))
+		var distance := maxf(0.0, _results_elapsed - PODIUM_HOLD_SECONDS) * TOWER_PAN_SPEED
+		var focus := start.move_toward(end, distance)
+		# Leave the left side of the frame free for the results and menu.
+		cam.position = Vector3(focus.x - 1.45, focus.y + 0.5, 9.0)
+		cam.look_at(Vector3(cam.position.x, focus.y, 0), Vector3.UP)
+		line_bar.visible = false
+		return
 	var live := game.live_climbers()
 	var top := 1.6
 	if game.stage != null and (live.is_empty() or game.phase == "idle"):
@@ -438,7 +453,13 @@ func _on_over(res: Dictionary) -> void:
 # ================================================================ screens
 
 func show_screen(id: String) -> void:
+	if game != null and game.chair != null and (id == "results" or screen == "results"):
+		game.chair.visible = id != "results"
 	screen = id
+	if id == "results":
+		_results_elapsed = 0.0
+		_results_peak = game.tower_peak()
+		_tick_camera(0.0)
 	Sound.music("climb" if id in ["hud", "pause"] else "title")  # the match music plays on through a pause
 	for k in screens:
 		screens[k].visible = k == id

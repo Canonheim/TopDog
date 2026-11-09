@@ -1710,7 +1710,7 @@ func _run_wrestling() -> void:
 		if faller.knockout_left > 0:
 			knocked_down = true
 			break
-	t("KO: a hard head-first collision knocks out the climber", knocked_down)
+	t("KO: a hard head-first landing leaves the climber conscious", not knocked_down and faller.bodies["head"].global_position.y < 1.0)
 	ground.knock_out()
 	t("wrestling: locked pieces stay frozen", ground.state == Climber.State.FROZEN and ground.knockout_left == 0)
 
@@ -1721,6 +1721,8 @@ func _run_chairwear() -> void:
 	var chair := g.chair
 	var c: Climber = g.climbers[g.live[0]]
 	var head: RigidBody3D = g.partner.bodies["head"]
+	g._chair_impact(g.partner, "head", Vector3.ZERO, Vector3.RIGHT * head.mass * 5.0)
+	t("KO: a hard chair strike knocks out the practice partner", g.partner.knockout_left > 0)
 	var rival := spawn(Vector2(-3, 5))
 	rival.climber_id = 99
 	g.climbers[rival.climber_id] = rival

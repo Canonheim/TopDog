@@ -615,22 +615,6 @@ func _physics_process(delta: float) -> void:
 		return
 	live_time += delta
 	_impact_guard = maxf(0, _impact_guard - delta)
-	if knockout_left <= 0 and _impact_guard <= 0 and live_time > 0.65:
-		for pn in ["head", "chest"]:
-			var body: RigidBody3D = bodies[pn]
-			var physics := PhysicsServer3D.body_get_direct_state(body.get_rid())
-			if physics == null:
-				continue
-			for j in physics.get_contact_count():
-				var other := physics.get_contact_collider_object(j)
-				if other == null or (other.has_meta("climber") and other.get_meta("climber") == self):
-					continue
-				var impact := physics.get_contact_impulse(j).length() / body.mass
-				if impact >= (5.5 if pn == "head" else 8.0):
-					knock_out()
-					break
-			if knockout_left > 0:
-				break
 	for load_info: Dictionary in remote_pulls.values():
 		var piece: RigidBody3D = bodies.get(load_info.piece)
 		if piece != null:

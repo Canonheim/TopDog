@@ -203,7 +203,7 @@ func _next() -> void:
 		_finish()
 		return
 	if stage.row.get("dress", "") == "plaza":
-		_rpc_spawn_chair.rpc(chair_generation + 1, _chair_tower_top(), Vector2i(randi_range(8, 10), randi_range(11, 13)))
+		_rpc_spawn_chair.rpc(chair_generation + 1, tower_peak(), Vector2i(randi_range(8, 10), randi_range(11, 13)))
 	if mode.live == "turns":
 		# Next player still in, in order.
 		for k in turn_order.size():
@@ -957,7 +957,7 @@ func _on_peer_left(id: int) -> void:
 		_finish()
 
 
-func _chair_tower_top() -> Vector2:
+func tower_peak() -> Vector2:
 	var highest := Vector2(0, -INF)
 	for cid in tower:
 		var climber: Climber = climbers[cid]

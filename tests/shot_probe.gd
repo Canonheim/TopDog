@@ -48,8 +48,21 @@ func _ready() -> void:
 			if open == "pause":
 				main._toggle_pause()
 			elif open == "results":
-				main.game.results = {"winner": 0, "best": {0: 6.42}, "tower": 7, "top": 8.1}
+				main.game.roster = [{"pid": 0, "name": "Parker", "peer": 1, "slot": 0}, {"pid": 1, "name": "Matilda", "peer": 2}, {"pid": 2, "name": "Yorick", "peer": 3}]
+				main.game.results = {"winner": 0, "best": {0: 6.42, 1: 5.71, 2: 4.38}, "tower": 7, "top": 8.1}
 				main.show_screen("results")
+				var peak: Vector2 = main._results_peak
+				main._results_peak = Vector2(2, 9)
+				var initial: Vector3 = main.cam.position
+				main._tick_camera(2.5 * Engine.time_scale)
+				assert(main.cam.position.is_equal_approx(initial))
+				main._tick_camera(1.0 * Engine.time_scale)
+				assert(is_equal_approx(initial.distance_to(main.cam.position), main.TOWER_PAN_SPEED))
+				main._tick_camera(30.0 * Engine.time_scale)
+				assert(is_equal_approx(main.cam.position.y, 9.5))
+				main._results_peak = peak
+				main._results_elapsed = 0.0
+				main._tick_camera(0.0)
 	await get_tree().create_timer(2.2).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(shot)
