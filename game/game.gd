@@ -139,8 +139,9 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array, dent_hits: Vector2i) ->
 	_ring_out.clear()
 	if stage.row.get("dress", "") == "plaza":
 		chair = ChairScript.new()
-		chair.setup(dress, is_host(), dent_hits)
+		chair.setup(dress, dent_hits)
 		world.add_child(chair)
+		chair.float_above(stage.first_line)
 	if practice and multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
 		_spawn_partner()
 	line = stage.first_line
@@ -424,7 +425,7 @@ func _tick_owned(real_delta: float) -> void:
 		var c: Climber = climbers[cid]
 		if c.state != Climber.State.LIVE or c.owner_peer != me():
 			continue
-		if c.driver != null and c.driver.lock_pressed() and (phase == "turn" or phase == "round"):
+		if c.driver != null and c.driver.lock_pressed() and c.knockout_left <= 0 and (phase == "turn" or phase == "round"):
 			if c.top_height() > line + LOCK_MARGIN:
 				if is_host():
 					_judge_lock(cid, c.pose())
@@ -434,7 +435,7 @@ func _tick_owned(real_delta: float) -> void:
 				announce.emit("Get above the line to lock in!", false)
 		_tick_pulls_out(c, real_delta, send)
 		if send and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
-			_rpc_pose.rpc(cid, _seq, c.pose())
+			_rpc_pose.rpc(cid, _seq, c.pose(), c.touches_solid())
 	# Remote pulls on my climbers that went stale stop pulling.
 	for cid in _pulls.keys():
 		if not climbers.has(cid):
@@ -447,7 +448,7 @@ func _tick_owned(real_delta: float) -> void:
 			if _now - float(e[1]) < PULL_STALE_S:
 				pc.remote_pulls[piece] = e[0]
 	if send and chair != null and is_host() and multiplayer.get_peers().size() > 0:
-		_rpc_chair_pose.rpc(chair.holder, chair.limb, chair.grip_point, chair.global_transform, chair.hit_count)
+		_rpc_chair_pose.rpc(chair.holder, chair.limb, chair.grip_point, chair.global_transform, chair.hit_count, chair.in_bubble)
 @rpc("any_peer", "call_remote", "reliable")
 func _rpc_lock_request(cid: int, pose: PackedFloat32Array) -> void:
 	if not is_host() or not climbers.has(cid):
@@ -714,7 +715,7 @@ func live_climbers() -> Array:
 # ================================================================ the stream and puppets
 
 @rpc("any_peer", "call_remote", "unreliable")
-func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array) -> void:
+func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool) -> void:
 	var c: Climber = climbers.get(cid)
 	if c == null or c.state != Climber.State.PUPPET:
 		return
@@ -722,6 +723,7 @@ func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array) -> void:
 		return  # only the owner streams a climber
 	if seq <= int(_last_seq.get(cid, -1)):
 		return  # stale or duplicate: unreliable lanes arrive out of order
+	c.puppet_on_support = on_support
 	_last_seq[cid] = seq
 	if not _puppet_buf.has(cid):
 		_puppet_buf[cid] = []
@@ -871,7 +873,7 @@ func _tick_pulls_out(c: Climber, delta: float, send: bool) -> void:
 	var n := maxi(1, c.stuck_count())
 	var hold := c.total_mass * (accel - g) / float(n)
 	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
-	var pull := (-hold).limit_length(cap)  # what I do to what I hold
+	var pull := (c.wrestling_force - hold).limit_length(cap)  # what I do to what I hold
 	for g2 in mine:
 		var oc: Climber = climbers.get(g2[0])
 		if oc != null:
@@ -975,14 +977,12 @@ func _tick_chair(dt: float) -> void:
 			chair.follow(carrier, dt)
 			_apply_chair_hits(chair.sweep_hits(dt, carrier.climber_id))
 	elif stage.out_of_bounds(Climber.pos2(chair)):
-		chair.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), ChairScript.HOME)
-		chair.previous = chair.global_transform
-		chair.thrower = -1
-		Climber.sync_server(chair)
-		chair.linear_velocity = Vector3.ZERO
-		chair.angular_velocity = Vector3.ZERO
+		chair.float_above(line)
 	else:
-		chair.settle()
+		if chair.in_bubble:
+			chair.float_above(line)
+		else:
+			chair.settle()
 		if chair.thrower != -1:
 			_apply_chair_hits(chair.sweep_hits(dt, chair.thrower))
 			if chair == null:
@@ -1039,6 +1039,8 @@ func _chair_impact(victim: Climber, piece_name: String, local_offset: Vector3, i
 	var piece: RigidBody3D = victim.bodies.get(piece_name)
 	if piece == null:
 		return
+	if impulse.length() / piece.mass >= (4.5 if piece_name == "head" else 6.0):
+		victim.knock_out()
 	if victim == partner:
 		partner.stagger_time = 0.5
 	var offset := piece.global_basis * local_offset
@@ -1053,11 +1055,14 @@ func _rpc_chair_impact(cid: int, piece: String, local_offset: Vector3, impulse: 
 
 
 @rpc("authority", "call_remote", "unreliable_ordered")
-func _rpc_chair_pose(cid: int, limb: int, point: Vector3, pose: Transform3D, hit_count: int) -> void:
+func _rpc_chair_pose(cid: int, limb: int, point: Vector3, pose: Transform3D, hit_count: int, in_bubble: bool) -> void:
 	if chair == null:
 		return
 	if chair.holder != cid or chair.limb != limb:
 		chair.global_transform = pose
+	chair.in_bubble = in_bubble
+	if chair.bubble != null:
+		chair.bubble.visible = in_bubble
 	chair.holder = cid
 	chair.limb = limb
 	chair.grip_point = point

@@ -12,7 +12,7 @@ func _physics_process(delta: float) -> void:
 	if stagger_time > 0:
 		stagger_time -= delta
 		return
-	if removed or state != State.LIVE or not _touching_solid():
+	if removed or state != State.LIVE or knockout_left > 0 or not _touching_solid():
 		return
 	var chest: RigidBody3D = bodies["chest"]
 	# Raise a fallen torso against its planted legs. Only help while supported.

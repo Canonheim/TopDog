@@ -10,7 +10,9 @@ var dent_hits: Vector2i
 var hit_count := 0
 var model: Node3D
 const SIZE := Vector3(0.49, 1.08, 0.13)
-const HOME := Vector3(4.6, 0.095, 0)
+const PICKUP_HEIGHT := 0.76
+var in_bubble := true
+var bubble: MeshInstance3D
 const HIT_SPEED := 1.8
 const LIGHT_HIT_MAX_SPEED := 4.5  # Contact-point speed in m/s.
 var holder := -1
@@ -27,7 +29,7 @@ var carrier_rids: Array[RID] = []
 var loose_target := Transform3D.IDENTITY
 
 
-func setup(draw_model: bool, authoritative: bool, thresholds: Vector2i) -> void:
+func setup(draw_model: bool, thresholds: Vector2i) -> void:
 	dent_hits = thresholds
 	hit_shape.size = SIZE
 	var col := CollisionShape3D.new()
@@ -35,6 +37,18 @@ func setup(draw_model: bool, authoritative: bool, thresholds: Vector2i) -> void:
 	add_child(col)
 	if draw_model:
 		_show_stage(0)
+		bubble = MeshInstance3D.new()
+		var sphere := SphereMesh.new()
+		sphere.radius = 0.67
+		sphere.height = 1.34
+		bubble.mesh = sphere
+		var surface := StandardMaterial3D.new()
+		surface.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		surface.albedo_color = Color(0.47, 0.84, 1.0, 0.21)
+		surface.roughness = 0.16
+		bubble.material_override = surface
+		bubble.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		add_child(bubble)
 	axis_lock_linear_z = true
 	collision_layer = 0
 	collision_mask = Climber.LAYER_WORLD | Climber.LAYER_FROZEN
@@ -42,10 +56,24 @@ func setup(draw_model: bool, authoritative: bool, thresholds: Vector2i) -> void:
 	max_contacts_reported = 4
 	continuous_cd = true
 	mass = 0.7
-	freeze = not authoritative
-	transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5), HOME)
+	freeze = true
+	collision_mask = 0
 	loose_target = transform
 	previous = transform
+
+
+func float_above(line: float) -> void:
+	in_bubble = true
+	if bubble != null:
+		bubble.show()
+	freeze = true
+	collision_mask = 0
+	thrower = -1
+	linear_velocity = Vector3.ZERO
+	angular_velocity = Vector3.ZERO
+	global_transform = Transform3D(Basis(Vector3.BACK, -0.18), Vector3(0, line + PICKUP_HEIGHT, 0))
+	previous = global_transform
+	loose_target = global_transform
 
 
 func set_hit_count(count: int) -> void:
@@ -115,6 +143,9 @@ func pick_up(c: Climber, i: int) -> void:
 	for body: RigidBody3D in c.bodies.values():
 		carrier_rids.append(body.get_rid())
 	last_hand = end.global_position
+	in_bubble = false
+	if bubble != null:
+		bubble.hide()
 	holder = c.climber_id
 	thrower = -1
 	limb = i
