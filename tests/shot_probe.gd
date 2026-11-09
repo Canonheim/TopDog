@@ -3,11 +3,14 @@ extends Node
 func _ready() -> void:
 	var open := "title"
 	var shot := ""
+	var wait := 2.2  # --wait=S: seconds before the shot (a banner clears in about 5)
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--open="):
 			open = a.get_slice("=", 1)
 		elif a.begins_with("--shot="):
 			shot = a.get_slice("=", 1)
+		elif a.begins_with("--wait="):
+			wait = float(a.get_slice("=", 1))
 	var main = load("res://game/main.tscn").instantiate()
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(0.8).timeout
@@ -68,7 +71,7 @@ func _ready() -> void:
 				main._results_peak = peak
 				main._results_elapsed = 0.0
 				main._tick_camera(0.0)
-	await get_tree().create_timer(2.2).timeout
+	await get_tree().create_timer(wait).timeout
 	await RenderingServer.frame_post_draw
 	get_viewport().get_texture().get_image().save_png(shot)
 	print("SHOT ", shot)

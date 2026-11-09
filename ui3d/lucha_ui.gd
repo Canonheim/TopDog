@@ -52,6 +52,8 @@ var _banner_t := 0.0
 var _clock_up := 0.0  # how far the clock and bell are lifted out of the frame
 var _clock_drop_t := 0.0
 const CLOCK_AT := Vector3(0, 2.25, 0)
+const COUNTDOWN_FROM := 10  # the clock pulses and ticks from here down (Parker 11-09)
+var _pulse_tween: Tween
 const BELL_AT := Vector3(1.05, 2.0, 0.05)
 const CLOCK_HIDE_UP := 2.6  # above the top of the frame
 var _cards: Node3D
@@ -1877,11 +1879,21 @@ func _process(delta: float) -> void:
 				var on_kit := LuchaKit.kit_model_exists("clock_buckle")
 				var col := LuchaKit.RED if v <= 10 else (LuchaKit.INK if on_kit else LuchaKit.GOLD)
 				var num := LuchaKit.text3d(str(v), 0.34 if on_kit else 0.42, col, 0.03)
+				LuchaKit.center_digits(num)  # dead centre on the face (Parker 11-09)
 				_clock_text.add_child(num)
 				no_shadows(num)
-				if v <= 10:
-					_clock_text.scale = Vector3.ONE * 1.35
-					create_tween().tween_property(_clock_text, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_BACK)
+				# THE COUNTDOWN PULSE (Parker 11-09: "start pulsing each number at 10"):
+				# from 10 down each number lands big and thumps back, and the buckle bumps
+				# with it; the tick sounds with each one (main.gd).
+				if v <= COUNTDOWN_FROM:
+					if _pulse_tween != null and _pulse_tween.is_valid():
+						_pulse_tween.kill()
+					var buckle_node := _hud.get_node("Buckle") as Node3D
+					_clock_text.scale = Vector3.ONE * 1.6
+					buckle_node.scale = Vector3.ONE * 1.08
+					_pulse_tween = create_tween().set_parallel(true)
+					_pulse_tween.tween_property(_clock_text, "scale", Vector3.ONE, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+					_pulse_tween.tween_property(buckle_node, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if _banner != null and _banner.visible:
 		_banner_t -= delta
 		_banner.rotation.z = lerpf(_banner.rotation.z, sin(t * 3.0) * 0.03, 0.05)

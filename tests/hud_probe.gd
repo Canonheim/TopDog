@@ -58,6 +58,16 @@ func _ready() -> void:
 	await get_tree().create_timer(0.4).timeout
 	_check("above the line the LOCK IN toast pops up", hb.popped and hb._lock.position.y > 0.25, hb._lock.position.y)
 	await _shot("hud_lockin")
+	# THE COUNTDOWN PULSE (Parker 11-09): at 10 the number lands big and thumps back.
+	var clock_text: Node3D = main.lucha._clock_text
+	_check("above 10 the clock rests at its size", is_equal_approx(clock_text.scale.x, 1.0), clock_text.scale.x)
+	main.game.clock = 9.6
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_check("at 10 the clock number pulses big", clock_text.scale.x > 1.3, clock_text.scale.x)
+	await get_tree().create_timer(0.7).timeout
+	_check("...and settles back", absf(clock_text.scale.x - 1.0) < 0.05, clock_text.scale.x)
+	_check("the countdown ticks from 10", LuchaUI.COUNTDOWN_FROM == 10)
 	var player: Climber = main.game.live_climbers()[0]
 	player.release_all()
 	player.set_physics_process(false)

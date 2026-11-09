@@ -148,6 +148,26 @@ static func text3d(s: String, size: float, c: Color, _depth := 0.06, priority :=
 	return lb
 
 
+## Centre a Label3D's DIGITS on its origin (Parker 11-09: the clock's numbers sat high
+## on the face). A label centres its line box, ascent and descent; digits stand on the
+## baseline with nothing below it, so they float up by half the descent's share. This
+## measures the font's "0" and shifts the text down by exactly that.
+static func center_digits(lb: Label3D) -> void:
+	var f: Font = lb.font if lb.font != null else ThemeDB.fallback_font
+	if f == null:
+		return
+	var size := lb.font_size
+	var ts := TextServerManager.get_primary_interface()
+	var rids: Array = f.get_rids()
+	if rids.is_empty():
+		return
+	var rid: RID = rids[0]
+	var glyph := ts.font_get_glyph_index(rid, size, "0".unicode_at(0), 0)
+	var top := -ts.font_get_glyph_offset(rid, Vector2i(size, 0), glyph).y  # the digit's top, above the baseline (px)
+	var baseline := (f.get_descent(size) - f.get_ascent(size)) * 0.5  # where the centred line puts the baseline (px, up +)
+	lb.offset = Vector2(0.0, -(baseline + top * 0.5))
+
+
 ## A whole kit model out of the ink: its atlas colours, unshaded, drawn in the
 ## transparent pass (after the ink, which reads only opaque depth and normals).
 static func skip_ink(root: Node) -> void:

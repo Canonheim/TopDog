@@ -375,7 +375,8 @@ func _tick_hud(delta: float) -> void:
 		var s := int(ceil(game.clock))
 		hud_clock.text = "%d" % maxi(s, 0)
 		hud_clock.modulate = Color(1, 0.35, 0.3) if game.clock <= 10.0 else Color.WHITE
-		if s != _last_tick_s and s <= 5 and s >= 1:
+		# THE COUNTDOWN (Parker 11-09: "you should hear it counting down starting at 10").
+		if s != _last_tick_s and s <= LuchaUI.COUNTDOWN_FROM and s >= 1:
 			Sound.play("tick")
 		_last_tick_s = s
 	else:
