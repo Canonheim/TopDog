@@ -127,44 +127,52 @@ func _build_sky() -> void:
 		_clouds.append(c)
 
 
-## THE TOWN IN THE ROUND (Parker 11-08: "the town arranged in more of a semi circle
-## around the ring. So the church is more visible and the ring feel like it might
-## be more in the town and the town isn't just a grid"). Everything is laid out on
-## arcs about one centre, ARC_C, just behind the ring:
-## - the first ring of kit houses faces the centre, from ARC_FIRST to ARC_LAST each
-##   side, so its wings come forward on both sides of the ring; a street opens
-##   between the houses on each side (ARC_STREETS);
-## - the church stands in the gap at the back at street level on a paved forecourt,
-##   nothing in front of it, scaled up as the centrepiece (CHURCH_SCALE);
-## - the hill town climbs behind in concentric terraces (TERRACES), houses facing
-##   the centre, an amphitheatre round the square;
-## - the ground: a round plaza of concentric sett courses, a raised kerbed pavement
-##   along the house fronts, sett streets running out between the houses to steps
-##   up the first terrace, slabs on the forecourt. Flat-coloured: the stones are flat
-##   quads 5 mm over a grout bed, so the ink leaves the joints alone; only kerbs and
-##   steps stand proud (Parker: "flat like in the image so ink doesnt hit it");
-## - the papel picado on poles round the plaza: strings along the arc and up to the
-##   church towers, none across the climbing column.
-## Gameplay never touches this: the ring, the deck, the plaza floor collider (on the
-## play plane), the line poles at x +-12 and the cameras are the stage's and main's.
+## THE HILL TOWN ROUND THE SQUARE (Parker 11-08: "not a perfect half circle, but
+## more of like half a football shaped ... make it look like a town with like
+## stairs and bricks and stuff instead of just blank terraces, and make sure the
+## sides of the church look nice"). Everything is laid out on one shape, a lens
+## (half an American football) about ARC_C: wider than deep, its back flat behind
+## the church, its curve tightening to points at the sides. Every row and terrace
+## is the same lens grown outward by an offset (_lens).
+## - the square: the whole lens paved in courses that follow its shape (a paler
+##   course every seventh), the setts running straight up to the church's steps;
+## - the first row of kit houses faces the square behind a kerbed pavement, a
+##   street opening through it each side to stairs up the hill;
+## - the church at the back, flanked by raised gardens (a palm, bushes, flowers)
+##   with a stairway up beside each to the first terrace;
+## - the hill: four terraces, each faced with a brick retaining wall and topped by
+##   a parapet and a paved lane with lamps and benches, houses facing the square;
+##   stairways climb between the levels, bushes fill the gaps between houses;
+## - flat-coloured as Parker liked: setts and bricks are flat quads a few mm proud
+##   of their bed, so the ink leaves the joints alone; only kerbs, steps,
+##   parapets and the like stand proud.
+## Gameplay never touches this: the ring, the deck, the plaza floor collider (on
+## the play plane, inside the square), the line poles and the cameras are the
+## stage's and main's.
 const ARC_C := Vector2(0.0, -2.5)  # the town's centre, (x, z)
-const ARC_FRONT := 23.0  # the first ring's house fronts, from ARC_C
-const ARC_FIRST := 24.0  # degrees from the back axis: the church's gap inside this (the first houses meet the forecourt)
-const ARC_LAST := 94.0  # the wings stop here (z about -1 at x +-24: clear of the play cameras)
-const ARC_STREETS := [62.0]  # a street opens here each side (degrees)
-const STREET_W := 4.2
-const PLAZA_R := 21.4  # the plaza's stones; the pavement runs from here to the house fronts
-const WALK_H := 0.14  # the pavement and kerb, proud of the plaza
-const TERRACES := [  # [front radius, top above the stones, angular half-range (deg), start (deg)]
-	[29.5, 1.6, 100.0, 17.0], [36.5, 4.0, 100.0, 17.0], [43.5, 6.6, 98.0, 0.0], [50.5, 9.4, 92.0, 0.0],
-]
-const TERRACE_OUT := 58.0  # every terrace runs out to here, so none floats
+const LENS_A := 30.0  # the square's half-width at its points
+const LENS_B := 20.5  # its depth behind ARC_C, at the back
+const LENS_M := 3.5  # >2 flattens the back (behind the church)
+const LENS_K := 0.8  # <1 sharpens the points
+const LENS_T1 := 0.985  # rows and terraces stop just short of the points
+const WALK_W := 1.6  # the pavement, from the square's edge to the house fronts
+const WALK_H := 0.14
+const ROW_O := 4.0  # the first row's house centres (offset from the square's edge)
+const ROW_X0 := 11.4  # the row starts here each side; the church's gardens inside
+const STREET_F := 0.52  # a street opens through the row here (fraction of its length)
+const STREET_W := 4.0
+const TERRACES := [[8.0, 1.6], [16.0, 4.0], [24.0, 6.6], [32.0, 9.4]]  # [front offset, top above the stones]
+const TERRACE_BACK := 12.0  # the last terrace runs back this far
+const NOTCH_X := 8.4  # the church's notch through the first two terraces
+const LANE_W := 2.6  # the paved lane along each terrace's front, behind its parapet
+const PARAPET_W := 0.3
+const PARAPET_H := 0.6
+const HILL_O := 5.2  # hill house centres, from their terrace's front
+const STAIRS := {1: [0.24, 0.66], 2: [0.44, 0.86], 3: [0.3, 0.7]}  # stair flights up each terrace face (fraction of its length)
 const CHURCH_SCALE := 1.25
-const CHURCH_FRONT_Z := -25.6  # the church's steps on the forecourt
-const FORECOURT := Rect2(-9.6, -45.0, 19.2, 24.0)  # (x, z, w, d): the church's paved gap, at street level
+const GARDEN := Rect2(8.5, -26.8, 2.6, 4.0)  # (x, z, w, d) the raised garden beside the church, right side (mirrored)
 const HOUSE_W := {"a": 4.8, "b": 5.2, "c": 3.8}
 const HOUSE_D := 4.75
-const STONE := Color("#C2A878")
 const DRY_GRASS := Color("#8E9A5C")  # lit, the cel band reads it a dry green
 const LAND := Color("#C9BE92")
 const RIDGE_NEAR := Color("#B4C9EC")  # haze blues: the far ridges sit back by colour (no fog in the look)
@@ -176,19 +184,90 @@ const FAR_RIDGES := [
 	[-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR, -0.12],
 ]
 const POLE_WOOD := Color("#6A4128")
-const POLE_R := 19.0  # the papel picado poles stand round the plaza at this radius
-const POLE_DEG := [36.0, 58.0, 80.0]  # each side
+const POLE_T := [0.32, 0.58, 0.82]  # the papel picado poles round the square (lens t, each side)
 const GROUT := Color("#7A6C5A")
+const MORTAR := Color("#8A7662")
 const KERB := Color("#D9CBB0")
 const WALK := Color("#CDBFA4")
-const STONE_TONES := [Color("#C4B192"), Color("#B9A585"), Color("#AE9978"), Color("#CBBB9E")]  # warm sandstone: the sun lifts these a step
-const SLAB_TONES := [Color("#D3C4A8"), Color("#C8B89A")]
+const PARAPET := Color("#D6C3A0")
+const SOIL := Color("#6E8A45")
+const IRON := Color("#2E2A2C")
+const STONE_TONES := [Color("#C4B192"), Color("#B9A585"), Color("#AE9978"), Color("#D2C3A6")]  # warm sandstone; the last, paler, is the band course
+const BRICK_TONES := [Color("#C49A70"), Color("#B5885E"), Color("#CFA97F"), Color("#A97B55")]
+const BUSH_TONES := [Color("#4E8A34"), Color("#5E9C3C"), Color("#3F7A2E")]
+const FLOWER_TONES := [Color("#D81E6A"), Color("#FFC928"), Color("#F28A1E"), Color("#E0287A")]
 
 
-## A point on the town's arcs: radius r, angle deg from the back axis (+ is right).
-static func _arc_pt(r: float, deg: float) -> Vector2:
-	var a := deg_to_rad(deg)
-	return ARC_C + Vector2(sin(a), -cos(a)) * r
+## A point on the lens grown by offset o, at t in -1..1 (0 is the back axis,
+## +-1 the points), on its back half. `front` gives the mirror half, toward the camera.
+static func _lens(t: float, o: float, front := false) -> Vector2:
+	var u := clampf(absf(t), 0.0, 1.0)
+	var depth := (LENS_B + o) * pow(1.0 - pow(u, LENS_M), LENS_K)
+	return Vector2((LENS_A + o) * t, ARC_C.y + (depth if front else -depth))
+
+
+## The same lens scaled by s about ARC_C (the square's courses).
+static func _lens_s(t: float, s: float, front: bool) -> Vector2:
+	var u := clampf(absf(t), 0.0, 1.0)
+	var depth := LENS_B * s * pow(1.0 - pow(u, LENS_M), LENS_K)
+	return Vector2(LENS_A * s * t, ARC_C.y + (depth if front else -depth))
+
+
+## The lens at offset o from x0 out to t1 on the right side, sampled finely, with
+## its running length: [points, lengths, ts].
+static func _path(o: float, x0: float, t1: float) -> Array:
+	var t0 := clampf(x0 / (LENS_A + o), 0.0, t1)
+	var pts := PackedVector2Array()
+	var cum := PackedFloat32Array()
+	var ts := PackedFloat32Array()
+	var n := 500
+	var run := 0.0
+	for i in n + 1:
+		var t := lerpf(t0, t1, float(i) / n)
+		var p := _lens(t, o)
+		if i > 0:
+			run += p.distance_to(pts[i - 1])
+		pts.append(p)
+		cum.append(run)
+		ts.append(t)
+	return [pts, cum, ts]
+
+
+## The point, unit tangent (toward the point) and inward normal (toward the
+## square) a distance d along a path: [pos, tan, nrm, t].
+static func _at(path: Array, d: float) -> Array:
+	var pts: PackedVector2Array = path[0]
+	var cum: PackedFloat32Array = path[1]
+	var ts: PackedFloat32Array = path[2]
+	d = clampf(d, 0.0, cum[cum.size() - 1])
+	var lo := 0
+	var hi := cum.size() - 1
+	while hi - lo > 1:
+		var mid := (lo + hi) / 2
+		if cum[mid] < d:
+			lo = mid
+		else:
+			hi = mid
+	var seg := maxf(cum[hi] - cum[lo], 0.0001)
+	var f := (d - cum[lo]) / seg
+	var tan := (pts[hi] - pts[lo]).normalized()
+	return [pts[lo].lerp(pts[hi], f), tan, Vector2(-tan.y, tan.x), lerpf(ts[lo], ts[hi], f)]
+
+
+static func _len(path: Array) -> float:
+	var cum: PackedFloat32Array = path[1]
+	return cum[cum.size() - 1]
+
+
+## A world point from a right-side path point, mirrored for the left (side -1).
+static func _w(p: Vector2, side: float, y: float) -> Vector3:
+	return Vector3(p.x * side, y, p.y)
+
+
+## Stand a +Z-facing model at p facing the inward normal n (right-side frame).
+func _stand(m: Node3D, p: Vector2, n: Vector2, side: float, y: float) -> void:
+	m.position = _w(p, side, y)
+	m.rotation.y = atan2(n.x * side, n.y)
 
 
 func _build_plaza() -> void:
@@ -199,92 +278,73 @@ func _build_plaza() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 8
 	var kinds := _house_kinds()
+	var stones: Array = []  # flat setts and slabs by tone
+	for t in STONE_TONES:
+		stones.append([])
+	var bricks: Array = []
+	for t in BRICK_TONES:
+		bricks.append([])
 	# Land to the horizon, just under the stones.
 	plaza.add_child(LuchaKit.box(Vector3(4000, 0.2, 4000), LAND, Vector3(0, gy - 0.12, -1980)))
-	_pave(plaza, gy)
-	# The first ring of houses, facing the centre.
-	for side in [-1.0, 1.0]:
-		var deg := ARC_FIRST
-		while true:
-			# A street's mouth: jump past it rather than build across it.
-			for s in ARC_STREETS:
-				var lo := float(s) - rad_to_deg(STREET_W * 0.5 / ARC_FRONT)
-				var hi := float(s) + rad_to_deg(STREET_W * 0.5 / ARC_FRONT)
-				if deg + rad_to_deg(5.2 / ARC_FRONT) > lo and deg < hi:
-					deg = hi
-			var kind: String = kinds[rng.randi() % kinds.size()]
-			var w := _house_w(kind)
-			var half_deg := rad_to_deg(w * 0.5 / ARC_FRONT)
-			var centre := deg + half_deg
-			if centre + half_deg > ARC_LAST:
-				break
-			var house := _house(kind)
-			_place_facing(house, ARC_FRONT + HOUSE_D * 0.5, side * centre, gy)
-			house.scale = Vector3(1.0, rng.randf_range(0.92, 1.08), 1.0)  # a little stagger in the roofline
-			plaza.add_child(house)
-			deg = centre + half_deg + rad_to_deg(0.18 / ARC_FRONT)
-	# Palms in planters at the street mouths and the wings' ends.
-	for side in [-1.0, 1.0]:
-		for d in [46.0, 76.0]:
-			var p := _arc_pt(PLAZA_R - 1.2, side * d)
-			var palm := _palm()
-			palm.position = Vector3(p.x, gy, p.y)
-			plaza.add_child(palm)
-			plaza.add_child(LuchaKit.cyl(0.7, 0.5, KERB, Vector3(p.x, gy + 0.25, p.y)))
-	# The church on its forecourt.
-	_forecourt(plaza, gy)
+	_pave_square(plaza, gy, stones, rng)
+	_church_plot(plaza, gy, stones)
 	var church := _church()
 	church.scale = Vector3.ONE * CHURCH_SCALE
 	var reach := float(church.get_meta("front_reach")) * CHURCH_SCALE
-	church.position = Vector3(0, gy, CHURCH_FRONT_Z - reach)  # on the street, like the houses
+	church.position = Vector3(0, gy, ARC_C.y - LENS_B + 0.05 - reach)
 	plaza.add_child(church)
-	# The hill town: concentric terraces, a stone face and a dry-grass top, houses
-	# along each facing the centre; the church's notch and the streets' landings kept clear.
-	for k in TERRACES.size():
-		var t: Array = TERRACES[k]
-		var r0: float = t[0]
-		var top: float = t[1]
-		var span: float = t[2]
-		var start: float = t[3]
-		for side in [-1.0, 1.0]:
-			var a0: float = side * start
-			var a1: float = side * span
-			plaza.add_child(_arc_prism(r0, TERRACE_OUT, minf(a0, a1), maxf(a0, a1), gy, top, STONE))
-			plaza.add_child(_arc_prism(r0 + 0.2, TERRACE_OUT, minf(a0, a1), maxf(a0, a1), gy + top, 0.1, DRY_GRASS))
-		var rr := r0 + 2.9
-		var deg := -span + 3.0
-		while deg < span - 3.0:
+	# The pavement and kerb along the house fronts, broken for the street.
+	var row := _path(ROW_O, ROW_X0, LENS_T1)
+	var street_d := _len(row) * STREET_F
+	var street: Array = _at(row, street_d)
+	var street_t: float = street[3]
+	for side in [-1.0, 1.0]:
+		var walk_x0 := GARDEN.position.x - 0.1
+		var t_gap := STREET_W * 0.5 / (LENS_A + ROW_O)
+		for rng_t in [[walk_x0 / LENS_A, street_t - t_gap], [street_t + t_gap, LENS_T1]]:
+			plaza.add_child(_band(0.0, WALK_W, rng_t[0], rng_t[1], side, gy, gy + WALK_H, WALK, false))
+			plaza.add_child(_band(-0.05, 0.25, rng_t[0], rng_t[1], side, gy, gy + WALK_H + 0.02, KERB, false))
+	# The first row of houses, facing the square, with the street's gap.
+	for side in [-1.0, 1.0]:
+		var d := 0.0
+		var total := _len(row)
+		while true:
 			var kind: String = kinds[rng.randi() % kinds.size()]
 			var w := _house_w(kind)
-			var half_deg := rad_to_deg(w * 0.5 / rr)
-			var c := deg + half_deg
-			var p := _arc_pt(rr, c)
-			var clear := true
-			if absf(c) < start + half_deg + 1.0:
-				clear = false  # the church's notch
-			if absf(p.x) < 10.5 and k <= 2:
-				clear = false  # behind the church
-			if k == 0:
-				for s in ARC_STREETS:
-					if absf(absf(c) - float(s)) < rad_to_deg(3.6 / rr):
-						clear = false  # the street's landing
-			if clear:
-				var h := _house(kind)
-				_place_facing(h, rr + rng.randf_range(0.0, 0.6), c, gy + top)
-				h.scale = Vector3.ONE * (0.92 - k * 0.04)  # a touch smaller up the hill, for depth
-				plaza.add_child(h)
-			var gap := rng.randf_range(1.0, 3.6)
-			if gap > 2.7 and k < 3 and clear:
-				var pp := _arc_pt(r0 + 1.4, c + half_deg + rad_to_deg(gap * 0.5 / rr))
-				var palm := _palm()
-				palm.position = Vector3(pp.x, gy + top, pp.y)
-				palm.scale = Vector3.ONE * 0.85
-				plaza.add_child(palm)
-			deg = c + half_deg + rad_to_deg(gap / rr)
-	# Far mountains (Parker 11-08: "large cardboard cut outs of mountains"): the
-	# kit's mountain_cutout_a/b/c, scaled to each ridge's width and height, stood
-	# with a slight yaw and lean like set dressing propped on the horizon. If the
-	# kit pieces are missing, plain flat cards in the haze blues stand in.
+			if d < street_d + STREET_W * 0.5 and d + w > street_d - STREET_W * 0.5:
+				d = street_d + STREET_W * 0.5
+			if d + w > total:
+				break
+			var at: Array = _at(row, d + w * 0.5)
+			var house := _house(kind)
+			_stand(house, at[0], at[2], side, gy)
+			house.scale = Vector3(1.0, rng.randf_range(0.92, 1.08), 1.0)  # a little stagger in the roofline
+			plaza.add_child(house)
+			d += w + 0.15
+		# The street: setts from the pavement through the row, then stairs up the first terrace.
+		var axis: Vector2 = street[2]
+		var mouth: Vector2 = (street[0] as Vector2) + axis * ROW_O  # from the square's edge
+		var t0_face: Vector2 = _lens(street_t, float(TERRACES[0][0]))
+		var run := mouth.distance_to(t0_face)
+		var stair_len := 2.4
+		var bed_c := mouth - axis * ((run - stair_len) * 0.5)
+		var bed := LuchaKit.box(Vector3(STREET_W + 0.2, 0.02, run - stair_len + 0.2), GROUT, Vector3(bed_c.x * side, gy + 0.01, bed_c.y))
+		bed.rotation.y = atan2(axis.x * side, axis.y)
+		plaza.add_child(bed)
+		_lay_strip(stones, rng, mouth, -axis, run - stair_len, STREET_W, side, gy + 0.025)
+		_stairs(plaza, t0_face, axis, side, gy, gy + float(TERRACES[0][1]), STREET_W - 0.4)
+		# Palms in round planters at the street's mouth and at the wing's end.
+		for pt in [_lens(street_t - 0.06, -1.1), _lens(street_t + 0.06, -1.1), _lens(0.93, -1.6)]:
+			_palm_planter(plaza, _w(pt, side, gy))
+	# The church's gardens and their stairs.
+	for side in [-1.0, 1.0]:
+		_garden(plaza, side, gy, rng)
+	# The hill.
+	for k in TERRACES.size():
+		_terrace(plaza, k, gy, rng, kinds, stones, bricks, street_t)
+	_commit_stones(plaza, stones, STONE_TONES)
+	_commit_walls(plaza, bricks, BRICK_TONES)
+	# Far mountains (Parker 11-08: "large cardboard cut outs of mountains").
 	for i in FAR_RIDGES.size():
 		var r: Array = FAR_RIDGES[i]
 		var w: float = r[2]
@@ -304,21 +364,21 @@ func _build_plaza() -> void:
 		var ridge := LuchaKit._extrude(pts, 4.0, r[4])
 		ridge.position = Vector3(r[0], gy - 0.2, r[1])
 		plaza.add_child(ridge)
-	# Papel picado round the plaza: poles on a circle, strings along the arc between
-	# them, and one from each inner pole up to its church tower.
+	# Papel picado round the square: poles inside its edge, strings between them,
+	# and one from each inner pole up to its church tower.
 	var tops := {}
 	for side in [-1.0, 1.0]:
-		for d in POLE_DEG:
-			var p := _arc_pt(POLE_R, side * d)
-			plaza.add_child(_bunting_pole(Vector3(p.x, gy, p.y)))
-			tops[side * d] = Vector3(p.x, 6.8, p.y)
+		for t in POLE_T:
+			var p := _lens(float(t), -1.8)
+			plaza.add_child(_bunting_pole(_w(p, side, gy)))
+			tops[side * float(t)] = _w(p, side, 6.8)
 	var ties: Array = church.get_meta("anchors")  # the belfries' outer faces, church-local
 	var strings: Array = []
 	for side in [-1.0, 1.0]:
-		for i in POLE_DEG.size() - 1:
-			strings.append([tops[side * POLE_DEG[i]], tops[side * POLE_DEG[i + 1]], 8, 0.8])
+		for i in POLE_T.size() - 1:
+			strings.append([tops[side * float(POLE_T[i])], tops[side * float(POLE_T[i + 1])], 8, 0.8])
 		var tie: Vector3 = church.position + (ties[0 if side < 0 else 1] as Vector3) * CHURCH_SCALE
-		strings.append([tops[side * POLE_DEG[0]], tie, 9, 0.7])
+		strings.append([tops[side * float(POLE_T[0])], tie, 9, 0.7])
 	for st in strings:
 		var b := LuchaKit.bunting(st[0], st[1], st[2], st[3])
 		plaza.add_child(b)
@@ -326,51 +386,455 @@ func _build_plaza() -> void:
 			if f.has_meta("sway"):
 				_flags.append(f)
 	# The pinata mid-span on the right-hand inner string, clear of the HUD clock.
-	var pa: Vector3 = tops[POLE_DEG[0]]
-	var pb: Vector3 = tops[POLE_DEG[1]]
+	var pa: Vector3 = tops[float(POLE_T[0])]
+	var pb: Vector3 = tops[float(POLE_T[1])]
 	var mid := (pa + pb) * 0.5
 	_hang_pinata(plaza, Vector3(mid.x, mid.y - 0.85, mid.z))
 
 
-## Stand a +Z-facing model on the arc at radius r, angle deg, facing the centre.
-func _place_facing(n: Node3D, r: float, deg: float, y: float) -> void:
-	var p := _arc_pt(r, deg)
-	n.position = Vector3(p.x, y, p.y)
-	n.rotation.y = -deg_to_rad(deg)
+## The square: a grout bed over the whole lens, then courses that follow its
+## shape, each a smaller copy of the edge (so they run straight across the flat
+## back and fan out toward the points). Stones skip the ring's stage.
+func _pave_square(parent: Node3D, gy: float, stones: Array, rng: RandomNumberGenerator) -> void:
+	var outline := PackedVector2Array()
+	for i in 161:
+		outline.append(_lens(lerpf(-1.0, 1.0, float(i) / 160.0), 0.0))
+	for i in range(159, 0, -1):
+		outline.append(_lens(lerpf(-1.0, 1.0, float(i) / 160.0), 0.0, true))
+	parent.add_child(_flat_poly(outline, gy + 0.02, GROUT))  # 5 mm under the setts: a deeper step inks at grazing angles
+	var ds := 0.62 / LENS_B
+	var joint := 0.07
+	var s := 1.0 - ds * 0.5
+	var ci := 0
+	while LENS_B * s > 2.6:
+		for front in [false, true]:
+			var pts := PackedVector2Array()
+			for i in 301:
+				pts.append(_lens_s(lerpf(-1.0, 1.0, float(i) / 300.0), s, front))
+			var cum := PackedFloat32Array([0.0])
+			for i in range(1, pts.size()):
+				cum.append(cum[i - 1] + pts[i].distance_to(pts[i - 1]))
+			var total: float = cum[cum.size() - 1]
+			var n := maxi(4, int(round(total / 0.95)))
+			var phase := rng.randf()
+			var ts := PackedFloat32Array()
+			ts.resize(pts.size())
+			var path := [pts, cum, ts]
+			for i in n:
+				var d := (float(i) + phase) * total / n
+				var at: Array = _at(path, d)
+				var p: Vector2 = at[0]
+				if absf(p.x) < 9.6 and absf(p.y) < 2.0:
+					continue  # under the ring's stage
+				var tan: Vector2 = at[1]
+				# The course's width: how far the edge lens sits from the centre here.
+				var t_here := clampf(p.x / maxf(LENS_A * s, 0.01), -1.0, 1.0)
+				var edge := _lens_s(t_here, 1.0, front)
+				var wid := maxf(edge.distance_to(ARC_C) * ds - joint, 0.3)
+				var lot := 3 if ci % 7 == 3 else rng.randi() % 3
+				(stones[lot] as Array).append(_stone_xf(Vector3(p.x, gy + 0.025, p.y), total / n - joint, wid, atan2(-tan.y, tan.x)))
+		s -= ds
+		ci += 1
 
 
-## A solid annular sector about ARC_C: radius r0..r1, angles a0..a1 (degrees),
-## from y up by h: a top, the inner and outer faces and the two ends, flat per
-## facet (no bottom: it stands on the ground). Built here rather than through
-## LuchaKit._prism, whose winding suits upright cards, not a floor plan.
-func _arc_prism(r0: float, r1: float, a0: float, a1: float, y: float, h: float, c: Color) -> MeshInstance3D:
-	var n := maxi(2, int(ceil((a1 - a0) / 2.0)))
+## The church's plot: setts in straight courses from the square's flat back edge
+## to behind the church (so the square's setts run on up to its steps), led by a
+## course of the paler band stone along the edge.
+func _church_plot(parent: Node3D, gy: float, stones: Array) -> void:
+	var x0 := -GARDEN.position.x - 0.1
+	var x1 := GARDEN.position.x + 0.1
+	var z_edge := ARC_C.y - LENS_B
+	var z_back := ARC_C.y - LENS_B - 20.0
+	parent.add_child(LuchaKit.box(Vector3(x1 - x0, 0.018, z_edge - z_back + 0.6), GROUT, Vector3(0, gy + 0.009, (z_edge + z_back) * 0.5 + 0.3)))  # just under the square's bed
+	var z := z_edge + 0.3
+	var row := 0
+	while z - 0.62 > z_back:
+		var shift := 0.475 if row % 2 == 1 else 0.0
+		var x := x0 - shift
+		while x < x1:
+			var xa := maxf(x, x0)
+			var xb := minf(x + 0.95, x1)
+			if xb - xa > 0.2:
+				var c := Vector2((xa + xb) * 0.5, z - 0.31)
+				# Only behind the square's edge (the square's own courses cover the rest).
+				var t := clampf(c.x / LENS_A, -1.0, 1.0)
+				if c.y < _lens(t, 0.0).y - 0.05:
+					var lot := 3 if row == 0 else (int(xa * 13.0 + row * 7.0) % 3)
+					(stones[lot] as Array).append(_stone_xf(Vector3(c.x, gy + 0.025, c.y), xb - xa - 0.07, 0.55, 0.0))
+			x += 0.95
+		z -= 0.62
+		row += 1
+
+
+## A raised garden beside the church (right side, mirrored for the left): a stone
+## planter of soil with a palm, bushes and flowers, and a stairway behind it up to
+## the first terrace.
+func _garden(parent: Node3D, side: float, gy: float, rng: RandomNumberGenerator) -> void:
+	var g := GARDEN
+	var cx := (g.position.x + g.size.x * 0.5) * side
+	var cz := g.position.y + g.size.y * 0.5
+	parent.add_child(LuchaKit.box(Vector3(g.size.x, 0.5, g.size.y), PARAPET, Vector3(cx, gy + 0.25, cz)))
+	parent.add_child(LuchaKit.box(Vector3(g.size.x - 0.3, 0.06, g.size.y - 0.3), SOIL, Vector3(cx, gy + 0.53, cz)))
+	var palm := _palm()
+	palm.position = Vector3(cx, gy + 0.5, cz - 0.6)
+	palm.scale = Vector3.ONE * 0.9
+	parent.add_child(palm)
+	for i in 4:
+		_bush(parent, Vector3(cx + rng.randf_range(-0.8, 0.8), gy + 0.56, cz + rng.randf_range(-1.6, 1.6)), rng, 0.45)
+	_flowers(parent, Vector3(cx, gy + 0.56, g.end.y - 0.35), g.size.x - 0.5, rng)
+	# The stairway up to the first terrace, behind the garden.
+	var sx := (g.position.x + g.size.x * 0.5)
+	var t := sx / (LENS_A + float(TERRACES[0][0]))
+	var face := _lens(t, float(TERRACES[0][0]))
+	_stairs(parent, Vector2(sx, face.y), Vector2(0, 1), side, gy, gy + float(TERRACES[0][1]), 1.9)
+
+
+## One terrace (k) on both sides: its brick-faced retaining wall, its grass top,
+## a parapet broken for the stairs, a paved lane with lamps and benches, the
+## houses along it facing the square, bushes in the gaps, and the stairways up
+## its face from the level below.
+func _terrace(parent: Node3D, k: int, gy: float, rng: RandomNumberGenerator, kinds: Array, stones: Array, bricks: Array, street_t: float) -> void:
+	var o: float = TERRACES[k][0]
+	var top: float = gy + float(TERRACES[k][1])
+	var below: float = gy if k == 0 else gy + float(TERRACES[k - 1][1])
+	var o_back: float = o + TERRACE_BACK
+	if k + 1 < TERRACES.size():
+		o_back = float(TERRACES[k + 1][0])
+	var x0 := NOTCH_X if k < 2 else 0.0
+	var face_path := _path(o, x0, LENS_T1)
+	var flen := _len(face_path)
+	# Where stairs land on this terrace (from below), and where the next terrace's
+	# stairs come down onto it: no house there.
+	var ups: Array = []  # distances along face_path
+	if STAIRS.has(k):
+		for f in STAIRS[k]:
+			ups.append(flen * float(f))
+	var downs: Array = []  # world points (right frame) of the next face's stair feet
+	if STAIRS.has(k + 1):
+		var nxt := _path(float(TERRACES[k + 1][0]), NOTCH_X if k + 1 < 2 else 0.0, LENS_T1)
+		for f in STAIRS[k + 1]:
+			downs.append((_at(nxt, _len(nxt) * float(f))[0]) as Vector2)
+	var landings: Array = []  # world points (right frame) to keep clear of houses
+	for d in ups:
+		landings.append((_at(face_path, d)[0]) as Vector2)
+	if k == 0:
+		landings.append(_lens(street_t, o))
+		landings.append(Vector2(GARDEN.position.x + GARDEN.size.x * 0.5, _lens(0.3, o).y))
+	for side in [-1.0, 1.0]:
+		# The wall face (mortar, bricks laid on it) and the grass top.
+		var t0_face := x0 / (LENS_A + o)
+		parent.add_child(_band(o, o_back, t0_face, LENS_T1, side, below, top, MORTAR, true, x0 > 0.0))
+		parent.add_child(_band(o + LANE_W, o_back, t0_face, LENS_T1, side, top, top + 0.012, DRY_GRASS, false))
+		_brick_face(bricks, face_path, side, below, top, rng)
+		# The parapet, broken where stairs arrive.
+		var gaps: Array = []
+		for d in ups:
+			gaps.append(Vector2(float(d) - 1.3, float(d) + 1.3))
+		var d0 := 0.0
+		for gp in gaps + [Vector2(flen, flen)]:
+			var a: float = d0
+			var b: float = (gp as Vector2).x
+			if b - a > 0.5:
+				var ta: float = _at(face_path, a)[3]
+				var tb: float = _at(face_path, b)[3]
+				parent.add_child(_band(o, o + PARAPET_W, ta, tb, side, top, top + PARAPET_H, PARAPET, false))
+			d0 = (gp as Vector2).y
+		# The lane: a grout strip and setts in running bond along the terrace.
+		parent.add_child(_band(o + PARAPET_W, o + LANE_W, t0_face, LENS_T1, side, top, top + 0.022, GROUT, false))
+		var lane_o := o + PARAPET_W + 0.05
+		while lane_o + 0.6 <= o + LANE_W:
+			_lay_curve(stones, rng, _path(lane_o + 0.3, x0, LENS_T1), side, top + 0.027, 0.9, 0.53)
+			lane_o += 0.6
+		# Lamps and benches along the lane, clear of the stairs.
+		var lane := _path(o + PARAPET_W + 0.35, x0, LENS_T1)
+		var dl := 4.0
+		var li := 0
+		while dl < _len(lane) - 2.0:
+			var clear := true
+			for d in ups:
+				if absf(dl - float(d)) < 2.2:
+					clear = false
+			if clear:
+				var at: Array = _at(lane, dl)
+				parent.add_child(_lamp(_w(at[0], side, top)))
+				if li % 2 == 1:
+					var bench := _bench()
+					var bp: Vector2 = (at[0] as Vector2) + (at[1] as Vector2) * 1.4 - (at[2] as Vector2) * 1.7
+					_stand(bench, bp, at[2], side, top)
+					parent.add_child(bench)
+				if li % 3 == 0:
+					_flowers(parent, _w((at[0] as Vector2) + (at[1] as Vector2) * 1.6 + (at[2] as Vector2) * 0.5, side, top + PARAPET_H), 1.2, rng, true)
+				li += 1
+			dl += 11.0
+		# The stairs up this face from the level below.
+		for d in ups:
+			var at: Array = _at(face_path, d)
+			_stairs(parent, at[0], at[2], side, below, top, 2.0)
+	# The houses along the terrace, facing the square, bushes in the wider gaps.
+	var hx0 := (NOTCH_X + 0.4) if k < 2 else 2.8
+	var hp := _path(o + HILL_O, hx0, LENS_T1)
+	var total := _len(hp)
+	for side in [-1.0, 1.0]:
+		var d := rng.randf_range(0.0, 1.5)
+		while true:
+			var kind: String = kinds[rng.randi() % kinds.size()]
+			var w := _house_w(kind) * (0.92 - k * 0.04)
+			if d + w > total:
+				break
+			var at: Array = _at(hp, d + w * 0.5)
+			var p: Vector2 = at[0]
+			var clear := true
+			for q in landings + downs:
+				if p.distance_to(q as Vector2) < w * 0.5 + 2.3:
+					clear = false
+			if clear:
+				var h := _house(kind)
+				_stand(h, p, at[2], side, top)
+				h.scale = Vector3.ONE * (0.92 - k * 0.04)  # a touch smaller up the hill, for depth
+				parent.add_child(h)
+			var gap := rng.randf_range(0.6, 3.4)
+			if gap > 1.8 and clear and k < 3:
+				var gp: Vector2 = _at(hp, d + w + gap * 0.5)[0]
+				if rng.randf() < 0.3:
+					var palm := _palm()
+					palm.position = _w(gp, side, top)
+					palm.scale = Vector3.ONE * 0.8
+					parent.add_child(palm)
+				else:
+					_bush(parent, _w(gp, side, top), rng, 0.6)
+			d += w + gap
+
+
+## A band between two offsets of the lens over t0..t1 on one side, from y0 up to
+## y1: its top and inner face (facing the square), and its end faces. `wall`
+## marks a retaining wall whose inner face runs only over its exposed height.
+## `notch_end` closes the end at t0 (the church's notch).
+func _band(o0: float, o1: float, t0: float, t1: float, side: float, y0: float, y1: float, c: Color, wall: bool, notch_end := false) -> MeshInstance3D:
+	var n := maxi(4, int(ceil((t1 - t0) * 160.0)))
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var y1 := y + h
+	# Each curve runs over its own t, so a band cut at x stays cut at x.
+	var ti0 := t0
+	var te0 := t0 * (LENS_A + o0) / (LENS_A + o1)
+	var inner: Array = []
+	var outer: Array = []
+	for i in n + 1:
+		var f := float(i) / n
+		inner.append(_lens(lerpf(ti0, t1, f), o0))
+		outer.append(_lens(lerpf(te0, t1, f), o1))
 	for i in n:
-		var da := lerpf(a0, a1, float(i) / n)
-		var db := lerpf(a0, a1, float(i + 1) / n)
-		var ia := _arc_pt(r0, da)
-		var ib := _arc_pt(r0, db)
-		var oa := _arc_pt(r1, da)
-		var ob := _arc_pt(r1, db)
-		_quad(st, Vector3(ia.x, y1, ia.y), Vector3(ib.x, y1, ib.y), Vector3(ob.x, y1, ob.y), Vector3(oa.x, y1, oa.y), Vector3.UP)
-		var mi_ := (ia + ib) * 0.5
-		var nin := Vector3(ARC_C.x - mi_.x, 0, ARC_C.y - mi_.y).normalized()
-		_quad(st, Vector3(ia.x, y, ia.y), Vector3(ib.x, y, ib.y), Vector3(ib.x, y1, ib.y), Vector3(ia.x, y1, ia.y), nin)
-		_quad(st, Vector3(oa.x, y, oa.y), Vector3(ob.x, y, ob.y), Vector3(ob.x, y1, ob.y), Vector3(oa.x, y1, oa.y), -nin)
-	for end in [[a0, -1.0], [a1, 1.0]]:
-		var d: float = end[0]
-		var ar := deg_to_rad(d)
-		var tn := Vector3(cos(ar), 0, sin(ar)) * float(end[1])  # along the arc, outward at this end
-		var pi_ := _arc_pt(r0, d)
-		var po := _arc_pt(r1, d)
-		_quad(st, Vector3(pi_.x, y, pi_.y), Vector3(po.x, y, po.y), Vector3(po.x, y1, po.y), Vector3(pi_.x, y1, pi_.y), tn)
+		var a: Vector2 = inner[i]
+		var b: Vector2 = inner[i + 1]
+		var c2: Vector2 = outer[i + 1]
+		var d: Vector2 = outer[i]
+		_quad(st, _w(a, side, y1), _w(b, side, y1), _w(c2, side, y1), _w(d, side, y1), Vector3.UP)
+		var tan := (b - a).normalized()
+		var nrm := Vector2(-tan.y, tan.x)
+		_quad(st, _w(a, side, y0), _w(b, side, y0), _w(b, side, y1), _w(a, side, y1), Vector3(nrm.x * side, 0, nrm.y))
+	var ends := [[0, -1.0]] if notch_end else []
+	ends.append([n, 1.0])
+	for e in ends:
+		var i: int = e[0]
+		var a: Vector2 = inner[i]
+		var b: Vector2 = outer[i]
+		var j := i + (1 if i == 0 else -1)
+		var along := ((inner[i] as Vector2) - (inner[j] as Vector2)).normalized()
+		var nn := Vector3(along.x * side, 0, along.y)
+		_quad(st, _w(a, side, y0), _w(b, side, y0), _w(b, side, y1), _w(a, side, y1), nn)
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
 	mi.material_override = LuchaKit.mat(c)
 	return mi
+
+
+## A flat polygon (x, z points) at height y.
+func _flat_poly(pts: PackedVector2Array, y: float, c: Color) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var tris := Geometry2D.triangulate_polygon(pts)
+	for k in range(0, tris.size(), 3):
+		_tri(st, Vector3(pts[tris[k]].x, y, pts[tris[k]].y), Vector3(pts[tris[k + 1]].x, y, pts[tris[k + 1]].y), Vector3(pts[tris[k + 2]].x, y, pts[tris[k + 2]].y), Vector3.UP)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = LuchaKit.mat(c)
+	return mi
+
+
+## Setts along a path: stones of length l and width w, end to end.
+func _lay_curve(stones: Array, rng: RandomNumberGenerator, path: Array, side: float, y: float, l: float, w: float) -> void:
+	var total := _len(path)
+	var d := rng.randf() * l
+	while d + l * 0.5 < total:
+		var at: Array = _at(path, d)
+		var p: Vector2 = at[0]
+		var tan: Vector2 = at[1]
+		var yaw := atan2(-tan.y * 1.0, tan.x * side)
+		(stones[rng.randi() % 3] as Array).append(_stone_xf(Vector3(p.x * side, y, p.y), l - 0.07, w, yaw))
+		d += l
+
+
+## Setts in running bond over a straight strip from `start` along dir (right
+## frame), `length` long and `width` wide.
+func _lay_strip(stones: Array, rng: RandomNumberGenerator, start: Vector2, dir: Vector2, length: float, width: float, side: float, y: float) -> void:
+	var across := Vector2(-dir.y, dir.x)
+	var dw := Vector2(dir.x * side, dir.y)
+	var aw := Vector2(across.x * side, across.y)
+	var yaw := atan2(-aw.y, aw.x)
+	var row := 0
+	var r := 0.3
+	while r + 0.3 <= length:
+		var shift := 0.45 if row % 2 == 1 else 0.0
+		var x := -width * 0.5 - shift
+		while x < width * 0.5:
+			var xa := maxf(x, -width * 0.5)
+			var xb := minf(x + 0.9, width * 0.5)
+			if xb - xa > 0.2:
+				var c := Vector2(start.x * side, start.y) + dw * r + aw * ((xa + xb) * 0.5)
+				(stones[rng.randi() % 3] as Array).append(_stone_xf(Vector3(c.x, y, c.y), xb - xa - 0.07, 0.53, yaw))
+			x += 0.9
+		r += 0.6
+		row += 1
+
+
+## Bricks on a retaining wall's exposed face, in running bond, 4 mm proud of
+## the mortar: flat quads, so the joints are colour and the ink leaves them alone.
+func _brick_face(bricks: Array, path: Array, side: float, y0: float, y1: float, rng: RandomNumberGenerator) -> void:
+	var total := _len(path)
+	var course := 0.26
+	var bl := 0.62
+	var y := y0 + 0.05
+	var row := 0
+	while y + course <= y1 - 0.02:
+		var d := (bl * 0.5 if row % 2 == 1 else 0.0) + 0.04
+		while d + bl < total:
+			var at: Array = _at(path, d + bl * 0.5)
+			var p: Vector2 = at[0]
+			var tan: Vector2 = at[1]
+			var nrm: Vector2 = at[2]
+			var pos := Vector3(p.x * side, y + course * 0.5, p.y) + Vector3(nrm.x * side, 0, nrm.y) * 0.004
+			var xf := _wall_xf(pos, Vector3(tan.x * side, 0, tan.y), Vector3(nrm.x * side, 0, nrm.y), bl - 0.06, course - 0.06)
+			(bricks[rng.randi() % bricks.size()] as Array).append(xf)
+			d += bl
+		y += course
+		row += 1
+
+
+## A flat quad standing up: the PlaneMesh's +Y turned to face n, its x along tan.
+static func _wall_xf(p: Vector3, tan: Vector3, n: Vector3, w: float, h: float) -> Transform3D:
+	var x := tan.normalized() * w
+	var y := n.normalized()
+	var z := Vector3.UP * h
+	if x.cross(y).dot(z) < 0.0:
+		z = -z
+	return Transform3D(Basis(x, y, z), p)
+
+
+## The bricks as one MultiMesh of upright quads per tone (both faces drawn, so a
+## mirrored quad never culls away).
+func _commit_walls(parent: Node3D, lots: Array, tones: Array) -> void:
+	for i in tones.size():
+		var xs: Array = lots[i]
+		if xs.is_empty():
+			continue
+		var mm := MultiMesh.new()
+		mm.transform_format = MultiMesh.TRANSFORM_3D
+		var pm := PlaneMesh.new()
+		pm.size = Vector2.ONE
+		mm.mesh = pm
+		mm.instance_count = xs.size()
+		for k in xs.size():
+			mm.set_instance_transform(k, xs[k])
+		var mmi := MultiMeshInstance3D.new()
+		mmi.multimesh = mm
+		mmi.material_override = LuchaKit.mat(tones[i])
+		parent.add_child(mmi)
+
+
+## A flight of stairs descending from a terrace's edge at `top_at` toward the
+## square along n (right frame), from y_hi down to y_lo, with stepped cheek walls.
+func _stairs(parent: Node3D, top_at: Vector2, n: Vector2, side: float, y_lo: float, y_hi: float, width: float) -> void:
+	var rise := y_hi - y_lo
+	var count := maxi(2, int(ceil(rise / 0.2)))
+	var r := rise / count
+	var tread := 0.3
+	var nw := Vector2(n.x * side, n.y)
+	var yaw := atan2(nw.x, nw.y)
+	var across := Vector3(nw.y, 0, -nw.x)
+	for i in count:
+		var h := r * (count - i)
+		var c := Vector2(top_at.x * side, top_at.y) + nw * (tread * (i + 0.5))
+		var step := LuchaKit.box(Vector3(width, h, tread), KERB, Vector3(c.x, y_lo + h * 0.5, c.y))
+		step.rotation.y = yaw
+		parent.add_child(step)
+		for sgn in [-1.0, 1.0]:
+			var cheek := LuchaKit.box(Vector3(0.24, h + 0.4, tread), PARAPET, Vector3(c.x, y_lo + (h + 0.4) * 0.5, c.y) + across * ((width * 0.5 + 0.12) * sgn))
+			cheek.rotation.y = yaw
+			parent.add_child(cheek)
+
+
+## A street lamp: the kit's `lamp_post` if delivered, else an iron post with a
+## cream lantern (matte: no glow in the look).
+func _lamp(at: Vector3) -> Node3D:
+	var k := LuchaKit.kit_model("lamp_post")
+	if k != null:
+		k.position = at
+		return k
+	var root := Node3D.new()
+	root.add_child(LuchaKit.cyl(0.07, 2.6, IRON, Vector3(0, 1.3, 0)))
+	root.add_child(LuchaKit.box(Vector3(0.3, 0.4, 0.3), Color("#F2E6C8"), Vector3(0, 2.8, 0)))
+	root.add_child(LuchaKit.box(Vector3(0.4, 0.08, 0.4), IRON, Vector3(0, 3.04, 0)))
+	root.add_child(LuchaKit.cyl(0.14, 0.12, IRON, Vector3(0, 0.06, 0)))
+	root.position = at
+	return root
+
+
+## A bench: the kit's `bench` if delivered, else a wooden seat on iron legs.
+func _bench() -> Node3D:
+	var k := LuchaKit.kit_model("bench")
+	if k != null:
+		return k
+	var root := Node3D.new()
+	root.add_child(LuchaKit.box(Vector3(1.5, 0.08, 0.45), POLE_WOOD, Vector3(0, 0.45, 0)))
+	root.add_child(LuchaKit.box(Vector3(1.5, 0.4, 0.07), POLE_WOOD, Vector3(0, 0.72, -0.2)))
+	for sx in [-0.65, 0.65]:
+		root.add_child(LuchaKit.box(Vector3(0.07, 0.45, 0.4), IRON, Vector3(sx, 0.22, 0)))
+	return root
+
+
+## A bush: the kit's `bush` if delivered, else a cluster of green balls.
+func _bush(parent: Node3D, at: Vector3, rng: RandomNumberGenerator, size: float) -> void:
+	var k := LuchaKit.kit_model("bush")
+	if k != null:
+		k.position = at
+		k.scale = Vector3.ONE * size / 0.6
+		parent.add_child(k)
+		return
+	for i in 3:
+		var r := size * rng.randf_range(0.7, 1.0)
+		var off := Vector3(rng.randf_range(-size, size) * 0.6, r * 0.8, rng.randf_range(-size, size) * 0.4)
+		parent.add_child(LuchaKit.ball(r, BUSH_TONES[rng.randi() % BUSH_TONES.size()], at + off))
+
+
+## A row of flowers (little balls over a leafy strip), or draped over a parapet.
+func _flowers(parent: Node3D, at: Vector3, length: float, rng: RandomNumberGenerator, drape := false) -> void:
+	var n := maxi(3, int(length / 0.22))
+	for i in n:
+		var x := -length * 0.5 + length * (float(i) + 0.5) / n
+		var p := at + Vector3(x, rng.randf_range(0.05, 0.18), rng.randf_range(-0.12, 0.12))
+		if drape:
+			parent.add_child(LuchaKit.ball(0.14, BUSH_TONES[0], p))
+			parent.add_child(LuchaKit.ball(0.09, FLOWER_TONES[0] if rng.randf() < 0.7 else FLOWER_TONES[1], p + Vector3(0, 0.08, 0.06)))
+		else:
+			parent.add_child(LuchaKit.ball(0.1, BUSH_TONES[1], p))
+			parent.add_child(LuchaKit.ball(0.07, FLOWER_TONES[rng.randi() % FLOWER_TONES.size()], p + Vector3(0, 0.08, 0)))
+
+
+## A palm in a round stone planter.
+func _palm_planter(parent: Node3D, at: Vector3) -> void:
+	var palm := _palm()
+	palm.position = at
+	parent.add_child(palm)
+	parent.add_child(LuchaKit.cyl(0.7, 0.5, KERB, at + Vector3(0, 0.25, 0)))
 
 
 ## A flat quad a-b-c-d facing n (two triangles, each wound to face n).
@@ -392,128 +856,6 @@ static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, n: Vector3
 	st.add_vertex(b)
 	st.set_normal(n)
 	st.add_vertex(c)
-
-
-## The church's forecourt, at street level (Parker 11-08: "make the church not on
-## a raised pedistal but on street level with the other houses"): flat 1.6 m slabs
-## in the arc's back gap, from the round plaza's edge back past the church, on a
-## grout skin just under the plaza's, so the two pavings meet without a seam
-## fighting. Slabs that would overlap the plaza's courses are left out.
-func _forecourt(parent: Node3D, gy: float) -> void:
-	var f := FORECOURT
-	parent.add_child(LuchaKit.box(Vector3(f.size.x, 0.01, f.size.y), GROUT, Vector3(f.position.x + f.size.x * 0.5, gy + 0.005, f.position.y + f.size.y * 0.5)))
-	var lots: Array = [[], []]
-	var x := f.position.x
-	while x + 1.6 <= f.end.x + 0.01:
-		var z := f.position.y
-		while z + 1.6 <= f.end.y + 0.01:
-			# Every corner outside the plaza's courses, or the slab is skipped.
-			var outside := true
-			for c in [Vector2(x, z), Vector2(x + 1.6, z), Vector2(x, z + 1.6), Vector2(x + 1.6, z + 1.6)]:
-				if c.distance_to(ARC_C) < PLAZA_R + 0.05:
-					outside = false
-			if outside:
-				(lots[(int(x * 7.0 + z * 3.0) & 1)] as Array).append(_stone_xf(Vector3(x + 0.8, gy + 0.025, z + 0.8), 1.53, 1.53, 0.0))
-			z += 1.6
-		x += 1.6
-	_commit_stones(parent, lots, SLAB_TONES)
-
-
-## THE PAVING, in the round: the plaza in concentric sett courses about ARC_C, a
-## raised pavement with a kerb along the house fronts, and the streets in setts
-## running out between the houses to steps up the first terrace.
-func _pave(parent: Node3D, gy: float) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 31
-	var lots: Array = []
-	for t in STONE_TONES:
-		lots.append([])
-	var y := gy + 0.025  # flush: 5 mm over the grout
-	# The grout bed under the round plaza.
-	var bed := LuchaKit.cyl(PLAZA_R, 0.02, GROUT, Vector3(ARC_C.x, gy + 0.01, ARC_C.y))
-	((bed.mesh) as CylinderMesh).radial_segments = 128
-	parent.add_child(bed)
-	# Concentric courses, 0.62 m wide; every seventh course a band of paler stone.
-	var joint := 0.07
-	var course := 0.62
-	var r := 1.0
-	var ci := 0
-	while r + course <= PLAZA_R:
-		var rc := r + course * 0.5
-		var n := maxi(6, int(round(TAU * rc / 0.95)))
-		var phase := rng.randf() * TAU
-		for i in n:
-			var a := phase + TAU * float(i) / n
-			var p := ARC_C + Vector2(sin(a), -cos(a)) * rc
-			# The ring's stage covers the middle: no stones under it.
-			if absf(p.x) < 9.5 and absf(p.y) < 2.0:
-				continue
-			var xf := _stone_xf(Vector3(p.x, y, p.y), TAU * rc / n - joint, course - joint, -a)
-			var lot := 3 if ci % 7 == 3 else rng.randi() % 3
-			(lots[lot] as Array).append(xf)
-		r += course
-		ci += 1
-	# The pavement along the house fronts, and its kerb.
-	for side in [-1.0, 1.0]:
-		var segs := _walk_segments()
-		for sg in segs:
-			var a0: float = side * sg.x
-			var a1: float = side * sg.y
-			parent.add_child(_arc_prism(PLAZA_R, ARC_FRONT + 0.4, minf(a0, a1), maxf(a0, a1), gy, WALK_H, WALK))
-			parent.add_child(_arc_prism(PLAZA_R - 0.05, PLAZA_R + 0.25, minf(a0, a1), maxf(a0, a1), gy, WALK_H + 0.02, KERB))
-	# The streets: setts in running bond along each street, out to steps up the first terrace.
-	var t0: Array = TERRACES[0]
-	var land: float = t0[0]
-	for side in [-1.0, 1.0]:
-		for s in ARC_STREETS:
-			var deg: float = side * float(s)
-			var yaw := -deg_to_rad(deg)
-			var basis := Basis(Vector3.UP, yaw)
-			var r_in := PLAZA_R - 0.2
-			var steps_d := 2.4
-			var r_out := land - steps_d
-			var mid := _arc_pt((r_in + r_out) * 0.5, deg)
-			var bed2 := LuchaKit.box(Vector3(STREET_W, 0.02, r_out - r_in), GROUT, Vector3(mid.x, gy + 0.01, mid.y))
-			bed2.rotation.y = yaw
-			parent.add_child(bed2)
-			var row := 0
-			var dist := r_in
-			while dist + 0.6 <= r_out:
-				var shift := 0.45 if row % 2 == 1 else 0.0
-				var x := -STREET_W * 0.5 - shift
-				while x < STREET_W * 0.5:
-					var xa := maxf(x, -STREET_W * 0.5)
-					var xb := minf(x + 0.9, STREET_W * 0.5)
-					if xb - xa > 0.15:
-						var c := _arc_pt(dist + 0.3, deg)
-						var off := basis * Vector3((xa + xb) * 0.5, 0, 0)
-						(lots[rng.randi() % 3] as Array).append(_stone_xf(Vector3(c.x + off.x, y, c.y + off.z), xb - xa - joint, 0.6 - joint, yaw))
-					x += 0.9
-				dist += 0.6
-				row += 1
-			# The steps up to the terrace.
-			var top: float = t0[1]
-			var nst := 6
-			for k in nst:
-				var rr := r_out + steps_d * (k + 0.5) / nst
-				var c := _arc_pt(rr, deg)
-				var hh := top * float(k + 1) / nst
-				var stp := LuchaKit.box(Vector3(STREET_W, hh, steps_d / nst), KERB, Vector3(c.x, gy + hh * 0.5, c.y))
-				stp.rotation.y = yaw
-				parent.add_child(stp)
-	_commit_stones(parent, lots, STONE_TONES)
-
-
-## The pavement's runs (degrees, one side): the house arc, broken at each street.
-func _walk_segments() -> Array:
-	var out: Array = []
-	var lo := ARC_FIRST - 1.0
-	for s in ARC_STREETS:
-		var half := rad_to_deg(STREET_W * 0.5 / PLAZA_R)
-		out.append(Vector2(lo, float(s) - half))
-		lo = float(s) + half
-	out.append(Vector2(lo, ARC_LAST + 1.0))
-	return out
 
 
 ## One flat stone: a unit quad scaled to w x d, turned by yaw, at p.
