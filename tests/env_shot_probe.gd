@@ -12,6 +12,7 @@ const CAMS := [
 	["wide", Vector3(0, 6.0, 40.0), Vector3(0, 6.0, 0.0)],
 	["street", Vector3(9.0, 3.2, 1.0), Vector3(3.0, -0.4, -12.0)],  # down across the paving to the houses
 	["aerial", Vector3(0, 38.0, 34.0), Vector3(0, 0.0, -14.0)],  # three-quarter view of the whole square
+	["church", Vector3(0, 2.6, -11.0), Vector3(0, 2.6, -24.0)],  # the church front close, from the square
 	["plan", Vector3(0, 95.0, -14.0), Vector3(0, 0.0, -14.01), Vector3(0, 0, -1)],  # straight down (up = -z)
 ]
 

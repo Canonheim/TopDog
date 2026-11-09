@@ -308,8 +308,9 @@ func _build_plaza() -> void:
 	for side in [-1.0, 1.0]:
 		var d := 0.0
 		var total := _len(row)
+		var last := ""
 		while true:
-			var kind: String = kinds[rng.randi() % kinds.size()]
+			var kind := _pick_kind(kinds, rng, last)
 			var w := _house_w(kind)
 			if d < street_d + STREET_W * 0.5 and d + w > street_d - STREET_W * 0.5:
 				d = street_d + STREET_W * 0.5
@@ -320,6 +321,7 @@ func _build_plaza() -> void:
 			_stand(house, at[0], at[2], side, gy)
 			house.scale = Vector3(1.0, rng.randf_range(0.92, 1.08), 1.0)  # a little stagger in the roofline
 			plaza.add_child(house)
+			last = kind
 			d += w + 0.15
 		# The street: setts from the pavement through the row, then stairs up the first terrace.
 		var axis: Vector2 = street[2]
@@ -574,10 +576,13 @@ func _terrace(parent: Node3D, k: int, gy: float, rng: RandomNumberGenerator, kin
 	var hx0 := (NOTCH_X + 0.4) if k < 2 else 2.8
 	var hp := _path(o + HILL_O, hx0, LENS_T1)
 	var total := _len(hp)
+	var centre_kind := ""  # above the church's notch the two sides meet behind it: their first houses are neighbours too
 	for side in [-1.0, 1.0]:
 		var d := rng.randf_range(0.0, 1.5)
+		var last := centre_kind if k >= 2 else ""
+		var first := true
 		while true:
-			var kind: String = kinds[rng.randi() % kinds.size()]
+			var kind := _pick_kind(kinds, rng, last)
 			var w := _house_w(kind) * (0.92 - k * 0.04)
 			if d + w > total:
 				break
@@ -592,6 +597,11 @@ func _terrace(parent: Node3D, k: int, gy: float, rng: RandomNumberGenerator, kin
 				_stand(h, p, at[2], side, top)
 				h.scale = Vector3.ONE * (0.92 - k * 0.04)  # a touch smaller up the hill, for depth
 				parent.add_child(h)
+				last = kind
+				if first:
+					first = false
+					if centre_kind == "":
+						centre_kind = kind
 			var gap := rng.randf_range(0.6, 3.4)
 			if gap > 1.8 and clear and k < 3:
 				var gp: Vector2 = _at(hp, d + w + gap * 0.5)[0]
@@ -893,6 +903,17 @@ func _house_kinds() -> Array:
 	return out
 
 
+## NO TWO NEIGHBOURS ALIKE (Parker 11-08: "make sure no 2 buildings right next to
+## each other are the same"): a style other than the last house placed in the
+## same row, including across a gap left for stairs or a street. Only a different
+## style counts; a rescaled or mirrored copy would still look the same.
+func _pick_kind(kinds: Array, rng: RandomNumberGenerator, last: String) -> String:
+	var kind: String = kinds[rng.randi() % kinds.size()]
+	while kind == last and kinds.size() > 1:
+		kind = kinds[rng.randi() % kinds.size()]
+	return kind
+
+
 ## A house style's width along the street: the known kit widths, or measured from
 ## the model's meshes for a newer style.
 var _house_w_cache := {}
@@ -976,6 +997,7 @@ func _church() -> Node3D:
 		# front, whatever origin the file has (the Building Maker moved it from the
 		# nave's centre to the facade's foot, 11-08). The string ties sit on the
 		# belfries' outer faces, 2.95 m behind that front, 14.6 m up.
+		_pot_church(k)
 		var front := _front_z(k)
 		k.set_meta("front_reach", front)
 		k.set_meta("anchors", [Vector3(-6.2, 14.6, front - 2.95), Vector3(6.2, 14.6, front - 2.95)])
@@ -1006,6 +1028,23 @@ func _church() -> Node3D:
 		t.position = Vector3(sx * CHURCH_TOWER_X, 0, -1.2)  # the towers stand a little proud of the facade
 		root.add_child(t)
 	return root
+
+
+## The poinsettia pots on the church towers' ledges (the UI creator's
+## pot_poinsettia_a/b/c on the Building Maker's pot_spot_1..4 markers): each pot a
+## child of its marker, so the church's scale and place carry over. Neighbours differ.
+const CHURCH_POTS := ["a", "b", "c", "a"]
+func _pot_church(church: Node3D) -> void:
+	for i in CHURCH_POTS.size():
+		var spot := church.find_child("pot_spot_%d" % (i + 1), true, false) as Node3D
+		if spot == null:
+			continue
+		var pot := LuchaKit.kit_model("pot_poinsettia_" + str(CHURCH_POTS[i]))
+		if pot == null:
+			continue
+		spot.add_child(pot)
+		if spot is MeshInstance3D:
+			(spot as MeshInstance3D).mesh = null  # the 4 cm marker disc: the pot stands on it
 
 
 ## The plaza's bell tower: the kit's `bell_tower` when it lands, else a stand-in
@@ -1059,10 +1098,33 @@ func _bunting_pole(at: Vector3) -> Node3D:
 	return root
 
 
+## THE PALMS VARY (Parker 11-08: "make the palm trees not all face exactly the
+## same way or have the BM make some more palm trees"): each palm is a kit style
+## (palm, palm_b, palm_c... whichever are delivered) turned to its own heading,
+## leaned a little and sized a little, from a running seed, so no two match.
+var _palm_rng: RandomNumberGenerator = null
+var _palm_last := ""
 func _palm() -> Node3D:
-	var k := LuchaKit.kit_model("palm")
-	if k != null:
-		return k
+	if _palm_rng == null:
+		_palm_rng = RandomNumberGenerator.new()
+		_palm_rng.seed = 77
+	var styles: Array = []
+	for nm in ["palm", "palm_b", "palm_c", "palm_d"]:
+		if LuchaKit.kit_model_exists(nm):
+			styles.append(nm)
+	if not styles.is_empty():
+		var nm := str(styles[_palm_rng.randi() % styles.size()])
+		while nm == _palm_last and styles.size() > 1:
+			nm = str(styles[_palm_rng.randi() % styles.size()])
+		_palm_last = nm
+		var k := LuchaKit.kit_model(nm)
+		# A holder takes the caller's position, rotation and scale; the palm inside
+		# keeps its own heading, lean and size.
+		var holder := Node3D.new()
+		holder.add_child(k)
+		k.rotation = Vector3(_palm_rng.randf_range(-0.06, 0.06), _palm_rng.randf() * TAU, _palm_rng.randf_range(-0.06, 0.06))
+		k.scale = Vector3.ONE * _palm_rng.randf_range(0.85, 1.15)
+		return holder
 	var p := Node3D.new()
 	var trunk := Color(0.6, 0.42, 0.24)
 	var y := 0.0
