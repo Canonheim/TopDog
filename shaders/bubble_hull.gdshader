@@ -3,7 +3,9 @@
 // the clear bubble its inside would blacken the chair, so every pixel whose sight line
 // passes through the bubble itself is cut: only the rim ring is left.
 shader_type spatial;
-render_mode unshaded, cull_front, shadows_disabled;
+// Drawn in the TRANSPARENT pass (ALPHA below): the screen-space ink runs before it, so the
+// ink never traces the hull and the ring keeps its own colour (Parker 11-09: white).
+render_mode unshaded, cull_front, shadows_disabled, depth_draw_never;
 
 uniform vec4 ink : source_color = vec4(0.1, 0.07, 0.05, 1.0);
 uniform float inner_radius = 0.67;  // the bubble's radius (model units)
@@ -21,4 +23,5 @@ void fragment() {
 		discard;
 	}
 	ALBEDO = ink.rgb;
+	ALPHA = ink.a;
 }
