@@ -278,6 +278,7 @@ func _build_plaza() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 8
 	var kinds := _house_kinds()
+	_placed = {}
 	var stones: Array = []  # flat setts and slabs by tone
 	for t in STONE_TONES:
 		stones.append([])
@@ -310,7 +311,7 @@ func _build_plaza() -> void:
 		var total := _len(row)
 		var last := ""
 		while true:
-			var kind := _pick_kind(kinds, rng, last)
+			var kind := _pick_kind(kinds, rng, [last])
 			var w := _house_w(kind)
 			if d < street_d + STREET_W * 0.5 and d + w > street_d - STREET_W * 0.5:
 				d = street_d + STREET_W * 0.5
@@ -321,6 +322,7 @@ func _build_plaza() -> void:
 			_stand(house, at[0], at[2], side, gy)
 			house.scale = Vector3(1.0, rng.randf_range(0.92, 1.08), 1.0)  # a little stagger in the roofline
 			plaza.add_child(house)
+			_log_house(0, _w(at[0], side, 0.0), w, kind)
 			last = kind
 			d += w + 0.15
 		# The street: setts from the pavement through the row, then stairs up the first terrace.
@@ -582,7 +584,9 @@ func _terrace(parent: Node3D, k: int, gy: float, rng: RandomNumberGenerator, kin
 		var last := centre_kind if k >= 2 else ""
 		var first := true
 		while true:
-			var kind := _pick_kind(kinds, rng, last)
+			var probe: Array = _at(hp, d + 2.4)
+			var avoid := [last] + _in_front(k + 1, _w(probe[0], side, 0.0), 5.2)
+			var kind := _pick_kind(kinds, rng, avoid)
 			var w := _house_w(kind) * (0.92 - k * 0.04)
 			if d + w > total:
 				break
@@ -597,6 +601,7 @@ func _terrace(parent: Node3D, k: int, gy: float, rng: RandomNumberGenerator, kin
 				_stand(h, p, at[2], side, top)
 				h.scale = Vector3.ONE * (0.92 - k * 0.04)  # a touch smaller up the hill, for depth
 				parent.add_child(h)
+				_log_house(k + 1, _w(p, side, 0.0), w, kind)
 				last = kind
 				if first:
 					first = false
@@ -893,6 +898,34 @@ func _commit_stones(parent: Node3D, lots: Array, tones: Array) -> void:
 		parent.add_child(mmi)
 
 
+## THE PLANTS ON BUILDINGS (Parker 11-08: the Building Maker models no plants; it
+## marks where they go and the UI creator builds them): every marker object named
+## plant_<kind>_N on a building (box, pot, vine...) gets one of the kit's
+## plant_<kind>_a/b/c... as its child, so the building's scale and place carry
+## over. Variants rotate so neighbours on one building differ. Markers with no
+## delivered plant of their kind stay empty. The 4 cm marker discs are hidden.
+var _plant_turn := 0
+func _plant_markers(building: Node3D) -> void:
+	for n in building.find_children("plant_*", "Node3D", true, false):
+		var marker := n as Node3D
+		var parts := marker.name.split("_")
+		if parts.size() < 3 or not parts[2].is_valid_int():
+			continue  # a plant itself, or a name that isn't a marker
+		var kind := parts[1]
+		var ways: Array = []
+		for v in ["a", "b", "c", "d", "e"]:
+			if LuchaKit.kit_model_exists("plant_%s_%s" % [kind, v]):
+				ways.append(v)
+		if marker is MeshInstance3D:
+			(marker as MeshInstance3D).mesh = null
+		if ways.is_empty():
+			continue
+		var plant := LuchaKit.kit_model("plant_%s_%s" % [kind, ways[_plant_turn % ways.size()]])
+		_plant_turn += 1
+		if plant != null:
+			marker.add_child(plant)
+
+
 ## The house styles to build with: a, b and c always (kit or stand-in), plus any
 ## later kit style (d, e...) that's been delivered. A new style mixes in by name.
 func _house_kinds() -> Array:
@@ -913,32 +946,89 @@ func _house_kinds() -> Array:
 const HOUSE_WEIGHT := {"d": 0.5}
 
 
-func _pick_kind(kinds: Array, rng: RandomNumberGenerator, last: String) -> String:
-	# A colourway (d_tan) is the same building as its base (d): the same
-	# silhouette side by side still reads as a repeat, so they count as one.
-	# Pick a family by weight (never the last one's), then a colourway in it.
-	var families := {}
-	for k in kinds:
-		var fam := str(k).get_slice("_", 0)
-		if not families.has(fam):
-			families[fam] = []
-		(families[fam] as Array).append(str(k))
-	var last_fam := last.get_slice("_", 0) if last != "" else ""
-	var total := 0.0
-	for fam in families:
-		if fam != last_fam or families.size() == 1:
-			total += float(HOUSE_WEIGHT.get(fam, 1.0))
-	var roll := rng.randf() * total
-	var chosen: String = families.keys()[0]
-	for fam in families:
-		if fam == last_fam and families.size() > 1:
+## Wall colours that read alike in the sun, beyond the same building (Parker
+## 11-08: "a yellow house with a yellow house behind it? We dont want that"):
+## d_tan's tan sits between a's cream and b's ochre.
+const HOUSE_LOOKALIKE := {"d_tan": ["a", "b"], "a": ["d_tan"], "b": ["d_tan"]}
+
+
+## Do two house styles look the same: the same building (d and d_tan), or wall
+## colours that read alike?
+static func _clash(a: String, b: String) -> bool:
+	if a == "" or b == "":
+		return false
+	if a.get_slice("_", 0) == b.get_slice("_", 0):
+		return true
+	return b in HOUSE_LOOKALIKE.get(a, []) or a in HOUSE_LOOKALIKE.get(b, [])
+
+
+## A house style unlike every one in `avoid` (the last house in the row, and
+## whatever stands just in front of or behind this spot): a building family is
+## picked by weight among those that clash with none, then a colourway in it. If
+## every family clashes, only the row's last house (avoid[0]) is kept apart.
+func _pick_kind(kinds: Array, rng: RandomNumberGenerator, avoid: Array) -> String:
+	for strict in [true, false]:
+		var pool: Array = []
+		for k in kinds:
+			var ok := true
+			for a in (avoid if strict else avoid.slice(0, 1)):
+				if _clash(str(k), str(a)):
+					ok = false
+			if ok:
+				pool.append(str(k))
+		if pool.is_empty():
 			continue
-		chosen = fam
-		roll -= float(HOUSE_WEIGHT.get(fam, 1.0))
-		if roll <= 0.0:
-			break
-	var ways: Array = families[chosen]
-	return str(ways[rng.randi() % ways.size()])
+		var families := {}
+		for k in pool:
+			var fam := str(k).get_slice("_", 0)
+			if not families.has(fam):
+				families[fam] = []
+			(families[fam] as Array).append(k)
+		var total := 0.0
+		for fam in families:
+			total += float(HOUSE_WEIGHT.get(fam, 1.0))
+		var roll := rng.randf() * total
+		var chosen: String = families.keys()[0]
+		for fam in families:
+			chosen = fam
+			roll -= float(HOUSE_WEIGHT.get(fam, 1.0))
+			if roll <= 0.0:
+				break
+		var ways: Array = families[chosen]
+		return str(ways[rng.randi() % ways.size()])
+	return str(kinds[rng.randi() % kinds.size()])
+
+
+## The houses placed so far, by row (0 the square's row, k + 1 terrace k): each
+## [the angle it's seen at from the play camera, its half-width in angle, kind],
+## so a row can see what stands in front of it on screen.
+const VIEW_FROM := Vector2(0.0, 7.0)  # the play camera's place, about (x, z)
+const VIEW_MARGIN := 0.07  # radians: houses that only touch on screen count too
+var _placed := {}
+static func _view(at: Vector3, w: float) -> Vector2:
+	var dx := at.x - VIEW_FROM.x
+	var dz := VIEW_FROM.y - at.z
+	return Vector2(atan2(dx, dz), (w * 0.5) / maxf(Vector2(dx, dz).length(), 0.1))
+
+
+func _log_house(row: int, at: Vector3, w: float, kind: String) -> void:
+	if not _placed.has(row):
+		_placed[row] = []
+	var v := _view(at, w)
+	(_placed[row] as Array).append([v.x, v.y, kind])
+
+
+## The styles of the houses in the two rows in front (row - 1, row - 2) that a
+## spot at `at` (w wide) overlaps as the play camera sees it: they stand stacked
+## one above the other on screen, so they mustn't look alike.
+func _in_front(row: int, at: Vector3, w: float) -> Array:
+	var v := _view(at, w)
+	var out: Array = []
+	for r in [row - 1, row - 2]:
+		for h in _placed.get(r, []):
+			if absf(float(h[0]) - v.x) < float(h[1]) + v.y + VIEW_MARGIN:
+				out.append(str(h[2]))
+	return out
 
 
 ## A house style's width along the street: the known kit widths, or measured from
@@ -959,6 +1049,7 @@ func _house_w(kind: String) -> float:
 func _house(kind: String) -> Node3D:
 	var k := LuchaKit.kit_model("plaza_house_" + kind)
 	if k != null:
+		_plant_markers(k)
 		return k
 	var w := float(HOUSE_W.get(kind, 4.8))
 	var h := 5.4 if kind == "a" else (5.8 if kind == "b" else 6.8)
@@ -1025,6 +1116,7 @@ func _church() -> Node3D:
 		# nave's centre to the facade's foot, 11-08). The string ties sit on the
 		# belfries' outer faces, 2.95 m behind that front, 14.6 m up.
 		_pot_church(k)
+		_plant_markers(k)
 		var front := _front_z(k)
 		k.set_meta("front_reach", front)
 		k.set_meta("anchors", [Vector3(-6.2, 14.6, front - 2.95), Vector3(6.2, 14.6, front - 2.95)])
