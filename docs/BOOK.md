@@ -475,6 +475,17 @@ Parker: "I want the town arranged in more of a semi circle around the ring. So t
   - **The church at street level** (Parker to the Environment Maker: "make the church not on a raised pedistal but on street level with the other houses"; env-pass 560f7e1). The forecourt block and its steps are gone; the church stands on the plaza with flush slabs in its gap, keeping its own steps and plinth.
   - The Environment Maker mixes house_d through the arc and terraces (env-pass a33e39b). The town builds from every delivered house style by name, so a future house_e mixes in with no code change.
 
+## The hill town round the square: half a football (Parker, 2026-11-08)
+
+Parker: "make the ground by the church and the street blend better ... the layout of the town not a perfect half circle, but more of like half a football ... make it look like a town with like stairs and bricks and stuff instead of just blank terraces, and make sure the sides of the church look nice ... some vegetation"; "make sure no 2 buildings right next to each other are the same"; to the Building Maker: arches and pot spots on the church front, poinsettia pots from the UI creator.
+
+- **Layout:** one lens shape, 30 m to its points and 20.5 m deep, flat behind the church. The square, the house row and four terraces are the same lens grown outward (env-pass 2baaa55, 8bfcde9).
+- **Ground:** the square's setts run straight up to the church steps, led by one pale course; the courses follow the lens. The grout beds sit 4-5 mm under the stones (a 15 mm step inked at grazing angles).
+- **A town:** brick retaining walls on every terrace (flat quads on mortar), parapets, paved lanes with lamp posts, benches and flower boxes, stair flights between levels, and a street through the house row each side up to the stairs. The church has a raised garden each side and a stairway behind, so no blank walls show.
+- **No two neighbours alike:** every row and terrace picks a style other than the last placed, across gaps too. The styles are a, b, c, d, and `d_tan` (house d in tan with turquoise shutters, Parker to the Building Maker), which counts as its own style.
+- **Palms:** each palm gets its own heading, lean and size, chosen from `palm`, `palm_b` (tall, curved) and `palm_c` (a fan palm) so neighbours differ (Parker: "not all face exactly the same way").
+- **The church:** blind arches with pot ledges on each tower, `pot_spot_1..4`, carrying the UI creator's `pot_poinsettia_a/b/c`. k2 adds gold ring knockers and fixes the plinth's block courses and pilaster bottoms.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

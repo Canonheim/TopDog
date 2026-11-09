@@ -897,7 +897,7 @@ func _commit_stones(parent: Node3D, lots: Array, tones: Array) -> void:
 ## later kit style (d, e...) that's been delivered. A new style mixes in by name.
 func _house_kinds() -> Array:
 	var out := ["a", "b", "c"]
-	for k in ["d", "e", "f"]:
+	for k in ["d", "d_tan", "e", "f"]:  # d_tan: house d in tan (Parker 11-08), its own style
 		if LuchaKit.kit_model_exists("plaza_house_" + k):
 			out.append(k)
 	return out
