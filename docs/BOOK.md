@@ -472,6 +472,7 @@ Parker: "I want the town arranged in more of a semi circle around the ring. So t
 - **Then** (Parker: "fix the very bottom of the church, it looks like a big brown slab. Also have it build one more house"):
   - the Building Maker's church plinth (a footing course, three courses of rusticated blocks in two stone tones, a moulded cap; the portal steps narrowed to the nave);
   - `plaza_house_d`: narrow, tall, sage green, with a scrolled parapet and a loggia.
+  - **The church at street level** (Parker to the Environment Maker: "make the church not on a raised pedistal but on street level with the other houses"; env-pass 560f7e1). The forecourt block and its steps are gone; the church stands on the plaza with flush slabs in its gap, keeping its own steps and plinth.
   - The Environment Maker mixes house_d through the arc and terraces (env-pass a33e39b). The town builds from every delivered house style by name, so a future house_e mixes in with no code change.
 
 ## Record
