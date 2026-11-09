@@ -17,10 +17,11 @@ extends Node3D
 
 const LONGEST := 33
 const DIGIT_STEP := TAU / 10.0
-const PLATE_AT := Vector3(-1.4, -3.05, 0.0)  # HUD units (x UI_SCALE on screen)
-const ODO_AT := Vector3(4.1, -3.05, 0.0)
-const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) and odometer at HUD size
-const LOCK_AT := Vector3(-3.2, -2.3, 0.0)  # the LOCK IN tab, above the plate's left end
+const PLATE_AT := Vector3(-1.4, -2.8, 0.0)  # HUD units (x UI_SCALE on screen)
+const ODO_AT := Vector3(4.55, -2.8, 0.0)
+const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
+const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
+const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
 const LOCK_TEXT := "LOCK IN!  A / SPACE"
 
 var main: Node
@@ -37,6 +38,7 @@ var _lock_text: Node3D
 var _odo: Node3D
 var _drums: Array = []  # left to right: tens, units, tenths, hundredths
 var _shown_h := 0.0
+var _digit_colour := LuchaKit.INK
 
 
 func _init(p_main: Node) -> void:
@@ -106,11 +108,16 @@ func _build_odometer() -> void:
 	_odo = LuchaKit.kit_model("hud_odometer")
 	var wheels: Array = []
 	if _odo != null:
-		for n in _odo.find_children("odo_wheel_*", "Node3D", true, false):
-			wheels.append(n)
+		# Godot's importer reads "_wheel" in a name as a car wheel: odo_wheel_0
+		# arrives as a VehicleWheel3D called odo_0. Take that, or odo_drum_* / odo_wheel_*.
+		for n in _odo.find_children("odo_*", "Node3D", true, false):
+			var nm := String(n.name)
+			if n is VehicleWheel3D or nm.begins_with("odo_drum_") or nm.begins_with("odo_wheel_"):
+				wheels.append(n)
 		wheels.sort_custom(func(a, b): return (a as Node3D).global_position.x < (b as Node3D).global_position.x if a.is_inside_tree() else (a as Node3D).position.x < (b as Node3D).position.x)
 	if _odo != null and wheels.size() >= 4:
-		_odo.scale = Vector3.ONE * KIT_SCALE
+		_odo.scale = Vector3.ONE * ODO_SCALE
+		_digit_colour = LuchaKit.CREAM  # the kit's drums are dark wood
 	if _odo == null or wheels.size() < 4:
 		_odo = _stand_in_odometer()
 		wheels.clear()
@@ -127,6 +134,11 @@ func _dress_drum(wheel: Node3D) -> Node3D:
 	var r: float = wheel.get_meta("radius", 0.3)
 	var width: float = wheel.get_meta("width", 0.4)
 	var mi := wheel as MeshInstance3D
+	if mi == null:
+		for ch in wheel.get_children():
+			if ch is MeshInstance3D:
+				mi = ch
+				break
 	if mi != null and mi.mesh != null and not wheel.has_meta("radius"):
 		var bb := mi.mesh.get_aabb()
 		r = maxf(bb.size.y, bb.size.z) * 0.5
@@ -136,7 +148,7 @@ func _dress_drum(wheel: Node3D) -> Node3D:
 	wheel.add_child(spin)
 	for k in 10:
 		var a := -k * DIGIT_STEP  # the next digit waits below and rolls up, as on a real odometer
-		var d := LuchaKit.text3d(str(k), minf(width * 0.75, r * 0.72), LuchaKit.INK, 0.0, 2)
+		var d := LuchaKit.text3d(str(k), minf(width * 0.75, r * 0.72), _digit_colour, 0.0, 2)
 		d.position = Vector3(0, r * sin(a), r * cos(a)) * 1.02
 		d.rotation.x = -a
 		spin.add_child(d)
@@ -220,7 +232,9 @@ func tick(delta: float) -> void:
 		_lock.scale = Vector3.ONE * (1.0 + 0.05 * sin(Time.get_ticks_msec() / 1000.0 * 8.0))
 	if _gems != null and above != _gems_lit:
 		_gems_lit = above
-		LuchaKit.tint_part(_plate, "nameplate_lockin", Color("#7CC83A") if above else Color("#D8262E"))
+		var gm := _gems as MeshInstance3D
+		if gm != null:
+			gm.material_override = CelPass.cel_material(Color("#7CC83A") if above else Color("#D8262E"))
 
 
 ## A mesh's box in another node's space (both may be scaled kit pieces).
