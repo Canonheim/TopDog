@@ -36,7 +36,7 @@ func _ready() -> void:
 			main._start_practice()
 			await get_tree().create_timer(2.0).timeout
 			var g = main.game
-			g._rpc_spawn_chair(g.chair_generation + 1, g._chair_tower_top(), Vector2i(9, 12))
+			g._rpc_spawn_chair(g.chair_generation + 1, g.tower_peak(), Vector2i(9, 12))
 			# Floated between the two climbers, at chest height, so it sits in frame.
 			var mid := Vector2.ZERO
 			for c in g.climbers.values():
