@@ -337,3 +337,38 @@ func _to_corners() -> void:
 		_plate.position.x = -half_w + CORNER_MARGIN + PLATE_HALF_W
 	if _odo != null:
 		_odo.position.x = half_w - CORNER_MARGIN - ODO_HALF_W
+	# The plate's bottom on the odometer's bottom AS THE CAMERA SEES THEM (Parker
+	# 11-08). The odometer is a deep box, so its front edge is nearer the lens and
+	# reads lower: match the two front-bottom edges' screen heights, not model y.
+	if _plate != null and _odo != null and main != null and main.cam != null:
+		var cam: Camera3D = main.cam
+		var inv := cam.global_transform.affine_inverse()
+		var ob := _bottom_front(_odo)
+		var o := inv * (_odo.global_transform * Vector3(0.0, ob.x, ob.y))
+		var pb := _bottom_front(_plate)
+		var pp := inv * (_plate.global_transform * Vector3(0.0, pb.x, pb.y))
+		if o.z < -0.01 and pp.z < -0.01:
+			var target_y := o.y / -o.z * -pp.z  # the plate edge's cam-space y on the odometer's screen line
+			var parent_scale := (_plate.get_parent() as Node3D).global_transform.basis.get_scale().y if _plate.get_parent() is Node3D else 1.0
+			_plate.position.y += (target_y - pp.y) / maxf(parent_scale, 0.0001)
+
+
+## The bottom-front edge of a model's meshes, local to it (before its own
+## transform): Vector2(lowest y, front z).
+static func _bottom_front(root: Node3D) -> Vector2:
+	var low := INF
+	var front := -INF
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		if m.mesh == null or not m.visible:
+			continue
+		var xf := Transform3D.IDENTITY
+		var cur: Node = m
+		while cur != null and cur != root:
+			if cur is Node3D:
+				xf = (cur as Node3D).transform * xf
+			cur = cur.get_parent()
+		var bb: AABB = xf * m.mesh.get_aabb()
+		low = minf(low, bb.position.y)
+		front = maxf(front, bb.end.z)
+	return Vector2(low if low < INF else 0.0, front if front > -INF else 0.0)
