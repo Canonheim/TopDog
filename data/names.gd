@@ -19,7 +19,7 @@ const THING := [
 	"Rampart", "Tankard", "Haystack", "Drawbridge", "Pudding", "Cart", "Lantern", "Mitten",
 	"Gatepost", "Herring", "Saddle", "Shovel", "Teacup", "Banner", "Bell", "Pickle",
 	"Cat", "Dog", "Turtle", "Horse", "Donkey", "Goat", "Grape", "Book",
-	"Teeth", "Bone", "Elbow", "Foot", "Melon", "Gold", "Egg", "Letter",
+	"Teeth", "Bone", "Elbow", "Foot", "Melon", "Gold", "Egg", "Letter", "Giant", "Tiny",
 ]
 const DOER := [
 	"Hugger", "Climber", "Wrangler", "Toppler", "Stacker", "Clinger", "Dangler", "Flinger",
