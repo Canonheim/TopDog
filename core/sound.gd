@@ -4,6 +4,7 @@ extends Node
 
 const RARE_GRAB := "grab_slap_10"
 const SFX := {
+	"knockout": ["knockout_whimper_01", "knockout_whimper_02", "knockout_whimper_03"],
 	"bubble_pop": ["bubble_pop_01", "bubble_pop_02", "bubble_pop_03"],
 	"chair_light": ["big_slam_01", "big_slam_02"],
 	"chair_heavy": ["big_slam_03", "big_slam_04"],
@@ -112,12 +113,22 @@ func play(kind: String, volume_db := 0.0, pitch := 1.0) -> void:
 			return
 
 
-func play_exertion(clip: String, chest: Node3D) -> void:
-	if clip not in SFX["strain"]:
+func play_exertion(clip: String, head: Node3D) -> void:
+	if clip not in SFX["strain"] or Time.get_ticks_msec() < int(head.get_meta("grunt_block_until", 0)):
 		return
-	var player := contact_player(_streams[clip], 1.0, chest)
+	var player := contact_player(_streams[clip], 1.0, head)
+	player.set_meta("exertion_voice", true)
 	player.finished.connect(player.queue_free)
 	player.play()
+
+
+func stop_exertion(head: Node3D) -> void:
+	# Applied on each listener, including puppets whose local KO timer is not updated.
+	head.set_meta("grunt_block_until", Time.get_ticks_msec() + 1600)
+	for child in head.get_children():
+		if child is AudioStreamPlayer3D and child.has_meta("exertion_voice"):
+			child.stop()
+			child.queue_free()
 
 
 func play_grab(clip: String, at: Vector3, pitch: float, host: Node) -> void:
@@ -156,6 +167,11 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 		chair_boost_db += linear_to_db(3.0)
 	if kind == "church_bell":
 		chair_boost_db += linear_to_db(2.0)
+	if kind == "knockout":
+		# Match measured short-block loudness to the two big slams, with their 6x gain.
+		var trims := {"knockout_whimper_01": 2.9727, "knockout_whimper_02": 2.5629, "knockout_whimper_03": 3.1371}
+		var selected: String = s.resource_path.get_file().get_basename()
+		chair_boost_db += linear_to_db(6.0) + float(trims.get(selected, 0.0))
 	volume_db += chair_boost_db
 	var host: Node = parent if parent != null else get_tree().current_scene
 	if host == null:
@@ -170,6 +186,7 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	p.unit_size = 6.0
 	if kind == "church_bell":
 		p.attenuation_model = AudioStreamPlayer3D.ATTENUATION_DISABLED
+		p.max_db += maxf(0.0, volume_db - chair_boost_db)  # Allow the chair-only bell boost.
 	if kind == "grab":
 		p.max_db += linear_to_db(8.4)  # Preserve the gain increase at close range.
 	host.add_child(p)

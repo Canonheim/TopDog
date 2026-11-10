@@ -444,6 +444,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 			if dress:
 				c.set_glyphs(Glyphs.limb_glyphs(c.local_slot))
 		c.exerted.connect(func(): _rpc_exertion.rpc(cid, Sound.SFX["strain"].pick_random()))
+		c.knocked_out.connect(func(): _rpc_knockout.rpc(cid, Sound.SFX["knockout"].pick_random()))
 		c.release_contact.connect(func(at: Vector3):
 			_rpc_slap.rpc(cid, at, Sound.pick_grab(), randf_range(0.92, 1.08)))
 		c.grab_made.connect(_on_grab_made)
@@ -946,10 +947,18 @@ func _audio_climber(cid: int) -> Climber:
 
 
 @rpc("any_peer", "call_local", "reliable")
+func _rpc_knockout(cid: int, clip: String) -> void:
+	var c := _audio_climber(cid)
+	if c != null and clip in Sound.SFX["knockout"]:
+		Sound.stop_exertion(c.bodies["head"])
+		Sound.play_at("knockout", c.bodies["head"].global_position, 0.0, world, clip)
+
+
+@rpc("any_peer", "call_local", "reliable")
 func _rpc_exertion(cid: int, clip: String) -> void:
 	var c := _audio_climber(cid)
 	if c != null:
-		Sound.play_exertion(clip, c.bodies["chest"])
+		Sound.play_exertion(clip, c.bodies["head"])
 
 
 ## A rope bounce, on every machine: the placeholder boing at the rope, and the
@@ -996,11 +1005,11 @@ func _on_chair_bell(at: Vector3) -> void:
 func _rpc_chair_bell(at: Vector3, clip: String) -> void:
 	if not at.is_finite() or clip not in Sound.SFX["church_bell"]:
 		return
-	_play_bell(at, clip)
+	_play_bell(at, clip, linear_to_db(2.0))
 
 
-func _play_bell(at: Vector3, clip: String) -> void:
-	Sound.play_at("church_bell", at, 0.0, world, clip)
+func _play_bell(at: Vector3, clip: String, extra_gain_db := 0.0) -> void:
+	Sound.play_at("church_bell", at, extra_gain_db, world, clip)
 	bell_rings += 1
 	if stage != null:
 		stage.pulse_bell()
@@ -1181,6 +1190,9 @@ func _spawn_partner() -> void:
 	partner.display_name = "Practice partner"
 	add_child(partner)
 	partner.build(feet, world, PRACTICE_PARTNER_MODEL if dress else null)
+	partner.knocked_out.connect(func():
+		Sound.stop_exertion(partner.bodies["head"])
+		Sound.play_at("knockout", partner.bodies["head"].global_position, 0.0, world, Sound.SFX["knockout"].pick_random()))
 
 
 @rpc("any_peer", "call_remote", "reliable")

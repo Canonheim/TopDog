@@ -865,11 +865,41 @@ func _run_net() -> void:
 	A.chair.bell_struck.emit(Vector3(0, 1.8, 0))
 	await frames(2)
 	t("net: chair bell cooldown prevents contact chatter", bell_audio.size() == 3)
+	var ko_audio: Array = []
+	for m in machines:
+		m.world.child_entered_tree.connect(func(node):
+			if node is AudioStreamPlayer3D and node.stream.resource_path.get_file().get_basename() in Sound.SFX["knockout"]:
+				ko_audio.append(node.stream.resource_path))
+	B._rpc_exertion.rpc(b1.climber_id, Sound.SFX["strain"][0])
+	await frames(2)
+	var interrupted_grunts: Array = []
+	for m in machines:
+		var head: Node3D = m.game.climbers[b1.climber_id].bodies["head"]
+		for child in head.get_children():
+			if child is AudioStreamPlayer3D and child.has_meta("exertion_voice"):
+				interrupted_grunts.append(child)
+	t("net: grunts originate at all three heads", interrupted_grunts.size() == 3 and interrupted_grunts.all(func(v): return v.playing and v.position == Vector3.ZERO))
+	b1.knock_out()
+	await frames(4)
+	t("net: knockout interrupts every active grunt", interrupted_grunts.all(func(v): return not is_instance_valid(v) or not v.playing))
+	B._rpc_exertion.rpc(b1.climber_id, Sound.SFX["strain"][0])
+	await frames(2)
+	var blocked := true
+	for m in machines:
+		for child in m.game.climbers[b1.climber_id].bodies["head"].get_children():
+			if child is AudioStreamPlayer3D and child.has_meta("exertion_voice"):
+				blocked = false
+	t("net: no grunt restarts during knockout", blocked)
+	t("net: knockout selects one approved whimper for every listener", ko_audio.size() == 3 and ko_audio.count(ko_audio[0]) == 3)
+	b1.knock_out()
+	await frames(2)
+	t("net: already knocked-out player does not repeat whimper", ko_audio.size() == 3)
+	await seconds(2.5)
 	# A client makes a contact and holds RB. Both peers hear the same take.
 	var grunts := []
 	for m in machines:
 		var climber: Climber = m.game.climbers[b1.climber_id]
-		climber.bodies["chest"].child_entered_tree.connect(func(node):
+		climber.bodies["head"].child_entered_tree.connect(func(node):
 			if node is AudioStreamPlayer3D:
 				grunts.append(node.stream.resource_path.get_file().get_basename()))
 	b1.exerted.emit()

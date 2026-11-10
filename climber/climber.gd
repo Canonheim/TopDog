@@ -74,6 +74,7 @@ signal rope_bounced(at: Vector3, speed: float)
 signal grab_made(climber: Climber, limb: int, other: Object)
 signal release_contact(position: Vector3)
 signal exerted
+signal knocked_out
 
 var state := State.LIVE
 var climber_id := 0
@@ -692,6 +693,7 @@ func knock_out() -> void:
 	if state != State.LIVE or knockout_left > 0 or _impact_guard > 0:
 		return
 	knockout_left = 1.6
+	knocked_out.emit()
 	_impact_guard = knockout_left + 0.8
 	release_all()
 	_active_limb = -1
