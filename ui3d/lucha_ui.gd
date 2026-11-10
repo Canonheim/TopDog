@@ -2079,5 +2079,10 @@ func _tick_hud_occlusion(delta: float) -> void:
 			if covered:
 				break
 		for mesh: GeometryInstance3D in meshes:
-			var clear := LuchaHudBottom.ALPHA_PASS if mesh.has_meta("alpha_pass") else 0.0  # the plate stays in the alpha pass, off the ink
-			mesh.transparency = lerpf(mesh.transparency, 0.85 if covered else clear, 1.0 - exp(-delta * 18.0))
+			var fade := lerpf(mesh.transparency, 0.85 if covered else 0.0, 1.0 - exp(-delta * 18.0))
+			# Snap the last bit back to exactly 0: any transparency above 0 keeps a mesh in
+			# the alpha pass, off the screen ink (the plate lost its outlines for good once it
+			# had faded once, and its face sorted under its body, Parker 11-09).
+			if not covered and fade < 0.01:
+				fade = 0.0
+			mesh.transparency = fade
