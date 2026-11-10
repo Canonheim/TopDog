@@ -325,7 +325,6 @@ func _fill_lobby() -> void:
 	else:
 		_lobby_ready_item = m.add_button("I'M READY!" if not bool(me.get("ready", false)) else "NOT READY", func():
 			Net.set_ready(not bool(Net.members.get(Net.me(), {}).get("ready", false))))
-	m.add_choice_button("SAY", Net.CHAT_PRESETS.map(func(t): return str(t).to_upper()), 0, func(i): Net.send_chat(Net.CHAT_PRESETS[i]))
 	m.add_button("INVITE FRIENDS", func(): Net.invite_friends())
 	m.add_button("LEAVE", main._leave_lobby)
 	m.refresh()

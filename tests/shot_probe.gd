@@ -15,6 +15,19 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(0.8).timeout
 	match open:
+		"options":
+			var original := DisplayServer.window_get_mode()
+			main.show_screen("options")
+			var button: Button = main.screens.options.find_child("FullscreenToggle", true, false)
+			assert(button != null and button.toggle_mode and button.focus_mode == Control.FOCUS_ALL)
+			main._set_fullscreen(true, false)
+			await get_tree().create_timer(0.4).timeout
+			assert(DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN)
+			main._set_fullscreen(false, false)
+			await get_tree().create_timer(0.4).timeout
+			assert(DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MAXIMIZED)
+			DisplayServer.window_set_mode(original)
+			print("PASS fullscreen and windowed modes toggle correctly")
 		"hudfade":
 			main._start_practice()
 			await get_tree().create_timer(1.2).timeout

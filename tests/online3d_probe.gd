@@ -84,6 +84,7 @@ func _ready() -> void:
 	_check("the 3D lobby opens with a card per player", main.screen == "lobby" and main.lucha.online._board.get_child_count() == 3, main.lucha.online._board.get_child_count())
 	var lobby: Menu3D = main.lucha.menus.lobby
 	_check("the host's lobby leads with FIGHT!", lobby.items.size() > 0 and str(lobby.items[0].label) == "FIGHT!")
+	_check("multiplayer menu has no Say button", not lobby.items.any(func(item): return str(item.get("label", "")) == "SAY"))
 	await _shot("lobby")
 	for pid in range(3, 12):
 		Net.members[pid] = {"name": "Player %d" % (pid + 1), "players": [{"name": "Player %d" % (pid + 1), "tint": NameGen.tint(pid), "slot": 0}], "ready": true}

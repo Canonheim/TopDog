@@ -57,6 +57,9 @@ var _build_tag: Label  # "BUILD x.y.z" in the title's corner (Parker 11-07: know
 
 
 func _ready() -> void:
+	var display := ConfigFile.new()
+	if display.load("user://display.cfg") == OK:
+		_set_fullscreen(bool(display.get_value("display", "fullscreen", false)), false)
 	get_tree().auto_accept_quit = false  # the X button runs quit_game too
 	# THE PAUSE LAW: the tree pauses the WORLD and the GAME only. Main, its menus,
 	# Players and PadNav keep running, or the pause menu can't be clicked and the
@@ -1084,15 +1087,32 @@ func _capture_bind(event: InputEvent) -> void:
 	_rebuild_controls()
 
 
+func _set_fullscreen(on: bool, save := true) -> void:
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if on else DisplayServer.WINDOW_MODE_MAXIMIZED)
+	if save:
+		var display := ConfigFile.new()
+		display.set_value("display", "fullscreen", on)
+		display.save("user://display.cfg")
+
+
 func _screen_options() -> Control:
 	var c := UiKit.panel_screen("Options", "")
 	var box: VBoxContainer = c.get_meta("box")
 	for bus in ["Master", "Music", "Effects"]:
 		UiKit.slider(box, "%s volume" % bus, Sound.volumes[bus], 0.0, 1.0, func(v): Sound.set_volume(bus, v))
-	var fs := CheckButton.new()
-	fs.text = "Fullscreen"
-	fs.button_pressed = DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
-	fs.toggled.connect(func(on): DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if on else DisplayServer.WINDOW_MODE_MAXIMIZED))
+	var fs := Button.new()
+	fs.name = "FullscreenToggle"
+	fs.toggle_mode = true
+	fs.custom_minimum_size = Vector2(0, 56)
+	var refresh_display := func():
+		var on := DisplayServer.window_get_mode() in [DisplayServer.WINDOW_MODE_FULLSCREEN, DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN]
+		fs.set_pressed_no_signal(on)
+		fs.text = "Fullscreen: ON" if on else "Fullscreen: OFF"
+	refresh_display.call()
+	fs.toggled.connect(func(on):
+		_set_fullscreen(on)
+		refresh_display.call())
+	c.visibility_changed.connect(refresh_display)
 	box.add_child(fs)
 	UiKit.button(box, "Feel panel (F1)", func(): feel_panel.visible = not feel_panel.visible)
 	UiKit.button(box, "Back", func(): show_screen(_options_back))

@@ -393,20 +393,17 @@ func _to_corners() -> void:
 		_plate.position.x = -half_w + CORNER_MARGIN + PLATE_HALF_W
 	if _odo != null:
 		_odo.position.x = half_w - CORNER_MARGIN - ODO_HALF_W
-	# The plate's bottom on the odometer's bottom AS THE CAMERA SEES THEM (Parker
-	# 11-08). The odometer is a deep box, so its front edge is nearer the lens and
-	# reads lower: match the two front-bottom edges' screen heights, not model y.
-	if _plate != null and _odo != null and main != null and main.cam != null:
+	# Keep the nameplate and its child lock-in tab low, with an eight-pixel
+	# bottom margin at any resolution. The odometer keeps its own placement.
+	if _plate != null and main != null and main.cam != null:
 		var cam: Camera3D = main.cam
 		var inv := cam.global_transform.affine_inverse()
-		var ob := _bottom_front(_odo)
-		var o := inv * (_odo.global_transform * Vector3(0.0, ob.x, ob.y))
 		var pb := _bottom_front(_plate)
 		var pp := inv * (_plate.global_transform * Vector3(0.0, pb.x, pb.y))
-		if o.z < -0.01 and pp.z < -0.01:
-			var target_y := o.y / -o.z * -pp.z  # the plate edge's cam-space y on the odometer's screen line
-			var parent_scale := (_plate.get_parent() as Node3D).global_transform.basis.get_scale().y if _plate.get_parent() is Node3D else 1.0
-			_plate.position.y += (target_y - pp.y) / maxf(parent_scale, 0.0001)
+		if pp.z < -0.01:
+			var target := inv * cam.project_position(Vector2(size.x * 0.5, size.y - 8.0), -pp.z)
+			var parent_scale := (_plate.get_parent() as Node3D).global_transform.basis.get_scale().y
+			_plate.position.y += (target.y - pp.y) / maxf(parent_scale, 0.0001)
 
 
 ## The bottom-front edge of a model's meshes, local to it (before its own
