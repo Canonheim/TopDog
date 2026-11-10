@@ -345,7 +345,7 @@ func _tick_camera(delta: float) -> void:
 	if follow and Net.online:
 		var spread := hi - lo
 		var distance := maxf(spread.x / 1.6, spread.y)
-		_personal_camera = distance > (4.5 if _personal_camera else 6.0)
+		_personal_camera = distance > (13.5 if _personal_camera else 18.0)
 		if _personal_camera:
 			var target: Climber = null
 			for candidate: Climber in live:

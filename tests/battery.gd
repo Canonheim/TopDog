@@ -1990,6 +1990,7 @@ func _run_ring() -> void:
 func _run_roundchair() -> void:
 	for mode_id in ["tower", "scramble"]:
 		var g := make_game(mode_id, 2, 30.0, "plaza")
+		g.host_start({"mode": mode_id, "timer": 30.0, "stage": "plaza", "base": "barrel"}, g.roster)
 		var active_phase := "turn" if mode_id == "tower" else "round"
 		if not await wait_phase(g, active_phase, 5.0):
 			t("opening phase starts", false, mode_id)
@@ -1998,7 +1999,10 @@ func _run_roundchair() -> void:
 		var c: Climber = g.climbers[g.live[0]]
 		c.set_glyphs([{"text": "X"}])
 		t("live climber displays its glyph", c._glyphs[0].visible)
-		g._rpc_chair_broke(g.chair.global_transform, Vector3.RIGHT, Sound.SFX["chair_break"][0])
+		g.chair.in_bubble = false
+		g.chair.global_position = Vector3(30, -10, 0)
+		g._tick_chair(1.0 / 120.0)
+		t("out-of-bounds chair stays retired until the next round", g.chair == null)
 		await lift_and_lock(g, 0)
 		c.set_glyphs_visible(true)
 		t("locked climber has no glyphs after visibility refresh", c._glyphs.is_empty())
@@ -2414,7 +2418,7 @@ func _run_personalcamera() -> void:
 	var other: Climber = g.climbers[g.live[1]]
 	other.owner_peer = 2
 	for piece: RigidBody3D in other.bodies.values():
-		piece.global_position += Vector3(0, 15, 0)
+		piece.global_position += Vector3(0, 45, 0)
 		Climber.sync_server(piece)
 	var main = load("res://game/main.gd").new()
 	# Exercise camera logic without starting another application scene.

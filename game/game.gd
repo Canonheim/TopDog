@@ -36,6 +36,7 @@ const FartVoice := preload("res://audio/fart_voice.gd")
 const ClimberScript := preload("res://climber/climber.gd")
 const Drivers := preload("res://climber/drivers.gd")
 const Layout := preload("res://climber/body_layout.gd")
+const PRACTICE_PARTNER_MODEL := preload("res://models/practice_spiral_dog.glb")
 const KNIGHT := preload("res://models/defaultio.glb")  # the default 16-piece climber
 
 const LOCK_MARGIN := 0.02  # metres above the line a lock-in must clear
@@ -1125,7 +1126,7 @@ func _spawn_partner() -> void:
 	partner.climber_id = -2
 	partner.display_name = "Practice partner"
 	add_child(partner)
-	partner.build(feet, world, KNIGHT if dress else null)
+	partner.build(feet, world, PRACTICE_PARTNER_MODEL if dress else null)
 
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -1158,7 +1159,7 @@ func _tick_chair(dt: float) -> void:
 			chair.tick_ropes(dt)
 			_apply_chair_hits(chair.sweep_hits(dt, carrier.climber_id))
 	elif stage.out_of_bounds(Climber.pos2(chair)):
-		chair.float_above(chair_spawn_top)
+		_rpc_retire_chair.rpc(chair_generation)
 	else:
 		if not chair.in_bubble:
 			chair.release_carrier_when_clear()
@@ -1174,6 +1175,11 @@ func _tick_chair(dt: float) -> void:
 				chair.pick_up(c, selected)
 				break
 
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_retire_chair(generation: int) -> void:
+	if generation == chair_generation:
+		_clear_chair()
 
 func _chair_limb(c: Climber) -> int:
 	return c.active_limb() if c.owner_peer == me() else int(remote_chair_limbs.get(c.climber_id, -1))

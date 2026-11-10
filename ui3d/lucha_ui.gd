@@ -1658,6 +1658,8 @@ func _build_hud() -> void:
 	hud_bottom = LuchaHudBottom.new(main)
 	_hud.add_child(hud_bottom)
 	_clock_text.reparent(hud_bottom, false)
+	_hud.get_node("Buckle").reparent(hud_bottom, false)
+	_info.reparent(hud_bottom, false)
 	# 1.3 m from the lens, shrunk to match: the same place on screen, but in front
 	# of the ring's apron, which the follow camera brings nearer than the HUD.
 	var near := 1.3
@@ -1829,12 +1831,13 @@ func _process(delta: float) -> void:
 		main.hud_info.visible = false
 		var g: Game = main.game
 		var show := g.phase in ["turn", "round"] and not g.practice
-		_hud.get_node("Buckle").visible = false
+		hud_bottom.get_node("Buckle").visible = show
 		var viewport_size := main.get_viewport().get_visible_rect().size
 		var half_h := tan(deg_to_rad(cam.fov * 0.5)) * MENU_DIST / UI_SCALE
 		var half_w := half_h * viewport_size.x / maxf(1.0, viewport_size.y)
-		_clock_text.position = Vector3(half_w - 0.75, -half_h + 0.65, 0.075)
-		_info.position = Vector3(half_w - 0.25, half_h - 0.3, 0)
+		hud_bottom.get_node("Buckle").position = Vector3(half_w - 1.15, half_h - 1.05, 0)
+		_clock_text.position = hud_bottom.get_node("Buckle").position + Vector3(0, 0, 0.075)
+		_info.position = Vector3(half_w - 0.25, -half_h + 0.4, 0)
 		hud_bottom.tick(delta)
 		if _bell != null:
 			_bell.visible = false
@@ -1864,9 +1867,9 @@ func _process(delta: float) -> void:
 			for ch in _clock_text.get_children():
 				ch.queue_free()
 			if v >= 0:
-				var on_kit := false
+				var on_kit := LuchaKit.kit_model_exists("clock_buckle")
 				var col := LuchaKit.RED if v <= 10 else (LuchaKit.INK if on_kit else LuchaKit.GOLD)
-				var num := LuchaKit.poster_text(str(v), 0.42, col, LuchaKit.INK, 0.04)
+				var num := LuchaKit.text3d(str(v), 0.34 if on_kit else 0.42, col, 0.03)
 				LuchaKit.center_digits(num)  # dead centre on the face (Parker 11-09)
 				_clock_text.add_child(num)
 				no_shadows(num)
@@ -1876,7 +1879,7 @@ func _process(delta: float) -> void:
 				if v <= COUNTDOWN_FROM:
 					if _pulse_tween != null and _pulse_tween.is_valid():
 						_pulse_tween.kill()
-					var buckle_node := _hud.get_node("Buckle") as Node3D
+					var buckle_node := hud_bottom.get_node("Buckle") as Node3D
 					_clock_text.scale = Vector3.ONE * 1.6
 					buckle_node.scale = Vector3.ONE * 1.08
 					_pulse_tween = create_tween().set_parallel(true)
@@ -2050,6 +2053,8 @@ func _tick_hud_occlusion(delta: float) -> void:
 		if not first:
 			actors.append(projected.grow(8.0))
 	var groups: Array = hud_bottom.get_children()
+	groups.erase(_clock_text)
+	groups.erase(hud_bottom.get_node("Buckle"))
 	for group: Node3D in groups:
 		if not group.is_visible_in_tree():
 			continue
