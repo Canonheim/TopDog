@@ -293,8 +293,6 @@ A pad is connected but nothing has arrived. If pressing changes nothing here, so
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if screen == "lobby" and not Net.is_host() and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_E:
-		game._rpc_lobby_ding.rpc_id(1)
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F1:
 		feel_panel.visible = not feel_panel.visible
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE 			and _rebind_wait.is_empty() and screen not in ["hud", "pause"]:

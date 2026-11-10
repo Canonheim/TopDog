@@ -2522,6 +2522,7 @@ func _run_waitingroom() -> void:
 	add_child(g)
 	var guests := [{"pid": 32, "peer": 2, "slot": 0, "name": "Guest", "tint": Color.WHITE}]
 	g._rpc_waiting_room(guests, {})
+	t("lobby: new bell model is the waiting ring base", g.stage.base_id == "bell" and not g.stage.base_bodies.is_empty())
 	t("lobby: authenticated guest appears without a host body", g.phase == "lobby" and g.climbers.size() == 1 and g.live.has(32))
 	var first: Climber = g.climbers[32]
 	var expanded := guests.duplicate()
@@ -2531,7 +2532,7 @@ func _run_waitingroom() -> void:
 	g._rpc_waiting_room([expanded[1]], {})
 	t("lobby: leaving guest is removed", g.climbers.size() == 1 and not g.live.has(32))
 	g._rpc_start({"mode": "scramble", "stage": "plaza", "base": "barrel"}, expanded)
-	t("lobby: match start clears waiting actors and button", g.phase == "between" and g.climbers.is_empty() and g._lobby_button == null)
+	t("lobby: match start clears waiting actors and button", g.phase == "between" and g.climbers.is_empty())
 	g.end_match()
 	g.queue_free()
 	await frames(2)
@@ -2583,11 +2584,29 @@ func _run_waitingclient() -> void:
 		var c: Climber = g.climbers.values()[0]
 		t("network lobby: guest owns playable limbs", c.state == Climber.State.LIVE and c.driver is Drivers.LocalDriver)
 		c.bodies["chest"].apply_central_impulse(Vector3(25, 0, 0))
-		g._rpc_lobby_ding.rpc_id(1)
 		await wait_phase(g, "round", 8.0)
-		t("network lobby: guest transitions to match", g.phase == "round" and g._lobby_button == null)
+		t("network lobby: guest transitions to match", g.phase == "round")
 		await seconds(1.0)
 	g.end_match()
 	Net.leave()
 	g.queue_free()
 	await frames(2)
+func _run_joinrecovery() -> void:
+	var messages: Array[String] = []
+	var capture := func(message: String): messages.append(message)
+	Net.status.connect(capture)
+	Net._pending_lobby = true
+	Net._joining_lobby = 42
+	Net._join_started_ms = Time.get_ticks_msec()
+	Net.join_steam(42)
+	t("join: duplicate attempt reports progress instead of silently returning", not messages.is_empty())
+	Net._join_started_ms = Time.get_ticks_msec() - Net.JOIN_TIMEOUT_MS - 1
+	Net._process(0.0)
+	t("join: stalled attempt releases pending state for retry", not Net._pending_lobby and Net._joining_lobby == 0 and not Net.online)
+	Net._awaiting_accept = true
+	Net._pending_lobby = true
+	Net._joining_lobby = 42
+	Net._rpc_members({Net.me(): {"name": "Accepted", "players": [], "ready": false}})
+	t("join: host membership acceptance completes the join", Net.online and not Net._pending_lobby and not Net._awaiting_accept)
+	Net.leave()
+	Net.status.disconnect(capture)

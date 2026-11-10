@@ -125,7 +125,6 @@ func host_start(p_settings: Dictionary, p_roster: Array) -> void:
 
 @rpc("authority", "call_local", "reliable")
 func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
-	_clear_lobby_button()
 	_clear_arena_props()
 	settings = p_settings
 	mode = Modes.row(str(settings.get("mode", "scramble")))
@@ -557,12 +556,6 @@ func _tick_owned(real_delta: float) -> void:
 					_rpc_lock_request.rpc_id(1, cid, c.pose(), c.welded_to_support())
 			else:
 				announce.emit("Get above the line to lock in!", false)
-		if phase == "lobby" and send:
-			for limb in c.limbs:
-				var hand: RigidBody3D = c.bodies[limb.def.end]
-				if Vector2(hand.position.x, hand.position.y).distance_to(Vector2(0, 0.5)) < 0.65 and hand.linear_velocity.length() > 0.5:
-					_rpc_lobby_ding.rpc_id(1)
-					break
 		if send:
 			_send_contact_loads(c)
 		if send and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
@@ -1327,14 +1320,11 @@ func _clear_climbers() -> void:
 func end_match() -> void:
 	if phase == "lobby" and stage != null:
 		stage.set_base(world, str(Net.settings.get("base", "barrel")))
-	_clear_lobby_button()
 	_clear_arena_props()
 	_clear_climbers()
 	phase = "idle"
 	phase_changed.emit(phase)
 
-var _lobby_button: Node3D
-var _lobby_bell_wait := 0.0
 
 ## Host sends only authenticated members, after Net's completed handshake.
 func sync_waiting_room() -> void:
@@ -1365,16 +1355,7 @@ func _rpc_waiting_room(guests: Array, snapshot: Dictionary) -> void:
 			stage = Stage.new("plaza")
 			stage.build(world, dress)
 		Climber.rope_x = stage.ring_half()
-		for body in stage.base_bodies:
-			stage.bodies.erase(body)
-		stage.base_bodies.clear()
-		if is_instance_valid(stage.base_root):
-			stage.base_root.free()
-		stage.base_root = null
-		stage.base_id = ""
-		stage.barrel_top = 0.0
-		stage.barrel_half = 0.0
-		_make_lobby_button()
+		stage.set_base(world, "bell")
 	roster = guests
 	var ids := guests.map(func(r): return int(r.pid))
 	for pid in live.keys():
@@ -1389,40 +1370,3 @@ func _rpc_waiting_room(guests: Array, snapshot: Dictionary) -> void:
 		_rpc_spawn(pid, pid, _open_spawn(Vector2(-6.5 + (i % 6) * 2.6, (i / 6) * 2.5)), str(r.name))
 		if snapshot.has(pid):
 			climbers[pid].apply_pose(snapshot[pid])
-
-
-func _make_lobby_button() -> void:
-	_clear_lobby_button()
-	_lobby_button = Node3D.new()
-	world.add_child(_lobby_button)
-	_lobby_button.position = Vector3(0, 0.3, 0)
-	_lobby_button.add_child(LuchaKit.cyl(0.35, 0.25, LuchaKit.RED, Vector3.ZERO))
-	var label := LuchaKit.poster_text("DING (E)", 0.18, LuchaKit.GOLD, LuchaKit.INK, 0.025)
-	label.position = Vector3(0, 0.4, 0)
-	_lobby_button.add_child(label)
-
-
-func _clear_lobby_button() -> void:
-	if is_instance_valid(_lobby_button):
-		_lobby_button.queue_free()
-	_lobby_button = null
-
-
-@rpc("any_peer", "call_local", "reliable")
-func _rpc_lobby_ding() -> void:
-	if not is_host() or phase != "lobby" or _now < _lobby_bell_wait:
-		return
-	var sender := multiplayer.get_remote_sender_id()
-	if sender == 0:
-		sender = me()
-	if not Net.members.has(sender):
-		return
-	_lobby_bell_wait = _now + 0.7
-	_rpc_lobby_bell.rpc()
-
-
-@rpc("authority", "call_local", "reliable")
-func _rpc_lobby_bell() -> void:
-	if phase == "lobby":
-		Sound.play("lock")
-		announce.emit("DING!", false)

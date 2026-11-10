@@ -26,7 +26,7 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.3.71"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.3.72"  # bump on every build: RPC tables move between builds
 const MAX_MACHINES := 12
 const MAX_CLIMBERS := 12
 const CHAT_PRESETS := ["Hello!", "Ready!", "Not ready", "Nice one!", "Oops!", "Get off me!", "Hold on!", "GG"]
@@ -46,6 +46,10 @@ var settings := Modes.default_settings()
 var in_match := false
 
 var _pending_lobby := false
+var _joining_lobby := 0
+var _join_started_ms := 0
+var _awaiting_accept := false
+const JOIN_TIMEOUT_MS := 20000
 var _hosting := false
 var _invite_lobby := 0
 var _list_wanted := false
@@ -79,6 +83,13 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if steam_ok:
 		Steam.run_callbacks()  # every frame, online or not: invites arrive here
+	if _joining_lobby != 0:
+		var peer := multiplayer.multiplayer_peer
+		if not _awaiting_accept and peer is SteamMultiplayerPeer and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
+			_on_connected()
+		if Time.get_ticks_msec() - _join_started_ms >= JOIN_TIMEOUT_MS:
+			leave()
+			status.emit("The host did not finish connecting. Refresh the list and try joining again.")
 
 
 func _notification(what: int) -> void:
@@ -223,15 +234,27 @@ func _on_lobby_match_list(lobbies: Array) -> void:
 
 
 func join_steam(lobby_id: int) -> void:
-	if online or _pending_lobby or lobby_id == 0:
+	if _pending_lobby:
+		if _joining_lobby != 0 and Time.get_ticks_msec() - _join_started_ms >= JOIN_TIMEOUT_MS:
+			leave()
+		else:
+			status.emit("Still connecting to the lobby. Please wait...")
+			return
+	if online:
+		status.emit("Already connected. Leave the current lobby before joining another.")
+		return
+	if lobby_id == 0:
+		status.emit("This lobby is no longer available. Refresh the list.")
 		return
 	if not steam_ok:
 		status.emit("Steam isn't running.")
 		return
 	_pending_lobby = true
+	_joining_lobby = lobby_id
+	_join_started_ms = Time.get_ticks_msec()
+	_awaiting_accept = false
 	status.emit("Joining lobby...")
 	Steam.joinLobby(lobby_id)
-
 
 ## THE FRIENDS LIST (lifted from Golemheim's friends_in_game): Steam friends running
 ## this game right now, [{id, name, lobby}], those in a joinable game first. lobby 0
@@ -288,8 +311,13 @@ func _on_lobby_data_update(_success: bool, lobby_id: int, _member: int) -> void:
 
 
 func _on_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) -> void:
+	if lobby_id != _joining_lobby and lobby_id != steam_lobby and not _hosting:
+		if response == Steam.CHAT_ROOM_ENTER_RESPONSE_SUCCESS:
+			Steam.leaveLobby(lobby_id)
+		return
 	if response != Steam.CHAT_ROOM_ENTER_RESPONSE_SUCCESS:
 		_pending_lobby = false
+		_joining_lobby = 0
 		status.emit("Couldn't enter the lobby (%d)" % response)
 		return
 	if Steam.getLobbyOwner(lobby_id) == Steam.getSteamID():
@@ -297,17 +325,20 @@ func _on_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) 
 			# A joiner made owner: the host's leave and our join crossed. Nobody serves it.
 			Steam.leaveLobby(lobby_id)
 			_pending_lobby = false
+			_joining_lobby = 0
 			status.emit("That lobby has no host any more")
 		return
 	if online:
 		Steam.leaveLobby(lobby_id)
 		_pending_lobby = false
+		_joining_lobby = 0
 		return
 	steam_lobby = lobby_id
 	if str(Steam.getLobbyData(lobby_id, "game")) != LOBBY_TAG:
 		Steam.leaveLobby(lobby_id)
 		steam_lobby = 0
 		_pending_lobby = false
+		_joining_lobby = 0
 		status.emit("That friend is in a different game.")
 		return
 	var v := str(Steam.getLobbyData(lobby_id, "version"))
@@ -315,6 +346,7 @@ func _on_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) 
 		Steam.leaveLobby(lobby_id)
 		steam_lobby = 0
 		_pending_lobby = false
+		_joining_lobby = 0
 		status.emit("Can't join: they're on version %s (you have %s)" % [v if v != "" else "unknown", GAME_VERSION])
 		return
 	var peer := SteamMultiplayerPeer.new()
@@ -323,6 +355,7 @@ func _on_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) 
 		Steam.leaveLobby(lobby_id)
 		steam_lobby = 0
 		_pending_lobby = false
+		_joining_lobby = 0
 		status.emit("Steam connect failed (%s)" % err)
 		return
 	multiplayer.multiplayer_peer = peer
@@ -342,12 +375,12 @@ func _start_session_as_host() -> void:
 
 
 func _on_connected() -> void:
+	if _awaiting_accept or online:
+		return
 	Players.prepare_online(my_name())
-	online = true
-	_pending_lobby = false
+	_awaiting_accept = true
+	status.emit("Connected to Steam. Waiting for the host to accept your player...")
 	_rpc_hello.rpc_id(1, GAME_VERSION, my_name(), _local_players())
-	session_started.emit()
-
 
 func _on_peer_connected(_id: int) -> void:
 	pass  # the hello carries everything
@@ -455,6 +488,12 @@ func _rpc_refused(reason: String) -> void:
 @rpc("authority", "call_local", "reliable")
 func _rpc_members(m: Dictionary) -> void:
 	members = m
+	if _awaiting_accept and members.has(me()):
+		_awaiting_accept = false
+		_pending_lobby = false
+		_joining_lobby = 0
+		online = true
+		session_started.emit()
 	members_changed.emit()
 
 
@@ -574,6 +613,9 @@ func leave() -> void:
 		multiplayer.multiplayer_peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
 	online = false
+	_joining_lobby = 0
+	_awaiting_accept = false
+	_hosting = false
 	in_match = false
 	_pending_lobby = false
 	members.clear()
