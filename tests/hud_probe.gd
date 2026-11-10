@@ -43,7 +43,9 @@ func _ready() -> void:
 		seen[hb._name_shown] = true
 	_check("...turning through every line", seen.size() == lines.size(), seen.keys())
 	_check("the odometer has four drums", hb._drums.size() == 4, hb._drums.size())
-	_check("below the line the toast is down in its slot", not hb.popped and hb._lock.position.y < 0.1, hb._lock.position.y)
+	_check("below the line the toast is down in its slot, and hidden", not hb.popped and hb._lock.position.y < 0.1 and not hb._lock.visible, hb._lock.position.y)
+	var plate_meshes: Array = hb._plate.find_children("*", "MeshInstance3D", true, false)
+	_check("the nameplate draws in the alpha pass (off the screen ink)", plate_meshes.all(func(m): return m.transparency > 0.0), plate_meshes.size())
 	await _shot("hud_bottom")
 	# A banner up top lifts the clock out of the frame; it drops back after.
 	main.lucha._on_announce("Winifred the Drawbridge-Scrambler's turn", true)
@@ -57,7 +59,7 @@ func _ready() -> void:
 	_check("after the banner flies out, the clock is back", main.lucha._clock_up == 0.0 and not main.lucha._banner.visible, main.lucha._clock_up)
 	main.game.line = -5.0
 	await get_tree().create_timer(0.4).timeout
-	_check("above the line the LOCK IN toast pops up", hb.popped and hb._lock.position.y > 0.25, hb._lock.position.y)
+	_check("above the line the LOCK IN toast pops up", hb.popped and hb._lock.position.y > 0.25 and hb._lock.visible, hb._lock.position.y)
 	await _shot("hud_lockin")
 	# THE COUNTDOWN PULSE (Parker 11-09): at 10 the number lands big and thumps back.
 	var clock_text: Node3D = main.lucha._clock_text

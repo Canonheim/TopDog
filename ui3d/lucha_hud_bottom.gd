@@ -138,7 +138,25 @@ func _build_plate() -> void:
 		_lock_text.position = Vector3(0, 0, 0.075)
 		_lock.add_child(_lock_text)
 		add_child(_lock)
-	_lock.visible = _toaster  # the toaster's tab hides in its slot; the stand-in hides
+	# Hidden while down (Parker 11-09: "when the toaster is not up, have it despawn, so
+	# you can't see it when the object is transparent"): it shows only while popped.
+	_lock.visible = false
+	_ink_plate()
+
+
+## OFF THE SCREEN INK (Parker 11-09: "make the outline shader not hit the Bottom left
+## Name card thing by giving it an alpha channel"): every plate mesh (the tab too)
+## draws in the transparent pass, which the screen-space ink runs before, so the ink
+## never traces it. The HUD's fade keeps them just off fully opaque (ALPHA_PASS).
+## (An inverse-hull outline in its place was tried and dropped, Parker 11-09.)
+const ALPHA_PASS := 0.001  # a GeometryInstance3D above 0 transparency draws in the alpha pass
+func _ink_plate() -> void:
+	for mi in _plate.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		if m.mesh == null:
+			continue
+		m.transparency = ALPHA_PASS
+		m.set_meta("alpha_pass", true)
 
 
 ## Pop the toast up (above the line) or drop it back in the slot.
@@ -153,11 +171,13 @@ func _set_popped(up: bool) -> void:
 		_pop_tween.kill()
 	_pop_tween = create_tween()
 	if up:
+		_lock.visible = true
 		# Out fast, past the top (to about 0.34) and settle at 0.30: ease-out-back.
 		_pop_tween.tween_property(_lock, "position:y", TAB_UP_Y, 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		Sound.play("lock", -10.0, 1.8)  # a little spring ding
 	else:
 		_pop_tween.tween_property(_lock, "position:y", TAB_DOWN_Y, 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		_pop_tween.tween_callback(func() -> void: _lock.visible = false)  # gone once it's in the slot
 
 
 func set_name_text(s: String) -> void:

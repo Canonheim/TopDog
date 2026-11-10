@@ -2079,4 +2079,5 @@ func _tick_hud_occlusion(delta: float) -> void:
 			if covered:
 				break
 		for mesh: GeometryInstance3D in meshes:
-			mesh.transparency = lerpf(mesh.transparency, 0.85 if covered else 0.0, 1.0 - exp(-delta * 18.0))
+			var clear := LuchaHudBottom.ALPHA_PASS if mesh.has_meta("alpha_pass") else 0.0  # the plate stays in the alpha pass, off the ink
+			mesh.transparency = lerpf(mesh.transparency, 0.85 if covered else clear, 1.0 - exp(-delta * 18.0))
