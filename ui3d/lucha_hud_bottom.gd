@@ -157,6 +157,11 @@ func _ink_plate() -> void:
 			continue
 		m.transparency = ALPHA_PASS
 		m.set_meta("alpha_pass", true)
+		# See-through pieces sort by their centres, not depth: the face, gems and the tab
+		# are told to draw after the gold body they sit in, or the body paints over them
+		# (the cream face went orange once the pocket left the body, 11-09).
+		if not (m.name in ["hud_nameplate", "lockin_tab"]):
+			m.sorting_offset = 0.5
 
 
 ## Pop the toast up (above the line) or drop it back in the slot.
