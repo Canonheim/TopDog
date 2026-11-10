@@ -26,7 +26,7 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.3.74"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.3.75"  # bump on every build: RPC tables move between builds
 const MAX_MACHINES := 12
 const MAX_CLIMBERS := 12
 const CHAT_PRESETS := ["Hello!", "Ready!", "Not ready", "Nice one!", "Oops!", "Get off me!", "Hold on!", "GG"]
