@@ -1929,6 +1929,10 @@ func _run_ring() -> void:
 			inward = v2.x
 			up = v2.y
 	t("ring: falling into the ropes at an angle bounces you back in and up (out 3, down 4 m/s)", inward < -3.0 and up > 2.0, "back at (%.2f, %.2f) m/s" % [inward, up])
+	# ONLY EVER LIFT (Parker 11-09): rising into the ropes you keep rising, never sent down.
+	var rising := Climber.rope_throw(Vector2(3.0, 3.0), 1.0)
+	var falling := Climber.rope_throw(Vector2(-3.0, -4.0), -1.0)
+	t("ring: the rope throw only ever adds lift (rising stays rising, falling turns up)", rising.x < -3.0 and is_equal_approx(rising.y, 3.0) and falling.x > 3.0 and falling.y > 3.9, "%s / %s" % [rising, falling])
 	await seconds(0.6)
 	var settled: bool = rope != null and rope.mesh == rope.get_meta("rest_mesh", null)
 	var rope_voice := rope.get_node_or_null("TensionSound") as AudioStreamPlayer3D
@@ -2189,6 +2193,12 @@ func _run_chairsolid() -> void:
 	chair.linear_velocity = Vector3.RIGHT * 4
 	chair.tick_ropes(1.0 / 120)
 	t("chair solid: an outward throw rebounds in the rope band", chair.linear_velocity.x < -4)
+	# THE SAME ROPE RULES AS PEOPLE (Parker 11-09): a falling chair goes back in and up.
+	chair.rope_wait = 0.0
+	chair.global_position = Vector3(Climber.rope_x - 0.3, 0.8, 0)
+	chair.linear_velocity = Vector3(3.0, -4.0, 0)
+	chair.tick_ropes(1.0 / 120)
+	t("chair solid: a chair falling into the ropes bounces back in and up, as people do", chair.linear_velocity.x < -3.0 and chair.linear_velocity.y > 3.0, Vector2(chair.linear_velocity.x, chair.linear_velocity.y))
 	g.end_match()
 	g.queue_free()
 	await frames(2)

@@ -354,8 +354,11 @@ func tick_ropes(dt: float) -> void:
 			linear_velocity.x = 0.0
 		return
 	if linear_velocity.x * side > 0.3:
-		var speed := absf(linear_velocity.x)
-		linear_velocity.x *= -Feel.get_k("rope_bounce")
+		var speed := Vector2(linear_velocity.x, linear_velocity.y).length()
+		# The same throw as a climber's (Climber.rope_throw): back in, and up if falling.
+		var thrown := Climber.rope_throw(Vector2(linear_velocity.x, linear_velocity.y), side)
+		linear_velocity.x = thrown.x
+		linear_velocity.y = thrown.y
 		rope_wait = Climber.ROPE_COOLDOWN
 		rope_struck.emit(Vector3(side * Climber.rope_x, p.y, 0), speed)
 

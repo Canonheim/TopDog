@@ -750,17 +750,26 @@ func _tick_ropes(delta: float) -> void:
 		var out_speed: float = com_v.x * side
 		if out_speed < 0.3:
 			continue
-		# BACK THE WAY YOU CAME (Parker 11-09: "bounce you in the opposite direction to
-		# where you are coming from, so if you are falling off the tower and hit it, it
-		# can potentially bounce you up and back on"): the whole movement turns round,
-		# the sideways part at rope_bounce, the up/down part at rope_bounce_up.
-		var new_v := Vector2(-side * out_speed * Feel.get_k("rope_bounce"), -com_v.y * Feel.get_k("rope_bounce_up"))
+		var new_v := rope_throw(com_v, side)
 		for o in pieces:
 			var rb := o as RigidBody3D
 			rb.linear_velocity.x += new_v.x - com_v.x
 			rb.linear_velocity.y += new_v.y - com_v.y
 		_rope_wait = ROPE_COOLDOWN
 		rope_bounced.emit(Vector3(side * rope_x, p.y, 0.0), com_v.length())
+
+
+## THE ROPE THROW, for climbers and the chair alike (Parker 11-09: "bounce you in the
+## opposite direction to where you are coming from, so if you are falling off the
+## tower and hit it, it can potentially bounce you up and back on ... only ever add
+## lift ... the chair should have the same rules as the people"). v: the velocity
+## into the ropes on `side` (-1 left, +1 right). The sideways part turns round at
+## rope_bounce; a fall turns into a throw UP at rope_bounce_up; rising, you keep
+## rising as you were (it never sends you down).
+static func rope_throw(v: Vector2, side: float) -> Vector2:
+	var out_speed := maxf(0.0, v.x * side)
+	var up := -v.y * Feel.get_k("rope_bounce_up") if v.y < 0.0 else v.y
+	return Vector2(-side * out_speed * Feel.get_k("rope_bounce"), up)
 
 
 func is_attached() -> bool:

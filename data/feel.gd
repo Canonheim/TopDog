@@ -40,7 +40,7 @@ const SPEC := {
 	"linear_damp": [0.05, 0.0, 2.0, "Air drag on every piece"],
 	"angular_damp": [0.4, 0.0, 5.0, "Spin drag on every piece"],
 	"rope_bounce": [1.5, 1.0, 3.0, "The side ropes throw you back at this many times the speed you hit them"],
-	"rope_bounce_up": [1.0, 0.0, 2.0, "The ropes turn your up/down speed round too: falling into them throws you back up at this many times your fall"],
+	"rope_bounce_up": [1.0, 0.0, 2.0, "Falling into the ropes throws you (or the chair) back up at this many times the fall; rising into them, you keep rising"],
 	"puppet_delay": [0.1, 0.0, 0.4, "Online: seconds of buffer behind a remote climber"],
 	"pull_cap": [4.0, 0.0, 6.0, "Online: cap on a rival's pull, in body-weights"],
 }
