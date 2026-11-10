@@ -24,7 +24,7 @@ const LINE_Z := -0.8  # behind the play plane (the line node sits at z 0.35)
 const BANNER_KIT_SCALE := 2.0  # the kit's hud_banner at HUD size (notes x0.85)
 const BANNER_Y := 2.55  # the turn / announcement banner, high on the HUD (its flags reach the top)
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
-const OWNED := ["title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat"]
+const OWNED := ["title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat", "controls", "options"]
 const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
 const CARD_DY := 2.3  # and 2.05 m with its mask crest
 
@@ -62,6 +62,7 @@ var _cards: Node3D
 var _podium: Node3D
 var _winner_poster: Node3D
 var online: LuchaOnline
+var settings: LuchaSettings  # Controls and Options in 3D (Parker 11-10)
 
 
 func setup(p_main: Node) -> void:
@@ -78,6 +79,9 @@ func setup(p_main: Node) -> void:
 	online = LuchaOnline.new(self)
 	online.build()
 	_build_hud()
+	settings = LuchaSettings.new(self)
+	add_child(settings)
+	settings.build()
 	_restyle_line()
 	main.game.announce.connect(_on_announce)
 	no_shadows(cam)  # UI never casts shadows into the world (the menus' words ghosted on the apron)
@@ -111,6 +115,8 @@ func show_screen(id: String) -> bool:
 		Sound.play("lock", -4.0)
 	if online != null:
 		online.on_screen(id)
+	if settings != null:
+		settings.on_screen(id)
 	return id in OWNED
 
 

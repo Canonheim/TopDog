@@ -59,7 +59,10 @@ var _build_tag: Label  # "BUILD x.y.z" in the title's corner (Parker 11-07: know
 func _ready() -> void:
 	var display := ConfigFile.new()
 	if display.load("user://display.cfg") == OK:
-		_set_fullscreen(bool(display.get_value("display", "fullscreen", false)), false)
+		# The three window modes (Parker 11-10); an older save's fullscreen ON was the
+		# borderless kind.
+		var legacy := "borderless" if bool(display.get_value("display", "fullscreen", false)) else "windowed"
+		set_window_mode(str(display.get_value("display", "window_mode", legacy)), false)
 	get_tree().auto_accept_quit = false  # the X button runs quit_game too
 	# THE PAUSE LAW: the tree pauses the WORLD and the GAME only. Main, its menus,
 	# Players and PadNav keep running, or the pause menu can't be clicked and the
@@ -1087,12 +1090,39 @@ func _capture_bind(event: InputEvent) -> void:
 	_rebuild_controls()
 
 
-func _set_fullscreen(on: bool, save := true) -> void:
-	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if on else DisplayServer.WINDOW_MODE_MAXIMIZED)
+## THE WINDOW MODES (Parker 11-10: the TV's knob, "Windowed, Full screen, and Windowed
+## Full screen"): "windowed" (a maximised window), "fullscreen" (exclusive) and
+## "borderless" (windowed fullscreen). Saved between launches.
+const WINDOW_MODES := ["windowed", "fullscreen", "borderless"]
+
+
+func set_window_mode(mode: String, save := true) -> void:
+	if not mode in WINDOW_MODES:
+		mode = "windowed"
+	DisplayServer.window_set_mode({
+		"windowed": DisplayServer.WINDOW_MODE_MAXIMIZED,
+		"fullscreen": DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN,
+		"borderless": DisplayServer.WINDOW_MODE_FULLSCREEN,
+	}[mode])
 	if save:
 		var display := ConfigFile.new()
-		display.set_value("display", "fullscreen", on)
+		display.load("user://display.cfg")
+		display.set_value("display", "window_mode", mode)
+		display.set_value("display", "fullscreen", mode != "windowed")
 		display.save("user://display.cfg")
+
+
+func window_mode() -> String:
+	match DisplayServer.window_get_mode():
+		DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN:
+			return "fullscreen"
+		DisplayServer.WINDOW_MODE_FULLSCREEN:
+			return "borderless"
+	return "windowed"
+
+
+func _set_fullscreen(on: bool, save := true) -> void:
+	set_window_mode("borderless" if on else "windowed", save)
 
 
 func _screen_options() -> Control:
