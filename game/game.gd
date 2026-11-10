@@ -420,7 +420,11 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 	c.display_name = nm
 	c.tint = r.tint if r.tint is Color else Color.WHITE
 	add_child(c)
-	c.build(feet, world, KNIGHT if dress else null)
+	var appearance: Dictionary = Wardrobe.clean(r.get("appearance", {}))
+	c.build(feet, world, Wardrobe.model(appearance) if dress else null)
+	if dress:
+		for body in c.bodies.values():
+			Wardrobe.apply(body, appearance)
 	var voice := FartVoice.new()
 	c.bodies["pelvis"].add_child(voice)
 	c.froze.connect(func(_cl): voice.release())

@@ -15,6 +15,8 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(0.8).timeout
 	match open:
+		"customize":
+			main.show_screen("customize")
 		"options":
 			var original := DisplayServer.window_get_mode()
 			main.show_screen("options")

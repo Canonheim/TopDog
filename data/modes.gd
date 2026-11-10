@@ -32,8 +32,8 @@ const ROWS := {
 	},
 }
 
-const TIMERS := [40.0, 60.0, 90.0]
-const TIMER_NAMES := ["Short (40 s)", "Normal (1 min)", "Long (1 min 30)"]
+const TIMERS := [45.0, 60.0, 90.0, 120.0, 180.0]
+const TIMER_NAMES := ["45 S", "1 Min", "1:30", "2 Min", "3 Min"]
 const BASES := ["random", "barrel", "cactus", "donkey", "bell"]
 const STARTING_BASES := ["barrel", "cactus", "donkey", "bell"]
 const BASE_NAMES := ["Random", "Barrel", "Cactus", "Donkey", "Bell"]

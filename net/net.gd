@@ -26,7 +26,7 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.3.63"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.3.69"  # bump on every build: RPC tables move between builds
 const MAX_MACHINES := 12
 const MAX_CLIMBERS := 12
 const CHAT_PRESETS := ["Hello!", "Ready!", "Not ready", "Nice one!", "Oops!", "Get off me!", "Hold on!", "GG"]
@@ -366,7 +366,7 @@ func _on_peer_disconnected(id: int) -> void:
 func _local_players() -> Array:
 	var out: Array = []
 	for s in Players.slots.size():
-		out.append({"name": str(Players.slots[s].name), "random": bool(Players.slots[s].get("random", false)), "tint": Players.slots[s].tint, "slot": s})
+		out.append({"name": str(Players.slots[s].name), "random": bool(Players.slots[s].get("random", false)), "tint": Players.slots[s].tint, "slot": s, "appearance": Wardrobe.for_slot(s)})
 	return out
 
 
@@ -426,7 +426,7 @@ func _clean_players(players: Array) -> Array:
 	var out: Array = []
 	for p in players.slice(0, 4):
 		if p is Dictionary:
-			out.append({"name": str(p.get("name", "Climber")).left(40), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": int(p.get("slot", 0))})
+			out.append({"name": str(p.get("name", "Climber")).left(40), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": int(p.get("slot", 0)), "appearance": Wardrobe.clean(p.get("appearance", {}))})
 	return out
 
 
@@ -537,7 +537,7 @@ func build_roster() -> Array:
 	ids.sort()
 	for id in ids:
 		for p in members[id].players:
-			roster.append({"pid": pid, "name": p.name, "random": bool(p.get("random", false)), "tint": p.tint, "peer": id, "slot": p.slot})
+			roster.append({"pid": pid, "name": p.name, "random": bool(p.get("random", false)), "tint": p.tint, "peer": id, "slot": p.slot, "appearance": Wardrobe.clean(p.get("appearance", {}))})
 			pid += 1
 	return roster
 

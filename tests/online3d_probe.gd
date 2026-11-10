@@ -37,13 +37,23 @@ func _ready() -> void:
 	await _tap(JOY_BUTTON_B)
 	await _wait(0.5)
 	_check("B on browse goes back to online", main.screen == "online", main.screen)
-	# HOST flips left / right before it hosts.
+	# Public hosting uses the same full-size button as the rest of this menu.
+	_check("online has Public, Join a Friend, Browse Games and Back", online.items.map(func(i): return i.label) == ["HOST PUBLIC", "JOIN A FRIEND", "BROWSE GAMES", "BACK"])
+	_check("Public matches the other button types and widths", online.items.all(func(i): return i.kind == "button") and is_equal_approx(float(online.items[0].belt.get_meta("width", Menu3D.BELT_W)), float(online.items[1].belt.get_meta("width", Menu3D.BELT_W))))
 	online.focus = 0
-	await _wait(0.3)
-	_check("HOST shows its focus ring on PUBLIC", _ring_on(online, 0, 0))
 	await _tap(JOY_BUTTON_DPAD_RIGHT)
-	_check("right walks HOST to the FRIENDS belt and its ring", online.items[0].stop == 1 and _ring_on(online, 0, 1), online.items[0].stop)
-	await _tap(JOY_BUTTON_DPAD_LEFT)
+	_check("Public has no Friends or Invite hosting choices", online.items[0].kind == "button" and online.focus == 0)
+	var previous_settings: Dictionary = Net.settings.duplicate(true)
+	main.preview_base("cactus")
+	var base: Node3D = main.game.stage.base_root
+	Net.settings.base = "random"
+	for timer in Modes.TIMERS:
+		Net.settings.timer = timer
+		Net.settings_changed.emit()
+	_check("clock changes never reroll the random base preview", main.game.stage.base_root == base and main.game.stage.base_id == "cactus")
+	main.preview_base("random")
+	_check("selecting Random defers selection to match start", main.game.stage.base_root == base)
+	Net.settings = previous_settings
 	# Friends as kit rows: two stops each (the row, then JOIN).
 	main.lucha.online.test_friends = [{"id": 0, "name": "Matilda", "lobby": 77}, {"id": 0, "name": "Yorick", "lobby": 0}]
 	main.show_screen("friends")

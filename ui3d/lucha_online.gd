@@ -5,7 +5,7 @@ extends RefCounted
 ## same championship belts as every menu, so pad (ui_* actions, Steam Input
 ## included), keyboard and mouse all work.
 ##
-## online   HOST (public / friends / invite, flipped left-right), JOIN A FRIEND,
+## online   HOST PUBLIC, JOIN A FRIEND,
 ##          BROWSE GAMES, BACK. A status
 ##          poster under the header shows Net's status line.
 ## friends  your Steam friends playing Top Dog (Net.friends_in_game): JOIN their
@@ -49,10 +49,9 @@ func build() -> void:
 	o.set_header(LuchaKit.poster_text("PLAY ONLINE", 0.48, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
 	o.column_x = -2.4
 	o.top_y = 1.25
-	var hi := o.add_row(LuchaKit.belt_small_row("HOST A GAME", ["PUBLIC", "FRIENDS", "INVITE"]), func(i):
+	o.add_button("HOST PUBLIC", func():
 		main._ensure_player()
-		Net.host_steam([Net.VIS_PUBLIC, Net.VIS_FRIENDS, Net.VIS_INVITE][i]))
-	o.items[hi].label = "HOST"
+		Net.host_steam(Net.VIS_PUBLIC))
 	o.add_button("JOIN A FRIEND", func(): main.show_screen("friends"))
 	o.add_button("BROWSE GAMES", func(): main.show_screen("browse"))
 	o.add_button("BACK", func(): main.show_screen("title"))
@@ -313,7 +312,7 @@ func _fill_lobby() -> void:
 			var s: Dictionary = Net.settings.duplicate()
 			s.mode = mode_ids[i]
 			Net.set_settings(s))
-		m.add_choice("CLOCK", ["40 S", "1 MIN", "1:30"], maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0)))), func(i):
+		m.add_choice("CLOCK", Modes.TIMER_NAMES, maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0)))), func(i):
 			var s: Dictionary = Net.settings.duplicate()
 			s.timer = Modes.TIMERS[i]
 			Net.set_settings(s))

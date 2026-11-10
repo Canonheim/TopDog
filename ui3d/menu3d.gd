@@ -22,6 +22,8 @@ var focus := 0
 var cam: Camera3D
 var header: Node3D  # optional: logo / title above the belts
 var cursor: Node3D
+var item_spacing := STEP
+var header_tilt := 0.0
 var column_x := -2.4
 var top_y := 0.9
 var _open_t := 0.0
@@ -107,7 +109,7 @@ func _add(it: Dictionary) -> int:
 		for d in [-1, 1]:
 			var a := LuchaKit.picker_arrow(d)
 			a.position = Vector3(d * half, 0, 0.05)
-			a.visible = false
+			a.visible = true
 			root.add_child(a)
 			arrows.append(a)
 		it.arrows = arrows
@@ -121,7 +123,7 @@ func _add(it: Dictionary) -> int:
 	area.monitoring = false
 	var col := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
-	bs.size = Vector3(float(belt.get_meta("width", BELT_W)) + 0.2, maxf(0.55, float(belt.get_meta("height", 0.55))), 0.3)
+	bs.size = Vector3(float(belt.get_meta("width", BELT_W)) + (0.95 if it.has("arrows") else 0.2), maxf(0.55, float(belt.get_meta("height", 0.55))), 0.3)
 	col.shape = bs
 	area.add_child(col)
 	root.add_child(area)
@@ -163,12 +165,12 @@ func set_label(i: int, s: String) -> void:
 func _layout() -> void:
 	var y := top_y
 	for it in items:
-		var step := STEP
+		var step := item_spacing
 		if it.node != null:
 			it.node.position = Vector3(column_x, y, 0)
 			it.node.set_meta("home", it.node.position)
 			# A kit belt says how tall its plate is: never let the points overlap.
-			step = maxf(STEP, float((it.belt as Node3D).get_meta("height", 0.0)) + 0.06)
+			step = maxf(item_spacing, float((it.belt as Node3D).get_meta("height", 0.0)) + 0.06)
 		y -= step
 
 
@@ -192,10 +194,10 @@ func open() -> void:
 	if header != null:
 		var hp := header.position
 		header.position = hp + Vector3(0, 4.0, 0)
-		header.rotation.z = 0.25
+		header.rotation.z = header_tilt + 0.25
 		var tw2 := create_tween().set_parallel()
 		tw2.tween_property(header, "position", hp, 0.6).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-		tw2.tween_property(header, "rotation:z", 0.0, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		tw2.tween_property(header, "rotation:z", header_tilt, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	if cursor != null and _live(focus):
 		cursor.position = (items[focus].node.get_meta("home") as Vector3) + Vector3(-BELT_W * 0.5 - 0.55, 0, 0.1)
 
@@ -242,10 +244,13 @@ func _unhandled_input(event: InputEvent) -> void:
 			if it.kind == "row":
 				it.stop = _stop_at(h, (event as InputEventMouseButton).position)
 				_activate(h)
-			elif it.kind == "choice":
-				# A click on the belt's left half steps back, right half steps on.
+			elif it.has("arrows"):
 				var local := _ray_local(h, (event as InputEventMouseButton).position)
-				_cycle(-1 if local.x < 0.0 else 1)
+				var half: float = float(it.belt.get_meta("width", BELT_W)) * 0.5
+				if absf(local.x) > half:
+					_cycle(-1 if local.x < 0.0 else 1)
+				else:
+					_activate(h)
 			else:
 				_activate(h)
 	else:
@@ -375,7 +380,7 @@ func _process(delta: float) -> void:
 					(rings[k] as Node3D).visible = i == focus and k == int(it.get("stop", 0))
 		if it.has("arrows"):
 			for a in it.arrows:
-				(a as Node3D).visible = i == focus
+				(a as Node3D).visible = true
 				(a as Node3D).scale = Vector3.ONE * (1.0 + 0.12 * sin(t * 8.0))
 		if _open_t > 0.6:
 			n.scale = n.scale.lerp(Vector3.ONE * want, 1.0 - exp(-delta * 12.0))
@@ -396,5 +401,5 @@ func _process(delta: float) -> void:
 		cursor.rotation.z = sin(t * 6.0) * 0.18
 		cursor.rotation.y = sin(t * 2.0) * 0.4
 	if header != null and _open_t > 0.7:
-		header.rotation.z = sin(t * 1.4) * 0.025
+		header.rotation.z = header_tilt + sin(t * 1.4) * 0.025
 		header.scale = Vector3.ONE * (1.0 + sin(t * 2.6) * 0.012)
