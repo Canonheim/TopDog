@@ -14,7 +14,7 @@ const FIRST := [
 	"Danny", "Dan", "John", "Johnny", "Jonny", "Jonaline", "Ethan", "Daniel",
 	"Jorge", "George", "Austin", "Jesus", "Brandon",
 	"Horatio", "Horace", "Seamus O'Hool", "O'Leary", "Reginald", "Bort", "Bob", "Billy",
-	"Bingus", "Sally", "Steven", "Steve",
+	"Bingus", "Sally", "Steven", "Steve", "Weston", "Carsen",
 ]
 const THING := [
 	"Barrel", "Ladder", "Turnip", "Goose", "Bucket", "Anvil", "Cabbage", "Kettle",
