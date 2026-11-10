@@ -247,8 +247,10 @@ static func title_logo() -> Node3D:
 	return root
 
 
-## F12: the select marker, a blue star on a gold star plate (Parker 11-10), 0.56 x 0.53,
-## origin its centre. Stand-in: a gold star with a smaller blue one on it.
+## F12: the select marker, a blue star on a gold star plate, 0.56 x 0.53, origin its
+## centre: the Options screen's only (Parker 11-10: "I just wanted it replaced in the
+## Options specifically, not in the main UI"); the menus keep the pug crest and mask.
+## Stand-in: a gold star with a smaller blue one on it.
 static func cursor_star() -> Node3D:
 	var k := kit_model("cursor_star")
 	if k != null:
@@ -352,16 +354,8 @@ static func belt_button(width := 2.2) -> Node3D:
 		holder.set_meta("text_color", CREAM)  # the kit's label face is red: cream letters
 		holder.set_meta("text_back", INK)
 		if crest != null:
-			# THE SELECT STAR (Parker 11-10: "make the select thing that is currently a dog
-			# emblem, make it a blue star on a gold star shaped background"): the kit's
-			# cursor_star stands where the pug crest stood, its foot on the crest's foot.
-			var star := cursor_star()
-			var c3 := crest as Node3D
-			star.position = Vector3(0.0, c3.position.y - 0.138 + 0.2665, c3.position.z)
-			c3.get_parent().add_child(star)
-			c3.queue_free()
-			holder.set_meta("crest", star)
-			star.visible = false
+			holder.set_meta("crest", crest)
+			(crest as Node3D).visible = false
 		return holder
 	var root := Node3D.new()
 	var strap := box(Vector3(width + 1.2, 0.26, 0.05), LEATHER, Vector3(0, 0, -0.04))

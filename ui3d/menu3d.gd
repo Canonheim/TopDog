@@ -3,8 +3,7 @@ extends Node3D
 ## A 3D MENU: championship-belt buttons in the world, hung in front of the camera.
 ## Pad (through PadNav's ui_* actions), keyboard (arrows, Enter/Space) and mouse
 ## (a ray against each belt) all drive it. The focused belt grows and wobbles and
-## the select star slides beside it (kit belts wear it on top instead); a menu opening
-## drops its belts in with a bounce.
+## a luchador mask slides beside it; a menu opening drops its belts in with a bounce.
 ##
 ## Items: add_button(label, callback) / add_choice(label, options, index, on_change)
 ## / add_spacer(). A choice cycles with left/right (or a click on its sides).
@@ -34,8 +33,8 @@ func _init(p_cam: Camera3D) -> void:
 
 
 func _ready() -> void:
-	cursor = LuchaKit.cursor_star()  # the select star (Parker 11-10), was the mask
-	cursor.scale = Vector3.ONE * 0.7
+	cursor = LuchaKit.mask_icon(LuchaKit.RED, LuchaKit.GOLD)
+	cursor.scale = Vector3.ONE * 0.55
 	add_child(cursor)
 	close()
 
