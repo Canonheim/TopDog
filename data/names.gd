@@ -1,6 +1,6 @@
 class_name NameGen
 extends RefCounted
-## Climber names: "First the Thing Doer" (or "First the Wretch"), from our own word lists.
+## Climber names: "[Describer] First the Thing Doer" (or "... the Wretch"), from our own word lists.
 
 const FIRST := [
 	"Aldric", "Bertram", "Cuthbert", "Dunstan", "Edwin", "Fulk", "Godric", "Humbert",
@@ -9,7 +9,7 @@ const FIRST := [
 	"Agnes", "Beatrix", "Cecily", "Edith", "Gisela", "Hilda", "Isolde", "Matilda",
 	"Rowena", "Sibyl", "Winifred", "Elspeth", "Maud", "Odette", "Brunhild", "Tamsin",
 	"Dango", "Benny", "Alec", "Yordun", "Colin", "Nick", "Anthony",
-	"Don'Key", "Specky", "Adam", "Craig", "Big Tony", "El Jefe", "Juan", "Stephan",
+	"Don'Key", "Specky", "Adam", "Craig", "Tony", "Jefe", "Juan", "Stephan",
 	"Gordito", "P.K.", "Mohamad", "Xavier", "Timmy", "Tim", "Tom", "Tommy",
 	"Danny", "Dan", "John", "Johnny", "Jonny", "Jonaline", "Ethan", "Daniel",
 	"Jorge", "George", "Austin", "Jesus", "Brandon",
@@ -33,6 +33,19 @@ const TINTS := [
 ]
 
 
+## THE FRONT WORD (Parker 11-10): half of all climbers get a describer before the
+## first name, "Stinky Tony the Goose Toppler". Parker's list first, then ours.
+const ADJECTIVE := [
+	"El", "Big", "Tiny", "Stinky", "Violent", "Slimy", "Slick", "Skinny",
+	"Fat", "Pretty", "Nostalgic", "Lovely", "Melancholy",
+	"Sweaty", "Soggy", "Wobbly", "Grumpy", "Crusty", "Sneaky", "Damp", "Greasy",
+	"Lumpy", "Clumsy", "Moist", "Sassy", "Spicy", "Chunky", "Saucy", "Dizzy",
+	"Wiggly", "Hairy", "Sleepy", "Squeaky", "Feral", "Humble", "Unwashed", "Haunted",
+	"Itchy", "Bashful",
+]
+const ADJECTIVE_CHANCE := 0.5
+
+
 ## TITLES THAT STAND ALONE (Parker 11-09): picked like any THING, but no DOER is added,
 ## so anyone can be "Edith the Wretch".
 const ALONE := ["Wretch"]
@@ -40,6 +53,8 @@ const ALONE := ["Wretch"]
 
 static func make() -> String:
 	var first: String = FIRST.pick_random()
+	if randf() < ADJECTIVE_CHANCE:
+		first = "%s %s" % [ADJECTIVE.pick_random(), first]
 	var title: String = (THING + ALONE).pick_random()
 	if title in ALONE:
 		return "%s the %s" % [first, title]
