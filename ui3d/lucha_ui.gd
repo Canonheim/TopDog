@@ -1850,6 +1850,9 @@ func _process(delta: float) -> void:
 		_clock_text.position = hud_bottom.get_node("Buckle").position + Vector3(0, 0, 0.075)
 		_info.position = Vector3(half_w - 0.25, -half_h + 0.4, 0)
 		_steam_tag.position = Vector3(-half_w + 0.3, half_h - 0.4, 0)
+		# The who's-climbing label repeats the banner's news, and its tail covers it:
+		# it waits too.
+		_info.visible = not (_banner != null and _banner.visible)
 		hud_bottom.tick(delta)
 		if _bell != null:
 			_bell.visible = false
