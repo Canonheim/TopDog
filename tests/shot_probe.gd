@@ -15,6 +15,23 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(0.8).timeout
 	match open:
+		"pauseinput":
+			main._start_practice()
+			await get_tree().create_timer(1.2).timeout
+			for action in ["Escape", "Select"]:
+				# Both mapped inputs arrive through the same consumable pause edge.
+				Players._pause_edge[0] = true
+				main._process(0.0)
+				assert(main.screen == "pause" and get_tree().paused, action + " must open practice pause")
+				Players._pause_edge[0] = true
+				main._process(0.0)
+				assert(main.screen == "hud" and not get_tree().paused, action + " must resume")
+			print("PASS practice pause edges open and resume exactly once")
+		"lobby":
+			Net.online = true
+			Net.members = {1: {"name": "Host", "players": [], "ready": true}, 2: {"name": "Guest", "players": [{"name": "Guest", "tint": Color.WHITE, "slot": 0}], "ready": true}}
+			main.show_screen("lobby")
+			main._sync_waiting_room()
 		"customize":
 			main.show_screen("customize")
 		"options":

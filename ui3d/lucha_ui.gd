@@ -1407,8 +1407,8 @@ func _build_menus() -> void:
 	var logo_shift := cam.project_position(Vector2(10, 0), MENU_DIST).distance_to(cam.project_position(Vector2.ZERO, MENU_DIST)) / UI_SCALE
 	t.set_header(LuchaKit.title_logo(), Vector3(3.0 + logo_shift, 2.4, 0))
 	t.header_tilt = -0.07
-	t.column_x = -3.9
-	t.top_y = 1.8
+	t.column_x = Menu3D.MENU_COLUMN_X
+	t.top_y = Menu3D.MENU_TOP_Y
 	t.add_button("PLAY TOGETHER", func(): main.show_screen("local"))
 	t.add_button("PLAY ONLINE", func(): main.show_screen("online"))
 	t.add_button("PRACTICE", main._start_practice)
@@ -1416,18 +1416,12 @@ func _build_menus() -> void:
 	t.add_button("CONTROLS", func(): main._controls_back = "title"; main.show_screen("controls"))
 	t.add_button("OPTIONS", func(): main._options_back = "title"; main.show_screen("options"))
 	t.add_button("QUIT", main.quit_game)
-	# Keep Quit at its previous height, extending the column upward until the
-	# first and last buttons have equal margins around the screen centre.
-	var bottom: float = t.items[t.items.size() - 2].node.get_meta("home").y
-	t.top_y = -bottom
-	t.item_spacing = (t.top_y - bottom) / float(t.items.size() - 1)
-	t.refresh()
 	menus.title = t
 	# PLAY TOGETHER
 	var l := _menu()
-	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
-	l.column_x = -2.4
-	l.top_y = 1.75
+	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	l.column_x = Menu3D.MENU_COLUMN_X
+	l.top_y = Menu3D.MENU_TOP_Y
 	var mode_ids := ["scramble", "tower"]
 	l.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "scramble")))), func(i):
 		Net.settings.mode = mode_ids[i]
@@ -1448,8 +1442,8 @@ func _build_menus() -> void:
 	# PAUSE
 	var p := _menu()
 	p.set_header(LuchaKit.poster_text("TIME OUT!", 0.6, LuchaKit.GOLD, LuchaKit.RED, 0.12), Vector3(0, 1.9, 0))
-	p.column_x = 0.0
-	p.top_y = 0.9
+	p.column_x = Menu3D.MENU_COLUMN_X
+	p.top_y = Menu3D.MENU_TOP_Y
 	p.add_button("RESUME", main._toggle_pause)
 	p.add_button("CONTROLS", func(): main._controls_back = "pause"; main.show_screen("controls"))
 	p.add_button("OPTIONS", func(): main._options_back = "pause"; main.show_screen("options"))
@@ -1468,8 +1462,8 @@ func _build_menus() -> void:
 	menus.pause = p
 	# RESULTS
 	var r := _menu()
-	r.column_x = -2.6
-	r.top_y = -0.6
+	r.column_x = Menu3D.MENU_COLUMN_X
+	r.top_y = Menu3D.MENU_TOP_Y
 	r.add_button("REMATCH!", func():
 		if main.local_mode:
 			main.game.host_start(Net.settings.duplicate() if main.game.settings.mode != "practice" else main.game.settings, main.game.roster)

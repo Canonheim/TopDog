@@ -14,7 +14,9 @@ extends Node3D
 signal activated(index: int)
 
 const UI_LAYER := 1 << 19
-const STEP := 0.66
+const STEP := 0.5
+const MENU_COLUMN_X := -3.9
+const MENU_TOP_Y := 2.5
 const BELT_W := 2.3
 
 var items: Array = []  # [{node, kind, label, cb, options, index, on_change, text_node, area}]
@@ -24,8 +26,8 @@ var header: Node3D  # optional: logo / title above the belts
 var cursor: Node3D
 var item_spacing := STEP
 var header_tilt := 0.0
-var column_x := -2.4
-var top_y := 0.9
+var column_x := MENU_COLUMN_X
+var top_y := MENU_TOP_Y
 var _open_t := 0.0
 var _hover := -1
 

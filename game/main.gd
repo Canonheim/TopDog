@@ -89,6 +89,7 @@ func _ready() -> void:
 		if _online_status: _online_status.text = t
 		if _lobby_status: _lobby_status.text = t)
 	Net.members_changed.connect(_refresh_lobby)
+	Net.members_changed.connect(_sync_waiting_room)
 	Net.chat_line.connect(_on_chat)
 	Net.settings_changed.connect(_refresh_lobby)
 	Net.settings_changed.connect(func(): preview_base(str(Net.settings.get("base", "random"))))
@@ -268,12 +269,14 @@ func _process(delta: float) -> void:
 		var dev := Players.poll_join()
 		if dev != -2:
 			Players.add_player(dev)
-	if screen == "lobby":
+	if screen == "lobby" and Net.is_host():
 		var dev2 := Players.poll_join()
 		if dev2 != -2 and Players.slots.size() < 4:
 			Players.add_player(dev2)
 	for s in Players.slots.size():
-		if Players.pause_pressed(s) and screen in ["hud", "pause"]:
+		if screen == "lobby" and not Net.is_host() and Players.pause_pressed(s):
+			_leave_lobby()
+		elif screen in ["hud", "pause"] and Players.pause_pressed(s):
 			_toggle_pause()
 	if _build_tag != null:
 		_build_tag.visible = screen == "title"
@@ -290,6 +293,8 @@ A pad is connected but nothing has arrived. If pressing changes nothing here, so
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if screen == "lobby" and not Net.is_host() and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_E:
+		game._rpc_lobby_ding.rpc_id(1)
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F1:
 		feel_panel.visible = not feel_panel.visible
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE 			and _rebind_wait.is_empty() and screen not in ["hud", "pause"]:
@@ -307,6 +312,21 @@ func results_podium_focus() -> Vector2:
 
 
 func _tick_camera(delta: float) -> void:
+	if screen == "lobby":
+		var focus := Vector2(-5.5, 4.85)
+		var viewport_size := get_viewport().get_visible_rect().size
+		var aspect := viewport_size.x / maxf(1.0, viewport_size.y)
+		var distance := maxf(31.0, 16.5 / (tan(deg_to_rad(cam.fov * 0.5)) * aspect))
+		if not Net.is_host():
+			for actor: Climber in game.live_climbers():
+				if actor.owner_peer == game.me():
+					focus = actor.centre_of_mass()
+					distance = 9.0
+					break
+		cam.position = cam.position.lerp(Vector3(focus.x, focus.y + 1.0, distance), 1.0 - exp(-delta * 3.0))
+		cam.look_at(Vector3(cam.position.x, cam.position.y - 1.0, 0), Vector3.UP)
+		line_bar.visible = false
+		return
 	if screen == "customize":
 		cam.position = Vector3(-1.1, 2.2, 7.2)
 		cam.look_at(Vector3(-1.1, 1.7, 0), Vector3.UP)
@@ -531,7 +551,7 @@ func show_screen(id: String) -> void:
 		screens[k].visible = k == id
 	if pad_nav != null:
 		pad_nav.screen_root = screens.get(id)
-		pad_nav.active = id != "hud"
+		pad_nav.active = id != "hud" and not (id == "lobby" and not Net.is_host())
 	# Screens the 3D front end owns: its menu shows, the flat one stays hidden.
 	if lucha != null and lucha.show_screen(id):
 		if screens.has(id):
@@ -774,6 +794,7 @@ func _on_session_started() -> void:
 	_lobby_back = screen if screen in ["online", "online_flat", "friends", "browse", "title"] else "online"
 	local_mode = false
 	show_screen("lobby")
+	_sync_waiting_room()
 
 
 func _screen_lobby() -> Control:
@@ -855,9 +876,6 @@ func _start_online() -> void:
 	if not Net.is_host():
 		_lobby_status.text = "Only the host can start. Press Ready!"
 		return
-	if not Net.all_ready():
-		_lobby_status.text = "Waiting for everyone to press Ready."
-		return
 	Net.set_in_match(true)
 	game.host_start(Net.settings.duplicate(), Net.build_roster())
 
@@ -926,7 +944,8 @@ func _screen_results() -> Control:
 		if local_mode:
 			show_screen("title")
 		else:
-			show_screen("lobby"))
+			show_screen("lobby")
+			_sync_waiting_room())
 	return c
 
 
@@ -1183,3 +1202,7 @@ func _feel_panel() -> Control:
 		UiKit.slider(box, "%s: %s" % [k, spec[3]], Feel.get_k(k), spec[1], spec[2], func(v): Feel.set_k(k, v), 16)
 	UiKit.button(box, "Reset all", func(): Feel.reset(); feel_panel.queue_free(); feel_panel = _feel_panel(); ui.get_child(0).add_child(feel_panel))
 	return p
+
+func _sync_waiting_room() -> void:
+	if screen == "lobby" and Net.is_host() and not Net.in_match:
+		game.sync_waiting_room.call_deferred()

@@ -2515,3 +2515,79 @@ func _run_personalcamera() -> void:
 	g.end_match()
 	g.queue_free()
 	await frames(2)
+func _run_waitingroom() -> void:
+	var g := GameScript.new()
+	g.world = world
+	g.dress = false
+	add_child(g)
+	var guests := [{"pid": 32, "peer": 2, "slot": 0, "name": "Guest", "tint": Color.WHITE}]
+	g._rpc_waiting_room(guests, {})
+	t("lobby: authenticated guest appears without a host body", g.phase == "lobby" and g.climbers.size() == 1 and g.live.has(32))
+	var first: Climber = g.climbers[32]
+	var expanded := guests.duplicate()
+	expanded.append({"pid": 48, "peer": 3, "slot": 0, "name": "Second", "tint": Color.WHITE})
+	g._rpc_waiting_room(expanded, {})
+	t("lobby: new guest preserves the first climber", g.climbers.size() == 2 and g.climbers[32] == first)
+	g._rpc_waiting_room([expanded[1]], {})
+	t("lobby: leaving guest is removed", g.climbers.size() == 1 and not g.live.has(32))
+	g._rpc_start({"mode": "scramble", "stage": "plaza", "base": "barrel"}, expanded)
+	t("lobby: match start clears waiting actors and button", g.phase == "between" and g.climbers.is_empty() and g._lobby_button == null)
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+func _run_waitinghost() -> void:
+	var g := GameScript.new()
+	g.name = "WaitingGame"
+	g.world = world
+	g.dress = false
+	add_child(g)
+	Net.members_changed.connect(g.sync_waiting_room)
+	var peer := ENetMultiplayerPeer.new()
+	assert(peer.create_server(7789, 12) == OK)
+	Net.multiplayer.multiplayer_peer = peer
+	Net._start_session_as_host()
+	for tick in 1200:
+		if Net.members.size() > 1 and not g.climbers.is_empty():
+			break
+		await frames(1)
+	t("network lobby: host sees one fully joined guest", g.climbers.size() == 1 and g.phase == "lobby")
+	if not g.climbers.is_empty():
+		var c: Climber = g.climbers.values()[0]
+		t("network lobby: host remains a spectator", c.owner_peer != 1)
+		await seconds(2.0)
+		t("network lobby: guest pose reaches host", g._last_seq.has(c.climber_id))
+		Net.set_in_match(true)
+		g.host_start(Net.settings.duplicate(), Net.build_roster())
+		await wait_phase(g, "round", 5.0)
+		t("network lobby: host starts match without ready menus", g.phase == "round" and g.live_climbers().size() == 2)
+		await seconds(2.0)
+	Net.members_changed.disconnect(g.sync_waiting_room)
+	g.end_match()
+	Net.leave()
+	g.queue_free()
+	await frames(2)
+
+
+func _run_waitingclient() -> void:
+	var g := GameScript.new()
+	g.name = "WaitingGame"
+	g.world = world
+	g.dress = false
+	add_child(g)
+	var peer := ENetMultiplayerPeer.new()
+	assert(peer.create_client("127.0.0.1", 7789) == OK)
+	Net.multiplayer.multiplayer_peer = peer
+	await wait_phase(g, "lobby", 10.0)
+	t("network lobby: guest enters waiting ring", g.phase == "lobby" and g.climbers.size() == 1)
+	if not g.climbers.is_empty():
+		var c: Climber = g.climbers.values()[0]
+		t("network lobby: guest owns playable limbs", c.state == Climber.State.LIVE and c.driver is Drivers.LocalDriver)
+		c.bodies["chest"].apply_central_impulse(Vector3(25, 0, 0))
+		g._rpc_lobby_ding.rpc_id(1)
+		await wait_phase(g, "round", 8.0)
+		t("network lobby: guest transitions to match", g.phase == "round" and g._lobby_button == null)
+		await seconds(1.0)
+	g.end_match()
+	Net.leave()
+	g.queue_free()
+	await frames(2)

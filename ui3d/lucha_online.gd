@@ -46,9 +46,9 @@ func _init(p_ui: LuchaUI) -> void:
 func build() -> void:
 	# ONLINE
 	var o := ui._menu()
-	o.set_header(LuchaKit.poster_text("PLAY ONLINE", 0.48, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
-	o.column_x = -2.4
-	o.top_y = 1.25
+	o.set_header(LuchaKit.poster_text("PLAY ONLINE", 0.48, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	o.column_x = Menu3D.MENU_COLUMN_X
+	o.top_y = Menu3D.MENU_TOP_Y
 	o.add_button("HOST PUBLIC", func():
 		main._ensure_player()
 		Net.host_steam(Net.VIS_PUBLIC))
@@ -58,21 +58,21 @@ func build() -> void:
 	ui.menus.online = o
 	# FRIENDS
 	var f := ui._menu()
-	f.set_header(LuchaKit.poster_text("JOIN A FRIEND", 0.46, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
-	f.column_x = -2.4
-	f.top_y = 1.25
+	f.set_header(LuchaKit.poster_text("JOIN A FRIEND", 0.46, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	f.column_x = Menu3D.MENU_COLUMN_X
+	f.top_y = Menu3D.MENU_TOP_Y
 	ui.menus.friends = f
 	# BROWSE
 	var b := ui._menu()
-	b.set_header(LuchaKit.poster_text("BROWSE GAMES", 0.46, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
-	b.column_x = -2.4
-	b.top_y = 1.25
+	b.set_header(LuchaKit.poster_text("BROWSE GAMES", 0.46, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	b.column_x = Menu3D.MENU_COLUMN_X
+	b.top_y = Menu3D.MENU_TOP_Y
 	ui.menus.browse = b
 	# LOBBY
 	var l := ui._menu()
-	l.set_header(LuchaKit.poster_text("LOBBY", 0.5, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(-2.4, 2.75, 0))
-	l.column_x = -2.4
-	l.top_y = 1.4
+	l.set_header(LuchaKit.poster_text("LOBBY", 0.5, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	l.column_x = Menu3D.MENU_COLUMN_X
+	l.top_y = Menu3D.MENU_TOP_Y
 	ui.menus.lobby = l
 	# The status poster, shared by every online screen, and the lobby's boards.
 	_status_node = Node3D.new()
@@ -123,9 +123,9 @@ func _on_lobby_list(rows: Array) -> void:
 ## LuchaUI calls this on every screen change.
 func on_screen(id: String) -> void:
 	var online_ids := ["online", "friends", "browse", "lobby"]
-	_status_node.visible = id in online_ids
-	_board.visible = id == "lobby"
-	_chat_board.visible = id == "lobby"
+	_status_node.visible = id in ["friends", "browse"]
+	_board.visible = false
+	_chat_board.visible = false
 	_place_boards(id)
 	match id:
 		"online":
@@ -321,15 +321,13 @@ func _fill_lobby() -> void:
 			s.base = Modes.BASES[i]
 			Net.set_settings(s))
 
+		m.add_button("INVITE FRIENDS", func(): Net.invite_friends())
+		m.add_button("LEAVE", main._leave_lobby)
 	else:
-		_lobby_ready_item = m.add_button("I'M READY!" if not bool(me.get("ready", false)) else "NOT READY", func():
-			Net.set_ready(not bool(Net.members.get(Net.me(), {}).get("ready", false))))
-	m.add_button("INVITE FRIENDS", func(): Net.invite_friends())
-	m.add_button("LEAVE", main._leave_lobby)
+		m.close()
+		return
 	m.refresh()
 	m.focus = clampi(keep, 0, m.items.size() - 1)
-	_fill_cards()
-	_fill_chat()
 	_place_boards("lobby")
 	if not host:
 		_update_guest_settings()
@@ -343,9 +341,6 @@ func _start() -> void:
 		return
 	if Net._climber_count() < int(Modes.row(str(Net.settings.get("mode", "scramble"))).min_players):
 		set_status("Classic needs at least two players.")
-		return
-	if not Net.all_ready():
-		set_status("Waiting for everyone to press READY.")
 		return
 	main._start_online()
 
