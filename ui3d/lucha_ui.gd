@@ -46,6 +46,8 @@ var _clock_text: Node3D
 var _clock_val := -1
 var _info: Node3D
 var _info_text := ""
+var _steam_tag: Node3D  # the nameplate climber's Steam name, top left (Parker 11-10)
+var _steam_text := ""
 var _local_start := -1
 var _banner: Node3D
 var _banner_t := 0.0
@@ -1660,6 +1662,9 @@ func _build_hud() -> void:
 	_clock_text.reparent(hud_bottom, false)
 	_hud.get_node("Buckle").reparent(hud_bottom, false)
 	_info.reparent(hud_bottom, false)
+	_steam_tag = Node3D.new()
+	_steam_tag.name = "SteamTag"
+	hud_bottom.add_child(_steam_tag)
 	# 1.3 m from the lens, shrunk to match: the same place on screen, but in front
 	# of the ring's apron, which the follow camera brings nearer than the HUD.
 	var near := 1.3
@@ -1838,6 +1843,7 @@ func _process(delta: float) -> void:
 		hud_bottom.get_node("Buckle").position = Vector3(half_w - 1.15, half_h - 1.05, 0)
 		_clock_text.position = hud_bottom.get_node("Buckle").position + Vector3(0, 0, 0.075)
 		_info.position = Vector3(half_w - 0.25, -half_h + 0.4, 0)
+		_steam_tag.position = Vector3(-half_w + 0.3, half_h - 0.4, 0)
 		hud_bottom.tick(delta)
 		if _bell != null:
 			_bell.visible = false
@@ -1852,6 +1858,17 @@ func _process(delta: float) -> void:
 				info = "GET READY..."
 		if g.practice:
 			info = "PRACTICE"
+		# The Steam name, top left, read from its left edge (online only).
+		var steam := hud_bottom.steam_shown.to_upper() if show else ""
+		if steam != _steam_text:
+			_steam_text = steam
+			for ch in _steam_tag.get_children():
+				ch.queue_free()
+			if steam != "":
+				var st := LuchaKit.poster_text(steam, 0.26, LuchaKit.GOLD, LuchaKit.INK, 0.05)
+				st.position = Vector3(steam.length() * 0.09, 0, 0)
+				_steam_tag.add_child(st)
+				no_shadows(st)
 		if info != _info_text:
 			_info_text = info
 			for ch in _info.get_children():

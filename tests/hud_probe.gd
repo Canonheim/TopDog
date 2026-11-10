@@ -31,17 +31,19 @@ func _ready() -> void:
 	await get_tree().create_timer(2.0).timeout
 	var hb: LuchaHudBottom = main.lucha.hud_bottom
 	_check("the bottom shows in a turn", hb.is_visible_in_tree())
-	# THE NAME CYCLE (Parker 11-09): the climber's made name and the Steam name, no round.
-	var lines: Array = hb.name_cycle(main.game, main.game.live_climbers()[0])
-	var steam := LuchaHudBottom.steam_name(1)
-	_check("the nameplate cycles the climber's name and the Steam name (no round)", lines[0] == "Bartholomew the Exceedingly Long-Named" and (steam == "" or lines.has(steam)) and not lines.any(func(x): return str(x).begins_with("ROUND")), lines)
-	_check("offline there's no Steam name to show (not the Windows user name)", steam == "" and lines.size() == 1, lines)
-	_check("...and shows one of them in full, never clipped", lines.map(func(x): return str(x).to_upper()).has(hb._name_shown), hb._name_shown)
-	var seen := {}
-	for k in int(LuchaHudBottom.NAME_CYCLE_S * lines.size() * 10.0) + 2:
-		await get_tree().create_timer(0.1).timeout
-		seen[hb._name_shown] = true
-	_check("...turning through every line", seen.size() == lines.size(), seen.keys())
+	# Parker 11-10: the plate holds the made name only; the Steam name goes top left.
+	_check("the nameplate names the climber in full, never clipped", hb._name_shown == "BARTHOLOMEW THE EXCEEDINGLY LONG-NAMED", hb._name_shown)
+	await get_tree().create_timer(3.0).timeout
+	_check("...and keeps it (no cycling)", hb._name_shown == "BARTHOLOMEW THE EXCEEDINGLY LONG-NAMED", hb._name_shown)
+	_check("offline there's no Steam name (top left stays empty)", hb.steam_shown == "" and main.lucha._steam_tag.get_child_count() == 0, hb.steam_shown)
+	# Online, the climber's player's Steam name shows top left.
+	Net.online = true
+	Net.members[1] = {"name": "SteamPal", "players": [], "ready": true}
+	await get_tree().create_timer(0.3).timeout
+	_check("online, the Steam name shows top left", hb.steam_shown == "SteamPal" and main.lucha._steam_text == "STEAMPAL" and main.lucha._steam_tag.get_child_count() > 0, main.lucha._steam_text)
+	await _shot("hud_steam_tag")
+	Net.online = false
+	Net.members.erase(1)
 	_check("the odometer has four drums", hb._drums.size() == 4, hb._drums.size())
 	_check("below the line the toast is down in its slot, and hidden", not hb.popped and hb._lock.position.y < 0.1 and not hb._lock.visible, hb._lock.position.y)
 	# Uncovered, the plate is fully opaque again (exactly 0), so the screen ink outlines it.

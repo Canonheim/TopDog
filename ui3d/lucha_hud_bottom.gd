@@ -6,9 +6,9 @@ extends Node3D
 ## Odometer with the rotating wheels with the numbers on them."
 ##
 ## nameplate  on the kit's hud_nameplate (its nameplate_face), fitted for 33
-##            letters: THE NAME CYCLE (Parker 11-09) turns every NAME_CYCLE_S
-##            between the climber's made-up name and its player's Steam name
-##            (the climbing climber in turns modes, your own in Classic); no round. Its
+##            letters: the climber's made-up name only (the climbing climber in
+##            turns modes, your own in Classic). Its player's Steam name shows in
+##            the HUD's top-left corner instead (steam_shown, Parker 11-10). Its
 ##            nameplate_lockin tab says LOCK IN! when your climber is above the
 ##            line, held a moment either way so it never flickers.
 ## odometer   your climber's top height, 00.00 to 99.99 m, on the kit's
@@ -32,7 +32,10 @@ const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
 const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
 const LOCK_TEXT := "LOCK IN!"
-const NAME_CYCLE_S := 2.5  # THE NAME CYCLE: the made name and the Steam name each show this long
+## The Steam name of the nameplate's climber's player (online only, else ""), which
+## LuchaUI shows in the top-left corner (Parker 11-10: "the name plate should now only
+## have the built names and the name of the steam name should show in the upper left").
+var steam_shown := ""
 ## THE STEADY TAB (Parker 11-09: the lock-in "was flashing oddly"): your climber must be
 ## above the line this long before the tab pops, and off it this long before it drops,
 ## so a hand flickering on and off a hold at the line doesn't flash it.
@@ -127,6 +130,9 @@ func _build_plate() -> void:
 			fh = fb.size.y
 		# The title font runs narrower than fit_text's guess: let it use the face.
 		_lock_text = LuchaKit.fit_text(LOCK_TEXT, fw * 1.1, fh * 0.95, LuchaKit.RED, LuchaKit.INK)
+		# The capitals sat high in the toaster (Parker 11-10): centre them by the font's
+		# letter height, not its line box.
+		LuchaKit.center_digits(_lock_text)
 		_lock_text.position = fc
 		_lock.add_child(_lock_text)
 	else:
@@ -313,7 +319,8 @@ func tick(delta: float) -> void:
 		if cl.owner_peer == me and (mine == null or cl.top_height() > mine.top_height()):
 			mine = cl
 	var who: Climber = climbing if g.mode.get("live", "turns") == "turns" else mine
-	set_name_text(name_cycle_text(g, who))
+	set_name_text(who.display_name if who != null else "")
+	steam_shown = steam_name(who.owner_peer if who != null else g.me())
 	var h_src: Climber = who if who != null else mine
 	if h_src != null:
 		set_height(test_height if test_height >= 0.0 else maxf(0.0, h_src.top_height()), delta)
@@ -333,27 +340,6 @@ func tick(delta: float) -> void:
 		var gm := _gems as MeshInstance3D
 		if gm != null:
 			gm.material_override = CelPass.cel_material(Color("#7CC83A") if above else Color("#D8262E"))
-
-
-## THE NAME CYCLE: the lines the plate turns through for `who` (null: nobody of
-## yours is climbing, so just your Steam name), and the one showing now. No round
-## number (Parker 11-09: "dont have it cycle the round number").
-func name_cycle(g: Game, who: Climber) -> Array:
-	var lines: Array = []
-	var peer: int = who.owner_peer if who != null else g.me()
-	if who != null:
-		lines.append(who.display_name)
-	var steam := steam_name(peer)
-	if steam != "" and not lines.has(steam):
-		lines.append(steam)
-	return lines
-
-
-func name_cycle_text(g: Game, who: Climber) -> String:
-	var lines := name_cycle(g, who)
-	if lines.is_empty():
-		return ""
-	return str(lines[int(Time.get_ticks_msec() / (NAME_CYCLE_S * 1000.0)) % lines.size()])
 
 
 ## A machine's Steam name, from the lobby's member list: online only. Offline (practice,
