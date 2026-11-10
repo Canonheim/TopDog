@@ -190,7 +190,7 @@ func _demo() -> void:
 	Players.add_player(Players.ANY, "Parker the Barrel-Hugger")
 	local_mode = true
 	game.host_start({"mode": "scramble", "timer": 60.0, "spawn": "alternate", "stage": "plaza"},
-		[{"pid": 0, "name": Players.slots[0].name, "tint": Players.slots[0].tint, "peer": 1, "slot": 0}])
+		[{"pid": 0, "name": Players.slots[0].name, "tint": Players.slots[0].tint, "peer": 1, "slot": 0, "appearance": Wardrobe.for_slot(0)}])
 	show_screen("hud")
 
 
@@ -307,6 +307,11 @@ func results_podium_focus() -> Vector2:
 
 
 func _tick_camera(delta: float) -> void:
+	if screen == "customize":
+		cam.position = Vector3(-1.1, 2.2, 7.2)
+		cam.look_at(Vector3(-1.1, 1.7, 0), Vector3.UP)
+		line_bar.visible = false
+		return
 	if screen == "results":
 		_results_elapsed += delta / Engine.time_scale
 		var start := Vector2(0, 1.5)
@@ -505,8 +510,10 @@ func _on_over(res: Dictionary) -> void:
 func preview_base(choice: String) -> void:
 	if game == null or game.stage == null or game.phase != "idle":
 		return
-	var selected := str(Modes.STARTING_BASES.pick_random()) if choice == "random" else choice
-	game.stage.set_base(world, selected)
+	# Random is resolved by the host at match start, never by menu updates.
+	if choice == "random":
+		return
+	game.stage.set_base(world, choice)
 
 
 func show_screen(id: String) -> void:
@@ -531,6 +538,8 @@ func show_screen(id: String) -> void:
 			screens[id].visible = false
 		if pad_nav != null and id != "online_flat":
 			pad_nav.screen_root = null
+	if screens.has("customize"):
+		screens.customize.on_screen(id)
 	if id == "online":
 		Net.ensure_steam()
 	paused = false
@@ -568,6 +577,7 @@ func _build_ui() -> void:
 	screens.pause = _screen_pause()
 	screens.controls = _screen_controls()
 	screens.options = _screen_options()
+	screens.customize = preload("res://ui/customization.gd").new(self)
 	for k in screens:
 		root.add_child(screens[k])
 	banner = Label.new()
@@ -615,6 +625,7 @@ func _screen_title() -> Control:
 	UiKit.button(box, "Play together (this PC)", func(): show_screen("local"))
 	UiKit.button(box, "Play online", func(): show_screen("online"))
 	UiKit.button(box, "Practice", _start_practice)
+	UiKit.button(box, "Customize", func(): show_screen("customize"))
 	UiKit.button(box, "Controls", func(): _controls_back = "title"; show_screen("controls"))
 	UiKit.button(box, "Options", func(): _options_back = "title"; show_screen("options"))
 	UiKit.button(box, "Quit", quit_game)
@@ -665,7 +676,7 @@ func _start_local() -> void:
 	local_mode = true
 	var roster: Array = []
 	for s in Players.slots.size():
-		roster.append({"pid": s, "name": Players.slots[s].name, "random": Players.slots[s].get("random", false), "tint": Players.slots[s].tint, "peer": 1, "slot": s})
+		roster.append({"pid": s, "name": Players.slots[s].name, "random": Players.slots[s].get("random", false), "tint": Players.slots[s].tint, "peer": 1, "slot": s, "appearance": Wardrobe.for_slot(s)})
 	game.host_start(Net.settings.duplicate(), roster)
 	show_screen("hud")
 
@@ -676,7 +687,7 @@ func _start_practice() -> void:
 	local_mode = true
 	var s := Net.settings.duplicate()
 	s.mode = "practice"
-	game.host_start(s, [{"pid": 0, "name": Players.slots[0].name, "random": Players.slots[0].get("random", false), "tint": Players.slots[0].tint, "peer": 1, "slot": 0}])
+	game.host_start(s, [{"pid": 0, "name": Players.slots[0].name, "random": Players.slots[0].get("random", false), "tint": Players.slots[0].tint, "peer": 1, "slot": 0, "appearance": Wardrobe.for_slot(0)}])
 	show_screen("hud")
 
 
@@ -983,6 +994,11 @@ func _back() -> void:
 	if not _rebind_wait.is_empty():
 		return
 	match screen:
+		"customize":
+			if screens.customize.confirming:
+				screens.customize._cancel_delete()
+			else:
+				show_screen("title")
 		"local", "online":
 			show_screen("title")
 		"lobby":

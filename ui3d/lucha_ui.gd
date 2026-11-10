@@ -24,7 +24,7 @@ const LINE_Z := -0.8  # behind the play plane (the line node sits at z 0.35)
 const BANNER_KIT_SCALE := 2.0  # the kit's hud_banner at HUD size (notes x0.85)
 const BANNER_Y := 2.55  # the turn / announcement banner, high on the HUD (its flags reach the top)
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
-const OWNED := ["title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat", "controls", "options"]
+const OWNED := ["customize", "title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat", "controls", "options"]
 const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
 const CARD_DY := 2.3  # and 2.05 m with its mask crest
 
@@ -1404,15 +1404,24 @@ func _menu() -> Menu3D:
 func _build_menus() -> void:
 	# THE TITLE
 	var t := _menu()
-	t.set_header(LuchaKit.title_logo(), Vector3(2.4, 2.0, 0))
-	t.column_x = -3.6
+	var logo_shift := cam.project_position(Vector2(10, 0), MENU_DIST).distance_to(cam.project_position(Vector2.ZERO, MENU_DIST)) / UI_SCALE
+	t.set_header(LuchaKit.title_logo(), Vector3(3.0 + logo_shift, 2.4, 0))
+	t.header_tilt = -0.07
+	t.column_x = -3.9
 	t.top_y = 1.8
 	t.add_button("PLAY TOGETHER", func(): main.show_screen("local"))
 	t.add_button("PLAY ONLINE", func(): main.show_screen("online"))
 	t.add_button("PRACTICE", main._start_practice)
+	t.add_button("CUSTOMIZE", func(): main.show_screen("customize"))
 	t.add_button("CONTROLS", func(): main._controls_back = "title"; main.show_screen("controls"))
 	t.add_button("OPTIONS", func(): main._options_back = "title"; main.show_screen("options"))
 	t.add_button("QUIT", main.quit_game)
+	# Keep Quit at its previous height, extending the column upward until the
+	# first and last buttons have equal margins around the screen centre.
+	var bottom: float = t.items[t.items.size() - 2].node.get_meta("home").y
+	t.top_y = -bottom
+	t.item_spacing = (t.top_y - bottom) / float(t.items.size() - 1)
+	t.refresh()
 	menus.title = t
 	# PLAY TOGETHER
 	var l := _menu()
@@ -1423,7 +1432,7 @@ func _build_menus() -> void:
 	l.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "scramble")))), func(i):
 		Net.settings.mode = mode_ids[i]
 		_refresh_cards())
-	l.add_choice("CLOCK", ["40 S", "1 MIN", "1:30"], maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0)))), func(i): Net.settings.timer = Modes.TIMERS[i])
+	l.add_choice("CLOCK", Modes.TIMER_NAMES, maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0)))), func(i): Net.settings.timer = Modes.TIMERS[i])
 	l.add_choice("SPAWN", ["SWAP", "LEFT", "RIGHT", "RANDOM"], maxi(0, Modes.SPAWNS.find(str(Net.settings.get("spawn", "alternate")))), func(i): Net.settings.spawn = Modes.SPAWNS[i])
 	l.add_choice("BASE", Modes.BASE_NAMES.map(func(n): return n.to_upper()), maxi(0, Modes.BASES.find(str(Net.settings.get("base", "random")))), func(i):
 		Net.settings.base = Modes.BASES[i]
