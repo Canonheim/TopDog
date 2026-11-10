@@ -1021,6 +1021,18 @@ func _pose_diff(a: PackedFloat32Array, b: PackedFloat32Array) -> float:
 ## Four fake pads drive four players with no crosstalk; the triggers share one
 ## press point; the keyboard player is its own device.
 func _run_devices() -> void:
+	# THE SWAP (Parker 11-10): binding a key another action uses swaps the two.
+	# (set_bind saves: the player's own binds are put back afterwards.)
+	var kept_binds: Dictionary = Players.binds.duplicate(true)
+	Players.reset_binds()
+	Players.set_bind("kbm", "arm_l", 0, {"key": KEY_D})  # D was the right hand's
+	t("devices: binding a key that's in use swaps it (left hand D, right hand gets A)", Players.binds.kbm.arm_l[0] == {"key": KEY_D} and Players.binds.kbm.arm_r[0] == {"key": KEY_A}, [Players.binds.kbm.arm_l[0], Players.binds.kbm.arm_r[0]])
+	Players.set_bind("pad", "lock", 0, {"pad": JOY_BUTTON_A})  # A was the right hand's
+	t("devices: on the pad too (lock gets A, right hand gets Start)", Players.binds.pad.lock[0] == {"pad": JOY_BUTTON_A} and Players.binds.pad.arm_r[0] == {"pad": JOY_BUTTON_START})
+	Players.set_bind("kbm", "leg_l", 1, {"key": KEY_ENTER})  # into an empty slot: Lock's second key moves, the other side empties
+	t("devices: swapping into an empty slot leaves the other slot empty", Players.binds.kbm.leg_l[1] == {"key": KEY_ENTER} and Players.binds.kbm.lock[1].is_empty())
+	Players.binds = kept_binds
+	Players.save()
 	# AN ONLINE PLAYER (Parker 11-09): goes by the Steam name, but its climbers get
 	# made names (the slot is flagged random), and the host names each new climber.
 	Players.clear_players()

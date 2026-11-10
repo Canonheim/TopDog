@@ -454,12 +454,15 @@ func _bind_down(dev: int, b: Dictionary) -> bool:
 
 func set_bind(scheme: String, action: String, index: int, b: Dictionary) -> void:
 	var list: Array = binds[scheme][action]
-	# One input, one action: clear it anywhere else in the scheme first.
+	# One input, one action. An input already bound elsewhere in the scheme SWAPS
+	# (Parker 11-10: "a key that is bound over another one swaps it"): that slot takes
+	# this slot's old input.
+	var old: Dictionary = list[index]
 	if not b.is_empty():
 		for a in binds[scheme]:
 			for i in binds[scheme][a].size():
-				if binds[scheme][a][i] == b:
-					binds[scheme][a][i] = {}
+				if binds[scheme][a][i] == b and not (a == action and i == index):
+					binds[scheme][a][i] = old
 	list[index] = b
 	save()
 
