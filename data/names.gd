@@ -13,6 +13,8 @@ const FIRST := [
 	"Gordito", "P.K.", "Mohamad", "Xavier", "Timmy", "Tim", "Tom", "Tommy",
 	"Danny", "Dan", "John", "Johnny", "Jonny", "Jonaline", "Ethan", "Daniel",
 	"Jorge", "George", "Austin", "Jesus", "Brandon",
+	"Horatio", "Horace", "Seamus O'Hool", "O'Leary", "Reginald", "Bort", "Bob", "Billy",
+	"Bingus", "Sally", "Steven", "Steve",
 ]
 const THING := [
 	"Barrel", "Ladder", "Turnip", "Goose", "Bucket", "Anvil", "Cabbage", "Kettle",
