@@ -35,6 +35,7 @@ func _ready() -> void:
 	var lines: Array = hb.name_cycle(main.game, main.game.live_climbers()[0])
 	var steam := LuchaHudBottom.steam_name(1)
 	_check("the nameplate cycles the climber's name and the Steam name (no round)", lines[0] == "Bartholomew the Exceedingly Long-Named" and (steam == "" or lines.has(steam)) and not lines.any(func(x): return str(x).begins_with("ROUND")), lines)
+	_check("offline there's no Steam name to show (not the Windows user name)", steam == "" and lines.size() == 1, lines)
 	_check("...and shows one of them in full, never clipped", lines.map(func(x): return str(x).to_upper()).has(hb._name_shown), hb._name_shown)
 	var seen := {}
 	for k in int(LuchaHudBottom.NAME_CYCLE_S * lines.size() * 10.0) + 2:

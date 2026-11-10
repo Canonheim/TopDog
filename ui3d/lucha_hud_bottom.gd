@@ -345,11 +345,13 @@ func name_cycle_text(g: Game, who: Climber) -> String:
 	return str(lines[int(Time.get_ticks_msec() / (NAME_CYCLE_S * 1000.0)) % lines.size()])
 
 
-## A machine's Steam name: the lobby's member list online, this machine's own offline.
+## A machine's Steam name, from the lobby's member list: online only. Offline (practice,
+## local play) there's none to show (Parker 11-09: practice cycled "part of the email
+## address", the Windows user name the offline fallback used).
 static func steam_name(peer: int) -> String:
-	if Net.members.has(peer):
+	if Net.online and Net.members.has(peer):
 		return str(Net.members[peer].get("name", ""))
-	return Net.my_name()
+	return ""
 
 
 ## A mesh's box in another node's space (both may be scaled kit pieces).
