@@ -9,6 +9,10 @@ const FIRST := [
 	"Agnes", "Beatrix", "Cecily", "Edith", "Gisela", "Hilda", "Isolde", "Matilda",
 	"Rowena", "Sibyl", "Winifred", "Elspeth", "Maud", "Odette", "Brunhild", "Tamsin",
 	"Dango", "Benny", "Alec", "Yordun", "Colin", "Nick", "Anthony",
+	"Don'Key", "Specky", "Adam", "Craig", "Big Tony", "El Jefe", "Juan", "Stephan",
+	"Gordito", "P.K.", "Mohamad", "Xavier", "Timmy", "Tim", "Tom", "Tommy",
+	"Danny", "Dan", "John", "Johnny", "Jonny", "Jonaline", "Ethan", "Daniel",
+	"Jorge", "George", "Austin", "Jesus", "Brandon",
 ]
 const THING := [
 	"Barrel", "Ladder", "Turnip", "Goose", "Bucket", "Anvil", "Cabbage", "Kettle",
