@@ -1021,6 +1021,21 @@ func _pose_diff(a: PackedFloat32Array, b: PackedFloat32Array) -> float:
 ## Four fake pads drive four players with no crosstalk; the triggers share one
 ## press point; the keyboard player is its own device.
 func _run_devices() -> void:
+	# AN ONLINE PLAYER (Parker 11-09): goes by the Steam name, but its climbers get
+	# made names (the slot is flagged random), and the host names each new climber.
+	Players.clear_players()
+	var os := Players.add_online_player("SteamPal")
+	t("devices: an online player keeps the Steam name and is flagged for made climber names", os == 0 and Players.slots[0].name == "SteamPal" and bool(Players.slots[0].random))
+	var ng := make_game("tower", 1, 60.0)
+	ng.roster = [{"pid": 0, "name": "SteamPal", "random": true, "tint": Color.WHITE, "peer": 1, "slot": 0}]
+	await wait_phase(ng, "turn")
+	ng.host_start({"mode": "tower", "timer": 60.0, "spawn": "alternate", "stage": "dock"}, ng.roster)
+	await wait_phase(ng, "turn")
+	var nc: Climber = ng.live_climbers()[0]
+	t("devices: an online player's climber gets a made name, not the Steam name", nc.display_name != "SteamPal" and nc.display_name.contains(" the "), nc.display_name)
+	ng.end_match()
+	ng.queue_free()
+	await frames(2)
 	Players.clear_players()
 	Players.fake.clear()
 	for k in 4:

@@ -150,7 +150,7 @@ func _physics_process(_delta: float) -> void:
 ## follows the active backend while keeping its roster index and identity.
 func prepare_online(pname: String) -> void:
 	if slots.is_empty():
-		add_player(ANY, pname)
+		add_online_player(pname)
 	elif slots.size() == 1:
 		slots[0].device = ANY
 		slots[0].erase("native_pad")
@@ -190,6 +190,17 @@ func _refresh_pad_routes() -> void:
 			slot.device = route
 			available.erase(route)
 			device_changed.emit(s)
+
+## AN ONLINE PLAYER (Parker 11-09: the nameplate "is just showing steam names"): the
+## player goes by their Steam name (lobby, results, "X CLIMBING"), but each climber
+## they play gets a made-up name, like everyone else's; the nameplate cycles the
+## made name, the round and the Steam name.
+func add_online_player(steam_name: String) -> int:
+	var s := add_player(ANY, steam_name)
+	if s >= 0:
+		slots[s].random = true
+	return s
+
 
 func add_player(device: int, pname := "") -> int:
 	if slots.size() >= MAX_LOCAL or slot_of_device(device) != -1:

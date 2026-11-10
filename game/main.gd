@@ -732,7 +732,7 @@ func _focus_first_in(n: Control) -> void:
 
 func _ensure_player() -> void:
 	if Players.slots.is_empty():
-		Players.add_player(Players.ANY, Net.my_name())
+		Players.add_online_player(Net.my_name())  # Steam name for the player, made names for its climbers
 
 
 func _fill_lobby_list(rows: Array) -> void:

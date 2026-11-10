@@ -31,10 +31,10 @@ func _ready() -> void:
 	await get_tree().create_timer(2.0).timeout
 	var hb: LuchaHudBottom = main.lucha.hud_bottom
 	_check("the bottom shows in a turn", hb.is_visible_in_tree())
-	# THE NAME CYCLE (Parker 11-09): the climber's name, the round, the Steam name.
+	# THE NAME CYCLE (Parker 11-09): the climber's made name and the Steam name, no round.
 	var lines: Array = hb.name_cycle(main.game, main.game.live_climbers()[0])
 	var steam := LuchaHudBottom.steam_name(1)
-	_check("the nameplate cycles the climber's name, the round and the Steam name", lines.size() >= 2 and lines[0] == "Bartholomew the Exceedingly Long-Named" and str(lines[1]).begins_with("ROUND ") and (steam == "" or lines.has(steam)), lines)
+	_check("the nameplate cycles the climber's name and the Steam name (no round)", lines[0] == "Bartholomew the Exceedingly Long-Named" and (steam == "" or lines.has(steam)) and not lines.any(func(x): return str(x).begins_with("ROUND")), lines)
 	_check("...and shows one of them in full, never clipped", lines.map(func(x): return str(x).to_upper()).has(hb._name_shown), hb._name_shown)
 	var seen := {}
 	for k in int(LuchaHudBottom.NAME_CYCLE_S * lines.size() * 10.0) + 2:

@@ -7,8 +7,8 @@ extends Node3D
 ##
 ## nameplate  on the kit's hud_nameplate (its nameplate_face), fitted for 33
 ##            letters: THE NAME CYCLE (Parker 11-09) turns every NAME_CYCLE_S
-##            through the climber's name, the round and its player's Steam name
-##            (the climbing climber in turns modes, your own in Classic). Its
+##            between the climber's made-up name and its player's Steam name
+##            (the climbing climber in turns modes, your own in Classic); no round. Its
 ##            nameplate_lockin tab says LOCK IN! when your climber is above the
 ##            line, held a moment either way so it never flickers.
 ## odometer   your climber's top height, 00.00 to 99.99 m, on the kit's
@@ -32,7 +32,7 @@ const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
 const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
 const LOCK_TEXT := "LOCK IN!"
-const NAME_CYCLE_S := 2.5  # THE NAME CYCLE: each of name / round / Steam name shows this long
+const NAME_CYCLE_S := 2.5  # THE NAME CYCLE: the made name and the Steam name each show this long
 ## THE STEADY TAB (Parker 11-09: the lock-in "was flashing oddly"): your climber must be
 ## above the line this long before the tab pops, and off it this long before it drops,
 ## so a hand flickering on and off a hold at the line doesn't flash it.
@@ -325,14 +325,13 @@ func tick(delta: float) -> void:
 
 
 ## THE NAME CYCLE: the lines the plate turns through for `who` (null: nobody of
-## yours is climbing, so just the round and your Steam name), and the one showing now.
+## yours is climbing, so just your Steam name), and the one showing now. No round
+## number (Parker 11-09: "dont have it cycle the round number").
 func name_cycle(g: Game, who: Climber) -> Array:
 	var lines: Array = []
 	var peer: int = who.owner_peer if who != null else g.me()
 	if who != null:
 		lines.append(who.display_name)
-	if not bool(g.mode.get("practice", false)):
-		lines.append("ROUND %d" % maxi(1, g.round_n))
 	var steam := steam_name(peer)
 	if steam != "" and not lines.has(steam):
 		lines.append(steam)

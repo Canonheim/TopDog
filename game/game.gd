@@ -369,8 +369,9 @@ func _spawn(pid: int, preferred_side := 0) -> void:
 	var cid := _cid_next
 	_cid_next += 1
 	# A NEW NAME FOR EVERY CLIMBER (Parker 11-08): a player with a random name gets
-	# a fresh one each time they climb; a real (Steam) name stays. The host picks,
-	# so every machine shows the same.
+	# a fresh one each time they climb; a typed name stays. Online players go by their
+	# Steam name but are flagged random, so their climbers get made names too
+	# (Parker 11-09). The host picks, so every machine shows the same.
 	var r := roster_entry(pid)
 	var nm := str(r.get("name", "?"))
 	if bool(r.get("random", false)) and _is_new_character(pid):

@@ -152,7 +152,13 @@ static func text3d(s: String, size: float, c: Color, _depth := 0.06, priority :=
 ## on the face). A label centres its line box, ascent and descent; digits stand on the
 ## baseline with nothing below it, so they float up by half the descent's share. This
 ## measures the font's "0" and shifts the text down by exactly that.
-static func center_digits(lb: Label3D) -> void:
+## Takes a Label3D or anything holding them (poster_text's face and shadow move together).
+static func center_digits(node: Node) -> void:
+	if not (node is Label3D):
+		for child in node.get_children():
+			center_digits(child)
+		return
+	var lb := node as Label3D
 	var f: Font = lb.font if lb.font != null else ThemeDB.fallback_font
 	if f == null:
 		return
