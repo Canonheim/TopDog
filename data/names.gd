@@ -1,6 +1,6 @@
 class_name NameGen
 extends RefCounted
-## Climber names: "First the Title", from our own word lists.
+## Climber names: "First the Thing Doer" (or "First the Wretch"), from our own word lists.
 
 const FIRST := [
 	"Aldric", "Bertram", "Cuthbert", "Dunstan", "Edwin", "Fulk", "Godric", "Humbert",
@@ -39,7 +39,7 @@ static func make() -> String:
 	var title: String = (THING + ALONE).pick_random()
 	if title in ALONE:
 		return "%s the %s" % [first, title]
-	return "%s the %s-%s" % [first, title, DOER.pick_random()]
+	return "%s the %s %s" % [first, title, DOER.pick_random()]  # no dash (Parker 11-10)
 
 
 static func tint(i: int) -> Color:
