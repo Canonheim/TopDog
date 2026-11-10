@@ -34,6 +34,7 @@ const PODIUM_SHIFT_SECONDS := 3.0
 const TOWER_PAN_SPEED := 0.35  # world metres per second
 var _results_elapsed := 0.0
 var _results_peak := Vector2.ZERO
+var _personal_camera := false
 var _cam_target := Vector3(0, 2, 14)
 var _cam_fov := 34.0
 const FOLLOW_HALF_H := 2.05  # in play: the camera shows at least this many metres above and below you
@@ -341,6 +342,36 @@ func _tick_camera(delta: float) -> void:
 		for point in [Vector2(-2.0, maxf(0.0, line_y - 3.0)), Vector2(2.0, line_y + 0.8)]:
 			lo = lo.min(point)
 			hi = hi.max(point)
+	if follow and Net.online:
+		var spread := hi - lo
+		var distance := maxf(spread.x / 1.6, spread.y)
+		_personal_camera = distance > (4.5 if _personal_camera else 6.0)
+		if _personal_camera:
+			var target: Climber = null
+			for candidate: Climber in live:
+				if candidate.owner_peer == game.me():
+					target = candidate
+					break
+			# Once locked in, follow the next active player in roster order.
+			if target == null:
+				var local_index := -1
+				for i in game.roster.size():
+					if int(game.roster[i].peer) == game.me():
+						local_index = i
+						break
+				for offset in range(1, game.roster.size() + 1):
+					var pid := int(game.roster[(local_index + offset) % game.roster.size()].pid)
+					for candidate: Climber in live:
+						if candidate.player_id == pid:
+							target = candidate
+							break
+					if target != null:
+						break
+			if target != null:
+				lo = target.centre_of_mass()
+				hi = lo
+	else:
+		_personal_camera = false
 	if follow:
 		lo -= Vector2(1.2, 1.15)
 		hi += Vector2(1.2, 1.35)
@@ -661,16 +692,8 @@ func _screen_online() -> Control:
 	_lobby_list = VBoxContainer.new()
 	_lobby_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	sc.add_child(_lobby_list)
-	var lan := HBoxContainer.new()
-	box.add_child(lan)
-	UiKit.button(lan, "Host on LAN", func(): _ensure_player(); Net.host_lan())
-	var ip := LineEdit.new()
-	ip.placeholder_text = "Host's IP (blank = this PC)"
-	ip.custom_minimum_size = Vector2(380, 0)
-	lan.add_child(ip)
-	UiKit.button(lan, "Join on LAN", func(): _ensure_player(); Net.join_lan(ip.text.strip_edges()))
 	_online_status = Label.new()
-	_online_status.text = "Steam ready." if Net.steam_ok else "Steam isn't running: LAN only. (Start Steam and restart to play over Steam.)"
+	_online_status.text = "Steam ready." if Net.steam_ok else "Start Steam and restart to play online."
 	_online_status.autowrap_mode = TextServer.AUTOWRAP_WORD
 	_online_status.custom_minimum_size = Vector2(900, 0)
 	box.add_child(_online_status)

@@ -54,16 +54,19 @@ func _ready() -> void:
 			print("PASS lobby B returns to ", origin)
 	main.show_screen("online")
 	main._ensure_player()
-	Net.host_lan()
+	var test_peer := ENetMultiplayerPeer.new()
+	assert(test_peer.create_server(7788, 12) == OK)
+	Net.multiplayer.multiplayer_peer = test_peer
+	Net._start_session_as_host()
 	if main.screen != "lobby" or not Net.online:
 		fails += 1
-		print("FAIL LAN host lobby did not open")
+		print("FAIL test host lobby did not open")
 	await _press("menu_back")
 	if main.screen != "online" or Net.online:
 		fails += 1
 		print("FAIL host B did not leave the session and return to Online")
 	else:
-		print("PASS host B left the LAN lobby and returned to Online")
+		print("PASS host B left the test lobby and returned to Online")
 	print("ONLINE PAD RESULT fails=", fails)
 	get_tree().quit(fails)
 

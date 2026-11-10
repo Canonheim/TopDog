@@ -752,6 +752,7 @@ func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: Strin
 		c.apply_pose(pose)
 		c.freeze()
 		_snap_static(c)
+		_free_locked_overlaps(c)
 		tower.append(cid)
 		_puppet_buf.erase(cid)
 	else:
@@ -766,6 +767,32 @@ func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: Strin
 		"short":
 			announce.emit("%s froze at %.2f m" % [who, top], false)
 
+
+## Recover locally simulated pieces from the newly static tower. Owners stream
+## the corrected pose normally, so remote puppets are never moved independently.
+func _free_locked_overlaps(locked: Climber) -> void:
+	if not is_instance_valid(locked):
+		return
+	for actor: Climber in climbers.values():
+		if actor == locked or actor.state != Climber.State.LIVE or actor.owner_peer != me():
+			continue
+		for body: RigidBody3D in actor.bodies.values():
+			var query := PhysicsTestMotionParameters3D.new()
+			query.margin = 0.025
+			query.recovery_as_collision = true
+			for attempt in 6:
+				query.from = body.global_transform
+				query.motion = Vector3.ZERO
+				var result := PhysicsTestMotionResult3D.new()
+				if not PhysicsServer3D.body_test_motion(body.get_rid(), query, result):
+					break
+				var recovery := result.get_travel()
+				recovery.z = 0.0
+				if recovery.length_squared() < 0.000001:
+					break
+				body.global_position += recovery
+				Climber.sync_server(body)
+				body.sleeping = false
 
 ## Frozen pieces were static already; push their final transforms to the server.
 func _snap_static(c: Climber) -> void:

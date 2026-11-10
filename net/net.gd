@@ -4,7 +4,6 @@ extends Node
 ## Transports (nothing above this file knows which is in use):
 ## - Steam: GodotSteam's SteamMultiplayerPeer over a Steam lobby (Valve's relay,
 ##   no ports). App 480 (Spacewar) with our own lobby tag until our own app exists.
-## - ENet on a port: LAN and same-PC tests (one Steam account can't join itself).
 ##
 ## The lobby: every machine sends the host its local players; the host keeps the
 ## member list, ready flags, chat and match settings, and starts the match through
@@ -27,8 +26,7 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.3.57"  # bump on every build: RPC tables move between builds
-const ENET_PORT := 7788
+const GAME_VERSION := "0.3.58"  # bump on every build: RPC tables move between builds
 const MAX_MACHINES := 12
 const MAX_CLIMBERS := 12
 const CHAT_PRESETS := ["Hello!", "Ready!", "Not ready", "Nice one!", "Oops!", "Get off me!", "Hold on!", "GG"]
@@ -152,7 +150,7 @@ func host_steam(visibility := VIS_PUBLIC, lobby_name := "") -> void:
 	if online or _pending_lobby:
 		return  # one round-trip at a time: a second createLobby tore the live peer
 	if not steam_ok:
-		status.emit("Steam isn't running. Start Steam and restart the game, or play on LAN.")
+		status.emit("Steam isn't running. Start Steam and restart the game.")
 		return
 	_pending_lobby = true
 	_hosting = true
@@ -329,33 +327,6 @@ func _on_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) 
 		return
 	multiplayer.multiplayer_peer = peer
 	status.emit("Connecting through Steam...")
-
-
-# ================================================================ LAN
-
-func host_lan() -> void:
-	if online:
-		return
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_server(ENET_PORT, MAX_MACHINES)
-	if err != OK:
-		status.emit("Couldn't open port %d (%s)" % [ENET_PORT, error_string(err)])
-		return
-	multiplayer.multiplayer_peer = peer
-	_start_session_as_host()
-	status.emit("Hosting on LAN, port %d. Others join with your IP address." % ENET_PORT)
-
-
-func join_lan(ip: String) -> void:
-	if online:
-		return
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_client(ip if ip != "" else "127.0.0.1", ENET_PORT)
-	if err != OK:
-		status.emit("Couldn't connect (%s)" % error_string(err))
-		return
-	multiplayer.multiplayer_peer = peer
-	status.emit("Connecting to %s..." % ip)
 
 
 # ================================================================ the session

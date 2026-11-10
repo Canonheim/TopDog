@@ -6,7 +6,7 @@ extends RefCounted
 ## included), keyboard and mouse all work.
 ##
 ## online   HOST (public / friends / invite, flipped left-right), JOIN A FRIEND,
-##          BROWSE GAMES, LAN (host / join this PC / type an IP), BACK. A status
+##          BROWSE GAMES, BACK. A status
 ##          poster under the header shows Net's status line.
 ## friends  your Steam friends playing Top Dog (Net.friends_in_game): JOIN their
 ##          game, or "not in a game"; REFRESH; BACK.
@@ -55,8 +55,6 @@ func build() -> void:
 	o.items[hi].label = "HOST"
 	o.add_button("JOIN A FRIEND", func(): main.show_screen("friends"))
 	o.add_button("BROWSE GAMES", func(): main.show_screen("browse"))
-	var li := o.add_row(LuchaKit.belt_small_row("LAN", ["HOST", "THIS PC", "TYPE IP"]), _lan)
-	o.items[li].label = "LAN"
 	o.add_button("BACK", func(): main.show_screen("title"))
 	ui.menus.online = o
 	# FRIENDS
@@ -97,16 +95,6 @@ func build() -> void:
 	Net.lobby_list.connect(_on_lobby_list)
 
 
-func _lan(i: int) -> void:
-	main._ensure_player()
-	if i == 0:
-		Net.host_lan()
-	elif i == 1:
-		Net.join_lan("127.0.0.1")
-	else:
-		main.show_screen("online_flat")
-
-
 func _on_settings() -> void:
 	if ui.current != "lobby":
 		return
@@ -143,7 +131,7 @@ func on_screen(id: String) -> void:
 	match id:
 		"online":
 			if status_text == "":
-				set_status("Steam ready. Host a game or join a friend." if Net.steam_ok else "Steam isn't running: LAN only.")
+				set_status("Steam ready. Host a game or join a friend." if Net.steam_ok else "Start Steam to play online.")
 		"friends":
 			_friends_page = 0
 			_fill_friends()

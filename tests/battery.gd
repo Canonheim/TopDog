@@ -2211,7 +2211,10 @@ func _run_joinpadhost() -> void:
 	game.world = world
 	game.dress = false
 	add_child(game)
-	Net.host_lan()
+	var test_peer := ENetMultiplayerPeer.new()
+	assert(test_peer.create_server(7788, 12) == OK)
+	Net.multiplayer.multiplayer_peer = test_peer
+	Net._start_session_as_host()
 	for tick in 1800:
 		if Net.members.size() >= 2:
 			break
@@ -2238,7 +2241,9 @@ func _run_joinpadclient() -> void:
 	Net.steam_input = si
 	si.devices[3000] = {"buttons": {}, "stick": Vector2.ZERO, "gameplay_active":false, "menu_active":false}
 	Players.clear_players()
-	Net.join_lan("127.0.0.1")  # Direct join like an invite, no menu to create a slot.
+	var test_peer := ENetMultiplayerPeer.new()
+	assert(test_peer.create_client("127.0.0.1", 7788) == OK)
+	Net.multiplayer.multiplayer_peer = test_peer
 	await wait_phase(game, "round", 12.0)
 	var mine: Climber
 	# The round announcement can arrive one packet before the spawn RPC.
@@ -2382,3 +2387,57 @@ func _run_classicspawns() -> void:
 	t("Classic spawns: new match clears previous sides", g._last_spawn_sides.is_empty())
 	g.end_match()
 	g.queue_free()
+
+func _run_lockrecovery() -> void:
+	var g := make_game("scramble", 2, 60.0)
+	await wait_phase(g, "round")
+	var locked: Climber = g.climbers[g.live[0]]
+	var actor: Climber = g.climbers[g.live[1]]
+	locked.release_all()
+	actor.release_all()
+	var chest: RigidBody3D = actor.bodies["chest"]
+	chest.global_position = locked.bodies["chest"].global_position + Vector3(0.03, 0, 0)
+	Climber.sync_server(chest)
+	locked.freeze()
+	g._snap_static(locked)
+	var before := chest.global_position
+	g._free_locked_overlaps(locked)
+	t("lock recovery: overlapping live chest moves clear of frozen player", chest.global_position.distance_to(before) > 0.025)
+	t("lock recovery: frozen player remains frozen", locked.state == Climber.State.FROZEN)
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+func _run_personalcamera() -> void:
+	var g := make_game("scramble", 2, 60.0)
+	await wait_phase(g, "round")
+	var mine: Climber = g.climbers[g.live[0]]
+	var other: Climber = g.climbers[g.live[1]]
+	other.owner_peer = 2
+	for piece: RigidBody3D in other.bodies.values():
+		piece.global_position += Vector3(0, 15, 0)
+		Climber.sync_server(piece)
+	var main = load("res://game/main.gd").new()
+	# Exercise camera logic without starting another application scene.
+	main.game = g
+	main.cam = Camera3D.new()
+	add_child(main.cam)
+	main.line_bar = MeshInstance3D.new()
+	add_child(main.line_bar)
+	main.screen = "hud"
+	var was_online := Net.online
+	Net.online = true
+	main._tick_camera(1.0)
+	t("camera: distant online players get a personal view", main._personal_camera and absf(main._cam_target.y - mine.centre_of_mass().y) < 1.0)
+	mine.freeze()
+	main._tick_camera(1.0)
+	t("camera: locked player follows the next active climber", absf(main._cam_target.y - other.centre_of_mass().y) < 1.0)
+	Net.online = false
+	main._tick_camera(1.0)
+	t("camera: local matches retain shared camera", not main._personal_camera)
+	Net.online = was_online
+	main.cam.queue_free()
+	main.line_bar.queue_free()
+	main.free()
+	g.end_match()
+	g.queue_free()
+	await frames(2)

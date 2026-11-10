@@ -1657,6 +1657,7 @@ func _build_hud() -> void:
 	# The bottom: the climber's nameplate and the height odometer (Parker 11-08).
 	hud_bottom = LuchaHudBottom.new(main)
 	_hud.add_child(hud_bottom)
+	_clock_text.reparent(hud_bottom, false)
 	# 1.3 m from the lens, shrunk to match: the same place on screen, but in front
 	# of the ring's apron, which the follow camera brings nearer than the HUD.
 	var near := 1.3
@@ -1828,37 +1829,22 @@ func _process(delta: float) -> void:
 		main.hud_info.visible = false
 		var g: Game = main.game
 		var show := g.phase in ["turn", "round"] and not g.practice
-		_hud.get_node("Buckle").visible = show
-		# Parker 11-08: "The clock does not come down from the top of the screen
-		# until the banner leaves." While a banner shows, the clock and bell wait
-		# above the frame; after it flies out they drop back in with a bounce.
-		var want_up := CLOCK_HIDE_UP if (_banner != null and _banner.visible) else 0.0
-		if want_up > _clock_up:
-			_clock_up = minf(want_up, _clock_up + delta * 14.0)  # out of the way fast
-		elif want_up < _clock_up:
-			_clock_drop_t += delta
-			# Falls in, overshoots a touch and settles (a short damped bounce).
-			_clock_up = maxf(0.0, _clock_up - delta * 9.0)
-		if want_up > 0.0:
-			_clock_drop_t = 0.0
-		var bounce := 0.0
-		if _clock_up == 0.0 and _clock_drop_t > 0.0 and _clock_drop_t < 0.6:
-			bounce = sin(_clock_drop_t * 18.0) * 0.12 * exp(-_clock_drop_t * 7.0)
-		var lift := Vector3(0, _clock_up + bounce, 0)
-		_hud.get_node("Buckle").position = CLOCK_AT + lift
-		_clock_text.position = CLOCK_AT + Vector3(0, 0, 0.075) + lift
-		if _bell != null:
-			_bell.position = BELL_AT + lift
+		_hud.get_node("Buckle").visible = false
+		var viewport_size := main.get_viewport().get_visible_rect().size
+		var half_h := tan(deg_to_rad(cam.fov * 0.5)) * MENU_DIST / UI_SCALE
+		var half_w := half_h * viewport_size.x / maxf(1.0, viewport_size.y)
+		_clock_text.position = Vector3(half_w - 0.75, -half_h + 0.65, 0.075)
+		_info.position = Vector3(half_w - 0.25, half_h - 0.3, 0)
 		hud_bottom.tick(delta)
 		if _bell != null:
-			_bell.visible = show
+			_bell.visible = false
 		# The who's-climbing line, as a small poster at the top left.
 		var info := ""
 		match g.phase:
 			"turn":
 				info = "%s CLIMBING" % str(g.player_name(g.turn_order[g.turn_i] if g.turn_i >= 0 else -1)).split(" the ")[0].to_upper()
 			"round":
-				info = "ROUND %d: %s" % [g.round_n, g.round_matchup().to_upper()]
+				info = "ROUND %d" % g.round_n
 			"between":
 				info = "GET READY..."
 		if g.practice:
@@ -1869,7 +1855,7 @@ func _process(delta: float) -> void:
 				ch.queue_free()
 			if info != "":
 				var it := LuchaKit.poster_text(info, 0.26, LuchaKit.GOLD, LuchaKit.INK, 0.05)
-				it.position = Vector3(info.length() * 0.09, 0, 0)
+				it.position = Vector3(-info.length() * 0.09, 0, 0)
 				_info.add_child(it)
 				no_shadows(it)
 		var v := int(ceil(g.clock)) if show else -1
@@ -1878,9 +1864,9 @@ func _process(delta: float) -> void:
 			for ch in _clock_text.get_children():
 				ch.queue_free()
 			if v >= 0:
-				var on_kit := LuchaKit.kit_model_exists("clock_buckle")
+				var on_kit := false
 				var col := LuchaKit.RED if v <= 10 else (LuchaKit.INK if on_kit else LuchaKit.GOLD)
-				var num := LuchaKit.text3d(str(v), 0.34 if on_kit else 0.42, col, 0.03)
+				var num := LuchaKit.poster_text(str(v), 0.42, col, LuchaKit.INK, 0.04)
 				LuchaKit.center_digits(num)  # dead centre on the face (Parker 11-09)
 				_clock_text.add_child(num)
 				no_shadows(num)
