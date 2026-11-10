@@ -15,6 +15,14 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(0.8).timeout
 	match open:
+		"browse_list":
+			main.show_screen("browse")
+			main.lucha.online._on_lobby_list([
+				{"id": 1, "name": "Canondorf's Climb", "mode_line": "Classic", "count_text": "1/12", "joinable": true},
+				{"id": 2, "name": "Second Ring", "mode_line": "Tower", "count_text": "2/12", "joinable": true},
+				{"id": 3, "name": "Third Ring", "mode_line": "Classic", "count_text": "3/12", "joinable": true},
+				{"id": 4, "name": "Fourth Ring", "mode_line": "Tower", "count_text": "4/12", "joinable": true}
+			])
 		"pauseinput":
 			main._start_practice()
 			await get_tree().create_timer(1.2).timeout

@@ -415,10 +415,11 @@ func sweep_hits(dt: float, excluded_id: int) -> Dictionary:
 				var point: Vector3 = hit.point
 				var speed := displacement / dt + omega.cross(point - query.transform.origin)
 				speed.z = 0
-				if speed.length() >= HIT_SPEED:
+				if speed.length() >= HIT_SPEED and (not hits.has(id) or speed.length() > float(hits[id].speed)):
 					var impulse := speed.normalized() * minf(victim.total_mass * 0.75, piece.mass * speed.length() * 0.85)
 					hits[id] = {"piece": piece.get_meta("piece"), "offset": piece.to_local(point), "impulse": impulse, "speed": speed.length()}
-					recent_hits[id] = 0.35
+	for id in hits:
+		recent_hits[id] = 0.35
 	previous = current
 	return hits
 

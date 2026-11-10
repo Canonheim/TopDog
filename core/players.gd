@@ -80,13 +80,7 @@ func _ready() -> void:
 	binds.kbm = DEFAULT_KBM.duplicate(true)
 	binds.pad = DEFAULT_PAD.duplicate(true)
 	_load()
-	Input.joy_connection_changed.connect(func(dev: int, connected: bool):
-		if not connected:
-			_native_event_pads.erase(dev)
-			for table in [_native_buttons, _native_axes]:
-				for key: Vector2i in table.keys():
-					if key.x == dev:
-						table.erase(key))
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 
 
 ## Which device spoke last, for the ANY slot and its glyphs.
@@ -103,13 +97,13 @@ func _input(event: InputEvent) -> void:
 	if (event is InputEventJoypadButton or event is InputEventJoypadMotion) and _steam_live():
 		return  # Steam reports the same physical controller through note_device().
 	var dev := -99
-	if event is InputEventKey or event is InputEventMouseButton:
+	if (event is InputEventKey or event is InputEventMouseButton) and event.pressed:
 		dev = KBM
 	elif event is InputEventMouseMotion and (event as InputEventMouseMotion).relative.length() > 6.0:
 		dev = KBM
-	elif event is InputEventJoypadButton:
+	elif event is InputEventJoypadButton and event.pressed:
 		dev = (event as InputEventJoypadButton).device
-	elif event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) > 0.5:
+	elif event is InputEventJoypadMotion and absf((event as InputEventJoypadMotion).axis_value) > Feel.get_k("stick_deadzone"):
 		dev = (event as InputEventJoypadMotion).device
 	if dev == -99 or dev == last_device:
 		return
@@ -207,6 +201,8 @@ func add_player(device: int, pname := "") -> int:
 		return -1
 	var s := slots.size()
 	slots.append({"device": device, "name": pname if pname != "" else NameGen.make(), "random": pname == "", "skin": "defaultio", "tint": NameGen.tint(s)})
+	if device >= 0 and device < 1000:
+		slots[s].pad_guid = Input.get_joy_guid(device) if Input.get_connected_joypads().has(device) else ""
 	joined.emit(s)
 	return s
 
@@ -217,6 +213,8 @@ func remove_player(s: int) -> void:
 	slots.remove_at(s)
 	_lock_prev.clear()
 	_lock_edge.clear()
+	_pause_prev.clear()
+	_pause_edge.clear()
 	left.emit(s)
 
 
@@ -341,12 +339,7 @@ func limb_aim(s: int, climber, limb: int):
 ## The device's stick, y-up, radial deadzone left to the caller.
 func stick(dev: int) -> Vector2:
 	if dev == ANY:
-		var best := Vector2.ZERO
-		for p in _raw_pads() + steam_devices():
-			var v := stick(p)
-			if v.length() > best.length():
-				best = v
-		return best
+		return Vector2.ZERO if last_device == KBM else stick(last_device)
 	if _is_steam_dev(dev):
 		return Net.steam_input.stick(dev) if Net.steam_input != null else Vector2.ZERO
 	if fake.has(dev):
@@ -509,3 +502,44 @@ func _load() -> void:
 			for a in ACTIONS:
 				if d.has(a) and d[a] is Array and d[a].size() == 2:
 					binds[scheme][a] = d[a]
+
+## Rebind a disconnected fixed slot when its pad returns under a new native ID.
+## Matching GUIDs take priority; a single missing pad also accepts a replacement.
+func _on_joy_connection_changed(dev: int, connected: bool) -> void:
+	if not connected:
+		_native_event_pads.erase(dev)
+		for table in [_native_buttons, _native_axes]:
+			for key: Vector2i in table.keys():
+				if key.x == dev:
+					table.erase(key)
+		for s in slots.size():
+			if int(slots[s].get("native_pad", slots[s].device)) == dev:
+				slots[s].disconnected = true
+				_lock_prev.erase(s)
+				_lock_edge.erase(s)
+				_pause_prev.erase(s)
+				_pause_edge.erase(s)
+		if last_device == dev:
+			note_device(KBM)
+		return
+	if slot_of_device(dev) >= 0 and not slots[slot_of_device(dev)].get("disconnected", false):
+		return
+	var missing: Array = []
+	for s in slots.size():
+		if slots[s].get("disconnected", false):
+			missing.append(s)
+	var guid := Input.get_joy_guid(dev) if Input.get_connected_joypads().has(dev) else ""
+	var selected := -1
+	for s in missing:
+		if guid != "" and slots[s].get("pad_guid", "") == guid:
+			selected = s
+			break
+	if selected < 0 and missing.size() == 1:
+		selected = missing[0]
+	if selected >= 0:
+		var slot: Dictionary = slots[selected]
+		slot.device = dev
+		slot.pad_guid = guid
+		slot.erase("native_pad")
+		slot.erase("disconnected")
+		device_changed.emit(selected)

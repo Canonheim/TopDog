@@ -2308,6 +2308,7 @@ func _run_joinpadclient() -> void:
 		si.devices[3000].gameplay_active = true
 		si.devices[3000].buttons = {"arm_r":true, "lock":true}
 		si.devices[3000].stick = Vector2(0, 0.85)
+		Players.note_device(3000)
 		t("join pad: primary controller cannot also join as a couch player", Players.poll_join() == -2)
 		si.devices[3000].buttons.erase("lock")
 		await frames(4)
@@ -2610,3 +2611,48 @@ func _run_joinrecovery() -> void:
 	t("join: host membership acceptance completes the join", Net.online and not Net._pending_lobby and not Net._awaiting_accept)
 	Net.leave()
 	Net.status.disconnect(capture)
+func _run_inputreconnect() -> void:
+	var cleaned := Net._clean_players([{"name": "Steam Guest", "random": true, "slot": 0}])
+	t("names: host preserves guest randomized character flag", cleaned[0].random)
+	t("names: explicit custom name remains supported", not Net._clean_players([{"name": "Custom", "random": false}])[0].random)
+	Players.clear_players()
+	Players.add_player(0, "Pad player")
+	Players.add_player(1, "Other pad")
+	Players._pause_edge[0] = true
+	Players._on_joy_connection_changed(0, false)
+	t("input: disconnect clears queued pause press", not Players.pause_pressed(0))
+	Players._on_joy_connection_changed(2, true)
+	t("input: reconnect under new ID restores original player", Players.slots[0].device == 2 and Players.slots[1].device == 1)
+	Players._pause_edge[1] = true
+	Players.remove_player(0)
+	t("input: removing a slot clears stale pause indexes", not Players.pause_pressed(0) and not Players.pause_pressed(1))
+	Players.clear_players()
+	Players.add_player(Players.ANY)
+	Players.fake[1000] = {"buttons": {}, "stick": Vector2.RIGHT}
+	Players.last_device = Players.KBM
+	t("input: keyboard aiming ignores an idle controller's stick", Players.stick(Players.ANY) == Vector2.ZERO)
+	Players.note_device(1000)
+	t("input: stick aiming resumes as soon as controller is active", Players.stick(Players.ANY) == Vector2.RIGHT)
+	Players.fake.erase(1000)
+	Players.clear_players()
+func _run_chairbodyhits() -> void:
+	var g := make_game("practice", 1, 60.0, "plaza", true)
+	await wait_phase(g, "turn")
+	var victim: Climber = g.partner
+	for piece_name in victim.bodies:
+		if piece_name == "head":
+			continue
+		g.chair.set_hit_count(0)
+		var piece: RigidBody3D = victim.bodies[piece_name]
+		var hit := {"piece": piece_name, "offset": Vector3.ZERO, "impulse": Vector3.RIGHT * piece.mass * 9.0, "speed": 8.0}
+		g._apply_chair_hits({-2: hit})
+		t("chair: heavy hit to %s damages chair without knockout" % piece_name, g.chair.hit_count == 1 and victim.knockout_left == 0)
+		hit.speed = 3.0
+		g._apply_chair_hits({-2: hit})
+		t("chair: light hit to %s preserves durability" % piece_name, g.chair.hit_count == 1 and victim.knockout_left == 0)
+	var head: RigidBody3D = victim.bodies["head"]
+	g._apply_chair_hits({-2: {"piece": "head", "offset": Vector3.ZERO, "impulse": Vector3.RIGHT * head.mass * 9.0, "speed": 8.0}})
+	t("chair: heavy head hit still damages chair and knocks out victim", g.chair.hit_count == 2 and victim.knockout_left > 0)
+	g.end_match()
+	g.queue_free()
+	await frames(2)

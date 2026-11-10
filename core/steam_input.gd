@@ -113,7 +113,7 @@ func _process(delta: float) -> void:
 		d.menu_active = menu_active
 		if not bool(ad.get("active", false)):
 			d.stick = Vector2.ZERO
-		if d.stick.length() > 0.5 and last_dev != dev:
+		if d.stick.length() > Feel.get_k("stick_deadzone") and Players.last_device != dev:
 			_note(dev, "stick")
 		devices[dev] = d
 	for dev in devices.keys():

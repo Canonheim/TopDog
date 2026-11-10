@@ -1334,6 +1334,8 @@ func sync_waiting_room() -> void:
 	for entry in Net.build_roster():
 		if int(entry.peer) != 1:
 			entry.pid = int(entry.peer) * 16 + int(entry.slot)
+			if bool(entry.get("random", false)):
+				entry.name = climbers[live[entry.pid]].display_name if live.has(entry.pid) and climbers.has(live[entry.pid]) else NameGen.make()
 			guests.append(entry)
 	var snapshot := {}
 	for cid in climbers:

@@ -169,11 +169,12 @@ func _layout() -> void:
 	for it in items:
 		var step := item_spacing
 		if it.node != null:
-			it.node.position = Vector3(column_x, y, 0)
+			it.node.position = it.get("layout_position", Vector3(column_x, y, 0))
 			it.node.set_meta("home", it.node.position)
 			# A kit belt says how tall its plate is: never let the points overlap.
 			step = maxf(item_spacing, float((it.belt as Node3D).get_meta("height", 0.0)) + 0.06)
-		y -= step
+		if not it.has("layout_position"):
+			y -= step
 
 
 # ---------------------------------------------------------------- show / hide

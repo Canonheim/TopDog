@@ -44,6 +44,7 @@ var last_time := 0  # Time.get_ticks_msec() of the last pad input seen
 var seen_devices := {}  # device -> last seen msec (events and polling)
 var raw_count := 0  # every joypad event that reached _input, for the readout
 
+var _steam_menu_devices: Array = []
 var _held := {}  # "dev:action" -> bool
 var _repeat := {}  # "dev:action" -> seconds to the next repeat
 var _axis := {}  # "dev:axis" -> last value from events
@@ -59,7 +60,9 @@ func _ready() -> void:
 				InputMap.action_erase_event(action, ev)
 	Input.joy_connection_changed.connect(func(dev: int, connected: bool) -> void:
 		if connected:
-			seen_devices[dev] = Time.get_ticks_msec())
+			seen_devices[dev] = Time.get_ticks_msec()
+		else:
+			_clear_device(dev))
 
 
 # ---------------------------------------------------------------- path 2: events
@@ -103,6 +106,11 @@ func _input(event: InputEvent) -> void:
 func _process(delta: float) -> void:
 	var si = Net.steam_input
 	var steam_live: bool = si != null and si.count() > 0
+	var menu_devices: Array = si.active_devices("menu_active") if si != null else []
+	for dev in _steam_menu_devices:
+		if not menu_devices.has(dev):
+			_clear_device(dev)
+	_steam_menu_devices = menu_devices
 	if steam_live and not si.active_devices("menu_active").is_empty():
 		_poll_steam(si, delta)
 	var devs := {}
@@ -252,3 +260,13 @@ static func focus_first(root: Control) -> bool:
 				ctl.grab_focus()
 				return true
 	return false
+
+func _clear_device(dev: int) -> void:
+	seen_devices.erase(dev)
+	var prefix := "%d:" % dev
+	for table in [_held, _repeat, _axis]:
+		for key in table.keys():
+			if str(key).begins_with(prefix):
+				if table == _held and bool(table[key]):
+					Input.action_release(str(key).get_slice(":", 1))
+				table.erase(key)

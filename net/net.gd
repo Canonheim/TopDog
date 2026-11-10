@@ -26,7 +26,7 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
-const GAME_VERSION := "0.3.72"  # bump on every build: RPC tables move between builds
+const GAME_VERSION := "0.3.74"  # bump on every build: RPC tables move between builds
 const MAX_MACHINES := 12
 const MAX_CLIMBERS := 12
 const CHAT_PRESETS := ["Hello!", "Ready!", "Not ready", "Nice one!", "Oops!", "Get off me!", "Hold on!", "GG"]
@@ -459,7 +459,7 @@ func _clean_players(players: Array) -> Array:
 	var out: Array = []
 	for p in players.slice(0, 4):
 		if p is Dictionary:
-			out.append({"name": str(p.get("name", "Climber")).left(40), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": int(p.get("slot", 0)), "appearance": Wardrobe.clean(p.get("appearance", {}))})
+			out.append({"name": str(p.get("name", "Climber")).left(40), "random": bool(p.get("random", true)), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": int(p.get("slot", 0)), "appearance": Wardrobe.clean(p.get("appearance", {}))})
 	return out
 
 

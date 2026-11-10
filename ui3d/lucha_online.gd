@@ -271,7 +271,7 @@ func _fill_browse() -> void:
 	var m: Menu3D = ui.menus.browse
 	m.clear_items()
 	if not _browse_rows.is_empty():
-		set_status("%d game%s found." % [_browse_rows.size(), "" if _browse_rows.size() == 1 else "s"])
+		set_status("")
 	elif ui.current == "browse" and status_text != "Looking for games...":
 		set_status("No games found. Host one!")
 	var start := _browse_page * PAGE
@@ -288,6 +288,7 @@ func _fill_browse() -> void:
 			set_status("Joining %s..." % str(r.get("name", "")))
 			Net.join_steam(int(r.get("id", 0))))
 		m.items[ri].label = "GAME %s" % str(r.get("name", "?"))
+		m.items[ri].layout_position = Vector3(2.4, Menu3D.MENU_TOP_Y - (k - start) * 0.95, 0)
 	if _browse_rows.size() > start + PAGE:
 		m.add_button("MORE GAMES", func(): _browse_page += 1; _fill_browse())
 	m.add_button("REFRESH", func():
