@@ -1907,6 +1907,28 @@ func _run_ring() -> void:
 			rope_peak = maxf(rope_peak, rope.mesh.get_aabb().size.x - rest_w)
 	t("ring: the ropes throw you back harder than you hit them (in at 4 m/s)", back < -4.0, "back at %.2f m/s" % back)
 	t("ring: the bounce is told (signal) and has five tension sounds", bounces[0] > 0 and Sound.SFX["rope"].size() == 5 and Sound._streams.has("rope_tension_05"), "%d bounces" % bounces[0])
+	# BACK THE WAY YOU CAME (Parker 11-09): falling into the ropes at an angle (out at
+	# 3 m/s, down at 4 m/s), the bounce throws you back in AND up.
+	await seconds(0.5)
+	c.release_all()
+	var shift2 := Vector3(7.6 - c.centre_of_mass().x, 1.0 - c.centre_of_mass().y, 0.0)
+	for b in c.bodies.values():
+		var rb := b as RigidBody3D
+		rb.global_position += shift2
+		Climber.sync_server(rb)
+		rb.linear_velocity = Vector3(3.0, -4.0, 0.0)
+	var up := -99.0
+	var inward := 0.0
+	for k in int(0.5 * Engine.physics_ticks_per_second):
+		await get_tree().physics_frame
+		var v2 := Vector2.ZERO
+		for b in c.bodies.values():
+			v2 += Vector2(b.linear_velocity.x, b.linear_velocity.y) * b.mass
+		v2 /= c.total_mass
+		if v2.x < inward:
+			inward = v2.x
+			up = v2.y
+	t("ring: falling into the ropes at an angle bounces you back in and up (out 3, down 4 m/s)", inward < -3.0 and up > 2.0, "back at (%.2f, %.2f) m/s" % [inward, up])
 	await seconds(0.6)
 	var settled: bool = rope != null and rope.mesh == rope.get_meta("rest_mesh", null)
 	var rope_voice := rope.get_node_or_null("TensionSound") as AudioStreamPlayer3D

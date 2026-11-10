@@ -750,12 +750,17 @@ func _tick_ropes(delta: float) -> void:
 		var out_speed: float = com_v.x * side
 		if out_speed < 0.3:
 			continue
-		var new_vx: float = -side * out_speed * Feel.get_k("rope_bounce")
+		# BACK THE WAY YOU CAME (Parker 11-09: "bounce you in the opposite direction to
+		# where you are coming from, so if you are falling off the tower and hit it, it
+		# can potentially bounce you up and back on"): the whole movement turns round,
+		# the sideways part at rope_bounce, the up/down part at rope_bounce_up.
+		var new_v := Vector2(-side * out_speed * Feel.get_k("rope_bounce"), -com_v.y * Feel.get_k("rope_bounce_up"))
 		for o in pieces:
 			var rb := o as RigidBody3D
-			rb.linear_velocity.x += new_vx - com_v.x
+			rb.linear_velocity.x += new_v.x - com_v.x
+			rb.linear_velocity.y += new_v.y - com_v.y
 		_rope_wait = ROPE_COOLDOWN
-		rope_bounced.emit(Vector3(side * rope_x, p.y, 0.0), out_speed)
+		rope_bounced.emit(Vector3(side * rope_x, p.y, 0.0), com_v.length())
 
 
 func is_attached() -> bool:
