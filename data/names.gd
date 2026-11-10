@@ -22,6 +22,7 @@ const THING := [
 	"Gatepost", "Herring", "Saddle", "Shovel", "Teacup", "Banner", "Bell", "Pickle",
 	"Cat", "Dog", "Turtle", "Horse", "Donkey", "Goat", "Grape", "Book",
 	"Teeth", "Bone", "Elbow", "Foot", "Melon", "Gold", "Egg", "Letter", "Giant", "Tiny",
+	"Barf", "Boot", "Shirt", "Pants", "Skin",
 ]
 const DOER := [
 	"Hugger", "Climber", "Wrangler", "Toppler", "Stacker", "Clinger", "Dangler", "Flinger",
@@ -43,7 +44,7 @@ const ADJECTIVE := [
 	"Sweaty", "Soggy", "Wobbly", "Grumpy", "Crusty", "Sneaky", "Damp", "Greasy",
 	"Lumpy", "Clumsy", "Moist", "Sassy", "Spicy", "Chunky", "Saucy", "Dizzy",
 	"Wiggly", "Hairy", "Sleepy", "Squeaky", "Feral", "Humble", "Unwashed", "Haunted",
-	"Itchy", "Bashful",
+	"Itchy", "Bashful", "Captain", "Master", "Enormous", "Happy", "Obtuse",
 ]
 const ADJECTIVE_CHANCE := 0.5
 
