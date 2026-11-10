@@ -1883,7 +1883,9 @@ func _process(delta: float) -> void:
 					_clock_text.scale = Vector3.ONE * 1.6
 					buckle_node.scale = Vector3.ONE * 1.08
 					_pulse_tween = create_tween().set_parallel(true)
-					_pulse_tween.tween_property(_clock_text, "scale", Vector3.ONE, 0.45).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+					# Eased back over half a second (an elastic curve left 1.6 within a frame or two,
+					# so the pulse barely showed).
+					_pulse_tween.tween_property(_clock_text, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 					_pulse_tween.tween_property(buckle_node, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	if _banner != null and _banner.visible:
 		_banner_t -= delta

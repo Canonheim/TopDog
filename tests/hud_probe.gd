@@ -61,11 +61,14 @@ func _ready() -> void:
 	# THE COUNTDOWN PULSE (Parker 11-09): at 10 the number lands big and thumps back.
 	var clock_text: Node3D = main.lucha._clock_text
 	_check("above 10 the clock rests at its size", is_equal_approx(clock_text.scale.x, 1.0), clock_text.scale.x)
-	main.game.clock = 9.6
-	await get_tree().process_frame
-	await get_tree().process_frame
-	_check("at 10 the clock number pulses big", clock_text.scale.x > 1.3, clock_text.scale.x)
-	await get_tree().create_timer(0.7).timeout
+	main.game.clock = 9.95  # just inside 10, a whole second before 9 pulses
+	var peak_scale := 0.0  # the springy pulse crosses 1.0 as it settles: take its biggest
+	for k in 12:
+		await get_tree().process_frame
+		peak_scale = maxf(peak_scale, clock_text.scale.x)
+	# It starts at 1.6x; how much of that a check sees depends on the frame time.
+	_check("at 10 the clock number pulses big", peak_scale > 1.1 and main.lucha._pulse_tween != null, peak_scale)
+	await get_tree().create_timer(0.45).timeout
 	_check("...and settles back", absf(clock_text.scale.x - 1.0) < 0.05, clock_text.scale.x)
 	_check("the countdown ticks from 10", LuchaUI.COUNTDOWN_FROM == 10)
 	var player: Climber = main.game.live_climbers()[0]
