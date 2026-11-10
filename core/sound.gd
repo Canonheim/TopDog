@@ -26,7 +26,7 @@ const SFX := {
 	"hurt": ["hurt_1", "hurt_2", "hurt_3", "hurt_4"],
 	"fall": ["yell_1", "yell_2", "yell_3"],
 	"lock": ["lock_bell"],
-	"church_bell": ["church_bell_01", "church_bell_02", "church_bell_03"],  # the bell base (Parker 11-10)
+	"church_bell": ["bell_tower_ring_01", "bell_tower_ring_02", "bell_tower_ring_03", "bell_tower_ring_04", "bell_tower_ring_05", "bell_tower_ring_06", "bell_tower_ring_07", "bell_tower_ring_08", "bell_single_11", "bell_single_12", "bell_single_13", "bell_single_14", "bell_single_15"],
 	"tick": ["clock_tick"],
 	"clap": ["clap_1", "clap_2"],
 	"win": ["match_victory"],
@@ -154,6 +154,8 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 		chair_boost_db += linear_to_db(1.2)
 	if kind == "bubble_pop":
 		chair_boost_db += linear_to_db(3.0)
+	if kind == "church_bell":
+		chair_boost_db += linear_to_db(2.0)
 	volume_db += chair_boost_db
 	var host: Node = parent if parent != null else get_tree().current_scene
 	if host == null:
@@ -166,6 +168,8 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	p.max_db += chair_boost_db
 	p.pitch_scale = randf_range(0.92, 1.08) if clip.is_empty() else 1.0
 	p.unit_size = 6.0
+	if kind == "church_bell":
+		p.attenuation_model = AudioStreamPlayer3D.ATTENUATION_DISABLED
 	if kind == "grab":
 		p.max_db += linear_to_db(8.4)  # Preserve the gain increase at close range.
 	host.add_child(p)
@@ -185,6 +189,8 @@ func music(id: String) -> void:
 	var st = load(path)
 	if st is AudioStreamOggVorbis:
 		st.loop = true
+	# Match climb (-22.0073 LUFS) to title (-16.3000 LUFS), then apply the shared 15% boost.
+	_music.volume_db = linear_to_db(1.15) + (5.7073 if id == "climb" else 0.0)
 	_music.stream = st
 	_music.play()
 

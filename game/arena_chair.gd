@@ -2,6 +2,7 @@ extends RigidBody3D
 ## The chair and its gripping limb share a fixed physics joint until release.
 signal terrain_struck(at: Vector3, speed: float)
 signal rope_struck(at: Vector3, speed: float)
+signal bell_struck(at: Vector3)
 
 var grip_joint := RID()
 var terrain_contacts := {}
@@ -277,6 +278,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		return
 	var touching := {}
 	var strongest := 0.0
+	var bell_speed := 0.0
+	var bell_at := Vector3.ZERO
 	var at := Vector3.ZERO
 	for i in state.get_contact_count():
 		var other := state.get_contact_collider_object(i) as PhysicsBody3D
@@ -290,6 +293,9 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var velocity := incoming_linear + incoming_angular.cross(point - state.transform.origin)
 		var relative := velocity - state.get_contact_collider_velocity_at_position(i)
 		var speed := -relative.dot(state.get_contact_local_normal(i))
+		if other.has_meta("bell_ring") and speed > bell_speed:
+			bell_speed = speed
+			bell_at = point
 		if speed > strongest:
 			strongest = speed
 			at = point
@@ -298,6 +304,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	incoming_angular = state.angular_velocity
 	if strongest >= HIT_SPEED:
 		terrain_struck.emit(at, strongest)
+	if bell_speed >= HIT_SPEED:
+		bell_struck.emit(bell_at)
 
 
 func drop(c: Climber, dt: float) -> void:

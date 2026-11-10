@@ -971,8 +971,8 @@ func _play_rope(at: Vector3, speed: float) -> void:
 		stage.bounce_rope(signf(at.x), clampf(speed, 0.0, 20.0))
 
 
-## The bell base rings on every machine: a church-bell strike (one of three, at a
-## slightly random pitch) and the bell's pulse.
+## The bell broadcasts one of the 13 approved strikes, at its authored pitch,
+## to every listener alongside the existing visual pulse.
 const BELL_COOLDOWN_MS := 300  # per limb: a grip flickering on and off doesn't peal
 var _bell_wait := {}
 var bell_rings := 0  # rings heard on this machine (the batteries count them)
@@ -982,7 +982,25 @@ var bell_rings := 0  # rings heard on this machine (the batteries count them)
 func _rpc_bell(cid: int, at: Vector3, clip: String) -> void:
 	if _audio_climber(cid) == null or not at.is_finite() or not clip in Sound.SFX["church_bell"]:
 		return
-	Sound.play_at("church_bell", at, 0.0, world, "")
+	_play_bell(at, clip)
+
+
+func _on_chair_bell(at: Vector3) -> void:
+	if not is_host() or _bell_wait.get("chair", 0) > Time.get_ticks_msec():
+		return
+	_bell_wait["chair"] = Time.get_ticks_msec() + BELL_COOLDOWN_MS
+	_rpc_chair_bell.rpc(at, Sound.SFX["church_bell"].pick_random())
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_chair_bell(at: Vector3, clip: String) -> void:
+	if not at.is_finite() or clip not in Sound.SFX["church_bell"]:
+		return
+	_play_bell(at, clip)
+
+
+func _play_bell(at: Vector3, clip: String) -> void:
+	Sound.play_at("church_bell", at, 0.0, world, clip)
 	bell_rings += 1
 	if stage != null:
 		stage.pulse_bell()
@@ -1120,6 +1138,7 @@ func _rpc_spawn_chair(generation: int, top: Vector2, dent_hits: Vector2i) -> voi
 	chair = ChairScript.new()
 	if is_host():
 		chair.terrain_struck.connect(_play_chair_impact_sound)
+		chair.bell_struck.connect(_on_chair_bell)
 		chair.rope_struck.connect(func(at: Vector3, speed: float): _rpc_chair_rope.rpc(at, speed))
 	chair.setup(dress, dent_hits)
 	world.add_child(chair)

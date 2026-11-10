@@ -101,8 +101,8 @@ func _ask_delete() -> void:
 		main.lucha.menus.customize_delete = confirmation
 		confirmation.column_x = -2.0
 		confirmation.top_y = 0.4
-		confirmation.add_button("CANCEL", _cancel_delete)
 		confirmation.add_button("YES, DELETE", _confirm_delete)
+		confirmation.add_button("CANCEL", _cancel_delete)
 	var question := "DELETE CLIMBER %d?\nARE YOU SURE?" % (Wardrobe.selected+1)
 	if Wardrobe.profiles.size() == 1:
 		question += "\nA NEW DEFAULT CLIMBER WILL REPLACE IT."
@@ -111,6 +111,7 @@ func _ask_delete() -> void:
 	confirming = true
 	menu.close()
 	confirmation.open()
+	confirmation.focus = 1
 
 func _cancel_delete() -> void:
 	confirming = false

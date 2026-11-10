@@ -846,6 +846,25 @@ func _run_net() -> void:
 	t("net: each machine owns its own climber and puppets the other",
 		a0 != null and b1 != null and a0.state == Climber.State.LIVE and b1.state == Climber.State.LIVE
 		and a1.state == Climber.State.PUPPET and b0.state == Climber.State.PUPPET)
+	# Every approved bell clip reaches host, client and spectator unchanged.
+	var bell_audio: Array = []
+	for m in machines:
+		m.world.child_entered_tree.connect(func(node):
+			if node is AudioStreamPlayer3D and node.stream.resource_path.get_file().get_basename() in Sound.SFX["church_bell"]:
+				bell_audio.append([node.stream.resource_path.get_file().get_basename(), node.pitch_scale, node.attenuation_model]))
+	t("net: all 13 approved bell clips are loaded", Sound.SFX["church_bell"].size() == 13 and Sound.SFX["church_bell"].all(func(clip): return Sound._streams.has(clip)))
+	for clip in Sound.SFX["church_bell"]:
+		bell_audio.clear()
+		B._rpc_bell.rpc(b1.climber_id, b1.bodies["hand_r"].global_position, clip)
+		await frames(4)
+		t("net: bell clip reaches all peers without pitch or distance changes: " + clip, bell_audio.size() == 3 and bell_audio.all(func(row): return row[0] == clip and row[1] == 1.0 and row[2] == AudioStreamPlayer3D.ATTENUATION_DISABLED))
+	bell_audio.clear()
+	A.chair.bell_struck.emit(Vector3(0, 1.8, 0))
+	await frames(4)
+	t("net: chair bell strike reaches all three listeners with the same clip", bell_audio.size() == 3 and bell_audio.all(func(row): return row[0] == bell_audio[0][0]))
+	A.chair.bell_struck.emit(Vector3(0, 1.8, 0))
+	await frames(2)
+	t("net: chair bell cooldown prevents contact chatter", bell_audio.size() == 3)
 	# A client makes a contact and holds RB. Both peers hear the same take.
 	var grunts := []
 	for m in machines:
