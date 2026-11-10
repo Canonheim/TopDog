@@ -616,7 +616,19 @@ func _run_groundlock() -> void:
 		await wait_phase(g, "round" if id == "scramble" else "turn")
 		var c := await lift_and_lock(g, 0, 0.4, true)
 		t("%s: an above-line airborne lock is refused" % id, c.state == Climber.State.LIVE and g.tower.is_empty() and g.best[0] == 0.0)
-		await lift_and_lock(g, 0)
+		# WELDED COUNTS (Parker 11-09): a hand welded to the barrel locks in even when
+		# the pose itself sits off the barrel (a strained weld hangs a little away).
+		var w := await lift_and_lock(g, 0, 0.4, true, false)
+		w.attach(0, g.stage.base_bodies[0])
+		(g.bot_drivers[0] as Drivers.ScriptDriver).lock = true
+		await frames(3)
+		t("%s: welded to the barrel (pose clear of it), the lock is accepted" % id, w.state == Climber.State.FROZEN and g.tower.size() == 1, [w.state, g.tower.size()])
+		g.end_match()
+		g.queue_free()
+		await frames(2)
+		g = make_game(id, 2 if id == "scramble" else 1, 50.0)
+		await wait_phase(g, "round" if id == "scramble" else "turn")
+		c = await lift_and_lock(g, 0)
 		t("%s: contact with the barrel accepts the lock" % id, c.state == Climber.State.FROZEN and g.tower.size() == 1)
 		g.end_match()
 		g.queue_free()

@@ -534,9 +534,9 @@ func _tick_owned(real_delta: float) -> void:
 		if c.driver != null and c.driver.lock_pressed() and c.knockout_left <= 0 and (phase == "turn" or phase == "round"):
 			if c.top_height() > line + LOCK_MARGIN:
 				if is_host():
-					_judge_lock(cid, c.pose())
+					_judge_lock(cid, c.pose(), c.welded_to_support())
 				else:
-					_rpc_lock_request.rpc_id(1, cid, c.pose())
+					_rpc_lock_request.rpc_id(1, cid, c.pose(), c.welded_to_support())
 			else:
 				announce.emit("Get above the line to lock in!", false)
 		if send:
@@ -559,12 +559,12 @@ func _tick_owned(real_delta: float) -> void:
 	if send and chair != null and is_host() and multiplayer.get_peers().size() > 0:
 		_rpc_chair_pose.rpc(chair_generation, chair.holder, chair.limb, chair.grip_point, chair.global_transform, chair.hit_count, chair.in_bubble)
 @rpc("any_peer", "call_remote", "reliable")
-func _rpc_lock_request(cid: int, pose: PackedFloat32Array) -> void:
+func _rpc_lock_request(cid: int, pose: PackedFloat32Array, welded: bool) -> void:
 	if not is_host() or not climbers.has(cid):
 		return
 	if climbers[cid].owner_peer != multiplayer.get_remote_sender_id():
 		return  # only a climber's own machine may lock it in
-	_judge_lock(cid, pose)
+	_judge_lock(cid, pose, welded)
 
 
 ## Test the submitted pose against this match's permanent supports. A remote
@@ -604,7 +604,9 @@ func _valid_lock_pose(pose: PackedFloat32Array) -> bool:
 			return false
 	return true
 
-func _judge_lock(cid: int, pose: PackedFloat32Array) -> void:
+## welded: the owner's word that a hand or foot is welded to the arena or the tower
+## (Climber.welded_to_support), which counts as touching.
+func _judge_lock(cid: int, pose: PackedFloat32Array, welded := false) -> void:
 	var c: Climber = climbers.get(cid)
 	if c == null or c.state == Climber.State.FROZEN or _pending_freeze.has(cid):
 		return
@@ -617,7 +619,7 @@ func _judge_lock(cid: int, pose: PackedFloat32Array) -> void:
 		else:
 			announce.emit("The line moved! Climb higher.", false)
 		return
-	_broadcast_freeze(cid, pose, "locked")
+	_broadcast_freeze(cid, pose, "locked", welded)
 
 
 @rpc("authority", "call_local", "reliable")
@@ -689,12 +691,14 @@ func _finish_timeout_if_settled() -> void:
 
 
 ## Host: judge a freeze and tell everyone. verdict in: "locked" | "time" | "left".
-func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String) -> void:
+func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded := false) -> void:
 	var c: Climber = climbers.get(cid)
 	if c == null:
 		return
 	var top := c.pose_top(pose)
-	var grounded := _pose_on_support(c, pose)
+	# Touching: a weld to the arena or the tower (the owner's report, or this machine's
+	# own climber), or the pose test against the supports.
+	var grounded := welded or (c.owner_peer == me() and c.welded_to_support()) or _pose_on_support(c, pose)
 	if why == "time" and not grounded:
 		return
 	if why == "locked" and not grounded:

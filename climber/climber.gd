@@ -782,6 +782,17 @@ func grounded_locally() -> bool:
 	return false
 
 
+## WELDED TO A SUPPORT (Parker 11-09: "If I am welded to the tower, I should be able to
+## lock in if I am above the line"): a hand or foot stuck to the arena or the frozen
+## tower. A strained weld can hang a few centimetres off the surface, so the host's
+## pose test alone missed it; the lock-in request carries this too.
+func welded_to_support() -> bool:
+	for l in limbs:
+		if (l.grab as RID).is_valid() and l.grab_other != null and (l.grab_climber == null or not is_instance_valid(l.grab_climber) or l.grab_climber.state == State.FROZEN):
+			return true
+	return false
+
+
 ## Stuck to the arena or the frozen tower, or an end piece touching either.
 func touches_solid() -> bool:
 	if state == State.PUPPET:
