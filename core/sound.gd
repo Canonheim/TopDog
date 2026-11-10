@@ -26,6 +26,7 @@ const SFX := {
 	"hurt": ["hurt_1", "hurt_2", "hurt_3", "hurt_4"],
 	"fall": ["yell_1", "yell_2", "yell_3"],
 	"lock": ["lock_bell"],
+	"church_bell": ["church_bell_01", "church_bell_02", "church_bell_03"],  # the bell base (Parker 11-10)
 	"tick": ["clock_tick"],
 	"clap": ["clap_1", "clap_2"],
 	"win": ["match_victory"],

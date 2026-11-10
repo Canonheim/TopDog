@@ -438,6 +438,12 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 		c.release_contact.connect(func(at: Vector3):
 			_rpc_slap.rpc(cid, at, Sound.pick_grab(), randf_range(0.92, 1.08)))
 		c.grab_made.connect(_on_grab_made)
+		c.grab_made.connect(func(_c: Climber, limb: int, other: Object):
+			# THE BELL (Parker 11-10): a hand or foot sticking to the metal bell rings it.
+			if other is Node and (other as Node).has_meta("bell_ring") and _bell_wait.get("%d:%d" % [cid, limb], 0) <= Time.get_ticks_msec():
+				_bell_wait["%d:%d" % [cid, limb]] = Time.get_ticks_msec() + BELL_COOLDOWN_MS
+				var end: RigidBody3D = c.bodies[c.limbs[limb].def.end]
+				_rpc_bell.rpc(cid, end.global_position, Sound.SFX["church_bell"].pick_random()))
 		c.grab_lost.connect(_on_grab_lost)
 		c.rope_bounced.connect(func(at: Vector3, speed: float): _rpc_rope.rpc(cid, at, speed))
 		if chair != null and not is_host():
@@ -954,6 +960,23 @@ func _rpc_chair_rope(at: Vector3, speed: float) -> void:
 func _play_rope(at: Vector3, speed: float) -> void:
 	if stage != null:
 		stage.bounce_rope(signf(at.x), clampf(speed, 0.0, 20.0))
+
+
+## The bell base rings on every machine: a church-bell strike (one of three, at a
+## slightly random pitch) and the bell's pulse.
+const BELL_COOLDOWN_MS := 300  # per limb: a grip flickering on and off doesn't peal
+var _bell_wait := {}
+var bell_rings := 0  # rings heard on this machine (the batteries count them)
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _rpc_bell(cid: int, at: Vector3, clip: String) -> void:
+	if _audio_climber(cid) == null or not at.is_finite() or not clip in Sound.SFX["church_bell"]:
+		return
+	Sound.play_at("church_bell", at, 0.0, world, "")
+	bell_rings += 1
+	if stage != null:
+		stage.pulse_bell()
 
 
 @rpc("any_peer", "call_local", "reliable")

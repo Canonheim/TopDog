@@ -561,7 +561,9 @@ func make_game(mode_id: String, n: int, timer: float, arena := "dock", draw := f
 	for i in n:
 		roster.append({"pid": i, "name": "Bot %d" % i, "tint": Color.WHITE, "peer": 1, "slot": i})
 		g.bot_drivers[i] = Drivers.ScriptDriver.new()
-	g.host_start({"mode": mode_id, "timer": timer, "spawn": "alternate", "stage": arena}, roster)
+	# Always the barrel: lift_and_lock stands a climber on the base's top at x = 0, which
+	# only the barrel has (a random donkey left it in the air and the lock was refused).
+	g.host_start({"mode": mode_id, "timer": timer, "spawn": "alternate", "stage": arena, "base": "barrel"}, roster)
 	return g
 
 
@@ -2332,6 +2334,47 @@ func _run_joinpadclient() -> void:
 	si.queue_free()
 
 
+## THE BELL BASE (Parker 11-10): its collision stands where the model does (the
+## bell's hull up at the bell, not on the canvas), only bell_body rings, a limb that
+## sticks to the bell rings it and pulses it, and one stuck to the pedestal doesn't.
+func _run_bell() -> void:
+	var g := make_game("tower", 1, 60.0, "plaza", true)
+	g.host_start({"mode": "tower", "timer": 60.0, "spawn": "alternate", "stage": "plaza", "base": "bell"}, g.roster)
+	await wait_phase(g, "turn")
+	var st: Stage = g.stage
+	var ringers := st.base_bodies.filter(func(b): return b.has_meta("bell_ring"))
+	t("bell: the bell base is up, 2.20 m tall, first line 0.5 above", st.base_id == "bell" and absf(st.barrel_top - 2.20) < 0.02 and is_equal_approx(st.first_line, st.barrel_top + Stage.FIRST_LINE_ABOVE), "top %.3f line %.3f" % [st.barrel_top, st.first_line])
+	t("bell: one hull rings (bell_body), and it sits up at the bell", ringers.size() == 1 and _hull_mid_y(ringers[0]) > 1.2, "%d ringers, mid y %.2f" % [ringers.size(), _hull_mid_y(ringers[0]) if ringers.size() > 0 else -1.0])
+	t("bell: the model's bell node is found for the pulse", st.bell_node != null)
+	var c: Climber = g.live_climbers()[0]
+	var before := g.bell_rings
+	c.attach(0, ringers[0])
+	await frames(2)
+	t("bell: a hand stuck to the metal bell rings it", g.bell_rings == before + 1, g.bell_rings - before)
+	await frames(4)
+	t("bell: ...and the bell pulses", st.bell_node.scale.x > 1.01, st.bell_node.scale.x)
+	c.release(0)
+	var stone: Object = st.base_bodies.filter(func(b): return not b.has_meta("bell_ring"))[0]
+	before = g.bell_rings
+	c.attach(1, stone)
+	await frames(2)
+	t("bell: a hand on the stone doesn't ring it", g.bell_rings == before)
+	c.release(1)
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+
+
+func _hull_mid_y(body: StaticBody3D) -> float:
+	var pts: PackedVector3Array = ((body.get_child(0) as CollisionShape3D).shape as ConvexPolygonShape3D).points
+	var lo := INF
+	var hi := -INF
+	for p in pts:
+		lo = minf(lo, p.y)
+		hi = maxf(hi, p.y)
+	return (lo + hi) * 0.5
+
+
 func _run_startingbase() -> void:
 	var g := make_game("tower", 1, 60, "plaza", true)
 	await wait_phase(g, "turn")
@@ -2346,7 +2389,7 @@ func _run_startingbase() -> void:
 		g.host_start({"mode": "tower", "timer": 60.0, "stage": "plaza", "base": choice}, g.roster)
 		await wait_phase(g, "turn")
 		var support: Node3D = g.stage.base_root
-		var highest: float = {"barrel": 2.016, "cactus": 1.796, "donkey": 2.117581}[choice]
+		var highest: float = {"barrel": 2.016, "cactus": 1.796, "donkey": 2.117581, "bell": 2.20}[choice]
 		t("base: forced choice uses matching support height", g.stage.base_id == choice and is_equal_approx(g.stage.barrel_top, highest) and is_equal_approx(g.stage.first_line, highest + Stage.FIRST_LINE_ABOVE), choice)
 		t("base: support has live stage collisions", not g.stage.base_bodies.is_empty() and g.stage.base_bodies.all(func(b): return g.stage.bodies.has(b) and b.is_inside_tree()), choice)
 		if choice == "donkey":

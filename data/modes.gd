@@ -34,9 +34,9 @@ const ROWS := {
 
 const TIMERS := [40.0, 60.0, 90.0]
 const TIMER_NAMES := ["Short (40 s)", "Normal (1 min)", "Long (1 min 30)"]
-const BASES := ["random", "barrel", "cactus", "donkey"]
-const STARTING_BASES := ["barrel", "cactus", "donkey"]
-const BASE_NAMES := ["Random", "Barrel", "Cactus", "Donkey"]
+const BASES := ["random", "barrel", "cactus", "donkey", "bell"]
+const STARTING_BASES := ["barrel", "cactus", "donkey", "bell"]
+const BASE_NAMES := ["Random", "Barrel", "Cactus", "Donkey", "Bell"]
 
 const SPAWNS := ["alternate", "left", "right", "random"]
 const SPAWN_NAMES := ["Alternating", "Left side", "Right side", "Random"]

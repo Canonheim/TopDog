@@ -5,6 +5,11 @@ extends RefCounted
 ## of every solid is its 3D shape cut at the play plane (z = 0).
 
 const DONKEY_MODEL := preload("res://kit/models/donkey_base.glb")
+## THE BELL BASE (Parker 11-10, the Building Maker's design): a stone pedestal, a wooden
+## frame, a church bell. Collision from its non-deco_ meshes; only bell_body rings.
+const BELL_MODEL_PATH := "res://kit/models/bell_base.glb"
+const BELL_PULSE := 1.06  # the ring's pulse: 6% (the Building Maker's limit), back in 0.25 s
+var bell_node: Node3D = null  # the model's `bell` node (pulses on a ring), when dressed
 
 const CACTUS_MODEL := preload("res://kit/models/potted_saguaro.glb")
 
@@ -97,6 +102,8 @@ func set_base(world: Node3D, selected: String) -> void:
 		base_bodies.append(_static_poly(base_root, pts, 0.9, 0.6))
 		barrel_top = 0.96 * bs
 		barrel_half = 0.445 * bs
+	elif base_id == "bell" and ResourceLoader.exists(BELL_MODEL_PATH):
+		_bell_collision()
 	elif base_id == "cactus":
 		# The reduced pot and cactus are authored in metres, origin on the canvas.
 		# Separate convex pieces preserve the gaps underneath both raised arms.
@@ -136,11 +143,62 @@ func set_base(world: Node3D, selected: String) -> void:
 	first_line = barrel_top + FIRST_LINE_ABOVE
 	if base_dressed:
 		var models := {"barrel": BARREL_MODEL, "cactus": CACTUS_MODEL, "donkey": DONKEY_MODEL}
+		if base_id == "bell":
+			models.bell = load(BELL_MODEL_PATH)
 		var visual: Node3D = models[base_id].instantiate()
 		base_root.add_child(visual)
 		if base_id == "barrel":
 			visual.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5).scaled(Vector3.ONE * float(row.barrel_scale)), Vector3.ZERO)
 		CelPass.celify(visual)
+		bell_node = visual.find_child("bell", true, false) as Node3D if base_id == "bell" else null
+
+
+## THE BELL'S COLLISION: each non-deco_ mesh's outline at the plane, one convex hull
+## each (as the donkey's). The bell_body hull carries meta bell_ring: a limb that sticks
+## to it rings the bell (Game).
+func _bell_collision() -> void:
+	var src: Node3D = (load(BELL_MODEL_PATH) as PackedScene).instantiate()
+	barrel_top = 0.0
+	barrel_half = 0.0
+	for mesh: MeshInstance3D in src.find_children("*", "MeshInstance3D", true, false):
+		var part := str(mesh.name)
+		if part.begins_with("deco_") or part == "bell":
+			continue  # dressing, and the `bell` node's 1 cm placeholder cube inside the crown
+		var xf := Transform3D.IDENTITY
+		var cur: Node = mesh
+		while cur != null and cur != src:
+			xf = (cur as Node3D).transform * xf
+			cur = cur.get_parent()
+		var outline := PackedVector2Array()
+		for si in mesh.mesh.get_surface_count():
+			for v: Vector3 in mesh.mesh.surface_get_arrays(si)[Mesh.ARRAY_VERTEX]:
+				var w := xf * v
+				outline.append(Vector2(w.x, w.y))
+				barrel_top = maxf(barrel_top, w.y)
+				barrel_half = maxf(barrel_half, absf(w.x))
+		var hull := Geometry2D.convex_hull(outline)
+		if hull.size() > 3:
+			hull.resize(hull.size() - 1)  # the hull repeats its first point
+			var body := _static_poly(base_root, hull, 0.9, 0.3)
+			if part == "bell_body":
+				body.set_meta("bell_ring", true)
+			base_bodies.append(body)
+	src.free()
+
+
+## Ring the bell: the pulse (the sound is Game's, at the contact).
+func pulse_bell() -> void:
+	if bell_node == null or not is_instance_valid(bell_node):
+		return
+	if bell_node.has_meta("tween"):
+		var old: Tween = bell_node.get_meta("tween")
+		if old != null and old.is_valid():
+			old.kill()
+	bell_node.scale = Vector3.ONE
+	var tw := bell_node.create_tween()
+	tw.tween_property(bell_node, "scale", Vector3.ONE * BELL_PULSE, 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(bell_node, "scale", Vector3.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	bell_node.set_meta("tween", tw)
 
 
 func spawn_point(side: int) -> Vector2:
