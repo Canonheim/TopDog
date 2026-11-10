@@ -44,7 +44,7 @@ var ring_kit: Node3D = null  # the kit ring, once dressed (its ropes animate)
 ## THE FIRST LINE: the line before anyone is in the tower sits this far above the
 ## barrel's top, out of a standing climber's reach (Parker 11-07: "I can reach
 ## straight up at spawn and touch it").
-const FIRST_LINE_ABOVE := 0.5  # Parker 11-10: "the first starting line should always be .5 meters above whatever the height of the starting climb object is" (was 0.8)
+const FIRST_LINE_ABOVE := 0.75  # Parker 11-10: first "the first starting line should always be .5 meters above whatever the height of the starting climb object is", then ".75 above instead of .5" (was 0.8 before that)
 var first_line := 0.0
 var barrel_half := 0.0
 var bodies: Array = []

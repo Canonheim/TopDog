@@ -2363,7 +2363,7 @@ func _run_bell() -> void:
 	await wait_phase(g, "turn")
 	var st: Stage = g.stage
 	var ringers := st.base_bodies.filter(func(b): return b.has_meta("bell_ring"))
-	t("bell: the bell base is up, 2.20 m tall, first line 0.5 above", st.base_id == "bell" and absf(st.barrel_top - 2.20) < 0.02 and is_equal_approx(st.first_line, st.barrel_top + Stage.FIRST_LINE_ABOVE), "top %.3f line %.3f" % [st.barrel_top, st.first_line])
+	t("bell: the bell base is up, 2.20 m tall, first line FIRST_LINE_ABOVE above", st.base_id == "bell" and absf(st.barrel_top - 2.20) < 0.02 and is_equal_approx(st.first_line, st.barrel_top + Stage.FIRST_LINE_ABOVE), "top %.3f line %.3f" % [st.barrel_top, st.first_line])
 	t("bell: one hull rings (bell_body), and it sits up at the bell", ringers.size() == 1 and _hull_mid_y(ringers[0]) > 1.2, "%d ringers, mid y %.2f" % [ringers.size(), _hull_mid_y(ringers[0]) if ringers.size() > 0 else -1.0])
 	t("bell: the model's bell node is found for the pulse", st.bell_node != null)
 	var c: Climber = g.live_climbers()[0]

@@ -13,13 +13,16 @@ const FIRST := [
 	"Gordito", "P.K.", "Mohamad", "Xavier", "Timmy", "Tim", "Tom", "Tommy",
 	"Danny", "Dan", "John", "Johnny", "Jonny", "Jonaline", "Ethan", "Daniel",
 	"Jorge", "George", "Austin", "Jesus", "Brandon",
+	"Horatio", "Horace", "Seamus O'Hool", "O'Leary", "Reginald", "Bort", "Bob", "Billy",
+	"Bingus", "Sally", "Steven", "Steve", "Weston", "Carsen",
 ]
 const THING := [
 	"Barrel", "Ladder", "Turnip", "Goose", "Bucket", "Anvil", "Cabbage", "Kettle",
 	"Rampart", "Tankard", "Haystack", "Drawbridge", "Pudding", "Cart", "Lantern", "Mitten",
 	"Gatepost", "Herring", "Saddle", "Shovel", "Teacup", "Banner", "Bell", "Pickle",
 	"Cat", "Dog", "Turtle", "Horse", "Donkey", "Goat", "Grape", "Book",
-	"Teeth", "Bone", "Elbow", "Foot", "Melon", "Gold", "Egg", "Letter",
+	"Teeth", "Bone", "Elbow", "Foot", "Melon", "Gold", "Egg", "Letter", "Giant", "Tiny",
+	"Barf", "Boot", "Shirt", "Pants", "Skin",
 ]
 const DOER := [
 	"Hugger", "Climber", "Wrangler", "Toppler", "Stacker", "Clinger", "Dangler", "Flinger",
@@ -41,7 +44,7 @@ const ADJECTIVE := [
 	"Sweaty", "Soggy", "Wobbly", "Grumpy", "Crusty", "Sneaky", "Damp", "Greasy",
 	"Lumpy", "Clumsy", "Moist", "Sassy", "Spicy", "Chunky", "Saucy", "Dizzy",
 	"Wiggly", "Hairy", "Sleepy", "Squeaky", "Feral", "Humble", "Unwashed", "Haunted",
-	"Itchy", "Bashful",
+	"Itchy", "Bashful", "Captain", "Master", "Enormous", "Happy", "Obtuse",
 ]
 const ADJECTIVE_CHANCE := 0.5
 
