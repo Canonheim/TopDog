@@ -4,6 +4,7 @@ extends Node
 
 const RARE_GRAB := "grab_slap_10"
 const SFX := {
+	"donkey": ["donkey_natural_02", "donkey_natural_03"],
 	"knockout": ["knockout_grunt_01"],
 	"bubble_pop": ["bubble_pop_01", "bubble_pop_02", "bubble_pop_03"],
 	"chair_light": ["big_slam_01", "big_slam_02"],
@@ -153,19 +154,19 @@ func contact_player(stream: AudioStream, pitch: float, host: Node) -> AudioStrea
 
 
 ## A positioned effect in the 3D world.
-func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null, clip := "") -> void:
+func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null, clip := "") -> AudioStreamPlayer3D:
 	var list: Array = SFX.get(kind, [])
 	if list.is_empty():
-		return
+		return null
 	var s = _pick_stream(kind, list) if clip.is_empty() else _streams.get(clip)
 	if s == null or (not clip.is_empty() and clip not in list):
-		return
+		return null
 	var chair_boost_db := linear_to_db(5.0) if kind in ["chair_light", "chair_heavy", "chair_break"] else 0.0
 	if kind == "chair_heavy":
 		chair_boost_db += linear_to_db(1.2)
 	if kind == "bubble_pop":
 		chair_boost_db += linear_to_db(3.0)
-	if kind == "church_bell":
+	if kind in ["church_bell", "donkey"]:
 		chair_boost_db += linear_to_db(2.0)
 	if kind == "knockout":
 		# Match measured short-block loudness to the two big slams, with their 6x gain.
@@ -176,7 +177,7 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	var host: Node = parent if parent != null else get_tree().current_scene
 	if host == null:
 		play(kind, volume_db)
-		return
+		return null
 	var p := AudioStreamPlayer3D.new()
 	p.bus = "Effects"
 	p.stream = s
@@ -184,7 +185,7 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	p.max_db += chair_boost_db
 	p.pitch_scale = randf_range(0.92, 1.08) if clip.is_empty() else 1.0
 	p.unit_size = 6.0
-	if kind == "church_bell":
+	if kind in ["church_bell", "donkey"]:
 		p.attenuation_model = AudioStreamPlayer3D.ATTENUATION_DISABLED
 		p.max_db += maxf(0.0, volume_db - chair_boost_db)  # Allow the chair-only bell boost.
 	if kind == "grab":
@@ -193,6 +194,7 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	p.global_position = where
 	p.play()
 	p.finished.connect(p.queue_free)
+	return p
 
 
 func music(id: String) -> void:

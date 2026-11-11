@@ -2751,3 +2751,67 @@ func _run_kostars() -> void:
 	g.end_match()
 	g.queue_free()
 	await frames(2)
+
+
+func _run_donkey() -> void:
+	var g := make_game("tower", 1, 60, "plaza", true)
+	g.host_start({"mode": "tower", "timer": 60.0, "stage": "plaza", "base": "donkey"}, g.roster)
+	await wait_phase(g, "turn")
+	t("donkey: collision hulls activate contact trigger", g.stage.base_bodies.all(func(b): return b.has_meta("donkey_voice")))
+	var head: MeshInstance3D = g.stage.base_root.find_child("head", true, false)
+	t("donkey: sound origin matches visible head", head != null and g.stage.base_root.to_global(g.stage.donkey_head).distance_to(head.to_global(head.mesh.get_aabb().get_center())) < 0.001)
+	t("donkey: contact cooldown prevents repeated rolls", g._donkey_contact_ready("test") and not g._donkey_contact_ready("test"))
+	t("donkey: chance is ten percent", is_equal_approx(g.DONKEY_CHANCE, 0.10))
+	for clip in Sound.SFX["donkey"]:
+		g._play_donkey(clip)
+		var voices := g.stage.base_root.get_children().filter(func(n): return n is AudioStreamPlayer3D and n.stream.resource_path.contains(clip))
+		t("donkey: approved clip plays once from head", voices.size() == 1 and voices[0].playing and voices[0].global_position.distance_to(g.stage.base_root.to_global(g.stage.donkey_head)) < 0.001, clip)
+		var active: AudioStreamPlayer3D = g._donkey_voice
+		g._play_donkey(clip, true)
+		t("donkey: repeated proc cannot overlap or interrupt", g._donkey_voice == active and not g._donkey_contact_ready("busy"))
+		t("donkey: normal volume matches bell gain", is_equal_approx(active.volume_db, linear_to_db(2.0)))
+		await seconds(2.1)
+		t("donkey: natural finish unlocks playback", not g._donkey_busy())
+		g._play_donkey(clip, true)
+		t("donkey: chair adds same double volume as bell", g._donkey_busy() and is_equal_approx(g._donkey_voice.volume_db, linear_to_db(4.0)))
+		await seconds(2.1)
+	g.stage.set_base(g.world, "bell")
+	t("donkey: bell contacts cannot activate donkey", not g._donkey_contact_ready("other"))
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+
+
+func _run_ropesides() -> void:
+	var old_rope := Climber.rope_x
+	Climber.rope_x = 8.0
+	var c: Climber = ClimberScript.new()
+	add_child(c)
+	c.build(Vector2.ZERO, world)
+	c.set_physics_process(false)
+	var bounces := [0]
+	c.rope_bounced.connect(func(_at, _speed): bounces[0] += 1)
+	for side in [-1.0, 1.0]:
+		for speed in [-3.0, 0.0, 3.0]:
+			for body: RigidBody3D in c.bodies.values():
+				body.global_position = Vector3(side * (Climber.rope_x + 0.18), 0.8, 0)
+				body.linear_velocity = Vector3(side * speed, -4.0, 0)
+				Climber.sync_server(body)
+			c._rope_wait = 0.0
+			var before: int = bounces[0]
+			c._tick_ropes(1.0 / 120)
+			t("outside rope: left/right, incoming/outgoing/falling launches inward and up", c.bodies.chest.linear_velocity.x * side < 0 and c.bodies.chest.linear_velocity.y > 0 and bounces[0] == before + 1, [side, speed])
+			c._tick_ropes(1.0 / 120)
+			t("outside rope: cooldown prevents repeated launch events", bounces[0] == before + 1)
+		for body: RigidBody3D in c.bodies.values():
+			body.global_position = Vector3(side * (Climber.rope_x - 0.1), 0.8, 0)
+			body.linear_velocity = Vector3(-side * 3.0, 2.0, 0)
+			Climber.sync_server(body)
+		c._rope_wait = 0.0
+		var before: int = bounces[0]
+		c._tick_ropes(1.0 / 120)
+		t("inside rope: moving away stays unchanged", bounces[0] == before and c.bodies.chest.linear_velocity.is_equal_approx(Vector3(-side * 3.0, 2.0, 0)))
+	c.remove()
+	c.queue_free()
+	Climber.rope_x = old_rope
+	await frames(2)

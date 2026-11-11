@@ -742,7 +742,7 @@ func knock_out() -> void:
 ## and on through) is stuck to or touching the arena or the frozen tower. Two climbers
 ## holding each other in the air can't fly. A rival on another machine counts while
 ## their pull arrives (their machine sends it only while they're grounded).
-## A piece entering the rope zone moving outward throws the whole climber back
+## Contact from either side of the rope throws the whole climber back
 ## into the ring at Feel rope_bounce times the speed it hit (relative motion kept).
 func _tick_ropes(delta: float) -> void:
 	_rope_wait -= delta
@@ -756,7 +756,8 @@ func _tick_ropes(delta: float) -> void:
 		var body := b as RigidBody3D
 		var side := signf(p.x)
 		var outward := body.linear_velocity.x * side
-		var reach := 0.3 + maxf(0.0, outward) * delta
+		var outside := absf(p.x) > rope_x
+		var reach := 0.3 + absf(body.linear_velocity.x) * delta
 		if absf(p.x) < rope_x - 0.22 or absf(p.x) > rope_x + reach or p.y < ROPE_LOW or p.y > ROPE_HIGH:
 			continue
 		if not velocity_ready:
@@ -774,10 +775,12 @@ func _tick_ropes(delta: float) -> void:
 			sync_server(body)
 		if _rope_wait > 0.0:
 			continue
-		var out_speed: float = com_v.x * side
+		# Outside contact uses the same inward throw, even when already moving inward.
+		# Keep the original directional gate for a wrestler inside leaving the rope.
+		var out_speed: float = maxf(0.3, absf(com_v.x)) if outside else com_v.x * side
 		if out_speed < 0.3:
 			continue
-		var new_v := rope_throw(com_v, side)
+		var new_v := rope_throw(Vector2(side * out_speed, com_v.y), side)
 		for o in pieces:
 			var rb := o as RigidBody3D
 			rb.linear_velocity.x += new_v.x - com_v.x
