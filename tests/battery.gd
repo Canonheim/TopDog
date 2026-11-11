@@ -2539,6 +2539,29 @@ func _run_delmar() -> void:
 	var fl: DelMarFloaties = st.floaties
 	t("delmar: six floaties drift on the climbers' plane in the open water", fl != null and fl._items.size() == DelMarFloaties.COUNT and fl._items.all(func(it): return absf((it.node as Node3D).global_position.z) < 0.01 and float(it.x) >= Stage.FLOAT_X.x and float(it.x) <= Stage.FLOAT_X.y), fl._items.map(func(it): return snappedf(float(it.x), 0.1)) if fl != null else [])
 	t("delmar: the buoy floats back behind the play plane, clear of every floatie", absf(st.buoy_body.global_position.z - Stage.BUOY_Z) < 0.01 and Stage.BUOY_Z < -1.5, st.buoy_body.global_position.z)
+	# The clouds never pop (Parker 11-11): drifting past a real camera, a cloud only
+	# ever jumps while every part of it is off screen, and lands off screen.
+	var sky_root := Node3D.new()
+	add_child(sky_root)
+	var sky_cam := Camera3D.new()
+	sky_root.add_child(sky_cam)
+	sky_cam.position = Vector3(0, 6, 13)
+	sky_cam.current = true
+	var puff := Node3D.new()
+	sky_root.add_child(puff)
+	puff.position = Vector3(-30.0, 18.0, -80.0)
+	var pops := 0
+	var wraps := 0
+	for k in 3000:
+		var was := puff.position.x
+		var seen_before := LuchaKit.cloud_seen(sky_cam, puff, was + 0.5, 8.0)  # where it would be
+		LuchaKit.drift_cloud(puff, 0.5, 8.0, -30.0, 40.0, sky_cam)
+		if puff.position.x < was:
+			wraps += 1
+			if seen_before or LuchaKit.cloud_seen(sky_cam, puff, puff.position.x, 8.0):
+				pops += 1
+	t("delmar: a drifting cloud wraps round only off screen (no popping in or out)", wraps > 0 and pops == 0, "wraps %d, seen %d" % [wraps, pops])
+	sky_root.queue_free()
 	fl._items[0].amp = 0.0  # hold this one still: it drifts out from under a test fall
 	fl.tick(0.0)
 	var spare := spawn(Vector2(float(fl._items[0].x), Stage.WATER_Y + 3.0))

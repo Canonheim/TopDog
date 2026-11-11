@@ -124,7 +124,7 @@ var water: MeshInstance3D = null  # the sea, for the game's splashes
 var _foam: MeshInstance3D = null
 var _piece_at: Array = []  # each placed piece: Vector3(x, its footprint's half-diagonal, z), for clearances
 var _ships: Array = []  # [node, x0, x1, phase, speed]
-var _clouds: Array = []  # [node, base x]
+var _clouds: Array = []  # [node, base x, half width]
 var _bobbers: Array = []  # [node, base y, phase]
 var _t := 0.0
 var _rng := RandomNumberGenerator.new()
@@ -255,8 +255,9 @@ func tick(delta: float) -> void:
 		n2.position.y = float(b[1]) + sin(_t * 0.9 + float(b[2])) * 0.08
 	for c in _clouds:
 		var cn: Node3D = c[0]
-		# Drift right, wrap back to the start: never left of where the plan placed it.
-		cn.position.x = float(c[1]) + fposmod(_t * 0.6, 60.0)
+		# Drift right 60 m, then back to where the plan placed it, only ever off screen
+		# (it jumped back 60 m in plain view every 100 s).
+		LuchaKit.drift_cloud(cn, 0.6 * delta, float(c[2]), float(c[1]), float(c[1]) + 60.0)
 	if _foam != null:
 		# The foam line breathes in and out a little with the swell.
 		_foam.position.x = sin(_t * 0.8) * 0.18
@@ -1021,7 +1022,7 @@ func _build_clouds() -> void:
 		cloud.position = Vector3(c.x, c.y, c.z)
 		cloud.rotation.y = deg_to_rad(_rng.randf_range(-12.0, 12.0))
 		root.add_child(cloud)
-		_clouds.append([cloud, c.x])
+		_clouds.append([cloud, c.x, c.w * 0.5])
 
 
 # ---------------------------------------------------------------- mesh helpers

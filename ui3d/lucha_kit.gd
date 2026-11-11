@@ -513,6 +513,41 @@ static func bunting(a: Vector3, b: Vector3, n: int, sag := 0.5) -> Node3D:
 	return root
 
 
+## THE CLOUDS NEVER POP (Parker 11-11: "make sure we are not seeing clouds pop in and
+## out"): a drifting cloud moves on by dx, and once past `hi` it wraps back to `lo`,
+## but only while no part of it is on screen, and never onto a spot that is: the
+## way back steps further left until it's out of view. Still seen past `hi`, it just
+## drifts on until it isn't.
+static func drift_cloud(n: Node3D, dx: float, half_w: float, lo: float, hi: float, cam: Camera3D = null) -> void:
+	n.position.x += dx
+	if n.position.x <= hi:
+		return
+	if cam == null and n.is_inside_tree():
+		cam = n.get_viewport().get_camera_3d()  # the view being drawn
+	if cam != null and cloud_seen(cam, n, n.position.x, half_w):
+		return
+	var x := lo
+	if cam != null:
+		for k in 40:
+			if not cloud_seen(cam, n, x, half_w):
+				break
+			x -= half_w * 2.0 + 4.0
+	n.position.x = x
+
+
+## Whether any of a cloud (half_w wide each way, about half as tall) would be on
+## screen with its x at `x` (in its parent's space).
+static func cloud_seen(cam: Camera3D, n: Node3D, x: float, half_w: float) -> bool:
+	var parent := n.get_parent() as Node3D
+	var to_world := parent.global_transform if parent != null else Transform3D()
+	var half_h := half_w * 0.6
+	for o: Vector2 in [Vector2.ZERO, Vector2(-1, -1), Vector2(1, -1), Vector2(-1, 1), Vector2(1, 1), Vector2(-1, 0), Vector2(1, 0)]:
+		var p: Vector3 = to_world * Vector3(x + o.x * half_w, n.position.y + o.y * half_h, n.position.z)
+		if cam.is_position_in_frustum(p):
+			return true
+	return false
+
+
 ## C1: a flat swirl cloud card (the stylized sky): overlapping cream lobes with
 ## spiral curls on the top, all flat, inked by the outline pass.
 static func swirl_cloud(width: float, which := 0) -> Node3D:

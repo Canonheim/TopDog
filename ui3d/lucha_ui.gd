@@ -135,6 +135,7 @@ func _build_sky() -> void:
 		var c := LuchaKit.swirl_cloud(w, i)
 		c.position = Vector3(rng.randf_range(-70.0, 70.0), rng.randf_range(9.0, 26.0), rng.randf_range(-95.0, -70.0))
 		c.set_meta("speed", rng.randf_range(0.4, 1.0))
+		c.set_meta("half_w", w * 0.5)
 		sky.add_child(c)
 		_clouds.append(c)
 
@@ -1878,9 +1879,8 @@ func _process(delta: float) -> void:
 	_festive_tick(delta, t)
 	for c in _clouds:
 		var n: Node3D = c
-		n.position.x += float(n.get_meta("speed")) * delta
-		if n.position.x > 80.0:
-			n.position.x = -80.0
+		# (It jumped from x 80 to -80 in plain view: it wraps only off screen now.)
+		LuchaKit.drift_cloud(n, float(n.get_meta("speed")) * delta, float(n.get_meta("half_w")), -80.0, 80.0)
 	_tick_hud_occlusion(delta)
 	_tick_line_poles()
 	for f in _flags:
