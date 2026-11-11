@@ -324,7 +324,7 @@ func tick(delta: float) -> void:
 	var h_src: Climber = who if who != null else mine
 	if h_src != null:
 		set_height(test_height if test_height >= 0.0 else maxf(0.0, h_src.top_height()), delta)
-	var raw := mine != null and mine.top_height() > g.line + Game.LOCK_MARGIN and mine.touches_solid()
+	var raw := mine != null and g.measure(mine) > g.line + Game.LOCK_MARGIN and mine.touches_solid()
 	if raw == popped:
 		_lock_hold = 0.0
 	else:

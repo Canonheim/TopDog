@@ -308,7 +308,7 @@ func _fill_lobby() -> void:
 	var me: Dictionary = Net.members.get(Net.me(), {})
 	if host:
 		m.add_button("FIGHT!", _start)
-		var mode_ids := ["scramble", "tower"]
+		var mode_ids := ["scramble", "tower", "delmar"]
 		m.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "scramble")))), func(i):
 			var s: Dictionary = Net.settings.duplicate()
 			s.mode = mode_ids[i]

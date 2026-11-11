@@ -2452,6 +2452,77 @@ func _run_plazafloor() -> void:
 	t("plazafloor: a climber falling anywhere outside the ring lands on the stones", holes.is_empty(), "holes at %s" % str(holes))
 
 
+## DEL MAR (Parker 11-10, docs/DEL_MAR.md): the pier, the base at its end, the 45 degree
+## line along x + y starting 0.75 past the base, spawns 3 m apart on the deck, a lock
+## over the line moving it to 0.25 past the tower, the buoy never held, and a fall into
+## the sea is out. Back to the plaza when the match ends.
+func _run_delmar() -> void:
+	var g := make_game("delmar", 2, 50.0, "plaza")
+	if not await wait_phase(g, "round"):
+		t("delmar: a round starts", false)
+		return
+	var st: Stage = g.stage
+	var base_right := st.base_root.position.x + st.barrel_half
+	t("delmar: the pier is built and the base stands flush on its end", st.delmar and is_instance_valid(st.delmar_root) and absf(base_right - Stage.PIER_END) < 0.05, "base right %.2f" % base_right)
+	var reach := -INF
+	for b in st.base_bodies:
+		for q: Vector3 in ((b.get_child(0) as CollisionShape3D).shape as ConvexPolygonShape3D).points:
+			reach = maxf(reach, q.x + q.y + st.base_root.position.x)
+	t("delmar: the line starts 0.75 past the base along the rope (x + y)", is_equal_approx(g.line, reach + 0.75) and is_equal_approx(st.first_line, g.line), "line %.2f, base reach %.2f" % [g.line, reach])
+	var xs: Array = g.live_climbers().map(func(c): return snappedf(c.centre_of_mass().x, 0.01))
+	xs.sort()
+	t("delmar: two spawns on the pier, about 3 m apart near its end", xs.size() == 2 and absf(xs[1] - xs[0] - 3.0) < 0.4 and xs[1] < Stage.PIER_END and xs[1] > Stage.PIER_END - 6.0, xs)
+	await frames(10)
+	t("delmar: the buoy floats where the rope meets the water", absf(st.buoy_body.global_position.x - (g.line - Stage.WATER_Y)) < 0.3, "buoy x %.2f" % st.buoy_body.global_position.x)
+	# The buoy is never held.
+	var c0: Climber = g.climbers[g.live[0]]
+	c0.attach(0, st.buoy_body)
+	t("delmar: a hand can't weld to the buoy", c0.limbs[0].grab_other != st.buoy_body)
+	# Lock in: stand climber 0 on the base's top; it reaches over the rope.
+	c0.release_all()
+	for l in c0.limbs:
+		l.regrip = 2.0
+	var p := c0.pose()
+	var low := INF
+	var low_x := 0.0
+	for i in Layout.ORDER.size():
+		var k := 3 * i
+		var y := -c0.top_of(Layout.ORDER[i], Transform2D(p[k + 2] + PI, Vector2(0, -p[k + 1])))
+		if y < low:
+			low = y
+			low_x = p[k]
+	var spot := Vector2(st.base_root.position.x, st.barrel_top)
+	for k in range(0, p.size(), 3):
+		p[k] += spot.x - low_x
+		p[k + 1] += spot.y - low - 0.008
+	c0.apply_pose(p)
+	var before := g.line
+	var reached := g.measure(c0)
+	(g.bot_drivers[0] as Drivers.ScriptDriver).lock = true
+	await frames(4)
+	(g.bot_drivers[0] as Drivers.ScriptDriver).lock = false
+	t("delmar: over the rope and on the base, the lock is accepted", c0.state == Climber.State.FROZEN, "reach %.2f vs line %.2f" % [reached, before])
+	t("delmar: the line moves to 0.25 past the tower's furthest point", absf(g.line - (reached + 0.25)) < 0.05 and g.line > before, "line %.2f, reach %.2f" % [g.line, reached])
+	# A climber under the line is refused (climber 1, standing on the deck).
+	var c1: Climber = g.climbers[g.live[1]]
+	var refused_before := c1.state
+	t("delmar: standing on the deck is under the line", g.measure(c1) < g.line, "%.2f < %.2f" % [g.measure(c1), g.line])
+	# The sea: climber 1 falls in and is out.
+	var drop := Vector3(0, Stage.WATER_Y - 1.0 - c1.centre_of_mass().y, 0)
+	c1.release_all()
+	for b in c1.bodies.values():
+		var rb := b as RigidBody3D
+		rb.global_position += drop + Vector3(6.0, 0, 0)
+		Climber.sync_server(rb)
+	await frames(6)
+	t("delmar: falling in the sea is out", not g.alive[1] and not g.live.has(1), [g.alive, g.live.keys()])
+	g.end_match()
+	await frames(2)
+	t("delmar: after the match the pier is gone and the base is back on the canvas", not st.delmar and not is_instance_valid(st.delmar_root) and st.base_root.position.is_zero_approx())
+	g.queue_free()
+	await frames(2)
+
+
 func _run_startingbase() -> void:
 	var g := make_game("tower", 1, 60, "plaza", true)
 	await wait_phase(g, "turn")

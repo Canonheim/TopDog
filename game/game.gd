@@ -58,6 +58,7 @@ var climbers := {}  # cid -> Climber
 var live := {}  # pid -> cid of that player's live climber
 var tower: Array = []  # frozen cids in freeze order
 var line := 0.0
+var _shown_line := 0.0  # Del Mar: the rope glides out to `line` after each lock
 var clock := 0.0
 var phase := "idle"  # idle | turn | round | between | over
 var turn_order: Array = []
@@ -143,7 +144,10 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	if stage == null:
 		stage = Stage.new(str(settings.get("stage", "dock")))
 		stage.build(world, dress)
+	stage.set_delmar(world, str(mode.get("arena", "")) == "delmar")
 	stage.set_base(world, str(settings.get("resolved_base", settings.get("base", "barrel"))))
+	stage.place_base()
+	_shown_line = stage.first_line
 	Climber.rope_x = stage.ring_half() if str(stage.row.get("dress", "")) == "plaza" else 0.0
 	_ring_out.clear()
 	if practice and multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
@@ -177,6 +181,9 @@ func player_name(pid: int) -> String:
 # ================================================================ the host's rules
 
 func _physics_process(delta: float) -> void:
+	if stage != null and stage.delmar:
+		_shown_line = lerpf(_shown_line, line, 1.0 - exp(-delta * 3.0))
+		stage.place_delmar_line(_shown_line)
 	var real_delta := delta / Engine.time_scale
 	_now += real_delta
 	_tick_fart_meters(real_delta)
@@ -221,7 +228,7 @@ func _next() -> void:
 		_finish()
 		return
 	if stage.row.get("dress", "") == "plaza":
-		_rpc_spawn_chair.rpc(chair_generation + 1, tower_peak(), Vector2i(randi_range(8, 10), randi_range(11, 13)))
+		_rpc_spawn_chair.rpc(chair_generation + 1, _delmar_chair_spot() if stage.delmar else tower_peak(), Vector2i(randi_range(8, 10), randi_range(11, 13)))
 	if mode.live == "turns":
 		# Next player still in, in order.
 		for k in turn_order.size():
@@ -297,6 +304,8 @@ func _rpc_clock(p_clock: float, p_line: float) -> void:
 ## Resolve on the host before broadcasting. Read body poses directly so a climber
 ## created earlier in this same physics tick already occupies its space.
 func _open_spawn(preferred: Vector2) -> Vector2:
+	if stage.delmar:
+		return preferred  # the pier's two spawns, 3 m apart (Stage.spawn_point)
 	var scale_factor := Feel.get_k("body_scale")
 	# Shoulder offset, an outward-folded upper arm, and its capsule radius.
 	var half_width := (0.73 + Feel.get_k("shoulder_flare")) * scale_factor
@@ -498,6 +507,11 @@ func _check_bounds() -> void:
 				_ring_out.erase(cid)
 				_spawn(pid)
 			continue
+		if stage.in_sea(c):
+			# Del Mar: "your counted as Out if you fall off the tower into the water".
+			_rpc_note.rpc("%s fell in the sea!" % c.display_name)
+			_broadcast_freeze(cid, c.pose(), "sea")
+			continue
 		if stage.ring_out(c):
 			_ring_out[cid] = RING_OUT_S
 			_rpc_note.rpc("RING OUT!")  # every machine: the banner and its sound
@@ -550,7 +564,7 @@ func _tick_owned(real_delta: float) -> void:
 		if c.state != Climber.State.LIVE or c.owner_peer != me():
 			continue
 		if c.driver != null and c.driver.lock_pressed() and c.knockout_left <= 0 and (phase == "turn" or phase == "round"):
-			if c.top_height() > line + LOCK_MARGIN:
+			if measure(c) > line + LOCK_MARGIN:
 				if is_host():
 					_judge_lock(cid, c.pose(), c.welded_to_support())
 				else:
@@ -630,7 +644,7 @@ func _judge_lock(cid: int, pose: PackedFloat32Array, welded := false) -> void:
 		return
 	if not (phase == "turn" or phase == "round") or not _valid_lock_pose(pose):
 		return
-	var top := c.pose_top(pose)
+	var top := pose_measure(c, pose)
 	if top <= line + LOCK_MARGIN:
 		if c.owner_peer != me():
 			_rpc_note.rpc_id(c.owner_peer, "The line moved! Climb higher.")
@@ -713,10 +727,12 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded :
 	var c: Climber = climbers.get(cid)
 	if c == null:
 		return
-	var top := c.pose_top(pose)
+	var top := pose_measure(c, pose)
 	# Touching: a weld to the arena or the tower (the owner's report, or this machine's
 	# own climber), or the pose test against the supports.
 	var grounded := welded or (c.owner_peer == me() and c.welded_to_support()) or _pose_on_support(c, pose)
+	if why == "sea":
+		grounded = false  # in the water: out, the body leaves the tower (Del Mar)
 	if why == "time" and not grounded:
 		return
 	if why == "locked" and not grounded:
@@ -734,7 +750,7 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded :
 		verdict = "made" if made else "short"
 	var new_line := line
 	if why == "locked" and mode.line == "raise":
-		new_line = maxf(line, top)
+		new_line = maxf(line, top + float(mode.get("line_gap", 0.0)))
 	_rpc_freeze.rpc(cid, pose, verdict, why, top, new_line, grounded)
 	# The host's rule follow-ups.
 	var pid := c.player_id
@@ -748,6 +764,14 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded :
 		if why == "locked":
 			_end_of_play()
 	else:
+		if why == "sea":
+			# Out in the water: the round ends once everyone still in has locked in.
+			var all_done := true
+			for p in round_players:
+				if alive.get(p, false) and not locked.has(p):
+					all_done = false
+			if all_done:
+				_end_of_play()
 		if why == "locked":
 			locked[pid] = true
 			var all_in := true
@@ -777,9 +801,14 @@ func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: Strin
 		live.erase(c.player_id)
 		_drop_climber(cid)
 	line = maxf(line, new_line)
+	# Del Mar's measure is along the rope: say how far out past the pier's end.
+	var shown := top - Stage.PIER_END if stage != null and stage.delmar else top
 	match verdict:
 		"made":
-			announce.emit("%s locked in at %.2f m!" % [who, top] if why == "locked" else "%s made it: %.2f m" % [who, top], false)
+			if stage != null and stage.delmar:
+				announce.emit("%s locked in %.2f m out!" % [who, shown] if why == "locked" else "%s made it: %.2f m out" % [who, shown], false)
+			else:
+				announce.emit("%s locked in at %.2f m!" % [who, top] if why == "locked" else "%s made it: %.2f m" % [who, top], false)
 		"out":
 			announce.emit("%s is out!" % who if why != "left" else "%s left" % who, false)
 		"short":
@@ -865,8 +894,36 @@ func tower_top() -> float:
 	var top := stage.first_line if stage != null else 0.0  # the first line until the tower passes it
 	for cid in tower:
 		if climbers.has(cid):
-			top = maxf(top, climbers[cid].top_height())
+			top = maxf(top, measure(climbers[cid]))
 	return top
+
+
+## How far a climber gets toward the line: its top (the plaza), or its reach along the
+## 45 degree rope's normal, x + y (Del Mar). A pose's too, as the host judges it.
+func measure(c: Climber) -> float:
+	return c.reach(stage.line_dir()) if stage != null else c.top_height()
+
+
+func pose_measure(c: Climber, pose: PackedFloat32Array) -> float:
+	return c.pose_reach(pose, stage.line_dir()) if stage != null else c.pose_top(pose)
+
+
+## Del Mar: where the chair floats, to the right of the tower's furthest point ("The
+## Chair bubble will float to the right of the right most point").
+func _delmar_chair_spot() -> Vector2:
+	var d := stage.line_dir()
+	var best := Vector2(Stage.PIER_END, Stage.DECK_Y + stage.barrel_top)
+	var best_r := -INF
+	for cid in tower:
+		var climber: Climber = climbers.get(cid)
+		if climber == null:
+			continue
+		for piece in climber.bodies:
+			var p := Climber.pos2(climber.bodies[piece])
+			if p.dot(d) > best_r:
+				best_r = p.dot(d)
+				best = p
+	return Vector2(maxf(best.x, line - best.y) + 1.6, best.y - ChairScript.PICKUP_HEIGHT + 0.4)
 
 
 func live_climbers() -> Array:
@@ -1349,6 +1406,9 @@ func _clear_climbers() -> void:
 
 
 func end_match() -> void:
+	if stage != null and stage.delmar:
+		stage.set_delmar(world, false)  # the pier, the sea and the rope go with the match
+		stage.place_base()
 	if phase == "lobby" and stage != null:
 		stage.set_base(world, str(Net.settings.get("base", "barrel")))
 	_clear_arena_props()
@@ -1388,7 +1448,9 @@ func _rpc_waiting_room(guests: Array, snapshot: Dictionary) -> void:
 			stage = Stage.new("plaza")
 			stage.build(world, dress)
 		Climber.rope_x = stage.ring_half()
+		stage.set_delmar(world, false)
 		stage.set_base(world, "bell")
+		stage.place_base()
 	roster = guests
 	var ids := guests.map(func(r): return int(r.pid))
 	for pid in live.keys():

@@ -1423,7 +1423,7 @@ func _build_menus() -> void:
 	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
 	l.column_x = Menu3D.MENU_COLUMN_X
 	l.top_y = Menu3D.MENU_TOP_Y
-	var mode_ids := ["scramble", "tower"]
+	var mode_ids := ["scramble", "tower", "delmar"]
 	l.add_choice("MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "scramble")))), func(i):
 		Net.settings.mode = mode_ids[i]
 		_refresh_cards())

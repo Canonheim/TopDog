@@ -52,6 +52,158 @@ var first_line := 0.0
 var barrel_half := 0.0
 var bodies: Array = []
 
+# ================================================================ DEL MAR (Parker 11-10)
+## The pier mode (docs/DEL_MAR.md; numbers from the Environment Maker's district plan,
+## Top Dog Kit/docs/del_mar/DEL_MAR_DISTRICT_PLAN.md). The plaza stays built; Del Mar
+## adds the pier, the sea, the mast, the rope and the buoy to the right of it, and
+## frees them again when the match ends.
+const PIER_ROOT := 74.0
+const PIER_END := 104.0
+const DECK_Y := 0.0
+const DECK_DEPTH := 0.36  # the pier's slab under the deck top (one seamless body)
+const WATER_Y := -1.8
+const MAST_X := 100.75
+const MAST_Z := -1.35  # the mast stands behind the play area (Parker: background dressing)
+const DELMAR_FIRST_GAP := 0.75  # the rope starts this far beyond the base's furthest point
+const BUOY_R := 0.5  # the buoy's solid dome, half on the water
+const SPAWN_BACK := [3.86, 6.86]  # spawns: this far back from the pier end (3 m apart)
+var delmar := false
+var delmar_root: Node3D = null
+var buoy_body: StaticBody3D = null
+var _rope: MeshInstance3D = null
+var _mast_pole: MeshInstance3D = null
+
+
+## Del Mar on or off. Built when a Del Mar match starts, freed when one ends: the
+## plaza never pays for it.
+func set_delmar(world: Node3D, on: bool) -> void:
+	if on == delmar and (not on or is_instance_valid(delmar_root)):
+		return
+	if is_instance_valid(delmar_root):
+		for b in delmar_root.find_children("*", "StaticBody3D", true, false):
+			bodies.erase(b)
+		delmar_root.free()
+	delmar_root = null
+	buoy_body = null
+	_rope = null
+	_mast_pole = null
+	delmar = on
+	if not on:
+		return
+	delmar_root = Node3D.new()
+	delmar_root.name = "DelMar"
+	world.add_child(delmar_root)
+	# The pier: one seamless slab, its top the deck (the Carpenter's pier_deck).
+	_static_poly(delmar_root, PackedVector2Array([Vector2(PIER_ROOT, DECK_Y), Vector2(PIER_END, DECK_Y), Vector2(PIER_END, DECK_Y - DECK_DEPTH), Vector2(PIER_ROOT, DECK_Y - DECK_DEPTH)]), 1.0, 1.6)
+	# The buoy: solid, but never held and never a support (meta no_weld), and not in
+	# `bodies`, so a lock-in never counts it as the stage.
+	var dome := PackedVector2Array()
+	for k in 12:
+		var a := PI * float(k) / 11.0
+		dome.append(Vector2(cos(a) * BUOY_R, sin(a) * BUOY_R * 1.3))
+	buoy_body = _static_poly(delmar_root, dome, 0.6, 0.5)
+	buoy_body.set_meta("no_weld", true)
+	bodies.erase(buoy_body)
+	if base_dressed:
+		_dress_delmar()
+
+
+## Stand-ins until the kit's pieces land: an oak deck on piles, the sea, the mast, the
+## rope and the buoy.
+func _dress_delmar() -> void:
+	var deck := _boxm(Vector3(PIER_END - PIER_ROOT, DECK_DEPTH, 3.2), Color("#B07A48"), Vector3((PIER_ROOT + PIER_END) * 0.5, DECK_Y - DECK_DEPTH * 0.5, 0))
+	delmar_root.add_child(deck)
+	for x in range(int(PIER_ROOT) + 1, int(PIER_END), 3):
+		for z in [-1.4, 1.4]:
+			delmar_root.add_child(_boxm(Vector3(0.3, 3.6, 0.3), Color("#7A5232"), Vector3(x, DECK_Y - DECK_DEPTH - 1.8, z)))
+	var sea := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(400, 300)
+	sea.mesh = plane
+	sea.material_override = CelPass.cel_material(Color("#2C7FCC"))
+	sea.position = Vector3(PIER_END + 80, WATER_Y, -120)
+	delmar_root.add_child(sea)
+	_mast_pole = _boxm(Vector3(0.28, 1.0, 0.28), Color("#8A5A34"), Vector3(MAST_X, 0, MAST_Z))
+	delmar_root.add_child(_mast_pole)
+	_rope = MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.035
+	cyl.bottom_radius = 0.035
+	cyl.height = 1.0
+	_rope.mesh = cyl
+	_rope.material_override = CelPass.cel_material(Color("#D8262E"))
+	delmar_root.add_child(_rope)
+	var buoy := MeshInstance3D.new()
+	var sph := SphereMesh.new()
+	sph.radius = BUOY_R
+	sph.height = BUOY_R * 2.6
+	buoy.mesh = sph
+	buoy.material_override = CelPass.cel_material(Color("#E23B3B"))
+	buoy_body.add_child(buoy)
+
+
+## Where Del Mar's line is: `c` in the line's units (x + y). The buoy floats where the
+## rope meets the water, the mast's head rises to where it meets the mast (Parker:
+## "The mast gets taller as the game plays, line stays 45"), and the rope joins them.
+func place_delmar_line(c: float) -> void:
+	if not delmar or not is_instance_valid(delmar_root):
+		return
+	var buoy_at := Vector3(c - WATER_Y, WATER_Y, 0.0)
+	if is_instance_valid(buoy_body):
+		buoy_body.global_position = buoy_at
+	var eye := Vector3(MAST_X, c - MAST_X, MAST_Z)
+	if _mast_pole != null:
+		_mast_pole.scale = Vector3(1, maxf(0.5, eye.y - DECK_Y), 1)
+		_mast_pole.position = Vector3(MAST_X, DECK_Y + (eye.y - DECK_Y) * 0.5, MAST_Z)
+	if _rope != null:
+		var a := buoy_at + Vector3(0, BUOY_R * 0.9, 0)
+		var mid := (a + eye) * 0.5
+		var along := eye - a
+		_rope.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, along.normalized())).scaled(Vector3(1, along.length(), 1)), mid)
+
+
+## The base on the canvas (the plaza), or flush on the pier's end (Del Mar: "At the end
+## of the pier is one of the starting climbing objects"), and the first line from it.
+func _place_base() -> void:
+	if not is_instance_valid(base_root):
+		return
+	if not delmar:
+		base_root.position = Vector3.ZERO
+		first_line = barrel_top + FIRST_LINE_ABOVE
+		return
+	var right := -INF
+	for b in base_bodies:
+		for q: Vector3 in ((b.get_child(0) as CollisionShape3D).shape as ConvexPolygonShape3D).points:
+			right = maxf(right, q.x)
+	base_root.position = Vector3(PIER_END - right, DECK_Y, 0)
+	var reach := -INF
+	for b in base_bodies:
+		for q: Vector3 in ((b.get_child(0) as CollisionShape3D).shape as ConvexPolygonShape3D).points:
+			reach = maxf(reach, q.x + q.y + base_root.position.x + base_root.position.y)
+	first_line = reach + DELMAR_FIRST_GAP
+
+
+## Call after set_delmar and set_base: the base moves to (or back from) the pier and the
+## line follows.
+func place_base() -> void:
+	_place_base()
+	place_delmar_line(first_line)
+
+
+## The line's direction (its maths' units): up for the plaza, diagonal for Del Mar.
+func line_dir() -> Vector2:
+	return Vector2(1, 1) if delmar else Vector2(0, 1)
+
+
+## A Del Mar fall: any of the climber's pieces in the sea.
+func in_sea(c) -> bool:
+	if not delmar:
+		return false
+	for b in c.bodies.values():
+		if (b as Node3D).global_position.y < WATER_Y:
+			return true
+	return false
+
 
 func _init(id := "dock") -> void:
 	row = STAGES.get(id, STAGES.dock)
@@ -143,7 +295,7 @@ func set_base(world: Node3D, selected: String) -> void:
 				hull.resize(hull.size() - 1)  # the convex hull repeats its first vertex
 				base_bodies.append(_static_poly(base_root, hull, 0.9, 0.18))
 		shape_source.free()
-	first_line = barrel_top + FIRST_LINE_ABOVE
+	_place_base()
 	if base_dressed:
 		var models := {"barrel": BARREL_MODEL, "cactus": CACTUS_MODEL, "donkey": DONKEY_MODEL}
 		if base_id == "bell":
@@ -207,6 +359,9 @@ func pulse_bell() -> void:
 
 
 func spawn_point(side: int) -> Vector2:
+	if delmar:
+		# Next to each other towards the pier's end, 3 m apart (Parker).
+		return Vector2(PIER_END - float(SPAWN_BACK[0 if side > 0 else 1]), DECK_Y + 0.05)
 	return Vector2(float(row.spawn_x) * (1.0 if side > 0 else -1.0), 0.05)
 
 
@@ -316,6 +471,8 @@ func ring_half() -> float:
 ## RING OUT: is this climber down on the plaza floor outside the ring? (Its lowest
 ## piece near the stones, beyond the apron.) Works on live bodies and puppets.
 func ring_out(c) -> bool:
+	if delmar:
+		return false  # the sea is Del Mar's floor (in_sea)
 	if str(row.get("dress", "")) != "plaza":
 		return false
 	for b in c.bodies.values():
@@ -326,6 +483,8 @@ func ring_out(c) -> bool:
 
 
 func out_of_bounds(p: Vector2) -> bool:
+	if delmar:
+		return p.y < WATER_Y - 3.0 or p.x < PIER_ROOT - 10.0 or p.x > PIER_END + 80.0
 	return p.y < float(row.kill_y) or absf(p.x) > float(row.side_x)
 
 

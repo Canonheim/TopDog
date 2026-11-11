@@ -25,6 +25,14 @@ const ROWS := {
 		"live": "all", "line": "raise", "round_end": "all_locked", "out": "under", "win": "last",
 		"min_players": 2, "round_robin": true,
 	},
+	# DEL MAR (Parker 11-10, docs/DEL_MAR.md): Classic's 1v1 rotation off the end of a
+	# pier, building out over the sea past a 45 degree rope. arena "delmar" builds the
+	# pier; the line runs along (1, 1) and sits line_gap past the tower's furthest point.
+	"delmar": {
+		"name": "Del Mar", "blurb": "One versus one off the end of the pier. Build out over the sea, past the rope.",
+		"live": "all", "line": "raise", "round_end": "all_locked", "out": "under", "win": "last",
+		"min_players": 2, "round_robin": true, "arena": "delmar", "line_gap": 0.25,
+	},
 	"practice": {
 		"name": "Practice", "blurb": "Climb alone, no clock pressure. Best height counts.",
 		"live": "turns", "line": "tower", "round_end": "lock", "out": "never", "win": "none",

@@ -825,6 +825,8 @@ func touches_solid() -> bool:
 		for o in end.get_colliding_bodies():
 			if (o.collision_layer & SOLID_MASK) == 0:
 				continue
+			if o.has_meta("no_weld"):
+				continue  # the buoy holds nobody up
 			if not (o is RigidBody3D and o.has_meta("climber")):
 				return true  # the arena (static world)
 			var oc: Climber = o.get_meta("climber")
@@ -916,7 +918,7 @@ func _try_grab(i: int) -> void:
 	var best: Object = null
 	var best_score := INF
 	for o in hits:
-		if o == null or o == end or (o.collision_layer & SOLID_MASK) == 0:
+		if o == null or o == end or (o.collision_layer & SOLID_MASK) == 0 or o.has_meta("no_weld"):
 			continue
 		var score := 0.0
 		if o is RigidBody3D and o.has_meta("climber"):
@@ -982,6 +984,8 @@ func _tick_live_contact(i: int, dt: float) -> void:
 func attach(i: int, other: Object) -> void:
 	if other is CollisionObject3D and (other.collision_layer & SOLID_MASK) == 0:
 		return
+	if other is Node and (other as Node).has_meta("no_weld"):
+		return  # Del Mar's buoy: solid, never held (Parker 11-10)
 	if other.has_meta("climber") and other.get_meta("climber") == self:
 		return
 	var l: Dictionary = limbs[i]
@@ -1443,6 +1447,42 @@ func top_of(pname: String, xf: Transform2D) -> float:
 				top = maxf(top, (xf * c).y)
 			return top
 	return xf.origin.y
+
+
+## REACH ALONG A DIRECTION (Del Mar, Parker 11-10): how far a piece reaches along
+## `d` (not normalised: the line's maths are in its units), its furthest point's
+## dot with d. d = (0, 1) is the piece's top; Del Mar's diagonal line uses (1, 1).
+func reach_of(pname: String, xf: Transform2D, d: Vector2) -> float:
+	var g: Array = _shape_geo[pname]
+	match g[0]:
+		"circle":
+			return xf.origin.dot(d) + float(g[1]) * d.length()
+		"capsule":
+			return maxf((xf * (g[1] as Vector2)).dot(d), (xf * (g[2] as Vector2)).dot(d)) + float(g[3]) * d.length()
+		"box":
+			var he: Vector2 = g[1]
+			var best := -INF
+			for c in [Vector2(-he.x, -he.y), Vector2(he.x, -he.y), Vector2(he.x, he.y), Vector2(-he.x, he.y)]:
+				best = maxf(best, (xf * c).dot(d))
+			return best
+	return xf.origin.dot(d)
+
+
+## The climber's reach along d (live bodies), and a pose's (from the network).
+func reach(d: Vector2) -> float:
+	var best := -INF
+	for pname in bodies:
+		best = maxf(best, reach_of(pname, xf2(bodies[pname]), d))
+	return best
+
+
+func pose_reach(p: PackedFloat32Array, d: Vector2) -> float:
+	var best := -INF
+	var k := 0
+	for pname in Layout.ORDER:
+		best = maxf(best, reach_of(pname, Transform2D(p[k + 2], Vector2(p[k], p[k + 1])), d))
+		k += 3
+	return best
 
 
 ## Axis-aligned bounds of all collision pieces in a submitted pose.

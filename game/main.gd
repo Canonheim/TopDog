@@ -368,7 +368,12 @@ func _tick_camera(delta: float) -> void:
 	if live.is_empty():
 		lo = Vector2(0, top)
 		hi = lo
-	if not follow:
+	var delmar: bool = game.stage != null and game.stage.delmar
+	if not follow and delmar:
+		# Del Mar between rounds: the pier's end and the rope where it meets the tower.
+		lo = Vector2(Stage.PIER_END - 7.0, -1.0)
+		hi = Vector2(maxf(Stage.PIER_END + 3.0, game.line - Stage.DECK_Y - 1.0), 4.0)
+	elif not follow:
 		for point in [Vector2(-2.0, maxf(0.0, line_y - 3.0)), Vector2(2.0, line_y + 0.8)]:
 			lo = lo.min(point)
 			hi = hi.max(point)
@@ -419,12 +424,13 @@ func _tick_camera(delta: float) -> void:
 	# THE PLAZA CLAMP (Parker 11-10, the Environment Maker's plan): the camera's centre
 	# stays within PLAZA_CAM_X of the ring, so a climber flung out across the 60 m floor
 	# can't swing it round to the beach town (Del Mar, off to the right).
-	centre.x = clampf(centre.x, -PLAZA_CAM_X, PLAZA_CAM_X)
+	if not delmar:
+		centre.x = clampf(centre.x, -PLAZA_CAM_X, PLAZA_CAM_X)
 	_cam_target = Vector3(centre.x, centre.y + 0.3, dist)
 	cam.position = cam.position.lerp(_cam_target, 1.0 - exp(-delta * 2.5))
 	cam.look_at(Vector3(cam.position.x, cam.position.y - 0.3, 0.0), Vector3.UP)
 	line_bar.position.y = lerpf(line_bar.position.y, line_y, 1.0 - exp(-delta * 8.0))
-	line_bar.visible = game.phase in ["turn", "round", "between"]
+	line_bar.visible = game.phase in ["turn", "round", "between"] and not delmar  # Del Mar's line is the rope
 
 
 # ---------------------------------------------------------------- HUD
