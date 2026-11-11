@@ -97,7 +97,10 @@ var _rope_wob_v := 0.0
 var _last_eye := Vector3.INF
 const ROPE_SAG := 0.035  # the rope's sag, x its length, at its middle
 const ROPE_POINTS := 12  # the curve the segments follow
-const BUOY_EYE := Vector3(-0.34, 0.37, 0.0)  # the rope ties here on the buoy (its model's eye)
+## The rope ties to the gold ring at the top of the UI creator's classic buoy (11-10:
+## "make the buoy taller and have the rope attach to it at the top"). The buoy rides
+## along the line so this eye sits ON it: the rope from here to the mast is the line.
+const BUOY_EYE := Vector3(0.0, 2.07, 0.0)
 const STREAMER_STEP := 0.5  # one every 0.5 m, counted from the buoy end (they don't slide)
 const STREAMER_TINTS := [Color("#E0287A"), Color("#1FB8AE"), Color("#F28A1E"), Color("#7CC83A"), Color("#8A3FC0"), Color("#FFC928")]
 const FLOAT_X := Vector2(104.5, 135.0)  # the open water the floaties drift in (the plan's box)
@@ -178,9 +181,10 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	# The buoy: solid, but never held and never a support (meta no_weld), and not in
 	# `bodies`, so a lock-in never counts it as the stage.
 	var dome := PackedVector2Array()
-	for k in 12:
-		var a := PI * float(k) / 11.0
-		dome.append(Vector2(cos(a) * BUOY_R, sin(a) * 0.7))
+	# The classic buoy's float (1.0 across, to y 0.5) and its tapered cage to the top.
+	for q in [Vector2(0.5, 0.0), Vector2(0.47, 0.25), Vector2(0.34, 0.5), Vector2(0.13, 1.56), Vector2(0.06, 2.1),
+			Vector2(-0.06, 2.1), Vector2(-0.13, 1.56), Vector2(-0.34, 0.5), Vector2(-0.47, 0.25), Vector2(-0.5, 0.0)]:
+		dome.append(q)
 	buoy_body = _static_poly(delmar_root, dome, 0.6, 0.5)
 	buoy_body.set_meta("no_weld", true)
 	bodies.erase(buoy_body)
@@ -261,7 +265,8 @@ func _dress_delmar() -> void:
 func place_delmar_line(c: float, speed := 0.0, delta := 0.0) -> void:
 	if not delmar or not is_instance_valid(delmar_root):
 		return
-	var buoy_at := Vector3(c - WATER_Y, WATER_Y, 0.0)
+	# Placed so its eye lies on the line (x + y = c): the rope is the line exactly.
+	var buoy_at := Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, 0.0)
 	if is_instance_valid(buoy_body):
 		buoy_body.global_position = buoy_at
 	_float_buoy(speed, delta, buoy_at)

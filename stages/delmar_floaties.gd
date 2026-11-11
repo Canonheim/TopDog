@@ -26,7 +26,8 @@ const COUNT := 6
 const LEFT_PUSH := 1.5  # m/s back toward the tower on a bounce
 const BOUNCE_UP := 1.0  # x the fall speed, as the ring ropes' rope_bounce_up (at least MIN_UP)
 const MIN_UP := 3.0
-const BUOY_CLEAR := 0.9  # a floatie stays at least this far left of the buoy's centre
+const BUOY_CLEAR := 0.9  # the least gap, buoy centre to floatie centre (the duck's is wider)
+const BUOY_HALF := 0.5  # the classic buoy's float, half its width
 const COOLDOWN := 0.3
 
 var water_y := -1.8
@@ -87,17 +88,18 @@ func tick(delta: float) -> void:
 	_last_buoy = buoy_x
 	for it: Dictionary in _items:
 		var x: float = float(it.home) + float(it.amp) * sin(_t * float(it.freq) * TAU + float(it.phase))
+		var clear := maxf(BUOY_CLEAR, BUOY_HALF + float(it.kind[1]) + 0.1)  # never touching the float
 		if bool(it.right):
-			if x < buoy_x + BUOY_CLEAR:
+			if x < buoy_x + clear:
 				if buoy_moved:
 					# The buoy, gliding out, passes through it: it ends up on the buoy's
 					# left, and drifts there from now on.
 					it.right = false
-					it.home = buoy_x - BUOY_CLEAR - float(it.amp) - 0.3
+					it.home = buoy_x - clear - float(it.amp) - 0.3
 				else:
-					x = buoy_x + BUOY_CLEAR  # drifting into the buoy: it bumps and stops
+					x = buoy_x + clear  # drifting into the buoy: it bumps and stops
 		if not bool(it.right):
-			x = minf(x, buoy_x - BUOY_CLEAR)
+			x = minf(x, buoy_x - clear)
 		x = clampf(x, x_min + float(it.kind[1]), x_max)
 		it.x = x
 		var bob := sin(_t * 1.6 + float(it.bob)) * 0.05

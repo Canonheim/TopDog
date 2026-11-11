@@ -2477,7 +2477,8 @@ func _run_delmar() -> void:
 	xs.sort()
 	t("delmar: two spawns on the pier, about 3 m apart near its end", xs.size() == 2 and absf(xs[1] - xs[0] - 3.0) < 0.4 and xs[1] < Stage.PIER_END and xs[1] > Stage.PIER_END - 6.0, xs)
 	await frames(10)
-	t("delmar: the buoy floats where the rope meets the water", absf(st.buoy_body.global_position.x - (g.line - Stage.WATER_Y)) < 0.3, "buoy x %.2f" % st.buoy_body.global_position.x)
+	var eye := st.buoy_body.global_position + Stage.BUOY_EYE
+	t("delmar: the buoy floats on the water with the rope's eye on the line", absf(st.buoy_body.global_position.y - Stage.WATER_Y) < 0.01 and absf(eye.x + eye.y - g.line) < 0.3, "eye x+y %.2f vs line %.2f" % [eye.x + eye.y, g.line])
 	# The buoy is never held.
 	var c0: Climber = g.climbers[g.live[0]]
 	c0.attach(0, st.buoy_body)
