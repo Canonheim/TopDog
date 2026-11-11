@@ -693,7 +693,7 @@ func _run_tower() -> void:
 
 
 func _run_scramble() -> void:
-	for n in range(2, 13):
+	for n in range(2, 21):
 		var pairs := Modes.round_robin(range(n))
 		var seen := {}
 		var counts := {}
@@ -703,10 +703,10 @@ func _run_scramble() -> void:
 				counts[pid] = counts.get(pid, 0) + 1
 		t("Classic: every pair appears once with %d players" % n, seen.size() == n * (n - 1) / 2 and pairs.size() == seen.size() and counts.values().all(func(c): return c == n - 1))
 	t("Classic: exact three-player rotation", Modes.round_robin([0, 1, 2]) == [[0, 1], [1, 2], [2, 0]])
-	t("Classic: default mode and twelve-player limits", Modes.default_settings().mode == "scramble" and Modes.row("scramble").name == "Classic" and Net.MAX_CLIMBERS == 12 and Net.MAX_MACHINES == 12)
+	t("Classic: default mode and twenty-player limits (Parker 11-10)", Modes.default_settings().mode == "scramble" and Modes.row("scramble").name == "Classic" and Net.MAX_CLIMBERS == 20 and Net.MAX_MACHINES == 20)
 	var saved_members: Dictionary = Net.members.duplicate(true)
-	Net.members = {1: {"players": [{}, {}, {}, {}]}, 2: {"players": [{}, {}, {}, {}]}, 3: {"players": [{}, {}, {}]}}
-	t("lobby: twelfth player fits, thirteenth is refused", Net.can_fit_players(4, 1) and not Net.can_fit_players(4, 2))
+	Net.members = {1: {"players": [{}, {}, {}, {}]}, 2: {"players": [{}, {}, {}, {}]}, 3: {"players": [{}, {}, {}]}, 5: {"players": [{}, {}, {}, {}]}, 6: {"players": [{}, {}, {}, {}]}}
+	t("lobby: twentieth player fits, twenty-first is refused", Net.can_fit_players(4, 1) and not Net.can_fit_players(4, 2))
 	t("lobby: existing machine may fill but not exceed capacity", Net.can_fit_players(3, 4) and not Net.can_fit_players(3, 5))
 	Net.members = saved_members
 	var g := make_game("scramble", 3, 50.0)
@@ -2844,6 +2844,226 @@ func _run_joinrecovery() -> void:
 	t("join: host membership acceptance completes the join", Net.online and not Net._pending_lobby and not Net._awaiting_accept)
 	Net.leave()
 	Net.status.disconnect(capture)
+## THE INPUT LAW (the 11-10 rewrite, after a client's pad "randomly stopped working"):
+## each protection in core/players.gd and core/steam_input.gd, proven on fake and
+## synthetic devices. No single thing may silence a player.
+func _run_input() -> void:
+	var cam := Camera3D.new()
+	cam.position = Vector3(0, 2, 10)
+	add_child(cam)
+	Players.camera = cam
+	Players.fake.clear()
+	Players.clear_players()
+	Players.add_player(Players.ANY)
+	Players.fake[1000] = {"buttons": {}, "stick": Vector2.ZERO}
+	Players.fake[1001] = {"buttons": {}, "stick": Vector2.ZERO}
+	# 1. The ANY slot reads everything at once.
+	Players.fake[1001].buttons = {"leg_r": true}
+	t("input: the one-player slot reads every pad on the machine at once", Players.limb_held(0, 3) and not Players.limb_held(0, 0))
+	Players.fake[1001].buttons = {}
+	# 2. Nothing "spoke last" can take a pad player's controls: a key press (push to
+	#    talk), a mouse move.
+	Players.fake[1000].buttons = {"arm_l": true}
+	Players.fake[1000].stick = Vector2(0.9, 0.0)
+	var key := InputEventKey.new()
+	key.physical_keycode = KEY_V
+	key.keycode = KEY_V
+	key.pressed = true
+	Input.parse_input_event(key)
+	var mm := InputEventMouseMotion.new()
+	mm.relative = Vector2(40, 0)
+	Input.parse_input_event(mm)
+	Input.flush_buffered_events()
+	var aim = Players.limb_aim(0, null, 0)
+	t("input: a key press and a mouse move don't take a pad player's aim (glyphs may flip, reads don't)", Players.last_device == Players.KBM and Players.limb_held(0, 0) and aim is Dictionary and aim.has("dir") and aim.dir.x > 0.9, [Players.last_device, aim])
+	key = key.duplicate()
+	key.pressed = false
+	Input.parse_input_event(key)
+	Input.flush_buffered_events()
+	# 3. A keyboard player is never steered by a second pad's drifting stick.
+	Players.fake[1000].buttons = {}
+	Players.fake[1000].stick = Vector2(0.45, 0.1)  # drift, past the deadzone
+	var ka := InputEventKey.new()
+	ka.physical_keycode = int(Players.binds.kbm.arm_l[0].key)
+	ka.keycode = ka.physical_keycode
+	ka.pressed = true
+	Input.parse_input_event(ka)
+	Input.flush_buffered_events()
+	await frames(2)
+	aim = Players.limb_aim(0, null, 0)
+	t("input: a limb held by a key is aimed by the mouse, never by a pad's drifting stick", Players.limb_held(0, 0) and aim is Dictionary and aim.has("point"), aim)
+	# ...and held on both, the pad's stick has it.
+	Players.fake[1000].buttons = {"arm_l": true}
+	aim = Players.limb_aim(0, null, 0)
+	t("input: held on a pad as well, that pad's stick aims it", aim is Dictionary and aim.has("dir"))
+	ka = ka.duplicate()
+	ka.pressed = false
+	Input.parse_input_event(ka)
+	Input.flush_buffered_events()
+	Players.fake[1000].buttons = {}
+	Players.fake[1000].stick = Vector2.ZERO
+	await frames(2)
+	# 4. THE LATCH: a press and release inside one frame is still seen by one tick.
+	var jb := InputEventJoypadButton.new()
+	jb.device = 7
+	jb.button_index = int(Players.binds.pad.arm_l[0].pad)
+	jb.pressed = true
+	Input.parse_input_event(jb.duplicate())
+	var up := jb.duplicate()
+	up.pressed = false
+	Input.parse_input_event(up.duplicate())
+	Input.flush_buffered_events()
+	var godot_says := Input.is_joy_button_pressed(7, jb.button_index)
+	await get_tree().physics_frame  # (we run before Players each tick: it latched in the tick just gone)
+	var latched := Players.limb_held(0, 0)
+	await get_tree().physics_frame
+	t("input: a tap shorter than a frame is latched for exactly one physics tick", not godot_says and latched and not Players.limb_held(0, 0), [godot_says, latched])
+	# 5. THE STALE GUARD: what a raw pad held when Steam took it never reads as held.
+	Input.parse_input_event(jb.duplicate())
+	var axis := InputEventJoypadMotion.new()
+	axis.device = 7
+	axis.axis = JOY_AXIS_LEFT_X
+	axis.axis_value = 0.8
+	Input.parse_input_event(axis)
+	Input.flush_buffered_events()
+	await frames(3)
+	var before := Players.limb_held(0, 0) and Players.stick(7).x > 0.7
+	Players.suspect_raw("the battery's Steam took the pad")
+	var stale_ignored := not Players.limb_held(0, 0) and Players.stick(7) == Vector2.ZERO and Input.is_joy_button_pressed(7, jb.button_index)
+	t("input: a button and stick down when Steam takes the pad are ignored (Godot still says held)", before and stale_ignored, [before, stale_ignored])
+	# The pad speaks again (it wasn't taken after all): it carries straight on.
+	axis = axis.duplicate()
+	axis.axis_value = 0.6
+	Input.parse_input_event(axis)
+	Input.parse_input_event(up.duplicate())
+	Input.parse_input_event(jb.duplicate())
+	Input.flush_buffered_events()
+	await frames(3)
+	t("input: a pad that speaks again is live again at once", Players.limb_held(0, 0) and is_equal_approx(Players.stick(7).x, 0.6), [Players.limb_held(0, 0), Players.stick(7)])
+	Input.parse_input_event(up.duplicate())
+	axis = axis.duplicate()
+	axis.axis_value = 0.0
+	Input.parse_input_event(axis)
+	Input.flush_buffered_events()
+	Players._on_joy_connection_changed(7, false)
+	await frames(3)
+	# 6. STEAM'S HOLD: an action going "inactive" for a blink never drops a held limb.
+	var si := preload("res://core/steam_input.gd").new()
+	var d := {"buttons": {}, "stick": Vector2.ZERO}
+	si.devices[3000] = d
+	var pressed_edge := si.feed_digital(d, "arm_r", true, true, 1000)
+	si.feed_steer(d, true, Vector2(0.0, 0.9), 1000)
+	si.feed_flags(3000, d, true, true, 1000)
+	si.feed_digital(d, "arm_r", false, false, 1100)  # the blink: Steam says "inactive"
+	si.feed_steer(d, false, Vector2.ZERO, 1100)
+	si.feed_flags(3000, d, false, false, 1100)
+	var through_blink := si.button(3000, "arm_r") and si.stick(3000).y > 0.8 and bool(d.gameplay_active)
+	si.feed_digital(d, "arm_r", true, true, 1150)  # back
+	var still := si.button(3000, "arm_r")
+	si.feed_digital(d, "arm_r", false, false, 1160)
+	si.feed_digital(d, "arm_r", false, false, 1160 + si.HOLD_MS + 20)  # really gone: it lets go
+	si.feed_steer(d, false, Vector2.ZERO, 1160 + si.HOLD_MS + 20)
+	si.feed_flags(3000, d, false, false, 1160 + si.HOLD_MS + 20)
+	var let_go := not si.button(3000, "arm_r") and si.stick(3000) == Vector2.ZERO
+	var live_kept := bool(d.gameplay_active)
+	si.feed_flags(3000, d, false, false, 1150 + si.LIVE_MS + 500)
+	t("input: Steam's one-frame 'inactive' blink doesn't drop a held limb or the stick", pressed_edge and through_blink and still, [pressed_edge, through_blink, still])
+	t("input: an action really gone is released after the hold, and the layout's 'live' flag outlasts a blink", let_go and live_kept and not bool(d.gameplay_active), [let_go, live_kept, d.gameplay_active])
+	# Steam's own latch: a press between two physics ticks.
+	var d2 := {"buttons": {}, "stick": Vector2.ZERO}
+	si.devices[3001] = d2
+	si.feed_digital(d2, "lock", true, true, 5000)
+	si.feed_digital(d2, "lock", true, false, 5008)  # up again before any physics tick
+	si.tick_latch()
+	var seen_once := si.button(3001, "lock")
+	si.tick_latch()
+	t("input: a Steam press between two physics ticks is seen by exactly one", seen_once and not si.button(3001, "lock"))
+	si.free()
+	# 7. THE DRIVER'S SLOT: a climber this machine owns always has a driver.
+	Players.clear_players()
+	var made := Players.resolve_slot(3, 0)
+	t("input: a machine with no local player gets one when a climber needs a driver", made == 0 and Players.slots.size() == 1 and int(Players.slots[0].device) == Players.ANY)
+	Players.fake[1000].buttons = {"leg_l": true}
+	t("input: a slot index that doesn't exist reads the whole machine (one local player)", Players.limb_held(5, 2) and Players.resolve_slot(5, 0) == 0)
+	Players.fake[1000].buttons = {"lock": true}
+	await frames(2)
+	t("input: ...and its Lock In edge arrives too", Players.lock_pressed(5) and not Players.lock_pressed(5))
+	Players.fake[1000].buttons = {}
+	# 8. The window's focus is known (main shows the notice), and the log has it all.
+	Players._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
+	var lost := not Players.focused
+	Players._notification(NOTIFICATION_APPLICATION_FOCUS_IN)
+	t("input: losing the window's focus is noticed and logged", lost and Players.focused and Players.health().contains("PLAYER 1") and FileAccess.file_exists(Players.LOG_PATH) and Players._log.any(func(l): return str(l).contains("LOST FOCUS")))
+	Players.fake.clear()
+	Players.clear_players()
+	Players.camera = null
+	cam.queue_free()
+	# 8b. NO GHOSTS: a piece whose climber is gone must not silence a climber that
+	#     touches it (the typed read of the freed climber was a script error inside
+	#     the tick: no grabs, no "touching the ground", no steering).
+	var floor := static_box(Vector2(0, -0.5), Vector2(6, 0.5))
+	var alive := spawn(Vector2(0, 0.05))
+	await seconds(0.6)
+	var stood := alive.touches_solid()
+	var dead: Climber = ClimberScript.new()
+	dead.climber_id = 9001
+	add_child(dead)
+	var ghost := RigidBody3D.new()
+	var gcol := CollisionShape3D.new()
+	var gshape := SphereShape3D.new()
+	gshape.radius = 0.25
+	gcol.shape = gshape
+	ghost.add_child(gcol)
+	ghost.collision_layer = Climber.LAYER_LIVE
+	ghost.collision_mask = 0
+	ghost.freeze = true
+	ghost.set_meta("climber", dead)
+	ghost.set_meta("piece", "torso")
+	world.add_child(ghost)
+	ghost.global_position = alive.bodies["hand_l"].global_position
+	Climber.sync_server(ghost)
+	dead.free()  # the climber is gone; its piece stands in the world with its name on it
+	await frames(6)
+	var touching_ghost: bool = (alive.bodies["hand_l"] as RigidBody3D).get_colliding_bodies().has(ghost)
+	t("ghosts: a piece whose climber is gone reads as nobody's (no error)", Climber.climber_of(ghost) == null and Climber.is_ghost(ghost) and not Climber.is_ghost(floor))
+	(alive.driver as Drivers.ScriptDriver).set_limb(1, true, Vector2.UP)
+	await frames(4)
+	t("ghosts: a climber touching one still stands, grabs and steers", stood and touching_ghost and alive.touches_solid() and alive.active_limb() == 1 and alive.limbs[0].grab_other != ghost, [stood, touching_ghost, alive.touches_solid(), alive.active_limb()])
+	# A climber freed any way but remove() takes its pieces with it.
+	var doomed := spawn(Vector2(4, 0.05))
+	var pieces: Array = doomed.bodies.values()
+	doomed.free()
+	await frames(2)
+	t("ghosts: a climber freed under the game leaves no pieces behind", pieces.all(func(b): return not is_instance_valid(b)))
+	alive.remove()
+	ghost.queue_free()
+	floor.queue_free()
+	await frames(2)
+	# 9. TWENTY: the lobby takes twenty climbers and no more, a 20-player match starts,
+	#    and the waiting room's stream slows to keep the host's load level.
+	Net.members.clear()
+	for i in 19:
+		Net.members[i + 1] = {"name": "M%d" % i, "players": [{"name": "P%d" % i, "tint": Color.WHITE, "slot": 0}], "ready": true}
+	t("twenty: a lobby of 19 takes a 20th climber and refuses a 21st", Net.MAX_CLIMBERS == 20 and Net.MAX_MACHINES == 20 and Net.can_fit_players(99, 1) and not Net.can_fit_players(99, 2))
+	t("twenty: the roster for 19 machines has 19 climbers, each on its own machine's slot 0", Net.build_roster().size() == 19 and Net.build_roster().all(func(r): return int(r.slot) == 0))
+	Net.members.clear()
+	var g := make_game("tower", 20, 30.0, "plaza")
+	t("twenty: a 20-player Tower match starts", await wait_phase(g, "turn") and g.roster.size() == 20)
+	t("twenty: one live climber streams at the full rate", is_equal_approx(g.stream_hz(), Game.STREAM_HZ))
+	g.queue_free()
+	await frames(2)
+	var g2 := make_game("scramble", 20, 30.0, "plaza")
+	t("twenty: a 20-player Classic starts its first one-versus-one", await wait_phase(g2, "round") and g2.live.size() == 2, g2.live.size())
+	# Twenty moving at once (the waiting room): the rate falls to the floor.
+	for k in 18:
+		g2._rpc_spawn(2 + k if g2.roster.size() > 2 + k else 0, 500 + k, Vector2(-7.0 + 0.7 * k, 0.05), "W%d" % k)
+	await frames(2)
+	var moving := g2.climbers.values().filter(func(c): return c.state != Climber.State.FROZEN).size()
+	t("twenty: with twenty moving climbers the stream falls to %d a second" % int(Game.STREAM_MIN_HZ), moving >= 20 and is_equal_approx(g2.stream_hz(), Game.STREAM_MIN_HZ), [moving, g2.stream_hz()])
+	g2.queue_free()
+	await frames(2)
+
+
 func _run_inputreconnect() -> void:
 	var cleaned := Net._clean_players([{"name": "Steam Guest", "random": true, "slot": 0}])
 	t("names: host preserves guest randomized character flag", cleaned[0].random)
@@ -2863,9 +3083,12 @@ func _run_inputreconnect() -> void:
 	Players.add_player(Players.ANY)
 	Players.fake[1000] = {"buttons": {}, "stick": Vector2.RIGHT}
 	Players.last_device = Players.KBM
-	t("input: keyboard aiming ignores an idle controller's stick", Players.stick(Players.ANY) == Vector2.ZERO)
-	Players.note_device(1000)
-	t("input: stick aiming resumes as soon as controller is active", Players.stick(Players.ANY) == Vector2.RIGHT)
+	# (the 11-10 input law: who HOLDS a limb aims it; "who spoke last" only picks glyphs)
+	var idle = Players.limb_aim(0, null, 0)
+	t("input: an idle controller's stick is still read (nothing is switched off by the last device)", Players.stick(Players.ANY) == Vector2.RIGHT and idle is Dictionary and idle.has("dir"))
+	Players.fake[1000].buttons = {"arm_l": true}
+	var held = Players.limb_aim(0, null, 0)
+	t("input: a limb held on the pad is aimed by that pad's stick whatever spoke last", held is Dictionary and held.has("dir") and held.dir == Vector2.RIGHT)
 	Players.fake.erase(1000)
 	Players.clear_players()
 func _run_chairbodyhits() -> void:

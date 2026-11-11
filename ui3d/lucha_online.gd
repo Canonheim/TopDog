@@ -215,12 +215,19 @@ static func wrap_words(text: String, width: int, max_lines: int) -> PackedString
 
 
 ## Where the sign and chat sit: right of the belts; in the lobby, under the cards.
+## The lobby's cards: four to a row up to twelve players, five to a row past that
+## (twenty players, Parker 11-10: four rows of five, the cards smaller to fit).
+func _card_cols() -> int:
+	return 4 if _card_count() <= 12 else 5
+
+
 func _place_boards(id: String) -> void:
-	var rows := clampi(ceili(_card_count() / 4.0), 1, 3)
-	_board.scale = Vector3.ONE * LuchaUI.UI_SCALE * ([1.0, 0.62, 0.46][rows - 1])
+	var cols := _card_cols()
+	var rows := clampi(ceili(_card_count() / float(cols)), 1, 4)
+	_board.scale = Vector3.ONE * LuchaUI.UI_SCALE * ([1.0, 0.62, 0.46, 0.46][rows - 1]) * (4.0 / cols)
 	if id == "lobby":
-		_status_node.position = Vector3(0.1, [0.35, 0.05, -0.6][rows - 1], -LuchaUI.MENU_DIST)
-		_chat_board.position = Vector3(0.15, [-0.38, -0.62, -1.27][rows - 1], -LuchaUI.MENU_DIST)
+		_status_node.position = Vector3(0.1, [0.35, 0.05, -0.6, -0.72][rows - 1], -LuchaUI.MENU_DIST)
+		_chat_board.position = Vector3(0.15, [-0.38, -0.62, -1.27, -1.37][rows - 1], -LuchaUI.MENU_DIST)
 	else:
 		_status_node.position = Vector3(0.1, 1.0, -LuchaUI.MENU_DIST)
 
@@ -365,6 +372,7 @@ func _fill_cards() -> void:
 	var ids: Array = Net.members.keys()
 	ids.sort()
 	var n := 0
+	var cols := _card_cols()
 	for id in ids:
 		var mem: Dictionary = Net.members[id]
 		var ready: bool = id == 1 or bool(mem.get("ready", false))
@@ -373,7 +381,7 @@ func _fill_cards() -> void:
 				break
 			var tint: Color = p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE
 			var card := LuchaKit.card_frame(LuchaKit.CREAM, tint)
-			card.position = Vector3((n % 4) * LuchaUI.CARD_DX, -(n / 4) * LuchaUI.CARD_DY, 0)
+			card.position = Vector3((n % cols) * LuchaUI.CARD_DX, -(n / cols) * LuchaUI.CARD_DY, 0)
 			var num := LuchaKit.poster_text("HOST" if id == 1 else "P%d" % (n + 1), 0.2, LuchaKit.CREAM, LuchaKit.INK, 0.04)
 			num.position = Vector3(0, 0.56, 0.06)
 			card.add_child(num)

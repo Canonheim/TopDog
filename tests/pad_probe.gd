@@ -18,15 +18,10 @@ func _ready() -> void:
 	await _tap(JOY_BUTTON_DPAD_UP)
 	print("after two ups: focus %d" % title.focus)
 	if title.focus != 0: fails += 1
-	await _tap(JOY_BUTTON_A)  # PLAY TOGETHER
+	await _tap(JOY_BUTTON_A)  # PLAY ONLINE (Play Together is off the title since 11-10)
 	await get_tree().create_timer(0.4).timeout
 	print("screen after A: ", main.screen)
-	if main.screen != "local": fails += 1
-	var local: Menu3D = main.lucha.menus.local
-	var before: int = local.items[0].index
-	await _tap(JOY_BUTTON_DPAD_RIGHT)  # MODE: next
-	print("mode choice %d -> %d (Net.settings.mode %s)" % [before, local.items[0].index, Net.settings.mode])
-	if local.items[0].index == before: fails += 1
+	if main.screen != "online": fails += 1
 	await _tap(JOY_BUTTON_B)
 	await get_tree().create_timer(0.4).timeout
 	print("screen after B: ", main.screen)

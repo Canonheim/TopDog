@@ -27,8 +27,8 @@ const SteamInputScript := preload("res://core/steam_input.gd")
 const STEAM_APP_ID := 480  # Spacewar (Valve's dev app) until Top Your Pals has its own
 const LOBBY_TAG := "topdog"  # must equal lobby_logic.gd GAME_TAG
 const GAME_VERSION := "0.3.78"  # bump on every build: RPC tables move between builds
-const MAX_MACHINES := 12
-const MAX_CLIMBERS := 12
+const MAX_MACHINES := 20  # Parker 11-10: "raise loby cap to 20"
+const MAX_CLIMBERS := 20
 const CHAT_PRESETS := ["Hello!", "Ready!", "Not ready", "Nice one!", "Oops!", "Get off me!", "Hold on!", "GG"]
 
 const VIS_PUBLIC := "public"
@@ -410,7 +410,7 @@ func update_local_players() -> void:
 	if is_host():
 		var players := _local_players()
 		if not can_fit_players(1, players.size()):
-			status.emit("That lobby is full (12 players maximum).")
+			status.emit("That lobby is full (%d players maximum)." % MAX_CLIMBERS)
 			return
 		members[1].players = players
 		_rpc_members.rpc(members)
@@ -465,7 +465,7 @@ func _clean_players(players: Array) -> Array:
 
 @rpc("authority", "call_remote", "reliable")
 func _rpc_note_capacity() -> void:
-	status.emit("That lobby is full (12 players maximum).")
+	status.emit("That lobby is full (%d players maximum)." % MAX_CLIMBERS)
 
 
 func can_fit_players(id: int, count: int) -> bool:

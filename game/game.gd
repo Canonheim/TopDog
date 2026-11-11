@@ -475,7 +475,14 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 		if bot_drivers.has(pid):
 			c.driver = bot_drivers[pid]
 		else:
-			c.local_slot = int(r.get("slot", 0))
+			# THE DRIVER'S SLOT (the input law, 6): the roster's slot if this machine
+			# has it, else this climber's place among the machine's own entries. A
+			# climber this machine owns is never left without a driver.
+			var ordinal := 0
+			for other in roster:
+				if int(other.peer) == me() and int(other.pid) < pid:
+					ordinal += 1
+			c.local_slot = Players.resolve_slot(int(r.get("slot", 0)), ordinal)
 			c.driver = Drivers.LocalDriver.new(c.local_slot)
 			if dress:
 				c.set_glyphs(Glyphs.limb_glyphs(c.local_slot))
@@ -585,11 +592,25 @@ func _tick_fart_meters(seconds: float) -> void:
 		_fart_fuel[pid] = 0.0 if fuel <= seconds + 0.000001 else fuel - seconds
 
 
+## THE STREAM RATE (20-player lobbies, 11-10): every moving climber's owner streams
+## its pose to everyone through the host. Up to four moving climbers stream at the
+## full STREAM_HZ; past that the rate falls so the total stays the same (twenty in the
+## waiting room stream at STREAM_MIN_HZ), and the puppets' buffer widens to match. A
+## match has one or two live climbers, so play itself is always at the full rate.
+const STREAM_MIN_HZ := 10.0
+func stream_hz() -> float:
+	var moving := 0
+	for c: Climber in climbers.values():
+		if c.state != Climber.State.FROZEN:
+			moving += 1
+	return clampf(STREAM_HZ * 4.0 / maxf(float(moving), 4.0), STREAM_MIN_HZ, STREAM_HZ)
+
+
 func _tick_owned(real_delta: float) -> void:
 	_stream_t -= real_delta
 	var send := _stream_t <= 0.0
 	if send:
-		_stream_t += 1.0 / STREAM_HZ
+		_stream_t += 1.0 / stream_hz()
 		_seq += 1
 	for cid in climbers.keys():
 		var c: Climber = climbers[cid]
@@ -605,9 +626,8 @@ func _tick_owned(real_delta: float) -> void:
 				announce.emit("Get above the line to lock in!", false)
 		if send:
 			_send_contact_loads(c)
-		if send and c.growing():
-			send = false  # the grow-in plays on every machine by itself
-		if send and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
+		# (the grow-in plays on every machine by itself: nothing is streamed during it)
+		if send and not c.growing() and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
 			_rpc_pose.rpc(cid, _seq, c.pose(), c.touches_solid())
 	# Remote pulls on my climbers that went stale stop pulling.
 	for cid in _pulls.keys():
@@ -656,7 +676,7 @@ func _pose_on_support(c: Climber, pose: PackedFloat32Array) -> bool:
 				return true
 			if not other.has_meta("climber"):
 				continue
-			var support := other.get_meta("climber") as Climber
+			var support := Climber.climber_of(other)
 			if support != null and climbers.get(support.climber_id) == support and tower.has(support.climber_id):
 				return true
 	return false
@@ -994,7 +1014,7 @@ func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool) -
 
 ## Puppets play back the stream Feel "puppet_delay" seconds behind, interpolated.
 func _tick_puppets() -> void:
-	var delay := Feel.get_k("puppet_delay")
+	var delay := maxf(Feel.get_k("puppet_delay"), 1.25 / stream_hz())  # never less than a sample and a bit
 	for cid in _puppet_buf.keys():
 		var c: Climber = climbers.get(cid)
 		if c == null or c.state != Climber.State.PUPPET or c.growing():
@@ -1190,8 +1210,8 @@ func _rpc_fart(cid: int, take: int, pitch: float, budget: float) -> void:
 func _on_grab_made(c: Climber, limb: int, other: Object) -> void:
 	if not (other is RigidBody3D and other.has_meta("climber")):
 		return
-	var oc: Climber = other.get_meta("climber")
-	if oc.state != Climber.State.PUPPET or oc.owner_peer == me():
+	var oc := Climber.climber_of(other)
+	if oc == null or oc.state != Climber.State.PUPPET or oc.owner_peer == me():
 		return
 	_remote_grabs["%d:%d" % [c.climber_id, limb]] = [oc.climber_id, str(other.get_meta("piece"))]
 	_rpc_grabbed.rpc_id(oc.owner_peer, oc.climber_id, c.climber_id, limb, true)

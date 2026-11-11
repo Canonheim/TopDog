@@ -13,7 +13,7 @@ func _ready() -> void:
 	var main = load("res://game/main.tscn").instantiate()
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(1.2).timeout
-	await _tap(JOY_BUTTON_DPAD_DOWN)  # PLAY ONLINE
+	# PLAY ONLINE is the title's first belt (Play Together is off the title since 11-10)
 	await _tap(JOY_BUTTON_A)
 	await _wait(0.6)
 	_check("A on PLAY ONLINE opens the 3D online screen", main.screen == "online" and main.lucha.menus.online.visible, main.screen)

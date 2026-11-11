@@ -138,6 +138,26 @@ var _grow_size := Vector2.ONE  # the block at full size (w, h), from the feet up
 
 # ---------------------------------------------------------------- frames
 
+## WHOSE BODY IS THIS (the 11-10 input sweep): a piece's climber, or null for the
+## arena, a prop, or a GHOST (a piece whose climber no longer exists). Every lookup
+## goes through here: a typed read of a freed climber is a script error, and one of
+## those inside the tick stopped that climber's grabs and steering dead for as long as
+## it touched the ghost ("his controller randomly stopped working").
+static func climber_of(o: Object) -> Climber:
+	if o == null or not is_instance_valid(o) or not o.has_meta("climber"):
+		return null
+	var m = o.get_meta("climber")
+	if m == null or not is_instance_valid(m):
+		return null
+	return m as Climber
+
+
+## A piece that says it's a climber's but whose climber is gone: touches nothing,
+## holds nobody up, can't be grabbed.
+static func is_ghost(o: Object) -> bool:
+	return o != null and is_instance_valid(o) and o.has_meta("climber") and climber_of(o) == null
+
+
 static func angle_of(b: Node3D) -> float:
 	var x := b.global_transform.basis.x
 	return atan2(x.y, x.x)
@@ -800,8 +820,8 @@ func _grow_push(delta: float) -> void:
 			continue
 		var group: Array = [rb]
 		var cx := rb.global_position.x
-		var who: Object = rb.get_meta("climber") if rb.has_meta("climber") else null
-		if who is Climber and who != self:
+		var who: Climber = climber_of(rb)
+		if who != null and who != self:
 			if done.has(who):
 				continue
 			done[who] = true
@@ -812,7 +832,7 @@ func _grow_push(delta: float) -> void:
 		var need := half + 0.25 - absf(dx)
 		if need <= 0.0:
 			continue
-		var speed := minf(need / maxf(delta, 0.008), 9.0)
+		var speed := minf(need / maxf(delta, 0.008), 4.0)  # a firm shove aside, never a launch
 		for b in group:
 			var body := b as RigidBody3D
 			if body != null and not body.freeze and side * body.linear_velocity.x < speed:
@@ -1018,14 +1038,14 @@ func touches_solid() -> bool:
 		if end == null or not end.contact_monitor:
 			continue
 		for o in end.get_colliding_bodies():
-			if (o.collision_layer & SOLID_MASK) == 0:
+			if o == null or not is_instance_valid(o) or (o.collision_layer & SOLID_MASK) == 0:
 				continue
 			if o.has_meta("no_weld"):
 				continue  # the buoy holds nobody up
 			if not (o is RigidBody3D and o.has_meta("climber")):
 				return true  # the arena (static world)
-			var oc: Climber = o.get_meta("climber")
-			if oc != self and oc.state == State.FROZEN:
+			var oc := climber_of(o)
+			if oc != null and oc != self and oc.state == State.FROZEN:
 				return true
 	return false
 
@@ -1073,6 +1093,18 @@ func _select_active_limb() -> void:
 
 func _tick_limb(i: int, delta: float) -> void:
 	var l: Dictionary = limbs[i]
+	# A hold on something that was freed under us (a piece, a prop): forget it cleanly.
+	# (A freed object compares equal to null, so release() alone would leave its joint.)
+	if not is_instance_valid(l.grab_other) and (typeof(l.grab_other) == TYPE_OBJECT or (l.grab as RID).is_valid()):
+		if (l.grab as RID).is_valid():
+			PhysicsServer3D.free_rid(l.grab)
+		l.grab = RID()
+		l.grab_other = null
+		l.grab_climber = null
+		l.grab_piece = ""
+		grab_lost.emit(self, i)
+	elif l.grab_climber != null and not is_instance_valid(l.grab_climber):
+		l.grab_climber = null
 	var held := i == _active_limb
 	var just_released: bool = l.held and not held
 	if held and not l.held:
@@ -1113,13 +1145,13 @@ func _try_grab(i: int) -> void:
 	var best: Object = null
 	var best_score := INF
 	for o in hits:
-		if o == null or o == end or (o.collision_layer & SOLID_MASK) == 0 or o.has_meta("no_weld"):
+		if o == null or not is_instance_valid(o) or o == end or (o.collision_layer & SOLID_MASK) == 0 or o.has_meta("no_weld"):
 			continue
 		var score := 0.0
 		if o is RigidBody3D and o.has_meta("climber"):
-			var oc: Climber = o.get_meta("climber")
-			if oc == self or oc.removed:
-				continue
+			var oc := climber_of(o)
+			if oc == null or oc == self or oc.removed:
+				continue  # (null: a ghost piece, its climber gone)
 			if oc.state != State.FROZEN:
 				if oc.get_instance_id() == l.peeled_from:
 					still_touching_peeled = true
@@ -1177,11 +1209,13 @@ func _tick_live_contact(i: int, dt: float) -> void:
 
 ## Stick limb i's end to `other` (a PhysicsBody3D) right where it is.
 func attach(i: int, other: Object) -> void:
+	if other == null or not is_instance_valid(other) or is_ghost(other):
+		return
 	if other is CollisionObject3D and (other.collision_layer & SOLID_MASK) == 0:
 		return
 	if other is Node and (other as Node).has_meta("no_weld"):
 		return  # Del Mar's buoy: solid, never held (Parker 11-10)
-	if other.has_meta("climber") and other.get_meta("climber") == self:
+	if climber_of(other) == self:
 		return
 	var l: Dictionary = limbs[i]
 	if l.grab_other != null:
@@ -1189,7 +1223,7 @@ func attach(i: int, other: Object) -> void:
 	var end: RigidBody3D = bodies[l.def.end]
 	var ob := other as CollisionObject3D
 	var at := end.global_position
-	var target := other.get_meta("climber") as Climber if other.has_meta("climber") else null
+	var target := climber_of(other)
 	if target != null and target.state != State.FROZEN:
 		var physics := PhysicsServer3D.body_get_direct_state(end.get_rid())
 		if physics != null:
@@ -1227,8 +1261,8 @@ func attach(i: int, other: Object) -> void:
 	l.grab_climber = null
 	l.grab_piece = ""
 	if other is RigidBody3D and other.has_meta("climber"):
-		var oc: Climber = other.get_meta("climber")
-		if oc != self:
+		var oc := climber_of(other)
+		if oc != null and oc != self:
 			l.grab_climber = oc
 			l.grab_piece = other.get_meta("piece")
 			if oc.state != State.FROZEN:
@@ -1550,6 +1584,8 @@ func limb_end(i: int) -> Vector2:
 ## Turn to stone where we are: every piece static, our grabs and joints gone.
 ## Grabs OTHER climbers hold on us stay: they now hold a static piece.
 func freeze() -> void:
+	if growing():
+		_end_grow()  # frozen mid grow-in: stand at full size first
 	set_knockout_visual(false)
 	if state == State.FROZEN:
 		return
@@ -1775,6 +1811,14 @@ func _notification(what: int) -> void:
 			if limb.grab.is_valid():
 				PhysicsServer3D.free_rid(limb.grab)
 		_free_joints()
+		# NO GHOSTS: the pieces live in the world, not under this node. A climber freed
+		# any way but remove() (its game freed under it) takes its pieces with it, so
+		# nothing is left standing in the world with a dead climber's name on it.
+		for piece in bodies.values():
+			if is_instance_valid(piece) and not (piece as Node).is_queued_for_deletion():
+				(piece as Node).queue_free()
+		if is_instance_valid(_grow_block):
+			_grow_block.queue_free()
 
 
 func remove() -> void:

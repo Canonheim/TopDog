@@ -44,7 +44,12 @@ func start() -> void:
 	ok = bool(Steam.inputInit(false))  # Steam runs the input frame inside run_callbacks
 	if not ok:
 		print("[SteamInput] init failed")
+		Players.note("Steam Input failed to start: raw pads only")
 		return
+	# From this moment Steam may hold the pads: whatever a raw pad has down right now
+	# (the A that just clicked PLAY ONLINE) can never be seen coming up.
+	Players.suspect_raw("Steam Input started")
+	Players.note("Steam Input started (layout file %s)" % ("accepted" if manifest_accepted else "REFUSED"))
 	set_handle = int(Steam.getActionSetHandle(ACTION_SET))
 	for a in DIGITAL:
 		digital_handles[a] = int(Steam.getDigitalActionHandle(a))
@@ -63,9 +68,24 @@ func count() -> int:
 	return devices.size()
 
 
+## THE GRACE TIMES (the 11-10 input rewrite: no blip may drop a held limb).
+## HOLD_MS: an action Steam reports "inactive" keeps its last state this long. Steam
+## flickers actions inactive for a frame or two when it reloads a layout or the
+## overlay stirs; without the hold a held hand let go by itself.
+## FORGET_MS: a controller missing from Steam's list this long is really gone (the
+## list can come back empty for a poll while Steam reshuffles).
+## LIVE_MS: "our layout is live on this controller" stays true this long after the
+## last frame it was, so the raw-pad fallback doesn't flap on and off.
+const HOLD_MS := 250
+const FORGET_MS := 1600
+const LIVE_MS := 1500
+const LIMBS := ["arm_l", "arm_r", "leg_l", "leg_r"]
+
+
 func _process(delta: float) -> void:
 	if not ok:
 		return
+	var now := Time.get_ticks_msec()
 	# The controller list twice a second, not every frame (GodotSteam logs each call).
 	_list_t -= delta
 	if _list_t <= 0.0:
@@ -79,46 +99,108 @@ func _process(delta: float) -> void:
 		for action in DIGITAL:
 			if digital_handles.get(action, 0) == 0:
 				digital_handles[action] = int(Steam.getDigitalActionHandle(action))
-	var handles: Array = _handles
-	var seen := {}
-	for h in handles:
-		var handle := int(h)
-		if handle == 0:
-			continue
-		if not _order.has(handle):
-			_order.append(handle)
-		var dev := STEAM_DEV_BASE + _order.find(handle)
-		seen[dev] = true
-		if set_handle != 0:
-			Steam.activateActionSet(handle, set_handle)
-		var d: Dictionary = devices.get(dev, {"handle": handle, "type": int(Steam.getInputTypeForHandle(handle)), "buttons": {}, "stick": Vector2.ZERO})
-		if not d.has("gamepad_index"):
-			d.gamepad_index = Steam.getGamepadIndexForController(handle) if Steam.has_method("getGamepadIndexForController") else -1
-		var limbs_active := false
-		var menu_active := false
-		for a in DIGITAL:
-			var dd: Dictionary = Steam.getDigitalActionData(handle, digital_handles[a])
-			var active := bool(dd.get("active", false))
-			if a in ["arm_l", "arm_r", "leg_l", "leg_r"]:
-				limbs_active = limbs_active or active
-			if a == "menu_select":
-				menu_active = active
-			var down := active and bool(dd.get("state", false))
-			if down and not d.buttons.get(a, false):
-				_note(dev, a)
-			d.buttons[a] = down
-		var ad: Dictionary = Steam.getAnalogActionData(handle, steer_handle)
-		d.stick = Vector2(float(ad.get("x", 0.0)), float(ad.get("y", 0.0)))  # Steam's joystick y is up, as ours
-		d.gameplay_active = limbs_active and bool(ad.get("active", false))
-		d.menu_active = menu_active
-		if not bool(ad.get("active", false)):
-			d.stick = Vector2.ZERO
-		if d.stick.length() > Feel.get_k("stick_deadzone") and Players.last_device != dev:
-			_note(dev, "stick")
-		devices[dev] = d
+		for h in _handles:
+			var handle := int(h)
+			if handle == 0:
+				continue
+			if not _order.has(handle):
+				_order.append(handle)
+			var dev := STEAM_DEV_BASE + _order.find(handle)
+			if not devices.has(dev):
+				devices[dev] = {"handle": handle, "type": int(Steam.getInputTypeForHandle(handle)), "buttons": {}, "stick": Vector2.ZERO,
+					"gameplay_active": false, "menu_active": false,
+					"gamepad_index": Steam.getGamepadIndexForController(handle) if Steam.has_method("getGamepadIndexForController") else -1}
+				Players.note("steam controller %d appears (%s)" % [dev, _type_name(int(devices[dev].type))])
+			devices[dev].listed_ms = now
+		for dev in devices.keys():
+			if (devices[dev] as Dictionary).has("handle") and now - int(devices[dev].get("listed_ms", now)) > FORGET_MS:
+				Players.note("steam controller %d is gone" % dev)
+				devices.erase(dev)
 	for dev in devices.keys():
-		if not seen.has(dev):
-			devices.erase(dev)
+		var d: Dictionary = devices[dev]
+		if not d.has("handle"):
+			continue  # a battery's hand-made device
+		_read(dev, d, now)
+
+
+## One controller, one frame: every action through the hold, the sticky live flags,
+## and a latch so a press between two physics ticks is still seen by one.
+func _read(dev: int, d: Dictionary, now: int) -> void:
+	var handle := int(d.handle)
+	if set_handle != 0:
+		Steam.activateActionSet(handle, set_handle)
+	var limbs_active := false
+	var menu_active := false
+	for a in DIGITAL:
+		var dd: Dictionary = Steam.getDigitalActionData(handle, digital_handles.get(a, 0))
+		var active := bool(dd.get("active", false))
+		if a in LIMBS:
+			limbs_active = limbs_active or active
+		if a == "menu_select":
+			menu_active = active
+		if feed_digital(d, a, active, bool(dd.get("state", false)), now):
+			_note(dev, a)
+	var ad: Dictionary = Steam.getAnalogActionData(handle, steer_handle)
+	var steer_active := bool(ad.get("active", false))
+	feed_steer(d, steer_active, Vector2(float(ad.get("x", 0.0)), float(ad.get("y", 0.0))), now)  # Steam's joystick y is up, as ours
+	feed_flags(dev, d, limbs_active and steer_active, menu_active, now)
+	if (d.stick as Vector2).length() > Players.GLYPH_STICK and Players.last_device != dev:
+		_note(dev, "stick")
+
+
+## THE HOLD, one button (no Steam calls: the batteries drive these three directly).
+## Active: Steam's state is the truth. Inactive: the last state stands for HOLD_MS,
+## then it's up. True on a fresh press (and the press is latched for one tick).
+func feed_digital(d: Dictionary, a: String, active: bool, state: bool, now: int) -> bool:
+	if not d.has("act_ms"):
+		d.act_ms = {}
+		d.latch_next = {}
+		d.latch = {}
+	if not d.has("buttons"):
+		d.buttons = {}
+	var was := bool(d.buttons.get(a, false))
+	var down := was
+	if active:
+		down = state
+		d.act_ms[a] = now
+	elif now - int(d.act_ms.get(a, -1000000)) > HOLD_MS:
+		down = false
+	d.buttons[a] = down
+	if down and not was:
+		d.latch_next[a] = true
+		return true
+	return false
+
+
+## THE HOLD, the stick.
+func feed_steer(d: Dictionary, active: bool, value: Vector2, now: int) -> void:
+	if active:
+		d.stick = value
+		d.steer_ms = now
+	elif now - int(d.get("steer_ms", -1000000)) > HOLD_MS:
+		d.stick = Vector2.ZERO
+
+
+## The sticky flags: "our layout is live here" outlasts a blip by LIVE_MS.
+func feed_flags(dev: int, d: Dictionary, game_active: bool, menu_active: bool, now: int) -> void:
+	if game_active:
+		d.game_ms = now
+	var live := now - int(d.get("game_ms", -1000000)) <= LIVE_MS
+	if live != bool(d.get("gameplay_active", false)):
+		Players.note("steam controller %d: our layout is %s" % [dev, "LIVE" if live else "NOT ACTIVE (overlay open, window unfocused, or another layout)"])
+	d.gameplay_active = live
+	if menu_active:
+		d.menu_ms = now
+	d.menu_active = now - int(d.get("menu_ms", -1000000)) <= LIVE_MS
+
+
+## Players calls this at the top of each physics tick: the presses latched since the
+## last tick become readable for exactly this one.
+func tick_latch() -> void:
+	for d: Dictionary in devices.values():
+		if d.has("latch_next"):
+			d.latch = d.latch_next
+			d.latch_next = {}
 
 
 func active_devices(flag: String) -> Array:
@@ -133,7 +215,7 @@ func _note(dev: int, what: String) -> void:
 
 func button(dev: int, action: String) -> bool:
 	var d: Dictionary = devices.get(dev, {})
-	return bool(d.get("buttons", {}).get(action, false))
+	return bool(d.get("buttons", {}).get(action, false)) or bool(d.get("latch", {}).get(action, false))
 
 
 func stick(dev: int) -> Vector2:

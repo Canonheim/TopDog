@@ -516,6 +516,59 @@ Parker: the ankle stop "changed how the climbing feels as you cannot rotate free
 - **The drawn wrist** (`Climber._draw_wrists`, every frame, puppets too). A hand's mesh is drawn turned back about the wrist to within 30°, so the steered hand never looks broken.
 - **Checks in `--feel`:** a stuck foot and a stuck hand twisted hard each swing over 60° past the stop both ways, with the joint itself staying within the stop. A hand bent 100° is drawn at 30°.
 
+## The input law, ghosts, and twenty players (Parker, 2026-11-10)
+
+Parker hosted, Dan joined, and Dan's "controller randomly stopped working". Parker: "I
+want you to make it so our controller and input system never fails even if there is 20
+people in a loby. And raise loby cap to 20." The log on the host's PC was empty and the
+client's wasn't to hand, so the cause was not seen; the whole input chain was read and
+every way it could go quiet was closed. `core/players.gd` was rewritten and carries the
+law at its top.
+
+- **Ghosts (the likeliest cause).** A climber's pieces live in the world, not under the
+  climber. A piece whose climber no longer existed made `touches_solid` and `_try_grab`
+  throw a script error (a typed read of a freed climber) on every tick it was touched.
+  That climber then had no grabs and no "touching the ground", so no steering: the pad
+  looked dead. Every lookup now goes through `Climber.climber_of`; a ghost touches
+  nothing; a climber freed any way takes its pieces with it; a hold on something freed
+  is forgotten cleanly.
+- **The one-player slot reads everything.** Practice and every online player (device
+  `ANY`) read the keyboard, every raw pad and every Steam controller at once. Nothing
+  is switched by "who spoke last" any more: before, any key press (push to talk), a
+  mouse nudge or a second pad's drifting stick took the aim away from the pad in use.
+  `last_device` now only picks the glyphs.
+- **Who holds a limb aims it.** A limb held by a pad's button is steered by that pad's
+  stick; a limb held by a key is steered by the mouse.
+- **The stale guard.** When Steam Input takes a pad, Godot never sees what was down
+  come up (the 11-09 stuck A). Whatever a raw pad holds at that moment is ignored until
+  Godot hears from that input again. So raw pads are read all the time now, and a pad
+  Steam doesn't manage keeps working while Steam is live (before, it went dead).
+- **Steam's blinks.** An action Steam reports "inactive" keeps its last state for
+  250 ms (`HOLD_MS`); a controller missing from Steam's list is kept 1.6 s; "our layout
+  is live" outlasts a blink by 1.5 s. A one-frame blink used to drop a held limb.
+- **The latch.** A press that comes and goes between two physics ticks is still seen
+  by exactly one (keys, mouse buttons, raw pads, Steam).
+- **The driver's slot.** A climber this machine owns always has a driver: a roster slot
+  that doesn't exist here falls back, a machine with no local player gets one.
+- **Seeing it.** F2 shows the input readout in game. Every device event goes to
+  `user://input_log.txt` (on Windows: `%APPDATA%\Godotpp_userdata\Top Dog\`). A
+  notice tells the player to click the game when its window has lost the focus: Steam
+  hands the pad to its desktop layout then, and nothing in the game can read it.
+- **Couch players in an online lobby are parked** (`main.COUCH_JOIN_ONLINE`) with Play
+  Together. A host on a pad who pressed Space or Enter got a second climber on the
+  keyboard and player one pinned to the pad.
+- **Twenty.** `Net.MAX_MACHINES` and `MAX_CLIMBERS` are 20. The pose stream slows as
+  more climbers move at once (30 a second up to four, 10 a second at twenty, the
+  waiting room's case), so the host relays about the same in total; a match has one or
+  two live climbers and always streams at the full rate.
+- **Not changed, and worth knowing:** steering only works while a hand or foot (yours
+  or a linked climber's) is planted or touching something solid. Lying on your body
+  with no hand or foot down, the stick does nothing, by the 11-08 rule.
+- **Checks:** `--input` (22: each point above, ghosts, twenty). `--inputreconnect` and
+  `--scramble` updated to the new law and cap. Not run: the two-process
+  `--joinpadhost` / `--joinpadclient` pair (one Godot at a time). Never tried on a real
+  pad or on Steam by this session: Parker and Dan's next game is the test.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

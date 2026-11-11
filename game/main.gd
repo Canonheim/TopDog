@@ -54,6 +54,14 @@ var pad_nav: Node
 var lucha: LuchaUI  # Top Dog's 3D front end (ui3d/lucha_ui.gd)
 var _pad_readout: Label
 var _pad_corner: Label
+var _input_health: Label  # F2: what the input system knows right now (Players.health)
+var _focus_notice: Label  # shown in a match while the window has lost the focus
+## COUCH PLAYERS IN AN ONLINE LOBBY are parked with Play Together (Parker 11-10:
+## "first lets only focus on the online multiplayer"). It was also a trap: a host on a
+## pad pressing Space or Enter (the keyboard's Lock In, and the menus' accept) made a
+## second climber for the keyboard and pinned player one to the pad. The slot
+## machinery under it stays (Players._refresh_pad_routes, its batteries).
+const COUCH_JOIN_ONLINE := false
 var _build_tag: Label  # "BUILD x.y.z" in the title's corner (Parker 11-07: know which build you booted)
 
 
@@ -270,7 +278,7 @@ func _process(delta: float) -> void:
 		var dev := Players.poll_join()
 		if dev != -2:
 			Players.add_player(dev)
-	if screen == "lobby" and Net.is_host():
+	if COUCH_JOIN_ONLINE and screen == "lobby" and Net.is_host():
 		var dev2 := Players.poll_join()
 		if dev2 != -2 and Players.slots.size() < 4:
 			Players.add_player(dev2)
@@ -279,6 +287,11 @@ func _process(delta: float) -> void:
 			_leave_lobby()
 		elif screen in ["hud", "pause"] and Players.pause_pressed(s):
 			_toggle_pause()
+	if _input_health != null and _input_health.visible:
+		_input_health.text = "INPUT (F2 hides)   log: %s
+%s" % [ProjectSettings.globalize_path(Players.LOG_PATH), Players.health()]
+	if _focus_notice != null:
+		_focus_notice.visible = not Players.focused and screen in ["hud", "pause", "lobby"]
 	if _build_tag != null:
 		_build_tag.visible = screen == "title"
 	if _pad_corner != null:
@@ -296,6 +309,8 @@ A pad is connected but nothing has arrived. If pressing changes nothing here, so
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F1:
 		feel_panel.visible = not feel_panel.visible
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F2 and _input_health != null:
+		_input_health.visible = not _input_health.visible
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_ESCAPE 			and _rebind_wait.is_empty() and screen not in ["hud", "pause"]:
 		_back()
 	if event is InputEventKey and event.pressed and not event.echo and pad_nav != null 			and event.physical_keycode in [KEY_UP, KEY_DOWN, KEY_TAB]:
@@ -649,6 +664,33 @@ func _build_ui() -> void:
 	_pad_corner.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
 	_pad_corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(_pad_corner)
+	# F2: THE INPUT READOUT (the 11-10 input rewrite): devices, Steam's state, each
+	# player's device and what it holds, the stale guard, the last log lines.
+	_input_health = Label.new()
+	_input_health.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	_input_health.position = Vector2(12, 90)
+	_input_health.add_theme_font_size_override("font_size", 15)
+	_input_health.add_theme_constant_override("outline_size", 6)
+	_input_health.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.03))
+	_input_health.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_input_health.visible = false
+	root.add_child(_input_health)
+	# The window lost the focus mid-match: keys go to the other window and Steam hands
+	# the pad to its desktop layout. Nothing the game can read; say so, loudly.
+	_focus_notice = Label.new()
+	_focus_notice.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+	_focus_notice.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_focus_notice.position.y = 150
+	_focus_notice.text = "CLICK THE GAME WINDOW
+it lost the focus, so your controls are off"
+	_focus_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_focus_notice.add_theme_font_size_override("font_size", 34)
+	_focus_notice.add_theme_color_override("font_color", Color("#FFC928"))
+	_focus_notice.add_theme_constant_override("outline_size", 12)
+	_focus_notice.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
+	_focus_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_focus_notice.visible = false
+	root.add_child(_focus_notice)
 	_build_tag = Label.new()
 	_build_tag.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	_build_tag.grow_horizontal = Control.GROW_DIRECTION_BEGIN

@@ -97,7 +97,7 @@ func _input(event: InputEvent) -> void:
 			var v := m.axis_value * float(d[2])
 			var down := v > (STICK_OFF if was else STICK_ON)
 			# Only the stick side of the held state: a d-pad hold must not be cut by the stick centring.
-			if down != was and not Input.is_joy_button_pressed(m.device, d[0]):
+			if down != was and not Players.raw_button(m.device, d[0]):
 				_edge(m.device, action, down, true)
 
 
@@ -118,15 +118,17 @@ func _process(delta: float) -> void:
 		devs[dev] = true
 	for dev in seen_devices:
 		devs[dev] = true
-	if steam_live:
-		devs.clear()  # Steam has the pads: read them through it only, never twice
+	if steam_live and not menu_devices.is_empty():
+		devs.clear()  # Steam's menu actions are live: read the pads through it only, never twice
 	for dev in devs:
 		for action in DIRS:
 			var d: Array = DIRS[action]
 			var key := "%d:%s" % [dev, action]
 			var was: bool = _held.get(key, false)
-			var ax := maxf(Input.get_joy_axis(dev, d[1]) * float(d[2]), float(_axis.get("%d:%d" % [dev, d[1]], 0.0)) * float(d[2]))
-			var down := Input.is_joy_button_pressed(dev, d[0]) or ax > (STICK_OFF if was else STICK_ON)
+			# Through Players' STALE GUARD: a button or stick that was down when Steam took
+			# the pad never reads as held here either.
+			var ax := Players.raw_axis(dev, d[1]) * float(d[2])
+			var down := Players.raw_button(dev, d[0]) or ax > (STICK_OFF if was else STICK_ON)
 			if down and not was:
 				_edge(dev, action, true, true)
 				_repeat[key] = REPEAT_FIRST
@@ -138,7 +140,7 @@ func _process(delta: float) -> void:
 			elif not down and was:
 				_held[key] = false
 		for action in BUTTONS:
-			var down := Input.is_joy_button_pressed(dev, BUTTONS[action])
+			var down := Players.raw_button(dev, BUTTONS[action])
 			if down != bool(_held.get("%d:%s" % [dev, action], false)):
 				_edge(dev, action, down, false)
 

@@ -422,7 +422,9 @@ func sweep_hits(dt: float, excluded_id: int) -> Dictionary:
 				var piece := instance_from_id(hit.collider_id) as RigidBody3D
 				if piece == null or not piece.has_meta("climber"):
 					continue
-				var victim: Climber = piece.get_meta("climber")
+				var victim := Climber.climber_of(piece)
+				if victim == null:
+					continue  # a ghost piece: its climber is gone
 				var id := victim.climber_id
 				if id == excluded_id or victim.removed or victim.state == Climber.State.FROZEN or recent_hits.has(id):
 					continue
@@ -455,8 +457,8 @@ func _expire_hits(dt: float) -> void:
 	query.exclude = carrier_rids
 	for result in get_world_3d().direct_space_state.intersect_shape(query, 128):
 		var piece: CollisionObject3D = result.collider
-		if piece.has_meta("climber"):
-			var owner_climber: Climber = piece.get_meta("climber")
+		var owner_climber := Climber.climber_of(piece)
+		if owner_climber != null:
 			expired.erase(owner_climber.climber_id)
 	for id in expired:
 		recent_hits.erase(id)
