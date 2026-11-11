@@ -118,6 +118,18 @@ var _gravity_scale := -1.0
 var _root: Node3D
 var _glyphs: Array = []  # per limb: the Sprite3D / Label3D riding the hand or foot
 var _hand_meshes := {}  # hand piece -> [mesh, its rest transform on the body]: THE DRAWN WRIST
+## THE GROW-IN (Parker 11-10): "when a players spawns, make them grow from nothing at
+## ground level and get bigger, pushing anything in their way out of the way... Grow
+## over the time frame of .3 seconds". While it runs the pieces are held (no physics,
+## no collisions) and drawn scaled about the feet, and an invisible block the climber's
+## size grows with them, shoving climbers, the chair and the partner aside.
+const GROW_S := 0.3
+var _grow_t := -1.0  # seconds into the grow-in; < 0 = not growing
+var _grow_full := {}  # piece -> its full-size Transform3D
+var _grow_kids := {}  # Node3D child of a piece -> its full-size local transform
+var _grow_block: StaticBody3D = null
+var _grow_box: BoxShape3D = null
+var _grow_size := Vector2.ONE  # the block at full size (w, h), from the feet up
 
 
 # ---------------------------------------------------------------- frames
@@ -592,6 +604,8 @@ static func _on_disc(tex: Texture2D, disc := true) -> Texture2D:
 
 
 func _process(_delta: float) -> void:
+	if growing():
+		return
 	_draw_wrists()
 	if _glyphs.is_empty():
 		return
@@ -649,6 +663,9 @@ func _draw_wrists() -> void:
 # ---------------------------------------------------------------- tick
 
 func _physics_process(delta: float) -> void:
+	if _grow_t >= 0.0 and not removed:
+		_tick_grow(delta)
+		return
 	if removed or state != State.LIVE:
 		return
 	live_time += delta
@@ -687,6 +704,156 @@ func _physics_process(delta: float) -> void:
 			if grip.grab.is_valid() and (grip.grab_climber == null or grip.grab_climber.state == State.FROZEN):
 				release(i)
 				grip.regrip = 0.65
+
+
+## True during the spawn's grow-in.
+func growing() -> bool:
+	return _grow_t >= 0.0
+
+
+## Start the grow-in (call right after build, on every machine): from nothing at the
+## feet to full size in GROW_S, the growing block pushing whatever stands there away.
+func grow_in() -> void:
+	if bodies.is_empty() or removed:
+		return
+	_grow_full.clear()
+	_grow_kids.clear()
+	var lo := Vector2(INF, INF)
+	var hi := Vector2(-INF, -INF)
+	for b in bodies.values():
+		var rb: RigidBody3D = b
+		_grow_full[rb] = rb.global_transform
+		for ch in rb.get_children():
+			if ch is Node3D and not ch is CollisionShape3D:
+				_grow_kids[ch] = (ch as Node3D).transform
+		var g: Array = _shape_geo.get(rb.get_meta("piece"), [])
+		var r := 0.12
+		if not g.is_empty():
+			match str(g[0]):
+				"circle":
+					r = float(g[1])
+				"capsule":
+					r = float(g[3]) + (g[2] as Vector2).length()
+				"box":
+					r = (g[1] as Vector2).length()
+		var p := pos2(rb)
+		lo = lo.min(p - Vector2(r, r))
+		hi = hi.max(p + Vector2(r, r))
+		rb.collision_layer = 0
+		rb.collision_mask = 0
+		rb.linear_velocity = Vector3.ZERO
+		rb.angular_velocity = Vector3.ZERO
+		rb.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
+		rb.freeze = true
+	# The block: the climber's standing width (both sides of the feet) and height.
+	var half_w := maxf(spawn_at.x - lo.x, hi.x - spawn_at.x)
+	_grow_size = Vector2(half_w * 2.0, maxf(hi.y - spawn_at.y, 0.2))
+	_grow_block = StaticBody3D.new()
+	_grow_block.name = "GrowBlock_%d" % climber_id
+	_grow_block.collision_layer = LAYER_WORLD  # everything that stands on the world feels it
+	_grow_block.collision_mask = 0
+	_grow_block.set_meta("no_weld", true)  # never held, never a support
+	_grow_box = BoxShape3D.new()
+	var col := CollisionShape3D.new()
+	col.shape = _grow_box
+	_grow_block.add_child(col)
+	_root.add_child(_grow_block)
+	_grow_t = 0.0
+	_apply_grow(0.0)
+
+
+func _tick_grow(delta: float) -> void:
+	_grow_t += delta
+	if _grow_t >= GROW_S:
+		_end_grow()
+		return
+	_apply_grow(_grow_t / GROW_S)
+	_grow_push(delta)
+
+
+## Shove whatever the block overlaps out sideways: a whole climber one way together
+## (by its centre against the feet), a loose body (the chair) by its own centre, fast
+## enough to be clear by the time the block reaches it.
+func _grow_push(delta: float) -> void:
+	if _grow_block == null or not _grow_block.is_inside_tree():
+		return
+	var space := _grow_block.get_world_3d().direct_space_state
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = _grow_box
+	q.transform = _grow_block.global_transform
+	q.collision_mask = SOLID_MASK | LAYER_PROP
+	q.exclude = [_grow_block.get_rid()]
+	var half := _grow_box.size.x * 0.5
+	var done := {}
+	for hit in space.intersect_shape(q, 32):
+		var rb := hit.collider as RigidBody3D
+		if rb == null or rb.freeze:
+			continue
+		var group: Array = [rb]
+		var cx := rb.global_position.x
+		var who: Object = rb.get_meta("climber") if rb.has_meta("climber") else null
+		if who is Climber and who != self:
+			if done.has(who):
+				continue
+			done[who] = true
+			group = (who as Climber).bodies.values()
+			cx = (who as Climber).centre_of_mass().x
+		var dx := cx - spawn_at.x
+		var side := signf(dx) if absf(dx) > 0.02 else (1.0 if climber_id % 2 == 0 else -1.0)
+		var need := half + 0.25 - absf(dx)
+		if need <= 0.0:
+			continue
+		var speed := minf(need / maxf(delta, 0.008), 9.0)
+		for b in group:
+			var body := b as RigidBody3D
+			if body != null and not body.freeze and side * body.linear_velocity.x < speed:
+				body.linear_velocity.x = side * speed
+
+
+## Draw everything at k of full size about the feet, and size the block to match.
+func _apply_grow(f: float) -> void:
+	var k := maxf(0.02, 1.0 - pow(1.0 - clampf(f, 0.0, 1.0), 2.0))  # eased out: quick, then settling
+	var feet := Vector3(spawn_at.x, spawn_at.y, 0.0)
+	for rb in _grow_full:
+		var full: Transform3D = _grow_full[rb]
+		(rb as RigidBody3D).global_transform = Transform3D(full.basis, feet + (full.origin - feet) * k)
+	for ch in _grow_kids:
+		if is_instance_valid(ch):
+			var t: Transform3D = _grow_kids[ch]
+			(ch as Node3D).transform = Transform3D(t.basis.scaled(Vector3.ONE * k), t.origin * k)
+	if _grow_box != null:
+		var w := maxf(_grow_size.x * k, 0.02)
+		var h := maxf(_grow_size.y * k, 0.02)
+		_grow_box.size = Vector3(w, h, 4.0)  # deep: the push comes out sideways or up, never along z (locked)
+		_grow_block.global_position = feet + Vector3(0.0, h * 0.5, 0.0)
+
+
+func _end_grow() -> void:
+	_grow_t = -1.0
+	for ch in _grow_kids:
+		if is_instance_valid(ch):
+			(ch as Node3D).transform = _grow_kids[ch]
+	for rb in _grow_full:
+		var body := rb as RigidBody3D
+		if not is_instance_valid(body):
+			continue
+		body.global_transform = _grow_full[rb]
+		body.linear_velocity = Vector3.ZERO
+		body.angular_velocity = Vector3.ZERO
+		if state == State.FROZEN:
+			body.collision_layer = LAYER_FROZEN
+		else:
+			body.collision_layer = LAYER_LIVE
+		body.collision_mask = SOLID_MASK | LAYER_PROP
+		if state == State.LIVE:
+			body.freeze = false
+		sync_server(body)
+	_grow_full.clear()
+	_grow_kids.clear()
+	if is_instance_valid(_grow_block):
+		_grow_block.queue_free()
+	_grow_block = null
+	_grow_box = null
 
 
 func knock_out() -> void:
@@ -1582,6 +1749,9 @@ func _notification(what: int) -> void:
 
 
 func remove() -> void:
+	if is_instance_valid(_grow_block):
+		_grow_block.queue_free()
+	_grow_block = null
 	removed = true
 	release_all()
 	_free_joints()

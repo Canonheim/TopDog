@@ -81,6 +81,10 @@ var _clock_t := 0.0
 var _stream_t := 0.0
 var _seq := 0
 var _pending_freeze := {}  # cid -> {"t": float, "verdict_hint": String}
+## THE GROW-IN (Parker 11-10): every spawn grows from nothing over Climber.GROW_S,
+## pushing whatever is in the way. Batteries that pose climbers the instant they
+## spawn turn it off.
+static var grow_spawns := true
 var _puppet_buf := {}  # cid -> Array of [time, PackedFloat32Array]
 var _last_seq := {}  # cid -> int
 var _ring_out := {}  # cid -> seconds until the RING OUT respawn
@@ -452,6 +456,8 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 	if dress:
 		for body in c.bodies.values():
 			Wardrobe.apply(body, appearance)
+	if grow_spawns:
+		c.grow_in()  # from nothing at the feet, pushing whatever stands there aside
 	var voice := FartVoice.new()
 	c.bodies["pelvis"].add_child(voice)
 	c.froze.connect(func(_cl): voice.release())
@@ -586,6 +592,8 @@ func _tick_owned(real_delta: float) -> void:
 				announce.emit("Get above the line to lock in!", false)
 		if send:
 			_send_contact_loads(c)
+		if send and c.growing():
+			send = false  # the grow-in plays on every machine by itself
 		if send and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
 			_rpc_pose.rpc(cid, _seq, c.pose(), c.touches_solid())
 	# Remote pulls on my climbers that went stale stop pulling.
@@ -976,8 +984,8 @@ func _tick_puppets() -> void:
 	var delay := Feel.get_k("puppet_delay")
 	for cid in _puppet_buf.keys():
 		var c: Climber = climbers.get(cid)
-		if c == null or c.state != Climber.State.PUPPET:
-			continue
+		if c == null or c.state != Climber.State.PUPPET or c.growing():
+			continue  # a growing puppet grows here on its own clock
 		var buf: Array = _puppet_buf[cid]
 		if buf.is_empty():
 			continue
@@ -1289,6 +1297,8 @@ func _spawn_partner() -> void:
 	partner.display_name = "Practice partner"
 	add_child(partner)
 	partner.build(feet, world, PRACTICE_PARTNER_MODEL if dress else null)
+	if grow_spawns:
+		partner.grow_in()
 	partner.knocked_out.connect(func():
 		Sound.stop_exertion(partner.bodies["head"])
 		Sound.play_at("knockout", partner.bodies["head"].global_position, 0.0, world, Sound.SFX["knockout"].pick_random()))

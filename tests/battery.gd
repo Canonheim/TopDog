@@ -21,6 +21,7 @@ func t(label: String, ok: bool, extra = "") -> void:
 
 
 func _ready() -> void:
+	Game.grow_spawns = false  # batteries pose climbers the instant they spawn (--grow tests it)
 	var args := OS.get_cmdline_user_args()
 	world = Node3D.new()
 	world.name = "World"
@@ -2571,6 +2572,38 @@ func _run_delmar() -> void:
 	t("delmar: after the match the pier is gone and the base is back on the canvas", not st.delmar and not is_instance_valid(st.delmar_root) and st.base_root.position.is_zero_approx())
 	g.queue_free()
 	await frames(2)
+
+
+## THE GROW-IN (Parker 11-10): a spawn grows from nothing at its feet over 0.3 s, held
+## and not colliding meanwhile, then stands at full size; and its growing block pushes a
+## climber standing on the spot out of the way instead of spawning inside it.
+func _run_grow() -> void:
+	Game.grow_spawns = true
+	var g := make_game("scramble", 2, 60.0, "plaza")
+	if not await wait_phase(g, "round"):
+		t("grow: a round starts", false)
+		Game.grow_spawns = false
+		return
+	var c0: Climber = g.climbers[g.live[0]]
+	var pel: RigidBody3D = c0.bodies["pelvis"]
+	var head: RigidBody3D = c0.bodies["head"]
+	var feet_y := c0.spawn_at.y
+	await frames(3)
+	t("grow: a fresh climber starts small at its feet, held and passing through", c0.growing() and pel.freeze and pel.collision_layer == 0 and head.global_position.y - feet_y < 1.0, "head %.2f above the feet" % (head.global_position.y - feet_y))
+	await seconds(0.4)
+	t("grow: after 0.3 s it stands at full size, live and solid", not c0.growing() and not pel.freeze and pel.collision_layer == Climber.LAYER_LIVE and head.global_position.y - feet_y > 1.2, "head %.2f above the feet" % (head.global_position.y - feet_y))
+	# Climber 1 respawns right where climber 0 stands: climber 0 is shoved aside.
+	await seconds(0.6)
+	var spot := c0.spawn_at
+	var before := c0.centre_of_mass()
+	g._rpc_spawn(1, 77, Vector2(before.x, spot.y), "Grower")
+	await seconds(0.5)
+	var c1: Climber = g.climbers.get(77)
+	var after := c0.centre_of_mass()
+	t("grow: a spawn on top of someone pushes them out of the way", c1 != null and not c1.growing() and absf(after.x - before.x) > 0.25, "moved %.2f m" % absf(after.x - before.x))
+	g.queue_free()
+	await frames(2)
+	Game.grow_spawns = false
 
 
 func _run_startingbase() -> void:
