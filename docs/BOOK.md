@@ -680,6 +680,23 @@ Commits 4714920, 7f37818 and the one after.
   inside a test scene, with `--shot` / `--demo`, or with `-- --no-boot`. Pieces: `boot_pad`,
   `boot_controller_text`, `title_press_any` and the drums (`boot_drum_1/2`) by the UI
   creator; `studio_logo` by the Building Maker (a stand-in until it lands).
+- **Hot swapping is tested (Parker 11-11: "make sure we can... make sure it all works
+  online correctly too").** Nothing needed changing: the one-player slot (Practice,
+  and the player online) reads every device at once, and the pad list is rebuilt the
+  frame a pad appears. Steam controllers are re-listed twice a second. A new pad never
+  makes a second player online (`COUCH_JOIN_ONLINE` is off, and pad routing skips the
+  lone ANY slot). `--hotswap`, also run inside every `--input`, proves it with 14 checks:
+  - keyboard first, then a pad plugged in mid-hold steers that hand at once;
+  - the key letting go never drops a hand the pad holds;
+  - every limb and Lock In work from the new pad;
+  - back on the keys, the mouse aims and the resting pad doesn't;
+  - unplugged mid-hold, the key's hand stays held;
+  - a raw pad's connect and first press drive the online player, which stays one ANY
+    slot and is never marked disconnected;
+  - the glyphs flip X/A both ways;
+  - a Steam controller appearing mid-session holds and steers.
+  Online the owner simulates its own climber with this same driver, so a swap there is
+  the same local read.
 
 ## Record
 

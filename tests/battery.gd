@@ -2851,6 +2851,7 @@ func _run_joinrecovery() -> void:
 ## each protection in core/players.gd and core/steam_input.gd, proven on fake and
 ## synthetic devices. No single thing may silence a player.
 func _run_input() -> void:
+	await _run_hotswap()  # (hot swapping is part of every input run)
 	var cam := Camera3D.new()
 	cam.position = Vector3(0, 2, 10)
 	add_child(cam)
@@ -3121,6 +3122,130 @@ func _run_korope() -> void:
 	k2.remove()
 	fl.queue_free()
 	await frames(2)
+
+
+## HOT SWAPPING (Parker 11-11: "some games are weird and dont let you hot swap
+## between a newly plugged in controller and your keyboard. Make sure we can"). The
+## one-player slot (Practice, and every player online) on a pad plugged in mid-session,
+## mid-hold, unplugged mid-hold, and back on the keyboard, with the glyphs following.
+func _run_hotswap() -> void:
+	var cam := Camera3D.new()
+	cam.position = Vector3(0, 2, 10)
+	add_child(cam)
+	Players.camera = cam
+	Players.fake.clear()
+	Players.clear_players()
+	Players.add_online_player("Hot Swapper")  # the online player: the ANY slot
+	Players.prepare_online("Hot Swapper")
+	t("hotswap: the online player reads every device (one slot, ANY)", Players.slots.size() == 1 and int(Players.slots[0].device) == Players.ANY)
+	var arm_l_key := int(Players.binds.kbm.arm_l[0].key)
+	var press := func(code: int, down: bool) -> void:
+		var e := InputEventKey.new()
+		e.physical_keycode = code
+		e.keycode = code
+		e.pressed = down
+		Input.parse_input_event(e)
+		Input.flush_buffered_events()
+	# 1. On the keyboard, no pad on the machine.
+	press.call(arm_l_key, true)
+	await frames(2)
+	var aim = Players.limb_aim(0, null, 0)
+	t("hotswap: keyboard first: the key holds the hand, the mouse aims it", Players.limb_held(0, 0) and aim is Dictionary and aim.has("point"), aim)
+	# 2. A pad is plugged in MID-HOLD and grabs the same hand: its stick takes the
+	#    hand that very frame (the pad list is rebuilt when the count moves).
+	Players.fake[1005] = {"buttons": {"arm_l": true}, "stick": Vector2(0.0, 0.95)}
+	aim = Players.limb_aim(0, null, 0)
+	t("hotswap: a pad plugged in mid-hold steers the hand at once", Players.limb_held(0, 0) and aim is Dictionary and aim.has("dir") and aim.dir.y > 0.9, aim)
+	# 3. The key lets go while the pad still holds: the hand never drops.
+	press.call(arm_l_key, false)
+	await frames(2)
+	t("hotswap: the key letting go doesn't drop a hand the pad holds", Players.limb_held(0, 0) and Players.limb_aim(0, null, 0).has("dir"))
+	# 4. Every limb and Lock In work from the new pad.
+	Players.fake[1005].buttons = {"arm_r": true, "leg_l": true, "leg_r": true}
+	var all_limbs: bool = not Players.limb_held(0, 0) and Players.limb_held(0, 1) and Players.limb_held(0, 2) and Players.limb_held(0, 3)
+	Players.fake[1005].buttons = {}
+	await frames(2)
+	Players.lock_pressed(0)  # (drop anything queued)
+	Players.fake[1005].buttons = {"lock": true}
+	await frames(2)
+	var locked := Players.lock_pressed(0)
+	Players.fake[1005].buttons = {}
+	await frames(2)
+	t("hotswap: every limb and Lock In work from the newly plugged pad", all_limbs and locked, [all_limbs, locked])
+	# 5. Back to the keyboard with the pad still plugged in and its stick resting off
+	#    centre: the key's hand is aimed by the mouse, and Lock In works from the keyboard.
+	Players.fake[1005].stick = Vector2(0.4, 0.2)
+	press.call(arm_l_key, true)
+	await frames(2)
+	aim = Players.limb_aim(0, null, 0)
+	t("hotswap: back on the keyboard, the mouse aims (the resting pad doesn't)", Players.limb_held(0, 0) and aim is Dictionary and aim.has("point"), aim)
+	press.call(arm_l_key, false)
+	await frames(2)
+	Players.lock_pressed(0)
+	press.call(int(Players.binds.kbm.lock[0].key), true)
+	await frames(2)
+	var kb_lock := Players.lock_pressed(0)
+	press.call(int(Players.binds.kbm.lock[0].key), false)
+	await frames(2)
+	t("hotswap: Lock In from the keyboard with a pad plugged in", kb_lock)
+	# 6. Unplugged MID-HOLD while the key holds the same hand: no error, the hand stays
+	#    held, the mouse takes the aim back.
+	press.call(arm_l_key, true)
+	Players.fake[1005].buttons = {"arm_l": true}
+	await frames(2)
+	Players.fake.erase(1005)
+	aim = Players.limb_aim(0, null, 0)
+	t("hotswap: the pad unplugged mid-hold leaves the key's hand held, the mouse aiming", Players.limb_held(0, 0) and aim is Dictionary and aim.has("point"), aim)
+	press.call(arm_l_key, false)
+	await frames(2)
+	t("hotswap: ...and let go, nothing is left held", not Players.limb_held(0, 0) and not Players.limb_held(0, 1))
+	# 7. A REAL raw pad appearing (Godot's connect signal and its first events) never
+	#    makes a second player or turns the online player into a pad-only one.
+	Players._on_joy_connection_changed(6, true)
+	var jb := InputEventJoypadButton.new()
+	jb.device = 6
+	jb.button_index = int(Players.binds.pad.arm_r[0].pad)
+	jb.pressed = true
+	Input.parse_input_event(jb.duplicate())
+	Input.flush_buffered_events()
+	await frames(2)
+	var raw_holds := Players.limb_held(0, 1)
+	var glyph_dev := Players.effective_device(0)
+	var pad_glyphs := Glyphs.limb_glyphs(0)
+	jb.pressed = false
+	Input.parse_input_event(jb.duplicate())
+	Input.flush_buffered_events()
+	await frames(2)
+	t("hotswap: a raw pad plugged in mid-session drives the online player at once", raw_holds and Players.slots.size() == 1 and int(Players.slots[0].device) == Players.ANY, [raw_holds, Players.slots.size()])
+	# (The left hand: X on the pad, A on the keys. The pad's right hand is A too.)
+	t("hotswap: the glyphs switch to the pad's buttons on its first press", glyph_dev == 6 and str(pad_glyphs[0].text) == Players.bind_label(Players.binds.pad.arm_l[0]) and str(pad_glyphs[0].text) != Players.bind_label(Players.binds.kbm.arm_l[0]), [glyph_dev, pad_glyphs[0].text])
+	press.call(arm_l_key, true)
+	await frames(2)
+	var kbm_glyphs := Glyphs.limb_glyphs(0)
+	press.call(arm_l_key, false)
+	await frames(2)
+	t("hotswap: ...and back to the keys' letters on a key press", Players.effective_device(0) == Players.KBM and str(kbm_glyphs[0].text) == Players.bind_label(Players.binds.kbm.arm_l[0]), kbm_glyphs[0].text)
+	Players._on_joy_connection_changed(6, false)
+	t("hotswap: the raw pad unplugged leaves the online player whole (still ANY, not 'disconnected')", Players.slots.size() == 1 and int(Players.slots[0].device) == Players.ANY and not Players.slots[0].get("disconnected", false))
+	# 8. A Steam controller appearing mid-session (Steam lists them twice a second)
+	#    is read by the one-player slot too: the battery fakes its device entry.
+	var si = Net.steam_input
+	var stand_in: bool = si == null  # (--no-steam: a bare Steam Input with no Steam behind it)
+	if stand_in:
+		si = load("res://core/steam_input.gd").new()
+		Net.steam_input = si
+	if si != null:
+		si.devices[3007] = {"buttons": {"arm_l": true}, "stick": Vector2(0.9, 0.0), "gameplay_active": true, "menu_active": true}
+		aim = Players.limb_aim(0, null, 0)
+		var steam_holds := Players.limb_held(0, 0)
+		si.devices.erase(3007)
+		t("hotswap: a Steam controller appearing mid-session holds and steers", steam_holds and aim is Dictionary and aim.has("dir"), [steam_holds, aim])
+	if stand_in:
+		Net.steam_input = null
+		si.free()
+	Players.fake.clear()
+	Players.clear_players()
+	cam.queue_free()
 
 
 func _run_inputreconnect() -> void:
