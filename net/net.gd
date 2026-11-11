@@ -83,6 +83,11 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	if steam_ok:
 		Steam.run_callbacks()  # every frame, online or not: invites arrive here
+	if _hosting and _pending_lobby and Time.get_ticks_msec() - _host_started_ms >= JOIN_TIMEOUT_MS:
+		# Steam never answered the lobby request: let the player try again.
+		_pending_lobby = false
+		_hosting = false
+		status.emit("Steam didn't answer. Try hosting again.")
 	if _joining_lobby != 0:
 		var peer := multiplayer.multiplayer_peer
 		if not _awaiting_accept and peer is SteamMultiplayerPeer and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
@@ -165,6 +170,7 @@ func host_steam(visibility := VIS_PUBLIC, lobby_name := "") -> void:
 		return
 	_pending_lobby = true
 	_hosting = true
+	_host_started_ms = Time.get_ticks_msec()
 	_pending_name = lobby_name if lobby_name != "" else "%s's climb" % my_name()
 	status.emit("Creating a Steam lobby...")
 	var t := Steam.LOBBY_TYPE_PUBLIC
@@ -176,6 +182,7 @@ func host_steam(visibility := VIS_PUBLIC, lobby_name := "") -> void:
 
 
 var _pending_name := ""
+var _host_started_ms := 0
 
 
 func _on_lobby_created(result: int, lobby_id: int) -> void:
@@ -459,7 +466,7 @@ func _clean_players(players: Array) -> Array:
 	var out: Array = []
 	for p in players.slice(0, 4):
 		if p is Dictionary:
-			out.append({"name": str(p.get("name", "Climber")).left(40), "random": bool(p.get("random", true)), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": int(p.get("slot", 0)), "appearance": Wardrobe.clean(p.get("appearance", {}))})
+			out.append({"name": str(p.get("name", "Climber")).left(40), "random": bool(p.get("random", true)), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": clampi(int(p.get("slot", 0)), 0, Players.MAX_LOCAL - 1), "appearance": Wardrobe.clean(p.get("appearance", {}))})  # (slot clamped: the waiting room's pid is peer * 16 + slot)
 	return out
 
 
@@ -532,7 +539,7 @@ func send_chat(text: String) -> void:
 
 @rpc("any_peer", "call_remote", "reliable")
 func _rpc_chat(text: String) -> void:
-	if is_host():
+	if is_host() and members.has(multiplayer.get_remote_sender_id()):
 		_relay_chat(multiplayer.get_remote_sender_id(), text.left(140))
 
 

@@ -112,7 +112,7 @@ func _on_settings() -> void:
 
 func _update_guest_settings() -> void:
 	var row := Modes.row(str(Net.settings.get("mode", "scramble")))
-	set_status("%s, %d s clock, %s base. Press I'M READY, the host starts." % [str(row.name), int(Net.settings.get("timer", 60)), str(Net.settings.get("base", "random")).capitalize()])
+	set_status("%s, %d s clock, %s base. The host starts the match." % [str(row.name), int(Net.settings.get("timer", 60)), str(Net.settings.get("base", "random")).capitalize()])
 
 
 func _on_members() -> void:

@@ -68,7 +68,9 @@ func _ready() -> void:
 # ---------------------------------------------------------------- path 2: events
 
 func _input(event: InputEvent) -> void:
-	if Net.steam_input != null and not Net.steam_input.active_devices("menu_active").is_empty() and (event is InputEventJoypadButton or event is InputEventJoypadMotion):
+	if not (event is InputEventJoypadButton or event is InputEventJoypadMotion):
+		return  # (checked first: this runs for every mouse move too)
+	if Net.steam_input != null and not _steam_menu_devices.is_empty():
 		return
 	if event is InputEventJoypadButton:
 		var e := event as InputEventJoypadButton
@@ -111,7 +113,7 @@ func _process(delta: float) -> void:
 		if not menu_devices.has(dev):
 			_clear_device(dev)
 	_steam_menu_devices = menu_devices
-	if steam_live and not si.active_devices("menu_active").is_empty():
+	if steam_live and not menu_devices.is_empty():
 		_poll_steam(si, delta)
 	var devs := {}
 	for dev in Input.get_connected_joypads():
@@ -147,7 +149,7 @@ func _process(delta: float) -> void:
 
 ## Steam's controllers drive the menus the same way: held table, repeat, focus.
 func _poll_steam(si, delta: float) -> void:
-	for dev in si.active_devices("menu_active"):
+	for dev in _steam_menu_devices:
 		var st: Dictionary = si.menu_state(dev)
 		for action in DIRS:
 			var key := "%d:%s" % [dev, action]

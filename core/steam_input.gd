@@ -104,7 +104,11 @@ func _process(delta: float) -> void:
 			if handle == 0:
 				continue
 			if not _order.has(handle):
-				_order.append(handle)
+				var free_at := _order.find(0)  # a forgotten controller's place is reused: ids stay under 3100
+				if free_at >= 0:
+					_order[free_at] = handle
+				else:
+					_order.append(handle)
 			var dev := STEAM_DEV_BASE + _order.find(handle)
 			if not devices.has(dev):
 				devices[dev] = {"handle": handle, "type": int(Steam.getInputTypeForHandle(handle)), "buttons": {}, "stick": Vector2.ZERO,
@@ -115,6 +119,9 @@ func _process(delta: float) -> void:
 		for dev in devices.keys():
 			if (devices[dev] as Dictionary).has("handle") and now - int(devices[dev].get("listed_ms", now)) > FORGET_MS:
 				Players.note("steam controller %d is gone" % dev)
+				var at := _order.find(int(devices[dev].handle))
+				if at >= 0:
+					_order[at] = 0
 				devices.erase(dev)
 	for dev in devices.keys():
 		var d: Dictionary = devices[dev]

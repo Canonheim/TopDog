@@ -121,15 +121,17 @@ func me() -> int:
 # ================================================================ setup
 
 ## Host / offline: start a match. roster entries: {pid, name, tint, peer, slot}.
-func host_start(p_settings: Dictionary, p_roster: Array) -> void:
+## True when the match started (false: not enough players for the mode).
+func host_start(p_settings: Dictionary, p_roster: Array) -> bool:
 	if p_roster.size() < int(Modes.row(str(p_settings.get("mode", "scramble"))).min_players):
 		announce.emit("Classic needs at least two players. Use Practice to climb alone.", false)
-		return
+		return false
 	var match_settings := p_settings.duplicate(true)
 	match_settings.seed = randi()  # one seed per match: Del Mar's floaties drift the same everywhere
 	var choice := str(match_settings.get("base", "random"))
 	match_settings.resolved_base = Modes.STARTING_BASES.pick_random() if choice == "random" else choice
 	_rpc_start.rpc(match_settings, p_roster)
+	return true
 
 
 @rpc("authority", "call_local", "reliable")
@@ -464,8 +466,6 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 	if dress:
 		for body in c.bodies.values():
 			Wardrobe.apply(body, appearance)
-	if grow_spawns:
-		c.grow_in()  # from nothing at the feet, pushing whatever stands there aside
 	var voice := FartVoice.new()
 	c.bodies["pelvis"].add_child(voice)
 	c.froze.connect(func(_cl): voice.release())
@@ -509,6 +509,8 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 	else:
 		c.driver = Drivers.NullDriver.new()
 		c.make_puppet()
+	if grow_spawns:
+		c.grow_in()  # from nothing at the feet (glyphs and all), pushing what stands there aside
 	climber_spawned.emit(c)
 
 

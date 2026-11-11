@@ -199,6 +199,10 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 	return p
 
 
+var _music_streams := {}
+var _save_due := false
+
+
 func music(id: String) -> void:
 	if id == _music_id:
 		return
@@ -207,7 +211,11 @@ func music(id: String) -> void:
 	if path == "" or not ResourceLoader.exists(path):
 		_music.stop()
 		return
-	var st = load(path)
+	# Both tracks stay loaded once heard: the 8 MB climb track was re-read from disk at
+	# every match start.
+	if not _music_streams.has(path):
+		_music_streams[path] = load(path)
+	var st = _music_streams[path]
 	if st is AudioStreamOggVorbis:
 		st.loop = true
 	# Match climb (-22.0073 LUFS) to title (-16.3000 LUFS), then apply the shared 15% boost.
@@ -222,7 +230,12 @@ func set_volume(bus: String, v: float) -> void:
 	if i >= 0:
 		AudioServer.set_bus_volume_db(i, linear_to_db(maxf(volumes[bus], 0.0001)))
 		AudioServer.set_bus_mute(i, volumes[bus] <= 0.001)
-	_save_options()
+	# A dragged fader calls this every mouse move: one save half a second after the last.
+	if not _save_due and is_inside_tree():
+		_save_due = true
+		get_tree().create_timer(0.5, true, false, true).timeout.connect(func() -> void:
+			_save_due = false
+			_save_options())
 
 
 func _load_options() -> void:

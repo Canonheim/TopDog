@@ -1514,11 +1514,11 @@ func _build_menus() -> void:
 			main.game.host_start(Net.settings.duplicate() if main.game.settings.mode != "practice" else main.game.settings, main.game.roster)
 			main.show_screen("hud")
 		elif Net.is_host():
-			Net.set_in_match(true)
-			main.game.host_start(Net.settings.duplicate(), Net.build_roster()))
-	r.add_button("BACK", func():
-		main.game.end_match()
-		main.show_screen("title" if main.local_mode else "lobby"))
+			if main.game.host_start(Net.settings.duplicate(), Net.build_roster()):
+				Net.set_in_match(true)
+		else:
+			main._on_announce("The host starts the next game.", false))
+	r.add_button("BACK", main.leave_results)
 	menus.results = r
 	# Player cards (Play together) and the podium (results) hang in the same frame.
 	_cards = Node3D.new()

@@ -122,6 +122,7 @@ var _gravity_scale := -1.0
 var _root: Node3D
 var _glyphs: Array = []  # per limb: the Sprite3D / Label3D riding the hand or foot
 var _hand_meshes := {}  # hand piece -> [mesh, its rest transform on the body]: THE DRAWN WRIST
+var _wrists := {}  # hand piece -> [forearm body, hand body, the wrist in the forearm's frame]
 ## THE GROW-IN (Parker 11-10): "when a players spawns, make them grow from nothing at
 ## ground level and get bigger, pushing anything in their way out of the way... Grow
 ## over the time frame of .3 seconds". While it runs the pieces are held (no physics,
@@ -278,6 +279,10 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 		for j in range(i + 1, names.size()):
 			bodies[names[i]].add_collision_exception_with(bodies[names[j]])
 	_build_joints(feet)
+	for hand_name in _hand_meshes:
+		var wrist: Dictionary = joints.get("wrist" + (hand_name as String).substr(4), {})
+		if not wrist.is_empty():
+			_wrists[hand_name] = [wrist.a, wrist.b, wrist.local_a]  # kept past the joints (puppets, the frozen)
 	_build_limbs()
 	_hands_on_hips()
 	set_tint(tint)
@@ -573,7 +578,17 @@ func set_glyphs(items: Array) -> void:
 
 ## tex (any size, or null) with its cut-out letter inked dark, over a white disc
 ## with a dark rim filling the canvas when `disc`.
+static var _disc_cache := {}
 static func _on_disc(tex: Texture2D, disc := true) -> Texture2D:
+	var cache_key := "%d:%s" % [tex.get_instance_id() if tex != null else 0, disc]
+	if _disc_cache.has(cache_key):
+		return _disc_cache[cache_key]
+	var made := _make_disc(tex, disc)
+	_disc_cache[cache_key] = made
+	return made
+
+
+static func _make_disc(tex: Texture2D, disc := true) -> Texture2D:
 	var n := 128
 	var top: Image = null
 	if tex != null:
@@ -668,17 +683,17 @@ func _draw_wrists() -> void:
 		var mesh := entry[0] as Node3D
 		if not is_instance_valid(mesh):
 			continue
-		var wj: Dictionary = joints.get("wrist" + (pname as String).substr(4), {})
-		if wj.is_empty():
+		var wj: Array = _wrists.get(pname, [])
+		if wj.is_empty() or not is_instance_valid(wj[0]) or not is_instance_valid(wj[1]):
 			continue
-		var hand := wj.b as RigidBody3D
-		var rel := wrapf(angle_of(hand) - angle_of(wj.a), -PI, PI)
+		var hand := wj[1] as RigidBody3D
+		var rel := wrapf(angle_of(hand) - angle_of(wj[0]), -PI, PI)
 		var stop := deg_to_rad(WRIST_LIMIT_DEG)
 		var back := clampf(rel, -stop, stop) - rel
 		if absf(back) < 0.001:
 			mesh.transform = entry[1]
 			continue
-		var w2 := xf2(wj.a) * (wj.local_a as Vector2)
+		var w2 := xf2(wj[0]) * (wj[2] as Vector2)
 		var pivot := hand.to_local(Vector3(w2.x, w2.y, 0.0))
 		var turn := Transform3D(Basis(Vector3.BACK, back), pivot - Basis(Vector3.BACK, back) * pivot)
 		mesh.transform = turn * (entry[1] as Transform3D)
@@ -700,7 +715,8 @@ func _physics_process(delta: float) -> void:
 			var force: Vector3 = load_info.force
 			piece.apply_force(force, piece.global_basis * (load_info.offset as Vector3))
 			_incoming_pull = maxf(_incoming_pull, force.length() * (1.0 if load_info.get("directly_supported", false) else 0.2))
-	_tick_slip()
+	_forget_dead_holds()
+	_tick_slip(delta)
 	if knockout_left > 0:
 		knockout_left = maxf(0, knockout_left - delta)
 		if is_instance_valid(knockout_stars):
@@ -833,6 +849,12 @@ func _grow_push(delta: float) -> void:
 		if need <= 0.0:
 			continue
 		var speed := minf(need / maxf(delta, 0.008), 4.0)  # a firm shove aside, never a launch
+		if who != null:
+			for li in who.limbs.size():
+				var hold: Dictionary = who.limbs[li]
+				if hold.grab_other != null and (hold.grab as RID).is_valid() and (hold.grab_climber == null or hold.grab_climber.state == State.FROZEN):
+					who.release(li)  # its feet were welded to the spot: let go, to be moved
+					hold.regrip = 0.35
 		for b in group:
 			var body := b as RigidBody3D
 			if body != null and not body.freeze and side * body.linear_velocity.x < speed:
@@ -935,6 +957,10 @@ func _tick_ropes(delta: float) -> void:
 	_rope_wait -= delta
 	if rope_x <= 0.0:
 		return
+	# Well inside the ring (no piece is 2 m from the pelvis): no rope can be near.
+	var pelvis: RigidBody3D = bodies.get("pelvis")
+	if pelvis != null and absf(pelvis.global_position.x) < rope_x - 2.2:
+		return
 	var pieces := bodies.values()
 	var com_v := Vector2.ZERO
 	var velocity_ready := false
@@ -1025,9 +1051,22 @@ func welded_to_support() -> bool:
 
 
 ## Stuck to the arena or the frozen tower, or an end piece touching either.
+var _solid_frame := -1
+var _solid_value := false
 func touches_solid() -> bool:
 	if state == State.PUPPET:
 		return puppet_on_support
+	# One answer per physics frame: the tick, the pose stream, the pulls and the HUD
+	# all ask, and each ask read every end's contact list. attach / release reset it.
+	var f := Engine.get_physics_frames()
+	if f == _solid_frame:
+		return _solid_value
+	_solid_value = _touches_solid_now()
+	_solid_frame = f
+	return _solid_value
+
+
+func _touches_solid_now() -> bool:
 	for l in limbs:
 		if l.grab_other != null and (l.grab_climber == null or not is_instance_valid(l.grab_climber) or l.grab_climber.state == State.FROZEN):
 			return true
@@ -1091,20 +1130,27 @@ func _select_active_limb() -> void:
 		limb_selected.emit(_active_limb, velocity)
 
 
+## A hold on something that was freed under us (a piece, the chair): forget it
+## cleanly, before the slip, the limbs or a knockout read it. (A freed object compares
+## equal to null, so release() alone left its joint and its fields dangling.)
+func _forget_dead_holds() -> void:
+	for i in limbs.size():
+		var l: Dictionary = limbs[i]
+		if not is_instance_valid(l.grab_other) and (typeof(l.grab_other) == TYPE_OBJECT or (l.grab as RID).is_valid()):
+			if (l.grab as RID).is_valid():
+				PhysicsServer3D.free_rid(l.grab)
+			l.grab = RID()
+			l.grab_other = null
+			l.grab_climber = null
+			l.grab_piece = ""
+			_solid_frame = -1
+			grab_lost.emit(self, i)
+		elif typeof(l.grab_climber) == TYPE_OBJECT and not is_instance_valid(l.grab_climber):
+			l.grab_climber = null
+
+
 func _tick_limb(i: int, delta: float) -> void:
 	var l: Dictionary = limbs[i]
-	# A hold on something that was freed under us (a piece, a prop): forget it cleanly.
-	# (A freed object compares equal to null, so release() alone would leave its joint.)
-	if not is_instance_valid(l.grab_other) and (typeof(l.grab_other) == TYPE_OBJECT or (l.grab as RID).is_valid()):
-		if (l.grab as RID).is_valid():
-			PhysicsServer3D.free_rid(l.grab)
-		l.grab = RID()
-		l.grab_other = null
-		l.grab_climber = null
-		l.grab_piece = ""
-		grab_lost.emit(self, i)
-	elif l.grab_climber != null and not is_instance_valid(l.grab_climber):
-		l.grab_climber = null
 	var held := i == _active_limb
 	var just_released: bool = l.held and not held
 	if held and not l.held:
@@ -1116,6 +1162,8 @@ func _tick_limb(i: int, delta: float) -> void:
 		l.cursor = limb_end(i)  # steering starts from where the hand is
 	elif just_released:
 		l.regrip = 0.0  # release: plant it right now if it's on something
+	if l.held != held:
+		_solid_frame = -1
 	l.held = held
 	l.regrip = maxf(0.0, l.regrip - delta)
 	var was_stuck: bool = l.grab_other != null
@@ -1257,6 +1305,7 @@ func attach(i: int, other: Object) -> void:
 		l.grab_rel0 = angle_of(end) - angle_of(ob)
 		l.slipping = false
 	end.add_collision_exception_with(ob)
+	_solid_frame = -1
 	l.grab_other = other
 	l.grab_climber = null
 	l.grab_piece = ""
@@ -1280,7 +1329,7 @@ func attach(i: int, other: Object) -> void:
 ## keeps its full swing, but stands exactly as firmly as a free ankle held it. Off the
 ## stop again, the weld locks where the end now sits. (A free turn with no friction let
 ## the standing body topple over its feet.)
-func _tick_slip() -> void:
+func _tick_slip(dt: float) -> void:
 	var weight := total_mass * 9.8 * Feel.climber_gravity(true)
 	# THE DRAWN WRIST: the hand you steer turns freely (a stopped one handed its whole
 	# swing to the body, which toppled on a plain reach); its mesh is drawn within the
@@ -1300,7 +1349,7 @@ func _tick_slip() -> void:
 		var win: float = wj.win
 		if not wj.stop_on:
 			win = maxf(stop, bend + 0.01)
-		win = maxf(stop, minf(win, bend + 0.01) - WRIST_CLOSE_RATE / Engine.physics_ticks_per_second)
+		win = maxf(stop, minf(win, bend + 0.01) - WRIST_CLOSE_RATE * dt)
 		if not wj.stop_on or not is_equal_approx(win, float(wj.win)):
 			wj.win = win
 			set_hinge_limits(wj.rid, -rad_to_deg(win), rad_to_deg(win))
@@ -1320,7 +1369,7 @@ func _tick_slip() -> void:
 				PhysicsServer3D.hinge_joint_set_flag(l.grab, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, false)
 				PhysicsServer3D.hinge_joint_set_flag(l.grab, PhysicsServer3D.HINGE_JOINT_FLAG_ENABLE_MOTOR, true)
 				PhysicsServer3D.hinge_joint_set_param(l.grab, PhysicsServer3D.HINGE_JOINT_MOTOR_TARGET_VELOCITY, 0.0)
-			PhysicsServer3D.hinge_joint_set_param(l.grab, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, friction / Engine.physics_ticks_per_second)
+			PhysicsServer3D.hinge_joint_set_param(l.grab, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, friction * dt)
 		elif l.slipping and absf(rel) < edge - deg_to_rad(1.0):
 			# Lock again where the end sits now (the weld's angle is the end's CCW turn
 			# against its hold since it stuck).
@@ -1347,6 +1396,7 @@ func release(i: int) -> void:
 	if oc != null and is_instance_valid(oc) and oc.state != State.FROZEN:
 		oc.grabbed_by = maxi(0, oc.grabbed_by - 1)
 		oc.held_by.erase(self)
+	_solid_frame = -1
 	l.grab_other = null
 	l.grab_climber = null
 	l.grab_piece = ""
@@ -1355,6 +1405,7 @@ func release(i: int) -> void:
 
 
 func release_all() -> void:
+	_forget_dead_holds()
 	for i in limbs.size():
 		release(i)
 
@@ -1605,6 +1656,11 @@ func freeze() -> void:
 	remote_pulls.clear()
 	remote_support = false
 	set_glyphs([])
+	_draw_wrists()  # the hands as they stand, for good
+	set_process(false)
+	set_physics_process(false)
+	for b in bodies.values():
+		(b as RigidBody3D).contact_monitor = false  # nothing reads a frozen piece's own contacts
 	froze.emit(self)
 
 
@@ -1632,10 +1688,12 @@ func pose() -> PackedFloat32Array:
 	var k := 0
 	for pname in Layout.ORDER:
 		var b: RigidBody3D = bodies[pname]
-		var p := pos2(b)
-		out[k] = p.x
-		out[k + 1] = p.y
-		out[k + 2] = angle_of(b)
+		# Mid grow-in the pieces are drawn small at the feet: the pose is where they
+		# will stand (a freeze, the spawn search and the stream must not get the heap).
+		var xf: Transform3D = _grow_full[b] if _grow_t >= 0.0 and _grow_full.has(b) else b.global_transform
+		out[k] = xf.origin.x
+		out[k + 1] = xf.origin.y
+		out[k + 2] = atan2(xf.basis.x.y, xf.basis.x.x)
 		k += 3
 	return out
 
@@ -1643,6 +1701,8 @@ func pose() -> PackedFloat32Array:
 func apply_pose(p: PackedFloat32Array) -> void:
 	if p.size() < Layout.ORDER.size() * 3:
 		return
+	if growing():
+		_end_grow()  # a pose from outside ends the grow-in: it must not be overwritten
 	var k := 0
 	for pname in Layout.ORDER:
 		var b: RigidBody3D = bodies[pname]

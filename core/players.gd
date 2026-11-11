@@ -108,6 +108,11 @@ var _latch := {}
 var _steam_ids: Array = []
 var _steam_was_live := false
 
+## Lock In and Pause presses are kept until read. A screen change MUTES them for a
+## moment and drops what's queued (the 11-10 sweep): the Esc that left Results was
+## read again as Pause on the lobby and threw a guest out of the session; an Enter on
+## FIGHT! arrived at the first spawn as a Lock In.
+var _edges_muted_until := 0
 var _lock_prev := {}
 var _lock_edge := {}
 var _pause_prev := {}
@@ -207,14 +212,23 @@ func _physics_process(_delta: float) -> void:
 		var dev: int = slots[s].device
 		# A press is kept until something reads it (an edge must never be lost
 		# because the reader ticked a frame late).
+		var muted := Time.get_ticks_msec() < _edges_muted_until
 		var now := _action(dev, "lock")
-		if now and not _lock_prev.get(s, false):
+		if now and not _lock_prev.get(s, false) and not muted:
 			_lock_edge[s] = true
 		_lock_prev[s] = now
 		var p := _action(dev, "pause")
-		if p and not _pause_prev.get(s, false):
+		if p and not _pause_prev.get(s, false) and not muted:
 			_pause_edge[s] = true
 		_pause_prev[s] = p
+
+
+## A screen changed: drop queued Lock In / Pause presses and ignore new ones for a
+## moment, so the press that changed the screen isn't read again on the next one.
+func mute_edges(ms := 250) -> void:
+	_edges_muted_until = Time.get_ticks_msec() + ms
+	_lock_edge.clear()
+	_pause_edge.clear()
 
 
 ## Steam taking or listing a controller is the moment raw state can go stale.
@@ -251,7 +265,7 @@ func suspect_raw(why: String) -> void:
 
 ## A raw pad's button, through the stale guard (and the latch).
 func raw_button(dev: int, button: int) -> bool:
-	if _latch.has("p:%d:%d" % [dev, button]):
+	if not _latch.is_empty() and _latch.has("p:%d:%d" % [dev, button]):
 		return true
 	if not Input.is_joy_button_pressed(dev, button):
 		if not _suspect_buttons.is_empty():
@@ -283,6 +297,8 @@ func prepare_online(pname: String) -> void:
 		slots[0].device = ANY
 		slots[0].erase("native_pad")
 		slots[0].erase("disconnected")
+		if bool(slots[0].get("random", false)) and pname != "":
+			slots[0].name = pname  # a made-up name from Practice: online they go by their Steam name
 		device_changed.emit(0)
 	note("online: %d local player%s, %s" % [slots.size(), "" if slots.size() == 1 else "s", slots.map(func(sl): return device_label(int(sl.device)))])
 	_refresh_pad_routes()
@@ -427,7 +443,7 @@ func devices() -> Array:
 
 
 func _si():
-	return Net.steam_input if Net.get("steam_input") != null else null
+	return Net.steam_input
 
 
 ## Steam controllers our layout is live on (when Steam is running).
@@ -459,12 +475,31 @@ func _raw_pads() -> Array:
 	return pads
 
 
-## Every pad of every kind: what the ANY slot reads.
+## Every pad of every kind: what the ANY slot reads. Built once per physics frame
+## (it's asked for many times a tick per climber).
+var _pads_cache: Array = []
+var _pads_frame := -1
 func _all_pads() -> Array:
-	var out: Array = _raw_pads()
-	out.append_array(_steam_all())
-	out.append_array(fake.keys())
-	return out
+	var f := Engine.get_physics_frames()
+	if f != _pads_frame or _pads_cache.size() != _pads_count():
+		_pads_frame = f
+		_pads_cache = _raw_pads()
+		_pads_cache.append_array(_steam_all())
+		_pads_cache.append_array(fake.keys())
+	return _pads_cache
+
+
+## How many pads there are right now, cheaply (the cache is rebuilt if this moved
+## inside a frame: a battery adding a fake pad, a pad plugged in).
+func _pads_count() -> int:
+	var si = _si()
+	var n: int = fake.size() + (int(si.devices.size()) if si != null else 0)
+	var listed: Array = Input.get_connected_joypads()
+	n += listed.size()
+	for dev in _seen_pads:
+		if not listed.has(dev):
+			n += 1
+	return n
 
 
 ## A device spoke: the ANY slot's GLYPHS follow it (reads never do).
@@ -620,9 +655,9 @@ func _bind_down(dev: int, b: Dictionary) -> bool:
 	if b.is_empty():
 		return false
 	if b.has("key"):
-		return dev == KBM and (Input.is_physical_key_pressed(b.key) or _latch.has("k:%d" % int(b.key)))
+		return dev == KBM and (Input.is_physical_key_pressed(b.key) or (not _latch.is_empty() and _latch.has("k:%d" % int(b.key))))
 	if b.has("mouse"):
-		return dev == KBM and (Input.is_mouse_button_pressed(b.mouse) or _latch.has("m:%d" % int(b.mouse)))
+		return dev == KBM and (Input.is_mouse_button_pressed(b.mouse) or (not _latch.is_empty() and _latch.has("m:%d" % int(b.mouse))))
 	if dev == KBM:
 		return false
 	if b.has("pad"):

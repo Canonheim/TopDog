@@ -54,6 +54,9 @@ var pad_nav: Node
 var lucha: LuchaUI  # Top Dog's 3D front end (ui3d/lucha_ui.gd)
 var _pad_readout: Label
 var _pad_corner: Label
+var _readout_t := 0.0
+var _glyphs_on := true
+var _glyphs_n := -1
 var _input_health: Label  # F2: what the input system knows right now (Players.health)
 var _focus_notice: Label  # shown in a match while the window has lost the focus
 ## COUCH PLAYERS IN AN ONLINE LOBBY are parked with Play Together (Parker 11-10:
@@ -271,9 +274,12 @@ func _build_world() -> void:
 func _process(delta: float) -> void:
 	_tick_camera(delta)
 	_tick_hud(delta)
-	for cid in game.climbers:
-		var climber: Climber = game.climbers[cid]
-		climber.set_glyphs_visible(screen != "pause")
+	var glyphs_on := screen != "pause"
+	if glyphs_on != _glyphs_on or game.climbers.size() != _glyphs_n:
+		_glyphs_on = glyphs_on
+		_glyphs_n = game.climbers.size()
+		for cid in game.climbers:
+			(game.climbers[cid] as Climber).set_glyphs_visible(glyphs_on)
 	if screen == "local":
 		var dev := Players.poll_join()
 		if dev != -2:
@@ -294,11 +300,15 @@ func _process(delta: float) -> void:
 		_focus_notice.visible = not Players.focused and screen in ["hud", "pause", "lobby"]
 	if _build_tag != null:
 		_build_tag.visible = screen == "title"
+	_readout_t -= delta
+	var readout_due := _readout_t <= 0.0
+	if readout_due:
+		_readout_t = 0.25  # the readout's text is rebuilt four times a second, not every frame
 	if _pad_corner != null:
 		_pad_corner.visible = screen not in ["hud", "pause"]
-		if _pad_corner.visible:
+		if _pad_corner.visible and readout_due:
 			_pad_corner.text = pad_nav.readout()
-	if _pad_readout != null and screen == "controls":
+	if _pad_readout != null and screen == "controls" and readout_due:
 		var hint := ""
 		if pad_nav.last_pad < 0 and not Input.get_connected_joypads().is_empty():
 			hint = "
@@ -472,6 +482,15 @@ func _tick_hud(delta: float) -> void:
 		banner.modulate.a = clampf(banner_t, 0.0, 1.0)
 	if screen != "hud" and screen != "pause":
 		return
+	if not hud_info.is_visible_in_tree():
+		# The 3D HUD draws all of this; the flat labels are hidden. Only the countdown's
+		# tick sound lives here (Parker 11-09).
+		if game.phase in ["turn", "round"] and not game.practice:
+			var sec := int(ceil(game.clock))
+			if sec != _last_tick_s and sec <= LuchaUI.COUNTDOWN_FROM and sec >= 1:
+				Sound.play("tick")
+			_last_tick_s = sec
+		return
 	var info := ""
 	match game.phase:
 		"turn":
@@ -543,7 +562,8 @@ func _exit_tree() -> void:
 
 func _on_phase(p: String) -> void:
 	_set_match_pace(p in ["turn", "round", "between"])
-	if p in ["turn", "round", "between"] and screen not in ["hud", "pause"]:
+	var from_pause := (screen == "controls" and _controls_back == "pause") or (screen == "options" and _options_back == "pause")
+	if p in ["turn", "round", "between"] and screen not in ["hud", "pause"] and not from_pause:
 		show_screen("hud")
 
 
@@ -577,6 +597,9 @@ func preview_base(choice: String) -> void:
 
 
 func show_screen(id: String) -> void:
+	Players.mute_edges()  # the press that changed the screen isn't read again on the next one
+	if id != "controls":
+		_rebind_wait = {}  # a rebind left waiting would eat the next key in play
 	if game != null and game.chair != null and (id == "results" or screen == "results"):
 		game.chair.visible = id != "results"
 	screen = id
@@ -859,6 +882,10 @@ func _fill_lobby_list(rows: Array) -> void:
 
 func _on_session_started() -> void:
 	_lobby_back = screen if screen in ["online", "online_flat", "friends", "browse", "title"] else "online"
+	# An invite accepted during a (paused) Practice: that match ends here.
+	get_tree().paused = false
+	if local_mode and game.phase != "idle":
+		game.end_match()
 	local_mode = false
 	show_screen("lobby")
 	_sync_waiting_room()
@@ -943,8 +970,8 @@ func _start_online() -> void:
 	if not Net.is_host():
 		_lobby_status.text = "Only the host can start. Press Ready!"
 		return
-	Net.set_in_match(true)
-	game.host_start(Net.settings.duplicate(), Net.build_roster())
+	if game.host_start(Net.settings.duplicate(), Net.build_roster()):
+		Net.set_in_match(true)  # only once it has really started: a refused start left the lobby shut
 
 
 func _screen_hud() -> Control:
@@ -1002,17 +1029,11 @@ func _screen_results() -> Control:
 			game.host_start(Net.settings.duplicate() if game.settings.mode != "practice" else game.settings, game.roster)
 			show_screen("hud")
 		elif Net.is_host():
-			Net.set_in_match(true)
-			game.host_start(Net.settings.duplicate(), Net.build_roster())
+			if game.host_start(Net.settings.duplicate(), Net.build_roster()):
+				Net.set_in_match(true)
 		else:
 			_lobby_status.text = "The host starts the next game.")
-	UiKit.button(box, "Back", func():
-		game.end_match()
-		if local_mode:
-			show_screen("title")
-		else:
-			show_screen("lobby")
-			_sync_waiting_room())
+	UiKit.button(box, "Back", leave_results)
 	return c
 
 
@@ -1098,8 +1119,7 @@ func _back() -> void:
 		"pause":
 			_toggle_pause()
 		"results":
-			game.end_match()
-			show_screen("title" if local_mode else "lobby")
+			leave_results()
 	Sound.play("ui_close", -8.0)
 
 
@@ -1113,8 +1133,21 @@ func _toggle_pause() -> void:
 		show_screen("hud")
 
 
+## Back from the results: the title after a local match; online, the lobby with its
+## waiting room (the host sends it again; a guest keeps the room the host already sent).
+func leave_results() -> void:
+	if local_mode or Net.is_host() or game.phase != "lobby":
+		game.end_match()
+	show_screen("title" if local_mode else "lobby")
+	_sync_waiting_room()
+
+
 func _to_title(reason: String) -> void:
 	get_tree().paused = false
+	if screen == "title" and game.phase == "idle":
+		if reason != "":
+			_on_announce(reason, false)
+		return  # already there (the host leaving reports twice)
 	game.end_match()
 	show_screen("title")
 	if reason != "":
