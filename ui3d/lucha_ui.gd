@@ -188,11 +188,12 @@ const DRY_GRASS := Color("#8E9A5C")  # lit, the cel band reads it a dry green
 const LAND := Color("#C9BE92")
 const RIDGE_NEAR := Color("#B4C9EC")  # haze blues: the far ridges sit back by colour (no fog in the look)
 const RIDGE_FAR := Color("#CCDBF3")
-## The far mountains: [x, z, width, height, fallback colour, yaw].
+## The far mountains: [x, z, width, height, fallback colour, yaw]. Half again as tall
+## (Parker 11-10: "make mountains in the background taller"; were 52 / 44 / 32).
 const FAR_RIDGES := [
-	[-140.0, -260.0, 300.0, 52.0, RIDGE_FAR, 0.2],
-	[120.0, -240.0, 280.0, 44.0, RIDGE_FAR, -0.24],
-	[-20.0, -200.0, 240.0, 32.0, RIDGE_NEAR, -0.12],
+	[-140.0, -260.0, 300.0, 78.0, RIDGE_FAR, 0.2],
+	[120.0, -240.0, 280.0, 66.0, RIDGE_FAR, -0.24],
+	[-20.0, -200.0, 240.0, 48.0, RIDGE_NEAR, -0.12],
 ]
 const POLE_WOOD := Color("#6A4128")
 const POLE_T := [0.32, 0.58, 0.82]  # the papel picado poles round the square (lens t, each side)

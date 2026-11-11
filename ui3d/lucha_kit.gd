@@ -52,6 +52,43 @@ static func tint_part(root: Node, part: String, c: Color) -> void:
 			mi.set_surface_override_material(si, d)
 
 
+## SMOOTH SHADING on part of a flat-shaded kit mesh (Parker 11-10: the bell and the
+## gold knobs on the ring's corner posts): every vertex that passes `keep` (given its
+## position in the mesh's own space) takes the average normal of all vertices sharing
+## its position, so the facets melt into one round surface. Materials stay as they are.
+static func smooth_normals(mi: MeshInstance3D, keep: Callable = Callable()) -> void:
+	if mi == null or mi.mesh == null:
+		return
+	var src := mi.mesh
+	var out := ArrayMesh.new()
+	var overrides: Array = []
+	for si in src.get_surface_count():
+		overrides.append(mi.get_surface_override_material(si))
+		var arrays := src.surface_get_arrays(si)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var norms: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		var sums := {}
+		for k in verts.size():
+			if keep.is_valid() and not keep.call(verts[k]):
+				continue
+			var key := Vector3i(roundi(verts[k].x * 10000.0), roundi(verts[k].y * 10000.0), roundi(verts[k].z * 10000.0))
+			sums[key] = (sums.get(key, Vector3.ZERO) as Vector3) + norms[k]
+		for k in verts.size():
+			if keep.is_valid() and not keep.call(verts[k]):
+				continue
+			var key := Vector3i(roundi(verts[k].x * 10000.0), roundi(verts[k].y * 10000.0), roundi(verts[k].z * 10000.0))
+			var n: Vector3 = sums[key]
+			if n.length_squared() > 1e-8:
+				norms[k] = n.normalized()
+		arrays[Mesh.ARRAY_NORMAL] = norms
+		out.add_surface_from_arrays(src.surface_get_primitive_type(si), arrays)
+		out.surface_set_material(si, src.surface_get_material(si))
+	mi.mesh = out
+	for si in overrides.size():
+		if overrides[si] != null:
+			mi.set_surface_override_material(si, overrides[si])
+
+
 static func kit_model_exists(name: String) -> bool:
 	return ResourceLoader.exists(KIT_DIR + name + ".glb")
 
@@ -471,6 +508,9 @@ static func swirl_cloud(width: float, which := 0) -> Node3D:
 	var k := kit_model(nm)
 	if k != null:
 		k.scale = Vector3.ONE * (width / float(CLOUDS[nm]))
+		# No dowels (Parker 11-10: "get rid of the dowels on the clouds").
+		for stick in k.find_children("*stick*", "", true, false):
+			stick.queue_free()
 		# The cardboard cut-out clouds (Building Maker, 11-08) take the normal house
 		# ink and cel shading, like every other cut-out (v2's own grey outline needed
 		# skip_ink; these don't, and stacked alpha cards would sort wrong).

@@ -2425,6 +2425,33 @@ func _hull_mid_y(body: StaticBody3D) -> float:
 	return (lo + hi) * 0.5
 
 
+## THE PLAZA FLOOR (Parker 11-10: "the ground outside the ring is not solid in places,
+## fix that so you don't fall through the ground if ringed out"): climbers dropped all
+## along the plaza outside the ring, both sides, land on the stones.
+func _run_plazafloor() -> void:
+	var st := Stage.new("plaza")
+	st.build(world, false)
+	var xs := []
+	for x in [9.05, 9.3, 10.0, 12.0, 14.0, 15.5, 16.5, 18.0, 22.0, 28.0]:
+		xs.append(x)
+		xs.append(-x)
+	var holes := []
+	var lows := {}
+	for x in xs:
+		var c := spawn(Vector2(x, 1.5))
+		c.release_all()
+		await seconds(1.6)
+		var low := INF
+		for b in c.bodies.values():
+			low = minf(low, (b as Node3D).global_position.y)
+		lows[x] = snappedf(low, 0.01)
+		if low < Stage.PLAZA_GROUND - 0.6:
+			holes.append(x)
+		c.remove()
+	print("INFO plaza floor lows: ", lows)
+	t("plazafloor: a climber falling anywhere outside the ring lands on the stones", holes.is_empty(), "holes at %s" % str(holes))
+
+
 func _run_startingbase() -> void:
 	var g := make_game("tower", 1, 60, "plaza", true)
 	await wait_phase(g, "turn")

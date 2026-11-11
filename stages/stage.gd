@@ -21,7 +21,10 @@ const STAGES := {
 	# THE PLAZA RING (Parker's picture): the same flat 18 m deck and barrel, dressed as
 	# a wrestling ring on a raised stage in a sunny plaza. Fall off the apron and you
 	# drop to the plaza stones (out, respawn), like falling in the sea.
-	"plaza": {"name": "The Plaza Ring", "deck_half": 9.0, "barrel_scale": 2.1, "spawn_x": 5.5, "kill_y": -4.0, "side_x": 16.0, "dress": "plaza"},
+	# side_x 60 (Parker 11-10: "the ground outside the ring is not solid in places"): the
+	# plaza floor ran to 16 m and climbers thrown past it fell through the stones; it now
+	# runs to 60 m, and anywhere on it is a RING OUT.
+	"plaza": {"name": "The Plaza Ring", "deck_half": 9.0, "barrel_scale": 2.1, "spawn_x": 5.5, "kill_y": -4.0, "side_x": 60.0, "dress": "plaza"},
 }
 ## The plaza's ground level (the ring's canvas is y = 0, its stage stands on this).
 const PLAZA_GROUND := -0.9  # the kit ring's apron drops 0.9 m to the plaza
@@ -151,6 +154,8 @@ func set_base(world: Node3D, selected: String) -> void:
 			visual.transform = Transform3D(Basis(Vector3.RIGHT, PI * 0.5).scaled(Vector3.ONE * float(row.barrel_scale)), Vector3.ZERO)
 		CelPass.celify(visual)
 		bell_node = visual.find_child("bell", true, false) as Node3D if base_id == "bell" else null
+		if base_id == "bell":
+			LuchaKit.smooth_normals(visual.find_child("bell_body", true, false) as MeshInstance3D)  # the bell, smooth (Parker 11-10)
 
 
 ## THE BELL'S COLLISION: each non-deco_ mesh's outline at the plane, one convex hull
@@ -447,6 +452,10 @@ func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
 		# centre, apron dropping 0.9 m): it goes in at scale 1.
 		root.add_child(kit)
 		ring_kit = kit
+		# The gold knobs on the corner posts, smooth (Parker 11-10): each post's knob is
+		# the part above 2.5 m.
+		for post in ["ring_post_bl", "ring_post_br", "ring_post_fl", "ring_post_fr"]:
+			LuchaKit.smooth_normals(kit.find_child(post, true, false) as MeshInstance3D, func(v: Vector3) -> bool: return v.y >= 2.5)
 		# The canvas in a mid warm grey: the kit's near-white read pure white in
 		# the sun and swallowed the climber's pale legs (environment pass 11-08).
 		var canvas := kit.find_child("ring_canvas", true, false) as MeshInstance3D
