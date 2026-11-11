@@ -2532,25 +2532,13 @@ func _run_delmar() -> void:
 	sea.dress(sheet, Stage.WATER_Y)
 	sea.splash(110.0, 1.0)
 	var sheet_mat := sheet.material_override as ShaderMaterial
-	t("delmar: the sea wears Golemheim's living water, and a fall splashes", sheet_mat != null and sheet_mat.shader == DelMarSea.SURFACE and get_tree().get_nodes_in_group("splash_fx").size() > 0, get_tree().get_nodes_in_group("splash_fx").size())
+	t("delmar: the sea wears the cheaper living water, and a fall splashes", sheet_mat != null and sheet_mat.shader != null and sheet_mat.shader.resource_path == DelMarSea.FAST_PATH and get_tree().get_nodes_in_group("splash_fx").size() > 0, get_tree().get_nodes_in_group("splash_fx").size())
 	sea.queue_free()
 	sheet.queue_free()
-	# The floaties: they stay left of the buoy, and a fall onto one throws you up and left.
+	# The floaties drift free on the climbers' plane; the buoy stands back out of their way.
 	var fl: DelMarFloaties = st.floaties
-	t("delmar: six floaties drift out in the water, none sitting in the buoy", fl != null and fl._items.size() == DelMarFloaties.COUNT and fl._items.all(func(it): return absf(float(it.x) - fl.buoy_x) >= DelMarFloaties.BUOY_CLEAR - 0.01), fl._items.map(func(it): return snappedf(float(it.x), 0.1)) if fl != null else [])
-	# The buoy glides out through one: it ends up on the buoy's left.
-	var ahead: Dictionary = fl._items.filter(func(it): return bool(it.right))[0] if fl._items.any(func(it): return bool(it.right)) else {}
-	if not ahead.is_empty():
-		var start_buoy := fl.buoy_x
-		for k in 200:
-			fl.buoy_x = start_buoy + float(k) * 0.2
-			fl.tick(1.0 / 60.0)
-			if not bool(ahead.right):
-				break
-		t("delmar: the buoy passing through a floatie leaves it on the buoy's left", not bool(ahead.right) and float(ahead.x) < fl.buoy_x, "floatie %.2f, buoy %.2f" % [float(ahead.x), fl.buoy_x])
-		fl.buoy_x = start_buoy
-		for it: Dictionary in fl._items:
-			it.right = float(it.home) > start_buoy
+	t("delmar: six floaties drift on the climbers' plane in the open water", fl != null and fl._items.size() == DelMarFloaties.COUNT and fl._items.all(func(it): return absf((it.node as Node3D).global_position.z) < 0.01 and float(it.x) >= Stage.FLOAT_X.x and float(it.x) <= Stage.FLOAT_X.y), fl._items.map(func(it): return snappedf(float(it.x), 0.1)) if fl != null else [])
+	t("delmar: the buoy floats back behind the play plane, clear of every floatie", absf(st.buoy_body.global_position.z - Stage.BUOY_Z) < 0.01 and Stage.BUOY_Z < -1.5, st.buoy_body.global_position.z)
 	fl._items[0].amp = 0.0  # hold this one still: it drifts out from under a test fall
 	fl.tick(0.0)
 	var spare := spawn(Vector2(float(fl._items[0].x), Stage.WATER_Y + 3.0))
@@ -3099,7 +3087,6 @@ func _run_korope() -> void:
 	var fl := DelMarFloaties.new()
 	add_child(fl)
 	fl.setup(5, Stage.WATER_Y, 104.5, 135.0)
-	fl.set_buoy(106.0)
 	fl.tick(0.0)
 	var k2 := spawn(Vector2(float(fl._items[0].x), Stage.WATER_Y + 0.6))
 	k2._impact_guard = 0.0

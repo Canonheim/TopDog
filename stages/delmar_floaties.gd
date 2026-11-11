@@ -3,11 +3,13 @@ extends Node3D
 ## THE FLOATIES (Parker 11-10: "beach balls and large rubber duckies, and life savers
 ## and innertubes floating in the water that bounce you up if you fall on them like the
 ## ring ropes, but they send you up and slightly left (back towards the growing climber
-## tower bridge), randomly floating around. The buoy passes through them as it moves,
-## making them go to the left of the buoy"). The UI creator's float_* pieces.
+## tower bridge), randomly floating around"). The UI creator's float_* pieces. They drift
+## free over the whole open water, on the climbers' plane where a fall lands on them
+## (Parker 11-11): the buoy stands back out of their way (Stage.BUOY_Z) and no longer
+## herds them.
 ##
 ## They're props, not bodies: each drifts on a seeded path (the same on every machine
-## for the same match seed), bobs on the water, and is shoved left of the buoy. A
+## for the same match seed) and bobs on the water. A
 ## climber's piece falling onto one's top is thrown up (as a fall into the ring ropes)
 ## and a little left; the floatie squashes. Not solid, so nobody welds to one.
 
@@ -26,16 +28,12 @@ const COUNT := 6
 const LEFT_PUSH := 1.5  # m/s back toward the tower on a bounce
 const BOUNCE_UP := 1.0  # x the fall speed, as the ring ropes' rope_bounce_up (at least MIN_UP)
 const MIN_UP := 3.0
-const BUOY_CLEAR := 0.9  # the least gap, buoy centre to floatie centre (the duck's is wider)
-const BUOY_HALF := 0.5  # the classic buoy's float, half its width
 const COOLDOWN := 0.3
 
 var water_y := -1.8
 var x_min := 104.5  # the open water's span, from the pier's end out
 var x_max := 135.0
-var buoy_x := 108.5
-var _items: Array = []  # {node, kind, home, amp, freq, phase, x, squash_t, right}
-var _last_buoy := INF
+var _items: Array = []  # {node, kind, home, amp, freq, phase, x, squash_t}
 var _t := 0.0
 var _cooldown := {}  # climber id -> seconds
 
@@ -77,26 +75,9 @@ func setup(seed_value: int, p_water_y: float, p_x_min: float, p_x_max: float) ->
 			"home": rng.randf_range(x_min + 3.0, x_max - 2.0),
 			"amp": rng.randf_range(1.5, 4.0), "freq": rng.randf_range(0.05, 0.12),
 			"phase": rng.randf_range(0.0, TAU), "bob": rng.randf_range(0.0, TAU),
-			"x": 0.0, "squash_t": 9.0, "right": true,
+			"x": 0.0, "squash_t": 9.0,
 		})
-	for it: Dictionary in _items:
-		it.right = float(it.home) > buoy_x
 	tick(0.0)
-
-
-## Where the buoy is. The FIRST time (the match's start) every floatie is put out in
-## the open water right of it: their sides were judged against a default buoy a
-## couple of metres off, which pinned about one in five between the buoy and the pier.
-var _placed := false
-func set_buoy(x: float) -> void:
-	if not _placed:
-		_placed = true
-		for it: Dictionary in _items:
-			var clear := maxf(BUOY_CLEAR, BUOY_HALF + float(it.kind[1]) + 0.1)
-			it.home = minf(maxf(float(it.home), x + clear + float(it.amp) + 0.2), x_max - 0.5)
-			it.right = true
-		_last_buoy = x
-	buoy_x = x
 
 
 func tick(delta: float) -> void:
@@ -105,22 +86,8 @@ func tick(delta: float) -> void:
 		_cooldown[id] = float(_cooldown[id]) - delta
 		if float(_cooldown[id]) <= 0.0:
 			_cooldown.erase(id)
-	var buoy_moved := buoy_x > _last_buoy + 0.0005
-	_last_buoy = buoy_x
 	for it: Dictionary in _items:
 		var x: float = float(it.home) + float(it.amp) * sin(_t * float(it.freq) * TAU + float(it.phase))
-		var clear := maxf(BUOY_CLEAR, BUOY_HALF + float(it.kind[1]) + 0.1)  # never touching the float
-		if bool(it.right):
-			if x < buoy_x + clear:
-				if buoy_moved:
-					# The buoy, gliding out, passes through it: it ends up on the buoy's
-					# left, and drifts there from now on.
-					it.right = false
-					it.home = buoy_x - clear - float(it.amp) - 0.3
-				else:
-					x = buoy_x + clear  # drifting into the buoy: it bumps and stops
-		if not bool(it.right):
-			x = minf(x, buoy_x - clear)
 		x = clampf(x, x_min + float(it.kind[1]), x_max)
 		it.x = x
 		var bob := sin(_t * 1.6 + float(it.bob)) * 0.05
@@ -174,7 +141,7 @@ func bounce(c: Climber) -> int:
 
 ## Where floatie i floats now (x), for the ripple its squash makes.
 func x_of(i: int) -> float:
-	return float(_items[i].x) if i >= 0 and i < _items.size() else buoy_x
+	return float(_items[i].x) if i >= 0 and i < _items.size() else x_min
 
 
 ## Another machine's climber bounced on floatie i: squash it here too.

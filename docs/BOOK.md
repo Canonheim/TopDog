@@ -659,12 +659,15 @@ Commits 4714920, 7f37818 and the one after.
 - **The HUD odometer is out of the game** (its code and checks removed).
 - **Del Mar:** the ships are spread out to the right, most out of view until the tower
   and the camera move out; the floaties are shaded smooth.
-- **ON THE DOCKET, NOT MERGED: the cheaper water.** `stages/delmar/sea_surface_fast.gdshader`
-  reads the 75-circle foam tile from `sea_circles.png` and runs the warp noise at 4 octaves.
-  It is OFF (`DelMarSea.fast`, or run with `-- --fastsea`). Side by side:
-  `docs/compare/sea_now_vs_cheaper.png`. Measured on Parker's PC: the whole frame is about
-  1.9 ms on the graphics card and the cheaper water saves about 0.17 ms of it. Switch
-  it on only when Parker is final on the look.
+- **The cheaper water is THE water (Parker 11-11: "make it the cheap water").**
+  `stages/delmar/sea_surface_fast.gdshader` reads the 75-circle foam tile from
+  `sea_circles.png` and runs the warp noise at 4 octaves. It is ON (`DelMarSea.fast`);
+  `-- --fullsea` brings Golemheim's back. Side by side: `docs/compare/sea_now_vs_cheaper.png`.
+  Measured on Parker's PC: the whole frame is about 1.9 ms on the graphics card and the
+  cheaper water saves about 0.17 ms of it.
+- **The floaties drift free; the buoy stands back (Parker 11-11).** The floaties float on
+  the climbers' plane over all the open water, no longer herded right of the buoy, and the
+  buoy floats 2 m behind the plane (`Stage.BUOY_Z`) so nothing clips it. DEL_MAR.md §7.
 
 ## Record
 

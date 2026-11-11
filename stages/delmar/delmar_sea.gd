@@ -10,12 +10,12 @@ extends Node
 ## Purely visual: nothing here touches the game's rules (the sea line is Stage.WATER_Y).
 
 const SURFACE := preload("res://stages/delmar/sea_surface.gdshader")
-## THE CHEAPER WATER (11-10, NOT THE DEFAULT until Parker settles the look): the same
+## THE CHEAPER WATER, THE DEFAULT (Parker 11-11: "make it the cheap water"): the same
 ## surface with its 75-circle foam tile read from a texture (sea_circles.png) and the
-## warp noise at 4 octaves. Loaded only when asked for (`--fastsea`, or `fast = true`).
+## warp noise at 4 octaves. `--fullsea` (or `fast = false`) puts Golemheim's back.
 const FAST_PATH := "res://stages/delmar/sea_surface_fast.gdshader"
 const CIRCLES_PATH := "res://stages/delmar/sea_circles.png"
-static var fast := false
+static var fast := true
 const SMOKE_SHADER := preload("res://stages/delmar/fx/toon_smoke.gdshader")
 const OUTLINE_SHADER := preload("res://stages/delmar/fx/toon_smoke_outline.gdshader")
 const MAX_RIPPLES := 12  # lockstep with the shader's ripples[12]
@@ -41,7 +41,7 @@ func dress(sea: MeshInstance3D, p_water_y: float) -> void:
 	if sea == null:
 		return
 	_mat = ShaderMaterial.new()
-	set_fast(fast or "--fastsea" in OS.get_cmdline_user_args())
+	set_fast(fast and not "--fullsea" in OS.get_cmdline_user_args())
 	if _noise_tex == null:
 		var fn := FastNoiseLite.new()
 		fn.seed = 7  # fixed: the sea shimmers the same on every machine

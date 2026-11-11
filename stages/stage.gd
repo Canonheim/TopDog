@@ -112,6 +112,11 @@ const ROPE_POINTS := 12  # the curve the segments follow
 ## "make the buoy taller and have the rope attach to it at the top"). The buoy rides
 ## along the line so this eye sits ON it: the rope from here to the mast is the line.
 const BUOY_EYE := Vector3(0.0, 2.07, 0.0)
+## THE BUOY STANDS BACK (Parker 11-11: "The buoy should actually be further back so it is
+## not in their way, so they can float around more freely and not clip through it"): it
+## floats 2 m behind the play plane, like the mast, out of the climbers' and the floaties'
+## way. Its x is the line's as ever (the line's maths is x and y only).
+const BUOY_Z := -2.0
 const SHORE_Y := -0.92  # the land's top behind the pier (the plaza's ground, DelMarScenery.GROUND_Y)
 const STREAMER_STEP := 0.5  # one every 0.5 m, counted from the buoy end (they don't slide)
 const STREAMER_TINTS := [Color("#E0287A"), Color("#1FB8AE"), Color("#F28A1E"), Color("#7CC83A"), Color("#8A3FC0"), Color("#FFC928")]
@@ -197,8 +202,8 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	world.add_child(delmar_root)
 	# The pier: one seamless slab, its top the deck (the Carpenter's pier_deck).
 	_static_poly(delmar_root, PackedVector2Array([Vector2(PIER_ROOT, DECK_Y), Vector2(PIER_END, DECK_Y), Vector2(PIER_END, DECK_Y - DECK_DEPTH), Vector2(PIER_ROOT, DECK_Y - DECK_DEPTH)]), 1.0, 1.6)
-	# The buoy: solid, but never held and never a support (meta no_weld), and not in
-	# `bodies`, so a lock-in never counts it as the stage.
+	# The buoy: behind the play plane now (BUOY_Z), so nobody meets it; still never held
+	# and never a support (meta no_weld), and not in `bodies`, so a lock-in never counts it.
 	var dome := PackedVector2Array()
 	# The classic buoy's float (1.0 across, to y 0.5) and its tapered cage to the top.
 	for q in [Vector2(0.5, 0.0), Vector2(0.47, 0.25), Vector2(0.34, 0.5), Vector2(0.13, 1.56), Vector2(0.06, 2.1),
@@ -313,17 +318,15 @@ func place_delmar_line(c: float, speed := 0.0, delta := 0.0) -> void:
 	draw_delmar_line(c, speed, delta)
 
 
-## THE PHYSICS HALF, every tick: the buoy's collider and where the floaties may drift.
+## THE PHYSICS HALF, every tick: the buoy's body.
 ## Written only when it moved.
 func move_buoy(c: float) -> void:
 	if not delmar or not is_instance_valid(delmar_root):
 		return
 	# Placed so its eye lies on the line (x + y = c): the rope is the line exactly.
-	var buoy_at := Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, 0.0)
+	var buoy_at := Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, BUOY_Z)
 	if is_instance_valid(buoy_body) and not buoy_body.global_position.is_equal_approx(buoy_at):
 		buoy_body.global_position = buoy_at
-	if floaties != null:
-		floaties.set_buoy(buoy_at.x)
 
 
 ## THE DRAWN HALF, once a frame (it ran every physics tick, 120 a second: the rope's
@@ -332,7 +335,7 @@ func move_buoy(c: float) -> void:
 func draw_delmar_line(c: float, speed := 0.0, delta := 0.0) -> void:
 	if not delmar or not is_instance_valid(delmar_root):
 		return
-	var buoy_at := Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, 0.0)
+	var buoy_at := Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, BUOY_Z)
 	_float_buoy(speed, delta, buoy_at)
 	var eye := Vector3(MAST_X, c - MAST_X, MAST_EYE_Z)
 	if _mast_head_node != null:

@@ -53,7 +53,7 @@ you're out.
 | **The starting base** | One of the starting climbing objects (barrel, cactus, donkey, bell: the BASE setting), standing at the end of the pier. | Its rightmost point sits on the pier end ("At the end of the pier is one of the starting climbing objects, and the rope is to the right of that thing"). |
 | **The mast** | A pole at the pier's back edge, left of the base, with the rope tied to its top. | Background dressing, behind the play area like the ring's back ropes (Parker 11-10: "the mast is dressing in the background, like the ring ropes behind the main area"). Never touched, and never in front of a climber. It GROWS as the game plays ("The mast gets taller as the game plays, line stays 45"): its top rises to wherever the rope must meet it (§5). The rope runs from the buoy back to it; the line's maths uses x and y only. |
 | **The rope (the line)** | From the buoy up to the mast at 45°, hung with little dangling streamers (papel picado ribbons). | It IS the line. It's drawn, not solid: climbers pass through it. |
-| **The buoy** | A buoy floating on the water where the rope meets it. | Solid, but **not weldable** ("You cannot weld to the buoy"). It sticks up a bit, so climbers near the water must get past it to lock in. It moves with the line and pushes floaties ahead of it (§7). |
+| **The buoy** | A buoy floating on the water where the rope meets it. | **Not weldable** ("You cannot weld to the buoy"). Since 11-11 it floats 2 m behind the play plane (`Stage.BUOY_Z`), out of the climbers' and the floaties' way (§7). It moves with the line. |
 | **The sea** | Golemheim's water (§8). | **Out** if you fall in ("your counted as Out if you fall off the tower into the water"). |
 | **Floaties** | Beach balls, big rubber duckies, life savers and inner tubes bobbing on the water. | Bounce you **up and a little left** (back toward the tower) when you fall on them, like the ring ropes (§7). |
 
@@ -105,9 +105,12 @@ you're out.
   as the rope throw: a fall turns into a throw up at the ring rope's strength, plus a
   small push left (toward the tower), about 1.5 m/s. It only ever adds lift. Each
   floatie bobs, squashes a little and gives a rubbery squeak or boing when hit.
-- **The buoy pushes them:** "The buoy passes through them as it moves, making them go
-  to the left of the buoy." Floaties stay left of the buoy. When the buoy glides out,
-  any floatie it reaches is shoved past to its left, bobbing as it goes.
+- **They drift free (Parker 11-11):** "they should be at the same forward and back depth
+  that the climbers are on, so you can hit them. The buoy should actually be further
+  back so it is not in their way, so they can float around more freely and not clip
+  through it." They float on the climbers' plane (z 0) anywhere over the open water, and
+  the buoy floats 2 m behind it (`Stage.BUOY_Z`), so it no longer herds them. (Before:
+  "The buoy passes through them as it moves, making them go to the left of the buoy.")
 - They're props with a simple bob and drift, not rigid bodies on the water's physics,
   so they stay cheap and the same on every machine. The host drives their positions and
   sends them on the pose stream.
