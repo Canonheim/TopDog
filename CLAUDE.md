@@ -23,3 +23,5 @@
 - Feel numbers live in `data/feel.gd` only (the F1 panel edits the same table).
 - Give Parker full absolute paths. Downloads need his permission.
 - Windows rebuilds overwrite builds/TopDog.exe in place. Keep one main Windows build in that folder. If the executable is locked, close it before retrying the same output path.
+
+- **All new lock-in effects:** follow `docs/LOCK_IN_EFFECTS.md` for bounded per-burst randomness, continuous coverage, balanced object types/sizes across directions, cached assets and validation. This is a standing user requirement.

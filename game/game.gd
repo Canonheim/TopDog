@@ -18,6 +18,7 @@ extends Node
 ## every rpc() with call_local just runs here: one code path for both.
 
 signal announce(text: String, big: bool)
+signal lock_effect(effect: String)
 signal phase_changed(phase: String)
 signal match_over(results: Dictionary)
 signal climber_spawned(c: Climber)
@@ -28,6 +29,8 @@ const PartnerScript := preload("res://climber/practice_partner.gd")
 var chair: ChairScript
 var chair_debris: Node3D
 var partner: PartnerScript
+var partner_last_lock := Vector2(INF, INF)
+var partner_attempt := 0
 var chair_generation := 0
 var chair_spawn_top := Vector2.ZERO
 var remote_chair_limbs := {}
@@ -138,7 +141,9 @@ func host_start(p_settings: Dictionary, p_roster: Array) -> bool:
 func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	_clear_arena_props()
 	settings = p_settings
-	mode = Modes.row(str(settings.get("mode", "scramble")))
+	partner_last_lock = Vector2(INF, INF)
+	partner_attempt = 0
+	mode = Modes.practice_row(str(settings.get("practice_mode", "scramble"))) if settings.get("mode") == "practice" else Modes.row(str(settings.get("mode", "scramble")))
 	practice = bool(mode.get("practice", false))
 	_fart_fuel.clear()
 	_fart_down.clear()
@@ -161,7 +166,7 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	_shown_line_v = 0.0
 	Climber.rope_x = stage.ring_half() if str(stage.row.get("dress", "")) == "plaza" else 0.0
 	_ring_out.clear()
-	if practice and multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
+	if practice and bool(settings.get("practice_npc", false)) and multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
 		_spawn_partner()
 	line = stage.first_line
 	turn_order = roster.map(func(r): return int(r.pid))
@@ -218,13 +223,18 @@ func _physics_process(delta: float) -> void:
 					if hit >= 0:
 						var com := c.centre_of_mass()
 						_rpc_floatie.rpc(hit, Vector3(com.x, com.y, 0.0))
+			if is_instance_valid(partner):
+				var hit := stage.floaties.bounce(partner)
+				if hit >= 0:
+					var com := partner.centre_of_mass()
+					_rpc_floatie.rpc(hit, Vector3(com.x, com.y, 0.0))
 	var real_delta := delta / Engine.time_scale
 	_now += real_delta
 	_tick_fart_meters(real_delta)
 	_tick_owned(real_delta)
 	_tick_puppets()
 	_tick_chair(delta)
-	if partner != null and stage.out_of_bounds(partner.centre_of_mass()):
+	if partner != null and (stage.out_of_bounds(partner.centre_of_mass()) or stage.in_sea(partner)):
 		_spawn_partner()
 	elif partner != null and stage.ring_out(partner):
 		# The partner rings out too: back in the ring after RING_OUT_S.
@@ -273,8 +283,11 @@ func _next() -> void:
 			if alive.get(turn_order[turn_i], false):
 				break
 		var pid: int = turn_order[turn_i]
-		_rpc_phase.rpc("turn", float(settings.get("timer", 60.0)), tower_top(), round_n, pid)
+		_rpc_phase.rpc("turn", float(settings.get("timer", 60.0)), tower_top() if mode.line == "tower" else line, round_n, pid)
 		_spawn(pid)
+		if practice and bool(settings.get("practice_npc", false)):
+			if not is_instance_valid(partner) or partner.state == Climber.State.FROZEN:
+				_spawn_partner()
 	else:
 		round_n += 1
 		locked.clear()
@@ -419,6 +432,8 @@ func _spawn(pid: int, preferred_side := 0) -> void:
 			side = -int(_last_spawn_sides[pid])
 		else:
 			side = _spawn_side()
+	if practice and stage.delmar and is_instance_valid(partner):
+		side = 1  # The NPC uses the other pier spawn.
 	var feet := _open_spawn(stage.spawn_point(side))
 	var cid := _cid_next
 	_cid_next += 1
@@ -572,7 +587,10 @@ func _check_bounds() -> void:
 		if stage.in_sea(c):
 			# Del Mar: "your counted as Out if you fall off the tower into the water".
 			_rpc_note.rpc("%s fell in the sea!" % c.display_name)
-			_broadcast_freeze(cid, c.pose(), "sea")
+			if practice:
+				_spawn(pid)
+			else:
+				_broadcast_freeze(cid, c.pose(), "sea")
 			continue
 		if stage.ring_out(c):
 			_ring_out[cid] = RING_OUT_S
@@ -921,6 +939,7 @@ func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: Strin
 	var shown := top - Stage.PIER_END if stage != null and stage.delmar else top
 	match verdict:
 		"made":
+			lock_effect.emit(Wardrobe.clean(roster_entry(c.player_id).get("appearance", {})).effect)
 			if stage != null and stage.delmar:
 				announce.emit("%s locked in %.2f m out!" % [who, shown] if why == "locked" else "%s made it: %.2f m out" % [who, shown], false)
 			else:
@@ -1048,6 +1067,8 @@ func live_climbers() -> Array:
 		var cid: int = live[pid]
 		if climbers.has(cid) and climbers[cid].state != Climber.State.FROZEN:
 			out.append(climbers[cid])
+	if is_instance_valid(partner) and partner.state == Climber.State.LIVE and not partner.removed:
+		out.append(partner)
 	return out
 
 
@@ -1425,26 +1446,81 @@ func _clear_arena_props() -> void:
 
 
 func _remove_partner() -> void:
+	# Locked NPCs are permanent tower pieces, just like locked human climbers.
+	# Retire the active reference without removing their geometry or grips.
+	if partner.state == Climber.State.FROZEN and tower.has(partner.climber_id):
+		partner = null
+		return
 	# Anyone holding the partner lets go first: never leave a joint on a freed body.
 	for o in climbers.values():
 		var oc: Climber = o
 		for i in oc.limbs.size():
 			if oc.limbs[i].grab_climber == partner:
 				oc.release(i)
+	if is_instance_valid(chair) and chair.holder == -2:
+		chair.drop(partner, get_physics_process_delta_time())
+	climbers.erase(-2)
+	tower.erase(-2)
 	partner.remove()
 	partner = null
 
 
+func set_practice_ai(level: String) -> void:
+	if not practice or level not in ["none", "stationary", "easy", "hard"]:
+		return
+	settings["practice_ai"] = level
+	settings["practice_npc"] = level != "none"
+	if level == "none":
+		if is_instance_valid(partner):
+			_remove_partner()
+		_partner_out = 0.0
+		return
+	if not is_instance_valid(partner) or partner.state != Climber.State.LIVE:
+		_spawn_partner()
+	else:
+		partner.configure(self, level)
+
+func partner_can_lock() -> bool:
+	return practice and is_instance_valid(partner) and partner.state == Climber.State.LIVE and partner.knockout_left <= 0 and phase in ["turn", "round"] and measure(partner) > line + LOCK_MARGIN and (partner.welded_to_support() or _pose_on_support(partner, partner.pose()))
+
+func lock_partner() -> void:
+	if not partner_can_lock():
+		return
+	if is_instance_valid(chair) and chair.holder == -2:
+		chair.drop(partner, get_physics_process_delta_time())
+	partner.freeze()
+	_snap_static(partner)
+	_free_locked_overlaps(partner)
+	partner.climber_id = _cid_next
+	_cid_next += 1
+	climbers[partner.climber_id] = partner
+	tower.append(partner.climber_id)
+	partner_last_lock = partner.centre_of_mass()
+	if mode.line == "raise":
+		line = maxf(line, measure(partner) + float(mode.get("line_gap", 0.0)))
+	announce.emit("Practice partner locked in!", false)
+
 func _spawn_partner() -> void:
 	if is_instance_valid(partner):
 		_remove_partner()
-	var feet := _open_spawn(Vector2(3.2, 0.05))
+	partner_attempt += 1
+	var side := 1.0
+	if str(settings.get("practice_ai", "stationary")) == "easy" and partner_attempt > 1:
+		side = -1.0 if randf() < 0.5 else 1.0
+	var feet := _open_spawn(stage.spawn_point(-1) if stage.delmar else Vector2(side * 3.2, 0.05))
 	partner = PartnerScript.new()
 	partner.climber_id = -2
+	partner.player_id = -2
+	partner.owner_peer = me()
 	partner.display_name = "Practice partner"
 	add_child(partner)
 	partner.build(feet, world, PRACTICE_PARTNER_MODEL if dress else null)
-	if grow_spawns:
+	partner.configure(self, str(settings.get("practice_ai", "stationary")))
+	partner.rope_bounced.connect(_play_rope)
+	partner.release_contact.connect(func(at: Vector3): Sound.play_grab(Sound.pick_grab(), at, randf_range(0.92, 1.08), world))
+	# The pause menu cannot advance a physics-driven grow animation. Build at
+	# full size there; live respawns keep the normal animated entrance.
+	if grow_spawns and not get_tree().paused:
 		partner.grow_in()
 	partner.knocked_out.connect(func():
 		Sound.stop_exertion(partner.bodies["head"])
@@ -1466,7 +1542,7 @@ func _rpc_chair_limb(cid: int, selected: int, release_velocity: Vector3) -> void
 func _tick_chair(dt: float) -> void:
 	if chair == null or phase not in ["turn", "round", "between"]:
 		return
-	var carrier: Climber = climbers.get(chair.holder)
+	var carrier: Climber = partner if chair.holder == -2 else climbers.get(chair.holder)
 	if not is_host():
 		if chair.grip_joint.is_valid():
 			return
@@ -1554,8 +1630,6 @@ func _chair_impact(victim: Climber, piece_name: String, local_offset: Vector3, i
 		return
 	if piece_name == "head" and victim.knockout_left <= 0 and impulse.length() / piece.mass >= 4.5:
 		victim.knock_out()
-	if victim == partner:
-		partner.stagger_time = 0.5
 	var offset := piece.global_basis * local_offset
 	piece.apply_impulse(impulse, offset)
 
@@ -1593,6 +1667,8 @@ func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose:
 	chair.set_hit_count(hit_count)
 
 func _clear_climbers() -> void:
+	if is_instance_valid(partner):
+		_remove_partner()
 	for c in climbers.values():
 		c.remove()
 	climbers.clear()

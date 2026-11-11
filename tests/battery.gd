@@ -564,7 +564,7 @@ func make_game(mode_id: String, n: int, timer: float, arena := "dock", draw := f
 		g.bot_drivers[i] = Drivers.ScriptDriver.new()
 	# Always the barrel: lift_and_lock stands a climber on the base's top at x = 0, which
 	# only the barrel has (a random donkey left it in the air and the lock was refused).
-	g.host_start({"mode": mode_id, "timer": timer, "spawn": "alternate", "stage": arena, "base": "barrel"}, roster)
+	g.host_start({"mode": mode_id, "timer": timer, "spawn": "alternate", "stage": arena, "base": "barrel", "practice_npc": mode_id == "practice", "practice_mode": "tower"}, roster)
 	return g
 
 
@@ -1780,7 +1780,7 @@ func _run_chair() -> void:
 			var before := head.linear_velocity
 			g._apply_chair_hits(hits)
 			await frames(2)
-			t("chair: head recoils and partner temporarily stops balancing", head.linear_velocity.x > before.x + 0.2 and npc.stagger_time > 0)
+			t("chair: head recoils like a normal player", head.linear_velocity.x > before.x + 0.2)
 		for direction in [-1.0, 1.0]:
 			g.chair.pick_up(c, 2)
 			foot.linear_velocity = Vector3(direction * 3.0, 0.3, 0)
@@ -1796,23 +1796,15 @@ func _run_chair() -> void:
 	g.chair.sleeping = false
 	await seconds(4)
 	t("chair: an edge landing settles onto a broad face", absf(g.chair.global_basis.z.y) > 0.94, g.chair.global_basis.z.y)
-	# Turn the NPC onto its side on the canvas, then allow its balance controller to act.
+	# Release normal terrain grips before placing the partner outside the arena.
+	npc.release_all()
 	var pose := npc.pose()
-	var pivot := npc.centre_of_mass()
+	var player_before: int = g.live[0]
 	for k in range(0, pose.size(), 3):
-		var xy := (Vector2(pose[k], pose[k + 1]) - pivot).rotated(PI * 0.5) + Vector2(2.8, 0.38)
-		pose[k] = xy.x
-		pose[k + 1] = xy.y
-		pose[k + 2] += PI * 0.5
-	npc.apply_pose(pose)
-	await seconds(5)
-	t("practice: fallen partner attempts to stand back upright", npc.piece_top("head") > 1.3 and absf(Climber.angle_of(npc.bodies["chest"])) < 0.65, npc.piece_top("head"))
-	pose = npc.pose()
-	for k in range(0, pose.size(), 3):
-		pose[k] += 25
+		pose[k] += float(g.stage.row.side_x) + 5.0
 	npc.apply_pose(pose)
 	await frames(4)
-	t("practice: out-of-bounds partner respawns without advancing the turn", g.partner != null and g.partner != npc and not g.stage.out_of_bounds(g.partner.centre_of_mass()) and g.live[0] == c.climber_id and g.phase == "turn")
+	t("practice: out-of-bounds partner respawns without advancing the turn", g.partner != null and g.partner != npc and not g.stage.out_of_bounds(g.partner.centre_of_mass()) and g.live[0] == player_before and g.phase == "turn", [g.partner != null, g.partner != npc, g.partner.centre_of_mass() if g.partner != null else Vector2.ZERO, g.live[0], player_before, g.phase])
 	g.end_match()
 	t("practice: leaving removes chair and partner", g.chair == null and g.partner == null)
 	g.queue_free()
@@ -3287,3 +3279,228 @@ func _run_ropesides() -> void:
 	c.queue_free()
 	Climber.rope_x = old_rope
 	await frames(2)
+
+
+func _run_practicesettings() -> void:
+	for game_type in ["scramble", "tower", "delmar"]:
+		var g: Game = GameScript.new()
+		g.world = world
+		g.dress = false
+		add_child(g)
+		g.bot_drivers[0] = Drivers.ScriptDriver.new()
+		var roster := [{"pid": 0, "name": "Practice", "tint": Color.WHITE, "peer": 1, "slot": 0}]
+		var options := {"mode": "practice", "practice_mode": game_type, "base": "cactus", "stage": "plaza", "timer": 45.0}
+		t("practice setup: starts solo " + game_type, g.host_start(options, roster))
+		await wait_phase(g, "turn")
+		t("practice setup: defaults to no NPC", g.partner == null)
+		t("practice setup: selected arena and base", g.stage.delmar == (game_type == "delmar") and g.stage.base_id == "cactus")
+		var clock := g.clock
+		await seconds(0.25)
+		t("practice setup: untimed and non-eliminating", is_equal_approx(clock, g.clock) and g.practice and not g._game_decided([0]))
+		if game_type == "delmar":
+			var c: Climber = g.live_climbers()[0]
+			var old_id := c.climber_id
+			c.bodies.head.global_position.y = Stage.WATER_Y - 1.0
+			g._check_bounds()
+			t("practice setup: sea fall respawns without elimination", g.live[0] != old_id and g.alive[0] and g.phase == "turn")
+		g.end_match()
+		options.practice_npc = true
+		g.host_start(options, roster)
+		await wait_phase(g, "turn")
+		var npc: Climber = g.partner
+		t("practice setup: NPC opt-in creates standard climber", npc != null and npc.bodies.size() == 16 and npc.driver is Drivers.ScriptDriver)
+		t("practice setup: stationary NPC uses passive inputs", npc.driver != null and npc.active_limb() == -1)
+		var c: Climber = g.live_climbers()[0]
+		t("practice setup: NPC mass matches player", is_equal_approx(npc.total_mass, c.total_mass))
+		npc.attach(0, c.bodies.chest)
+		t("practice setup: NPC can grip a player", npc.limbs[0].grab_other == c.bodies.chest)
+		npc.knock_out()
+		t("practice setup: NPC knockout releases grips", npc.knockout_left > 0 and npc.stuck_count() == 0)
+		g.end_match()
+		t("practice setup: leaving removes NPC", g.partner == null)
+		g.queue_free()
+		await frames(2)
+
+func _run_practiceai() -> void:
+	for level in ["easy", "hard"]:
+		var g := make_game("practice", 1, 60.0, "plaza")
+		await wait_phase(g, "turn")
+		for arg in OS.get_cmdline_user_args():
+			if arg.begins_with("--ai-base=") or arg.begins_with("--ai-mode="):
+				var options := g.settings.duplicate()
+				options["base" if arg.begins_with("--ai-base=") else "practice_mode"] = arg.get_slice("=", 1)
+				g.host_start(options, g.roster)
+				await wait_phase(g, "turn")
+		g.set_practice_ai(level)
+		var peak := 0.0
+		var invalid_inputs := false
+		for tick in 3600:
+			await frames(1)
+			var bot = g.partner
+			peak = maxf(peak, bot.top_height())
+			var pressed := 0
+			for held in bot.brain.holds:
+				pressed += int(held)
+			invalid_inputs = invalid_inputs or pressed > 1
+			if bot.state == Climber.State.FROZEN:
+				break
+		t("AI " + level + ": only one active limb", not invalid_inputs)
+		t("AI " + level + ": climbs and locks under normal rules", g.partner.state == Climber.State.FROZEN, "peak=" + str(peak))
+		g.end_match()
+		g.queue_free()
+		await frames(3)
+		await _clear()
+
+
+func _run_practiceairules() -> void:
+	var g := make_game("practice", 1, 60.0, "plaza")
+	await wait_phase(g, "turn")
+	var bot = g.partner
+	await frames(30)
+	t("AI stationary: no active limb", bot.active_limb() == -1)
+	g.set_practice_ai("hard")
+	t("AI setting: changes live partner without respawning", g.partner == bot and bot.difficulty == "hard")
+	bot.set_physics_process(false)
+	bot.release_all()
+	var pose: PackedFloat32Array = bot.pose()
+	for i in range(0, pose.size(), 3):
+		pose[i] += 5.0
+		pose[i + 1] += 8.0
+	bot.apply_pose(pose)
+	t("AI airborne: cannot lock above line", not g.partner_can_lock())
+	g.lock_partner()
+	t("AI airborne: lock request leaves NPC live", bot.state == Climber.State.LIVE)
+	g.set_practice_ai("stationary")
+	g._spawn_partner()
+	t("AI respawn: preserves chosen setting", g.partner.difficulty == "stationary")
+	bot = g.partner
+	await frames(20)
+	g.chair.pick_up(bot, 0)
+	bot.brain.set_limb(0, true, Vector2(1, 0))
+	bot._select_active_limb()
+	g._tick_chair(1.0 / 120.0)
+	t("AI chair: negative NPC id remains a valid carrier", g.chair.holder == -2 and g.chair.grip_joint.is_valid())
+	g.set_practice_ai("none")
+	t("AI none: removes NPC and releases carried chair", g.partner == null and g.chair.holder == -1 and not g.settings.practice_npc)
+	await frames(30)
+	t("AI none: stays removed", g.partner == null)
+	g.set_practice_ai("easy")
+	t("AI re-enable: spawns selected difficulty", g.partner != null and g.partner.difficulty == "easy")
+	g.end_match()
+	t("AI cleanup: no partner or stale tower id", g.partner == null and not g.climbers.has(-2) and not g.tower.has(-2))
+	g.queue_free()
+	await frames(3)
+
+func _run_practiceaicombat() -> void:
+	var g := make_game("practice", 1, 60.0, "plaza")
+	await wait_phase(g, "turn")
+	await frames(20)
+	var bot = g.partner
+	var rival: Climber = g.climbers[g.live[0]]
+	rival.release_all()
+	var pose := rival.pose()
+	var shift := bot.centre_of_mass().x + 1.25 - rival.centre_of_mass().x
+	for i in range(0, pose.size(), 3):
+		pose[i] += shift
+	rival.apply_pose(pose)
+	g.set_practice_ai("hard")
+	bot.brain.set_limb(1, true, Vector2(1, 0))
+	bot._select_active_limb()
+	g.chair.pick_up(bot, 1)
+	var struck := false
+	var attacked := false
+	for tick in 720:
+		await frames(1)
+		attacked = attacked or bot.intent == "Chair strike"
+		struck = struck or rival.knockout_left > 0
+		if struck:
+			break
+	t("AI hard: uses carried chair against nearby rival", attacked)
+	t("AI hard: physical head strike can knock rival out", struck)
+	g.end_match()
+	g.queue_free()
+	await frames(3)
+
+func _run_practiceairounds() -> void:
+	var g := make_game("practice", 1, 60.0, "plaza")
+	await wait_phase(g, "turn")
+	await frames(30)
+	var stationary = g.partner
+	g._next()
+	t("AI rounds: Stationary persists without replacement", g.partner == stationary and g.partner.difficulty == "stationary")
+	for level in ["easy", "hard"]:
+		g.set_practice_ai(level)
+		g.partner.set_physics_process(false)
+		g.line = -100.0  # legal floor fixture isolates lifecycle from route planning
+		await frames(180)
+		var old = g.partner
+		g.lock_partner()
+		var old_id: int = old.climber_id
+		t("AI rounds: locked NPC has unique tower id", old.state == Climber.State.FROZEN and old_id >= 0 and g.tower.has(old_id))
+		g._next()
+		t("AI rounds: " + level + " returns next round", g.partner != old and g.partner.state == Climber.State.LIVE and g.partner.difficulty == level)
+		t("AI rounds: previous NPC remains climbable", is_instance_valid(old) and not old.removed and g.climbers.get(old_id) == old and g.tower.has(old_id))
+	g.set_practice_ai("none")
+	var tower_count := g.tower.size()
+	g._next()
+	t("AI rounds: No NPC remains disabled", g.partner == null)
+	t("AI rounds: disabling NPC preserves built tower", g.tower.size() == tower_count)
+	g.end_match()
+	t("AI rounds: ending practice clears archived NPCs", g.climbers.is_empty() and g.tower.is_empty())
+	g.queue_free()
+	await frames(3)
+
+func _run_aicalibration() -> void:
+	var base := "barrel"
+	var mode_id := "tower"
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--ai-base="):
+			base = arg.get_slice("=", 1)
+		if arg.begins_with("--ai-mode="):
+			mode_id = arg.get_slice("=", 1)
+	var trial_seeds := [11, 29]
+	var levels := ["easy", "hard"]
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--ai-seed="):
+			trial_seeds = [int(arg.get_slice("=", 1))]
+		if arg.begins_with("--ai-level="):
+			levels = [arg.get_slice("=", 1)]
+	for trial_seed in trial_seeds:
+		for level in levels:
+			seed(trial_seed)
+			var g := make_game("practice", 1, 60.0, "plaza")
+			var options := g.settings.duplicate()
+			options.base = base
+			options.practice_mode = mode_id
+			options.practice_ai = level
+			g.host_start(options, g.roster)
+			await wait_phase(g, "turn")
+			for attempt in 2:
+				var start := Time.get_ticks_msec()
+				var bot = g.partner
+				bot.adapt_to_stalls = not OS.get_cmdline_user_args().has("--ai-baseline")
+				bot.placement_speed_limit = 5.0 if bot.adapt_to_stalls else 2.5
+				var initial_height := g.measure(bot)
+				var highest := initial_height
+				var shelf := false
+				var obstruction := false
+				for tick in 4800:
+					await frames(1)
+					bot = g.partner
+					highest = maxf(highest, g.measure(bot))
+					if OS.get_cmdline_user_args().has("--ai-trace") and tick % 600 == 0:
+						print("AI_TRACE ", JSON.stringify({"level":level,"round":attempt+1,"tick":tick,"pos":str(bot.centre_of_mass()),"measure":g.measure(bot),"line":g.line,"intent":bot.intent,"grips":bot.stuck_count(),"target":str(bot.target),"ends":[str(bot.limb_end(0)),str(bot.limb_end(1)),str(bot.limb_end(2)),str(bot.limb_end(3))]}))
+					shelf = shelf or bot.intent == "Build launch shelf"
+					obstruction = obstruction or bot.intent == "Obstruct rival approach"
+					if bot.state == Climber.State.FROZEN:
+						break
+				var success: bool = bot.state == Climber.State.FROZEN
+				if OS.get_cmdline_user_args().has("--ai-require-success"):
+					t("AI replay: %s %s seed %d round %d locks legally" % [mode_id, level, trial_seed, attempt + 1], success)
+				print("AI_TRIAL ", JSON.stringify({"policy":"baseline" if OS.get_cmdline_user_args().has("--ai-baseline") else "tuned","base":base,"mode":mode_id,"seed":trial_seed,"level":level,"round":attempt+1,"success":success,"seconds":(Time.get_ticks_msec()-start)/1000.0,"height_gain":highest-initial_height,"position":str(bot.centre_of_mass()),"shelf":shelf,"obstruction":obstruction,"intent":bot.intent}))
+				if attempt == 0:
+					g._next()
+			g.end_match()
+			g.queue_free()
+			await frames(3)
+			await _clear()  # each trial must start with exactly one arena, not old overlapping stage colliders

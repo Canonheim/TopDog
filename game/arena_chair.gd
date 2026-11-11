@@ -365,7 +365,7 @@ func tick_ropes(dt: float) -> void:
 	if edge < Climber.rope_x - 0.12 or absf(p.x) > Climber.rope_x + 0.3 or p.y + extent.y < Climber.ROPE_LOW or p.y - extent.y > Climber.ROPE_HIGH:
 		return
 	if rope_wait > 0:
-		if holder >= 0 and linear_velocity.x * side > 0:
+		if holder != -1 and linear_velocity.x * side > 0:
 			linear_velocity.x = 0.0
 		return
 	if linear_velocity.x * side > 0.3:
@@ -399,7 +399,7 @@ func sweep_hits(dt: float, excluded_id: int) -> Dictionary:
 		q = -q
 	var angle := q.get_angle()
 	var omega := q.get_axis() * angle / dt if angle > 0.0001 else Vector3.ZERO
-	if holder >= 0:
+	if holder != -1:
 		carry_spin = omega.z
 	_expire_hits(dt)
 	var hits := {}

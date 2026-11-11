@@ -24,7 +24,7 @@ const LINE_Z := -0.8  # behind the play plane (the line node sits at z 0.35)
 const BANNER_KIT_SCALE := 2.0  # the kit's hud_banner at HUD size (notes x0.85)
 const BANNER_Y := 2.55  # the turn / announcement banner, high on the HUD (its flags reach the top)
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
-const OWNED := ["customize", "title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat", "controls", "options"]
+const OWNED := ["practice_ai", "practice_settings", "customize", "title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat", "controls", "options"]
 const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
 const CARD_DY := 2.3  # and 2.05 m with its mask crest
 
@@ -85,6 +85,7 @@ func setup(p_main: Node) -> void:
 	settings.build()
 	_restyle_line()
 	main.game.announce.connect(_on_announce)
+	main.game.lock_effect.connect(play_lock_effect)
 	no_shadows(cam)  # UI never casts shadows into the world (the menus' words ghosted on the apron)
 	Players.joined.connect(func(_s): _refresh_cards())
 	Players.left.connect(func(_s): _refresh_cards())
@@ -94,6 +95,8 @@ func setup(p_main: Node) -> void:
 ## (main then hides its flat screen for it).
 func show_screen(id: String) -> bool:
 	current = id
+	if id == "pause":
+		_fill_pause()
 	for k in menus:
 		if k == id:
 			menus[k].open()
@@ -1432,12 +1435,21 @@ func _build_menus() -> void:
 	# together as a mode... first lets only focus on the online multiplayer"). Its
 	# screen below stays built for when local play comes back.
 	t.add_button("PLAY ONLINE", func(): main.show_screen("online"))
-	t.add_button("PRACTICE", main._start_practice)
+	t.add_button("PRACTICE", main._open_practice)
 	t.add_button("CUSTOMIZE", func(): main.show_screen("customize"))
 	t.add_button("CONTROLS", func(): main._controls_back = "title"; main.show_screen("controls"))
 	t.add_button("OPTIONS", func(): main._options_back = "title"; main.show_screen("options"))
 	t.add_button("QUIT", main.quit_game)
 	menus.title = t
+	# Practice choices are independent of multiplayer settings.
+	var training := _menu()
+	training.set_header(LuchaKit.poster_text("PRACTICE", 0.5, LuchaKit.GOLD, LuchaKit.RED), Vector3(-2.4, 3.1, 0))
+	training.add_button("FIGHT!", main._start_practice)
+	var practice_modes := ["scramble", "tower", "delmar"]
+	training.add_choice("MODE", ["CLASSIC", "TOWER", "DEL MAR"], 0, func(i): main.practice_settings.practice_mode = practice_modes[i])
+	training.add_choice("BASE", Modes.BASE_NAMES.map(func(n): return n.to_upper()), 1, func(i): main.practice_settings.base = Modes.BASES[i])
+	training.add_button("LEAVE", func(): main.show_screen("title"))
+	menus.practice_settings = training
 	# PLAY TOGETHER
 	var l := _menu()
 	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
@@ -1468,15 +1480,6 @@ func _build_menus() -> void:
 	p.set_header(LuchaKit.poster_text("TIME OUT!", 0.6, LuchaKit.GOLD, LuchaKit.RED, 0.12), Vector3(0, 1.9, 0))
 	p.column_x = Menu3D.MENU_COLUMN_X
 	p.top_y = Menu3D.MENU_TOP_Y
-	p.add_button("RESUME", main._toggle_pause)
-	p.add_button("CONTROLS", func(): main._controls_back = "pause"; main.show_screen("controls"))
-	p.add_button("OPTIONS", func(): main._options_back = "pause"; main.show_screen("options"))
-	p.add_button("QUIT TO MENU", func():
-		get_tree().paused = false
-		main.game.end_match()
-		if Net.online:
-			Net.leave()
-		main._to_title(""))
 	# IN FRONT OF EVERYTHING (Parker 11-08: "make the menu draw in front of everything
 	# when paused"): the follow camera sits close to the play, so the pause menu
 	# rides PAUSE_DIST from the lens instead of MENU_DIST, scaled to the same size on
@@ -1484,6 +1487,17 @@ func _build_menus() -> void:
 	p.position = Vector3(0, 0, -PAUSE_DIST)
 	p.scale = Vector3.ONE * UI_SCALE * PAUSE_DIST / MENU_DIST
 	menus.pause = p
+	var ai := _menu()
+	ai.column_x = Menu3D.MENU_COLUMN_X
+	ai.top_y = Menu3D.MENU_TOP_Y
+	ai.set_header(LuchaKit.poster_text("PRACTICE AI", 0.6, LuchaKit.GOLD, LuchaKit.RED, 0.12), Vector3(0, 1.9, 0))
+	for level in ["none", "stationary", "easy", "hard"]:
+		var choice: String = level
+		ai.add_button("NO NPC" if choice == "none" else ("STATIONARY" if choice == "stationary" else "CLIMB " + choice.to_upper()), func(): main.game.set_practice_ai(choice))
+	ai.add_button("BACK", func(): main.show_screen("pause"))
+	ai.position = p.position
+	ai.scale = p.scale
+	menus.practice_ai = ai
 	# RESULTS
 	var r := _menu()
 	r.column_x = Menu3D.MENU_COLUMN_X
@@ -1784,7 +1798,7 @@ func _on_announce(text: String, big: bool) -> void:
 		ring_bell()
 	if low.contains("tops") or low.contains("top dog"):
 		burst_pinata()
-	if low.contains("locked in") or low.contains("made it") or low.contains("tops") or low.contains("top dog"):
+	if low.contains("tops") or low.contains("top dog"):
 		confetti(low.contains("tops") or low.contains("top dog"))
 	for ch in _banner.get_children():
 		ch.queue_free()
@@ -1837,40 +1851,83 @@ func _on_announce(text: String, big: bool) -> void:
 ## A burst of confetti and streamers from the top of the frame (a lock-in, or a
 ## bigger, longer one for the winner). Kit confetti pieces replace the paper when
 ## delivered.
+func play_lock_effect(effect: String) -> void:
+	if effect == "treats":
+		preload("res://ui3d/dog_treats.gd").burst(cam)
+		Sound.play("clap", -4.0)
+	elif effect == "treasure":
+		preload("res://ui3d/treasure_effect.gd").burst(cam)
+		Sound.play("clap", -4.0)
+	elif effect == "bills":
+		preload("res://ui3d/peso_bills.gd").burst(cam)
+		Sound.play("clap", -4.0)
+	elif effect == "roses":
+		preload("res://ui3d/rose_petals.gd").burst(cam)
+		Sound.play("clap", -4.0)
+	else:
+		confetti()
+
+
 func confetti(big := false) -> void:
+	# A fresh burst profile varies the silhouette without extra particles or per-frame work.
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var lean := rng.randf_range(-0.18, 0.18)
+	var lift := rng.randf_range(0.94, 1.06)
+	var origin := Vector3(rng.randf_range(-0.18, 0.18), rng.randf_range(-0.06, 0.06), 0)
+	var root := Node3D.new()
+	root.name = "ConfettiBurst"
+	root.set_meta("burst_profile", [origin, lean, lift])
+	cam.add_child(root)
 	for side in ([-1.0, 1.0] if big else [0.0]):
-		var p := CPUParticles3D.new()
-		p.one_shot = true
-		p.explosiveness = 0.85
-		p.amount = 160 if big else 70
-		p.lifetime = 3.2 if big else 2.2
-		p.mesh = _confetti_mesh(int(randi() % 4))
-		var m := StandardMaterial3D.new()
-		m.vertex_color_use_as_albedo = true
-		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.cull_mode = BaseMaterial3D.CULL_DISABLED
-		p.material_override = m
-		var grad := Gradient.new()
-		grad.offsets = PackedFloat32Array([0.0, 0.17, 0.34, 0.5, 0.67, 0.84])
-		grad.colors = PackedColorArray(PAPEL)
-		grad.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
-		p.color_initial_ramp = grad
-		p.direction = Vector3(-side * 0.6, 1.0, 0.0)
-		p.spread = 55.0
-		p.initial_velocity_min = 3.0
-		p.initial_velocity_max = 7.0
-		p.gravity = Vector3(0, -4.0, 0)
-		p.damping_min = 1.0
-		p.damping_max = 2.0
-		p.angular_velocity_min = -360.0
-		p.angular_velocity_max = 360.0
-		p.angle_max = 360.0
-		p.scale_amount_min = 0.7
-		p.scale_amount_max = 1.6
-		cam.add_child(p)
-		p.position = Vector3(side * 2.6, -0.6 if big else 0.6, -5.0)
-		p.emitting = true
-		p.finished.connect(p.queue_free)
+		for band in 7:
+			for shape in 4:
+				var p := CPUParticles3D.new()
+				p.one_shot = true
+				p.explosiveness = rng.randf_range(0.80, 0.90)
+				var band_count := (23 if band < 6 else 22) if big else 10
+				p.amount = band_count / 4 + (1 if (shape + band) % 4 < band_count % 4 else 0)
+				p.lifetime = 3.2 if big else 2.2
+				p.mesh = _confetti_mesh(shape)
+				p.set_meta("coverage_lane", band)
+				p.set_meta("shape", shape)
+				var m := StandardMaterial3D.new()
+				m.vertex_color_use_as_albedo = true
+				m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+				m.cull_mode = BaseMaterial3D.CULL_DISABLED
+				p.material_override = m
+				var grad := Gradient.new()
+				grad.offsets = PackedFloat32Array([0.0, 0.17, 0.34, 0.5, 0.67, 0.84])
+				var colors := PAPEL.duplicate()
+				for i in range(colors.size()-1, 0, -1):
+					var j := rng.randi_range(0, i)
+					var swap: Color = colors[i]
+					colors[i] = colors[j]
+					colors[j] = swap
+				grad.colors = PackedColorArray(colors)
+				grad.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
+				p.color_initial_ramp = grad
+				var angle := deg_to_rad(-42.0 + band * 14.0 + rng.randf_range(-2.5, 2.5))
+				p.direction = Vector3(-side * 0.6 + tan(angle) + lean, 1.0, rng.randf_range(-0.04, 0.04))
+				p.spread = rng.randf_range(17.0, 20.0)
+				p.initial_velocity_min = 0.8 * lift
+				p.initial_velocity_max = 7.0 * lift
+				p.gravity = Vector3(0, -4.0, 0)
+				p.damping_min = 1.0
+				p.damping_max = 2.0
+				p.angular_velocity_min = rng.randf_range(-400.0, -300.0)
+				p.angular_velocity_max = rng.randf_range(300.0, 400.0)
+				p.angle_max = 360.0
+				p.scale_amount_min = 0.85
+				p.scale_amount_max = 1.45
+				root.add_child(p)
+				p.position = Vector3(side * 2.6, -0.6 if big else 0.6, -5.0) + origin
+				p.set_meta("burst_profile", [origin, lean, lift, p.spread])
+				p.emitting = true
+				p.finished.connect(p.queue_free)
+	root.get_tree().create_timer(4.2 if big else 3.0).timeout.connect(func():
+		if is_instance_valid(root):
+			root.queue_free())
 	Sound.play("clap", -4.0)
 
 
@@ -2169,3 +2226,18 @@ func _tick_hud_occlusion(delta: float) -> void:
 			if not covered and fade < 0.01:
 				fade = 0.0
 			mesh.transparency = fade
+
+func _fill_pause() -> void:
+	var p: Menu3D = menus.pause
+	p.clear_items()
+	p.add_button("RESUME", main._toggle_pause)
+	if main.game.practice:
+		p.add_button("AI SETTINGS", func(): main.show_screen("practice_ai"))
+	p.add_button("CONTROLS", func(): main._controls_back = "pause"; main.show_screen("controls"))
+	p.add_button("OPTIONS", func(): main._options_back = "pause"; main.show_screen("options"))
+	p.add_button("QUIT TO MENU", func():
+		get_tree().paused = false
+		main.game.end_match()
+		if Net.online:
+			Net.leave()
+		main._to_title(""))

@@ -71,3 +71,13 @@ static func round_robin(players: Array) -> Array:
 				seen[key] = true
 				pairs.append([players[i], players[j]])
 	return pairs
+
+
+## Training keeps the selected game's arena and target-line rules, but runs
+## one player indefinitely without a timer, elimination or a 1v1 requirement.
+static func practice_row(id: String) -> Dictionary:
+	var selected := id if id in ["scramble", "tower", "delmar"] else "scramble"
+	var result := row(selected).duplicate(true)
+	result.merge({"name": "Practice", "live": "turns", "round_end": "lock", "out": "never", "win": "none", "min_players": 1, "practice": true}, true)
+	result.erase("round_robin")
+	return result

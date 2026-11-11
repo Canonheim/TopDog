@@ -15,6 +15,8 @@ func _ready() -> void:
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(0.8).timeout
 	match open:
+		"practice_settings":
+			main._open_practice()
 		"browse_list":
 			main.show_screen("browse")
 			main.lucha.online._on_lobby_list([

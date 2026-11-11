@@ -563,7 +563,7 @@ func _exit_tree() -> void:
 func _on_phase(p: String) -> void:
 	_set_match_pace(p in ["turn", "round", "between"])
 	var from_pause := (screen == "controls" and _controls_back == "pause") or (screen == "options" and _options_back == "pause")
-	if p in ["turn", "round", "between"] and screen not in ["hud", "pause"] and not from_pause:
+	if p in ["turn", "round", "between"] and screen not in ["hud", "pause", "practice_ai"] and not from_pause:
 		show_screen("hud")
 
 
@@ -603,13 +603,17 @@ func show_screen(id: String) -> void:
 	if game != null and game.chair != null and (id == "results" or screen == "results"):
 		game.chair.visible = id != "results"
 	screen = id
+	if id == "pause":
+		for button in screens.pause.get_meta("box").get_children():
+			if button.has_meta("practice_ai_button"):
+				button.visible = game.practice
 	if id in ["local", "lobby"]:
 		preview_base(str(Net.settings.get("base", "random")))
 	if id == "results":
 		_results_elapsed = 0.0
 		_results_peak = game.tower_peak()
 		_tick_camera(0.0)
-	Sound.music("climb" if id in ["hud", "pause"] else "title")  # the match music plays on through a pause
+	Sound.music("climb" if id in ["hud", "pause", "practice_ai"] else "title")  # the match music plays on through a pause
 	for k in screens:
 		screens[k].visible = k == id
 	if pad_nav != null:
@@ -658,6 +662,7 @@ func _build_ui() -> void:
 	screens.hud = _screen_hud()
 	screens.results = _screen_results()
 	screens.pause = _screen_pause()
+	screens.practice_ai = _screen_practice_ai()
 	screens.controls = _screen_controls()
 	screens.options = _screen_options()
 	screens.customize = preload("res://ui/customization.gd").new(self)
@@ -734,7 +739,7 @@ func _screen_title() -> Control:
 	var box: VBoxContainer = c.get_meta("box")
 	# Play together is off the title for now (Parker 11-10: online first).
 	UiKit.button(box, "Play online", func(): show_screen("online"))
-	UiKit.button(box, "Practice", _start_practice)
+	UiKit.button(box, "Practice", _open_practice)
 	UiKit.button(box, "Customize", func(): show_screen("customize"))
 	UiKit.button(box, "Controls", func(): _controls_back = "title"; show_screen("controls"))
 	UiKit.button(box, "Options", func(): _options_back = "title"; show_screen("options"))
@@ -791,12 +796,20 @@ func _start_local() -> void:
 	show_screen("hud")
 
 
+var practice_settings := {"practice_mode": "scramble", "base": "barrel", "practice_npc": false}
+
+
+func _open_practice() -> void:
+	show_screen("practice_settings")
+
+
 func _start_practice() -> void:
 	Players.clear_players()
 	Players.add_player(Players.ANY)  # keyboard, mouse or any pad, swapped at will
 	local_mode = true
 	var s := Net.settings.duplicate()
 	s.mode = "practice"
+	s.merge(practice_settings, true)
 	game.host_start(s, [{"pid": 0, "name": Players.slots[0].name, "random": Players.slots[0].get("random", false), "tint": Players.slots[0].tint, "peer": 1, "slot": 0, "appearance": Wardrobe.for_slot(0)}])
 	show_screen("hud")
 
@@ -1037,10 +1050,21 @@ func _screen_results() -> Control:
 	return c
 
 
+func _screen_practice_ai() -> Control:
+	var c := UiKit.panel_screen("Practice AI", "Choose how the practice partner behaves.")
+	var box: VBoxContainer = c.get_meta("box")
+	for level in ["none", "stationary", "easy", "hard"]:
+		var choice: String = level
+		UiKit.button(box, "No NPC" if choice == "none" else ("Stationary" if choice == "stationary" else "Climb " + choice.capitalize()), func(): game.set_practice_ai(choice))
+	UiKit.button(box, "Back", func(): show_screen("pause"))
+	return c
+
 func _screen_pause() -> Control:
 	var c := UiKit.panel_screen("Paused", "")
 	var box: VBoxContainer = c.get_meta("box")
 	UiKit.button(box, "Resume", _toggle_pause)
+	var ai_button := UiKit.button(box, "AI Settings", func(): show_screen("practice_ai"))
+	ai_button.set_meta("practice_ai_button", true)
 	UiKit.button(box, "Controls", func(): _controls_back = "pause"; show_screen("controls"))
 	UiKit.button(box, "Options", func(): _options_back = "pause"; show_screen("options"))
 	UiKit.button(box, "Quit to the menu", func():
@@ -1106,7 +1130,7 @@ func _back() -> void:
 				screens.customize._cancel_delete()
 			else:
 				show_screen("title")
-		"local", "online":
+		"local", "online", "practice_settings":
 			show_screen("title")
 		"lobby":
 			_leave_lobby()
@@ -1116,6 +1140,8 @@ func _back() -> void:
 			show_screen(_controls_back)
 		"options":
 			show_screen(_options_back)
+		"practice_ai":
+			show_screen("pause")
 		"pause":
 			_toggle_pause()
 		"results":

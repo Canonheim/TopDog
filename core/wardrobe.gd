@@ -7,6 +7,8 @@ const SKIN_NAMES = ["Porcelain", "Sand", "Honey", "Tan", "Copper", "Brown", "Dee
 const SKINS = ["f6dfd1", "e5bb98", "c9905d", "af754a", "965936", "70432e", "422b25", "70cbe0", "99d06c", "ed9bc1"]
 const SUIT_NAMES = ["Red", "Gold", "Blue", "Turquoise", "Pink", "Purple", "Green", "Orange", "Black", "White"]
 const SUITS = ["f52236", "ffce28", "3264e8", "19c6bd", "ef398e", "8c47c7", "74bb35", "f58125", "252333", "f7f0dc"]
+const EFFECTS = ["confetti", "roses", "bills", "treasure", "treats"]
+const EFFECT_NAMES = ["Confetti", "Roses", "Money", "Treasure", "Treats"]
 var profiles: Array = []
 var selected := 0
 var save_error := ""
@@ -16,7 +18,7 @@ func _ready() -> void:
 
 func clean(value: Variant) -> Dictionary:
 	var p: Dictionary = value if value is Dictionary else {}
-	return {"head": clampi(int(p.get("head", 0)), 0, 1), "skin": clampi(int(p.get("skin", 1)), 0, SKINS.size()-1), "speedo": clampi(int(p.get("speedo", 0)), 0, SUITS.size()-1), "effect": "confetti"}
+	return {"head": clampi(int(p.get("head", 0)), 0, 1), "skin": clampi(int(p.get("skin", 1)), 0, SKINS.size()-1), "speedo": clampi(int(p.get("speedo", 0)), 0, SUITS.size()-1), "effect": p.get("effect", "confetti") if p.get("effect", "confetti") in EFFECTS else "confetti"}
 
 func load_profiles() -> void:
 	profiles.clear()
