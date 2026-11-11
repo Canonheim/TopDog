@@ -119,6 +119,7 @@ func host_start(p_settings: Dictionary, p_roster: Array) -> void:
 		announce.emit("Classic needs at least two players. Use Practice to climb alone.", false)
 		return
 	var match_settings := p_settings.duplicate(true)
+	match_settings.seed = randi()  # one seed per match: Del Mar's floaties drift the same everywhere
 	var choice := str(match_settings.get("base", "random"))
 	match_settings.resolved_base = Modes.STARTING_BASES.pick_random() if choice == "random" else choice
 	_rpc_start.rpc(match_settings, p_roster)
@@ -144,7 +145,7 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	if stage == null:
 		stage = Stage.new(str(settings.get("stage", "dock")))
 		stage.build(world, dress)
-	stage.set_delmar(world, str(mode.get("arena", "")) == "delmar")
+	stage.set_delmar(world, str(mode.get("arena", "")) == "delmar", int(settings.get("seed", 1)))
 	stage.set_base(world, str(settings.get("resolved_base", settings.get("base", "barrel"))))
 	stage.place_base()
 	_shown_line = stage.first_line
@@ -184,6 +185,16 @@ func _physics_process(delta: float) -> void:
 	if stage != null and stage.delmar:
 		_shown_line = lerpf(_shown_line, line, 1.0 - exp(-delta * 3.0))
 		stage.place_delmar_line(_shown_line)
+		if stage.floaties != null:
+			stage.floaties.tick(delta)
+			# Each machine bounces its own climbers (their physics runs here), and
+			# tells the others so the floatie squashes there too.
+			for c: Climber in climbers.values():
+				if c.state == Climber.State.LIVE and c.owner_peer == me():
+					var hit := stage.floaties.bounce(c)
+					if hit >= 0:
+						var com := c.centre_of_mass()
+						_rpc_floatie.rpc(hit, Vector3(com.x, com.y, 0.0))
 	var real_delta := delta / Engine.time_scale
 	_now += real_delta
 	_tick_fart_meters(real_delta)
@@ -1039,6 +1050,16 @@ func _play_rope(at: Vector3, speed: float) -> void:
 
 ## The bell broadcasts one of the 13 approved strikes, at its authored pitch,
 ## to every listener alongside the existing visual pulse.
+## A floatie bounced someone: it squashes and boings on every machine.
+@rpc("any_peer", "call_local", "reliable")
+func _rpc_floatie(i: int, at: Vector3) -> void:
+	if stage == null or stage.floaties == null or not at.is_finite():
+		return
+	if multiplayer.get_remote_sender_id() != me():
+		stage.floaties.squash(i)
+	Sound.play_at("rope", at, -4.0, world)
+
+
 const BELL_COOLDOWN_MS := 300  # per limb: a grip flickering on and off doesn't peal
 var _bell_wait := {}
 var bell_rings := 0  # rings heard on this machine (the batteries count them)

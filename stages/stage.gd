@@ -72,11 +72,19 @@ var delmar_root: Node3D = null
 var buoy_body: StaticBody3D = null
 var _rope: MeshInstance3D = null
 var _mast_pole: MeshInstance3D = null
+var floaties: DelMarFloaties = null
+var _rope_root: Node3D = null  # the UI creator's rope segments and streamers
+var _rope_segs: Array = []
+var _streamers: Array = []
+const BUOY_EYE := Vector3(-0.34, 0.37, 0.0)  # the rope ties here on the buoy (its model's eye)
+const STREAMER_STEP := 0.5  # one every 0.5 m, counted from the buoy end (they don't slide)
+const STREAMER_TINTS := [Color("#E0287A"), Color("#1FB8AE"), Color("#F28A1E"), Color("#7CC83A"), Color("#8A3FC0"), Color("#FFC928")]
+const FLOAT_X := Vector2(104.5, 135.0)  # the open water the floaties drift in (the plan's box)
 
 
 ## Del Mar on or off. Built when a Del Mar match starts, freed when one ends: the
 ## plaza never pays for it.
-func set_delmar(world: Node3D, on: bool) -> void:
+func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	if on == delmar and (not on or is_instance_valid(delmar_root)):
 		return
 	if is_instance_valid(delmar_root):
@@ -87,6 +95,10 @@ func set_delmar(world: Node3D, on: bool) -> void:
 	buoy_body = null
 	_rope = null
 	_mast_pole = null
+	floaties = null
+	_rope_root = null
+	_rope_segs.clear()
+	_streamers.clear()
 	delmar = on
 	if not on:
 		return
@@ -100,10 +112,14 @@ func set_delmar(world: Node3D, on: bool) -> void:
 	var dome := PackedVector2Array()
 	for k in 12:
 		var a := PI * float(k) / 11.0
-		dome.append(Vector2(cos(a) * BUOY_R, sin(a) * BUOY_R * 1.3))
+		dome.append(Vector2(cos(a) * BUOY_R, sin(a) * 0.7))
 	buoy_body = _static_poly(delmar_root, dome, 0.6, 0.5)
 	buoy_body.set_meta("no_weld", true)
 	bodies.erase(buoy_body)
+	floaties = DelMarFloaties.new()
+	floaties.name = "Floaties"
+	delmar_root.add_child(floaties)
+	floaties.setup(seed_value, WATER_Y, FLOAT_X.x, FLOAT_X.y)
 	if base_dressed:
 		_dress_delmar()
 
@@ -133,13 +149,22 @@ func _dress_delmar() -> void:
 	_rope.mesh = cyl
 	_rope.material_override = CelPass.cel_material(Color("#D8262E"))
 	delmar_root.add_child(_rope)
-	var buoy := MeshInstance3D.new()
-	var sph := SphereMesh.new()
-	sph.radius = BUOY_R
-	sph.height = BUOY_R * 2.6
-	buoy.mesh = sph
-	buoy.material_override = CelPass.cel_material(Color("#E23B3B"))
-	buoy_body.add_child(buoy)
+	var buoy_model := LuchaKit.kit_model("delmar_buoy")
+	if buoy_model != null:
+		buoy_body.add_child(buoy_model)
+	else:
+		var buoy := MeshInstance3D.new()
+		var sph := SphereMesh.new()
+		sph.radius = BUOY_R
+		sph.height = BUOY_R * 2.6
+		buoy.mesh = sph
+		buoy.material_override = CelPass.cel_material(Color("#E23B3B"))
+		buoy_body.add_child(buoy)
+	if LuchaKit.kit_model_exists("delmar_rope_seg"):
+		_rope.visible = false
+		_rope_root = Node3D.new()
+		_rope_root.name = "Rope"
+		delmar_root.add_child(_rope_root)
 
 
 ## Where Del Mar's line is: `c` in the line's units (x + y). The buoy floats where the
@@ -155,11 +180,55 @@ func place_delmar_line(c: float) -> void:
 	if _mast_pole != null:
 		_mast_pole.scale = Vector3(1, maxf(0.5, eye.y - DECK_Y), 1)
 		_mast_pole.position = Vector3(MAST_X, DECK_Y + (eye.y - DECK_Y) * 0.5, MAST_Z)
-	if _rope != null:
-		var a := buoy_at + Vector3(0, BUOY_R * 0.9, 0)
+	if floaties != null:
+		floaties.buoy_x = buoy_at.x
+	var a := buoy_at + BUOY_EYE
+	if _rope_root != null:
+		_string_rope(a, eye)
+	elif _rope != null:
 		var mid := (a + eye) * 0.5
 		var along := eye - a
 		_rope.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, along.normalized())).scaled(Vector3(1, along.length(), 1)), mid)
+
+
+## The UI creator's rope: 1 m segments from the buoy's eye to the mast's eye (the last one
+## cut to length), and a streamer every 0.5 m counted from the buoy end, so they never
+## slide as the rope grows; new ones appear at the mast end.
+func _string_rope(a: Vector3, b: Vector3) -> void:
+	var along := b - a
+	var length := along.length()
+	if length < 0.01:
+		return
+	var dir := along / length
+	var basis := Basis(Quaternion(Vector3.RIGHT, dir))
+	var n := int(ceil(length))
+	while _rope_segs.size() < n:
+		var seg := LuchaKit.kit_model("delmar_rope_seg")
+		_rope_root.add_child(seg)
+		_rope_segs.append(seg)
+	for i in _rope_segs.size():
+		var seg: Node3D = _rope_segs[i]
+		seg.visible = i < n
+		if i < n:
+			var part := minf(1.0, length - float(i))
+			seg.global_transform = Transform3D(basis.scaled(Vector3(part, 1, 1)), a + dir * float(i))
+	var m := int(floor(length / STREAMER_STEP))
+	while _streamers.size() < m:
+		var k := _streamers.size()
+		var st := LuchaKit.kit_model("delmar_streamer_" + "abc"[k % 3])
+		if st == null:
+			break
+		LuchaKit.tint_part(st, "streamer_" + "abc"[k % 3], STREAMER_TINTS[k % STREAMER_TINTS.size()])
+		_rope_root.add_child(st)
+		_streamers.append(st)
+	var t := Time.get_ticks_msec() / 1000.0
+	for k in _streamers.size():
+		var st: Node3D = _streamers[k]
+		st.visible = k < m
+		if k < m:
+			var at := a + dir * (STREAMER_STEP * float(k + 1))
+			st.global_position = at
+			st.rotation = Vector3(0, sin(t * 1.3 + k) * 0.17, sin(t * 2.1 + k * 0.7) * 0.31)
 
 
 ## The base on the canvas (the plaza), or flush on the pier's end (Del Mar: "At the end

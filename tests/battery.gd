@@ -2516,6 +2516,41 @@ func _run_delmar() -> void:
 		Climber.sync_server(rb)
 	await frames(6)
 	t("delmar: falling in the sea is out", not g.alive[1] and not g.live.has(1), [g.alive, g.live.keys()])
+	# The floaties: they stay left of the buoy, and a fall onto one throws you up and left.
+	var fl: DelMarFloaties = st.floaties
+	t("delmar: six floaties drift out in the water, none sitting in the buoy", fl != null and fl._items.size() == DelMarFloaties.COUNT and fl._items.all(func(it): return absf(float(it.x) - fl.buoy_x) >= DelMarFloaties.BUOY_CLEAR - 0.01), fl._items.map(func(it): return snappedf(float(it.x), 0.1)) if fl != null else [])
+	# The buoy glides out through one: it ends up on the buoy's left.
+	var ahead: Dictionary = fl._items.filter(func(it): return bool(it.right))[0] if fl._items.any(func(it): return bool(it.right)) else {}
+	if not ahead.is_empty():
+		var start_buoy := fl.buoy_x
+		for k in 200:
+			fl.buoy_x = start_buoy + float(k) * 0.2
+			fl.tick(1.0 / 60.0)
+			if not bool(ahead.right):
+				break
+		t("delmar: the buoy passing through a floatie leaves it on the buoy's left", not bool(ahead.right) and float(ahead.x) < fl.buoy_x, "floatie %.2f, buoy %.2f" % [float(ahead.x), fl.buoy_x])
+		fl.buoy_x = start_buoy
+		for it: Dictionary in fl._items:
+			it.right = float(it.home) > start_buoy
+	fl._items[0].amp = 0.0  # hold this one still: it drifts out from under a test fall
+	fl.tick(0.0)
+	var spare := spawn(Vector2(float(fl._items[0].x), Stage.WATER_Y + 3.0))
+	spare.release_all()
+	await frames(1)
+	var hit := -1
+	for k in 60:
+		for b in spare.bodies.values():
+			(b as RigidBody3D).linear_velocity.y = minf((b as RigidBody3D).linear_velocity.y, -4.0)
+		hit = fl.bounce(spare)
+		if hit >= 0:
+			break
+		await get_tree().physics_frame
+	var vv := Vector2.ZERO
+	for b in spare.bodies.values():
+		vv += Vector2((b as RigidBody3D).linear_velocity.x, (b as RigidBody3D).linear_velocity.y) * (b as RigidBody3D).mass
+	vv /= spare.total_mass
+	t("delmar: a fall onto a floatie throws you up and back toward the tower", hit >= 0 and vv.y > 2.5 and vv.x < -1.0, "hit %d, v (%.2f, %.2f)" % [hit, vv.x, vv.y])
+	spare.remove()
 	g.end_match()
 	await frames(2)
 	t("delmar: after the match the pier is gone and the base is back on the canvas", not st.delmar and not is_instance_valid(st.delmar_root) and st.base_root.position.is_zero_approx())

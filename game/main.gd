@@ -407,6 +407,12 @@ func _tick_camera(delta: float) -> void:
 				hi = lo
 	else:
 		_personal_camera = false
+	if follow and delmar:
+		# DEL MAR'S MATCH VIEW (the Environment Maker's plan): the climbers, the pier's
+		# end and the buoy where the rope meets the sea, so you see where to build.
+		var buoy_x := game.line - Stage.WATER_Y
+		lo = lo.min(Vector2(Stage.PIER_END - 4.0, Stage.WATER_Y - 0.4))
+		hi = hi.max(Vector2(buoy_x + 1.5, Stage.DECK_Y + 2.6))
 	if follow:
 		lo -= Vector2(1.2, 1.15)
 		hi += Vector2(1.2, 1.35)
@@ -420,6 +426,8 @@ func _tick_camera(delta: float) -> void:
 		aspect = vs.x / maxf(vs.y, 1.0)
 	var half_h := maxf((hi.y - lo.y) * 0.5, (hi.x - lo.x) * 0.5 / aspect)
 	half_h = maxf(half_h, FOLLOW_HALF_H if follow else 3.2)
+	if delmar:
+		half_h = clampf(half_h, 4.0, 9.5)
 	var dist := half_h / tan(deg_to_rad(_cam_fov * 0.5))
 	# THE PLAZA CLAMP (Parker 11-10, the Environment Maker's plan): the camera's centre
 	# stays within PLAZA_CAM_X of the ring, so a climber flung out across the 60 m floor
