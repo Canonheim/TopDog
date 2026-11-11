@@ -21,8 +21,13 @@ extends Node3D
 ## stand-in is built in its place, so the scene is whole at every stage.
 
 const GROUND_Y := -0.92  # the plaza land's top: the town's ground meets it exactly
-const BEACH_W := 10.0  # the beach, from the land's edge down to the waterline
-const SAND_LOW := -1.95  # the sand runs on just under the water
+const BEACH_MAX := 16.0  # the beach, from the land's edge down to the waterline, where there's room
+const WET_W := 2.6  # the wet sand band above the waterline
+const WET_TOP := -1.32  # the wet sand's top edge
+const HILL_Z0 := -44.0  # the hillside behind the town starts here (past the headland)
+const HILL_MAX := 9.5
+const BERM_MAX := 1.2  # the beach's top above the plaza's ground level, behind the town
+const HILL_PEAK := 0.14  # its crest, as a fraction of the way from the district line to the beach
 const WATER_Y := -1.8  # Stage.WATER_Y
 const FAR_SHORE_Z := -300.0  # the land ends here, behind the plaza's mountains
 const HORIZON := 2500.0
@@ -31,8 +36,18 @@ const COAST := [Vector2(84, 60), Vector2(86, 0), Vector2(90, -40), Vector2(108, 
 	Vector2(190, -230), Vector2(225, -270), Vector2(240, -300)]
 const LAND := Color("#C9BE92")
 const SAND := Color("#E6D1A0")
-const WET_SAND := Color("#CDB683")
+const WET_SAND := Color("#A99873")
+const DUNE := Color("#EBD9A8")
+const FOAM := Color("#F4F8FF")
+const ROCK := Color("#9C8F80")
+const ROCK_DARK := Color("#7E7366")
+const BEACH_GRASS := Color("#8FA84A")
+const BEACH_GRASS_DARK := Color("#6E8A3A")
 const SEA := Color("#2F7FD0")
+const SHALLOWS := Color("#3FA9DC")
+const SEA_MID := Color("#3792D6")
+const HILL_FAR := Color("#86A77C")
+const HILL_DARK := Color("#6E8A4A")
 const STONE := Color("#C2A878")
 const BRICK := Color("#8A7662")  # the mortar behind the bricks
 const PARAPET := Color("#D6C3A0")
@@ -44,7 +59,7 @@ const BULBS := [Color("#E0287A"), Color("#FFC928"), Color("#1FB8AE"), Color("#7C
 
 ## The shore row and the near pieces: [kit stem, x, z, yaw (degrees)], from the CSV.
 const PIECES := [
-	["lifeguard_tower", 79.0, 7.0, 0], ["beach_bar", 71.0, -8.0, 0],
+	["lifeguard_tower", 79.0, 7.0, 0], ["beach_bar", 78.2, -7.4, 0],
 	["beach_house_b", 78.4, -14.9, 41], ["beach_hut_a", 79.2, -22.4, 33], ["cabana_a", 79.7, -27.7, 29],
 	["beach_hut_c", 80.3, -33.7, 25], ["beach_house_a", 80.9, -39.5, 22], ["cabana_b", 83.4, -49.2, 17],
 	["stall_coco", 85.2, -55.4, 14], ["beach_hut_b", 87.2, -62.0, 12], ["stall_paletas", 89.0, -67.9, 9],
@@ -68,7 +83,7 @@ const STAND_IN := {
 	"stall_coco": [3.5, 3.0, 1.8, "#A8D05A"], "stall_paletas": [3.2, 2.9, 1.8, "#9DC3E6"], "lighthouse_spit": [4.0, 14.0, 4.0, "#F2EEE4"],
 	"el_faro": [3.2, 17.0, 3.2, "#F2EEE4"], "surf_rack": [2.0, 2.0, 0.8, "#E8B14A"],
 }
-const PALMS := [Vector2(81.3, -8.5), Vector2(82.7, -22.5), Vector2(84.7, -41.6), Vector2(91.3, -63.6), Vector2(99.1, -89.6),
+const PALMS := [Vector2(84.6, -10.8), Vector2(82.7, -22.5), Vector2(84.7, -41.6), Vector2(91.3, -63.6), Vector2(99.1, -89.6),
 	Vector2(114.1, -120.8), Vector2(133.3, -152.8), Vector2(158.8, -193.1), Vector2(185.9, -233.6), Vector2(62.0, -3.0), Vector2(56.0, -16.0)]
 const UMBRELLAS := [Vector3(70, 2, 0), Vector3(74, 9, 1), Vector3(82, 15, 2), Vector3(66, 10, 3), Vector3(60, 4, 4)]
 const POSTS := [45.0, 52.0, 59.0, 66.0, 73.0]  # on the boardwalk's back edge
@@ -91,6 +106,8 @@ const CLOUDS := [Vector4(122, 20, -110, 22), Vector4(152, 26, -150, 30), Vector4
 	Vector4(205, 34, -200, 40), Vector4(212, 44, -260, 36), Vector4(262, 48, -330, 52)]
 
 var water: MeshInstance3D = null  # the sea, for the game's splashes
+var _foam: MeshInstance3D = null
+var _piece_at: Array = []  # each placed piece: Vector3(x, its footprint's half-diagonal, z), for clearances
 var _ships: Array = []  # [node, x0, x1, phase, speed]
 var _clouds: Array = []  # [node, base x]
 var _bobbers: Array = []  # [node, base y, phase]
@@ -107,6 +124,15 @@ static func district_line(d: float) -> float:
 
 ## The waterline's x at depth z (z from +60 to -300).
 static func coast_x(z: float) -> float:
+	# The plan's polyline, its corners rounded (a 24 m average), so the shore curves.
+	var sum := 0.0
+	for k in 5:
+		sum += _coast_lin(z + (k - 2) * 6.0)
+	return sum / 5.0
+
+
+static func _coast_lin(z: float) -> float:
+	z = clampf(z, FAR_SHORE_Z, 60.0)
 	for i in COAST.size() - 1:
 		var a: Vector2 = COAST[i]
 		var b: Vector2 = COAST[i + 1]
@@ -128,15 +154,61 @@ static func plaza_land_outline() -> PackedVector2Array:
 	return pts
 
 
-## The ground's height at (x, z): the land's flat top, falling across the beach to
-## just under the water at the waterline.
+## The beach's width at depth z: up to BEACH_MAX, never past the district line.
+static func beach_w(z: float) -> float:
+	return clampf(coast_x(z) - (district_line(-z) + 0.5), 4.0, BEACH_MAX)
+
+
+## The shore's profile: the ground's height `u` metres in from the waterline (minus is
+## under the water): under the water it shelves away, the wet sand rises from the
+## waterline, then the dry sand rises gently to meet the land at GROUND_Y.
+static func shore_y(u: float, w: float, z := 0.0) -> float:
+	var wet := wet_w(z)
+	if u <= 0.0:
+		return lerpf(WATER_Y, WATER_Y - 0.7, clampf(-u / 4.0, 0.0, 1.0))
+	if u <= wet:
+		return lerpf(WATER_Y, WET_TOP, u / wet)
+	return lerpf(WET_TOP, GROUND_Y + berm(z), smoothstep(0.0, 1.0, (u - wet) / maxf(w - wet, 0.1)))
+
+
+## The wet band's width, wider and narrower along the shore.
+static func wet_w(z: float) -> float:
+	return WET_W * (1.0 + 0.32 * sin(z * 0.17) + 0.18 * sin(z * 0.41 + 0.8))
+
+
+## The berm: how far the beach's top stands above GROUND_Y. Nothing by the pier and the
+## boardwalk, up to BERM_MAX behind the town, and nothing where the land behind is too
+## narrow to come back down to the plaza's level at the district line.
+static func berm(z: float) -> float:
+	var strip := (coast_x(z) - beach_w(z)) - district_line(-z)
+	return BERM_MAX * smoothstep(-14.0, -30.0, z) * clampf((strip - 1.0) / 5.0, 0.0, 1.0)
+
+
+## The land's rise above GROUND_Y behind the beach: a hillside behind the town, past
+## the headland (z < HILL_Z0). Zero at the district line, so it meets the plaza's flat
+## land exactly; it climbs steeply just inside the line (that face is never seen) and
+## falls gently to the beach's top, the side the pier looks at.
+static func land_h(x: float, z: float) -> float:
+	var x0 := district_line(-z)
+	var x1 := coast_x(z) - beach_w(z)
+	if x1 - x0 < 1.0:
+		return 0.0
+	var f := clampf((x - x0) / (x1 - x0), 0.0, 1.0)
+	if z > HILL_Z0:
+		return berm(z) * smoothstep(0.45, 1.0, f)
+	var ramp := smoothstep(HILL_Z0, HILL_Z0 - 10.0, z)
+	var amp := minf(HILL_MAX, (x1 - x0) * 0.5) * (0.78 + 0.16 * sin(z * 0.21) + 0.1 * sin(z * 0.47 + 1.7))
+	var profile := smoothstep(0.0, HILL_PEAK, f) if f < HILL_PEAK else pow(1.0 - (f - HILL_PEAK) / (1.0 - HILL_PEAK), 1.25)
+	return ramp * amp * profile + berm(z) * smoothstep(0.45, 1.0, f)
+
+
+## The ground's height at (x, z).
 static func ground_y(x: float, z: float) -> float:
-	var cx := coast_x(z)
-	var w := cx - maxf(cx - BEACH_W, district_line(-z) + 0.5)
-	var inland := cx - x
-	if inland >= w:
-		return GROUND_Y
-	return lerpf(SAND_LOW, GROUND_Y, clampf(inland / maxf(w, 0.1), 0.0, 1.0))
+	var w := beach_w(z)
+	var u := coast_x(z) - x
+	if u >= w:
+		return GROUND_Y + land_h(x, z)
+	return shore_y(u, w, z)
 
 
 # ---------------------------------------------------------------- build and tick
@@ -145,9 +217,11 @@ func build() -> void:
 	name = "DelMarScenery"
 	_rng.seed = 2611
 	_build_ground()
+	_build_far_shore()
 	_build_headland()
 	_build_boardwalk()
 	_build_town()
+	_build_shore_dressing()
 	_build_sea_life()
 	_build_clouds()
 
@@ -168,6 +242,9 @@ func tick(delta: float) -> void:
 		var cn: Node3D = c[0]
 		# Drift right, wrap back to the start: never left of where the plan placed it.
 		cn.position.x = float(c[1]) + fposmod(_t * 0.6, 60.0)
+	if _foam != null:
+		# The foam line breathes in and out a little with the swell.
+		_foam.position.x = sin(_t * 0.8) * 0.18
 
 
 ## The water node, for the game's splashes.
@@ -178,59 +255,387 @@ func water_node() -> Node3D:
 # ---------------------------------------------------------------- the ground and the sea
 
 func _build_ground() -> void:
-	var land := PackedVector2Array()
-	# From the district line at the front, across to the beach's inner edge, back along
-	# the shore to the far shore, and home along the district line.
-	var shore_in: Array = []  # the beach's inner edge, front to back
-	var shore_out: Array = []  # the waterline
+	# Rows across the shore every 2.5 m from the front (z +60) to the far shore, each of
+	# the same 14 points: six over the land from the district line (on the plaza's flat,
+	# GROUND_Y) over the hillside to the beach's top, three down the dry sand, then the
+	# wet sand's top, its middle, the waterline, and two under the water.
+	var rows: Array = []
 	var z := 60.0
-	while z >= FAR_SHORE_Z:
+	while z >= FAR_SHORE_Z - 0.01:
 		var cx := coast_x(z)
-		# The beach's inner edge never crosses the district line (the far shore is
-		# narrow: there the beach runs right up to the line).
-		shore_in.append(Vector2(maxf(cx - BEACH_W, district_line(-z) + 0.5), z))
-		shore_out.append(Vector2(cx, z))
-		z -= 5.0
-	land.append(Vector2(district_line(0.0), 60.0))
-	for p in shore_in:
-		land.append(p)
-	var d := -FAR_SHORE_Z
-	while d >= 0.0:
-		land.append(Vector2(district_line(d), -d))
-		d -= 10.0
-	add_child(_flat(land, GROUND_Y, LAND, "Land"))
-	# The beach: a strip falling from the land's edge to just under the waterline.
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in shore_in.size() - 1:
-		var a: Vector2 = shore_in[i]
-		var b: Vector2 = shore_in[i + 1]
-		var c: Vector2 = shore_out[i + 1]
-		var e: Vector2 = shore_out[i]
-		var la := Vector3(a.x, GROUND_Y, a.y)
-		var lb := Vector3(b.x, GROUND_Y, b.y)
-		var wc := Vector3(c.x, SAND_LOW, c.y)
-		var we := Vector3(e.x, SAND_LOW, e.y)
-		var n := (lb - la).cross(we - la).normalized()
-		if n.y < 0.0:
-			n = -n
-		_quad(st, la, lb, wc, we, n)
-	var beach := MeshInstance3D.new()
-	beach.name = "Beach"
-	beach.mesh = st.commit()
-	beach.material_override = LuchaKit.mat(SAND)
-	add_child(beach)
-	# The sea: right of the waterline in front of the far shore, everywhere behind it.
-	var sea := PackedVector2Array([Vector2(coast_x(60.0) - 3.0, 60.0)])
-	for p in shore_out:
-		sea.append((p as Vector2) + Vector2(-3.0, 0.0))  # under the sand's toe, no gap
-	sea.append(Vector2(-HORIZON, FAR_SHORE_Z))
-	sea.append(Vector2(-HORIZON, -HORIZON))
-	sea.append(Vector2(HORIZON, -HORIZON))
-	sea.append(Vector2(HORIZON, 60.0))
-	water = _flat(sea, WATER_Y, SEA, "Sea")
+		var w := beach_w(z)
+		var x0 := district_line(-z) if z < 0.0 else district_line(0.0)
+		var x1 := cx - w
+		var row := PackedVector3Array()
+		for f in [0.0, HILL_PEAK, 0.34, 0.56, 0.78, 1.0]:
+			var x := lerpf(x0, x1, f)
+			row.append(Vector3(x, GROUND_Y + land_h(x, z), z))
+		var wet := wet_w(z)
+		for u in [wet + (w - wet) * 0.72, wet + (w - wet) * 0.44, wet + (w - wet) * 0.18, wet, wet * 0.5, 0.0, -1.5, -4.0]:
+			row.append(Vector3(cx - u, shore_y(u, w, z), z))
+		rows.append(row)
+		z -= 2.5
+	# Surfaces: 0 land, 1 the hillside's grass, 2 dry sand, 3 wet sand.
+	var sts: Array = []
+	for i in 4:
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		sts.append(st)
+	for r in rows.size() - 1:
+		var a: PackedVector3Array = rows[r]
+		var b: PackedVector3Array = rows[r + 1]
+		for k in 13:
+			var surf := 3
+			if k <= 4:
+				surf = 1 if (a[k].y + a[k + 1].y + b[k].y + b[k + 1].y) * 0.25 > GROUND_Y + 0.8 else 0
+			elif k <= 8:
+				surf = 2
+			_face(sts[surf], a[k], a[k + 1], b[k + 1])
+			_face(sts[surf], a[k], b[k + 1], b[k])
+	var ground := MeshInstance3D.new()
+	ground.name = "Ground"
+	var mesh := ArrayMesh.new()
+	var cols := [LAND, GRASS, SAND, WET_SAND]
+	for i in 4:
+		var before := mesh.get_surface_count()
+		(sts[i] as SurfaceTool).commit(mesh)
+		if mesh.get_surface_count() > before:
+			mesh.surface_set_material(mesh.get_surface_count() - 1, LuchaKit.mat(cols[i]))
+	ground.mesh = mesh
+	add_child(ground)
+	# The foam line: a thin wavy band lying on the water just off the waterline.
+	var fst := SurfaceTool.new()
+	fst.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var fz := 60.0
+	var prev_in := Vector3.ZERO
+	var prev_out := Vector3.ZERO
+	var first := true
+	while fz >= FAR_SHORE_Z - 0.01:
+		var cx := coast_x(fz)
+		var wob := 0.3 + 0.75 * absf(sin(fz * 0.42)) + 0.2 * sin(fz * 1.9 + 0.6)  # scallops
+		var pin := Vector3(cx + 0.15, WATER_Y + 0.012, fz)
+		var pout := Vector3(cx + 0.15 + wob, WATER_Y + 0.012, fz)
+		if not first:
+			_face(fst, prev_in, prev_out, pout)
+			_face(fst, prev_in, pout, pin)
+		prev_in = pin
+		prev_out = pout
+		first = false
+		fz -= 1.5
+	_foam = MeshInstance3D.new()
+	_foam.name = "Foam"
+	_foam.mesh = fst.commit()
+	_foam.material_override = LuchaKit.mat(FOAM)
+	_foam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_foam)
+	# The sea, one flat mesh in two tones that share their edge exactly (so no ink
+	# between them): the shallows, a paler band along the shore from under the sand's
+	# toe out about 9 m, and the deep beyond, round behind the far shore to the horizon.
+	var sh := SurfaceTool.new()
+	sh.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var mid_st := SurfaceTool.new()
+	mid_st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var pc := Vector3.ZERO
+	var edge := PackedVector2Array()  # the shallows' outer edge, front to back
+	var sz := 60.0
+	var have_prev := false
+	var pa := Vector3.ZERO
+	var pb := Vector3.ZERO
+	while sz >= FAR_SHORE_Z - 0.01:
+		var cx := coast_x(sz)
+		var out := cx + 5.5 + 2.2 * sin(sz * 0.11) + 1.0 * sin(sz * 0.31 + 0.9)
+		var out2 := out + 7.0 + 3.0 * sin(sz * 0.07 + 2.0) + 1.5 * sin(sz * 0.23)
+		var a3 := Vector3(cx - 5.0, WATER_Y, sz)
+		var b3 := Vector3(out, WATER_Y, sz)
+		var c3 := Vector3(out2, WATER_Y, sz)
+		edge.append(Vector2(out2, sz))
+		if have_prev:
+			_tri(sh, pa, pb, b3, Vector3.UP)
+			_tri(sh, pa, b3, a3, Vector3.UP)
+			_tri(mid_st, pb, pc, c3, Vector3.UP)
+			_tri(mid_st, pb, c3, b3, Vector3.UP)
+		pa = a3
+		pb = b3
+		pc = c3
+		have_prev = true
+		sz -= 5.0
+	var deep := PackedVector2Array()
+	for p in edge:
+		deep.append(p)
+	deep.append(Vector2(-HORIZON, FAR_SHORE_Z - 6.0))
+	deep.append(Vector2(-HORIZON, -HORIZON))
+	deep.append(Vector2(HORIZON, -HORIZON))
+	deep.append(Vector2(HORIZON, 60.0))
+	var dp := SurfaceTool.new()
+	dp.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var tris := Geometry2D.triangulate_polygon(deep)
+	for k in range(0, tris.size(), 3):
+		_tri(dp, Vector3(deep[tris[k]].x, WATER_Y, deep[tris[k]].y), Vector3(deep[tris[k + 1]].x, WATER_Y, deep[tris[k + 1]].y),
+			Vector3(deep[tris[k + 2]].x, WATER_Y, deep[tris[k + 2]].y), Vector3.UP)
+	var sea_mesh := ArrayMesh.new()
+	dp.commit(sea_mesh)
+	sea_mesh.surface_set_material(0, LuchaKit.mat(SEA))
+	sh.commit(sea_mesh)
+	sea_mesh.surface_set_material(1, LuchaKit.mat(SHALLOWS))
+	mid_st.commit(sea_mesh)
+	sea_mesh.surface_set_material(2, LuchaKit.mat(SEA_MID))
+	water = MeshInstance3D.new()
+	water.name = "Sea"
+	water.mesh = sea_mesh
 	water.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(water)
+
+
+## The far shore at z -300 (where the plaza's land ends, behind the lowered mountains):
+## a beach shelving into the sea along it, and overlapping low faceted hills just
+## inland, so the far side of the bay reads as a coast, not a cut.
+func _build_far_shore() -> void:
+	var root := Node3D.new()
+	root.name = "FarShore"
+	add_child(root)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var wst := SurfaceTool.new()
+	wst.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var x := -600.0
+	while x < coast_x(FAR_SHORE_Z) - 0.01:
+		var x2 := minf(x + 20.0, coast_x(FAR_SHORE_Z))
+		var zs := [FAR_SHORE_Z, FAR_SHORE_Z - 3.5, FAR_SHORE_Z - 5.0, FAR_SHORE_Z - 9.0]
+		var ys := [GROUND_Y, WET_TOP, WATER_Y, WATER_Y - 0.7]
+		for k in 3:
+			var target: SurfaceTool = st if k == 0 else wst
+			var a := Vector3(x, ys[k], zs[k])
+			var b := Vector3(x2, ys[k], zs[k])
+			var c := Vector3(x2, ys[k + 1], zs[k + 1])
+			var d := Vector3(x, ys[k + 1], zs[k + 1])
+			_face(target, a, b, c)
+			_face(target, a, c, d)
+		x = x2
+	var mesh := ArrayMesh.new()
+	st.commit(mesh)
+	mesh.surface_set_material(0, LuchaKit.mat(SAND))
+	wst.commit(mesh)
+	mesh.surface_set_material(1, LuchaKit.mat(WET_SAND))
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	root.add_child(mi)
+	# Two rows of hills: a lower sandy row in front, taller green ones behind.
+	for rowi in 3:
+		var hx := -170.0 + rowi * 9.0
+		while hx < 212.0:
+			var w := _rng.randf_range(20.0, 38.0) * (1.0 + 0.5 * rowi)
+			var h: float = [_rng.randf_range(3.5, 6.0), _rng.randf_range(8.0, 13.0), _rng.randf_range(15.0, 24.0)][rowi]
+			var col: Color = [DUNE, GRASS if _rng.randf() < 0.6 else HILL_DARK, HILL_FAR][rowi]
+			var hz: float = FAR_SHORE_Z + [9.0, 20.0, 34.0][rowi] + _rng.randf_range(0.0, 5.0)
+			root.add_child(_mound(Vector3(hx + w * 0.5, GROUND_Y, hz), Vector3(w, h, 14.0), col, 14))
+			if rowi == 1 and _rng.randf() < 0.6:
+				var palm := _any_palm()
+				palm.position = Vector3(hx + w * _rng.randf_range(0.3, 0.7), GROUND_Y + h * 0.82, hz - 1.0)
+				palm.rotation.y = _rng.randf() * TAU
+				palm.scale = Vector3.ONE * 1.5
+				root.add_child(palm)
+			hx += w * _rng.randf_range(0.5, 0.75)
+
+
+## The shore's dressing: a ridge of low dunes with beach grass behind the row, palms and
+## bushes on the hillside, a rocky point at the bay's bend, rocks in the surf, boulders
+## at the headland's foot and round the spit's lighthouse. Nothing stands in the pier's
+## strip (z -2 to +2 right of x 74) or the bridge's open water.
+func _build_shore_dressing() -> void:
+	var root := Node3D.new()
+	root.name = "ShoreDressing"
+	add_child(root)
+	# The dune ridge, behind and between the row's pieces along the beach's top.
+	var z := -10.0
+	while z > -292.0:
+		var w := beach_w(z)
+		if w >= 7.0:
+			var u := w - _rng.randf_range(0.6, 1.8)
+			var x := coast_x(z) - u
+			if _clear_of_pieces(x, z, 2.6):
+				var size := Vector3(_rng.randf_range(3.5, 6.5), _rng.randf_range(0.7, 1.5), _rng.randf_range(2.2, 3.4))
+				var at := Vector3(x, ground_y(x, z) - 0.15, z)
+				var dune := _mound(at, size, DUNE, 7)
+				dune.rotation.y = _rng.randf_range(-0.5, 0.5)
+				root.add_child(dune)
+				_grass(root, at + Vector3(0, size.y * 0.8, 0), size.x * 0.32, 4 + _rng.randi() % 3)
+		z -= _rng.randf_range(3.5, 6.5) * (1.0 + 0.5 * (-z / 250.0))
+	# Front dunes on the near beach, left of the pier's root (seen in the pan).
+	for p in [Vector3(58, 0, 14), Vector3(66, 0, 22), Vector3(54, 0, 28), Vector3(72, 0, 34)]:
+		var at := Vector3(p.x, ground_y(p.x, p.z) - 0.15, p.z)
+		var sz := Vector3(_rng.randf_range(4.0, 6.0), _rng.randf_range(0.8, 1.4), _rng.randf_range(2.5, 3.5))
+		var dn := _mound(at, sz, DUNE, 7)
+		dn.rotation.y = _rng.randf_range(-0.6, 0.6)
+		root.add_child(dn)
+		_grass(root, at + Vector3(0, sz.y * 0.8, 0), sz.x * 0.32, 5)
+	# Palms and bushes on the hillside behind the town.
+	var hz := HILL_Z0 - 6.0
+	while hz > -78.0:
+		var x0 := district_line(-hz)
+		var x1 := coast_x(hz) - beach_w(hz)
+		if x1 - x0 > 4.0:
+			var hx := lerpf(x0, x1, _rng.randf_range(0.3, 0.8))
+			var at := Vector3(hx, ground_y(hx, hz), hz)
+			if _rng.randf() < 0.55:
+				var palm := _any_palm()
+				palm.position = at - Vector3(0, 0.1, 0)
+				palm.rotation.y = _rng.randf() * TAU
+				palm.scale = Vector3.ONE * _rng.randf_range(0.8, 1.05)
+				root.add_child(palm)
+			else:
+				_bush(root, at, _rng.randf_range(0.6, 0.9))
+		hz -= _rng.randf_range(2.5, 4.5)
+	# The rocky point at the bay's bend: big boulders stepping out into the sea.
+	var bend := Vector2(coast_x(-100.0), -100.0)
+	for k in 9:
+		var out := float(k) * 1.2 + _rng.randf_range(-0.4, 0.4)
+		var s := lerpf(3.4, 1.0, float(k) / 8.0) * _rng.randf_range(0.8, 1.15)
+		_rock(root, Vector3(bend.x + 0.5 + out, WATER_Y, bend.y + _rng.randf_range(-2.6, 2.6) - out * 0.35), Vector3(s * 1.5, s, s * 1.2), k)
+	# Rocks in the surf, in clusters along the shore.
+	for rz in [-24.0, -47.0, -72.0, -128.0, -163.0, -206.0, -246.0, -284.0]:
+		var cx := coast_x(rz)
+		for k in 3 + _rng.randi() % 3:
+			var u := _rng.randf_range(-2.2, 0.8)
+			var zz: float = rz + _rng.randf_range(-2.4, 2.4)
+			var s := _rng.randf_range(0.5, 1.2)
+			_rock(root, Vector3(cx - u, WATER_Y - 0.05, zz), Vector3(s * 1.6, s * 0.8, s * 1.2), k)
+	# Boulders at the headland's foot, where its rocks meet the sand.
+	for p in [Vector3(66.5, 0, -7.0), Vector3(67.5, 0, -11.5), Vector3(70.5, 0, -17.0), Vector3(43.0, 0, -15.5), Vector3(71.5, 0, -26.0), Vector3(72.0, 0, -36.0)]:
+		var s := _rng.randf_range(0.9, 1.6)
+		_rock(root, Vector3(p.x, ground_y(p.x, p.z), p.z), Vector3(s * 1.5, s, s * 1.2), int(p.z))
+	# A rocky knoll round the spit lighthouse's foot.
+	for k in 7:
+		var a := float(k) / 7.0 * TAU
+		var s := _rng.randf_range(1.2, 2.2)
+		var px := 222.0 + cos(a) * 3.6
+		var pz := -268.0 + sin(a) * 3.6
+		_rock(root, Vector3(px, ground_y(px, pz), pz), Vector3(s * 1.5, s, s * 1.2), k)
+
+
+func _clear_of_pieces(x: float, z: float, r: float) -> bool:
+	for at in _piece_at:
+		if Vector2((at as Vector3).x - x, (at as Vector3).z - z).length() < r + (at as Vector3).y:
+			return false
+	for q in PALMS:
+		if (q as Vector2).distance_to(Vector2(x, z)) < r:
+			return false
+	return true
+
+
+## A low faceted mound (a dune, a hill) `size` across and `size.y` tall, flat shaded.
+func _mound(at: Vector3, size: Vector3, c: Color, segs: int) -> MeshInstance3D:
+	var mi := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 0.5
+	sm.height = 0.5  # a regular hemisphere, 0.5 tall
+	sm.radial_segments = segs
+	sm.rings = 3
+	sm.is_hemisphere = true
+	mi.mesh = sm
+	mi.material_override = LuchaKit.mat(c)
+	mi.scale = Vector3(size.x, size.y * 2.0, size.z)
+	mi.position = at
+	return mi
+
+
+## A boulder: a squashed low-poly ball, a third of it sunk in the ground, turned every
+## which way so no two read alike.
+func _rock(parent: Node3D, at: Vector3, size: Vector3, i: int) -> void:
+	# Never against a building (Parker 11-10: "rocks clipping a house"): a rock keeps
+	# its own half-width plus a metre off every piece's footprint, or it isn't placed.
+	if not _clear_of_pieces(at.x, at.z, maxf(size.x, size.z) * 0.5 + 1.0):
+		return
+	var mi := MeshInstance3D.new()
+	var sm := SphereMesh.new()
+	sm.radius = 0.5
+	sm.height = 1.0
+	sm.radial_segments = 6
+	sm.rings = 3
+	mi.mesh = sm
+	mi.material_override = LuchaKit.mat(ROCK if i % 3 != 1 else ROCK_DARK)
+	mi.scale = size
+	mi.rotation = Vector3(_rng.randf_range(-0.35, 0.35), _rng.randf() * TAU, _rng.randf_range(-0.35, 0.35))
+	mi.position = at + Vector3(0, size.y * 0.18, 0)
+	parent.add_child(mi)
+
+
+## One of the kit's palms, or a stand-in.
+func _any_palm() -> Node3D:
+	var styles := []
+	for nm in ["palm", "palm_b", "palm_c"]:
+		if LuchaKit.kit_model_exists(nm):
+			styles.append(nm)
+	if not styles.is_empty():
+		return LuchaKit.kit_model(str(styles[_rng.randi() % styles.size()]))
+	var palm := Node3D.new()
+	palm.add_child(LuchaKit.cyl(0.18, 4.6, Color("#8E5A2C"), Vector3(0, 2.3, 0)))
+	palm.add_child(LuchaKit.ball(1.3, Color("#48892B"), Vector3(0, 4.8, 0)))
+	return palm
+
+
+## Beach grass: tufts of thin blades on a dune.
+func _grass(parent: Node3D, at: Vector3, spread: float, n: int) -> void:
+	for i in n:
+		var tuft := Node3D.new()
+		tuft.position = at + Vector3(_rng.randf_range(-spread, spread), _rng.randf_range(-0.12, 0.0), _rng.randf_range(-0.5, 0.5))
+		for b in 3:
+			var blade := MeshInstance3D.new()
+			var cm := CylinderMesh.new()
+			cm.top_radius = 0.0
+			cm.bottom_radius = 0.06
+			cm.height = _rng.randf_range(0.5, 0.9)
+			cm.radial_segments = 3
+			blade.mesh = cm
+			blade.material_override = LuchaKit.mat(BEACH_GRASS if b != 1 else BEACH_GRASS_DARK)
+			blade.position = Vector3(0, cm.height * 0.45, 0)
+			blade.rotation = Vector3(_rng.randf_range(-0.35, 0.35), _rng.randf() * TAU, _rng.randf_range(-0.35, 0.35))
+			tuft.add_child(blade)
+		parent.add_child(tuft)
+
+
+## One triangle into st, facing up out of the ground (flat shaded: the house look).
+static func _face(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3) -> void:
+	var n := (b - a).cross(c - a)
+	if n.length() < 0.000001:
+		return
+	n = n.normalized()
+	if n.y < 0.0:
+		n = -n
+	_tri(st, a, b, c, n)
+
+
+## A beach piece's turn (Parker 11-10: "face the water a little more, not just the
+## camera directly"): part-way from facing the Del Mar camera toward facing the sea
+## across the shore, a little different each piece, never more than 55 degrees off
+## the camera so its front still reads from the pier.
+func _face_yaw(x: float, z: float, max_deg := 55.0) -> float:
+	var t := Vector2(coast_x(z - 1.0) - coast_x(z), -1.0).normalized()
+	var sea := Vector2(-t.y, t.x)  # the shore's normal...
+	if sea.x < 0.0:
+		sea = -sea  # ...pointing out to sea (toward +x)
+	var to_sea := atan2(sea.x, sea.y)
+	var to_cam := atan2(CAM.x - x, CAM.y - z)
+	var d := wrapf(to_sea - to_cam, -PI, PI)
+	var blend := _rng.randf_range(0.42, 0.88)  # some nearly face the sea, some still half to the lens
+	d = clampf(d * blend, deg_to_rad(-max_deg), deg_to_rad(max_deg))
+	return to_cam + d + deg_to_rad(_rng.randf_range(-12.0, 12.0))
+
+
+## A palm's place, slid along the shore if it would stand between the pier's camera and
+## a building's front (a trunk across a door reads as a mistake).
+func _unblock(q: Vector2) -> Vector2:
+	for tries in 5:
+		var blocked := false
+		for at in _piece_at:
+			var c := Vector2((at as Vector3).x, (at as Vector3).z)
+			var to_c := c - CAM
+			var along := (q - CAM).dot(to_c.normalized())
+			if along > 0.0 and along < to_c.length() and absf((q - CAM).cross(to_c.normalized())) < (at as Vector3).y * 0.7:
+				blocked = true
+		if not blocked:
+			return q
+		q += Vector2(0.9, -4.0)
+	return q
 
 
 # ---------------------------------------------------------------- the headland
@@ -261,6 +666,21 @@ func _build_headland() -> void:
 		_lay_wall(lots, Vector2(xr0, z0), Vector2(xr1, z1), GROUND_Y, top, 0.62, 0.26)
 		root.add_child(_prism([Vector2(xl0, z0), Vector2(xr0, z0), Vector2(xr0, z0 - 0.3), Vector2(xl0, z0 - 0.3)], top, top + 0.55, PARAPET))
 		root.add_child(_prism([Vector2(xl0 + 0.2, z0 - 0.3), Vector2(xr0 - 0.2, z0 - 0.3), Vector2(xr1 - 0.2, z1), Vector2(xl1 + 0.2, z1)], top, top + 0.01, GRASS))
+	# The plaza's terraces end in raw mortar faces along the lens's cut (no plaza camera
+	# sees them; the pan to Del Mar does): brick them and cap each with a parapet.
+	var offs: Array = []
+	for t in LuchaUI.TERRACES:
+		offs.append(float(t[0]))
+	offs.append(float(offs[offs.size() - 1]) + LuchaUI.TERRACE_BACK)
+	for k in LuchaUI.TERRACES.size():
+		var ea: Vector2 = LuchaUI._lens(LuchaUI.LENS_T1, float(offs[k]))
+		var eb: Vector2 = LuchaUI._lens(LuchaUI.LENS_T1, float(offs[k + 1]))
+		var etop: float = Stage.PLAZA_GROUND + float(LuchaUI.TERRACES[k][1])
+		var fwd := Vector2(-(eb - ea).y, (eb - ea).x).normalized()
+		if fwd.y < 0.0:
+			fwd = -fwd  # out of the face, toward the camera
+		_lay_wall(lots, ea + fwd * 0.01, eb + fwd * 0.01, GROUND_Y, etop, 0.62, 0.26, fwd)
+		root.add_child(_prism([ea + fwd * 0.12, eb + fwd * 0.12, eb - fwd * 0.2, ea - fwd * 0.2], etop, etop + 0.55, PARAPET))
 	_commit_walls(root, lots)
 	# A few bushes along the rock top and the steps.
 	for p in [Vector3(48, 0.65, -9), Vector3(58, 0.65, -11), Vector3(52, 3.1, -19), Vector3(63, 5.7, -27), Vector3(58, 7.6, -37)]:
@@ -324,7 +744,7 @@ func _build_boardwalk() -> void:
 			um = LuchaKit.kit_model("beach_umbrella")
 		if um != null:
 			um.position = p
-			um.rotation.y = _rng.randf() * TAU
+			um.rotation.y = _face_yaw(u.x, u.y) + _rng.randf_range(-0.4, 0.4)
 			root.add_child(um)
 		else:
 			root.add_child(LuchaKit.cyl(0.04, 2.3, Color("#F2EEE4"), p + Vector3(0, 1.15, 0)))
@@ -340,8 +760,9 @@ func _build_boardwalk() -> void:
 			root.add_child(cone)
 		var chair := LuchaKit.kit_model("beach_chair_" + ("a" if int(u.z) % 2 == 0 else "b"))
 		if chair != null:
-			chair.position = p + Vector3(0.9, 0.0, 0.6)
-			chair.rotation.y = deg_to_rad(_rng.randf_range(-25.0, 25.0))
+			chair.rotation.y = _face_yaw(u.x, u.y)
+			var off := Vector3(0.9, 0.0, 0.6).rotated(Vector3.UP, chair.rotation.y)
+			chair.position = Vector3(p.x + off.x, ground_y(p.x + off.x, p.z + off.z), p.z + off.z)
 			root.add_child(chair)
 
 
@@ -354,9 +775,19 @@ func _build_town() -> void:
 	for p in PIECES:
 		var x: float = p[1]
 		var z: float = p[2]
-		_place(root, str(p[0]), Vector3(x, ground_y(x, z), z), deg_to_rad(float(p[3])))
+		# Turned part-way to the sea (the table's yaw was the camera's). Stood at the
+		# ground's lower, seaward side so no corner floats over the sloping sand.
+		var stem := str(p[0])
+		# The two-storey houses stand back up the beach where it's wide, the huts and
+		# cabanas forward: no single baseline (and the houses a metre higher).
+		if stem.begins_with("beach_house") and beach_w(z) >= 15.0:
+			x -= 3.4
+		var yaw := _face_yaw(x, z, 24.0 if stem in ["beach_house_a", "lifeguard_tower", "beach_bar"] else 55.0) if stem != "lighthouse_spit" else 0.0
+		_place(root, stem, Vector3(x, minf(ground_y(x, z), ground_y(x + 1.2, z)), z), yaw)
+		var fp: Array = STAND_IN.get(stem, [3.0, 3.5, 3.0, ""])
+		_piece_at.append(Vector3(x, Vector2(float(fp[0]), float(fp[2])).length() * 0.5, z))
 	for i in PALMS.size():
-		var q: Vector2 = PALMS[i]
+		var q: Vector2 = _unblock(PALMS[i])
 		var styles := []
 		for nm in ["palm", "palm_b", "palm_c"]:
 			if LuchaKit.kit_model_exists(nm):
@@ -588,12 +1019,13 @@ static func _tri(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, n: Vector3
 ## flat quads 4 mm proud of the face, in running bond, so the joints are colour and
 ## the ink leaves them alone (the paving law). Each goes into one of four tone lots.
 const WALL_TONES := [Color("#C49A70"), Color("#B5885E"), Color("#CFA97F"), Color("#A97B55")]
-func _lay_wall(lots: Array, a: Vector2, b: Vector2, y0: float, y1: float, bl: float, course: float) -> void:
+func _lay_wall(lots: Array, a: Vector2, b: Vector2, y0: float, y1: float, bl: float, course: float, facing := Vector2.ZERO) -> void:
 	var run := a.distance_to(b)
 	var tan2 := (b - a) / run
 	var n := Vector3(tan2.y, 0, -tan2.x)
 	var mid := (a + b) * 0.5
-	if Vector2(n.x, n.z).dot(mid - Vector2(58, -24)) < 0.0:  # outward from the headland's middle
+	var want := facing if facing != Vector2.ZERO else mid - Vector2(58, -24)  # outward from the headland's middle
+	if Vector2(n.x, n.z).dot(want) < 0.0:
 		n = -n
 	var tan := Vector3(tan2.x, 0, tan2.y)
 	var y := y0 + 0.04
