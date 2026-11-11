@@ -191,6 +191,15 @@ func player_name(pid: int) -> String:
 
 # ================================================================ the host's rules
 
+## Del Mar's drawn things once a frame, not once a physics tick (120 a second): the
+## rope and its streamers, the buoy rocking, the mast, the ships and clouds.
+func _process(delta: float) -> void:
+	if stage != null and stage.delmar:
+		stage.draw_delmar_line(_shown_line, _shown_line_v, delta)
+		if stage.scenery != null:
+			stage.scenery.tick(delta)
+
+
 func _physics_process(delta: float) -> void:
 	if stage != null and stage.delmar:
 		# THE BUOY'S GLIDE (Parker 11-10: "make the buoy have some acceleration or
@@ -198,9 +207,7 @@ func _physics_process(delta: float) -> void:
 		# place and settles with a small overshoot.
 		_shown_line_v += ((line - _shown_line) * LINE_SPRING - _shown_line_v * LINE_DAMP) * delta
 		_shown_line += _shown_line_v * delta
-		stage.place_delmar_line(_shown_line, _shown_line_v, delta)
-		if stage.scenery != null:
-			stage.scenery.tick(delta)
+		stage.move_buoy(_shown_line)  # the collider; the rope, mast and scenery are drawn in _process
 		if stage.floaties != null:
 			stage.floaties.tick(delta)
 			# Each machine bounces its own climbers (their physics runs here), and

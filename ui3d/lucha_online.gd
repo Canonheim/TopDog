@@ -123,6 +123,8 @@ func _on_members() -> void:
 func _on_lobby_list(rows: Array) -> void:
 	_browse_rows = rows
 	_browse_page = 0
+	if rows.is_empty() and status_text == "Looking for games...":
+		set_status("No games found. Host one!")  # (it stayed on "Looking for games..." for ever)
 	if ui.current == "browse":
 		_fill_browse()
 

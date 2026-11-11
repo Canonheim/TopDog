@@ -78,6 +78,21 @@ func setup(seed_value: int, p_water_y: float, p_x_min: float, p_x_max: float) ->
 	tick(0.0)
 
 
+## Where the buoy is. The FIRST time (the match's start) every floatie is put out in
+## the open water right of it: their sides were judged against a default buoy a
+## couple of metres off, which pinned about one in five between the buoy and the pier.
+var _placed := false
+func set_buoy(x: float) -> void:
+	if not _placed:
+		_placed = true
+		for it: Dictionary in _items:
+			var clear := maxf(BUOY_CLEAR, BUOY_HALF + float(it.kind[1]) + 0.1)
+			it.home = minf(maxf(float(it.home), x + clear + float(it.amp) + 0.2), x_max - 0.5)
+			it.right = true
+		_last_buoy = x
+	buoy_x = x
+
+
 func tick(delta: float) -> void:
 	_t += delta
 	for id in _cooldown.keys():

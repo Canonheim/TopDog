@@ -89,6 +89,10 @@ var _rope_root: Node3D = null  # the UI creator's rope segments and streamers
 var _rope_segs: Array = []
 var _streamers: Array = []
 var _buoy_model: Node3D = null  # the buoy's look, rocking on its (still) collider
+var _mast_parts_found := false
+var _winch_drum: Node3D = null
+var _stay_foot: Node3D = null
+var _stay_top: Node3D = null
 var _buoy_t := 0.0
 var _buoy_lean := 0.0  # rad, leaning back as it glides out
 var _buoy_lean_v := 0.0
@@ -96,12 +100,19 @@ var _wake_wait := 0.0
 var _rope_wob := 0.0  # the rope's sideways swing (m at its middle), a damped spring
 var _rope_wob_v := 0.0
 var _last_eye := Vector3.INF
+var _rope_a := Vector3.INF
+var _rope_b := Vector3.INF
+var _rope_along := Vector3.ZERO
+var _rope_across := Vector3.ZERO
+var _rope_sag := 0.0
+var _rope_twang := 0.0
 const ROPE_SAG := 0.035  # the rope's sag, x its length, at its middle
 const ROPE_POINTS := 12  # the curve the segments follow
 ## The rope ties to the gold ring at the top of the UI creator's classic buoy (11-10:
 ## "make the buoy taller and have the rope attach to it at the top"). The buoy rides
 ## along the line so this eye sits ON it: the rope from here to the mast is the line.
 const BUOY_EYE := Vector3(0.0, 2.07, 0.0)
+const SHORE_Y := -0.92  # the land's top behind the pier (the plaza's ground, DelMarScenery.GROUND_Y)
 const STREAMER_STEP := 0.5  # one every 0.5 m, counted from the buoy end (they don't slide)
 const STREAMER_TINTS := [Color("#E0287A"), Color("#1FB8AE"), Color("#F28A1E"), Color("#7CC83A"), Color("#8A3FC0"), Color("#FFC928")]
 const FLOAT_X := Vector2(104.5, 135.0)  # the open water the floaties drift in (the plan's box)
@@ -118,6 +129,7 @@ const DELMAR_MODELS := [
 	"float_beachball", "float_duck", "float_innertube", "float_lifesaver", "isle_band_raft", "isle_lighthouse", "isle_palm_hammock",
 	"isle_pinata_tree", "life_ring", "lifeguard_tower", "light_post", "lighthouse_spit", "pier", "pier_mast_base", "pier_mast_head",
 	"pier_mast_section", "pier_mast_winch", "ship_brigantine", "ship_party_boat", "ship_sloop", "stall_coco", "stall_paletas", "surf_rack",
+	"el_faro", "plant_pot_a", "plant_pot_b", "plant_pot_c",
 ]
 static var _warming: Array = []
 static var _warm: Dictionary = {}  # path -> PackedScene: held, so the cache keeps them
@@ -147,6 +159,8 @@ static func _collect_warm() -> void:
 
 func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	if on == delmar and (not on or is_instance_valid(delmar_root)):
+		if on:
+			_reset_delmar(seed_value)  # a rematch: the same pier, everything back to its start
 		return
 	if is_instance_valid(delmar_root):
 		for b in delmar_root.find_children("*", "StaticBody3D", true, false):
@@ -166,6 +180,10 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	_rope_root = null
 	_rope_segs.clear()
 	_buoy_model = null
+	_mast_parts_found = false
+	_winch_drum = null
+	_stay_foot = null
+	_stay_top = null
 	_last_eye = Vector3.INF
 	_rope_wob = 0.0
 	_rope_wob_v = 0.0
@@ -189,12 +207,38 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	buoy_body = _static_poly(delmar_root, dome, 0.6, 0.5)
 	buoy_body.set_meta("no_weld", true)
 	bodies.erase(buoy_body)
+	# The shore behind the pier's root: the plaza's floor ends at x 60 and the pier
+	# begins at 74. Without this a climber who walked or was thrown back off the root
+	# fell through the steps and the sand and was called "in the sea".
+	_static_poly(delmar_root, PackedVector2Array([Vector2(56.0, SHORE_Y), Vector2(PIER_ROOT, SHORE_Y), Vector2(PIER_ROOT, SHORE_Y - 1.2), Vector2(56.0, SHORE_Y - 1.2)]), 1.0, 1.6)
+	_make_floaties(seed_value)
+	if base_dressed:
+		_dress_delmar()
+
+
+func _make_floaties(seed_value: int) -> void:
+	if is_instance_valid(floaties):
+		floaties.free()
 	floaties = DelMarFloaties.new()
 	floaties.name = "Floaties"
 	delmar_root.add_child(floaties)
 	floaties.setup(seed_value, WATER_Y, FLOAT_X.x, FLOAT_X.y)
-	if base_dressed:
-		_dress_delmar()
+
+
+## Del Mar for a second match in a row: the mast back to its lower section, new
+## floaties from the new seed, the rope and the buoy still.
+func _reset_delmar(seed_value: int) -> void:
+	for sec in _mast_sections:
+		if is_instance_valid(sec):
+			(sec as Node).queue_free()
+	_mast_sections.clear()
+	_last_eye = Vector3.INF
+	_last_eye_y = 0.0
+	_rope_wob = 0.0
+	_rope_wob_v = 0.0
+	_buoy_lean = 0.0
+	_buoy_lean_v = 0.0
+	_make_floaties(seed_value)
 
 
 ## Stand-ins until the kit's pieces land: an oak deck on piles, the sea, the mast, the
@@ -263,13 +307,32 @@ func _dress_delmar() -> void:
 ## Where Del Mar's line is: `c` in the line's units (x + y). The buoy floats where the
 ## rope meets the water, the mast's head rises to where it meets the mast (Parker:
 ## "The mast gets taller as the game plays, line stays 45"), and the rope joins them.
+## Both halves at once (the base being placed, the batteries).
 func place_delmar_line(c: float, speed := 0.0, delta := 0.0) -> void:
+	move_buoy(c)
+	draw_delmar_line(c, speed, delta)
+
+
+## THE PHYSICS HALF, every tick: the buoy's collider and where the floaties may drift.
+## Written only when it moved.
+func move_buoy(c: float) -> void:
 	if not delmar or not is_instance_valid(delmar_root):
 		return
 	# Placed so its eye lies on the line (x + y = c): the rope is the line exactly.
 	var buoy_at := Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, 0.0)
-	if is_instance_valid(buoy_body):
+	if is_instance_valid(buoy_body) and not buoy_body.global_position.is_equal_approx(buoy_at):
 		buoy_body.global_position = buoy_at
+	if floaties != null:
+		floaties.set_buoy(buoy_at.x)
+
+
+## THE DRAWN HALF, once a frame (it ran every physics tick, 120 a second: the rope's
+## segments and streamers alone were some 200 transforms a tick): the buoy rocking,
+## the mast, the rope.
+func draw_delmar_line(c: float, speed := 0.0, delta := 0.0) -> void:
+	if not delmar or not is_instance_valid(delmar_root):
+		return
+	var buoy_at := Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, 0.0)
 	_float_buoy(speed, delta, buoy_at)
 	var eye := Vector3(MAST_X, c - MAST_X, MAST_EYE_Z)
 	if _mast_head_node != null:
@@ -277,17 +340,15 @@ func place_delmar_line(c: float, speed := 0.0, delta := 0.0) -> void:
 	if _mast_pole != null:
 		_mast_pole.scale = Vector3(1, maxf(0.5, eye.y - DECK_Y), 1)
 		_mast_pole.position = Vector3(MAST_X, DECK_Y + (eye.y - DECK_Y) * 0.5, MAST_Z)
-	if floaties != null:
-		floaties.buoy_x = buoy_at.x
 	var a := buoy_at + BUOY_EYE
 	if _buoy_model != null:
-		a = buoy_body.global_transform * (_buoy_model.transform * BUOY_EYE)  # the rope rides the rocking buoy
+		a = Transform3D(Basis(), buoy_at) * (_buoy_model.transform * BUOY_EYE)  # the rope rides the rocking buoy
 	if _rope_root != null:
 		_string_rope(a, eye, delta)
 	elif _rope != null:
 		var mid := (a + eye) * 0.5
 		var along := eye - a
-		_rope.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, along.normalized())).scaled(Vector3(1, along.length(), 1)), mid)
+		_rope.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, along.normalized())).scaled_local(Vector3(1, along.length(), 1)), mid)
 
 
 ## The Carpenter's mast follows the eye: the head rides at it, and a new 2 m section
@@ -308,19 +369,24 @@ func _grow_mast(eye: Vector3) -> void:
 		var tw := sec.create_tween()
 		tw.tween_property(sec, "position", seat, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		tw.tween_callback(func() -> void: Sound.play_at("thud", seat, -6.0, delmar_root))
-	if _winch != null:
-		var drum := _winch.find_child("deco_winch_drum", true, false) as Node3D
-		if drum != null:
-			drum.rotation.z -= (eye.y - _last_eye_y) * 2.0
+	if not _mast_parts_found:
+		_mast_parts_found = true
+		_winch_drum = _winch.find_child("deco_winch_drum", true, false) as Node3D if _winch != null else null
+		_stay_foot = _winch.find_child("stay_anchor", true, false) as Node3D if _winch != null else null
+		_stay_top = _mast_head_node.find_child("stay_eye", true, false) as Node3D
+	if is_instance_valid(_winch_drum) and eye.y != _last_eye_y:
+		_winch_drum.rotation.z -= (eye.y - _last_eye_y) * 2.0
 	_last_eye_y = eye.y
 	if _backstay != null:
-		var top := _mast_head_node.find_child("stay_eye", true, false) as Node3D
-		var foot := _winch.find_child("stay_anchor", true, false) as Node3D if _winch != null else null
+		var top := _stay_top if is_instance_valid(_stay_top) else null
+		var foot := _stay_foot if is_instance_valid(_stay_foot) else null
 		if top != null and foot != null:
 			var a := foot.global_position
 			var b := top.global_position
 			var along := b - a
-			_backstay.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, along.normalized())).scaled(Vector3(1, along.length(), 1)), (a + b) * 0.5)
+			# (scaled_local: scaled() stretches in the parent's frame, and the stay drew as a
+			# near-upright sliver touching neither the winch nor the mast.)
+			_backstay.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, along.normalized())).scaled_local(Vector3(1, along.length(), 1)), (a + b) * 0.5)
 
 
 ## THE BUOY IN THE WATER (Parker 11-10: "have it bounce back and forth a little in the
@@ -355,12 +421,17 @@ func _float_buoy(speed: float, delta: float, at: Vector3) -> void:
 ## sideways swing (in the plane, across the rope) excited by the buoy's bobbing and
 ## its glide, which rings down like a plucked line.
 func _rope_point(a: Vector3, b: Vector3, s: float) -> Vector3:
-	var along := b - a
-	var across := Vector3(-along.y, along.x, 0.0).normalized()  # in the plane, square to the rope
+	if a != _rope_a or b != _rope_b:
+		_rope_a = a
+		_rope_b = b
+		_rope_along = b - a
+		_rope_across = Vector3(-_rope_along.y, _rope_along.x, 0.0).normalized()  # in the plane, square to the rope
+		_rope_sag = ROPE_SAG * _rope_along.length()
+		_rope_twang = sin(_buoy_t * 5.3)
 	var hump := 4.0 * s * (1.0 - s)
-	var p := a + along * s
-	p.y -= ROPE_SAG * along.length() * hump
-	p += across * _rope_wob * sin(PI * s) + across * _rope_wob * 0.35 * sin(TAU * s) * sin(_buoy_t * 5.3)
+	var p := a + _rope_along * s
+	p.y -= _rope_sag * hump
+	p += _rope_across * (_rope_wob * sin(PI * s) + _rope_wob * 0.35 * sin(TAU * s) * _rope_twang)
 	return p
 
 
@@ -391,6 +462,7 @@ func _string_rope(a: Vector3, b: Vector3, delta := 0.0) -> void:
 	var n := int(ceil(length))
 	while _rope_segs.size() < n:
 		var seg := LuchaKit.kit_model("delmar_rope_seg")
+		LuchaUI.no_shadows(seg)
 		_rope_root.add_child(seg)
 		_rope_segs.append(seg)
 	for i in _rope_segs.size():
@@ -405,7 +477,7 @@ func _string_rope(a: Vector3, b: Vector3, delta := 0.0) -> void:
 				seg.visible = false
 				continue
 			var basis := Basis(Quaternion(Vector3.RIGHT, d / span))
-			seg.global_transform = Transform3D(basis.scaled(Vector3(span, 1, 1)), p0)
+			seg.global_transform = Transform3D(basis.scaled_local(Vector3(span, 1, 1)), p0)  # (local: the cut last segment was sheared)
 	var m := int(floor(length / STREAMER_STEP))
 	while _streamers.size() < m:
 		var k := _streamers.size()
@@ -413,6 +485,7 @@ func _string_rope(a: Vector3, b: Vector3, delta := 0.0) -> void:
 		if st == null:
 			break
 		LuchaKit.tint_part(st, "streamer_" + "abc"[k % 3], STREAMER_TINTS[k % STREAMER_TINTS.size()])
+		LuchaUI.no_shadows(st)
 		_rope_root.add_child(st)
 		_streamers.append(st)
 	var t := Time.get_ticks_msec() / 1000.0

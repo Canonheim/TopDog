@@ -26,6 +26,8 @@ var header: Node3D  # optional: logo / title above the belts
 var cursor: Node3D
 var item_spacing := STEP
 var header_tilt := 0.0
+var _header_home := Vector3.ZERO
+var _header_tween: Tween = null
 var column_x := MENU_COLUMN_X
 var top_y := MENU_TOP_Y
 var _open_t := 0.0
@@ -48,6 +50,7 @@ func set_header(n: Node3D, at: Vector3) -> void:
 		header.queue_free()
 	header = n
 	header.position = at
+	_header_home = at
 	add_child(header)
 
 
@@ -195,10 +198,14 @@ func open() -> void:
 		tw.tween_property(it.node, "position", home, 0.45).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		k += 1
 	if header != null:
-		var hp := header.position
+		# From its true home: read mid-drop (pause, resume, pause) it settled higher each time.
+		var hp := _header_home
+		if _header_tween != null and _header_tween.is_valid():
+			_header_tween.kill()
 		header.position = hp + Vector3(0, 4.0, 0)
 		header.rotation.z = header_tilt + 0.25
 		var tw2 := create_tween().set_parallel()
+		_header_tween = tw2
 		tw2.tween_property(header, "position", hp, 0.6).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
 		tw2.tween_property(header, "rotation:z", header_tilt, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 	if cursor != null and _live(focus):

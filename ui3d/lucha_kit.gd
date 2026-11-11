@@ -47,9 +47,14 @@ static func tint_part(root: Node, part: String, c: Color) -> void:
 	for si in mi.mesh.get_surface_count():
 		var m := mi.get_active_material(si)
 		if m is ShaderMaterial:
-			var d: ShaderMaterial = m.duplicate()
-			d.set_shader_parameter("color", c)
-			mi.set_surface_override_material(si, d)
+			# One tinted copy per (material, colour): fifty streamers in six colours are
+			# six materials, not fifty.
+			var key := "%d|%s" % [m.get_instance_id(), c.to_html(true)]
+			if not _tints.has(key):
+				var d: ShaderMaterial = m.duplicate()
+				d.set_shader_parameter("color", c)
+				_tints[key] = [d, m]  # (the source is held too: its id must not be reused)
+			mi.set_surface_override_material(si, _tints[key][0])
 
 
 ## SMOOTH SHADING on part of a flat-shaded kit mesh (Parker 11-10: the bell and the
@@ -93,12 +98,21 @@ static func kit_model_exists(name: String) -> bool:
 	return ResourceLoader.exists(KIT_DIR + name + ".glb")
 
 
+static var _kit_scenes := {}  # path -> PackedScene
+static var _tints := {}  # "source material id | colour" -> the tinted copy
+static var _balls := {}  # "radius" -> SphereMesh
+
+
 ## A kit model if it's been delivered, else null.
 static func kit_model(name: String) -> Node3D:
 	var p := KIT_DIR + name + ".glb"
 	if not ResourceLoader.exists(p):
 		return null
-	var n: Node3D = (load(p) as PackedScene).instantiate()
+	# The scene is kept once loaded: with nothing holding it, every call read the file
+	# from disk again (107 flags, every belt, every banner).
+	if not _kit_scenes.has(p):
+		_kit_scenes[p] = load(p)
+	var n: Node3D = (_kit_scenes[p] as PackedScene).instantiate()
 	CelPass.celify(n)
 	return n
 
@@ -143,10 +157,17 @@ static func cyl(r: float, h: float, c: Color, at := Vector3.ZERO, axis := Vector
 
 static func ball(r: float, c: Color, at := Vector3.ZERO) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
-	var sm := SphereMesh.new()
-	sm.radius = r
-	sm.height = r * 2.0
-	mi.mesh = sm
+	# One mesh per radius, and segments to suit its size: the default sphere is 64 x 32
+	# (4,200 triangles), and the plaza has about 290 flower, bush and pole balls.
+	var key := "%.4f" % r
+	if not _balls.has(key):
+		var sm := SphereMesh.new()
+		sm.radius = r
+		sm.height = r * 2.0
+		sm.radial_segments = 16 if r < 0.25 else (24 if r < 1.0 else 32)
+		sm.rings = sm.radial_segments / 2
+		_balls[key] = sm
+	mi.mesh = _balls[key]
 	mi.material_override = mat(c)
 	mi.position = at
 	return mi

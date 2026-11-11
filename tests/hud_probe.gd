@@ -98,6 +98,7 @@ func _ready() -> void:
 	hb.tick(0.5)
 	_check("holding a live climber hides LOCK IN", not hb.popped)
 	rival.state = Climber.State.FROZEN
+	await get_tree().physics_frame  # (touches_solid answers once per physics frame since the 11-10 sweep)
 	hb.tick(0.5)
 	_check("holding the frozen tower shows LOCK IN", hb.popped)
 	# THE STEADY TAB (Parker 11-09: "flashing oddly"): a hold flickering live / frozen

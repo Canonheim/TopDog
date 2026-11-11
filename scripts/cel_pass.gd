@@ -66,11 +66,20 @@ static func material_for(src: StandardMaterial3D, mesh: Mesh = null, surface := 
 
 ## A material born cel, for call sites that build a look from a plain colour. metallic / roughness map onto the
 ## toon specular band (_metal_specular), never onto PBR.
+## SHARED (the 11-10 sweep): one material per colour and finish, handed to everyone who
+## asks. The plaza alone made about 1,200 identical-looking materials, one per stair,
+## lamp and flower. Nobody may change a material this returns: to tint one piece,
+## duplicate it first (LuchaKit.tint_part does).
+static var _plain := {}
 static func cel_material(color: Color, metallic := 0.0, roughness := 1.0) -> ShaderMaterial:
+	var key := "%s|%.3f|%.3f" % [color.to_html(true), metallic, roughness]
+	if _plain.has(key):
+		return _plain[key]
 	var cel := ShaderMaterial.new()
 	cel.shader = SHADER
 	cel.set_shader_parameter("color", color)
 	_metal_specular(cel, color, metallic, roughness)
+	_plain[key] = cel
 	return cel
 
 

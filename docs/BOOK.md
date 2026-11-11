@@ -569,6 +569,73 @@ law at its top.
   `--joinpadhost` / `--joinpadclient` pair (one Godot at a time). Never tried on a real
   pad or on Steam by this session: Parker and Dan's next game is the test.
 
+## The bug sweep and optimisation pass (Parker, 2026-11-10)
+
+Parker: "do a full code bug sweep and optimization pass". Five reviewers read the whole
+codebase (climber; game rules and netcode; session, lobby and app flow; the 3D UI; the
+stage and Del Mar). Each finding was checked against the code before it was fixed.
+Commits 4714920, 7f37818 and the one after.
+
+**Bugs fixed (the ones a player would meet):**
+- The Esc that left Results was read again as Pause on the lobby and threw a guest out
+  of the session; an Enter on FIGHT! arrived as a Lock In. A screen change now mutes
+  queued Lock In / Pause presses (`Players.mute_edges`).
+- A refused rematch (a guest had left) set `in_match` and shut the lobby for good.
+- After a match the host's waiting room stayed empty until someone joined or left.
+- Guests in Tower read "? CLIMBING" (only the host knew whose turn it was).
+- Time-up could wait for ever on a climber who never touched down. Now a weld counts,
+  and 8 s past the clock an airborne climber is out (`OVERTIME_CAP_S`).
+- A turn change closed Controls / Options opened from the pause menu.
+- Del Mar on a rematch kept the old mast sections, floaties and seed.
+- Del Mar: no ground between the plaza's floor (x 60) and the pier's root (x 74); a
+  climber walking back off the root fell through the sand and was "in the sea".
+- Del Mar: `Basis.scaled()` stretches in the parent's frame. The mast's backstay drew as
+  an upright sliver and the rope's cut last segment was sheared (`scaled_local`).
+- Del Mar: about one floatie in five started pinned between the buoy and the pier.
+- The slip's friction used 1/96 s in a match whose step is 1/120 s: it ran 25% stiff.
+  **This changes the feel of a slipping hand or foot in a match slightly**, to the value
+  the `--feel` battery always tested.
+- Remote players never saw the drawn wrist (a steered hand looked bent past its stop).
+- A freeze or a pose during the grow-in used the collapsed pose; a climber shoved by a
+  spawn kept its feet welded and wasn't moved; glyphs sat full size at the feet.
+- The header of a menu reopened mid-drop settled higher each time; Options reopened
+  mid fly-out landed in mid-air; Browse stayed on "Looking for games..." with none; the
+  pinata stayed burst online after the first match.
+- Smaller: a carrier dropped with the chair in hand, a stale pose after a waiting-room
+  respawn, `_check_bounds` erasing from the dictionary it walked, ring-out on scaled
+  time, a Practice name going online, hosting with no timeout, chat from non-members.
+
+**Faster:**
+- One cel material per colour and finish, shared (`CelPass.cel_material`): the plaza
+  made about 1,200 identical ones. **Nobody may change a material it returns**; tint a
+  copy (`LuchaKit.tint_part`, itself cached now).
+- Kit scenes are kept once loaded (`LuchaKit.kit_model` re-read the file on every call).
+- Plaza balls share a mesh per radius at 16 to 32 segments (each was 64 x 32, about
+  1.2 million triangles in all); the paving is indexed.
+- Del Mar's rope, streamers, mast, buoy rocking and scenery are drawn once a frame, not
+  once a physics tick (120 a second); only the buoy's collider moves in the tick.
+- The pose stream: a climber standing still sends a keepalive twice a second; a puppet
+  on its newest sample isn't re-posed.
+- `touches_solid` answers once per physics frame; frozen climbers stop ticking; no rope
+  maths well inside the ring; glyph discs are built once, not on every spawn.
+- Hidden HUD labels aren't rebuilt each frame; the pad readout four times a second; one
+  pad list per tick; music and fart clips stay loaded; one options save per fader drag.
+
+**Found and left (not small, or a look/feel call):**
+- The sea shader is heavy per pixel (150 circle tests and a 6-octave noise over half the
+  screen). Baking the circles into a texture would cut most of it; the look must be
+  compared by eye first.
+- The plaza is still about 1,200 separate meshes (stairs, lamps, benches). Merging them
+  per colour is the next big win. Del Mar's grass is one mesh per blade.
+- The 3D menus' 55 mouse areas ride the camera; the lobby menu is rebuilt on every
+  change; `_tick_hud_occlusion` and `_to_corners` search the HUD every frame.
+- A knocked-out climber passes through the ring ropes (no rope maths while out). Maybe
+  meant.
+- `set_ready` / "I'M READY" has no button in the 3D lobby; the HUD odometer is built by
+  nothing (`tests/hud_probe.gd` still expects it).
+- RPCs trust a buggy or hostile client's numbers more than they should (a lock pose far
+  from the last streamed one is accepted).
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

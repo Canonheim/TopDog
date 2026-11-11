@@ -439,7 +439,8 @@ func _open_options(from: String) -> void:
 	_set_tween = create_tween().set_parallel(true)
 	var k := 0
 	for piece: Node3D in [_desk, _tv]:
-		var land := piece.position
+		# Its true spot, not where it is: reopened mid fly-out it landed in mid-air.
+		var land := Vector3(-2.35 if piece == _desk else 2.45, 0, 0)
 		piece.position = land + Vector3(0, DROP_FROM, 0)
 		piece.rotation.z = (0.4 if k == 0 else -0.4)
 		_set_tween.tween_property(piece, "position", land, 0.75).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT).set_delay(0.12 * k)

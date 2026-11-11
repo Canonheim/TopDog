@@ -100,8 +100,8 @@ func show_screen(id: String) -> bool:
 		else:
 			menus[k].close()
 	_hud.visible = id == "hud"  # hidden under the pause menu (Parker 11-08: the menu in front of everything)
-	if id == "title":
-		_rehang_pinata()
+	if id in ["title", "lobby"]:
+		_rehang_pinata()  # (the lobby too: online it stayed burst from the first match on)
 	_cards.visible = id == "local"
 	_podium.visible = id == "results"
 	if _winner_poster != null:
@@ -869,6 +869,7 @@ func _pave_commit(parent: Node3D) -> void:
 	for i in _pave_st.size():
 		var st: SurfaceTool = _pave_st[i]
 		var before := mesh.get_surface_count()
+		st.index()  # shared corners once: the paving was half a million loose vertices
 		st.commit(mesh)
 		if mesh.get_surface_count() > before:
 			mats.append(LuchaKit.mat(STONE_TONES[i] if i < STONE_TONES.size() else GROUT))
