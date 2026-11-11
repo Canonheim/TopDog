@@ -64,6 +64,10 @@ const DECK_DEPTH := 0.36  # the pier's slab under the deck top (one seamless bod
 const WATER_Y := -1.8
 const MAST_X := 100.75
 const MAST_Z := -1.35  # the mast stands behind the play area (Parker: background dressing)
+const MAST_EYE_Z := -1.15  # the Carpenter's head: the rope's eye, a touch forward of the mast's axis
+const MAST_COLLAR := 4.0  # the fixed lower mast's collar (pier_mast_base)
+const MAST_SECTION := 2.0  # each section that slots in under the head as it rises
+const WINCH_AT := Vector3(93.75, 0.0, -1.15)
 const DELMAR_FIRST_GAP := 0.75  # the rope starts this far beyond the base's furthest point
 const BUOY_R := 0.5  # the buoy's solid dome, half on the water
 const SPAWN_BACK := [3.86, 6.86]  # spawns: this far back from the pier end (3 m apart)
@@ -73,6 +77,11 @@ var buoy_body: StaticBody3D = null
 var _rope: MeshInstance3D = null
 var _mast_pole: MeshInstance3D = null
 var floaties: DelMarFloaties = null
+var _mast_head_node: Node3D = null  # the Carpenter's pier_mast_head (origin = the rope's eye)
+var _mast_sections: Array = []
+var _winch: Node3D = null
+var _backstay: MeshInstance3D = null
+var _last_eye_y := 0.0
 var _rope_root: Node3D = null  # the UI creator's rope segments and streamers
 var _rope_segs: Array = []
 var _streamers: Array = []
@@ -96,6 +105,10 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	_rope = null
 	_mast_pole = null
 	floaties = null
+	_mast_head_node = null
+	_mast_sections.clear()
+	_winch = null
+	_backstay = null
 	_rope_root = null
 	_rope_segs.clear()
 	_streamers.clear()
@@ -127,11 +140,39 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 ## Stand-ins until the kit's pieces land: an oak deck on piles, the sea, the mast, the
 ## rope and the buoy.
 func _dress_delmar() -> void:
-	var deck := _boxm(Vector3(PIER_END - PIER_ROOT, DECK_DEPTH, 3.2), Color("#B07A48"), Vector3((PIER_ROOT + PIER_END) * 0.5, DECK_Y - DECK_DEPTH * 0.5, 0))
-	delmar_root.add_child(deck)
-	for x in range(int(PIER_ROOT) + 1, int(PIER_END), 3):
-		for z in [-1.4, 1.4]:
-			delmar_root.add_child(_boxm(Vector3(0.3, 3.6, 0.3), Color("#7A5232"), Vector3(x, DECK_Y - DECK_DEPTH - 1.8, z)))
+	# The Carpenter's pier (pier_deck's end square on PIER_END; the slab above is its
+	# collision), or the stand-in deck on piles.
+	var pier := LuchaKit.kit_model("pier")
+	if pier != null:
+		pier.position = Vector3(PIER_END, DECK_Y, 0)
+		delmar_root.add_child(pier)
+	else:
+		var deck := _boxm(Vector3(PIER_END - PIER_ROOT, DECK_DEPTH, 3.2), Color("#B07A48"), Vector3((PIER_ROOT + PIER_END) * 0.5, DECK_Y - DECK_DEPTH * 0.5, 0))
+		delmar_root.add_child(deck)
+		for x in range(int(PIER_ROOT) + 1, int(PIER_END), 3):
+			for z in [-1.4, 1.4]:
+				delmar_root.add_child(_boxm(Vector3(0.3, 3.6, 0.3), Color("#7A5232"), Vector3(x, DECK_Y - DECK_DEPTH - 1.8, z)))
+	# The growing mast (Parker: "The mast gets taller as the game plays, line stays 45"):
+	# the fixed lower mast, the head carrying the rope's eye, sections slotting in under
+	# it, and the backstay's winch paying out.
+	var base := LuchaKit.kit_model("pier_mast_base")
+	if base != null:
+		base.position = Vector3(MAST_X, DECK_Y, MAST_Z)
+		delmar_root.add_child(base)
+		_mast_head_node = LuchaKit.kit_model("pier_mast_head")
+		delmar_root.add_child(_mast_head_node)
+		_winch = LuchaKit.kit_model("pier_mast_winch")
+		if _winch != null:
+			_winch.position = WINCH_AT
+			delmar_root.add_child(_winch)
+		_backstay = MeshInstance3D.new()
+		var stay := CylinderMesh.new()
+		stay.top_radius = 0.02
+		stay.bottom_radius = 0.02
+		stay.height = 1.0
+		_backstay.mesh = stay
+		_backstay.material_override = CelPass.cel_material(Color("#5A3A22"))
+		delmar_root.add_child(_backstay)
 	var sea := MeshInstance3D.new()
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(400, 300)
@@ -139,8 +180,9 @@ func _dress_delmar() -> void:
 	sea.material_override = CelPass.cel_material(Color("#2C7FCC"))
 	sea.position = Vector3(PIER_END + 80, WATER_Y, -120)
 	delmar_root.add_child(sea)
-	_mast_pole = _boxm(Vector3(0.28, 1.0, 0.28), Color("#8A5A34"), Vector3(MAST_X, 0, MAST_Z))
-	delmar_root.add_child(_mast_pole)
+	if _mast_head_node == null:
+		_mast_pole = _boxm(Vector3(0.28, 1.0, 0.28), Color("#8A5A34"), Vector3(MAST_X, 0, MAST_Z))
+		delmar_root.add_child(_mast_pole)
 	_rope = MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
 	cyl.top_radius = 0.035
@@ -176,7 +218,9 @@ func place_delmar_line(c: float) -> void:
 	var buoy_at := Vector3(c - WATER_Y, WATER_Y, 0.0)
 	if is_instance_valid(buoy_body):
 		buoy_body.global_position = buoy_at
-	var eye := Vector3(MAST_X, c - MAST_X, MAST_Z)
+	var eye := Vector3(MAST_X, c - MAST_X, MAST_EYE_Z)
+	if _mast_head_node != null:
+		_grow_mast(eye)
 	if _mast_pole != null:
 		_mast_pole.scale = Vector3(1, maxf(0.5, eye.y - DECK_Y), 1)
 		_mast_pole.position = Vector3(MAST_X, DECK_Y + (eye.y - DECK_Y) * 0.5, MAST_Z)
@@ -189,6 +233,39 @@ func place_delmar_line(c: float) -> void:
 		var mid := (a + eye) * 0.5
 		var along := eye - a
 		_rope.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, along.normalized())).scaled(Vector3(1, along.length(), 1)), mid)
+
+
+## The Carpenter's mast follows the eye: the head rides at it, and a new 2 m section
+## drops onto its collar under the head (0.3 m in 0.15 s, with a thunk) whenever the
+## head's shaft would show too much. The winch turns and the backstay pays out.
+func _grow_mast(eye: Vector3) -> void:
+	_mast_head_node.global_position = eye
+	var n := maxi(0, int(floor((eye.y - DECK_Y - 0.4 - MAST_COLLAR) / MAST_SECTION)))
+	while _mast_sections.size() < n:
+		var k := _mast_sections.size()
+		var sec := LuchaKit.kit_model("pier_mast_section")
+		if sec == null:
+			break
+		var seat := Vector3(MAST_X, DECK_Y + MAST_COLLAR + MAST_SECTION * float(k), MAST_Z)
+		sec.position = seat + Vector3(0, 0.3, 0)
+		delmar_root.add_child(sec)
+		_mast_sections.append(sec)
+		var tw := sec.create_tween()
+		tw.tween_property(sec, "position", seat, 0.15).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_callback(func() -> void: Sound.play_at("thud", seat, -6.0, delmar_root))
+	if _winch != null:
+		var drum := _winch.find_child("deco_winch_drum", true, false) as Node3D
+		if drum != null:
+			drum.rotation.z -= (eye.y - _last_eye_y) * 2.0
+	_last_eye_y = eye.y
+	if _backstay != null:
+		var top := _mast_head_node.find_child("stay_eye", true, false) as Node3D
+		var foot := _winch.find_child("stay_anchor", true, false) as Node3D if _winch != null else null
+		if top != null and foot != null:
+			var a := foot.global_position
+			var b := top.global_position
+			var along := b - a
+			_backstay.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, along.normalized())).scaled(Vector3(1, along.length(), 1)), (a + b) * 0.5)
 
 
 ## The UI creator's rope: 1 m segments from the buoy's eye to the mast's eye (the last one
