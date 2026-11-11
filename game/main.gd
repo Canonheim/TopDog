@@ -35,6 +35,7 @@ const TOWER_PAN_SPEED := 0.35  # world metres per second
 var _results_elapsed := 0.0
 var _results_peak := Vector2.ZERO
 var _personal_camera := false
+const PLAZA_CAM_X := 14.0  # the plaza camera's centre stays within this of the ring (x)
 var _cam_target := Vector3(0, 2, 14)
 var _cam_fov := 34.0
 const FOLLOW_HALF_H := 2.05  # in play: the camera shows at least this many metres above and below you
@@ -415,6 +416,10 @@ func _tick_camera(delta: float) -> void:
 	var half_h := maxf((hi.y - lo.y) * 0.5, (hi.x - lo.x) * 0.5 / aspect)
 	half_h = maxf(half_h, FOLLOW_HALF_H if follow else 3.2)
 	var dist := half_h / tan(deg_to_rad(_cam_fov * 0.5))
+	# THE PLAZA CLAMP (Parker 11-10, the Environment Maker's plan): the camera's centre
+	# stays within PLAZA_CAM_X of the ring, so a climber flung out across the 60 m floor
+	# can't swing it round to the beach town (Del Mar, off to the right).
+	centre.x = clampf(centre.x, -PLAZA_CAM_X, PLAZA_CAM_X)
 	_cam_target = Vector3(centre.x, centre.y + 0.3, dist)
 	cam.position = cam.position.lerp(_cam_target, 1.0 - exp(-delta * 2.5))
 	cam.look_at(Vector3(cam.position.x, cam.position.y - 0.3, 0.0), Vector3.UP)

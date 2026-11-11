@@ -182,5 +182,10 @@ paper faces. That's a remodel for the Building Maker, who made them.
 2. **Lock in from the water's side:** climbers far out near the water only lock once
    past the buoy. Should a climber dangling below the pier deck, but over the line,
    also count?
-3. **The pan back:** at the match's end, pan back to the plaza for the results, or show
-   the results at the pier?
+3. ~~The pan back~~: settled. Results show at the pier.
+
+**Settled with the district plan (Parker 11-10):** the mountains are lowered during the
+pan (option B); the plaza camera is clamped to |x| ≤ 14; El Faro stays; the ships drift;
+results show at the pier; and on ultrawide the beach town may peek in (no letterbox). The plan
+itself, with its numbers (DELMAR_X 100, PIER_END 104, DECK_Y 0, WATER_Y -1.8, MAST_X
+100.65), is `Top Dog Kit\docs\del_mar\DEL_MAR_DISTRICT_PLAN.md`.
