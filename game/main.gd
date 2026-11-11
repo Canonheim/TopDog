@@ -369,6 +369,8 @@ func _tick_camera(delta: float) -> void:
 		lo = Vector2(0, top)
 		hi = lo
 	var delmar: bool = game.stage != null and game.stage.delmar
+	if lucha != null:
+		lucha.mountains_down(delmar, delta)
 	if not follow and delmar:
 		# Del Mar between rounds: the pier's end and the rope where it meets the tower.
 		lo = Vector2(Stage.PIER_END - 7.0, -1.0)

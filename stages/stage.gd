@@ -77,6 +77,7 @@ var buoy_body: StaticBody3D = null
 var _rope: MeshInstance3D = null
 var _mast_pole: MeshInstance3D = null
 var floaties: DelMarFloaties = null
+var scenery: DelMarScenery = null  # the Environment Maker's: the sea, the beach town, the pier's look, ships, clouds
 var _mast_head_node: Node3D = null  # the Carpenter's pier_mast_head (origin = the rope's eye)
 var _mast_sections: Array = []
 var _winch: Node3D = null
@@ -105,6 +106,7 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	_rope = null
 	_mast_pole = null
 	floaties = null
+	scenery = null
 	_mast_head_node = null
 	_mast_sections.clear()
 	_winch = null
@@ -140,18 +142,11 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 ## Stand-ins until the kit's pieces land: an oak deck on piles, the sea, the mast, the
 ## rope and the buoy.
 func _dress_delmar() -> void:
-	# The Carpenter's pier (pier_deck's end square on PIER_END; the slab above is its
-	# collision), or the stand-in deck on piles.
-	var pier := LuchaKit.kit_model("pier")
-	if pier != null:
-		pier.position = Vector3(PIER_END, DECK_Y, 0)
-		delmar_root.add_child(pier)
-	else:
-		var deck := _boxm(Vector3(PIER_END - PIER_ROOT, DECK_DEPTH, 3.2), Color("#B07A48"), Vector3((PIER_ROOT + PIER_END) * 0.5, DECK_Y - DECK_DEPTH * 0.5, 0))
-		delmar_root.add_child(deck)
-		for x in range(int(PIER_ROOT) + 1, int(PIER_END), 3):
-			for z in [-1.4, 1.4]:
-				delmar_root.add_child(_boxm(Vector3(0.3, 3.6, 0.3), Color("#7A5232"), Vector3(x, DECK_Y - DECK_DEPTH - 1.8, z)))
+	# The Environment Maker's scenery: the sea, the beach town, the boardwalk, the
+	# Carpenter's pier (its look; the slab above is its collision), ships, isles, clouds.
+	scenery = DelMarScenery.new()
+	delmar_root.add_child(scenery)
+	scenery.build()
 	# The growing mast (Parker: "The mast gets taller as the game plays, line stays 45"):
 	# the fixed lower mast, the head carrying the rope's eye, sections slotting in under
 	# it, and the backstay's winch paying out.
@@ -173,13 +168,6 @@ func _dress_delmar() -> void:
 		_backstay.mesh = stay
 		_backstay.material_override = CelPass.cel_material(Color("#5A3A22"))
 		delmar_root.add_child(_backstay)
-	var sea := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(400, 300)
-	sea.mesh = plane
-	sea.material_override = CelPass.cel_material(Color("#2C7FCC"))
-	sea.position = Vector3(PIER_END + 80, WATER_Y, -120)
-	delmar_root.add_child(sea)
 	if _mast_head_node == null:
 		_mast_pole = _boxm(Vector3(0.28, 1.0, 0.28), Color("#8A5A34"), Vector3(MAST_X, 0, MAST_Z))
 		delmar_root.add_child(_mast_pole)

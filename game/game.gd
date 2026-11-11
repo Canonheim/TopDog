@@ -185,6 +185,8 @@ func _physics_process(delta: float) -> void:
 	if stage != null and stage.delmar:
 		_shown_line = lerpf(_shown_line, line, 1.0 - exp(-delta * 3.0))
 		stage.place_delmar_line(_shown_line)
+		if stage.scenery != null:
+			stage.scenery.tick(delta)
 		if stage.floaties != null:
 			stage.floaties.tick(delta)
 			# Each machine bounces its own climbers (their physics runs here), and

@@ -190,6 +190,8 @@ const RIDGE_NEAR := Color("#B4C9EC")  # haze blues: the far ridges sit back by c
 const RIDGE_FAR := Color("#CCDBF3")
 ## The far mountains: [x, z, width, height, fallback colour, yaw]. Half again as tall
 ## (Parker 11-10: "make mountains in the background taller"; were 52 / 44 / 32).
+var _mountains: Array = []  # [node, its standing y, how far it sinks]
+var _mountains_t := 0.0
 const FAR_RIDGES := [
 	[-140.0, -260.0, 300.0, 78.0, RIDGE_FAR, 0.2],
 	[120.0, -240.0, 280.0, 66.0, RIDGE_FAR, -0.24],
@@ -282,6 +284,39 @@ func _stand(m: Node3D, p: Vector2, n: Vector2, side: float, y: float) -> void:
 	m.rotation.y = atan2(n.x * side, n.y)
 
 
+## THE MOUNTAINS GO DOWN FOR DEL MAR (Parker 11-10, option B): the sea has no
+## mountains behind it, so as the camera pans to the pier the cut-outs sink out of
+## sight over 0.8 s, and rise again on the way back. main.gd calls this every frame.
+func mountains_down(on: bool, delta: float) -> void:
+	var t := move_toward(_mountains_t, 1.0 if on else 0.0, delta / 0.8)
+	if t == _mountains_t:
+		return
+	_mountains_t = t
+	var e := smoothstep(0.0, 1.0, t)
+	for m in _mountains:
+		var n: Node3D = m[0]
+		if is_instance_valid(n):
+			n.position.y = float(m[1]) - e * float(m[2])
+			n.visible = t < 1.0
+
+
+## A flat ground piece on an (x, z) outline at height y.
+func _land_flat(pts: PackedVector2Array, y: float, c: Color) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var tris := Geometry2D.triangulate_polygon(pts)
+	for k in range(0, tris.size(), 3):
+		var a: Vector2 = pts[tris[k]]
+		var b: Vector2 = pts[tris[k + 1]]
+		var d: Vector2 = pts[tris[k + 2]]
+		DelMarScenery._tri(st, Vector3(a.x, y, a.y), Vector3(b.x, y, b.y), Vector3(d.x, y, d.y), Vector3.UP)
+	var mi := MeshInstance3D.new()
+	mi.name = "Land"
+	mi.mesh = st.commit()
+	mi.material_override = LuchaKit.mat(c)
+	return mi
+
+
 func _build_plaza() -> void:
 	var plaza := Node3D.new()
 	plaza.name = "Plaza"
@@ -296,8 +331,9 @@ func _build_plaza() -> void:
 	var bricks: Array = []
 	for t in BRICK_TONES:
 		bricks.append([])
-	# Land to the horizon, just under the stones.
-	plaza.add_child(LuchaKit.box(Vector3(4000, 0.2, 4000), LAND, Vector3(0, gy - 0.12, -1980)))
+	# Land to the horizon, just under the stones, up to Del Mar's district line (the
+	# Environment Maker's outline; right of it is the beach town and the sea).
+	plaza.add_child(_land_flat(DelMarScenery.plaza_land_outline(), DelMarScenery.GROUND_Y, LAND))
 	_pave_square(plaza, gy, stones, rng)
 	_church_plot(plaza, gy, stones)
 	var church := _church()
@@ -373,12 +409,14 @@ func _build_plaza() -> void:
 			cut.rotation = Vector3(-0.04, float(r[5]), 0.0)  # leaned back a touch, turned enough to show the kraft edge
 			cut.position = Vector3(r[0], gy - 0.2 - bb.position.y * sy, r[1])
 			plaza.add_child(cut)
+			_mountains.append([cut, cut.position.y, rh + 3.0])
 			continue
 		var pts := PackedVector2Array([Vector2(-w * 0.5, 0), Vector2(-w * 0.3, rh * 0.55), Vector2(-w * 0.12, rh * 0.8),
 			Vector2(0, rh), Vector2(w * 0.1, rh * 0.72), Vector2(w * 0.28, rh * 0.85), Vector2(w * 0.5, 0)])
 		var ridge := LuchaKit._extrude(pts, 4.0, r[4])
 		ridge.position = Vector3(r[0], gy - 0.2, r[1])
 		plaza.add_child(ridge)
+		_mountains.append([ridge, ridge.position.y, rh + 3.0])
 	# Papel picado round the square: poles inside its edge, strings between them,
 	# and one from each inner pole up to its church tower.
 	var tops := {}
