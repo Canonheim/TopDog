@@ -113,7 +113,7 @@ func _build_stage() -> void:
 	_pad = Node3D.new()
 	var model := LuchaKit.kit_model("boot_pad")
 	if model != null:
-		model.scale = Vector3.ONE * 1.7  # built 1.58 m wide
+		model.scale = Vector3.ONE * 1.3  # built 2.06 m wide (re-cut 11-11: room round every control)
 		for b in 4:
 			var btn := model.find_child("boot_pad_btn_%d" % b, true, false) as Node3D
 			if btn != null:
