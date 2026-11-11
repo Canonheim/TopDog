@@ -661,7 +661,7 @@ func _build_ui() -> void:
 func _screen_title() -> Control:
 	var c := UiKit.panel_screen("TOP DOG", "Grab, fling, freeze. Climb the tower of everyone who went before you.")
 	var box: VBoxContainer = c.get_meta("box")
-	UiKit.button(box, "Play together (this PC)", func(): show_screen("local"))
+	# Play together is off the title for now (Parker 11-10: online first).
 	UiKit.button(box, "Play online", func(): show_screen("online"))
 	UiKit.button(box, "Practice", _start_practice)
 	UiKit.button(box, "Customize", func(): show_screen("customize"))

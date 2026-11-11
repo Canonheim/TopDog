@@ -59,6 +59,7 @@ var _pulse_tween: Tween
 const BELL_AT := Vector3(1.05, 2.0, 0.05)
 const CLOCK_HIDE_UP := 2.6  # above the top of the frame
 var _cards: Node3D
+var _mode_card: Node3D = null  # the UI creator's mode_card_delmar, beside MODE while it reads DEL MAR
 var _podium: Node3D
 var _winner_poster: Node3D
 var online: LuchaOnline
@@ -1448,7 +1449,9 @@ func _build_menus() -> void:
 	t.header_tilt = -0.07
 	t.column_x = Menu3D.MENU_COLUMN_X
 	t.top_y = Menu3D.MENU_TOP_Y
-	t.add_button("PLAY TOGETHER", func(): main.show_screen("local"))
+	# PLAY TOGETHER is off the title for now (Parker 11-10: "completely remove play
+	# together as a mode... first lets only focus on the online multiplayer"). Its
+	# screen below stays built for when local play comes back.
 	t.add_button("PLAY ONLINE", func(): main.show_screen("online"))
 	t.add_button("PRACTICE", main._start_practice)
 	t.add_button("CUSTOMIZE", func(): main.show_screen("customize"))
@@ -1471,6 +1474,9 @@ func _build_menus() -> void:
 		Net.settings.base = Modes.BASES[i]
 		main.preview_base(Modes.BASES[i]))
 
+	_mode_card = _build_mode_card()
+	if _mode_card != null:
+		l.add_child(_mode_card)
 	_local_start = l.add_button("FIGHT!", main._start_local)
 	l.add_button("REMOVE LAST", func():
 		if not Players.slots.is_empty():
@@ -1537,7 +1543,36 @@ func _build_menus() -> void:
 	_podium.add_child(pod)
 
 
+## THE DEL MAR CARD (the UI creator's mode_card_delmar, PARTS.md G10): its sea scene in
+## a gold frame; the game writes the name on its red plate and the blurb on its navy bar.
+func _build_mode_card(row_y := Menu3D.MENU_TOP_Y) -> Node3D:
+	var card := LuchaKit.kit_model("mode_card_delmar")
+	if card == null:
+		return null
+	card.name = "ModeCardDelMar"
+	var nm := LuchaKit.fit_text("DEL MAR", 1.7, 0.26, LuchaKit.GOLD, LuchaKit.INK)
+	nm.position = Vector3(0, -0.74, 0.1)
+	card.add_child(nm)
+	var lines := ["ONE VERSUS ONE, OUT OVER THE SEA.", "GET PAST THE ROPE TO LOCK IN. DON'T FALL IN!"]
+	for i in lines.size():
+		var t := LuchaKit.fit_text(lines[i], 2.15, 0.1, LuchaKit.CREAM, LuchaKit.INK)
+		t.position = Vector3(0, -1.15 - 0.15 * i, 0.05)
+		card.add_child(t)
+	# Beside the MODE belt (row_y: that row's height), its top just under the header.
+	card.position = Vector3(Menu3D.MENU_COLUMN_X + Menu3D.BELT_W * 0.5 + 1.5, row_y - 0.5, 0.0)
+	card.scale = Vector3.ONE * 0.8
+	card.rotation.z = -0.04
+	card.visible = false
+	return card
+
+
 func _refresh_cards() -> void:
+	if _mode_card != null:
+		var on := str(Net.settings.get("mode", "scramble")) == "delmar"
+		if on and not _mode_card.visible:
+			_mode_card.scale = Vector3.ONE * 0.08
+			create_tween().tween_property(_mode_card, "scale", Vector3.ONE * 0.8, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_mode_card.visible = on
 	if _local_start >= 0 and menus.has("local"):
 		var minimum := int(Modes.row(str(Net.settings.get("mode", "scramble"))).min_players)
 		menus.local.set_label(_local_start, "JOIN 2 TO FIGHT" if Players.slots.size() < minimum else "FIGHT!")

@@ -23,6 +23,7 @@ const SIGN_SCALE := 2.05  # the kit sign (2.4 m) at board size
 const RIBBON_SCALE := 1.45
 const SIGN_W := 2.4 * SIGN_SCALE
 
+var _mode_card: Node3D = null  # the Del Mar card (LuchaUI._build_mode_card)
 var ui: LuchaUI
 var main: Node
 var status_text := ""
@@ -74,6 +75,10 @@ func build() -> void:
 	l.column_x = Menu3D.MENU_COLUMN_X
 	l.top_y = Menu3D.MENU_TOP_Y
 	ui.menus.lobby = l
+	# The Del Mar card beside the host's MODE belt (the lobby's second row).
+	_mode_card = ui._build_mode_card(Menu3D.MENU_TOP_Y - Menu3D.STEP)
+	if _mode_card != null:
+		l.add_child(_mode_card)
 	# The status poster, shared by every online screen, and the lobby's boards.
 	_status_node = Node3D.new()
 	ui.cam.add_child(_status_node)
@@ -322,6 +327,12 @@ func _fill_lobby() -> void:
 			s.base = Modes.BASES[i]
 			Net.set_settings(s))
 
+		if _mode_card != null:
+			var on := str(Net.settings.get("mode", "scramble")) == "delmar"
+			if on and not _mode_card.visible:
+				_mode_card.scale = Vector3.ONE * 0.08
+				_mode_card.create_tween().tween_property(_mode_card, "scale", Vector3.ONE * 0.8, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			_mode_card.visible = on
 		m.add_button("INVITE FRIENDS", func(): Net.invite_friends())
 		m.add_button("LEAVE", main._leave_lobby)
 	else:
