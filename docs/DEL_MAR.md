@@ -189,3 +189,26 @@ pan (option B); the plaza camera is clamped to |x| ≤ 14; El Faro stays; the sh
 results show at the pier; and on ultrawide the beach town may peek in (no letterbox). The plan
 itself, with its numbers (DELMAR_X 100, PIER_END 104, DECK_Y 0, WATER_Y -1.8, MAST_X
 100.65), is `Top Dog Kit\docs\del_mar\DEL_MAR_DISTRICT_PLAN.md`.
+
+## 13. Where it stands (11-10, end of day)
+
+**In game on main** (commits 8dab7c9, b2cf76c, 468480e, 07d0dc4, not pushed):
+- The Carpenter's pier, and the mast that grows a section at a time as the line moves.
+- The UI creator's buoy, the rope with its streamers, and the four floaties.
+- The Environment Maker's scenery: the sea, beach town, boardwalk, festoons, isles and
+  clouds. The plaza's land now stops at the district line, and the mountains sink while
+  Del Mar is on.
+- Golemheim's water: `stages/delmar/sea_surface.gdshader` and `delmar_sea.gd`, with
+  splashes and sounds when someone falls in.
+- Results on the pier.
+- The mode card beside MODE.
+- Background loading once Del Mar is picked (`Stage.warm_delmar`).
+- The battery: `--delmar`, 16 checks.
+
+**Play Together is off the title** (Parker 11-10: online first). Its screen stays built.
+
+**Out with the makers:**
+- The three ships are being remade by the Building Maker, using Golemheim's galleon and
+  coaster as the model (same stems).
+- Scenery pass 2 is with the Environment Maker: houses angled toward the water, a real
+  beach, and height variation.
