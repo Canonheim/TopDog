@@ -17,10 +17,10 @@ signal finished
 const STUDIO_IN := 0.5
 const DRUM_1 := 0.75  # seconds after the start
 const DRUM_2 := 1.3
-const STUDIO_OUT_AT := 2.3
+const STUDIO_OUT_AT := 2.8  # (Parker 11-11: half a second longer)
 const STUDIO_OUT := 0.45
 const PAD_IN := 0.3  # "fades in quickly"
-const PAD_HOLD := 1.9
+const PAD_HOLD := 2.9  # (Parker 11-11: a second longer)
 const PAD_OUT := 0.4
 const LIFT := 0.45  # the black lifting off the title
 const PULSE := 1.06  # the word's scale at a beat's peak (the logo keeps its frame clear to 1.08)
