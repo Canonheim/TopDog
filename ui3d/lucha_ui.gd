@@ -1569,6 +1569,8 @@ func _build_mode_card(row_y := Menu3D.MENU_TOP_Y) -> Node3D:
 func _refresh_cards() -> void:
 	if _mode_card != null:
 		var on := str(Net.settings.get("mode", "scramble")) == "delmar"
+		if on:
+			Stage.warm_delmar()
 		if on and not _mode_card.visible:
 			_mode_card.scale = Vector3.ONE * 0.08
 			create_tween().tween_property(_mode_card, "scale", Vector3.ONE * 0.8, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)

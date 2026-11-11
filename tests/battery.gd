@@ -2457,10 +2457,13 @@ func _run_plazafloor() -> void:
 ## over the line moving it to 0.25 past the tower, the buoy never held, and a fall into
 ## the sea is out. Back to the plaza when the match ends.
 func _run_delmar() -> void:
+	Stage.warm_delmar()  # MODE reads DEL MAR: its pieces start loading in the background
+	var asked: int = Stage._warming.size()
 	var g := make_game("delmar", 2, 50.0, "plaza")
 	if not await wait_phase(g, "round"):
 		t("delmar: a round starts", false)
 		return
+	t("delmar: picking it loads its pieces on background threads, collected when the match starts", Stage._warming.is_empty() and (asked > 0 and Stage._warm.size() >= asked or asked == 0), [asked, Stage._warm.size()])
 	var st: Stage = g.stage
 	var base_right := st.base_root.position.x + st.barrel_half
 	t("delmar: the pier is built and the base stands flush on its end", st.delmar and is_instance_valid(st.delmar_root) and absf(base_right - Stage.PIER_END) < 0.05, "base right %.2f" % base_right)
@@ -2516,6 +2519,18 @@ func _run_delmar() -> void:
 		Climber.sync_server(rb)
 	await frames(6)
 	t("delmar: falling in the sea is out", not g.alive[1] and not g.live.has(1), [g.alive, g.live.keys()])
+	# The water (the battery's stage is undressed, so on a sheet of its own): Golemheim's
+	# living surface goes on the sea, and a body going in throws a splash.
+	var sea := DelMarSea.new()
+	add_child(sea)
+	var sheet := MeshInstance3D.new()
+	add_child(sheet)
+	sea.dress(sheet, Stage.WATER_Y)
+	sea.splash(110.0, 1.0)
+	var sheet_mat := sheet.material_override as ShaderMaterial
+	t("delmar: the sea wears Golemheim's living water, and a fall splashes", sheet_mat != null and sheet_mat.shader == DelMarSea.SURFACE and get_tree().get_nodes_in_group("splash_fx").size() > 0, get_tree().get_nodes_in_group("splash_fx").size())
+	sea.queue_free()
+	sheet.queue_free()
 	# The floaties: they stay left of the buoy, and a fall onto one throws you up and left.
 	var fl: DelMarFloaties = st.floaties
 	t("delmar: six floaties drift out in the water, none sitting in the buoy", fl != null and fl._items.size() == DelMarFloaties.COUNT and fl._items.all(func(it): return absf(float(it.x) - fl.buoy_x) >= DelMarFloaties.BUOY_CLEAR - 0.01), fl._items.map(func(it): return snappedf(float(it.x), 0.1)) if fl != null else [])

@@ -23,6 +23,8 @@ const SFX := {
 		"dog_exertion_15", "dog_exertion_16", "dog_exertion_17", "dog_exertion_18",
 	],
 	"thud": ["thud", "land_soft", "hit_flesh"],
+	"splash": ["splash_big", "leap_splash"],  # Golemheim's (Del Mar: a body into the sea)
+	"splash_small": ["splash_step_1", "splash_step_2", "splash_step_3"],
 	"rope": ["rope_tension_01", "rope_tension_02", "rope_tension_03", "rope_tension_04", "rope_tension_05"],
 	"hurt": ["hurt_1", "hurt_2", "hurt_3", "hurt_4"],
 	"fall": ["yell_1", "yell_2", "yell_3"],

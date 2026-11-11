@@ -811,6 +811,9 @@ func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: Strin
 		tower.append(cid)
 		_puppet_buf.erase(cid)
 	else:
+		if why == "sea" and stage != null and stage.sea != null:
+			# Del Mar: in the drink. Golemheim's splash where the body went in.
+			stage.sea.splash(c.centre_of_mass().x, 1.6)  # bigger than Golemheim's 1: this camera sits far back
 		live.erase(c.player_id)
 		_drop_climber(cid)
 	line = maxf(line, new_line)
@@ -1060,6 +1063,8 @@ func _rpc_floatie(i: int, at: Vector3) -> void:
 	if multiplayer.get_remote_sender_id() != me():
 		stage.floaties.squash(i)
 	Sound.play_at("rope", at, -4.0, world)
+	if stage.sea != null:
+		stage.sea.ripple(Vector3(stage.floaties.x_of(i), Stage.WATER_Y, 0.0), 0.8)
 
 
 const BELL_COOLDOWN_MS := 300  # per limb: a grip flickering on and off doesn't peal
@@ -1208,6 +1213,20 @@ func _on_peer_left(id: int) -> void:
 
 
 func tower_peak() -> Vector2:
+	if stage != null and stage.delmar:
+		# Del Mar's tower reaches out along the rope: its furthest piece along (1, 1).
+		var far := Vector2(stage.base_root.position.x, 1.5)
+		var best_d := -INF
+		var dir := stage.line_dir()
+		for cid in tower:
+			var cl: Climber = climbers[cid]
+			for piece in cl.bodies:
+				var p3: Vector3 = (cl.bodies[piece] as RigidBody3D).global_position
+				var d := Vector2(p3.x, p3.y).dot(dir)
+				if d > best_d:
+					best_d = d
+					far = Vector2(p3.x, p3.y)
+		return far
 	var highest := Vector2(0, -INF)
 	for cid in tower:
 		var climber: Climber = climbers[cid]

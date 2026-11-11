@@ -139,6 +139,11 @@ func bounce(c: Climber) -> int:
 	return -1
 
 
+## Where floatie i floats now (x), for the ripple its squash makes.
+func x_of(i: int) -> float:
+	return float(_items[i].x) if i >= 0 and i < _items.size() else buoy_x
+
+
 ## Another machine's climber bounced on floatie i: squash it here too.
 func squash(i: int) -> void:
 	if i >= 0 and i < _items.size():

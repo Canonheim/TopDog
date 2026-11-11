@@ -100,6 +100,8 @@ func build() -> void:
 
 
 func _on_settings() -> void:
+	if str(Net.settings.get("mode", "")) == "delmar":
+		Stage.warm_delmar()
 	if ui.current != "lobby":
 		return
 	if Net.is_host():

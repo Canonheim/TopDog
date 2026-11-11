@@ -77,7 +77,8 @@ var buoy_body: StaticBody3D = null
 var _rope: MeshInstance3D = null
 var _mast_pole: MeshInstance3D = null
 var floaties: DelMarFloaties = null
-var scenery: DelMarScenery = null  # the Environment Maker's: the sea, the beach town, the pier's look, ships, clouds
+var scenery: DelMarScenery = null
+var sea: DelMarSea = null  # Golemheim's living water on the scenery's sea, and the splashes  # the Environment Maker's: the sea, the beach town, the pier's look, ships, clouds
 var _mast_head_node: Node3D = null  # the Carpenter's pier_mast_head (origin = the rope's eye)
 var _mast_sections: Array = []
 var _winch: Node3D = null
@@ -94,6 +95,42 @@ const FLOAT_X := Vector2(104.5, 135.0)  # the open water the floaties drift in (
 
 ## Del Mar on or off. Built when a Del Mar match starts, freed when one ends: the
 ## plaza never pays for it.
+## Every kit piece Del Mar builds (the scenery, the pier and mast, the rope, the buoy,
+## the floaties). Nothing of Del Mar loads until it's picked (Parker 11-10).
+const DELMAR_MODELS := [
+	"beach_bar", "beach_chair_a", "beach_chair_b", "beach_house_a", "beach_house_b", "beach_hut_a", "beach_hut_b", "beach_hut_c",
+	"beach_umbrella_a", "beach_umbrella_b", "beach_umbrella_c", "beach_umbrella_d", "beach_umbrella_e", "boardwalk", "cabana_a", "cabana_b",
+	"delmar_buoy", "delmar_rope_seg", "delmar_streamer_a", "delmar_streamer_b", "delmar_streamer_c", "festoon_bulb", "festoon_wire_seg",
+	"float_beachball", "float_duck", "float_innertube", "float_lifesaver", "isle_band_raft", "isle_lighthouse", "isle_palm_hammock",
+	"isle_pinata_tree", "life_ring", "lifeguard_tower", "light_post", "lighthouse_spit", "pier", "pier_mast_base", "pier_mast_head",
+	"pier_mast_section", "pier_mast_winch", "ship_brigantine", "ship_party_boat", "ship_sloop", "stall_coco", "stall_paletas", "surf_rack",
+]
+static var _warming: Array = []
+static var _warm: Dictionary = {}  # path -> PackedScene: held, so the cache keeps them
+
+
+## DEL MAR LOADS WHEN PICKED: the moment MODE reads DEL MAR (in the lobby, on every
+## machine), its pieces start loading on background threads, so the match's start
+## doesn't hitch. Safe to call again: a path already asked for is skipped.
+static func warm_delmar() -> void:
+	for stem in DELMAR_MODELS:
+		var p: String = LuchaKit.KIT_DIR + stem + ".glb"
+		if p in _warming or _warm.has(p) or ResourceLoader.has_cached(p) or not ResourceLoader.exists(p):
+			continue
+		if ResourceLoader.load_threaded_request(p, "PackedScene", true) == OK:
+			_warming.append(p)
+
+
+## Collect what warm_delmar fetched (waits for any still loading), so the build reads
+## them from the cache.
+static func _collect_warm() -> void:
+	for p in _warming:
+		var res := ResourceLoader.load_threaded_get(p)
+		if res != null:
+			_warm[p] = res
+	_warming.clear()
+
+
 func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	if on == delmar and (not on or is_instance_valid(delmar_root)):
 		return
@@ -107,6 +144,7 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	_mast_pole = null
 	floaties = null
 	scenery = null
+	sea = null
 	_mast_head_node = null
 	_mast_sections.clear()
 	_winch = null
@@ -117,6 +155,7 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	delmar = on
 	if not on:
 		return
+	_collect_warm()
 	delmar_root = Node3D.new()
 	delmar_root.name = "DelMar"
 	world.add_child(delmar_root)
@@ -147,6 +186,10 @@ func _dress_delmar() -> void:
 	scenery = DelMarScenery.new()
 	delmar_root.add_child(scenery)
 	scenery.build()
+	sea = DelMarSea.new()
+	sea.name = "Sea"
+	delmar_root.add_child(sea)
+	sea.dress(scenery.water_node(), WATER_Y)
 	# The growing mast (Parker: "The mast gets taller as the game plays, line stays 45"):
 	# the fixed lower mast, the head carrying the rope's eye, sections slotting in under
 	# it, and the backstay's winch paying out.

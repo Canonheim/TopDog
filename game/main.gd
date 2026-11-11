@@ -307,6 +307,10 @@ func _unhandled_input(event: InputEvent) -> void:
 # ---------------------------------------------------------------- camera
 
 func results_podium_focus() -> Vector2:
+	# Del Mar's results stand on the pier (Parker 11-10: "at pier"), on the deck just
+	# shore-side of the base, the tower reaching out over the sea beside them.
+	if game.stage != null and game.stage.delmar:
+		return Vector2(game.stage.base_root.position.x - game.stage.barrel_half - 2.8, 1.5)
 	return Vector2((game.stage.barrel_half if game.stage != null else 1.0) + 2.8, 1.5)
 
 
@@ -334,6 +338,8 @@ func _tick_camera(delta: float) -> void:
 	if screen == "results":
 		_results_elapsed += delta / Engine.time_scale
 		var start := Vector2(0, 1.5)
+		if game.stage != null and game.stage.delmar:
+			start.x = game.stage.base_root.position.x  # the tower's foot, at the pier's end
 		var end := Vector2(_results_peak.x, maxf(start.y, _results_peak.y))
 		var elapsed := maxf(0.0, _results_elapsed - PODIUM_HOLD_SECONDS)
 		var focus := results_podium_focus().lerp(start, smoothstep(0.0, PODIUM_SHIFT_SECONDS, elapsed))
