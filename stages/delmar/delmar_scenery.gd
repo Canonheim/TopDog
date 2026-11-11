@@ -47,6 +47,13 @@ const SEA := Color("#2F7FD0")
 const SHALLOWS := Color("#3FA9DC")
 const SEA_MID := Color("#3792D6")
 const HILL_FAR := Color("#86A77C")
+## The far hills' rows, front to back: [lit, mid, shade], stepping toward the sky's haze.
+const HILL_ROWS := [
+	[Color("#8DB257"), Color("#6F9744"), Color("#4F7339")],
+	[Color("#97B583"), Color("#7C9C72"), Color("#5E7D63")],
+	[Color("#9DB6AE"), Color("#839FA4"), Color("#66809A")],
+]
+const HAZE_ISLE := [Color("#8FA3C2"), Color("#778BB0"), Color("#5E6F99")]  # darker than the clouds, so they read as land
 const HILL_DARK := Color("#6E8A4A")
 const STONE := Color("#C2A878")
 const BRICK := Color("#8A7662")  # the mortar behind the bricks
@@ -109,7 +116,9 @@ const ISLES := [["isle_palm_hammock", 140.0, -72.0, 10.0, "#7CC83A"], ["isle_lig
 const CAM := Vector2(102.5, 13.1)  # the Del Mar camera (x, z): cut-outs and fronts turn to it
 ## Clouds over the sea: [x, y, z, width] (each outside the plaza cameras' reach).
 const CLOUDS := [Vector4(122, 20, -110, 22), Vector4(152, 26, -150, 30), Vector4(232, 28, -175, 26),
-	Vector4(205, 34, -200, 40), Vector4(212, 44, -260, 36), Vector4(262, 48, -330, 52)]
+	Vector4(205, 34, -200, 40), Vector4(212, 44, -260, 36), Vector4(262, 48, -330, 52),
+	# a high, small, thin layer up in the empty top of the sky
+	Vector4(160, 58, -180, 13), Vector4(196, 66, -232, 17), Vector4(232, 52, -205, 10), Vector4(150, 42, -128, 9)]
 
 var water: MeshInstance3D = null  # the sea, for the game's splashes
 var _foam: MeshInstance3D = null
@@ -427,22 +436,79 @@ func _build_far_shore() -> void:
 	mi.mesh = mesh
 	CelPass.unify(mi)  # its two tones as atlas UVs, on the one material
 	root.add_child(mi)
-	# Two rows of hills: a lower sandy row in front, taller green ones behind.
-	for rowi in 3:
-		var hx := -170.0 + rowi * 9.0
-		while hx < 212.0:
-			var w := _rng.randf_range(20.0, 38.0) * (1.0 + 0.5 * rowi)
-			var h: float = [_rng.randf_range(3.5, 6.0), _rng.randf_range(8.0, 13.0), _rng.randf_range(15.0, 24.0)][rowi]
-			var col: Color = [DUNE, GRASS if _rng.randf() < 0.6 else HILL_DARK, HILL_FAR][rowi]
-			var hz: float = FAR_SHORE_Z + [9.0, 20.0, 34.0][rowi] + _rng.randf_range(0.0, 5.0)
-			root.add_child(_mound(Vector3(hx + w * 0.5, GROUND_Y, hz), Vector3(w, h, 14.0), col, 14))
-			if rowi == 1 and _rng.randf() < 0.6:
-				var palm := _any_palm()
-				palm.position = Vector3(hx + w * _rng.randf_range(0.3, 0.7), GROUND_Y + h * 0.82, hz - 1.0)
-				palm.rotation.y = _rng.randf() * TAU
-				palm.scale = Vector3.ONE * 1.5
-				root.add_child(palm)
-			hx += w * _rng.randf_range(0.5, 0.75)
+	# The hills behind the far shore, in rows that step back by colour (no fog in the
+	# look): low sandy dunes, then faceted green hills, then paler blue-green ones, then a
+	# hazy blue ridge. Each green row is PlazaMountains' faceted massif (big planes in
+	# three tones), so the ridgelines and their shadow sides read; toward the spit the
+	# rows come down and end in a rocky point.
+	var end_x := coast_x(FAR_SHORE_Z) - 4.0
+	for rowi in 4:
+		var hx := -170.0 + rowi * 11.0
+		while hx < end_x - 6.0:
+			var w := _rng.randf_range(22.0, 40.0) * (1.0 + 0.45 * rowi)
+			var taper := clampf((end_x - (hx + w * 0.5)) / 60.0, 0.25, 1.0)  # lower toward the spit
+			var h: float = [_rng.randf_range(3.0, 5.0), _rng.randf_range(9.0, 14.0), _rng.randf_range(13.0, 18.0), _rng.randf_range(16.0, 22.0)][rowi] * taper
+			var hz: float = FAR_SHORE_Z + [9.0, 21.0, 36.0, 52.0][rowi] + _rng.randf_range(0.0, 5.0)
+			# Never out over the bay: a hill ends a little inland of the waterline at its depth.
+			w = minf(w, maxf((coast_x(hz) - 6.0 - hx) * 1.6, 0.0))
+			if w < 12.0:
+				break
+			if rowi == 0:
+				var dn := _mound(Vector3(hx + w * 0.5, GROUND_Y, hz), Vector3(w, h, 12.0), DUNE, 9)
+				dn.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				root.add_child(dn)
+			else:
+				var tones: Array = HILL_ROWS[rowi - 1]
+				var hill := PlazaMountains.massif(w, h, 22.0 + rowi * 6.0, _rng.randi(), tones[0], tones[1], tones[2])
+				hill.position = Vector3(hx + w * 0.5, GROUND_Y - 0.4, hz)
+				hill.rotation.y = _rng.randf_range(-0.12, 0.12)
+				root.add_child(hill)
+			hx += w * _rng.randf_range(0.5, 0.72)
+	# The rocky point the hills end in, and two sea stacks off it (well clear of the
+	# play strip, 300 m out).
+	for k in 6:
+		var s := lerpf(5.5, 2.0, float(k) / 5.0) * _rng.randf_range(0.85, 1.15)
+		_rock(root, Vector3(end_x + float(k) * 3.2, WATER_Y, FAR_SHORE_Z + 6.0 - float(k) * 1.6), Vector3(s * 1.4, s * 1.3, s * 1.2), k)
+	for sp in [Vector3(end_x + 26.0, 0, FAR_SHORE_Z - 6.0), Vector3(end_x + 37.0, 0, FAR_SHORE_Z + 4.0)]:
+		var stack := MeshInstance3D.new()
+		var cm := CylinderMesh.new()
+		cm.top_radius = 1.6
+		cm.bottom_radius = 3.2
+		cm.height = 9.0 if sp.z < FAR_SHORE_Z else 6.0
+		cm.radial_segments = 6
+		cm.rings = 1
+		stack.mesh = cm
+		CelPass.paint(stack, ROCK_DARK)
+		stack.position = Vector3(sp.x, WATER_Y + cm.height * 0.45, sp.z)
+		stack.rotation.y = _rng.randf() * TAU
+		stack.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		root.add_child(stack)
+		_bush(root, Vector3(sp.x, WATER_Y + cm.height * 0.9, sp.z), 0.9)
+	# A broken strip of scrub, dune bumps and palms along the foot of the hills, so the
+	# far beach doesn't meet them on a ruler line.
+	var fx := -150.0
+	while fx < end_x:
+		var at := Vector3(fx + _rng.randf_range(-2.0, 2.0), GROUND_Y - 0.1, FAR_SHORE_Z + _rng.randf_range(3.0, 7.0))
+		var pick := _rng.randf()
+		if pick < 0.45:
+			var dune := _mound(at, Vector3(_rng.randf_range(4.0, 8.0), _rng.randf_range(0.8, 1.8), 3.0), DUNE, 7)
+			dune.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			root.add_child(dune)
+		elif pick < 0.8:
+			_bush(root, at, _rng.randf_range(0.9, 1.6))
+		else:
+			var palm := _any_palm()
+			palm.position = at
+			palm.rotation.y = _rng.randf() * TAU
+			palm.scale = Vector3.ONE * _rng.randf_range(1.2, 1.6)
+			root.add_child(palm)
+		fx += _rng.randf_range(4.0, 9.0)
+	# Far islands on the horizon, pale and low, out past the bay to the right (beyond
+	# the plaza cameras' reach at their depth: x - half width > 31.4 + 0.5436 d).
+	for isle in [[580.0, -880.0, 70.0, 13.0], [705.0, -1100.0, 62.0, 18.0], [640.0, -1010.0, 30.0, 8.0]]:
+		var far := PlazaMountains.massif(float(isle[2]), float(isle[3]), float(isle[2]) * 0.4, _rng.randi(), HAZE_ISLE[0], HAZE_ISLE[1], HAZE_ISLE[2])
+		far.position = Vector3(float(isle[0]), WATER_Y - 0.6, float(isle[1]))
+		root.add_child(far)
 
 
 ## The shore's dressing: a ridge of low dunes with beach grass behind the row, palms and
@@ -953,6 +1019,7 @@ func _build_clouds() -> void:
 		var c: Vector4 = CLOUDS[i]
 		var cloud := LuchaKit.swirl_cloud(c.w, i + 3)
 		cloud.position = Vector3(c.x, c.y, c.z)
+		cloud.rotation.y = deg_to_rad(_rng.randf_range(-12.0, 12.0))
 		root.add_child(cloud)
 		_clouds.append([cloud, c.x])
 
