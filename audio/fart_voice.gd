@@ -26,13 +26,18 @@ func next_take() -> int:
 	return _bag.pop_back()
 
 
+static var _clips := {}
+
+
 func start(take: int, pitch: float, budget: float = CAPACITY) -> void:
 	if active():
 		return
 	_take = take
 	var path := "res://audio/sfx/farts/fart_%02d_" % take
-	var loop: AudioStreamWAV = load(path + "body.wav")
-	_tail = load(path + "tail.wav")
+	if not _clips.has(path):
+		_clips[path] = [load(path + "body.wav"), load(path + "tail.wav")]  # loaded once (was two disk reads a fart, on every listener)
+	var loop: AudioStreamWAV = _clips[path][0]
+	_tail = _clips[path][1]
 	_body = Sound.contact_player(loop, pitch, self)
 	_body.play()
 	# Schedule the cutoff on each listener so packet latency cannot extend a hold.

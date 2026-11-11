@@ -245,7 +245,10 @@ func _physics_process(delta: float) -> void:
 				_rpc_clock.rpc(clock, line)
 			_check_bounds()
 			if clock <= 0.0:
+				_overtime += real_delta
 				_time_up()
+			else:
+				_overtime = 0.0
 			_tick_pending(real_delta)
 
 
@@ -316,7 +319,10 @@ func _rpc_phase(p: String, p_clock: float, p_line: float, p_round: int, pid: int
 	round_n = p_round
 	phase_changed.emit(phase)
 	if p == "turn":
-		pass  # announced by _rpc_spawn, with the name the new climber gets
+		# (announced by _rpc_spawn, with the name the new climber gets.) Guests learn
+		# whose turn it is here: only the host's _next() moved turn_i, so they read "?".
+		if not is_host() and turn_order.has(pid):
+			turn_i = turn_order.find(pid)
 	elif p == "round":
 		announce.emit("Round %d" % p_round, true)
 
@@ -484,6 +490,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 					ordinal += 1
 			c.local_slot = Players.resolve_slot(int(r.get("slot", 0)), ordinal)
 			c.driver = Drivers.LocalDriver.new(c.local_slot)
+			Players.lock_pressed(c.local_slot)  # drop a Lock In pressed while sitting out
 			if dress:
 				c.set_glyphs(Glyphs.limb_glyphs(c.local_slot))
 		c.exerted.connect(func(): _rpc_exertion.rpc(cid, Sound.SFX["strain"].pick_random()))
@@ -529,13 +536,20 @@ func _drop_climber(cid: int) -> void:
 	_puppet_buf.erase(cid)
 	_last_seq.erase(cid)
 	_pulls.erase(cid)
+	_last_sent.erase(cid)
+	_puppet_at.erase(cid)
+	# Never leave the chair's grip joint on a freed hand.
+	if chair != null and is_instance_valid(chair) and chair.holder == cid:
+		chair.clear_grip()
 	c.remove()
 
 
 # ---------------------------------------------------------------- out of bounds
 
 func _check_bounds() -> void:
-	for pid in live:
+	for pid in live.keys():  # (a copy: the sea verdict erases from live inside the loop)
+		if not live.has(pid):
+			continue
 		var cid: int = live[pid]
 		if not climbers.has(cid) or _pending_freeze.has(cid):
 			continue
@@ -543,7 +557,7 @@ func _check_bounds() -> void:
 		if c.state == Climber.State.FROZEN:
 			continue
 		if _ring_out.has(cid):
-			_ring_out[cid] = float(_ring_out[cid]) - get_physics_process_delta_time()
+			_ring_out[cid] = float(_ring_out[cid]) - get_physics_process_delta_time() / maxf(Engine.time_scale, 0.01)  # real seconds, as the partner's count
 			if float(_ring_out[cid]) <= 0.0:
 				_ring_out.erase(cid)
 				_spawn(pid)
@@ -600,6 +614,19 @@ func _tick_fart_meters(seconds: float) -> void:
 ## waiting room stream at STREAM_MIN_HZ), and the puppets' buffer widens to match. A
 ## match has one or two live climbers, so play itself is always at the full rate.
 const STREAM_MIN_HZ := 10.0
+const STREAM_KEEPALIVE_S := 0.5
+var _last_sent := {}  # cid -> [pose, time, on_support]: the last pose streamed
+var _puppet_at := {}  # cid -> the newest sample's time once it has been applied in full
+
+
+static func _same_pose(a: PackedFloat32Array, b: PackedFloat32Array) -> bool:
+	if a.size() != b.size():
+		return false
+	for i in a.size():
+		if absf(a[i] - b[i]) > 0.001:
+			return false
+	return true
+
 func stream_hz() -> float:
 	var moving := 0
 	for c: Climber in climbers.values():
@@ -630,7 +657,16 @@ func _tick_owned(real_delta: float) -> void:
 			_send_contact_loads(c)
 		# (the grow-in plays on every machine by itself: nothing is streamed during it)
 		if send and not c.growing() and multiplayer.multiplayer_peer != null and not (multiplayer.multiplayer_peer is OfflineMultiplayerPeer):
-			_rpc_pose.rpc(cid, _seq, c.pose(), c.touches_solid())
+			# STANDING STILL SENDS LITTLE: a pose within a millimetre of the last one sent
+			# goes out as a keepalive twice a second (a full waiting room of idle climbers
+			# was thousands of identical packets a second through the host).
+			var now_pose := c.pose()
+			var on_support := c.touches_solid()
+			var last: Array = _last_sent.get(cid, [])
+			if not last.is_empty() and bool(last[2]) == on_support and _now - float(last[1]) < STREAM_KEEPALIVE_S and _same_pose(last[0], now_pose):
+				continue
+			_last_sent[cid] = [now_pose, _now, on_support]
+			_rpc_pose.rpc(cid, _seq, now_pose, on_support)
 	# Remote pulls on my climbers that went stale stop pulling.
 	for cid in _pulls.keys():
 		if not climbers.has(cid):
@@ -717,6 +753,10 @@ func _rpc_note(text: String) -> void:
 
 # ---------------------------------------------------------------- time up and freezes
 
+const OVERTIME_CAP_S := 8.0  # past the clock, how long an airborne climber may take to touch down
+var _overtime := 0.0
+
+
 func _time_up() -> void:
 	clock = 0.0
 	for pid in live.keys():
@@ -724,7 +764,17 @@ func _time_up() -> void:
 		if not climbers.has(cid) or _pending_freeze.has(cid):
 			continue
 		var c: Climber = climbers[cid]
-		if c.state == Climber.State.FROZEN or not _pose_on_support(c, c.pose()):
+		if c.state == Climber.State.FROZEN:
+			continue
+		# On a support: the pose test, or a weld it can miss (a strained one hangs a
+		# few centimetres off), or the owner's own word for a puppet.
+		var held_up := (c.owner_peer == me() and c.welded_to_support()) or (c.state == Climber.State.PUPPET and c.puppet_on_support)
+		if _overtime > OVERTIME_CAP_S * 2.0 or (not held_up and not _pose_on_support(c, c.pose())):
+			if _overtime > OVERTIME_CAP_S:
+				# Still in the air (hanging off the loose chair, spinning on a rope) long
+				# after the clock: out, so the round can end. It waited for ever before.
+				_rpc_note.rpc("%s ran out of time in the air!" % c.display_name)
+				_broadcast_freeze(cid, c.pose(), "air")
 			continue
 		if c.owner_peer == me():
 			_broadcast_freeze(cid, c.pose(), "time")
@@ -740,11 +790,11 @@ func _rpc_freeze_now(cid: int) -> void:
 	if c == null or c.owner_peer != me():
 		return
 	var p := c.pose()
-	_rpc_final_pose.rpc_id(1, cid, p)
+	_rpc_final_pose.rpc_id(1, cid, p, c.welded_to_support())
 
 
 @rpc("any_peer", "call_remote", "reliable")
-func _rpc_final_pose(cid: int, pose: PackedFloat32Array) -> void:
+func _rpc_final_pose(cid: int, pose: PackedFloat32Array, welded := false) -> void:
 	if not is_host() or not _pending_freeze.has(cid):
 		return
 	if climbers.has(cid) and climbers[cid].owner_peer != multiplayer.get_remote_sender_id():
@@ -752,7 +802,7 @@ func _rpc_final_pose(cid: int, pose: PackedFloat32Array) -> void:
 	if not _valid_lock_pose(pose):
 		return
 	_pending_freeze.erase(cid)
-	_broadcast_freeze(cid, pose, "time")
+	_broadcast_freeze(cid, pose, "time", welded)
 	_finish_timeout_if_settled()
 
 
@@ -787,8 +837,8 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded :
 	# Touching: a weld to the arena or the tower (the owner's report, or this machine's
 	# own climber), or the pose test against the supports.
 	var grounded := welded or (c.owner_peer == me() and c.welded_to_support()) or _pose_on_support(c, pose)
-	if why == "sea":
-		grounded = false  # in the water: out, the body leaves the tower (Del Mar)
+	if why == "sea" or why == "air":
+		grounded = false  # in the water (Del Mar), or never came down after the clock: out, the body leaves
 	if why == "time" and not grounded:
 		return
 	if why == "locked" and not grounded:
@@ -820,7 +870,7 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded :
 		if why == "locked":
 			_end_of_play()
 	else:
-		if why == "sea":
+		if why == "sea" or why == "air":
 			# Out in the water: the round ends once everyone still in has locked in.
 			var all_done := true
 			for p in round_players:
@@ -1003,6 +1053,8 @@ func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool) -
 		return
 	if c.owner_peer != multiplayer.get_remote_sender_id():
 		return  # only the owner streams a climber
+	if c.growing():
+		return  # still growing in: a pose in flight is the fallen body's (a respawn keeps its id)
 	if seq <= int(_last_seq.get(cid, -1)) or not _valid_lock_pose(pose):
 		return  # stale or duplicate: unreliable lanes arrive out of order
 	c.puppet_on_support = on_support
@@ -1037,7 +1089,14 @@ func _tick_puppets() -> void:
 			b = buf[-1]
 		var span := float(b[0]) - float(a[0])
 		var f := 0.0 if span <= 0.0 else clampf((t - float(a[0])) / span, 0.0, 1.0)
+		var at_newest := t >= float(buf[-1][0])
+		if at_newest and float(_puppet_at.get(cid, -1.0)) == float(buf[-1][0]):
+			continue  # already standing on the newest sample: 16 transforms a tick saved per idle puppet
 		c.apply_pose(_lerp_pose(a[1], b[1], f))
+		if at_newest:
+			_puppet_at[cid] = float(buf[-1][0])
+		else:
+			_puppet_at.erase(cid)
 
 
 static func _lerp_pose(a: PackedFloat32Array, b: PackedFloat32Array, f: float) -> PackedFloat32Array:
@@ -1088,7 +1147,7 @@ func _rpc_exertion(cid: int, clip: String) -> void:
 ## rope's spring (Parker 11-08).
 @rpc("any_peer", "call_local", "reliable")
 func _rpc_rope(cid: int, at: Vector3, speed: float) -> void:
-	if _audio_climber(cid) == null or not at.is_finite():
+	if _audio_climber(cid) == null or not at.is_finite() or not is_finite(speed):
 		return
 	_play_rope(at, speed)
 
@@ -1270,8 +1329,8 @@ func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vecto
 # ================================================================ leaving
 
 func _on_peer_left(id: int) -> void:
-	if phase == "lobby":
-		return
+	if phase not in ["turn", "round", "between", "over"]:
+		return  # (the lobby's waiting room follows the member list; idle has no match)
 	if not is_host():
 		return
 	for r in roster:
@@ -1536,6 +1595,9 @@ func _clear_climbers() -> void:
 	_last_seq.clear()
 	_pulls.clear()
 	_pending_freeze.clear()
+	_last_sent.clear()
+	_puppet_at.clear()
+	_overtime = 0.0
 
 
 func end_match() -> void:
