@@ -23,7 +23,8 @@ const PAD_IN := 0.3  # "fades in quickly"
 const PAD_HOLD := 1.9
 const PAD_OUT := 0.4
 const LIFT := 0.45  # the black lifting off the title
-const PULSE := 1.1  # the word's scale at a beat's peak
+const PULSE := 1.06  # the word's scale at a beat's peak (the logo keeps its frame clear to 1.08)
+const GEAR_RATIO := -16.0 / 12.0  # the copper gear (12 teeth) turns against the brass (16): they stay meshed
 
 var _black: ColorRect
 var _view: SubViewportContainer
@@ -96,6 +97,7 @@ func _build_stage() -> void:
 	# 1. the studio logo
 	_studio = LuchaKit.kit_model("studio_logo")
 	if _studio != null:
+		_studio.scale = Vector3.ONE * 1.25  # built 4.1 m wide
 		_studio_word = _studio.find_child("studio_logo_word", true, false) as Node3D
 		for g in 4:
 			var gear := _studio.find_child("studio_logo_gear_%d" % g, true, false) as Node3D
@@ -161,7 +163,7 @@ func _beat(n: int) -> void:
 	var w := _studio_word
 	var home := w.scale
 	var tw := create_tween()
-	tw.tween_property(w, "scale", home * (PULSE + (0.03 if n == 2 else 0.0)), 0.07).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(w, "scale", home * (PULSE + (0.02 if n == 2 else 0.0)), 0.07).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(w, "scale", home, 0.32).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
@@ -193,7 +195,7 @@ func _lift() -> void:
 func _process(delta: float) -> void:
 	_t += delta
 	for i in _gears.size():
-		(_gears[i] as Node3D).rotation.z = _t * (0.9 if i % 2 == 0 else -1.35)
+		(_gears[i] as Node3D).rotation.z = _t * 0.9 * (1.0 if i % 2 == 0 else GEAR_RATIO)
 	if _pad.visible:
 		_pad.rotation.y = sin(_t * 1.1) * 0.08
 		_pad.rotation.x = sin(_t * 0.8) * 0.04
