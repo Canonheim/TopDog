@@ -51,7 +51,7 @@ you're out.
 |---|---|---|
 | **The pier** | A wooden pier from the beach out over the water. Its deck is the floor of play. | Solid. Its end is `PIER_END` (x). Deck top at `DECK_Y`, about 1.5 to 2 m above the water. |
 | **The starting base** | One of the starting climbing objects (barrel, cactus, donkey, bell: the BASE setting), standing at the end of the pier. | Its rightmost point sits on the pier end ("At the end of the pier is one of the starting climbing objects, and the rope is to the right of that thing"). |
-| **The mast** | A tall pole on the pier, left of the base, carrying the top end of the rope. | Dressing (not climbable), or climbable if it looks good. The rope's top rides up and down it on a ring, so the rope stays at 45° as it moves (§5). |
+| **The mast** | A pole on the pier, left of the base, with the rope tied to its top. | Dressing. It GROWS as the game plays (Parker 11-10: "The mast gets taller as the game plays, line stays 45"): its top rises to wherever the rope must meet it (§5). |
 | **The rope (the line)** | From the buoy up to the mast at 45°, hung with little dangling streamers (papel picado ribbons). | It IS the line. It's drawn, not solid: climbers pass through it. |
 | **The buoy** | A buoy floating on the water where the rope meets it. | Solid, but **not weldable** ("You cannot weld to the buoy"). It sticks up a bit, so climbers near the water must get past it to lock in. It moves with the line and pushes floaties ahead of it (§7). |
 | **The sea** | Golemheim's water (§8). | **Out** if you fall in ("your counted as Out if you fall off the tower into the water"). |
@@ -72,10 +72,10 @@ you're out.
   moves back.
 - **The buoy** sits where the rope meets the water: `x = C - WATER_Y`. It glides out
   to its new place after each lock.
-- **The mast's ring** slides to `y = C - MAST_X`, so the rope stays at 45° however far
-  out it goes. The mast must be tall enough for a long match. Keep about 14 m of ring
-  travel; past that, the rope can lift off the mast's top and simply hang from it, and
-  it still reads.
+- **The mast grows:** its top, where the rope ties, rises to `y = C - MAST_X`, so the
+  rope stays at 45° however far out it goes ("The mast gets taller as the game plays,
+  line stays 45"). It extends in sections, a telescoping or stacking pole, with no
+  height limit.
 - **Lock in:** "You can lock in as long as you are anywhere over the 45 degree line."
   A climber locks in if any part of them is over the line (`x + y > C + LOCK_MARGIN`)
   while touching the tower, the pier or the base, the same touch rule as now (welds
@@ -178,8 +178,7 @@ paper faces. That's a remodel for the Building Maker, who made them.
 
 ## 12. Open questions for Parker
 
-1. **The mast:** a tall mast on the pier, with the rope's top sliding up it to keep
-   45° (the plan), or something else?
+1. ~~The mast~~: settled. It grows as the game plays, and the line stays at 45°.
 2. **Lock in from the water's side:** climbers far out near the water only lock once
    past the buoy. Should a climber dangling below the pier deck, but over the line,
    also count?
