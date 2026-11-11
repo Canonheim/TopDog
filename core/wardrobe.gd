@@ -47,14 +47,16 @@ func model(p: Dictionary) -> PackedScene:
 
 func apply(root: Node, value: Dictionary) -> void:
 	var p := clean(value)
-	var skin := AtlasPalette.material(Color(SKINS[p.skin]))
-	var suit := AtlasPalette.material(Color(SUITS[p.speedo]))
+	# THE ONE MATERIAL: the skin's and the suit's atlas cells go to each piece as its own
+	# per-instance texel (they were two materials per look).
+	var skin: Vector2 = AtlasPalette.swatch(Color(SKINS[p.skin])).uv
+	var suit: Vector2 = AtlasPalette.swatch(Color(SUITS[p.speedo])).uv
 	_apply_meshes(root, skin, suit)
 
-func _apply_meshes(node: Node, skin: Material, suit: Material) -> void:
+func _apply_meshes(node: Node, skin: Vector2, suit: Vector2) -> void:
 	if node is MeshInstance3D and node.name != "Head":
 		# The pelvis is the speedo; keep the heads' atlas colours intact.
 		if node.name in ["Pelvis", "Chest", "Navel", "L_Foot", "Foot", "L_Hand", "Hand", "Shoulder", "L_Shoulder", "Wrist", "L_Wrist", "Thigh", "L_Thigh", "Shin", "L_Shin"]:
-			node.material_override = suit if node.name == "Pelvis" else skin
+			CelPass.paint_uv(node, suit if node.name == "Pelvis" else skin)
 	for child in node.get_children():
 		_apply_meshes(child, skin, suit)

@@ -51,9 +51,9 @@ func _ready() -> void:
 		var c: Climber = climbers[0]
 		check(c.bodies.size() == 16, "All physical body pieces retained")
 		var pelvis: MeshInstance3D = c.bodies.pelvis.find_child("Pelvis", true, false)
-		check(pelvis.material_override.get_shader_parameter("uv_offset").is_equal_approx(AtlasPalette.swatch(Color(Wardrobe.SUITS[3])).uv), "Match speedo color")
+		check((pelvis.get_instance_shader_parameter("swatch_uv") as Vector2).is_equal_approx(AtlasPalette.swatch(Color(Wardrobe.SUITS[3])).uv), "Match speedo color")
 		var chest: MeshInstance3D = c.bodies.chest.find_child("Chest", true, false)
-		check(chest.material_override.get_shader_parameter("uv_offset").is_equal_approx(AtlasPalette.swatch(Color(Wardrobe.SKINS[5])).uv), "Match skin color")
+		check((chest.get_instance_shader_parameter("swatch_uv") as Vector2).is_equal_approx(AtlasPalette.swatch(Color(Wardrobe.SKINS[5])).uv), "Match skin color")
 		var model: Node = Wardrobe.SPIRAL.instantiate()
 		check(c.bodies.head.find_child("Head", true, false).mesh == model.find_child("Head", true, false).mesh, "Match Spiral head")
 		model.free()

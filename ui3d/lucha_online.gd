@@ -112,7 +112,9 @@ func _on_settings() -> void:
 
 func _update_guest_settings() -> void:
 	var row := Modes.row(str(Net.settings.get("mode", "scramble")))
-	set_status("%s, %d s clock, %s base. The host starts the match." % [str(row.name), int(Net.settings.get("timer", 60)), str(Net.settings.get("base", "random")).capitalize()])
+	# Parker 11-10: guests aren't told to ready up; they're told who they wait for.
+	var host_name := str((Net.members.get(1, {}) as Dictionary).get("name", "the host"))
+	set_status("Waiting for host %s to start the game. %s, %s clock, %s base." % [host_name, str(row.name), Modes.TIMER_NAMES[maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0))))], str(Net.settings.get("base", "random")).capitalize()])
 
 
 func _on_members() -> void:
@@ -132,7 +134,8 @@ func _on_lobby_list(rows: Array) -> void:
 ## LuchaUI calls this on every screen change.
 func on_screen(id: String) -> void:
 	var online_ids := ["online", "friends", "browse", "lobby"]
-	_status_node.visible = id in ["friends", "browse"]
+	# (the lobby too, for a guest: "Waiting for host ... to start the game")
+	_status_node.visible = id in ["friends", "browse"] or (id == "lobby" and not Net.is_host())
 	_board.visible = false
 	_chat_board.visible = false
 	_place_boards(id)

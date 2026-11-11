@@ -44,17 +44,9 @@ static func tint_part(root: Node, part: String, c: Color) -> void:
 	if n == null or not (n is MeshInstance3D):
 		return
 	var mi := n as MeshInstance3D
-	for si in mi.mesh.get_surface_count():
-		var m := mi.get_active_material(si)
-		if m is ShaderMaterial:
-			# One tinted copy per (material, colour): fifty streamers in six colours are
-			# six materials, not fifty.
-			var key := "%d|%s" % [m.get_instance_id(), c.to_html(true)]
-			if not _tints.has(key):
-				var d: ShaderMaterial = m.duplicate()
-				d.set_shader_parameter("color", c)
-				_tints[key] = [d, m]  # (the source is held too: its id must not be reused)
-			mi.set_surface_override_material(si, _tints[key][0])
+	# THE ONE MATERIAL: a tint is a per-instance value in the cel shader, not a copy of
+	# the material (a card's band, a streamer, a lamp: one material, many tints).
+	mi.set_instance_shader_parameter(&"tint", c)
 
 
 ## SMOOTH SHADING on part of a flat-shaded kit mesh (Parker 11-10: the bell and the
@@ -133,7 +125,7 @@ static func box(size: Vector3, c: Color, at := Vector3.ZERO) -> MeshInstance3D:
 	var bm := BoxMesh.new()
 	bm.size = size
 	mi.mesh = bm
-	mi.material_override = mat(c)
+	CelPass.paint(mi, c)
 	mi.position = at
 	return mi
 
@@ -146,7 +138,7 @@ static func cyl(r: float, h: float, c: Color, at := Vector3.ZERO, axis := Vector
 	cm.height = h
 	cm.radial_segments = 16
 	mi.mesh = cm
-	mi.material_override = mat(c)
+	CelPass.paint(mi, c)
 	mi.position = at
 	if axis == Vector3.RIGHT:
 		mi.rotation = Vector3(0, 0, PI * 0.5)
@@ -168,7 +160,7 @@ static func ball(r: float, c: Color, at := Vector3.ZERO) -> MeshInstance3D:
 		sm.rings = sm.radial_segments / 2
 		_balls[key] = sm
 	mi.mesh = _balls[key]
-	mi.material_override = mat(c)
+	CelPass.paint(mi, c)
 	mi.position = at
 	return mi
 
@@ -365,7 +357,7 @@ static func star_mesh(r: float, c: Color) -> MeshInstance3D:
 static func _extrude(pts: PackedVector2Array, depth: float, c: Color) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.mesh = _prism(pts, depth)
-	mi.material_override = mat(c)
+	CelPass.paint(mi, c)
 	return mi
 
 

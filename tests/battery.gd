@@ -3064,6 +3064,63 @@ func _run_input() -> void:
 	await frames(2)
 
 
+## OUT COLD, STILL BOUNCED (Parker 11-10: "knocked out climbers should bounce off the
+## ropes and the floating things in Del Mar"): knocked out and thrown at the ring ropes,
+## the climber comes back; knocked out and dropped on a floatie, it's thrown up.
+func _run_korope() -> void:
+	var g := make_game("tower", 1, 60.0, "plaza")
+	if not await wait_phase(g, "turn", 10.0):
+		t("korope: a turn starts", false)
+		return
+	var c: Climber = g.live_climbers()[0]
+	await seconds(0.6)
+	c.release_all()
+	c._impact_guard = 0.0
+	c.knock_out()
+	var shift_ko := Vector3(7.6 - c.centre_of_mass().x, 0.4, 0.0)
+	for b in c.bodies.values():
+		var rb := b as RigidBody3D
+		rb.global_position += shift_ko
+		Climber.sync_server(rb)
+		rb.linear_velocity = Vector3(4.0, 0.0, 0.0)
+	var was_out := c.knockout_left > 0.0
+	var back_ko := 0.0
+	for k in int(0.8 * Engine.physics_ticks_per_second):
+		await get_tree().physics_frame
+		var v := Vector2.ZERO
+		for b in c.bodies.values():
+			v += Vector2(b.linear_velocity.x, b.linear_velocity.y) * b.mass
+		back_ko = minf(back_ko, v.x / c.total_mass)
+	t("korope: a knocked-out climber bounces off the ring ropes", was_out and back_ko < -3.0 and c.centre_of_mass().x < Climber.rope_x, "back at %.2f m/s, x %.2f" % [back_ko, c.centre_of_mass().x])
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+	# The floaties: a knocked-out climber falling onto one is thrown up like anyone.
+	var fl := DelMarFloaties.new()
+	add_child(fl)
+	fl.setup(5, Stage.WATER_Y, 104.5, 135.0)
+	fl.set_buoy(106.0)
+	fl.tick(0.0)
+	var k2 := spawn(Vector2(float(fl._items[0].x), Stage.WATER_Y + 0.6))
+	k2._impact_guard = 0.0
+	k2.knock_out()
+	for b in k2.bodies.values():
+		(b as RigidBody3D).linear_velocity = Vector3(0, -4.0, 0)
+	var hit := -1
+	for k in 40:
+		await get_tree().physics_frame
+		hit = fl.bounce(k2)
+		if hit >= 0:
+			break
+	var up := 0.0
+	for b in k2.bodies.values():
+		up += (b as RigidBody3D).linear_velocity.y * (b as RigidBody3D).mass
+	t("korope: a knocked-out climber bounces off a floatie", k2.knockout_left > 0.0 and hit >= 0 and up / k2.total_mass > 2.0, "hit %d, up %.2f m/s" % [hit, up / k2.total_mass])
+	k2.remove()
+	fl.queue_free()
+	await frames(2)
+
+
 func _run_inputreconnect() -> void:
 	var cleaned := Net._clean_players([{"name": "Steam Guest", "random": true, "slot": 0}])
 	t("names: host preserves guest randomized character flag", cleaned[0].random)

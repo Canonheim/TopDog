@@ -272,7 +272,7 @@ func _dress_delmar() -> void:
 		stay.bottom_radius = 0.02
 		stay.height = 1.0
 		_backstay.mesh = stay
-		_backstay.material_override = CelPass.cel_material(Color("#5A3A22"))
+		CelPass.paint(_backstay, Color("#5A3A22"))
 		delmar_root.add_child(_backstay)
 	if _mast_head_node == null:
 		_mast_pole = _boxm(Vector3(0.28, 1.0, 0.28), Color("#8A5A34"), Vector3(MAST_X, 0, MAST_Z))
@@ -283,7 +283,7 @@ func _dress_delmar() -> void:
 	cyl.bottom_radius = 0.035
 	cyl.height = 1.0
 	_rope.mesh = cyl
-	_rope.material_override = CelPass.cel_material(Color("#D8262E"))
+	CelPass.paint(_rope, Color("#D8262E"))
 	delmar_root.add_child(_rope)
 	var buoy_model := LuchaKit.kit_model("delmar_buoy")
 	if buoy_model != null:
@@ -295,7 +295,7 @@ func _dress_delmar() -> void:
 		sph.radius = BUOY_R
 		sph.height = BUOY_R * 2.6
 		buoy.mesh = sph
-		buoy.material_override = CelPass.cel_material(Color("#E23B3B"))
+		CelPass.paint(buoy, Color("#E23B3B"))
 		buoy_body.add_child(buoy)
 	if LuchaKit.kit_model_exists("delmar_rope_seg"):
 		_rope.visible = false
@@ -908,7 +908,7 @@ func _dress(vis: Node3D, half: float, bs: float) -> void:
 	var pm := PlaneMesh.new()
 	pm.size = Vector2(400, 400)
 	sea.mesh = pm
-	sea.material_override = CelPass.cel_material(Color(0.2, 0.45, 0.6))
+	CelPass.paint(sea, Color(0.2, 0.45, 0.6))
 	sea.position = Vector3(0, -1.5, 0)
 	root.add_child(sea)
 	# Far islands for depth.
@@ -959,7 +959,7 @@ func _dress_plaza(vis: Node3D, half: float, bs: float) -> void:
 		# the sun and swallowed the climber's pale legs (environment pass 11-08).
 		var canvas := kit.find_child("ring_canvas", true, false) as MeshInstance3D
 		if canvas != null:
-			canvas.material_override = CelPass.cel_material(CANVAS)
+			CelPass.paint(canvas, CANVAS)
 	else:
 		var w := half * 2.0
 		# The stage block and its skirt panels, then the canvas and its rim.
@@ -1008,7 +1008,7 @@ func _boxm(size: Vector3, c: Color, at: Vector3) -> MeshInstance3D:
 	var bm := BoxMesh.new()
 	bm.size = size
 	mi.mesh = bm
-	mi.material_override = CelPass.cel_material(c)
+	CelPass.paint(mi, c)
 	mi.position = at
 	return mi
 

@@ -195,6 +195,7 @@ func _show_stage(stage: int) -> void:
 		remove_child(model)
 		model.queue_free()
 	model = MODELS[stage].instantiate() as Node3D
+	CelPass.celify(model)  # the house cel look on THE ONE MATERIAL, as every other kit piece (it was plain PBR)
 	model.position.y = -SIZE.y * 0.5
 	add_child(model)
 

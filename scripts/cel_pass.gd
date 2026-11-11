@@ -2,7 +2,8 @@
 ##
 ##   CelPass.celify(root)            every StandardMaterial3D surface under root -> its cel twin (cached, shared)
 ##   CelPass.add_outline_pass(root)  the screen-space ink on root's WorldEnvironment (one per world)
-##   CelPass.cel_material(color)     a material born cel, for things built from code
+##   CelPass.paint(thing, color)     THE ONE MATERIAL on a thing built from code, in that colour
+##   CelPass.cel_material(color)     a material of its own (see-through and metal looks only)
 ##
 ## Call celify and add_outline_pass once per loaded map or scene (after the scene is in the tree). Imported GLBs
 ## arrive with StandardMaterial3D; the twin keeps the colour, texture and tiling, swaps the shader for
@@ -57,8 +58,15 @@ static func _cel_mesh(mi: MeshInstance3D) -> void:
 static func material_for(src: StandardMaterial3D, mesh: Mesh = null, surface := 0) -> ShaderMaterial:
 	var cel: ShaderMaterial = _twins.get(src)
 	if cel == null:
-		cel = _build_cel(src)
+		# A plain atlas material (every kit model's PALETTE: white, untiled, matte, no
+		# vertex paint) IS the one material: 130 files used to make 130 identical twins.
+		var plain_atlas := is_palette(src) and src.albedo_color.is_equal_approx(Color.WHITE) and src.metallic <= 0.0 \
+				and src.uv1_scale.is_equal_approx(Vector3.ONE) and src.uv1_offset.is_zero_approx() \
+				and not src.vertex_color_use_as_albedo and not _has_vertex_color(mesh, surface) and (not src.emission_enabled or NO_EMISSION)
+		cel = one() if plain_atlas else _build_cel(src)
 		_twins[src] = cel
+	if cel == _one:
+		return cel
 	if _has_vertex_color(mesh, surface):
 		cel.set_shader_parameter("use_vertex_color", true)
 	return cel
@@ -71,6 +79,71 @@ static func material_for(src: StandardMaterial3D, mesh: Mesh = null, surface := 
 ## lamp and flower. Nobody may change a material this returns: to tint one piece,
 ## duplicate it first (LuchaKit.tint_part does).
 static var _plain := {}
+static var _plain_colors := {}  # a plain non-metal material -> its colour (unify reads it)
+static var _one: ShaderMaterial = null
+
+
+## THE ONE MATERIAL (Parker 11-10: "the whole game should be using one material, that's
+## the benefit of the color atlas ... except maybe clear things"): the shared atlas and
+## its masks, white, matte. Every kit model wears it by its UVs; everything built in code
+## wears it through a per-instance atlas texel (paint). Never change it.
+static func one() -> ShaderMaterial:
+	if _one == null:
+		_one = palette_material()
+		_one.resource_name = "ONE"
+	return _one
+
+
+## A thing built in code (a box, a ball, a wall of bricks, a flat of sand), in one colour,
+## on THE ONE MATERIAL: its colour is the nearest texel of the atlas's matte block (188,000
+## colours: never more than about 3% off), handed over per instance. A see-through colour
+## keeps a material of its own.
+static func paint(thing: GeometryInstance3D, color: Color) -> void:
+	if thing == null:
+		return
+	if color.a < 0.999:
+		thing.material_override = cel_material(color)
+		return
+	thing.material_override = one()
+	thing.set_instance_shader_parameter(&"swatch_uv", AtlasPalette.matte_uv(color))
+
+
+## The same, by an atlas UV already in hand (the wardrobe's skins and suits).
+static func paint_uv(thing: GeometryInstance3D, uv: Vector2) -> void:
+	if thing == null:
+		return
+	thing.material_override = one()
+	thing.set_instance_shader_parameter(&"swatch_uv", uv)
+
+
+## A mesh of several one-colour surfaces (the paving's tones, the sand and the wet sand)
+## onto THE ONE MATERIAL: each surface's vertices take its colour's atlas texel as their
+## UV, and every surface wears the one material. Surfaces that aren't plain colours stay.
+static func unify(mi: MeshInstance3D) -> void:
+	var src := mi.mesh as ArrayMesh
+	if src == null:
+		return
+	var out := ArrayMesh.new()
+	var changed := false
+	for si in src.get_surface_count():
+		var m := src.surface_get_material(si)
+		var arrays := src.surface_get_arrays(si)
+		if m != null and _plain_colors.has(m):
+			var n := (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+			var uvs := PackedVector2Array()
+			uvs.resize(n)
+			uvs.fill(AtlasPalette.matte_uv(_plain_colors[m]))
+			arrays[Mesh.ARRAY_TEX_UV] = uvs
+			changed = true
+			out.add_surface_from_arrays(src.surface_get_primitive_type(si), arrays)
+			out.surface_set_material(si, one())
+		else:
+			out.add_surface_from_arrays(src.surface_get_primitive_type(si), arrays)
+			out.surface_set_material(si, m)
+	if changed:
+		mi.mesh = out
+
+
 static func cel_material(color: Color, metallic := 0.0, roughness := 1.0) -> ShaderMaterial:
 	var key := "%s|%.3f|%.3f" % [color.to_html(true), metallic, roughness]
 	if _plain.has(key):
@@ -80,6 +153,8 @@ static func cel_material(color: Color, metallic := 0.0, roughness := 1.0) -> Sha
 	cel.set_shader_parameter("color", color)
 	_metal_specular(cel, color, metallic, roughness)
 	_plain[key] = cel
+	if metallic <= 0.0 and color.a >= 0.999:
+		_plain_colors[cel] = color
 	return cel
 
 

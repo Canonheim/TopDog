@@ -107,8 +107,20 @@ uniform vec2 uv_scale = vec2(1,1);
 uniform vec2 uv_offset = vec2(0,0);
 group_uniforms;
 
+// THE ONE MATERIAL (Top Dog, Parker 2026-11-10: the whole game on one material, that's
+// the benefit of the colour atlas). Per-INSTANCE values, so thousands of pieces share
+// one material and still differ:
+//   swatch_uv  x >= 0: the whole piece is this one atlas texel (a thing built in code,
+//              painted by CelPass.paint); x < 0 (the default): the mesh's own UVs.
+//   tint       multiplies the colour (LuchaKit.tint_part: a card's band, a streamer).
+instance uniform vec2 swatch_uv = vec2(-1.0, -1.0);
+instance uniform vec4 tint : source_color = vec4(1.0, 1.0, 1.0, 1.0);
+
 void vertex() {
 	UV = UV * uv_scale.xy + uv_offset.xy;
+	if (swatch_uv.x >= 0.0) {
+		UV = swatch_uv;
+	}
 	#if !USE_HEIGHT_MAP
 		base_uv = UV;
 	#endif
@@ -146,7 +158,7 @@ void fragment() {
 			FRESNEL_COLOR = vec3(1.0);
 			FRESNEL_STRENGTH = shine_polished_rim;
 		} else {                // SATIN
-			vec3 lin = color.rgb * texture(base_texture, base_uv).rgb;
+			vec3 lin = color.rgb * tint.rgb * texture(base_texture, base_uv).rgb;
 			vec3 srgb = mix(pow(lin, vec3(1.0 / 2.4)) * 1.055 - 0.055, lin * 12.92, lessThan(lin, vec3(0.0031308)));
 			srgb = mix(srgb, vec3(1.0), shine_satin_lighten);
 			SPECULAR_COLOR = mix(pow((srgb + 0.055) / 1.055, vec3(2.4)), srgb / 12.92, lessThan(srgb, vec3(0.04045)));
@@ -198,7 +210,7 @@ void fragment() {
 	BACKLIGHT = backlight_fragment(base_uv);
 #endif
 
-ALBEDO = color.rgb * texture(base_texture, base_uv).rgb;
+ALBEDO = color.rgb * tint.rgb * texture(base_texture, base_uv).rgb;
 	// COLOR is the mesh's vertex color (white when the mesh has no COLOR_0),
 	// so this only bites when painted
 	if (use_vertex_color) {

@@ -2,8 +2,8 @@ class_name LuchaHudBottom
 extends Node3D
 ## THE HUD'S BOTTOM (Parker 11-08): "Replace the bottom with a nice UI designer
 ## made nameplate of the current guy's name and make sure it is long enough to fit
-## the longest names. Also have a height counter down there ... built like an old
-## Odometer with the rotating wheels with the numbers on them."
+## the longest names." (The height odometer that sat beside it is out of the game:
+## Parker 11-10, "hud odometer is no longer in the game".)
 ##
 ## nameplate  on the kit's hud_nameplate (its nameplate_face), fitted for 33
 ##            letters: the climber's made-up name only (the climbing climber in
@@ -11,25 +11,16 @@ extends Node3D
 ##            the HUD's top-left corner instead (steam_shown, Parker 11-10). Its
 ##            nameplate_lockin tab says LOCK IN! when your climber is above the
 ##            line, held a moment either way so it never flickers.
-## odometer   your climber's top height, 00.00 to 99.99 m, on the kit's
-##            hud_odometer: four drums (odo_wheel_*), digits 0-9 round each; the
-##            right drum turns smoothly and each drum to its left rolls over as the
-##            one beside it passes 9 to 0.
-## Stand-ins (a plate, four drums) until the kit's parts land; they swap in by name.
+## A stand-in plate until the kit's part lands; it swaps in by name.
 
-const DIGIT_STEP := TAU / 10.0
 const PLATE_AT := Vector3(-1.4, -2.8, 0.0)  # HUD units (x UI_SCALE on screen)
-const ODO_AT := Vector3(4.55, -2.8, 0.0)
-## THE CORNERS (Parker 11-08: "the new name plate in the bottom left of the screen
-## and the new odometer height thing in the bottom right"): each frame the plate's
-## left edge and the odometer's right edge sit CORNER_MARGIN in from the screen's
-## edges, at any aspect. HUD_HALF_H: the HUD's visible half-height in HUD units.
+## THE CORNER (Parker 11-08: "the new name plate in the bottom left of the screen"):
+## each frame the plate's left edge sits CORNER_MARGIN in from the screen's edge, at
+## any aspect. HUD_HALF_H: the HUD's visible half-height in HUD units.
 const HUD_HALF_H := 3.8
 const CORNER_MARGIN := 0.35
 const PLATE_HALF_W := 2.96 * 0.5 * KIT_SCALE  # the kit plate's half-width in HUD units
-const ODO_HALF_W := 1.9 * 0.5 * ODO_SCALE
 const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
-const ODO_SCALE := 1.8  # the kit's odometer at HUD size (the UI creator's number)
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
 const LOCK_TEXT := "LOCK IN!"
 ## The Steam name of the nameplate's climber's player (online only, else ""), which
@@ -62,13 +53,6 @@ const TAB_X := -0.78  # the toaster tab in plate space (the UI creator's numbers
 const TAB_DOWN_Y := 0.05  # in the pocket, below the lip
 const TAB_UP_Y := 0.30  # the face clear, its foot still in the slot
 var _lock_text: Node3D
-var _odo: Node3D
-var _drums: Array = []  # left to right: tens, units, tenths, hundredths (thousands to units past 100 m)
-## Tests only: a height to show in place of the climber's (-1 = the climber's).
-var test_height := -1.0
-var _odo_point: Node3D = null  # the kit's decimal point, hidden past 100 m
-var _shown_h := 0.0
-var _digit_colour := LuchaKit.INK
 
 
 func _init(p_main: Node) -> void:
@@ -191,115 +175,6 @@ func set_name_text(s: String) -> void:
 	LuchaUI.no_shadows(t)
 
 
-# ---------------------------------------------------------------- the odometer
-
-func _build_odometer() -> void:
-	_odo = LuchaKit.kit_model("hud_odometer")
-	var wheels: Array = []
-	if _odo != null:
-		# Godot's importer reads "_wheel" in a name as a car wheel: odo_wheel_0
-		# arrives as a VehicleWheel3D called odo_0. Take that, or odo_drum_* / odo_wheel_*.
-		for n in _odo.find_children("odo_*", "Node3D", true, false):
-			var nm := String(n.name)
-			if n is VehicleWheel3D or nm.begins_with("odo_drum_") or nm.begins_with("odo_wheel_"):
-				wheels.append(n)
-		wheels.sort_custom(func(a, b): return (a as Node3D).global_position.x < (b as Node3D).global_position.x if a.is_inside_tree() else (a as Node3D).position.x < (b as Node3D).position.x)
-	if _odo != null and wheels.size() >= 4:
-		_odo.scale = Vector3.ONE * ODO_SCALE
-		_digit_colour = LuchaKit.CREAM  # the kit's drums are dark wood
-	if _odo == null or wheels.size() < 4:
-		_odo = _stand_in_odometer()
-		wheels.clear()
-		for n in _odo.find_children("odo_wheel_*", "Node3D", true, false):
-			wheels.append(n)
-	_odo.position = ODO_AT
-	add_child(_odo)
-	for w in wheels.slice(0, 4):
-		_drums.append(_dress_drum(w as Node3D))
-
-
-## A drum's digits: 0-9 round its rim, each facing out, the drum turning about X.
-func _dress_drum(wheel: Node3D) -> Node3D:
-	var r: float = wheel.get_meta("radius", 0.3)
-	var width: float = wheel.get_meta("width", 0.4)
-	var mi := wheel as MeshInstance3D
-	if mi == null:
-		for ch in wheel.get_children():
-			if ch is MeshInstance3D:
-				mi = ch
-				break
-	if mi != null and mi.mesh != null and not wheel.has_meta("radius"):
-		var bb := mi.mesh.get_aabb()
-		r = maxf(bb.size.y, bb.size.z) * 0.5
-		width = bb.size.x
-	var spin := Node3D.new()
-	spin.name = "digits"
-	wheel.add_child(spin)
-	for k in 10:
-		var a := -k * DIGIT_STEP  # the next digit waits below and rolls up, as on a real odometer
-		var d := LuchaKit.text3d(str(k), minf(width * 0.75, r * 0.72), _digit_colour, 0.0, 2)
-		d.position = Vector3(0, r * sin(a), r * cos(a)) * 1.02
-		d.rotation.x = -a
-		spin.add_child(d)
-	return wheel
-
-
-func _stand_in_odometer() -> Node3D:
-	var root := Node3D.new()
-	root.add_child(LuchaKit.box(Vector3(2.5, 0.95, 0.1), Color("#5A2E14"), Vector3(0, 0, -0.32)))
-	root.add_child(LuchaKit.box(Vector3(2.62, 1.05, 0.06), LuchaKit.GOLD, Vector3(0, 0, -0.36)))
-	for i in 4:
-		# A plain holder (the drum turns about its X), the cylinder laid along X inside.
-		var w := Node3D.new()
-		w.name = "odo_wheel_%d" % (i + 1)
-		w.position = Vector3((i - 1.5) * 0.56, 0, 0)
-		w.set_meta("radius", 0.3)
-		w.set_meta("width", 0.46)
-		w.add_child(LuchaKit.cyl(0.3, 0.46, LuchaKit.CREAM, Vector3.ZERO, Vector3.RIGHT))
-		root.add_child(w)
-	# The decimal point between the units and the tenths.
-	var dot := LuchaKit.ball(0.05, LuchaKit.RED, Vector3(0, -0.22, 0.32))
-	dot.name = "odo_point"
-	root.add_child(dot)
-	var m := LuchaKit.fit_text("M", 0.3, 0.3, LuchaKit.GOLD, LuchaKit.INK)
-	m.position = Vector3(1.45, -0.18, 0.05)
-	root.add_child(m)
-	return root
-
-
-## Drum values (0..10, continuous) for a height: the right drum turns with the
-## hundredths; each drum to its left steps on as the one beside it passes 9.
-## PAST 100 m (Parker 11-08: "the '.' drop[s] and the meter counter keep[s] going
-## at 100 with the decimal places being replaced"): the four drums read whole
-## metres, 0100 to 9999, the right drum turning with the metres.
-static func drum_values(h: float) -> Array:
-	var x := clampf(h, 0.0, 99.99) * 100.0 if h < 100.0 else clampf(h, 100.0, 9999.0)
-	var out: Array = [0.0, 0.0, 0.0, 0.0]
-	out[3] = fmod(x, 10.0)
-	var lower: float = out[3]
-	for i in [2, 1, 0]:
-		var place := pow(10.0, 3 - i)
-		var v := fmod(floorf(x / place), 10.0) + clampf(lower - 9.0, 0.0, 1.0)
-		out[i] = v
-		lower = v
-	return out
-
-
-func set_height(h: float, delta: float) -> void:
-	_shown_h = lerpf(_shown_h, h, 1.0 - exp(-delta * 10.0))
-	if absf(_shown_h - h) < 0.0005:
-		_shown_h = h
-	var vals := drum_values(_shown_h)
-	# The decimal point goes away once the drums read whole metres.
-	if _odo_point == null and _odo != null:
-		_odo_point = _odo.find_child("odo_point", true, false) as Node3D
-	if _odo_point != null:
-		_odo_point.visible = _shown_h < 100.0
-	for i in _drums.size():
-		var spin := (_drums[i] as Node3D).get_node("digits") as Node3D
-		spin.rotation.x = -float(vals[i]) * DIGIT_STEP
-
-
 # ---------------------------------------------------------------- the tick
 
 ## LuchaUI calls this every frame the HUD shows.
@@ -321,9 +196,6 @@ func tick(delta: float) -> void:
 	var who: Climber = climbing if g.mode.get("live", "turns") == "turns" else mine
 	set_name_text(who.display_name if who != null else "")
 	steam_shown = steam_name(who.owner_peer if who != null else g.me())
-	var h_src: Climber = who if who != null else mine
-	if h_src != null:
-		set_height(test_height if test_height >= 0.0 else maxf(0.0, h_src.top_height()), delta)
 	var raw := mine != null and g.measure(mine) > g.line + Game.LOCK_MARGIN and mine.touches_solid()
 	if raw == popped:
 		_lock_hold = 0.0
@@ -339,7 +211,7 @@ func tick(delta: float) -> void:
 		_gems_lit = above
 		var gm := _gems as MeshInstance3D
 		if gm != null:
-			gm.material_override = CelPass.cel_material(Color("#7CC83A") if above else Color("#D8262E"))
+			CelPass.paint(gm, Color("#7CC83A") if above else Color("#D8262E"))
 
 
 ## A machine's Steam name, from the lobby's member list: online only. Offline (practice,
@@ -377,10 +249,8 @@ func _to_corners() -> void:
 	var half_w := HUD_HALF_H * size.x / maxf(size.y, 1.0)
 	if _plate != null:
 		_plate.position.x = -half_w + CORNER_MARGIN + PLATE_HALF_W
-	if _odo != null:
-		_odo.position.x = half_w - CORNER_MARGIN - ODO_HALF_W
 	# Keep the nameplate and its child lock-in tab low, with an eight-pixel
-	# bottom margin at any resolution. The odometer keeps its own placement.
+	# bottom margin at any resolution.
 	if _plate != null and main != null and main.cam != null:
 		var cam: Camera3D = main.cam
 		var inv := cam.global_transform.affine_inverse()

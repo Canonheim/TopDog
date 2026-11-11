@@ -636,6 +636,36 @@ Commits 4714920, 7f37818 and the one after.
 - RPCs trust a buggy or hostile client's numbers more than they should (a lock pose far
   from the last streamed one is accepted).
 
+## The one material, and the evening's calls (Parker, 2026-11-10)
+
+- **THE ONE MATERIAL.** Parker: "the whole game should be using one material, that's the
+  benefit of the color atlas ... except maybe clear things". `CelPass.one()` is the atlas
+  material; every kit model's PALETTE material is it; everything built in code wears it
+  through `CelPass.paint(thing, colour)`, which hands the cel shader one atlas texel per
+  instance (`instance uniform swatch_uv`). The texel is the nearest of the atlas's matte
+  block (188,000 colours: every colour the code asks for is within about 3%). A tint
+  (`LuchaKit.tint_part`) is per instance too (`instance uniform tint`). Meshes of several
+  one-colour surfaces take the texel as their UVs (`CelPass.unify`).
+  - Counted: the title draws about 2,400 things with ONE material. A Del Mar match has
+    four: the one, the sea, and the chair's bubble and its ink (the clear things).
+  - `rendering/limits/global_shader_variables/buffer_size` is 524288 for it: the default
+    allows 4,096 instances with per-instance values, and Del Mar alone has more.
+  - The folding chair is cel-shaded now; it was the one piece still on plain PBR.
+  - Not on it yet: `Stage._mat` (the old dock stage's props) and text (Label3D).
+- **Knocked out, still bounced:** the ring ropes throw a knocked-out climber back
+  (the floaties already did). `--korope`.
+- **A guest's lobby** says "Waiting for host [Steam name] to start the game", with the
+  mode, clock and base. Nobody is told to ready up.
+- **The HUD odometer is out of the game** (its code and checks removed).
+- **Del Mar:** the ships are spread out to the right, most out of view until the tower
+  and the camera move out; the floaties are shaded smooth.
+- **ON THE DOCKET, NOT MERGED: the cheaper water.** `stages/delmar/sea_surface_fast.gdshader`
+  reads the 75-circle foam tile from `sea_circles.png` and runs the warp noise at 4 octaves.
+  It is OFF (`DelMarSea.fast`, or run with `-- --fastsea`). Side by side:
+  `docs/compare/sea_now_vs_cheaper.png`. Measured on Parker's PC: the whole frame is about
+  1.9 ms on the graphics card and the cheaper water saves about 0.17 ms of it. Switch
+  it on only when Parker is final on the look.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

@@ -1,5 +1,5 @@
 extends Node
-## The HUD bottom (windowed): the nameplate shows the climber, the odometer's drums
+## The HUD bottom (windowed): the nameplate shows the climber, the lock-in tab
 ## read the height and roll over like a real one, and the lock-in tab shows above
 ## the line. -- --shots=DIR saves hud_bottom.png and hud_lockin.png there.
 var fails := 0
@@ -10,15 +10,6 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shots="):
 			shots = a.get_slice("=", 1)
-	# The drum maths first: 12.34 m reads 1 2 3 4; 9.995 m is mid-roll on every drum.
-	var v: Array = LuchaHudBottom.drum_values(12.34)
-	_check("12.34 m reads 1 2 3 4", _near(v, [1.0, 2.0, 3.0, 4.0], 0.02), v)
-	v = LuchaHudBottom.drum_values(9.995)
-	_check("9.995 m rolls every drum halfway (0.5 9.5 9.5 9.5)", _near(v, [0.5, 9.5, 9.5, 9.5], 0.02), v)
-	v = LuchaHudBottom.drum_values(150.0)
-	_check("past 100 m the drums read whole metres: 150 m reads 0 1 5 0", _near(v, [0.0, 1.0, 5.0, 0.0], 0.02), v)
-	v = LuchaHudBottom.drum_values(1234.0)
-	_check("1234 m reads 1 2 3 4", _near(v, [1.0, 2.0, 3.0, 4.0], 0.02), v)
 	var main = load("res://game/main.tscn").instantiate()
 	get_tree().root.add_child.call_deferred(main)
 	await get_tree().create_timer(0.8).timeout
@@ -44,7 +35,6 @@ func _ready() -> void:
 	await _shot("hud_steam_tag")
 	Net.online = false
 	Net.members.erase(1)
-	_check("the odometer has four drums", hb._drums.size() == 4, hb._drums.size())
 	_check("below the line the toast is down in its slot, and hidden", not hb.popped and hb._lock.position.y < 0.1 and not hb._lock.visible, hb._lock.position.y)
 	# Uncovered, the plate is fully opaque again (exactly 0), so the screen ink outlines it.
 	var plate_meshes: Array = hb._plate.find_children("*", "MeshInstance3D", true, false)
@@ -116,11 +106,6 @@ func _ready() -> void:
 	player.limbs[0].grab_other = null
 	player.limbs[0].grab_climber = null
 	rival.queue_free()
-	# Past 100 m: whole metres, the decimal point hidden.
-	hb.test_height = 150.0
-	await get_tree().create_timer(1.2).timeout
-	_check("past 100 m the decimal point hides", hb._odo_point == null or not hb._odo_point.visible)
-	await _shot("hud_odo_150")
 	print("HUD RESULT fails=", fails)
 	get_tree().quit(fails)
 

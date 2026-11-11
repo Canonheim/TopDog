@@ -10,6 +10,12 @@ extends Node
 ## Purely visual: nothing here touches the game's rules (the sea line is Stage.WATER_Y).
 
 const SURFACE := preload("res://stages/delmar/sea_surface.gdshader")
+## THE CHEAPER WATER (11-10, NOT THE DEFAULT until Parker settles the look): the same
+## surface with its 75-circle foam tile read from a texture (sea_circles.png) and the
+## warp noise at 4 octaves. Loaded only when asked for (`--fastsea`, or `fast = true`).
+const FAST_PATH := "res://stages/delmar/sea_surface_fast.gdshader"
+const CIRCLES_PATH := "res://stages/delmar/sea_circles.png"
+static var fast := false
 const SMOKE_SHADER := preload("res://stages/delmar/fx/toon_smoke.gdshader")
 const OUTLINE_SHADER := preload("res://stages/delmar/fx/toon_smoke_outline.gdshader")
 const MAX_RIPPLES := 12  # lockstep with the shader's ripples[12]
@@ -35,7 +41,7 @@ func dress(sea: MeshInstance3D, p_water_y: float) -> void:
 	if sea == null:
 		return
 	_mat = ShaderMaterial.new()
-	_mat.shader = SURFACE
+	set_fast(fast or "--fastsea" in OS.get_cmdline_user_args())
 	if _noise_tex == null:
 		var fn := FastNoiseLite.new()
 		fn.seed = 7  # fixed: the sea shimmers the same on every machine
@@ -58,6 +64,18 @@ func dress(sea: MeshInstance3D, p_water_y: float) -> void:
 	sea.material_override = _mat
 	sea.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	_bind_ink()
+
+
+## Which surface the sea wears: the cheaper one, or Golemheim's as it came. The
+## material and every value on it stay; only the shader is swapped.
+func set_fast(on: bool) -> void:
+	if _mat == null:
+		return
+	if on and ResourceLoader.exists(FAST_PATH) and ResourceLoader.exists(CIRCLES_PATH):
+		_mat.shader = load(FAST_PATH)
+		_mat.set_shader_parameter("circle_tex", load(CIRCLES_PATH))
+	else:
+		_mat.shader = SURFACE
 
 
 ## The outline pass's ink ledger, so lines crossing open water are repainted on it

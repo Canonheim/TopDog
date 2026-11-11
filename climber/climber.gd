@@ -725,6 +725,7 @@ func _physics_process(delta: float) -> void:
 			set_knockout_visual(false)
 			knockout_changed.emit(false)
 		_incoming_pull = 0
+		_tick_ropes(delta)  # out cold you still bounce off the ropes (Parker 11-10), not through them
 		return
 	_tick_ropes(delta)
 	_grunt_wait -= delta / Engine.time_scale

@@ -92,10 +92,16 @@ const PIER_END := 104.0  # Stage.PIER_END
 const BOARD_Y := -0.6  # the boardwalk's top
 ## The ships: [kit stem, x0, x1 (the drift), z, length, colour, flip]. They drift slowly
 ## between x0 and x1, bobbing.
+## SPREAD OUT TO THE RIGHT (Parker 11-10: "the ships are too close to eachother, they
+## should all be more spread to the right so some are not visible until you climb to the
+## right a bit"). At the start the frame's right edge is about x 144 at z -58, 165 at
+## z -95 and 195 at z -150: one sloop sails in view, a brigantine noses in at the edge,
+## and the party boat, the second sloop and the far brigantine wait further right, coming
+## into view as the tower (and the camera with it) moves out.
 const SHIPS := [
-	["ship_brigantine", 140.0, 172.0, -95.0, 24.0, "#B8202C", false], ["ship_brigantine", 160.0, 205.0, -150.0, 24.0, "#2659D8", true],
-	["ship_sloop", 124.0, 136.0, -58.0, 12.0, "#FFC928", false], ["ship_sloop", 170.0, 182.0, -72.0, 12.0, "#1FB8AE", true],
-	["ship_party_boat", 154.0, 170.0, -46.0, 11.0, "#E0287A", false],
+	["ship_brigantine", 152.0, 174.0, -95.0, 24.0, "#B8202C", false], ["ship_brigantine", 225.0, 262.0, -150.0, 24.0, "#2659D8", true],
+	["ship_sloop", 116.0, 128.0, -58.0, 12.0, "#FFC928", false], ["ship_sloop", 178.0, 192.0, -72.0, 12.0, "#1FB8AE", true],
+	["ship_party_boat", 152.0, 166.0, -46.0, 11.0, "#E0287A", false],
 ]
 ## The islands and the raft: [kit stem, x, z, width, colour].
 const ISLES := [["isle_palm_hammock", 140.0, -72.0, 10.0, "#7CC83A"], ["isle_lighthouse", 166.0, -125.0, 14.0, "#F2EEE4"],
@@ -302,6 +308,7 @@ func _build_ground() -> void:
 		if mesh.get_surface_count() > before:
 			mesh.surface_set_material(mesh.get_surface_count() - 1, LuchaKit.mat(cols[i]))
 	ground.mesh = mesh
+	CelPass.unify(ground)  # its tones as atlas UVs, on the one material
 	add_child(ground)
 	# The foam line: a thin wavy band lying on the water just off the waterline.
 	var fst := SurfaceTool.new()
@@ -325,7 +332,7 @@ func _build_ground() -> void:
 	_foam = MeshInstance3D.new()
 	_foam.name = "Foam"
 	_foam.mesh = fst.commit()
-	_foam.material_override = LuchaKit.mat(FOAM)
+	CelPass.paint(_foam, FOAM)
 	_foam.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(_foam)
 	# The sea, one flat mesh in two tones that share their edge exactly (so no ink
@@ -418,6 +425,7 @@ func _build_far_shore() -> void:
 	mesh.surface_set_material(1, LuchaKit.mat(WET_SAND))
 	var mi := MeshInstance3D.new()
 	mi.mesh = mesh
+	CelPass.unify(mi)  # its two tones as atlas UVs, on the one material
 	root.add_child(mi)
 	# Two rows of hills: a lower sandy row in front, taller green ones behind.
 	for rowi in 3:
@@ -532,7 +540,7 @@ func _mound(at: Vector3, size: Vector3, c: Color, segs: int) -> MeshInstance3D:
 	sm.rings = 3
 	sm.is_hemisphere = true
 	mi.mesh = sm
-	mi.material_override = LuchaKit.mat(c)
+	CelPass.paint(mi, c)
 	mi.scale = Vector3(size.x, size.y * 2.0, size.z)
 	mi.position = at
 	return mi
@@ -552,7 +560,7 @@ func _rock(parent: Node3D, at: Vector3, size: Vector3, i: int) -> void:
 	sm.radial_segments = 6
 	sm.rings = 3
 	mi.mesh = sm
-	mi.material_override = LuchaKit.mat(ROCK if i % 3 != 1 else ROCK_DARK)
+	CelPass.paint(mi, ROCK if i % 3 != 1 else ROCK_DARK)
 	mi.scale = size
 	mi.rotation = Vector3(_rng.randf_range(-0.35, 0.35), _rng.randf() * TAU, _rng.randf_range(-0.35, 0.35))
 	mi.position = at + Vector3(0, size.y * 0.18, 0)
@@ -586,7 +594,7 @@ func _grass(parent: Node3D, at: Vector3, spread: float, n: int) -> void:
 			cm.height = _rng.randf_range(0.5, 0.9)
 			cm.radial_segments = 3
 			blade.mesh = cm
-			blade.material_override = LuchaKit.mat(BEACH_GRASS if b != 1 else BEACH_GRASS_DARK)
+			CelPass.paint(blade, BEACH_GRASS if b != 1 else BEACH_GRASS_DARK)
 			blade.position = Vector3(0, cm.height * 0.45, 0)
 			blade.rotation = Vector3(_rng.randf_range(-0.35, 0.35), _rng.randf() * TAU, _rng.randf_range(-0.35, 0.35))
 			tuft.add_child(blade)
@@ -755,7 +763,7 @@ func _build_boardwalk() -> void:
 			cm.height = 0.55
 			cm.radial_segments = 8
 			cone.mesh = cm
-			cone.material_override = LuchaKit.mat(BULBS[int(u.z) % BULBS.size()])
+			CelPass.paint(cone, BULBS[int(u.z) % BULBS.size()])
 			cone.position = p + Vector3(0, 2.3, 0)
 			root.add_child(cone)
 		var chair := LuchaKit.kit_model("beach_chair_" + ("a" if int(u.z) % 2 == 0 else "b"))
@@ -962,7 +970,7 @@ func _flat(pts: PackedVector2Array, y: float, c: Color, nm := "") -> MeshInstanc
 	if nm != "":
 		mi.name = nm
 	mi.mesh = st.commit()
-	mi.material_override = LuchaKit.mat(c)
+	CelPass.paint(mi, c)
 	return mi
 
 
@@ -992,7 +1000,7 @@ func _prism(outline: Array, y0: float, y1: float, c: Color) -> MeshInstance3D:
 		_quad(st, Vector3(a.x, y0, a.y), Vector3(b.x, y0, b.y), Vector3(b.x, y1, b.y), Vector3(a.x, y1, a.y), n)
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
-	mi.material_override = LuchaKit.mat(c)
+	CelPass.paint(mi, c)
 	return mi
 
 
@@ -1060,7 +1068,7 @@ func _commit_walls(parent: Node3D, lots: Array) -> void:
 			mm.set_instance_transform(k, xs[k])
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
-		mmi.material_override = LuchaKit.mat(WALL_TONES[i])
+		CelPass.paint(mmi, WALL_TONES[i])
 		parent.add_child(mmi)
 
 

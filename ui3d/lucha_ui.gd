@@ -314,7 +314,7 @@ func _land_flat(pts: PackedVector2Array, y: float, c: Color) -> MeshInstance3D:
 	var mi := MeshInstance3D.new()
 	mi.name = "Land"
 	mi.mesh = st.commit()
-	mi.material_override = LuchaKit.mat(c)
+	CelPass.paint(mi, c)
 	return mi
 
 
@@ -697,7 +697,7 @@ func _band(o0: float, o1: float, t0: float, t1: float, side: float, y0: float, y
 		_quad(st, _w(a, side, y0), _w(b, side, y0), _w(b, side, y1), _w(a, side, y1), nn)
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
-	mi.material_override = LuchaKit.mat(c)
+	CelPass.paint(mi, c)
 	return mi
 
 
@@ -710,7 +710,7 @@ func _flat_poly(pts: PackedVector2Array, y: float, c: Color) -> MeshInstance3D:
 		_tri(st, Vector3(pts[tris[k]].x, y, pts[tris[k]].y), Vector3(pts[tris[k + 1]].x, y, pts[tris[k + 1]].y), Vector3(pts[tris[k + 2]].x, y, pts[tris[k + 2]].y), Vector3.UP)
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
-	mi.material_override = LuchaKit.mat(c)
+	CelPass.paint(mi, c)
 	return mi
 
 
@@ -878,6 +878,7 @@ func _pave_commit(parent: Node3D) -> void:
 	var mi := MeshInstance3D.new()
 	mi.name = "Paving"
 	mi.mesh = mesh
+	CelPass.unify(mi)  # its tones as atlas UVs, on the one material
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	parent.add_child(mi)
 	_pave_st = []
@@ -933,7 +934,7 @@ func _commit_walls(parent: Node3D, lots: Array, tones: Array) -> void:
 			mm.set_instance_transform(k, xs[k])
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
-		mmi.material_override = LuchaKit.mat(tones[i])
+		CelPass.paint(mmi, tones[i])
 		parent.add_child(mmi)
 
 
@@ -1066,7 +1067,7 @@ func _commit_stones(parent: Node3D, lots: Array, tones: Array) -> void:
 			mm.set_instance_transform(k, xs[k])
 		var mmi := MultiMeshInstance3D.new()
 		mmi.multimesh = mm
-		mmi.material_override = LuchaKit.mat(tones[i])
+		CelPass.paint(mmi, tones[i])
 		parent.add_child(mmi)
 
 
@@ -1368,7 +1369,7 @@ func _bell_tower() -> Node3D:
 	cm.height = 2.8
 	cm.radial_segments = 4
 	cap.mesh = cm
-	cap.material_override = LuchaKit.mat(Color("#D2643A"))
+	CelPass.paint(cap, Color("#D2643A"))
 	cap.position = Vector3(0, 17.5, 0)
 	cap.rotation.y = PI * 0.25
 	root.add_child(cap)

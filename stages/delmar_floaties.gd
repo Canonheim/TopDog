@@ -51,6 +51,12 @@ func setup(seed_value: int, p_water_y: float, p_x_min: float, p_x_max: float) ->
 		var model := LuchaKit.kit_model(str(kind[0]))
 		var node := Node3D.new()  # the drifting pivot at the waterline; the model sits in it
 		if model != null:
+			# Shaded smooth (Parker 11-10: "shade the floating bouncy things smooth"): they're
+			# inflated rubber, not faceted.
+			for mi in model.find_children("*", "MeshInstance3D", true, false):
+				LuchaKit.smooth_normals(mi as MeshInstance3D)
+			if model is MeshInstance3D:
+				LuchaKit.smooth_normals(model as MeshInstance3D)
 			model.rotation.x = -deg_to_rad(float(kind[4]))  # lie flat on the water
 			model.position.y = -float(kind[5])
 			node.add_child(model)
@@ -60,7 +66,7 @@ func setup(seed_value: int, p_water_y: float, p_x_min: float, p_x_max: float) ->
 			sph.radius = float(kind[1])
 			sph.height = float(kind[1]) * 1.2
 			m.mesh = sph
-			m.material_override = CelPass.cel_material(kind[3])
+			CelPass.paint(m, kind[3])
 			m.position.y = float(kind[2]) * 0.5
 			node.add_child(m)
 		if str(kind[0]) == "float_duck" and rng.randf() < 0.5:
