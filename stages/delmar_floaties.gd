@@ -12,11 +12,15 @@ extends Node3D
 ## and a little left; the floatie squashes. Not solid, so nobody welds to one.
 
 const KINDS := [
-	# [model, half-width, top above the water (the landing face), fallback colour]
-	["float_beachball", 0.5, 0.8, Color("#E23B3B")],
-	["float_duck", 0.65, 0.85, Color("#FFC928")],
-	["float_lifesaver", 0.6, 0.42, Color("#D8262E")],
-	["float_innertube", 0.7, 0.55, Color("#7CC83A")],
+	# [model, half-width, top above the water (the landing face), fallback colour,
+	#  the model's tip toward the camera to undo (deg), how far it sinks (m)]
+	# IN THE WATER (Parker 11-10: "make the things in the water actually look like they
+	# are in the water, like flat in the water instead of standing weirdly up a little
+	# facing the camera"): the rings lie flat and half under, the ball and duck sit down.
+	["float_beachball", 0.5, 0.62, Color("#E23B3B"), 0.0, 0.18],
+	["float_duck", 0.65, 0.75, Color("#FFC928"), 0.0, 0.1],
+	["float_lifesaver", 0.6, 0.12, Color("#D8262E"), 30.0, 0.1],
+	["float_innertube", 0.7, 0.18, Color("#7CC83A"), 25.0, 0.12],
 ]
 const COUNT := 6
 const LEFT_PUSH := 1.5  # m/s back toward the tower on a bounce
@@ -43,9 +47,13 @@ func setup(seed_value: int, p_water_y: float, p_x_min: float, p_x_max: float) ->
 	rng.seed = seed_value
 	for i in COUNT:
 		var kind: Array = KINDS[i % KINDS.size()]
-		var node := LuchaKit.kit_model(str(kind[0]))
-		if node == null:
-			node = Node3D.new()
+		var model := LuchaKit.kit_model(str(kind[0]))
+		var node := Node3D.new()  # the drifting pivot at the waterline; the model sits in it
+		if model != null:
+			model.rotation.x = -deg_to_rad(float(kind[4]))  # lie flat on the water
+			model.position.y = -float(kind[5])
+			node.add_child(model)
+		else:
 			var m := MeshInstance3D.new()
 			var sph := SphereMesh.new()
 			sph.radius = float(kind[1])
@@ -96,6 +104,8 @@ func tick(delta: float) -> void:
 		var n: Node3D = it.node
 		n.position = Vector3(x, water_y + bob, 0.0)
 		n.rotation.z = sin(_t * 1.1 + float(it.bob)) * 0.06
+		n.rotation.x = sin(_t * 0.9 + float(it.bob) * 1.3) * 0.05  # rocking on the swell
+		n.rotation.y = float(it.bob) * 0.7  # each turned its own way on the water
 		# The landing squash: down and wide, then two wobbles back.
 		it.squash_t = float(it.squash_t) + delta
 		var st: float = it.squash_t

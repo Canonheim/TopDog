@@ -59,6 +59,7 @@ var live := {}  # pid -> cid of that player's live climber
 var tower: Array = []  # frozen cids in freeze order
 var line := 0.0
 var _shown_line := 0.0  # Del Mar: the rope glides out to `line` after each lock
+var _shown_line_v := 0.0  # ...on a spring: it picks up speed, slows, nudges past and settles
 var clock := 0.0
 var phase := "idle"  # idle | turn | round | between | over
 var turn_order: Array = []
@@ -85,6 +86,8 @@ var _pending_freeze := {}  # cid -> {"t": float, "verdict_hint": String}
 ## pushing whatever is in the way. Batteries that pose climbers the instant they
 ## spawn turn it off.
 static var grow_spawns := true
+const LINE_SPRING := 5.0  # Del Mar's buoy glide: stiffness (1/s^2)...
+const LINE_DAMP := 3.6  # ...and damping (1/s): a little under critical (4.47), one soft overshoot
 var _puppet_buf := {}  # cid -> Array of [time, PackedFloat32Array]
 var _last_seq := {}  # cid -> int
 var _ring_out := {}  # cid -> seconds until the RING OUT respawn
@@ -153,6 +156,7 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	stage.set_base(world, str(settings.get("resolved_base", settings.get("base", "barrel"))))
 	stage.place_base()
 	_shown_line = stage.first_line
+	_shown_line_v = 0.0
 	Climber.rope_x = stage.ring_half() if str(stage.row.get("dress", "")) == "plaza" else 0.0
 	_ring_out.clear()
 	if practice and multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
@@ -187,8 +191,12 @@ func player_name(pid: int) -> String:
 
 func _physics_process(delta: float) -> void:
 	if stage != null and stage.delmar:
-		_shown_line = lerpf(_shown_line, line, 1.0 - exp(-delta * 3.0))
-		stage.place_delmar_line(_shown_line)
+		# THE BUOY'S GLIDE (Parker 11-10: "make the buoy have some acceleration or
+		# deceleration"): a spring, a touch under-damped, so it eases off, slows into
+		# place and settles with a small overshoot.
+		_shown_line_v += ((line - _shown_line) * LINE_SPRING - _shown_line_v * LINE_DAMP) * delta
+		_shown_line += _shown_line_v * delta
+		stage.place_delmar_line(_shown_line, _shown_line_v, delta)
 		if stage.scenery != null:
 			stage.scenery.tick(delta)
 		if stage.floaties != null:

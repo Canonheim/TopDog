@@ -87,6 +87,16 @@ var _last_eye_y := 0.0
 var _rope_root: Node3D = null  # the UI creator's rope segments and streamers
 var _rope_segs: Array = []
 var _streamers: Array = []
+var _buoy_model: Node3D = null  # the buoy's look, rocking on its (still) collider
+var _buoy_t := 0.0
+var _buoy_lean := 0.0  # rad, leaning back as it glides out
+var _buoy_lean_v := 0.0
+var _wake_wait := 0.0
+var _rope_wob := 0.0  # the rope's sideways swing (m at its middle), a damped spring
+var _rope_wob_v := 0.0
+var _last_eye := Vector3.INF
+const ROPE_SAG := 0.035  # the rope's sag, x its length, at its middle
+const ROPE_POINTS := 12  # the curve the segments follow
 const BUOY_EYE := Vector3(-0.34, 0.37, 0.0)  # the rope ties here on the buoy (its model's eye)
 const STREAMER_STEP := 0.5  # one every 0.5 m, counted from the buoy end (they don't slide)
 const STREAMER_TINTS := [Color("#E0287A"), Color("#1FB8AE"), Color("#F28A1E"), Color("#7CC83A"), Color("#8A3FC0"), Color("#FFC928")]
@@ -151,6 +161,10 @@ func set_delmar(world: Node3D, on: bool, seed_value := 1) -> void:
 	_backstay = null
 	_rope_root = null
 	_rope_segs.clear()
+	_buoy_model = null
+	_last_eye = Vector3.INF
+	_rope_wob = 0.0
+	_rope_wob_v = 0.0
 	_streamers.clear()
 	delmar = on
 	if not on:
@@ -225,6 +239,7 @@ func _dress_delmar() -> void:
 	var buoy_model := LuchaKit.kit_model("delmar_buoy")
 	if buoy_model != null:
 		buoy_body.add_child(buoy_model)
+		_buoy_model = buoy_model
 	else:
 		var buoy := MeshInstance3D.new()
 		var sph := SphereMesh.new()
@@ -243,12 +258,13 @@ func _dress_delmar() -> void:
 ## Where Del Mar's line is: `c` in the line's units (x + y). The buoy floats where the
 ## rope meets the water, the mast's head rises to where it meets the mast (Parker:
 ## "The mast gets taller as the game plays, line stays 45"), and the rope joins them.
-func place_delmar_line(c: float) -> void:
+func place_delmar_line(c: float, speed := 0.0, delta := 0.0) -> void:
 	if not delmar or not is_instance_valid(delmar_root):
 		return
 	var buoy_at := Vector3(c - WATER_Y, WATER_Y, 0.0)
 	if is_instance_valid(buoy_body):
 		buoy_body.global_position = buoy_at
+	_float_buoy(speed, delta, buoy_at)
 	var eye := Vector3(MAST_X, c - MAST_X, MAST_EYE_Z)
 	if _mast_head_node != null:
 		_grow_mast(eye)
@@ -258,8 +274,10 @@ func place_delmar_line(c: float) -> void:
 	if floaties != null:
 		floaties.buoy_x = buoy_at.x
 	var a := buoy_at + BUOY_EYE
+	if _buoy_model != null:
+		a = buoy_body.global_transform * (_buoy_model.transform * BUOY_EYE)  # the rope rides the rocking buoy
 	if _rope_root != null:
-		_string_rope(a, eye)
+		_string_rope(a, eye, delta)
 	elif _rope != null:
 		var mid := (a + eye) * 0.5
 		var along := eye - a
@@ -299,16 +317,71 @@ func _grow_mast(eye: Vector3) -> void:
 			_backstay.global_transform = Transform3D(Basis(Quaternion(Vector3.UP, along.normalized())).scaled(Vector3(1, along.length(), 1)), (a + b) * 0.5)
 
 
+## THE BUOY IN THE WATER (Parker 11-10: "have it bounce back and forth a little in the
+## water... and a wake as it moves"): its look bobs, rocks and sways on the swell (the
+## collider stays put), leans back as it glides out and rights itself with a wobble,
+## and while it moves it leaves rings and a little spray behind it.
+func _float_buoy(speed: float, delta: float, at: Vector3) -> void:
+	if delta <= 0.0:
+		return
+	_buoy_t += delta
+	# The lean: pushed back by the glide's speed, sprung back upright, under-damped.
+	var want := -clampf(speed * 0.09, -0.35, 0.35)
+	_buoy_lean_v += ((want - _buoy_lean) * 28.0 - _buoy_lean_v * 4.5) * delta
+	_buoy_lean += _buoy_lean_v * delta
+	if _buoy_model != null:
+		var t := _buoy_t
+		_buoy_model.position = Vector3(sin(t * 0.9) * 0.07, sin(t * 3.1) * 0.05 + sin(t * 1.7) * 0.03, 0.0)
+		_buoy_model.rotation = Vector3(sin(t * 1.3) * 0.04, 0.0, sin(t * 2.0) * 0.1 + _buoy_lean)
+	# The wake: rings behind it and a little spray at its bow while it moves.
+	var v := absf(speed)
+	if sea != null and v > 0.12:
+		_wake_wait -= delta
+		if _wake_wait <= 0.0:
+			_wake_wait = clampf(0.22 - v * 0.03, 0.08, 0.22)
+			var behind := -signf(speed)
+			sea.ripple(at + Vector3(behind * 0.45, 0.0, randf_range(-0.25, 0.25)), clampf(0.5 + v * 0.25, 0.5, 1.4))
+			if v > 0.6:
+				sea.spray(at + Vector3(signf(speed) * 0.45, 0.0, 0.3), clampf(v * 0.15, 0.15, 0.45))
+
+
+## The rope's curve from the buoy's eye a to the mast's eye b: a slight sag, plus a
+## sideways swing (in the plane, across the rope) excited by the buoy's bobbing and
+## its glide, which rings down like a plucked line.
+func _rope_point(a: Vector3, b: Vector3, s: float) -> Vector3:
+	var along := b - a
+	var across := Vector3(-along.y, along.x, 0.0).normalized()  # in the plane, square to the rope
+	var hump := 4.0 * s * (1.0 - s)
+	var p := a + along * s
+	p.y -= ROPE_SAG * along.length() * hump
+	p += across * _rope_wob * sin(PI * s) + across * _rope_wob * 0.35 * sin(TAU * s) * sin(_buoy_t * 5.3)
+	return p
+
+
+func _tick_rope_wobble(a: Vector3, delta: float) -> void:
+	if delta <= 0.0:
+		return
+	var kick := 0.0
+	if _last_eye.is_finite():
+		kick = ((a - _last_eye) / delta).length()  # the eye's speed shakes the line
+	_last_eye = a
+	_rope_wob_v += (-_rope_wob * 40.0 - _rope_wob_v * 3.0) * delta + kick * 0.6 * delta * signf(sin(_buoy_t * 6.0))
+	_rope_wob = clampf(_rope_wob + _rope_wob_v * delta, -0.4, 0.4)
+
+
 ## The UI creator's rope: 1 m segments from the buoy's eye to the mast's eye (the last one
 ## cut to length), and a streamer every 0.5 m counted from the buoy end, so they never
 ## slide as the rope grows; new ones appear at the mast end.
-func _string_rope(a: Vector3, b: Vector3) -> void:
+func _string_rope(a: Vector3, b: Vector3, delta := 0.0) -> void:
 	var along := b - a
 	var length := along.length()
 	if length < 0.01:
 		return
 	var dir := along / length
-	var basis := Basis(Quaternion(Vector3.RIGHT, dir))
+	_tick_rope_wobble(a, delta)
+	# THE ROPE FLEXES (Parker 11-10: "make the rope have a little bit of flex and wobble
+	# as the buoy bounces"): each 1 m segment spans its stretch of the sagging, swinging
+	# curve, so the rope bends with it.
 	var n := int(ceil(length))
 	while _rope_segs.size() < n:
 		var seg := LuchaKit.kit_model("delmar_rope_seg")
@@ -318,8 +391,15 @@ func _string_rope(a: Vector3, b: Vector3) -> void:
 		var seg: Node3D = _rope_segs[i]
 		seg.visible = i < n
 		if i < n:
-			var part := minf(1.0, length - float(i))
-			seg.global_transform = Transform3D(basis.scaled(Vector3(part, 1, 1)), a + dir * float(i))
+			var p0 := _rope_point(a, b, float(i) / length)
+			var p1 := _rope_point(a, b, minf(float(i + 1), length) / length)
+			var d := p1 - p0
+			var span := d.length()
+			if span < 0.001:
+				seg.visible = false
+				continue
+			var basis := Basis(Quaternion(Vector3.RIGHT, d / span))
+			seg.global_transform = Transform3D(basis.scaled(Vector3(span, 1, 1)), p0)
 	var m := int(floor(length / STREAMER_STEP))
 	while _streamers.size() < m:
 		var k := _streamers.size()
@@ -334,7 +414,7 @@ func _string_rope(a: Vector3, b: Vector3) -> void:
 		var st: Node3D = _streamers[k]
 		st.visible = k < m
 		if k < m:
-			var at := a + dir * (STREAMER_STEP * float(k + 1))
+			var at := _rope_point(a, b, STREAMER_STEP * float(k + 1) / length)
 			st.global_position = at
 			st.rotation = Vector3(0, sin(t * 1.3 + k) * 0.17, sin(t * 2.1 + k * 0.7) * 0.31)
 

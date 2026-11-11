@@ -121,6 +121,11 @@ func splash(x: float, size_scale: float, z := 0.0) -> void:
 	Sound.play_at("splash" if size_scale >= 0.7 else "splash_small", at, 0.0, self)
 
 
+## A little spray at the buoy's bow as it glides (no sound): a few small blobs.
+func spray(at: Vector3, size_scale: float) -> void:
+	_puff(at + Vector3(0, 0.02, 0), int(clampf(2.0 + size_scale * 4.0, 2.0, 5.0)), 0.3, Vector2(0.6, 1.2) * maxf(size_scale, 0.3) * 1.6, 0.05)
+
+
 func _puff(at: Vector3, count: int, life: float, speed: Vector2, radius: float) -> void:
 	var p := GPUParticles3D.new()
 	p.add_to_group("splash_fx")
