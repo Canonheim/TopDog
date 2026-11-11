@@ -2506,6 +2506,18 @@ func _run_delmar() -> void:
 	var c1: Climber = g.climbers[g.live[1]]
 	var refused_before := c1.state
 	t("delmar: standing on the deck is under the line", g.measure(c1) < g.line, "%.2f < %.2f" % [g.measure(c1), g.line])
+	# A chair into the sea: its splash once, then it sinks slowly (not a stone). The round still runs.
+	g._rpc_spawn_chair(g.chair_generation + 1, Vector2(116.0, Stage.WATER_Y + 1.2), Vector2i(8, 11))
+	await frames(1)
+	var ch: RigidBody3D = g.chair
+	ch.in_bubble = false
+	ch.global_position = Vector3(116.0, Stage.WATER_Y + 0.6, 0.0)
+	Climber.sync_server(ch)
+	ch.freeze = false
+	ch.linear_velocity = Vector3(0, -7.0, 0)
+	var was_wet := g._chair_wet
+	await seconds(0.5)
+	t("delmar: a chair falling in the sea splashes, then sinks slowly", not was_wet and g._chair_wet and is_instance_valid(ch) and ch.linear_velocity.y > -2.5 and ch.global_position.y < Stage.WATER_Y, "wet %s, v %.2f, y %.2f" % [g._chair_wet, ch.linear_velocity.y if is_instance_valid(ch) else 0.0, ch.global_position.y if is_instance_valid(ch) else 0.0])
 	# The sea: climber 1 falls in and is out.
 	var drop := Vector3(0, Stage.WATER_Y - 1.0 - c1.centre_of_mass().y, 0)
 	c1.release_all()
@@ -2514,7 +2526,19 @@ func _run_delmar() -> void:
 		rb.global_position += drop + Vector3(6.0, 0, 0)
 		Climber.sync_server(rb)
 	await frames(6)
-	t("delmar: falling in the sea is out", not g.alive[1] and not g.live.has(1), [g.alive, g.live.keys()])
+	# IN THE DRINK (Parker 11-11): limp and sinking first, out only once right under.
+	var c1_id := c1.climber_id
+	var all_let_go := c1.limbs.all(func(l): return not l.grab.is_valid())
+	t("delmar: in the sea the climber goes limp and sinks; not out yet", c1.sinking and all_let_go and g.live.has(1) and g._sinking.has(c1_id), [c1.sinking, all_let_go, g.live.keys()])
+	var highest := INF
+	for k in int(5.0 * Engine.physics_ticks_per_second):
+		if not g.live.has(1):
+			break
+		highest = -INF
+		for b in c1.bodies.values():
+			highest = maxf(highest, (b as Node3D).global_position.y)
+		await get_tree().physics_frame
+	t("delmar: falling in the sea is out, once the whole body has gone under (and then some)", not g.alive[1] and not g.live.has(1) and highest < Stage.WATER_Y - 1.0, "alive %s, highest piece %.2f m (water %.2f)" % [g.alive, highest, Stage.WATER_Y])
 	# The water (the battery's stage is undressed, so on a sheet of its own): Golemheim's
 	# living surface goes on the sea, and a body going in throws a splash.
 	var sea := DelMarSea.new()
@@ -2573,6 +2597,39 @@ func _run_delmar() -> void:
 	vv /= spare.total_mass
 	t("delmar: a fall onto a floatie throws you up and back toward the tower", hit >= 0 and vv.y > 2.5 and vv.x < -1.0, "hit %d, v (%.2f, %.2f)" % [hit, vv.x, vv.y])
 	spare.remove()
+	# STRONGER (Parker 11-11: "send you at least as far back up as you fell down"): a
+	# plain fall from 5 m over a floatie comes back up at least that high.
+	for drop_h in [3.0, 6.0]:
+		var faller := spawn(Vector2(float(fl._items[0].x), Stage.WATER_Y + float(fl._items[0].kind[2]) + drop_h))
+		faller.release_all()
+		for l in faller.limbs:
+			l.regrip = 99.0
+		await frames(1)
+		var start_y := faller.centre_of_mass().y
+		var bounced := false
+		var apex := -INF
+		for k in int(8.0 * Engine.physics_ticks_per_second):
+			await get_tree().physics_frame
+			var com := faller.centre_of_mass()
+			if not bounced:
+				bounced = fl.bounce(faller) >= 0
+				continue
+			apex = maxf(apex, com.y)
+			var vy := 0.0
+			for b in faller.bodies.values():
+				vy += (b as RigidBody3D).linear_velocity.y * (b as RigidBody3D).mass
+			if vy < 0.0:
+				break
+		t("delmar: dropped %.0f m onto a floatie, you're thrown back at least as high as you fell from" % drop_h, bounced and apex >= start_y, "apex %.2f vs start %.2f" % [apex, start_y])
+		faller.remove()
+	# THE SQUASH: a hit dunks and flattens the floatie, then it springs back.
+	fl._items[0].squash_t = 0.0
+	var n0: Node3D = fl._items[0].node
+	fl.tick(0.07)
+	var flat := n0.scale.y
+	fl.tick(2.0)
+	t("delmar: a floatie that's hit squashes flat, then springs back", flat < 0.7 and absf(n0.scale.y - 1.0) < 0.01, "flat %.2f, back %.2f" % [flat, n0.scale.y])
+	t("delmar: the floatie's boing is in the sound kit", Sound.SFX.has("floatie") and Sound.SFX.floatie.all(func(c): return ResourceLoader.exists("res://audio/sfx/%s.wav" % c)))
 	g.end_match()
 	await frames(2)
 	t("delmar: after the match the pier is gone and the base is back on the canvas", not st.delmar and not is_instance_valid(st.delmar_root) and st.base_root.position.is_zero_approx())
@@ -3427,6 +3484,11 @@ func _run_practicesettings() -> void:
 			var old_id := c.climber_id
 			c.bodies.head.global_position.y = Stage.WATER_Y - 1.0
 			g._check_bounds()
+			# (in the drink it sinks first: back once under, or after Game.SINK_MAX_S)
+			for k in int((Game.SINK_MAX_S + 1.0) * Engine.physics_ticks_per_second):
+				if g.live[0] != old_id:
+					break
+				await get_tree().physics_frame
 			t("practice setup: sea fall respawns without elimination", g.live[0] != old_id and g.alive[0] and g.phase == "turn")
 		g.end_match()
 		options.practice_npc = true

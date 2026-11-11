@@ -38,6 +38,9 @@ var _personal_camera := false
 const PLAZA_CAM_X := 14.0  # the plaza camera's centre stays within this of the ring (x)
 var _cam_target := Vector3(0, 2, 14)
 var _cam_fov := 34.0
+## DEL MAR'S CAMERA RIDES UP (Parker 11-11: "raise the camera upwards by about this
+## much, there is too much sea being shown"): the frame lifts by this share of its height.
+const DELMAR_CAM_LIFT := 0.14
 const FOLLOW_HALF_H := 2.05  # in play: the camera shows at least this many metres above and below you
 var _last_tick_s := -1
 var _lobby_back := "online"
@@ -467,6 +470,7 @@ func _tick_camera(delta: float) -> void:
 				hi = lo
 	else:
 		_personal_camera = false
+	var bodies_lo := lo.y  # the lowest live climber (before the frame's own points)
 	if follow and delmar:
 		# DEL MAR'S MATCH VIEW (the Environment Maker's plan): the climbers, the pier's
 		# end and the buoy where the rope meets the sea, so you see where to build.
@@ -489,6 +493,13 @@ func _tick_camera(delta: float) -> void:
 	if delmar:
 		half_h = clampf(half_h, 4.0, 9.5)
 	var dist := half_h / tan(deg_to_rad(_cam_fov * 0.5))
+	if delmar:
+		# Less sea: up by DELMAR_CAM_LIFT of the frame, never so far a climber's lowest
+		# point leaves the bottom (a fall into the water is still seen going in).
+		var lift := half_h * 2.0 * DELMAR_CAM_LIFT
+		if follow:
+			lift = clampf(bodies_lo - 1.0 - (centre.y - half_h), 0.0, lift)
+		centre.y += lift
 	# THE PLAZA CLAMP (Parker 11-10, the Environment Maker's plan): the camera's centre
 	# stays within PLAZA_CAM_X of the ring, so a climber flung out across the 60 m floor
 	# can't swing it round to the beach town (Del Mar, off to the right).

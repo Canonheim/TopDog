@@ -708,6 +708,9 @@ func _physics_process(delta: float) -> void:
 	if removed or state != State.LIVE:
 		return
 	live_time += delta
+	if sinking:
+		_tick_sink(delta)
+		return
 	_impact_guard = maxf(0, _impact_guard - delta)
 	for load_info: Dictionary in remote_pulls.values():
 		var piece: RigidBody3D = bodies.get(load_info.piece)
@@ -750,6 +753,45 @@ func _physics_process(delta: float) -> void:
 			if grip.grab.is_valid() and (grip.grab_climber == null or grip.grab_climber.state == State.FROZEN):
 				release(i)
 				grip.regrip = 0.65
+
+
+## IN THE DRINK (Parker 11-11): limp from the moment a piece goes in, every grip let go
+## and every motor off; under the surface each piece is slowed to a sink, so the body
+## goes all the way under, and down a little more, before the host calls it out.
+const SINK_SPEED := 1.7  # m/s down, under the water
+var sinking := false
+var _sink_water_y := 0.0
+
+
+func sink(water_y: float) -> void:
+	if sinking or state != State.LIVE:
+		return
+	sinking = true
+	_sink_water_y = water_y
+	release_all()
+	_active_limb = -1
+	_press_stack.clear()
+	_buttons_down.fill(false)
+	_neutral_angles.clear()
+	limb_selected.emit(-1, Vector3.ZERO)
+	for l in limbs:
+		l.held = false
+		l.driving = false
+	for joint in joints.values():
+		PhysicsServer3D.hinge_joint_set_param(joint.rid, PhysicsServer3D.HINGE_JOINT_MOTOR_MAX_IMPULSE, 0)
+	_gravity_scale = Feel.get_k("gravity_scale")  # full weight: nothing holds it up now
+	for body: RigidBody3D in bodies.values():
+		body.gravity_scale = _gravity_scale
+
+
+func _tick_sink(delta: float) -> void:
+	var k := 1.0 - exp(-4.5 * delta)
+	for body: RigidBody3D in bodies.values():
+		if body.global_position.y < _sink_water_y:
+			var v := body.linear_velocity
+			v.y += 9.8 * body.gravity_scale * delta * 0.8  # the water bears most of the weight
+			body.linear_velocity = v.lerp(Vector3(v.x * 0.25, -SINK_SPEED, 0.0), k)
+			body.angular_velocity *= 1.0 - k * 0.6
 
 
 ## True during the spawn's grow-in.

@@ -95,6 +95,12 @@ var _puppet_buf := {}  # cid -> Array of [time, PackedFloat32Array]
 var _last_seq := {}  # cid -> int
 var _ring_out := {}  # cid -> seconds until the RING OUT respawn
 var _partner_out := 0.0  # the practice partner's ring-out countdown
+## DEL MAR'S SINKING (Parker 11-11): the host's clock on each climber gone in the water
+## (cid -> seconds); out once it's under (Stage.submerged) or after SINK_MAX_S.
+var _sinking := {}
+const SINK_MAX_S := 3.5
+var _partner_sink := -1.0
+var _chair_wet := false  # the chair's splash, once a dunk
 var _pulls := {}  # cid -> {piece: [Vector2, time]}
 var _remote_grabs := {}  # "cid:limb" -> [target_cid, piece]
 var _round_fail_tops := {}  # pid -> top (scramble: who failed this round, how high)
@@ -228,13 +234,27 @@ func _physics_process(delta: float) -> void:
 				if hit >= 0:
 					var com := partner.centre_of_mass()
 					_rpc_floatie.rpc(hit, Vector3(com.x, com.y, 0.0))
+		# In the drink: each machine's own climbers go limp and sink (their physics runs here).
+		for c: Climber in climbers.values():
+			if c.state == Climber.State.LIVE and c.owner_peer == me() and not c.sinking and stage.in_sea(c):
+				c.sink(Stage.WATER_Y)
 	var real_delta := delta / Engine.time_scale
 	_now += real_delta
 	_tick_fart_meters(real_delta)
 	_tick_owned(real_delta)
 	_tick_puppets()
 	_tick_chair(delta)
-	if partner != null and (stage.out_of_bounds(partner.centre_of_mass()) or stage.in_sea(partner)):
+	if partner != null and stage.in_sea(partner):
+		# The practice partner sinks like anyone, then comes back.
+		if _partner_sink < 0.0:
+			_partner_sink = 0.0
+			partner.sink(Stage.WATER_Y)
+			_sea_splash(stage.sea_entry_x(partner), 1.6)
+		_partner_sink += real_delta
+		if stage.submerged(partner) or _partner_sink > SINK_MAX_S or stage.out_of_bounds(partner.centre_of_mass()):
+			_partner_sink = -1.0
+			_spawn_partner()
+	elif partner != null and stage.out_of_bounds(partner.centre_of_mass()):
 		_spawn_partner()
 	elif partner != null and stage.ring_out(partner):
 		# The partner rings out too: back in the ring after RING_OUT_S.
@@ -544,6 +564,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 
 
 func _drop_climber(cid: int) -> void:
+	_sinking.erase(cid)
 	if not climbers.has(cid):
 		return
 	var c: Climber = climbers[cid]
@@ -584,13 +605,20 @@ func _check_bounds() -> void:
 				_ring_out.erase(cid)
 				_spawn(pid)
 			continue
-		if stage.in_sea(c):
-			# Del Mar: "your counted as Out if you fall off the tower into the water".
-			_rpc_note.rpc("%s fell in the sea!" % c.display_name)
-			if practice:
-				_spawn(pid)
-			else:
-				_broadcast_freeze(cid, c.pose(), "sea")
+		if stage.in_sea(c) or _sinking.has(cid):
+			# Del Mar: "your counted as Out if you fall off the tower into the water". In
+			# goes the body with a splash; it's out once it has gone right under.
+			if not _sinking.has(cid):
+				_sinking[cid] = 0.0
+				_rpc_note.rpc("%s fell in the sea!" % c.display_name)
+				_rpc_sea_splash.rpc(stage.sea_entry_x(c), 1.6)  # bigger than Golemheim's 1: this camera sits far back
+			_sinking[cid] = float(_sinking[cid]) + get_physics_process_delta_time() / maxf(Engine.time_scale, 0.01)
+			if stage.submerged(c) or float(_sinking[cid]) > SINK_MAX_S or stage.out_of_bounds(c.centre_of_mass()):
+				_sinking.erase(cid)
+				if practice:
+					_spawn(pid)
+				else:
+					_broadcast_freeze(cid, c.pose(), "sea")
 			continue
 		if stage.ring_out(c):
 			_ring_out[cid] = RING_OUT_S
@@ -670,7 +698,7 @@ func _tick_owned(real_delta: float) -> void:
 		var c: Climber = climbers[cid]
 		if c.state != Climber.State.LIVE or c.owner_peer != me():
 			continue
-		if c.driver != null and c.driver.lock_pressed() and c.knockout_left <= 0 and (phase == "turn" or phase == "round"):
+		if c.driver != null and c.driver.lock_pressed() and c.knockout_left <= 0 and not c.sinking and (phase == "turn" or phase == "round"):
 			if measure(c) > line + LOCK_MARGIN:
 				if is_host():
 					_judge_lock(cid, c.pose(), c.welded_to_support())
@@ -757,8 +785,8 @@ func _valid_lock_pose(pose: PackedFloat32Array) -> bool:
 ## (Climber.welded_to_support), which counts as touching.
 func _judge_lock(cid: int, pose: PackedFloat32Array, welded := false) -> void:
 	var c: Climber = climbers.get(cid)
-	if c == null or c.state == Climber.State.FROZEN or _pending_freeze.has(cid):
-		return
+	if c == null or c.state == Climber.State.FROZEN or _pending_freeze.has(cid) or _sinking.has(cid):
+		return  # (in the sea: nobody locks in from the water)
 	if not (phase == "turn" or phase == "round") or not _valid_lock_pose(pose):
 		return
 	var top := pose_measure(c, pose)
@@ -930,8 +958,10 @@ func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: Strin
 		_puppet_buf.erase(cid)
 	else:
 		if why == "sea" and stage != null and stage.sea != null:
-			# Del Mar: in the drink. Golemheim's splash where the body went in.
-			stage.sea.splash(c.centre_of_mass().x, 1.6)  # bigger than Golemheim's 1: this camera sits far back
+			# Del Mar: the splash was its going in; gone under, a last bubble.
+			var at := Vector3(c.centre_of_mass().x, Stage.WATER_Y, 0.0)
+			stage.sea.ripple(at, 0.6)
+			Sound.play_at("bubble_pop", at, -6.0, world)
 		live.erase(c.player_id)
 		_drop_climber(cid)
 	line = maxf(line, new_line)
@@ -1192,6 +1222,17 @@ func _play_rope(at: Vector3, speed: float) -> void:
 
 ## The bell broadcasts one of the 13 approved strikes, at its authored pitch,
 ## to every listener alongside the existing visual pulse.
+## Something went into Del Mar's sea at x: the splash and its sound on every machine.
+@rpc("authority", "call_local", "reliable")
+func _rpc_sea_splash(x: float, size: float) -> void:
+	_sea_splash(x, size)
+
+
+func _sea_splash(x: float, size: float) -> void:
+	if stage != null and stage.sea != null and is_finite(x):
+		stage.sea.splash(x, clampf(size, 0.3, 2.5))
+
+
 ## A floatie bounced someone: it squashes and boings on every machine.
 @rpc("any_peer", "call_local", "reliable")
 func _rpc_floatie(i: int, at: Vector3) -> void:
@@ -1199,9 +1240,17 @@ func _rpc_floatie(i: int, at: Vector3) -> void:
 		return
 	if multiplayer.get_remote_sender_id() != me():
 		stage.floaties.squash(i)
-	Sound.play_at("rope", at, -4.0, world)
+	# The rubber boing (Parker 11-11: "a sound effect when you hit them"), pitched to the
+	# floatie's size, and the water it shoves.
+	var boing := Sound.play_at("floatie", at, 2.0, world)
+	if boing != null:
+		boing.pitch_scale *= stage.floaties.pitch_of(i)
 	if stage.sea != null:
-		stage.sea.ripple(Vector3(stage.floaties.x_of(i), Stage.WATER_Y, 0.0), 0.8)
+		var fx := Vector3(stage.floaties.x_of(i), Stage.WATER_Y, 0.0)
+		stage.sea.ripple(fx, 1.0)
+		stage.sea.ripple(fx + Vector3(0.25, 0, 0), 0.6)
+		stage.sea.spray(fx + Vector3(0.5, 0.0, 0.2), 0.45)
+		stage.sea.spray(fx + Vector3(-0.5, 0.0, 0.2), 0.45)
 
 
 const BELL_COOLDOWN_MS := 300  # per limb: a grip flickering on and off doesn't peal
@@ -1416,6 +1465,7 @@ func tower_peak() -> Vector2:
 @rpc("authority", "call_local", "reliable")
 func _rpc_spawn_chair(generation: int, top: Vector2, dent_hits: Vector2i) -> void:
 	_clear_chair()
+	_chair_wet = false
 	chair_generation = generation
 	chair_spawn_top = top
 	chair = ChairScript.new()
@@ -1558,6 +1608,17 @@ func _tick_chair(dt: float) -> void:
 			_apply_chair_hits(chair.sweep_hits(dt, carrier.climber_id))
 	elif stage.out_of_bounds(Climber.pos2(chair)):
 		_rpc_retire_chair.rpc(chair_generation)
+	elif stage.delmar and not chair.in_bubble and chair.global_position.y < Stage.WATER_Y:
+		# The chair in the sea (Parker 11-11: "chairs all create splashes"): a splash going
+		# in, then it sinks slowly away; out of bounds under the water, it's retired.
+		if not _chair_wet:
+			_chair_wet = true
+			_rpc_sea_splash.rpc(chair.global_position.x, 1.1)
+		var k := 1.0 - exp(-10.0 * dt)  # water stops a chair fast
+		var v := chair.linear_velocity
+		v.y += 9.8 * chair.gravity_scale * dt * 0.85  # the water bears most of its weight
+		chair.linear_velocity = v.lerp(Vector3(v.x * 0.25, -1.4, 0.0), k)
+		chair.angular_velocity *= 1.0 - k * 0.5
 	else:
 		if not chair.in_bubble:
 			chair.release_carrier_when_clear()

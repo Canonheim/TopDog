@@ -534,14 +534,43 @@ func line_dir() -> Vector2:
 	return Vector2(1, 1) if delmar else Vector2(0, 1)
 
 
-## A Del Mar fall: any of the climber's pieces in the sea.
+## A Del Mar fall: any of the climber's pieces in the sea. From then the climber is
+## limp and sinking (Climber.sink); the host calls it out once it's gone under.
+## (A touch under the surface: a floatie bounce gets first say at the waterline.)
+const SINK_LINE := WATER_Y - 0.15
+## GONE UNDER (Parker 11-11: "people should fall in and become submerged completely and
+## then some before they despawn"): every piece's centre this far under the surface.
+const UNDER_DEPTH := 1.1
+
+
 func in_sea(c) -> bool:
 	if not delmar:
 		return false
 	for b in c.bodies.values():
-		if (b as Node3D).global_position.y < WATER_Y:
+		if (b as Node3D).global_position.y < SINK_LINE:
 			return true
 	return false
+
+
+func submerged(c) -> bool:
+	if not delmar:
+		return false
+	for b in c.bodies.values():
+		if (b as Node3D).global_position.y > WATER_Y - UNDER_DEPTH:
+			return false
+	return true
+
+
+## Where a body went into the water: its lowest piece's x.
+func sea_entry_x(c) -> float:
+	var lo := INF
+	var x := 0.0
+	for b in c.bodies.values():
+		var p: Vector3 = (b as Node3D).global_position
+		if p.y < lo:
+			lo = p.y
+			x = p.x
+	return x
 
 
 func _init(id := "dock") -> void:
@@ -827,7 +856,7 @@ func ring_out(c) -> bool:
 
 func out_of_bounds(p: Vector2) -> bool:
 	if delmar:
-		return p.y < WATER_Y - 3.0 or p.x < PIER_ROOT - 10.0 or p.x > PIER_END + 80.0
+		return p.y < WATER_Y - 4.5 or p.x < PIER_ROOT - 10.0 or p.x > PIER_END + 80.0  # (under the sinking's own out)
 	return p.y < float(row.kill_y) or absf(p.x) > float(row.side_x)
 
 

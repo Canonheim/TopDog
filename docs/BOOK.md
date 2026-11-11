@@ -697,6 +697,26 @@ Commits 4714920, 7f37818 and the one after.
   - a Steam controller appearing mid-session holds and steers.
   Online the owner simulates its own climber with this same driver, so a swap there is
   the same local read.
+- **Del Mar's sea, round two (Parker 11-11).** Four notes, one pass:
+  - **The camera rides up** ("too much sea being shown"): the frame lifts by
+    `DELMAR_CAM_LIFT` (0.14 of its height, main.gd), never so far a live climber's lowest
+    point leaves the bottom.
+  - **The floaties animate and boing:** a hit dunks the floatie, squashes it flat and
+    wide, then it springs up tall and wobbles back, rocking away from the hit (1.1 s).
+    The boing is synthesized (`tools/make_floatie_sfx.py`, `floatie_boing_01..03`),
+    pitched by kind (ball high, tube low), with rings and spray on the water.
+  - **Stronger:** the throw is worked out from the height fallen (the highest the
+    climber's centre was since it last held on), against the free-fall gravity and the
+    air drag, 1.12x plus 0.35 m. `--delmar` drops from 3 m and 6 m: both come back higher.
+  - **Into the sea, then under:** the first piece in (`Stage.SINK_LINE`, 0.15 m under)
+    makes the climber limp on its owner's machine (`Climber.sink`: every grip let go,
+    motors off, no Lock In), and the water slows it to a sink. The host calls it out once
+    every piece's centre is `UNDER_DEPTH` (1.1 m) under, or after `SINK_MAX_S` (3.5 s).
+    The splash and the "fell in the sea!" banner come as it goes in, on every machine
+    (`_rpc_sea_splash`); a bubble marks where it went under. The practice partner sinks
+    the same way.
+  - **Chairs splash too:** once per dunk, then the water takes most of their weight and
+    they sink slowly until retired under the sea.
 
 ## Record
 
