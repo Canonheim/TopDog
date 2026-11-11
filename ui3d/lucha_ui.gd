@@ -187,17 +187,10 @@ const HOUSE_W := {"a": 4.8, "b": 5.2, "c": 3.8}
 const HOUSE_D := 4.75
 const DRY_GRASS := Color("#8E9A5C")  # lit, the cel band reads it a dry green
 const LAND := Color("#C9BE92")
-const RIDGE_NEAR := Color("#B4C9EC")  # haze blues: the far ridges sit back by colour (no fog in the look)
-const RIDGE_FAR := Color("#CCDBF3")
-## The far mountains: [x, z, width, height, fallback colour, yaw]. Half again as tall
-## (Parker 11-10: "make mountains in the background taller"; were 52 / 44 / 32).
+## The far mountains are the Environment Maker's (stages/plaza_mountains.gd, built in
+## _build_plaza); they sink for Del Mar (mountains_down).
 var _mountains: Array = []  # [node, its standing y, how far it sinks]
 var _mountains_t := 0.0
-const FAR_RIDGES := [
-	[-140.0, -260.0, 300.0, 78.0, RIDGE_FAR, 0.2],
-	[120.0, -240.0, 280.0, 66.0, RIDGE_FAR, -0.24],
-	[-20.0, -200.0, 240.0, 48.0, RIDGE_NEAR, -0.12],
-]
 const POLE_WOOD := Color("#6A4128")
 const POLE_T := [0.32, 0.58, 0.82]  # the papel picado poles round the square (lens t, each side)
 const GROUT := Color("#7A6C5A")
@@ -396,28 +389,11 @@ func _build_plaza() -> void:
 		_terrace(plaza, k, gy, rng, kinds, stones, bricks, street_t)
 	_pave_commit(plaza)
 	_commit_walls(plaza, bricks, BRICK_TONES)
-	# Far mountains (Parker 11-08: "large cardboard cut outs of mountains").
-	for i in FAR_RIDGES.size():
-		var r: Array = FAR_RIDGES[i]
-		var w: float = r[2]
-		var rh: float = r[3]
-		var cut := LuchaKit.kit_model("mountain_cutout_" + "abc"[i])
-		if cut != null:
-			var bb := _local_aabb(cut)
-			var sx := w / maxf(bb.size.x, 0.01)
-			var sy := rh / maxf(bb.size.y, 0.01)
-			cut.scale = Vector3(sx, sy, (sx + sy) * 0.5)
-			cut.rotation = Vector3(-0.04, float(r[5]), 0.0)  # leaned back a touch, turned enough to show the kraft edge
-			cut.position = Vector3(r[0], gy - 0.2 - bb.position.y * sy, r[1])
-			plaza.add_child(cut)
-			_mountains.append([cut, cut.position.y, rh + 3.0])
-			continue
-		var pts := PackedVector2Array([Vector2(-w * 0.5, 0), Vector2(-w * 0.3, rh * 0.55), Vector2(-w * 0.12, rh * 0.8),
-			Vector2(0, rh), Vector2(w * 0.1, rh * 0.72), Vector2(w * 0.28, rh * 0.85), Vector2(w * 0.5, 0)])
-		var ridge := LuchaKit._extrude(pts, 4.0, r[4])
-		ridge.position = Vector3(r[0], gy - 0.2, r[1])
-		plaza.add_child(ridge)
-		_mountains.append([ridge, ridge.position.y, rh + 3.0])
+	# The mountains (Parker 11-10: "replace the cardboard mountains with slightly more
+	# modeled ones"): the Environment Maker's low-poly ranges where the cut-outs stood.
+	# Each comes back as [node, standing y, how far it sinks] for mountains_down().
+	for m in PlazaMountains.build(plaza, gy):
+		_mountains.append(m)
 	# Papel picado round the square: poles inside its edge, strings between them,
 	# and one from each inner pole up to its church tower.
 	var tops := {}
