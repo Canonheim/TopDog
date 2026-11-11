@@ -75,6 +75,7 @@ signal grab_made(climber: Climber, limb: int, other: Object)
 signal release_contact(position: Vector3)
 signal exerted
 signal knocked_out
+signal knockout_changed(active: bool)
 
 var state := State.LIVE
 var climber_id := 0
@@ -102,7 +103,10 @@ var joints := {}  # joint name -> Dictionary
 var limbs: Array = []  # per limb: Dictionary (see _build_limbs)
 var total_mass := 0.0
 var spawn_at := Vector2.ZERO
+const KNOCKOUT_DURATION := 1.6
 var knockout_left := 0.0
+var knockout_stars: Node3D
+const KnockoutStars := preload("res://climber/knockout_stars.gd")
 var _impact_guard := 0.0
 var _pull_load := 0.0
 var _incoming_pull := 0.0
@@ -679,6 +683,11 @@ func _physics_process(delta: float) -> void:
 	_tick_slip()
 	if knockout_left > 0:
 		knockout_left = maxf(0, knockout_left - delta)
+		if is_instance_valid(knockout_stars):
+			knockout_stars.set_remaining(knockout_left)
+		if knockout_left == 0:
+			set_knockout_visual(false)
+			knockout_changed.emit(false)
 		_incoming_pull = 0
 		return
 	_tick_ropes(delta)
@@ -856,10 +865,26 @@ func _end_grow() -> void:
 	_grow_box = null
 
 
+func set_knockout_visual(active: bool) -> void:
+	if active and (removed or state == State.FROZEN or not bodies.has("head")):
+		return
+	if active and not is_instance_valid(knockout_stars):
+		knockout_stars = KnockoutStars.new()
+		knockout_stars.name = "KnockoutStars"
+		bodies["head"].add_child(knockout_stars)
+		knockout_stars.setup(body_scale)
+	if is_instance_valid(knockout_stars):
+		knockout_stars.show_active(active, KNOCKOUT_DURATION)
+		if active and state == State.LIVE:
+			knockout_stars.set_remaining(knockout_left)
+
+
 func knock_out() -> void:
 	if state != State.LIVE or knockout_left > 0 or _impact_guard > 0:
 		return
-	knockout_left = 1.6
+	knockout_left = KNOCKOUT_DURATION
+	set_knockout_visual(true)
+	knockout_changed.emit(true)
 	knocked_out.emit()
 	_impact_guard = knockout_left + 0.8
 	release_all()
@@ -884,7 +909,7 @@ func knock_out() -> void:
 ## and on through) is stuck to or touching the arena or the frozen tower. Two climbers
 ## holding each other in the air can't fly. A rival on another machine counts while
 ## their pull arrives (their machine sends it only while they're grounded).
-## A piece entering the rope zone moving outward throws the whole climber back
+## Contact from either side of the rope throws the whole climber back
 ## into the ring at Feel rope_bounce times the speed it hit (relative motion kept).
 func _tick_ropes(delta: float) -> void:
 	_rope_wait -= delta
@@ -898,7 +923,8 @@ func _tick_ropes(delta: float) -> void:
 		var body := b as RigidBody3D
 		var side := signf(p.x)
 		var outward := body.linear_velocity.x * side
-		var reach := 0.3 + maxf(0.0, outward) * delta
+		var outside := absf(p.x) > rope_x
+		var reach := 0.3 + absf(body.linear_velocity.x) * delta
 		if absf(p.x) < rope_x - 0.22 or absf(p.x) > rope_x + reach or p.y < ROPE_LOW or p.y > ROPE_HIGH:
 			continue
 		if not velocity_ready:
@@ -916,10 +942,12 @@ func _tick_ropes(delta: float) -> void:
 			sync_server(body)
 		if _rope_wait > 0.0:
 			continue
-		var out_speed: float = com_v.x * side
+		# Outside contact uses the same inward throw, even when already moving inward.
+		# Keep the original directional gate for a wrestler inside leaving the rope.
+		var out_speed: float = maxf(0.3, absf(com_v.x)) if outside else com_v.x * side
 		if out_speed < 0.3:
 			continue
-		var new_v := rope_throw(com_v, side)
+		var new_v := rope_throw(Vector2(side * out_speed, com_v.y), side)
 		for o in pieces:
 			var rb := o as RigidBody3D
 			rb.linear_velocity.x += new_v.x - com_v.x
@@ -1522,6 +1550,7 @@ func limb_end(i: int) -> Vector2:
 ## Turn to stone where we are: every piece static, our grabs and joints gone.
 ## Grabs OTHER climbers hold on us stay: they now hold a static piece.
 func freeze() -> void:
+	set_knockout_visual(false)
 	if state == State.FROZEN:
 		return
 	release_all()
@@ -1752,6 +1781,7 @@ func remove() -> void:
 	if is_instance_valid(_grow_block):
 		_grow_block.queue_free()
 	_grow_block = null
+	set_knockout_visual(false)
 	removed = true
 	release_all()
 	_free_joints()

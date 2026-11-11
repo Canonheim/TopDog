@@ -36,6 +36,7 @@ const BARREL_PROFILE := [
 	Vector2(0.39, 0.0), Vector2(0.43, 0.24), Vector2(0.445, 0.48), Vector2(0.43, 0.72), Vector2(0.39, 0.96),
 ]
 
+var donkey_head := Vector3.ZERO
 var base_id := "barrel"
 var base_root: Node3D
 var base_bodies: Array = []
@@ -543,6 +544,8 @@ func set_base(world: Node3D, selected: String) -> void:
 		# limbs leave the space under the belly open for players to pass through.
 		for mesh: MeshInstance3D in shape_source.find_children("*", "MeshInstance3D", true, false):
 			var part := str(mesh.name)
+			if part == "head":
+				donkey_head = mesh.mesh.get_aabb().get_center()
 			if part.contains("eye") or part.contains("nostril") or part.contains("inner") or part.contains("hoof_edge") or part.ends_with("_brow") or part.ends_with("_mouth") or part == "dark_mane":
 				continue
 			var outline := PackedVector2Array()
@@ -555,7 +558,9 @@ func set_base(world: Node3D, selected: String) -> void:
 			var hull := Geometry2D.convex_hull(outline)
 			if hull.size() > 3:
 				hull.resize(hull.size() - 1)  # the convex hull repeats its first vertex
-				base_bodies.append(_static_poly(base_root, hull, 0.9, 0.18))
+				var body := _static_poly(base_root, hull, 0.9, 0.18)
+				body.set_meta("donkey_voice", true)
+				base_bodies.append(body)
 		shape_source.free()
 	_place_base()
 	if base_dressed:

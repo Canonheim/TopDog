@@ -882,6 +882,7 @@ func _run_net() -> void:
 	t("net: grunts originate at all three heads", interrupted_grunts.size() == 3 and interrupted_grunts.all(func(v): return v.playing and v.position == Vector3.ZERO))
 	b1.knock_out()
 	await frames(4)
+	t("net: knockout stars appear on host, owner and spectator", machines.all(func(m): return is_instance_valid(m.game.climbers[b1.climber_id].knockout_stars) and m.game.climbers[b1.climber_id].knockout_stars.visible))
 	t("net: knockout interrupts every active grunt", interrupted_grunts.all(func(v): return not is_instance_valid(v) or not v.playing))
 	B._rpc_exertion.rpc(b1.climber_id, Sound.SFX["strain"][0])
 	await frames(2)
@@ -896,6 +897,7 @@ func _run_net() -> void:
 	await frames(2)
 	t("net: already knocked-out player does not repeat whimper", ko_audio.size() == 3)
 	await seconds(2.5)
+	t("net: knockout stars disappear on every peer upon waking", machines.all(func(m): return not m.game.climbers[b1.climber_id].knockout_stars.visible))
 	# A client makes a contact and holds RB. Both peers hear the same take.
 	var grunts := []
 	for m in machines:
@@ -2886,4 +2888,112 @@ func _run_chairbodyhits() -> void:
 	t("chair: heavy head hit still damages chair and knocks out victim", g.chair.hit_count == 2 and victim.knockout_left > 0)
 	g.end_match()
 	g.queue_free()
+	await frames(2)
+
+func _run_kostars() -> void:
+	var g := make_game("practice", 1, 50.0, "plaza", true)
+	await wait_phase(g, "turn")
+	var c: Climber = g.partner
+	var head: RigidBody3D = c.bodies["head"]
+	var events := [0]
+	c.knocked_out.connect(func(): events[0] += 1)
+	g._chair_impact(c, "head", Vector3.ZERO, Vector3.RIGHT * head.mass * 5)
+	t("KO stars: head hit shows six atlas stars immediately", is_instance_valid(c.knockout_stars) and c.knockout_stars.visible and c.knockout_stars.stars.size() == 6)
+	var halo = c.knockout_stars
+	var first: Vector3 = halo.stars[0].position
+	halo._process(.2)
+	t("KO stars: carousel advances", first.distance_to(halo.stars[0].position) > .05)
+	c.set_physics_process(false)
+	t("KO stars: begin invisible at individual orbit positions", halo.stars.all(func(star): return not star.visible) and halo.stars[0].position.length() > .1)
+	c._physics_process(.15)
+	t("KO stars: grow halfway in 0.15 seconds", is_equal_approx(halo.stars[0].scale.x, c.body_scale * .85 * .5))
+	c._physics_process(.15)
+	t("KO stars: reach 15 percent smaller full size at 0.3 seconds", is_equal_approx(halo.stars[0].scale.x, c.body_scale * .85))
+	c._physics_process(.3)
+	var remaining := c.knockout_left
+	var guard := c._impact_guard
+	for i in 8:
+		g._chair_impact(c, "head", Vector3.ZERO, Vector3.RIGHT * head.mass * 6)
+	t("KO: repeated chair hits cannot refresh timer or guard", c.knockout_left == remaining and c._impact_guard == guard and events[0] == 1)
+	c._physics_process(remaining - .3)
+	t("KO stars: hold full size until last 0.3 seconds", is_equal_approx(halo.stars[0].scale.x, c.body_scale * .85))
+	c._physics_process(.15)
+	t("KO stars: shrink halfway with 0.15 seconds left", is_equal_approx(halo.stars[0].scale.x, c.body_scale * .85 * .5))
+	c._physics_process(c.knockout_left)
+	t("KO stars: disappear on exact wake tick", c.knockout_left == 0 and not halo.visible)
+	c._physics_process(.81)
+	g._chair_impact(c, "head", Vector3.ZERO, Vector3.RIGHT * head.mass * 5)
+	t("KO: new knockout allowed after waking and recovery guard", c.knockout_left == Climber.KNOCKOUT_DURATION and halo.visible and events[0] == 2)
+	head.global_position += Vector3(1,2,0)
+	head.rotation.z = PI
+	halo._process(0)
+	t("KO stars: follow fallen head while staying world upright", halo.global_position.y > head.global_position.y and halo.global_basis.is_equal_approx(Basis.IDENTITY))
+	c.freeze()
+	t("KO stars: freeze removes halo", not halo.visible)
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+
+
+func _run_donkey() -> void:
+	var g := make_game("tower", 1, 60, "plaza", true)
+	g.host_start({"mode": "tower", "timer": 60.0, "stage": "plaza", "base": "donkey"}, g.roster)
+	await wait_phase(g, "turn")
+	t("donkey: collision hulls activate contact trigger", g.stage.base_bodies.all(func(b): return b.has_meta("donkey_voice")))
+	var head: MeshInstance3D = g.stage.base_root.find_child("head", true, false)
+	t("donkey: sound origin matches visible head", head != null and g.stage.base_root.to_global(g.stage.donkey_head).distance_to(head.to_global(head.mesh.get_aabb().get_center())) < 0.001)
+	t("donkey: contact cooldown prevents repeated rolls", g._donkey_contact_ready("test") and not g._donkey_contact_ready("test"))
+	t("donkey: chance is ten percent", is_equal_approx(g.DONKEY_CHANCE, 0.10))
+	for clip in Sound.SFX["donkey"]:
+		g._play_donkey(clip)
+		var voices := g.stage.base_root.get_children().filter(func(n): return n is AudioStreamPlayer3D and n.stream.resource_path.contains(clip))
+		t("donkey: approved clip plays once from head", voices.size() == 1 and voices[0].playing and voices[0].global_position.distance_to(g.stage.base_root.to_global(g.stage.donkey_head)) < 0.001, clip)
+		var active: AudioStreamPlayer3D = g._donkey_voice
+		g._play_donkey(clip, true)
+		t("donkey: repeated proc cannot overlap or interrupt", g._donkey_voice == active and not g._donkey_contact_ready("busy"))
+		t("donkey: normal volume matches bell gain", is_equal_approx(active.volume_db, linear_to_db(2.0)))
+		await seconds(2.1)
+		t("donkey: natural finish unlocks playback", not g._donkey_busy())
+		g._play_donkey(clip, true)
+		t("donkey: chair adds same double volume as bell", g._donkey_busy() and is_equal_approx(g._donkey_voice.volume_db, linear_to_db(4.0)))
+		await seconds(2.1)
+	g.stage.set_base(g.world, "bell")
+	t("donkey: bell contacts cannot activate donkey", not g._donkey_contact_ready("other"))
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+
+
+func _run_ropesides() -> void:
+	var old_rope := Climber.rope_x
+	Climber.rope_x = 8.0
+	var c: Climber = ClimberScript.new()
+	add_child(c)
+	c.build(Vector2.ZERO, world)
+	c.set_physics_process(false)
+	var bounces := [0]
+	c.rope_bounced.connect(func(_at, _speed): bounces[0] += 1)
+	for side in [-1.0, 1.0]:
+		for speed in [-3.0, 0.0, 3.0]:
+			for body: RigidBody3D in c.bodies.values():
+				body.global_position = Vector3(side * (Climber.rope_x + 0.18), 0.8, 0)
+				body.linear_velocity = Vector3(side * speed, -4.0, 0)
+				Climber.sync_server(body)
+			c._rope_wait = 0.0
+			var before: int = bounces[0]
+			c._tick_ropes(1.0 / 120)
+			t("outside rope: left/right, incoming/outgoing/falling launches inward and up", c.bodies.chest.linear_velocity.x * side < 0 and c.bodies.chest.linear_velocity.y > 0 and bounces[0] == before + 1, [side, speed])
+			c._tick_ropes(1.0 / 120)
+			t("outside rope: cooldown prevents repeated launch events", bounces[0] == before + 1)
+		for body: RigidBody3D in c.bodies.values():
+			body.global_position = Vector3(side * (Climber.rope_x - 0.1), 0.8, 0)
+			body.linear_velocity = Vector3(-side * 3.0, 2.0, 0)
+			Climber.sync_server(body)
+		c._rope_wait = 0.0
+		var before: int = bounces[0]
+		c._tick_ropes(1.0 / 120)
+		t("inside rope: moving away stays unchanged", bounces[0] == before and c.bodies.chest.linear_velocity.is_equal_approx(Vector3(-side * 3.0, 2.0, 0)))
+	c.remove()
+	c.queue_free()
+	Climber.rope_x = old_rope
 	await frames(2)

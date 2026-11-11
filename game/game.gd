@@ -480,6 +480,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 			if dress:
 				c.set_glyphs(Glyphs.limb_glyphs(c.local_slot))
 		c.exerted.connect(func(): _rpc_exertion.rpc(cid, Sound.SFX["strain"].pick_random()))
+		c.knockout_changed.connect(func(active: bool): _rpc_knockout_visual.rpc(cid, active))
 		c.knocked_out.connect(func(): _rpc_knockout.rpc(cid, Sound.SFX["knockout"].pick_random()))
 		c.release_contact.connect(func(at: Vector3):
 			_rpc_slap.rpc(cid, at, Sound.pick_grab(), randf_range(0.92, 1.08)))
@@ -490,6 +491,10 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 				_bell_wait["%d:%d" % [cid, limb]] = Time.get_ticks_msec() + BELL_COOLDOWN_MS
 				var end: RigidBody3D = c.bodies[c.limbs[limb].def.end]
 				_rpc_bell.rpc(cid, end.global_position, Sound.SFX["church_bell"].pick_random()))
+		c.grab_made.connect(func(_c: Climber, limb: int, other: Object):
+			if other is Node and (other as Node).has_meta("donkey_voice") and _donkey_contact_ready("%d:%d" % [cid, limb]):
+				if randf() < DONKEY_CHANCE:
+					_rpc_donkey.rpc_id(1, cid, Sound.SFX["donkey"].pick_random()))
 		c.grab_lost.connect(_on_grab_lost)
 		c.rope_bounced.connect(func(at: Vector3, speed: float): _rpc_rope.rpc(cid, at, speed))
 		if chair != null and not is_host():
@@ -1035,6 +1040,13 @@ func _audio_climber(cid: int) -> Climber:
 	return c if c.owner_peer == (sender if sender != 0 else me()) else null
 
 
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_knockout_visual(cid: int, active: bool) -> void:
+	var c := _audio_climber(cid)
+	if c != null and c.state == Climber.State.PUPPET:
+		c.set_knockout_visual(active)
+
+
 @rpc("any_peer", "call_local", "reliable")
 func _rpc_knockout(cid: int, clip: String) -> void:
 	var c := _audio_climber(cid)
@@ -1093,6 +1105,44 @@ func _rpc_bell(cid: int, at: Vector3, clip: String) -> void:
 	if _audio_climber(cid) == null or not at.is_finite() or not clip in Sound.SFX["church_bell"]:
 		return
 	_play_bell(at, clip)
+
+
+const DONKEY_CHANCE := 0.10
+var _donkey_wait := {}
+var _donkey_voice: AudioStreamPlayer3D
+
+
+func _donkey_contact_ready(key: String) -> bool:
+	if _donkey_busy() or stage == null or stage.base_id != "donkey" or _donkey_wait.get(key, 0) > Time.get_ticks_msec():
+		return false
+	_donkey_wait[key] = Time.get_ticks_msec() + BELL_COOLDOWN_MS
+	return true
+
+
+func _donkey_busy() -> bool:
+	return is_instance_valid(_donkey_voice) and _donkey_voice.playing
+
+
+@rpc("any_peer", "call_local", "reliable")
+func _rpc_donkey(cid: int, clip: String) -> void:
+	# Only the host accepts requests, so simultaneous peers cannot start two brays.
+	if is_host() and _audio_climber(cid) != null and not _donkey_busy() and clip in Sound.SFX["donkey"]:
+		_rpc_donkey_play.rpc(clip, false)
+
+
+func _on_chair_donkey() -> void:
+	if is_host() and _donkey_contact_ready("chair") and randf() < DONKEY_CHANCE:
+		_rpc_donkey_play.rpc(Sound.SFX["donkey"].pick_random(), true)
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_donkey_play(clip: String, chair_hit: bool) -> void:
+	_play_donkey(clip, chair_hit)
+
+
+func _play_donkey(clip: String, chair_hit := false) -> void:
+	if not _donkey_busy() and stage != null and stage.base_id == "donkey" and clip in Sound.SFX["donkey"]:
+		_donkey_voice = Sound.play_at("donkey", stage.base_root.to_global(stage.donkey_head), linear_to_db(2.0) if chair_hit else 0.0, stage.base_root, clip)
 
 
 func _on_chair_bell(at: Vector3) -> void:
@@ -1263,6 +1313,7 @@ func _rpc_spawn_chair(generation: int, top: Vector2, dent_hits: Vector2i) -> voi
 	if is_host():
 		chair.terrain_struck.connect(_play_chair_impact_sound)
 		chair.bell_struck.connect(_on_chair_bell)
+		chair.donkey_struck.connect(_on_chair_donkey)
 		chair.rope_struck.connect(func(at: Vector3, speed: float): _rpc_chair_rope.rpc(at, speed))
 	chair.setup(dress, dent_hits)
 	world.add_child(chair)
@@ -1413,7 +1464,7 @@ func _chair_impact(victim: Climber, piece_name: String, local_offset: Vector3, i
 	var piece: RigidBody3D = victim.bodies.get(piece_name)
 	if piece == null:
 		return
-	if piece_name == "head" and impulse.length() / piece.mass >= 4.5:
+	if piece_name == "head" and victim.knockout_left <= 0 and impulse.length() / piece.mass >= 4.5:
 		victim.knock_out()
 	if victim == partner:
 		partner.stagger_time = 0.5
