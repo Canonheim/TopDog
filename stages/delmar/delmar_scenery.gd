@@ -58,6 +58,7 @@ const PIECES := [
 	["beach_hut_a", 184.8, -235.9, -18], ["cabana_a", 190.4, -244.2, -19], ["beach_hut_b", 197.8, -252.6, -20],
 	["cabana_b", 204.7, -260.5, -20], ["beach_hut_c", 212.1, -268.9, -21], ["beach_house_b", 217.6, -275.3, -22],
 	["beach_hut_a", 223.2, -286.5, -22], ["lighthouse_spit", 222.0, -268.0, 0],
+	["surf_rack", 62.0, 6.0, 15], ["surf_rack", 83.0, -3.0, -20],  # dressing on the sand
 ]
 ## Stand-in sizes [w, h, d] and colours for pieces that haven't landed.
 const STAND_IN := {
@@ -65,20 +66,21 @@ const STAND_IN := {
 	"beach_house_b": [4.8, 7.5, 4.4, "#E86A6A"], "beach_hut_a": [2.6, 3.6, 2.4, "#E86A9A"], "beach_hut_b": [2.8, 3.4, 2.4, "#1FB8AE"],
 	"beach_hut_c": [2.9, 3.6, 2.6, "#A8D05A"], "cabana_a": [3.2, 3.2, 3.0, "#F2E6C8"], "cabana_b": [3.1, 4.0, 3.0, "#1FB8AE"],
 	"stall_coco": [3.5, 3.0, 1.8, "#A8D05A"], "stall_paletas": [3.2, 2.9, 1.8, "#9DC3E6"], "lighthouse_spit": [4.0, 14.0, 4.0, "#F2EEE4"],
-	"el_faro": [3.2, 17.0, 3.2, "#F2EEE4"],
+	"el_faro": [3.2, 17.0, 3.2, "#F2EEE4"], "surf_rack": [2.0, 2.0, 0.8, "#E8B14A"],
 }
 const PALMS := [Vector2(81.3, -8.5), Vector2(82.7, -22.5), Vector2(84.7, -41.6), Vector2(91.3, -63.6), Vector2(99.1, -89.6),
 	Vector2(114.1, -120.8), Vector2(133.3, -152.8), Vector2(158.8, -193.1), Vector2(185.9, -233.6), Vector2(62.0, -3.0), Vector2(56.0, -16.0)]
 const UMBRELLAS := [Vector3(70, 2, 0), Vector3(74, 9, 1), Vector3(82, 15, 2), Vector3(66, 10, 3), Vector3(60, 4, 4)]
 const POSTS := [45.0, 52.0, 59.0, 66.0, 73.0]  # on the boardwalk's back edge
 const PIER_ROOT := 74.0  # Stage.PIER_ROOT
+const PIER_END := 104.0  # Stage.PIER_END
 const BOARD_Y := -0.6  # the boardwalk's top
 ## The ships: [kit stem, x0, x1 (the drift), z, length, colour, flip]. They drift slowly
 ## between x0 and x1, bobbing.
 const SHIPS := [
-	["brigantine", 140.0, 172.0, -95.0, 24.0, "#B8202C", false], ["brigantine", 160.0, 205.0, -150.0, 24.0, "#2659D8", true],
-	["sloop", 124.0, 136.0, -58.0, 12.0, "#FFC928", false], ["sloop", 170.0, 182.0, -72.0, 12.0, "#1FB8AE", true],
-	["party_boat", 154.0, 170.0, -46.0, 11.0, "#E0287A", false],
+	["ship_brigantine", 140.0, 172.0, -95.0, 24.0, "#B8202C", false], ["ship_brigantine", 160.0, 205.0, -150.0, 24.0, "#2659D8", true],
+	["ship_sloop", 124.0, 136.0, -58.0, 12.0, "#FFC928", false], ["ship_sloop", 170.0, 182.0, -72.0, 12.0, "#1FB8AE", true],
+	["ship_party_boat", 154.0, 170.0, -46.0, 11.0, "#E0287A", false],
 ]
 ## The islands and the raft: [kit stem, x, z, width, colour].
 const ISLES := [["isle_palm_hammock", 140.0, -72.0, 10.0, "#7CC83A"], ["isle_lighthouse", 166.0, -125.0, 14.0, "#F2EEE4"],
@@ -285,10 +287,16 @@ func _build_boardwalk() -> void:
 		root.add_child(bw)
 	else:
 		root.add_child(LuchaKit.box(Vector3(30.0, 0.32, 3.6), BOARD, Vector3(PIER_ROOT - 15.0, GROUND_Y + 0.16, -2.3)))
-	# The pier's root: three steps from the boardwalk (-0.6) up to the deck (0).
-	for i in 3:
-		var h := 0.2 * (i + 1) + 0.32
-		root.add_child(LuchaKit.box(Vector3(0.35, h, 3.2), BOARD, Vector3(73.2 + 0.35 * i - 0.7, GROUND_Y + h * 0.5, 0.0)))
+	# The pier (the Carpenter's: origin at its end, x -30.65 to 0, its steps down to
+	# the boardwalk's landing at the root). Its collision is Stage's; this is the look.
+	var pier := LuchaKit.kit_model("pier")
+	if pier != null:
+		pier.position = Vector3(PIER_END, 0.0, 0.0)
+		root.add_child(pier)
+	else:
+		for i in 3:
+			var h := 0.2 * (i + 1) + 0.32
+			root.add_child(LuchaKit.box(Vector3(0.35, h, 3.2), BOARD, Vector3(73.2 + 0.35 * i - 0.7, GROUND_Y + h * 0.5, 0.0)))
 	# Light posts and festoons between them.
 	var ends: Array = []  # [left hang, right hang] per post
 	for px in POSTS:
