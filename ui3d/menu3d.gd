@@ -38,6 +38,9 @@ var _hover := -1
 var attract := false
 var attract_at := Vector3(0, 0.7, 0)  # the big logo's spot, menu space
 var attract_scale := 1.45
+## The big logo stands level (Parker 11-11: "not be rotated clockwise like it is in the
+## main menu"): the header's turn that undoes its own built-in tilt.
+var attract_tilt := 0.0
 var attract_plate: Node3D = null  # "PRESS ANY BUTTON TO START", under the big logo
 var _quiet_until := 0  # msec: the press that left the attract does nothing else
 
@@ -237,12 +240,12 @@ func open_attract() -> void:
 		if _header_tween != null and _header_tween.is_valid():
 			_header_tween.kill()
 		header.position = attract_at + Vector3(0, 4.0, 0)
-		header.rotation.z = 0.25
+		header.rotation.z = attract_tilt + 0.25
 		header.scale = Vector3.ONE * attract_scale
 		var tw := create_tween().set_parallel()
 		_header_tween = tw
 		tw.tween_property(header, "position", attract_at, 0.6).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
-		tw.tween_property(header, "rotation:z", 0.0, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		tw.tween_property(header, "rotation:z", attract_tilt, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
 ## The press: the logo shrinks a little and moves to its spot, the belts fall in
@@ -468,7 +471,7 @@ func _process(delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
 	if attract:
 		if header != null and _open_t > 0.7:
-			header.rotation.z = sin(t * 1.4) * 0.025
+			header.rotation.z = attract_tilt + sin(t * 1.4) * 0.025
 			header.scale = Vector3.ONE * attract_scale * (1.0 + sin(t * 2.6) * 0.012)
 		if attract_plate != null:
 			attract_plate.scale = Vector3.ONE * (1.0 + sin(t * 3.4) * 0.05)

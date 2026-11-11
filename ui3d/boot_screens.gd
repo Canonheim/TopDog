@@ -58,7 +58,11 @@ func _ready() -> void:
 	_vp = SubViewport.new()
 	_vp.own_world_3d = true
 	_vp.transparent_bg = false
-	_vp.msaa_3d = Viewport.MSAA_4X
+	# The game's own AA (FXAA, no MSAA): the house ink is built for it, and under
+	# MSAA it never drew here (Parker 11-11: "make sure our outline shader hits the
+	# new screens").
+	_vp.msaa_3d = Viewport.MSAA_DISABLED
+	_vp.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
 	_view.add_child(_vp)
 	_build_stage()
 	_skip = AnyPress.new()

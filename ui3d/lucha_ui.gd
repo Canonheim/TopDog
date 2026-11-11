@@ -1478,6 +1478,7 @@ func _build_menus() -> void:
 	press_holder.visible = false
 	t.add_child(press_holder)
 	t.attract_plate = press_holder
+	t.attract_tilt = deg_to_rad(LuchaKit.LOGO_TILT_DEG)  # level on the press screen; the menu keeps its tilt
 	menus.title = t
 	# Practice choices are independent of multiplayer settings.
 	var training := _menu()
