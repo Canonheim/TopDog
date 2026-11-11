@@ -32,6 +32,14 @@ var column_x := MENU_COLUMN_X
 var top_y := MENU_TOP_Y
 var _open_t := 0.0
 var _hover := -1
+## THE TITLE'S PRESS ANY BUTTON (Parker 11-11): the logo big in the middle with the
+## press line under it and no belts; on a press the logo shrinks to its corner and
+## the belts fall in from the top of the screen. (lucha_ui owns the press.)
+var attract := false
+var attract_at := Vector3(0, 0.7, 0)  # the big logo's spot, menu space
+var attract_scale := 1.45
+var attract_plate: Node3D = null  # "PRESS ANY BUTTON TO START", under the big logo
+var _quiet_until := 0  # msec: the press that left the attract does nothing else
 
 
 func _init(p_cam: Camera3D) -> void:
@@ -212,9 +220,86 @@ func open() -> void:
 		cursor.position = (items[focus].node.get_meta("home") as Vector3) + Vector3(-BELT_W * 0.5 - 0.55, 0, 0.1)
 
 
+## The title waiting on a press: the logo big, the press line, no belts.
+func open_attract() -> void:
+	visible = true
+	attract = true
+	_set_pickable(false)
+	_open_t = 0.0
+	cursor.visible = false
+	for it in items:
+		if it.node != null:
+			(it.node as Node3D).visible = false
+	if attract_plate != null:
+		attract_plate.visible = true
+		attract_plate.scale = Vector3.ONE
+	if header != null:
+		if _header_tween != null and _header_tween.is_valid():
+			_header_tween.kill()
+		header.position = attract_at + Vector3(0, 4.0, 0)
+		header.rotation.z = 0.25
+		header.scale = Vector3.ONE * attract_scale
+		var tw := create_tween().set_parallel()
+		_header_tween = tw
+		tw.tween_property(header, "position", attract_at, 0.6).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+		tw.tween_property(header, "rotation:z", 0.0, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+## The press: the logo shrinks a little and moves to its spot, the belts fall in
+## quickly from above the top of the screen, one after another.
+func leave_attract() -> void:
+	if not attract:
+		return
+	attract = false
+	_quiet_until = Time.get_ticks_msec() + 350
+	_open_t = 0.0
+	_set_pickable(true)
+	focus = _next_live(-1, 1)
+	if attract_plate != null:
+		var tp := create_tween()
+		tp.tween_property(attract_plate, "scale", Vector3.ONE * 0.01, 0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+		tp.tween_callback(func(): attract_plate.visible = false)
+	if header != null:
+		if _header_tween != null and _header_tween.is_valid():
+			_header_tween.kill()
+		var tw := create_tween().set_parallel()
+		_header_tween = tw
+		tw.tween_property(header, "position", _header_home, 0.42).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(header, "scale", Vector3.ONE, 0.42).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(header, "rotation:z", header_tilt, 0.42).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	# Above the screen's top edge, wherever the window's shape puts it.
+	var top := 6.0
+	if cam != null:
+		top = tan(deg_to_rad(cam.fov * 0.5)) * absf(position.z) / maxf(0.001, scale.y) + 1.0
+	var k := 0
+	for it in items:
+		if it.node == null:
+			continue
+		var n := it.node as Node3D
+		var home: Vector3 = n.get_meta("home")
+		n.visible = true
+		n.position = Vector3(home.x, maxf(top, home.y + 3.5), home.z)
+		var tw2 := create_tween()
+		tw2.tween_interval(0.12 + 0.045 * k)
+		tw2.tween_property(n, "position", home, 0.32).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		k += 1
+	if cursor != null and _live(focus):
+		cursor.position = (items[focus].node.get_meta("home") as Vector3) + Vector3(-BELT_W * 0.5 - 0.55, 0, 0.1)
+
+
 func close() -> void:
 	visible = false
 	_set_pickable(false)
+	if attract:
+		# Left while waiting on the press (an invite opened the lobby): next time it's a plain menu.
+		attract = false
+		if attract_plate != null:
+			attract_plate.visible = false
+		for it in items:
+			if it.node != null:
+				(it.node as Node3D).visible = true
+		if header != null:
+			header.scale = Vector3.ONE
 
 
 ## Hidden menus must not catch the mouse: their belts leave the UI layer.
@@ -228,6 +313,10 @@ func _set_pickable(on: bool) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not visible or not is_visible_in_tree():
+		return
+	if attract or Time.get_ticks_msec() < _quiet_until:
+		if not event is InputEventMouseMotion:
+			get_viewport().set_input_as_handled()
 		return
 	if event.is_action_pressed("ui_down"):
 		_move(1)
@@ -377,6 +466,13 @@ func _process(delta: float) -> void:
 		return
 	_open_t += delta
 	var t := Time.get_ticks_msec() / 1000.0
+	if attract:
+		if header != null and _open_t > 0.7:
+			header.rotation.z = sin(t * 1.4) * 0.025
+			header.scale = Vector3.ONE * attract_scale * (1.0 + sin(t * 2.6) * 0.012)
+		if attract_plate != null:
+			attract_plate.scale = Vector3.ONE * (1.0 + sin(t * 3.4) * 0.05)
+		return
 	for i in items.size():
 		var it: Dictionary = items[i]
 		if it.node == null:

@@ -113,7 +113,23 @@ func _ready() -> void:
 	lucha.name = "LuchaUI"
 	add_child(lucha)
 	lucha.setup(self)
-	show_screen("title")
+	if _boot_wanted():
+		# THE BOOT SCREENS (Parker 11-11): the studio logo, the controller card, then the
+		# title waiting on PRESS ANY BUTTON TO START. Nothing plays under the black.
+		screen = "boot"
+		for k in screens:
+			screens[k].visible = false
+		lucha.show_screen("boot")
+		lucha.title_attract = true
+		var boot := BootScreens.new()
+		boot.finished.connect(func():
+			if screen == "boot":  # (a Steam invite may have opened the lobby meanwhile)
+				show_screen("title")
+			else:
+				lucha.title_attract = false)
+		add_child(boot)
+	else:
+		show_screen("title")
 	if "--demo" in OS.get_cmdline_user_args():
 		call_deferred("_demo")
 	if "--demo-heap" in OS.get_cmdline_user_args():
@@ -124,6 +140,17 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shot="):
 			_shot(a.get_slice("=", 1))
+
+
+## The boot screens play only on a real launch: not headless, not with main loaded
+## inside a test scene, not for --shot / --demo runs, and never with --no-boot.
+func _boot_wanted() -> bool:
+	if DisplayServer.get_name() == "headless" or get_tree().current_scene != self:
+		return false
+	for a in OS.get_cmdline_user_args():
+		if a == "--no-boot" or a.begins_with("--shot") or a.begins_with("--demo"):
+			return false
+	return true
 
 
 ## Screenshot hook: --shot=PATH[,SECONDS] saves the window to PATH and quits.

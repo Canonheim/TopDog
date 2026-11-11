@@ -32,6 +32,9 @@ var main: Node
 var cam: Camera3D
 var menus := {}  # id -> Menu3D
 var current := ""
+## The next title opens on PRESS ANY BUTTON TO START (main sets it after the boot screens).
+var title_attract := false
+var _title_press: AnyPress = null
 var _clouds: Array = []
 var _flags: Array = []
 var _line_poles: Array = []  # the two growing poles holding up the line's flag string
@@ -97,9 +100,16 @@ func show_screen(id: String) -> bool:
 	current = id
 	if id == "pause":
 		_fill_pause()
+	if _title_press != null and id != "title":
+		_title_press.queue_free()
+		_title_press = null
 	for k in menus:
 		if k == id:
-			menus[k].open()
+			if k == "title" and title_attract:
+				menus[k].open_attract()
+				_wait_title_press()
+			else:
+				menus[k].open()
 		else:
 			menus[k].close()
 	_hud.visible = id == "hud"  # hidden under the pause menu (Parker 11-08: the menu in front of everything)
@@ -115,13 +125,30 @@ func show_screen(id: String) -> bool:
 		_fill_results()
 		_raise_podium()
 	no_shadows(cam)
-	if id == "title":
+	if id == "title" and not title_attract:
 		Sound.play("lock", -4.0)
 	if online != null:
 		online.on_screen(id)
 	if settings != null:
 		settings.on_screen(id)
 	return id in OWNED
+
+
+## The title's press: the logo goes to its spot, the belts fall in, the bell rings.
+func _wait_title_press() -> void:
+	if _title_press != null:
+		_title_press.queue_free()
+	_title_press = AnyPress.new()
+	_title_press.delay = 0.45  # the logo has landed first
+	_title_press.pressed.connect(func():
+		title_attract = false
+		_title_press.queue_free()
+		_title_press = null
+		Players.mute_edges()
+		if current == "title":
+			menus.title.leave_attract()
+			Sound.play("lock", -4.0))
+	add_child(_title_press)
 
 
 # ================================================================ the sky and the plaza
@@ -1440,6 +1467,17 @@ func _build_menus() -> void:
 	t.add_button("CONTROLS", func(): main._controls_back = "title"; main.show_screen("controls"))
 	t.add_button("OPTIONS", func(): main._options_back = "title"; main.show_screen("options"))
 	t.add_button("QUIT", main.quit_game)
+	# PRESS ANY BUTTON TO START, under the big logo (Parker 11-11).
+	var press := LuchaKit.kit_model("title_press_any")
+	if press == null:
+		press = LuchaKit.poster_text("PRESS ANY BUTTON TO START", 0.36, LuchaKit.GOLD, LuchaKit.RED, 0.06)
+		LuchaKit.center_digits(press)
+	var press_holder := Node3D.new()
+	press_holder.add_child(press)
+	press_holder.position = Vector3(0, -2.35, 0.1)
+	press_holder.visible = false
+	t.add_child(press_holder)
+	t.attract_plate = press_holder
 	menus.title = t
 	# Practice choices are independent of multiplayer settings.
 	var training := _menu()

@@ -668,6 +668,18 @@ Commits 4714920, 7f37818 and the one after.
 - **The floaties drift free; the buoy stands back (Parker 11-11).** The floaties float on
   the climbers' plane over all the open water, no longer herded right of the buoy, and the
   buoy floats 2 m behind the plane (`Stage.BUOY_Z`) so nothing clips it. DEL_MAR.md §7.
+- **The boot screens and PRESS ANY BUTTON (Parker 11-11).** After Godot's splash:
+  the DANGADORF studio logo fades in, pulses twice on two tribal drum beats, and fades out.
+  Then a game pad with "THIS GAME IS BEST EXPERIENCED WITH A CONTROLLER" fades in quickly,
+  holds and fades out. Then the title, waiting on "PRESS ANY BUTTON TO START" under a big
+  logo. A press shrinks the logo back to its spot, and the belts fall in from above the
+  top of the screen. Any button skips the boot cards straight to the title. Code:
+  `ui3d/boot_screens.gd` (its own world in a SubViewport), `ui3d/any_press.gd` (keys,
+  mouse, every pad button polled and as events, and PadNav's actions for Steam pads), and
+  `Menu3D.open_attract` / `leave_attract`. They play only on a real launch: never headless,
+  inside a test scene, with `--shot` / `--demo`, or with `-- --no-boot`. Pieces: `boot_pad`,
+  `boot_controller_text`, `title_press_any` and the drums (`boot_drum_1/2`) by the UI
+  creator; `studio_logo` by the Building Maker (a stand-in until it lands).
 
 ## Record
 
