@@ -21,6 +21,7 @@ const MENU_DIST := 6.0  # in front of the ring's apron at every camera distance
 const PAUSE_DIST := 1.2  # the pause menu, nearer than anything in the world
 const LINE_HALF_W := 12.0  # the line's flag string spans the ring and the tower
 const LINE_Z := -0.8  # behind the play plane (the line node sits at z 0.35)
+const LINE_SAG := 0.12  # the flag string's sag at its middle (lifted back onto the line)
 const BANNER_KIT_SCALE := 2.0  # the kit's hud_banner at HUD size (notes x0.85)
 const BANNER_Y := 2.55  # the turn / announcement banner, high on the HUD (its flags reach the top)
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
@@ -1802,8 +1803,12 @@ func _restyle_line() -> void:
 	var bar: MeshInstance3D = main.line_bar
 	bar.mesh = null
 	bar.material_override = null
-	var string := LuchaKit.bunting(Vector3(-LINE_HALF_W, 0.0, LINE_Z), Vector3(LINE_HALF_W, 0.0, LINE_Z), int(LINE_HALF_W * 2.0 / 0.55), 0.12)
+	var string := LuchaKit.bunting(Vector3(-LINE_HALF_W, 0.0, LINE_Z), Vector3(LINE_HALF_W, 0.0, LINE_Z), int(LINE_HALF_W * 2.0 / 0.55), LINE_SAG)
 	string.name = "LineFlags"
+	# The string's middle, over the ring and the tower, sits ON the line (Parker 11-11:
+	# "being over the line more closely matches what you can see"): it's lifted by its
+	# sag, so only the far ends, out by the poles, ride a little high.
+	string.position.y = LINE_SAG
 	bar.add_child(string)
 	for f in string.find_children("*", "Node3D", true, false):
 		if f.has_meta("sway"):

@@ -43,6 +43,11 @@ const PRACTICE_PARTNER_MODEL := preload("res://models/practice_spiral_dog.glb")
 const KNIGHT := preload("res://models/defaultio.glb")  # the default 16-piece climber
 
 const LOCK_MARGIN := 0.02  # metres above the line a lock-in must clear
+## THE LOCK BUFFER (Parker 11-11: "make sure there is no delay that prevents you from
+## locking in once you are over"): a Lock In pressed a moment before you cross stays
+## wanted this long, and locks the first tick you're over.
+const LOCK_BUFFER_S := 0.3
+var _lock_want := {}  # climber id -> seconds the press is still wanted
 const STREAM_HZ := 30.0
 const CLOCK_HZ := 4.0
 const PAUSE_BETWEEN := 1.6  # seconds between turns / rounds
@@ -565,6 +570,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 
 func _drop_climber(cid: int) -> void:
 	_sinking.erase(cid)
+	_lock_want.erase(cid)
 	if not climbers.has(cid):
 		return
 	var c: Climber = climbers[cid]
@@ -698,14 +704,23 @@ func _tick_owned(real_delta: float) -> void:
 		var c: Climber = climbers[cid]
 		if c.state != Climber.State.LIVE or c.owner_peer != me():
 			continue
-		if c.driver != null and c.driver.lock_pressed() and c.knockout_left <= 0 and not c.sinking and (phase == "turn" or phase == "round"):
-			if measure(c) > line + LOCK_MARGIN:
+		var can_lock: bool = c.knockout_left <= 0 and not c.sinking and (phase == "turn" or phase == "round")
+		if c.driver != null and c.driver.lock_pressed() and can_lock:
+			_lock_want[cid] = LOCK_BUFFER_S
+		if _lock_want.has(cid):
+			if not can_lock:
+				_lock_want.erase(cid)
+			elif measure(c) > lock_line() + LOCK_MARGIN:
+				_lock_want.erase(cid)
 				if is_host():
 					_judge_lock(cid, c.pose(), c.welded_to_support())
 				else:
 					_rpc_lock_request.rpc_id(1, cid, c.pose(), c.welded_to_support())
 			else:
-				announce.emit("Get above the line to lock in!", false)
+				_lock_want[cid] = float(_lock_want[cid]) - real_delta
+				if float(_lock_want[cid]) <= 0.0:
+					_lock_want.erase(cid)
+					announce.emit("Get above the line to lock in!", false)
 		if send:
 			_send_contact_loads(c)
 		# (the grow-in plays on every machine by itself: nothing is streamed during it)
@@ -790,7 +805,7 @@ func _judge_lock(cid: int, pose: PackedFloat32Array, welded := false) -> void:
 	if not (phase == "turn" or phase == "round") or not _valid_lock_pose(pose):
 		return
 	var top := pose_measure(c, pose)
-	if top <= line + LOCK_MARGIN:
+	if top <= lock_line() + LOCK_MARGIN:
 		if c.owner_peer != me():
 			_rpc_note.rpc_id(c.owner_peer, "The line moved! Climb higher.")
 		else:
@@ -901,7 +916,7 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded :
 		else:
 			_rpc_note.rpc_id(c.owner_peer, note)
 		return
-	var made := grounded and top > line + LOCK_MARGIN
+	var made := grounded and top > lock_line() + LOCK_MARGIN
 	var verdict := "made" if made else "out"
 	if why == "left":
 		verdict = "out"
@@ -1061,6 +1076,16 @@ func tower_top() -> float:
 		if climbers.has(cid):
 			top = maxf(top, measure(climbers[cid]))
 	return top
+
+
+## THE LINE YOU CAN SEE (Parker 11-11): what a lock-in must clear. Del Mar's rope glides
+## out to `line` on its spring after each lock (Parker asked for the glide); while it
+## glides, a lock is judged by the rope as drawn, never by where it's heading. (The
+## plaza's bar shows the line itself: it snaps.)
+func lock_line() -> float:
+	if stage != null and stage.delmar:
+		return minf(line, _shown_line)
+	return line
 
 
 ## How far a climber gets toward the line: its top (the plaza), or its reach along the
@@ -1531,7 +1556,7 @@ func set_practice_ai(level: String) -> void:
 		partner.configure(self, level)
 
 func partner_can_lock() -> bool:
-	return practice and is_instance_valid(partner) and partner.state == Climber.State.LIVE and partner.knockout_left <= 0 and phase in ["turn", "round"] and measure(partner) > line + LOCK_MARGIN and (partner.welded_to_support() or _pose_on_support(partner, partner.pose()))
+	return practice and is_instance_valid(partner) and partner.state == Climber.State.LIVE and partner.knockout_left <= 0 and phase in ["turn", "round"] and measure(partner) > lock_line() + LOCK_MARGIN and (partner.welded_to_support() or _pose_on_support(partner, partner.pose()))
 
 func lock_partner() -> void:
 	if not partner_can_lock():

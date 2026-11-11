@@ -106,7 +106,9 @@ var _rope_along := Vector3.ZERO
 var _rope_across := Vector3.ZERO
 var _rope_sag := 0.0
 var _rope_twang := 0.0
-const ROPE_SAG := 0.035  # the rope's sag, x its length, at its middle
+## No standing sag (Parker 11-11): a 10-20 m rope sagged 0.35-0.7 m under the line it
+## stands for. It still flexes and wobbles when the buoy moves, and settles straight.
+const ROPE_SAG := 0.0
 const ROPE_POINTS := 12  # the curve the segments follow
 ## The rope ties to the gold ring at the top of the UI creator's classic buoy (11-10:
 ## "make the buoy taller and have the rope attach to it at the top"). The buoy rides
@@ -318,15 +320,53 @@ func place_delmar_line(c: float, speed := 0.0, delta := 0.0) -> void:
 	draw_delmar_line(c, speed, delta)
 
 
+## THE ROPE AS SEEN (Parker 11-11: "make it so being over the line more closely matches
+## what you can see from the camera view"): the mast's eye and the buoy stand behind the
+## play plane, and a rope drawn between them on the true line showed, in perspective,
+## nearer the screen's middle than the line climbers are judged on (x + y = c at z = 0).
+## Each end slides along the camera's sight line until the rope lies exactly over that
+## line: the mast's eye keeps its x and rides up or down a touch, the buoy keeps its
+## waterline and slides along it. Main sets the camera each frame; with no camera (the
+## headless batteries) the ends sit on the line itself, as before.
+var view_from := Vector3.INF
+
+
+func _viewed() -> bool:
+	return view_from.is_finite() and view_from.z > 1.0
+
+
+## The mast's eye for line c.
+func mast_eye(c: float) -> Vector3:
+	if not _viewed():
+		return Vector3(MAST_X, c - MAST_X, MAST_EYE_Z)
+	var cv := view_from
+	var k := (cv.z - MAST_EYE_Z) / cv.z
+	var qx := cv.x + (MAST_X - cv.x) / k
+	var q := Vector3(qx, c - qx, 0.0)
+	return cv + (q - cv) * k
+
+
+## Where the buoy floats for line c (its eye, BUOY_EYE above it, seen on the line).
+func buoy_at(c: float) -> Vector3:
+	if not _viewed():
+		return Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, BUOY_Z)
+	var cv := view_from
+	var k := (cv.z - BUOY_Z) / cv.z
+	var qy := cv.y + (WATER_Y + BUOY_EYE.y - cv.y) / k
+	var q := Vector3(c - qy, qy, 0.0)
+	var eye := cv + (q - cv) * k
+	return Vector3(eye.x - BUOY_EYE.x, WATER_Y, BUOY_Z)
+
+
 ## THE PHYSICS HALF, every tick: the buoy's body.
 ## Written only when it moved.
 func move_buoy(c: float) -> void:
 	if not delmar or not is_instance_valid(delmar_root):
 		return
-	# Placed so its eye lies on the line (x + y = c): the rope is the line exactly.
-	var buoy_at := Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, BUOY_Z)
-	if is_instance_valid(buoy_body) and not buoy_body.global_position.is_equal_approx(buoy_at):
-		buoy_body.global_position = buoy_at
+	# Placed so its eye shows on the line (x + y = c): the rope is the line exactly.
+	var at := buoy_at(c)
+	if is_instance_valid(buoy_body) and not buoy_body.global_position.is_equal_approx(at):
+		buoy_body.global_position = at
 
 
 ## THE DRAWN HALF, once a frame (it ran every physics tick, 120 a second: the rope's
@@ -335,19 +375,22 @@ func move_buoy(c: float) -> void:
 func draw_delmar_line(c: float, speed := 0.0, delta := 0.0) -> void:
 	if not delmar or not is_instance_valid(delmar_root):
 		return
-	var buoy_at := Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, BUOY_Z)
-	_float_buoy(speed, delta, buoy_at)
-	var eye := Vector3(MAST_X, c - MAST_X, MAST_EYE_Z)
+	var at := buoy_at(c)
+	if is_instance_valid(buoy_body):
+		buoy_body.global_position = at  # (this frame's camera: the physics tick's may be a frame old)
+	_float_buoy(speed, delta, at)
+	var eye := mast_eye(c)
 	if _mast_head_node != null:
 		_grow_mast(eye)
 	if _mast_pole != null:
 		_mast_pole.scale = Vector3(1, maxf(0.5, eye.y - DECK_Y), 1)
 		_mast_pole.position = Vector3(MAST_X, DECK_Y + (eye.y - DECK_Y) * 0.5, MAST_Z)
-	var a := buoy_at + BUOY_EYE
+	var a := at + BUOY_EYE
 	if _buoy_model != null:
-		a = Transform3D(Basis(), buoy_at) * (_buoy_model.transform * BUOY_EYE)  # the rope rides the rocking buoy
+		a = Transform3D(Basis(), at) * (_buoy_model.transform * BUOY_EYE)  # the rope rides the rocking buoy
 	if _rope_root != null:
-		_string_rope(a, eye, delta)
+		# (The wobble is kicked by the buoy's own motion, not by the camera sliding its end.)
+		_string_rope(a, eye, delta, a - at + Vector3(c - WATER_Y - BUOY_EYE.y - BUOY_EYE.x, WATER_Y, BUOY_Z))
 	elif _rope != null:
 		var mid := (a + eye) * 0.5
 		var along := eye - a
@@ -452,13 +495,13 @@ func _tick_rope_wobble(a: Vector3, delta: float) -> void:
 ## The UI creator's rope: 1 m segments from the buoy's eye to the mast's eye (the last one
 ## cut to length), and a streamer every 0.5 m counted from the buoy end, so they never
 ## slide as the rope grows; new ones appear at the mast end.
-func _string_rope(a: Vector3, b: Vector3, delta := 0.0) -> void:
+func _string_rope(a: Vector3, b: Vector3, delta := 0.0, kick_at := Vector3.INF) -> void:
 	var along := b - a
 	var length := along.length()
 	if length < 0.01:
 		return
 	var dir := along / length
-	_tick_rope_wobble(a, delta)
+	_tick_rope_wobble(kick_at if kick_at.is_finite() else a, delta)
 	# THE ROPE FLEXES (Parker 11-10: "make the rope have a little bit of flex and wobble
 	# as the buoy bounces"): each 1 m segment spans its stretch of the sagging, swinging
 	# curve, so the rope bends with it.

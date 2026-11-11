@@ -717,6 +717,35 @@ Commits 4714920, 7f37818 and the one after.
     the same way.
   - **Chairs splash too:** once per dunk, then the water takes most of their weight and
     they sink slowly until retired under the sea.
+- **The line you can see (Parker 11-11: "there are times in both modes where my hand
+  seems to be over the line but I cannot lock in").** Seven causes, all fixed:
+  - **The plaza line lagged:** it glided up after the line moved (a lerp). It snaps now.
+  - **The plaza line hung off the plane:** its flag string hangs 0.45 m behind the
+    climbers (the line node at z 0.35, the string `LuchaUI.LINE_Z` behind it), so in
+    perspective it showed above or below the real line. The node is now set on the
+    camera's sight line to the line at z = 0, so on screen the string covers exactly
+    the judged line.
+  - **The plaza string sagged** 0.12 m at its middle, right over the tower. It's lifted
+    by its sag (`LINE_SAG`): exact over the ring, a touch high out by the poles.
+  - **Del Mar's rope stood behind the plane** (the mast's eye at z -1.15, the buoy at
+    -2): it showed nearer the screen's middle than the line. Each end now slides along
+    the camera's sight line (`Stage.view_from`, set by main each frame): the mast's eye
+    keeps its x, the buoy its waterline, and the rope lies over the judged line from
+    any camera. With no camera (the headless batteries) the ends sit on the line.
+  - **Del Mar's rope sagged** 3.5% of its length (0.35-0.7 m) under the line. No
+    standing sag now; it still flexes and wobbles when the buoy moves (kicked by the
+    buoy's own motion, not the camera sliding its end), and settles straight.
+  - **The rope's glide:** after each lock the rope glides out on its spring while the
+    line has already moved. A lock is judged by the rope as drawn, `Game.lock_line()`
+    = the lesser of the two (the plaza: the line, its bar snaps). The raised line is
+    still `maxf(line, ...)`.
+  - **A press a moment early:** Lock In stays wanted for `LOCK_BUFFER_S` (0.3 s) and
+    locks the first tick you're over; "Get above the line" shows only when it runs out.
+  - Checked, not changed: the drawn hands reach 1.1 cm past their collision circles
+    (nothing to fix). The drawn head (cheeks and ears) reaches 7-12 cm past the head's
+    ball, and only the ball counts toward the line: an open call for Parker.
+  `--lockline` proves it (7 checks); a real-window check measured the drawn rope on the
+  judged line within 0.001 px.
 
 ## Record
 

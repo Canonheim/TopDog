@@ -2637,6 +2637,104 @@ func _run_delmar() -> void:
 	await frames(2)
 
 
+## THE LINE YOU CAN SEE (Parker 11-11: "there are times in both modes where my hand
+## seems to be over the line but I cannot lock in"): a press a moment early still locks
+## once over, a lock while Del Mar's rope glides is judged by the rope as drawn, and the
+## rope's ends sit on the camera's sight lines to the judged line.
+func _run_lockline() -> void:
+	var g := make_game("delmar", 2, 60.0, "plaza")
+	if not await wait_phase(g, "round"):
+		t("lockline: a round starts", false)
+		return
+	var st: Stage = g.stage
+	var notes: Array = []
+	g.announce.connect(func(text, _big): notes.append(str(text)))
+	var c0: Climber = g.climbers[g.live[0]]
+	var c1: Climber = g.climbers[g.live[1]]
+	var d0 := g.bot_drivers[0] as Drivers.ScriptDriver
+	var d1 := g.bot_drivers[1] as Drivers.ScriptDriver
+	var r0 := _stand_on_base(c0, st, -0.3)
+	var r1 := _stand_on_base(c1, st, 0.3)
+	await frames(2)
+	r0 = g.measure(c0)
+	r1 = g.measure(c1)
+	# 1. A press with the line out of reach: held for the buffer, then "get above".
+	_set_line(g, r0 + 0.6, r0 + 0.6)
+	d0.lock = true
+	await frames(2)
+	var held := g._lock_want.has(c0.climber_id) and c0.state == Climber.State.LIVE and not notes.has("Get above the line to lock in!")
+	await seconds(Game.LOCK_BUFFER_S + 0.1)
+	t("lockline: a press under the line waits a moment, then says get above", held and not g._lock_want.has(c0.climber_id) and notes.has("Get above the line to lock in!") and c0.state == Climber.State.LIVE, [held, notes])
+	_set_line(g, r0 - 0.4, r0 - 0.4)
+	await frames(3)
+	t("lockline: ...and once it ran out, crossing later doesn't lock by itself", c0.state == Climber.State.LIVE)
+	# 2. A press a hair before crossing: it locks the first tick you're over.
+	_set_line(g, r0 + 0.6, r0 + 0.6)
+	notes.clear()
+	d0.lock = true
+	await frames(6)  # 0.05 s under the line, the press waiting
+	_set_line(g, r0 - 0.4, r0 - 0.4)
+	await frames(3)
+	t("lockline: a press just before crossing locks once you're over (no second press)", c0.state == Climber.State.FROZEN and not notes.has("Get above the line to lock in!"), [c0.state, notes])
+	# 3. Del Mar's rope gliding out after a lock: judged by the rope as drawn.
+	_set_line(g, r1 + 0.5, r1 + 0.5)
+	d1.lock = true
+	await frames(3)
+	t("lockline: Del Mar: short of the drawn rope, refused", c1.state == Climber.State.LIVE)
+	await seconds(Game.LOCK_BUFFER_S + 0.05)
+	_set_line(g, r1 + 1.5, r1 - 0.4)  # the line moved out; the rope is still gliding behind
+	d1.lock = true
+	await frames(3)
+	t("lockline: Del Mar: past the gliding rope as drawn (the line already further out), the lock is taken", c1.state == Climber.State.FROZEN, [c1.state, g.line, g._shown_line, r1])
+	# 4. The rope's ends on the sight lines: from the camera, each end shows on x + y = c.
+	var c := 112.0
+	var worst := 0.0
+	for view in [Vector3(108.0, 3.0, 14.0), Vector3(99.0, 6.5, 9.0), Vector3(118.0, -0.5, 20.0)]:
+		st.view_from = view
+		var ends := [st.mast_eye(c), st.buoy_at(c) + Stage.BUOY_EYE]
+		for e: Vector3 in ends:
+			var hit: Vector3 = view + (e - view) * (view.z / (view.z - e.z))  # where its sight line meets z = 0
+			worst = maxf(worst, absf(hit.x + hit.y - c))
+		var me := st.mast_eye(c)
+		var bu := st.buoy_at(c)
+		worst = maxf(worst, maxf(absf(me.x - Stage.MAST_X), absf(me.z - Stage.MAST_EYE_Z)))
+		worst = maxf(worst, maxf(absf(bu.y - Stage.WATER_Y), absf(bu.z - Stage.BUOY_Z)))
+	st.view_from = Vector3.INF
+	var plain := st.buoy_at(c) + Stage.BUOY_EYE
+	t("lockline: Del Mar's rope ends show exactly over the judged line from any camera (mast keeps its x, buoy its waterline)", worst < 0.001 and absf(plain.x + plain.y - c) < 0.001, "worst %.5f" % worst)
+	t("lockline: the rope hangs straight at rest (no standing sag under the line)", Stage.ROPE_SAG == 0.0)
+	g.queue_free()
+	await frames(2)
+
+
+func _set_line(g: Game, true_line: float, shown: float) -> void:
+	g.line = true_line
+	g._shown_line = shown
+	g._shown_line_v = 0.0
+
+
+## Stand a climber on the base's top, dx from its middle, arms down; returns its reach.
+func _stand_on_base(c: Climber, st: Stage, dx: float) -> float:
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 99.0
+	var p := c.pose()
+	var low := INF
+	var low_x := 0.0
+	for i in Layout.ORDER.size():
+		var k := 3 * i
+		var y := -c.top_of(Layout.ORDER[i], Transform2D(p[k + 2] + PI, Vector2(0, -p[k + 1])))
+		if y < low:
+			low = y
+			low_x = p[k]
+	var spot := Vector2(st.base_root.position.x + dx, st.barrel_top)
+	for k in range(0, p.size(), 3):
+		p[k] += spot.x - low_x
+		p[k + 1] += spot.y - low - 0.008
+	c.apply_pose(p)
+	return 0.0
+
+
 ## THE GROW-IN (Parker 11-10): a spawn grows from nothing at its feet over 0.3 s, held
 ## and not colliding meanwhile, then stands at full size; and its growing block pushes a
 ## climber standing on the spot out of the way instead of spawning inside it.
