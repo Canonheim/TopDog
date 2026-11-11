@@ -881,6 +881,7 @@ func _run_net() -> void:
 	t("net: grunts originate at all three heads", interrupted_grunts.size() == 3 and interrupted_grunts.all(func(v): return v.playing and v.position == Vector3.ZERO))
 	b1.knock_out()
 	await frames(4)
+	t("net: knockout stars appear on host, owner and spectator", machines.all(func(m): return is_instance_valid(m.game.climbers[b1.climber_id].knockout_stars) and m.game.climbers[b1.climber_id].knockout_stars.visible))
 	t("net: knockout interrupts every active grunt", interrupted_grunts.all(func(v): return not is_instance_valid(v) or not v.playing))
 	B._rpc_exertion.rpc(b1.climber_id, Sound.SFX["strain"][0])
 	await frames(2)
@@ -895,6 +896,7 @@ func _run_net() -> void:
 	await frames(2)
 	t("net: already knocked-out player does not repeat whimper", ko_audio.size() == 3)
 	await seconds(2.5)
+	t("net: knockout stars disappear on every peer upon waking", machines.all(func(m): return not m.game.climbers[b1.climber_id].knockout_stars.visible))
 	# A client makes a contact and holds RB. Both peers hear the same take.
 	var grunts := []
 	for m in machines:
@@ -2702,6 +2704,50 @@ func _run_chairbodyhits() -> void:
 	var head: RigidBody3D = victim.bodies["head"]
 	g._apply_chair_hits({-2: {"piece": "head", "offset": Vector3.ZERO, "impulse": Vector3.RIGHT * head.mass * 9.0, "speed": 8.0}})
 	t("chair: heavy head hit still damages chair and knocks out victim", g.chair.hit_count == 2 and victim.knockout_left > 0)
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+
+func _run_kostars() -> void:
+	var g := make_game("practice", 1, 50.0, "plaza", true)
+	await wait_phase(g, "turn")
+	var c: Climber = g.partner
+	var head: RigidBody3D = c.bodies["head"]
+	var events := [0]
+	c.knocked_out.connect(func(): events[0] += 1)
+	g._chair_impact(c, "head", Vector3.ZERO, Vector3.RIGHT * head.mass * 5)
+	t("KO stars: head hit shows six atlas stars immediately", is_instance_valid(c.knockout_stars) and c.knockout_stars.visible and c.knockout_stars.stars.size() == 6)
+	var halo = c.knockout_stars
+	var first: Vector3 = halo.stars[0].position
+	halo._process(.2)
+	t("KO stars: carousel advances", first.distance_to(halo.stars[0].position) > .05)
+	c.set_physics_process(false)
+	t("KO stars: begin invisible at individual orbit positions", halo.stars.all(func(star): return not star.visible) and halo.stars[0].position.length() > .1)
+	c._physics_process(.15)
+	t("KO stars: grow halfway in 0.15 seconds", is_equal_approx(halo.stars[0].scale.x, c.body_scale * .85 * .5))
+	c._physics_process(.15)
+	t("KO stars: reach 15 percent smaller full size at 0.3 seconds", is_equal_approx(halo.stars[0].scale.x, c.body_scale * .85))
+	c._physics_process(.3)
+	var remaining := c.knockout_left
+	var guard := c._impact_guard
+	for i in 8:
+		g._chair_impact(c, "head", Vector3.ZERO, Vector3.RIGHT * head.mass * 6)
+	t("KO: repeated chair hits cannot refresh timer or guard", c.knockout_left == remaining and c._impact_guard == guard and events[0] == 1)
+	c._physics_process(remaining - .3)
+	t("KO stars: hold full size until last 0.3 seconds", is_equal_approx(halo.stars[0].scale.x, c.body_scale * .85))
+	c._physics_process(.15)
+	t("KO stars: shrink halfway with 0.15 seconds left", is_equal_approx(halo.stars[0].scale.x, c.body_scale * .85 * .5))
+	c._physics_process(c.knockout_left)
+	t("KO stars: disappear on exact wake tick", c.knockout_left == 0 and not halo.visible)
+	c._physics_process(.81)
+	g._chair_impact(c, "head", Vector3.ZERO, Vector3.RIGHT * head.mass * 5)
+	t("KO: new knockout allowed after waking and recovery guard", c.knockout_left == Climber.KNOCKOUT_DURATION and halo.visible and events[0] == 2)
+	head.global_position += Vector3(1,2,0)
+	head.rotation.z = PI
+	halo._process(0)
+	t("KO stars: follow fallen head while staying world upright", halo.global_position.y > head.global_position.y and halo.global_basis.is_equal_approx(Basis.IDENTITY))
+	c.freeze()
+	t("KO stars: freeze removes halo", not halo.visible)
 	g.end_match()
 	g.queue_free()
 	await frames(2)

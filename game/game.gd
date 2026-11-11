@@ -444,6 +444,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 			if dress:
 				c.set_glyphs(Glyphs.limb_glyphs(c.local_slot))
 		c.exerted.connect(func(): _rpc_exertion.rpc(cid, Sound.SFX["strain"].pick_random()))
+		c.knockout_changed.connect(func(active: bool): _rpc_knockout_visual.rpc(cid, active))
 		c.knocked_out.connect(func(): _rpc_knockout.rpc(cid, Sound.SFX["knockout"].pick_random()))
 		c.release_contact.connect(func(at: Vector3):
 			_rpc_slap.rpc(cid, at, Sound.pick_grab(), randf_range(0.92, 1.08)))
@@ -946,6 +947,13 @@ func _audio_climber(cid: int) -> Climber:
 	return c if c.owner_peer == (sender if sender != 0 else me()) else null
 
 
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_knockout_visual(cid: int, active: bool) -> void:
+	var c := _audio_climber(cid)
+	if c != null and c.state == Climber.State.PUPPET:
+		c.set_knockout_visual(active)
+
+
 @rpc("any_peer", "call_local", "reliable")
 func _rpc_knockout(cid: int, clip: String) -> void:
 	var c := _audio_climber(cid)
@@ -1296,7 +1304,7 @@ func _chair_impact(victim: Climber, piece_name: String, local_offset: Vector3, i
 	var piece: RigidBody3D = victim.bodies.get(piece_name)
 	if piece == null:
 		return
-	if piece_name == "head" and impulse.length() / piece.mass >= 4.5:
+	if piece_name == "head" and victim.knockout_left <= 0 and impulse.length() / piece.mass >= 4.5:
 		victim.knock_out()
 	if victim == partner:
 		partner.stagger_time = 0.5

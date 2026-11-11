@@ -4,7 +4,7 @@ extends Node
 
 const RARE_GRAB := "grab_slap_10"
 const SFX := {
-	"knockout": ["knockout_whimper_01", "knockout_whimper_02", "knockout_whimper_03"],
+	"knockout": ["knockout_grunt_01"],
 	"bubble_pop": ["bubble_pop_01", "bubble_pop_02", "bubble_pop_03"],
 	"chair_light": ["big_slam_01", "big_slam_02"],
 	"chair_heavy": ["big_slam_03", "big_slam_04"],
@@ -169,7 +169,7 @@ func play_at(kind: String, where: Vector3, volume_db := 0.0, parent: Node = null
 		chair_boost_db += linear_to_db(2.0)
 	if kind == "knockout":
 		# Match measured short-block loudness to the two big slams, with their 6x gain.
-		var trims := {"knockout_whimper_01": 2.9727, "knockout_whimper_02": 2.5629, "knockout_whimper_03": 3.1371}
+		var trims := {"knockout_grunt_01": 1.9132}
 		var selected: String = s.resource_path.get_file().get_basename()
 		chair_boost_db += linear_to_db(6.0) + float(trims.get(selected, 0.0))
 	volume_db += chair_boost_db

@@ -75,6 +75,7 @@ signal grab_made(climber: Climber, limb: int, other: Object)
 signal release_contact(position: Vector3)
 signal exerted
 signal knocked_out
+signal knockout_changed(active: bool)
 
 var state := State.LIVE
 var climber_id := 0
@@ -102,7 +103,10 @@ var joints := {}  # joint name -> Dictionary
 var limbs: Array = []  # per limb: Dictionary (see _build_limbs)
 var total_mass := 0.0
 var spawn_at := Vector2.ZERO
+const KNOCKOUT_DURATION := 1.6
 var knockout_left := 0.0
+var knockout_stars: Node3D
+const KnockoutStars := preload("res://climber/knockout_stars.gd")
 var _impact_guard := 0.0
 var _pull_load := 0.0
 var _incoming_pull := 0.0
@@ -662,6 +666,11 @@ func _physics_process(delta: float) -> void:
 	_tick_slip()
 	if knockout_left > 0:
 		knockout_left = maxf(0, knockout_left - delta)
+		if is_instance_valid(knockout_stars):
+			knockout_stars.set_remaining(knockout_left)
+		if knockout_left == 0:
+			set_knockout_visual(false)
+			knockout_changed.emit(false)
 		_incoming_pull = 0
 		return
 	_tick_ropes(delta)
@@ -689,10 +698,26 @@ func _physics_process(delta: float) -> void:
 				grip.regrip = 0.65
 
 
+func set_knockout_visual(active: bool) -> void:
+	if active and (removed or state == State.FROZEN or not bodies.has("head")):
+		return
+	if active and not is_instance_valid(knockout_stars):
+		knockout_stars = KnockoutStars.new()
+		knockout_stars.name = "KnockoutStars"
+		bodies["head"].add_child(knockout_stars)
+		knockout_stars.setup(body_scale)
+	if is_instance_valid(knockout_stars):
+		knockout_stars.show_active(active, KNOCKOUT_DURATION)
+		if active and state == State.LIVE:
+			knockout_stars.set_remaining(knockout_left)
+
+
 func knock_out() -> void:
 	if state != State.LIVE or knockout_left > 0 or _impact_guard > 0:
 		return
-	knockout_left = 1.6
+	knockout_left = KNOCKOUT_DURATION
+	set_knockout_visual(true)
+	knockout_changed.emit(true)
 	knocked_out.emit()
 	_impact_guard = knockout_left + 0.8
 	release_all()
@@ -1351,6 +1376,7 @@ func limb_end(i: int) -> Vector2:
 ## Turn to stone where we are: every piece static, our grabs and joints gone.
 ## Grabs OTHER climbers hold on us stay: they now hold a static piece.
 func freeze() -> void:
+	set_knockout_visual(false)
 	if state == State.FROZEN:
 		return
 	release_all()
@@ -1542,6 +1568,7 @@ func _notification(what: int) -> void:
 
 
 func remove() -> void:
+	set_knockout_visual(false)
 	removed = true
 	release_all()
 	_free_joints()
