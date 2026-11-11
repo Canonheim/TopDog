@@ -994,7 +994,9 @@ func _build_sea_life() -> void:
 					k.add_child(palm)
 				k.add_child(LuchaKit.box(Vector3(1.4, w * 0.5, 1.4), Color(str(isle[4])), Vector3(w * 0.18, 0.75 + w * 0.25, 0)))
 		k.position = Vector3(float(isle[1]), WATER_Y, float(isle[2]))
-		k.rotation.y = atan2(CAM.x - float(isle[1]), CAM.y - float(isle[2]))  # the flat faces the pier
+		# The Building Maker's islands are fully modelled (Parker 11-11: "we dont want
+		# cardboard cut outs in the water"), staged to read from the pier: no turning
+		# them to the camera.
 		root.add_child(k)
 		if str(isle[0]) == "isle_band_raft":
 			_bobbers.append([k, WATER_Y, _rng.randf() * TAU])
