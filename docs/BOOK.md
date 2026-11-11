@@ -717,6 +717,17 @@ Commits 4714920, 7f37818 and the one after.
     the same way.
   - **Chairs splash too:** once per dunk, then the water takes most of their weight and
     they sink slowly until retired under the sea.
+- **Del Mar's water: nothing in front of anything (Parker 11-11: "make all the
+  background stuff in the water spread out more so it's not in front of eachother"; he
+  picked "no overlaps, the rest to the right").** From the match camera (measured: x 103
+  to 115, pulled back 13 to 31 m) the open water is a narrow strip, and only four of the
+  nine pieces fit side by side there. Each now has its own slice of the view, drift
+  included, from every one of those cameras, with nearer pieces left of farther ones so
+  the camera moving out only widens the gaps, and every piece at least 12 m off the
+  shore. From the start: the band raft, the yellow sloop, the palm island, the red
+  brigantine at the edge. The party boat, the lighthouse island, the teal sloop, the blue
+  brigantine and the pinata island wait further right and are rarely seen in a match.
+  The tables are `SHIPS` and `ISLES` in delmar_scenery.gd.
 - **The line you can see (Parker 11-11: "there are times in both modes where my hand
   seems to be over the line but I cannot lock in").** Seven causes, all fixed:
   - **The plaza line lagged:** it glided up after the line moved (a lerp). It snaps now.

@@ -101,18 +101,25 @@ const BOARD_Y := -0.6  # the boardwalk's top
 ## between x0 and x1, bobbing.
 ## SPREAD OUT TO THE RIGHT (Parker 11-10: "the ships are too close to eachother, they
 ## should all be more spread to the right so some are not visible until you climb to the
-## right a bit"). At the start the frame's right edge is about x 144 at z -58, 165 at
-## z -95 and 195 at z -150: one sloop sails in view, a brigantine noses in at the edge,
-## and the party boat, the second sloop and the far brigantine wait further right, coming
-## into view as the tower (and the camera with it) moves out.
+## right a bit").
+## NOTHING IN FRONT OF ANYTHING (Parker 11-11: "right now there is an island in front of
+## a boat, make all the background stuff in the water spread out more so it's not in
+## front of eachother"; asked, he picked "no overlaps, the rest to the right"). From the
+## match camera the open water is a narrow strip (the beach curves in behind it), and
+## only four pieces fit side by side there. So each piece has its own slice of the view,
+## drift included, from every camera the match uses (measured: x 103 to 115, pulled back
+## 13 to 31 m), and nearer pieces stand left of farther ones, so the camera moving out
+## only opens the gaps. From the start: the band raft, the yellow sloop, the palm island,
+## the red brigantine nosing in at the edge; the rest wait further right. Every piece is
+## at least 12 m out from the shore. Keep a new piece's slice clear of the others.
 const SHIPS := [
-	["ship_brigantine", 152.0, 174.0, -95.0, 24.0, "#B8202C", false], ["ship_brigantine", 225.0, 262.0, -150.0, 24.0, "#2659D8", true],
-	["ship_sloop", 116.0, 128.0, -58.0, 12.0, "#FFC928", false], ["ship_sloop", 178.0, 192.0, -72.0, 12.0, "#1FB8AE", true],
-	["ship_party_boat", 152.0, 166.0, -46.0, 11.0, "#E0287A", false],
+	["ship_brigantine", 228.0, 233.0, -190.0, 24.0, "#B8202C", false], ["ship_brigantine", 497.5, 502.5, -300.0, 24.0, "#2659D8", true],
+	["ship_sloop", 121.5, 125.5, -75.0, 12.0, "#FFC928", false], ["ship_sloop", 340.5, 344.5, -200.0, 12.0, "#1FB8AE", true],
+	["ship_party_boat", 263.0, 266.0, -150.0, 11.0, "#E0287A", false],
 ]
 ## The islands and the raft: [kit stem, x, z, width, colour].
-const ISLES := [["isle_palm_hammock", 140.0, -72.0, 10.0, "#7CC83A"], ["isle_lighthouse", 166.0, -125.0, 14.0, "#F2EEE4"],
-	["isle_pinata_tree", 196.0, -190.0, 12.0, "#E0287A"], ["isle_band_raft", 145.0, -38.0, 6.0, "#E8B14A"]]
+const ISLES := [["isle_palm_hammock", 165.6, -125.0, 10.0, "#7CC83A"], ["isle_lighthouse", 307.8, -240.0, 14.0, "#F2EEE4"],
+	["isle_pinata_tree", 516.0, -280.0, 12.0, "#E0287A"], ["isle_band_raft", 106.3, -45.0, 6.0, "#E8B14A"]]
 const CAM := Vector2(102.5, 13.1)  # the Del Mar camera (x, z): cut-outs and fronts turn to it
 ## Clouds over the sea: [x, y, z, width] (each outside the plaza cameras' reach).
 const CLOUDS := [Vector4(122, 20, -110, 22), Vector4(152, 26, -150, 30), Vector4(232, 28, -175, 26),
