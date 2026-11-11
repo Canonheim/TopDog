@@ -5,7 +5,7 @@ extends Node
 const RARE_GRAB := "grab_slap_10"
 const SFX := {
 	"donkey": ["donkey_natural_02", "donkey_natural_03"],
-	"knockout": ["knockout_grunt_01"],
+	"knockout": ["knockout_grunt_01", "knockout_oof_01", "knockout_oof_02", "knockout_oof_03", "knockout_oof_04"],
 	"bubble_pop": ["bubble_pop_01", "bubble_pop_02", "bubble_pop_03"],
 	"chair_light": ["big_slam_01", "big_slam_02"],
 	"chair_heavy": ["big_slam_03", "big_slam_04"],
