@@ -30,6 +30,7 @@ var clock := 0.0  # the course's own clock: every cycle in the world reads it (s
 var things: PeakThings
 var zones: PeakZones
 var audio: PeakAudio
+var backdrop: PeakBackdrop
 var player: Climber = null
 var active := false
 var finished := false
@@ -120,6 +121,7 @@ func setup(p_game) -> void:
 			row["area"] = a.id
 			challenges.append(row)
 	challenges.sort_custom(func(x, y): return _cid_key(str(x.id)) < _cid_key(str(y.id)))
+	backdrop = PeakBackdrop.build(self, ORIGIN)  # the far layers: the valley, the ranges, the sea of cloud (the Environment Maker's)
 	_lamp = OmniLight3D.new()
 	_lamp.light_color = Color("#FFD9A0")
 	_lamp.omni_range = 9.0
@@ -455,6 +457,8 @@ func frame(delta: float, cam: Camera3D) -> void:
 	audio.frame(delta, weights, _fall_speed(), _drop_under())
 	things.frame(delta)
 	zones.frame(delta, cam)
+	if backdrop != null:
+		backdrop.tick(delta, cam)
 	# The lanterns near the climber burn; the rest are off.
 	var p := player_at()
 	for row in _lights:

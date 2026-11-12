@@ -586,7 +586,8 @@ func _tick_peak(delta: float) -> void:
 	_world_sky.sky_top_color = sky.darkened(0.25)
 	_world_sky.sky_horizon_color = sky.lightened(0.2)
 	_world_sky.ground_horizon_color = sky.lightened(0.2)
-	_world_sky.ground_bottom_color = sky.darkened(0.3)
+	# Outside you look DOWN on the far ranges: no darker band under the horizon there.
+	_world_sky.ground_bottom_color = sky.darkened(0.3).lerp(sky.lightened(0.2), 1.0 - float(look.inside))
 	_world_env.ambient_light_color = look.amb
 	_world_env.ambient_light_sky_contribution = lerpf(0.5, 0.0, float(look.inside))
 	_world_sun.light_energy = float(look.sun)

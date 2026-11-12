@@ -133,6 +133,8 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	var vis: Node3D = LuchaKit.kit_model(str(def.model)) if def.has("model") else null
 	if vis == null:
 		vis = _shapes_mesh(a, def.shapes)
+	elif def.has("model_scale"):
+		vis.scale = Vector3.ONE * float(def.model_scale)
 	(nodes[0] as Node3D).add_child(vis)
 	var mo: Dictionary = def.motion
 	var m := {"id": str(def.id), "def": def, "area": str(a.id), "home": home, "nodes": nodes, "vis": vis, "mo": mo, "type": str(mo.type),
