@@ -765,6 +765,28 @@ Commits 4714920, 7f37818 and the one after.
   - The pop rule (Parker: "make them pop up an off the back ground thing before landing,
     dont just have them clip as they flip"): the Controls keycaps and the results name
     tiles lift off, turn, then land.
+- **The UI pass, batches 2 to 8 (closed 11-11).** The whole record is in Top Dog
+  Kit/docs/UI_PASS.md.
+  - **2. The picker belt** (`belt_picker`, `LuchaKit.belt_picker`): every choice belt has a
+    label cell, its value alone on the face, and its own arrows. The arrows pulse on the
+    focused belt.
+  - **3 and 4. Cards and lobby:**
+    - Play together's cards sit in one lower row of five at 0.9.
+    - A guest's lobby shows the host's settings on locked pickers (`Menu3D.lock_choice`),
+      with LEAVE focused and "WAITING FOR <HOST> TO START".
+    - The match's "X CLIMBING" sits on a plate beside the ROUND tab.
+  - **5. The star marks the focus in every menu.** Parker chose this on 11-11, reversing
+    his 11-10 "Options only". The pug crest stood over the belt above and hid its words.
+    The crest now crowns each column's top belt.
+  - **6.** The star is drawn at 1.45.
+  - **7 and 8. Narrow windows:**
+    - From 16:10 up, column menus anchor to the left edge (`Menu3D.anchor_to`). The cards,
+      the online boards and the title logo follow.
+    - Narrower, every camera-hung UI root (group `LuchaUI.UI_ROOT`) shrinks by
+      half_w / 6.11 and lays out as at 16:10 (`LuchaUI._tick_narrow`).
+    - The results camera finds the board's free space at any window shape.
+    - The card row scales itself to stay inside the right edge.
+  - **Still to check:** a real guest lobby on a second machine.
 - **The line you can see (Parker 11-11: "there are times in both modes where my hand
   seems to be over the line but I cannot lock in").** Seven causes, all fixed:
   - **The plaza line lagged:** it glided up after the line moved (a lerp). It snaps now.
