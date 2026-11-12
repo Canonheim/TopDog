@@ -16,7 +16,7 @@ signal activated(index: int)
 const UI_LAYER := 1 << 19
 const STEP := 0.5
 const MENU_COLUMN_X := -3.9
-const MENU_TOP_Y := 2.5
+const MENU_TOP_Y := 2.25  # (the UI pass, 1b: the top belt's crest and arrows clear the banner)
 const BELT_W := 2.3
 
 var items: Array = []  # [{node, kind, label, cb, options, index, on_change, text_node, area}]
@@ -163,6 +163,8 @@ func _relabel(i: int) -> void:
 	var s: String = it.label
 	if it.kind == "choice" or it.kind == "choice_button":
 		s = "%s  %s" % [it.label, str(it.options[it.index])]  # left / right flips it; the stars on the belt say so
+		if it.get("value_only", false):
+			s = str(it.options[it.index])  # (the climber beside it shows what it changes)
 	# Fit the words to the belt's label face (the kit's face, or the placeholder plate).
 	var belt: Node3D = it.belt
 	var face_w: float = belt.get_meta("face_w", BELT_W * 0.92)

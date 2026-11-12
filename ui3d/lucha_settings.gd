@@ -243,7 +243,8 @@ func _build_controls() -> void:
 	_bubble.add_child(tip)
 	_bubble.visible = false
 	# The footer hint.
-	var hint := LuchaKit.poster_text("MOVE: STICK / ARROWS     A: PICK     B: BACK", 0.2, LuchaKit.GOLD, LuchaKit.INK, 0.03)
+	# The footer on the status ribbon (the UI pass, 1c).
+	var hint := LuchaKit.footer([["A", PAD_A], "PICK", ["B", PAD_B], "BACK"])
 	hint.position = Vector3(0, -3.25, 0.1)
 	frame.add_child(hint)
 	LuchaUI.no_shadows(_controls)
@@ -329,6 +330,10 @@ func _tick_monitor() -> void:
 
 # ================================================================ OPTIONS
 
+const PAD_A := Color("#2FA84A")  # the footers' button discs
+const PAD_B := Color("#D8262E")
+
+
 func _build_options() -> void:
 	# The banner and BACK ride the camera; the desk and the TV live in the world.
 	_opt_hud = Node3D.new()
@@ -339,11 +344,11 @@ func _build_options() -> void:
 	frame.position = Vector3(0, 0, -LuchaUI.PAUSE_DIST)
 	frame.scale = Vector3.ONE * LuchaUI.UI_SCALE * LuchaUI.PAUSE_DIST / LuchaUI.MENU_DIST
 	frame.add_child(_banner("OPTIONS", Vector3(0, 3.0, 0)))
-	var back_b := _belt_small("BACK", Vector3(0, -3.05, 0.08))
+	var back_b := _belt_small("BACK", Vector3(0, -2.55, 0.08))  # (up, clear of the footer)
 	back_b.node.scale = Vector3.ONE * 1.3
 	frame.add_child(back_b.node)
-	var hint := LuchaKit.poster_text("LEFT / RIGHT: PICK     UP / DOWN: SLIDE     A: TURN THE KNOB     B: BACK", 0.13, LuchaKit.GOLD, LuchaKit.INK, 0.03)
-	hint.position = Vector3(0, -3.55, 0)
+	var hint := LuchaKit.footer(["LEFT / RIGHT: SLIDE", ["A", PAD_A], "PICK", ["B", PAD_B], "BACK"])
+	hint.position = Vector3(0, -3.25, 0.1)
 	frame.add_child(hint)
 	LuchaUI.no_shadows(_opt_hud)
 	_opt_hud.visible = false
@@ -763,18 +768,8 @@ func _kit(name_s: String, size: Vector3, c: Color) -> Node3D:
 
 
 func _banner(text_s: String, at: Vector3) -> Node3D:
-	var b := LuchaKit.kit_model("hud_banner")
-	var root := Node3D.new()
+	var root := LuchaKit.banner(text_s, 1.6)
 	root.position = at
-	if b != null:
-		b.scale = Vector3.ONE * 1.6
-		root.add_child(b)
-		var t := LuchaKit.fit_text(text_s, 3.12 * 1.6 * 0.85, 0.26 * 1.6 * 0.85, LuchaKit.RED, LuchaKit.INK)
-		t.position = Vector3(0, 0, 0.07 * 1.6 + 0.02)
-		LuchaKit.center_digits(t)
-		root.add_child(t)
-	else:
-		root.add_child(LuchaKit.poster_text(text_s, 0.6, LuchaKit.GOLD, LuchaKit.RED, 0.12))
 	return root
 
 

@@ -786,6 +786,75 @@ static func sign_board() -> Node3D:
 	return k if k != null else _plate(2.4, 0.6, RED)
 
 
+## THE SCREEN'S NAME (the UI pass, 1a): red words on the hud_banner, at scale `s`
+## (1.1 for every column screen at menu (0, 3.2); Controls and Options 1.6).
+static func banner(text_s: String, s := 1.1) -> Node3D:
+	var b := kit_model("hud_banner")
+	var root := Node3D.new()
+	if b != null:
+		b.scale = Vector3.ONE * s
+		root.add_child(b)
+		var t := fit_text(text_s, 3.12 * s * 0.85, 0.26 * s * 0.85, RED, INK)
+		t.position = Vector3(0, 0, 0.07 * s + 0.02)
+		center_digits(t)
+		root.add_child(t)
+	else:
+		root.add_child(poster_text(text_s, 0.4 * s, GOLD, RED, 0.1))
+	return root
+
+
+## How wide words draw at `size` (the title font's own measure).
+static func text_width(t: String, size: float) -> float:
+	var probe := text3d(t, 1.0, Color.WHITE)
+	var f: Font = probe.font if probe.font != null else ThemeDB.fallback_font
+	probe.free()
+	return f.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 96).x / 96.0 * size
+
+
+## A footer on the status ribbon (the UI pass, 1c): words in INK with the pad's button
+## discs. `parts`: Strings, or [letter, tint] for a disc. The whole line fitted to `fit_w`.
+static func footer(parts: Array, fit_w := 3.6) -> Node3D:
+	var root := Node3D.new()
+	var rb := status_ribbon()
+	rb.scale = Vector3.ONE * 1.5
+	root.add_child(rb)
+	var line := Node3D.new()
+	line.position = Vector3(0, 0, 0.04 * 1.5 + 0.02)
+	root.add_child(line)
+	var size := 0.17
+	var disc := 0.28 * 0.9
+	var x := 0.0
+	var placed: Array = []
+	for p in parts:
+		if p is Array:
+			var g := kit_model("pad_glyph")
+			if g == null:
+				g = Node3D.new()
+				g.add_child(cyl(0.14, 0.04, p[1], Vector3.ZERO, Vector3.BACK))
+			else:
+				tint_part(g, "pad_glyph_face", p[1])
+			g.scale = Vector3.ONE * 0.9
+			var lt := poster_text(str(p[0]), 0.15, CREAM, INK, 0.02)
+			lt.position = Vector3(0, 0, 0.05)
+			center_digits(lt)
+			g.add_child(lt)
+			placed.append([g, x + disc * 0.5])
+			x += disc + 0.06
+		else:
+			var w := text_width(str(p), size)
+			var t := poster_text(str(p), size, INK, CREAM, 0.02)
+			center_digits(t)
+			placed.append([t, x + w * 0.5])
+			x += w + 0.32
+	x -= 0.32
+	var k := minf(1.0, fit_w / maxf(x, 0.01))
+	line.scale = Vector3.ONE * k
+	for it in placed:
+		(it[0] as Node3D).position.x = float(it[1]) - x * 0.5
+		line.add_child(it[0])
+	return root
+
+
 static func status_ribbon() -> Node3D:
 	var k := kit_model("status_ribbon")
 	return k if k != null else _plate(3.4, 0.4, Color("#1E2C5C"))

@@ -1483,7 +1483,7 @@ func _build_menus() -> void:
 	menus.title = t
 	# Practice choices are independent of multiplayer settings.
 	var training := _menu()
-	training.set_header(LuchaKit.poster_text("PRACTICE", 0.5, LuchaKit.GOLD, LuchaKit.RED), Vector3(-2.4, 3.1, 0))
+	training.set_header(LuchaKit.banner("PRACTICE"), Vector3(0, 3.2, 0))
 	training.add_button("FIGHT!", main._start_practice)
 	var practice_modes := ["scramble", "tower", "delmar"]
 	training.add_choice("MODE", ["CLASSIC", "TOWER", "DEL MAR"], 0, func(i): main.practice_settings.practice_mode = practice_modes[i])
@@ -1492,7 +1492,7 @@ func _build_menus() -> void:
 	menus.practice_settings = training
 	# PLAY TOGETHER
 	var l := _menu()
-	l.set_header(LuchaKit.poster_text("PLAY TOGETHER", 0.42, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	l.set_header(LuchaKit.banner("PLAY TOGETHER"), Vector3(0, 3.2, 0))
 	l.column_x = Menu3D.MENU_COLUMN_X
 	l.top_y = Menu3D.MENU_TOP_Y
 	var mode_ids := ["scramble", "tower", "delmar"]
@@ -1517,7 +1517,7 @@ func _build_menus() -> void:
 	menus.local = l
 	# PAUSE
 	var p := _menu()
-	p.set_header(LuchaKit.poster_text("TIME OUT!", 0.6, LuchaKit.GOLD, LuchaKit.RED, 0.12), Vector3(0, 1.9, 0))
+	p.set_header(LuchaKit.banner("TIME OUT!"), Vector3(0, 3.2, 0))
 	p.column_x = Menu3D.MENU_COLUMN_X
 	p.top_y = Menu3D.MENU_TOP_Y
 	# IN FRONT OF EVERYTHING (Parker 11-08: "make the menu draw in front of everything
@@ -1530,7 +1530,7 @@ func _build_menus() -> void:
 	var ai := _menu()
 	ai.column_x = Menu3D.MENU_COLUMN_X
 	ai.top_y = Menu3D.MENU_TOP_Y
-	ai.set_header(LuchaKit.poster_text("PRACTICE AI", 0.6, LuchaKit.GOLD, LuchaKit.RED, 0.12), Vector3(0, 1.9, 0))
+	ai.set_header(LuchaKit.banner("PRACTICE AI"), Vector3(0, 3.2, 0))
 	for level in ["none", "stationary", "easy", "hard"]:
 		var choice: String = level
 		ai.add_button("NO NPC" if choice == "none" else ("STATIONARY" if choice == "stationary" else "CLIMB " + choice.to_upper()), func(): main.game.set_practice_ai(choice))
@@ -2018,7 +2018,7 @@ func _process(delta: float) -> void:
 		var half_w := half_h * viewport_size.x / maxf(1.0, viewport_size.y)
 		hud_bottom.get_node("Buckle").position = Vector3(half_w - 1.15, half_h - 1.05, 0)
 		_clock_text.position = hud_bottom.get_node("Buckle").position + Vector3(0, 0, 0.075)
-		_info.position = Vector3(half_w - 0.25, -half_h + 0.4, 0)
+		_info.position = Vector3(half_w - 0.95, -half_h + 0.45, 0)
 		_steam_tag.position = Vector3(-half_w + 0.3, half_h - 0.4, 0)
 		# The who's-climbing label repeats the banner's news, and its tail covers it:
 		# it waits too.
@@ -2052,9 +2052,23 @@ func _process(delta: float) -> void:
 			_info_text = info
 			for ch in _info.get_children():
 				ch.queue_free()
-			if info != "":
+			if info.begins_with("ROUND") or info == "PRACTICE":
+				# THE ROUND TAB (the UI pass, 1d): a cream tab, label-red words.
+				var tab := LuchaKit.kit_model("bind_col_tab")
+				if tab == null:
+					tab = LuchaKit._plate(1.22, 0.4, Color("#E6D8B4"))
+				else:
+					for mi in tab.find_children("*", "MeshInstance3D", true, false):
+						(mi as MeshInstance3D).set_instance_shader_parameter(&"tint", Color("#E6D8B4"))
+				_info.add_child(tab)
+				var tt := LuchaKit.fit_text(info, 1.0, 0.2, LuchaKit.RED, LuchaKit.CREAM)
+				tt.position = Vector3(0, 0, 0.08)
+				LuchaKit.center_digits(tt)
+				_info.add_child(tt)
+				no_shadows(_info)
+			elif info != "":
 				var it := LuchaKit.poster_text(info, 0.26, LuchaKit.GOLD, LuchaKit.INK, 0.05)
-				it.position = Vector3(-info.length() * 0.09, 0, 0)
+				it.position = Vector3(0.7 - info.length() * 0.09, 0, 0)
 				_info.add_child(it)
 				no_shadows(it)
 		var v := int(ceil(g.clock)) if show else -1

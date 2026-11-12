@@ -47,7 +47,7 @@ func _init(p_ui: LuchaUI) -> void:
 func build() -> void:
 	# ONLINE
 	var o := ui._menu()
-	o.set_header(LuchaKit.poster_text("PLAY ONLINE", 0.48, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	o.set_header(LuchaKit.banner("PLAY ONLINE"), Vector3(0, 3.2, 0))
 	o.column_x = Menu3D.MENU_COLUMN_X
 	o.top_y = Menu3D.MENU_TOP_Y
 	o.add_button("HOST PUBLIC", func():
@@ -59,19 +59,19 @@ func build() -> void:
 	ui.menus.online = o
 	# FRIENDS
 	var f := ui._menu()
-	f.set_header(LuchaKit.poster_text("JOIN A FRIEND", 0.46, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	f.set_header(LuchaKit.banner("JOIN A FRIEND"), Vector3(0, 3.2, 0))
 	f.column_x = Menu3D.MENU_COLUMN_X
 	f.top_y = Menu3D.MENU_TOP_Y
 	ui.menus.friends = f
 	# BROWSE
 	var b := ui._menu()
-	b.set_header(LuchaKit.poster_text("BROWSE GAMES", 0.46, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	b.set_header(LuchaKit.banner("BROWSE GAMES"), Vector3(0, 3.2, 0))
 	b.column_x = Menu3D.MENU_COLUMN_X
 	b.top_y = Menu3D.MENU_TOP_Y
 	ui.menus.browse = b
 	# LOBBY
 	var l := ui._menu()
-	l.set_header(LuchaKit.poster_text("LOBBY", 0.5, LuchaKit.GOLD, LuchaKit.RED, 0.1), Vector3(Menu3D.MENU_COLUMN_X, 3.25, 0))
+	l.set_header(LuchaKit.banner("LOBBY"), Vector3(0, 3.2, 0))
 	l.column_x = Menu3D.MENU_COLUMN_X
 	l.top_y = Menu3D.MENU_TOP_Y
 	ui.menus.lobby = l

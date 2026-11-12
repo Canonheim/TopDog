@@ -338,7 +338,8 @@ func _process(delta: float) -> void:
 	if readout_due:
 		_readout_t = 0.25  # the readout's text is rebuilt four times a second, not every frame
 	if _pad_corner != null:
-		_pad_corner.visible = screen not in ["hud", "pause"]
+		# Only with the F2 input readout open (the UI pass, 1e: it was on every menu).
+		_pad_corner.visible = screen not in ["hud", "pause"] and _input_health != null and _input_health.visible
 		if _pad_corner.visible and readout_due:
 			_pad_corner.text = pad_nav.readout()
 	if _pad_readout != null and screen == "controls" and readout_due:
