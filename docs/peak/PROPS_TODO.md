@@ -57,3 +57,31 @@ Each area's map is `docs/peak/preview/<area>.png`; a game frame of every challen
 | `rock_fence_frame` | a7 | 19 x 3 x 0.3 | A timber rockfall fence along a gully: posts, rails, torn mesh |
 | `scaffold_frame` | a7 | 24 x 25 x 0.5 | The low cable station's great scaffold, a lattice seen flat, behind the route (the kit's `station_scaffold` is the 4 x 6 unit: this is the whole frame) |
 | `pylon_head_low`, `cable_station_low` | a7 | 8 x 5 x 1; 14 x 6 x 3 | The cableway's first pylon head; the low station's shed (the kit's `pylon_top` and `station_roof` are the same family) |
+
+## 3. Machines and set pieces still drawn as plain blocks (Parker 11-12: "making models for everything that is still just block outs")
+
+These move or are climbed, and the game draws them from their bare collider shapes. Each
+needs a model made TO ITS COLLIDER: open the area file, find the id, and build over
+exactly those shapes (origin = the mover's `at` point; for a spinning thing the hub).
+Grip parts pale and matte, slick parts muddy dark brown and glossy (see below). When a
+model lands under the name given here, tell Top Dog: the course file needs one word
+(`model="..."`) per piece, which Top Dog adds.
+
+**Slick is wet mud now (Parker 11-12): one colour everywhere, muddy dark brown `#3A2616`,
+polished and glossy.** Not black, not blue, not green: in every area, on every model, the
+parts that can't be held are that brown and shiny. Earlier models' slick parts should be
+re-landed in it when their maker next touches them.
+
+| Model name to land | Area, ids in the file | Collider about the origin (m) | What it is | For |
+|---|---|---|---|---|
+| `statue_champion_reach` | a5 `champion()` | trunk 1.8 x 5.8, shoulders, head, a west arm up to a fist at (-3.4, 7.75), an east arm to a gold fist at (+4.02, 8.19) | A stone luchador champion, 9 m, made to EXACTLY the shapes of `champion()` in a5.py (origin between the feet). The west forearm and fist are a catch, the east fist (gilded) is the launch. The game hides its flat shapes the moment this lands | Building Maker |
+| `temple_step` | a5 `step1..3` | x ±1.5, y ±0.5 | A stone stair tread that slides away under you | Building Maker |
+| `temple_plunger` | a5 `plunger` | x ±1.1, y ±2.0 | A stone ram that lifts you into the piston shaft | Building Maker |
+| `temple_piston` | a5 `piston1..9` | x ±1.7, y ±0.5 | A carved stone piston, a pug's flat face on its end (the kit's `piston_head` is this family, another size) | Building Maker |
+| `temple_gear` | a5 `gear1..4` | 6.2 across the teeth | A greased stone disc (slick) with twelve pale stone teeth (the holds), to the teeth of a5.py | Building Maker |
+| `temple_slab` | a5 `cw_a`, `cw_b` | x ±1.2, y ±0.4 | The two linked counterweight slabs | Building Maker |
+| `temple_block` | a5 `phantom1..5` | x ±1.1, y ±0.6 | A block that slides out of the wall on the drum beat | Building Maker |
+| `altar_cross` | a5 `altar_cross` | 10 across | The great turning cross of the altar, four arms | Building Maker |
+| `slag_raft` | a6 `balsa1..3` | x ±1.1, y ±0.2 | An iron raft riding the slag | Building Maker |
+| `cable_sheave` | a8 `sheave1..2` | 2.2 across | A pylon's turning sheave wheel | Carpenter |
+| `snail_wall` | a4 `snail1..5` | x -0.2..1.2, y -1.0..1.1 | A giant snail crawling up a leaning slime wall: its pale shell is the hold and must sit exactly on the collider's shell shape; its body is slick | Environment Maker |

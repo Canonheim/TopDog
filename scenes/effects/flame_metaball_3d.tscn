@@ -1,0 +1,34 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/fire.gd" id="1_fire"]
+[ext_resource type="Shader" path="res://shaders/fx/flame_metaball_3d.gdshader" id="2_volume"]
+
+[sub_resource type="ShaderMaterial" id="VolumeMaterial"]
+resource_local_to_scene = true
+render_priority = 1
+shader = ExtResource("2_volume")
+
+[sub_resource type="BoxMesh" id="VolumeBounds"]
+size = Vector3(2.8, 3.2, 2.8)
+
+[node name="MetaballFire3D" type="Node3D"]
+script = ExtResource("1_fire")
+light_energy = 0.75
+glow_range = 4.5
+metadata/effect = "THE FIRE TO PLACE (Parker 2026-09-11): the 3D metaball flame alone, base at the node origin — no brazier. Fire Color / Light Energy / Flicker / Glow Range on this root (fire.gd); scale the node to size it."
+
+[node name="Flames" type="MeshInstance3D" parent="."]
+material_override = SubResource("VolumeMaterial")
+cast_shadow = 0
+custom_aabb = AABB(-2.2, -0.2, -2.2, 4.4, 3.8, 4.4)
+visibility_range_end = 200.0
+mesh = SubResource("VolumeBounds")
+
+[node name="Glow" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.63, 0)
+light_color = Color(1, 0.39, 0.1, 1)
+light_energy = 0.75
+distance_fade_enabled = true
+distance_fade_begin = 16.0
+distance_fade_length = 8.0
+omni_range = 4.5

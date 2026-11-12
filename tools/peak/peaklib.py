@@ -85,32 +85,32 @@ KINDS = {
 # sun/amb/sky: the light. Colours are sRGB hex.
 _COMMON = {"wood": "#C9903F", "wood2": "#B07A32", "iron": "#B5532A", "root": "#A9825A", "bone": "#E9E2CE",
            "gold": "#E8B33A", "snow": "#F4F7FA", "ice": "#9FDDF2", "hot": "#F0541E", "weak": "#A99C86",
-           "edge": "#8A6A45", "drip": "#BFD8E6", "stone": "#C8B79A", "brick": "#B8674A", "gill": "#F0E3C2",
+           "edge": "#8A6A45", "drip": "#8A6442", "stone": "#C8B79A", "brick": "#B8674A", "gill": "#F0E3C2",
            "crystal": "#EDE3FF"}
 PALETTES = {
-    "town": {"rock": "#D9C7A2", "rock2": "#C7A77A", "slick": "#241A14", "accent": "#D8262E",
+    "town": {"rock": "#D9C7A2", "rock2": "#C7A77A", "slick": "#3A2616", "accent": "#D8262E",
              "back": "#C9B48E", "back2": "#B29A72", "back3": "#9C8460", "sky": "#8FD0FF", "sun": 1.25, "amb": "#D9D7DA", "inside": 0.0},
-    "mine": {"rock": "#B98F5E", "rock2": "#A37747", "slick": "#1A120D", "accent": "#E0B040",
-             "back": "#6B4A30", "back2": "#523824", "back3": "#3A2819", "sky": "#120C08", "sun": 0.34, "amb": "#8F7050", "inside": 1.0},
-    "river": {"rock": "#9FB0A8", "rock2": "#86988F", "slick": "#0E161C", "accent": "#4FB7A6", "brick": "#8C7B6C",
+    "mine": {"rock": "#B98F5E", "rock2": "#A37747", "slick": "#3A2616", "accent": "#E0B040",
+             "back": "#4E4A52", "back2": "#3B383F", "back3": "#2A282D", "sky": "#120C08", "sun": 0.34, "amb": "#8F7050", "inside": 1.0},
+    "river": {"rock": "#9FB0A8", "rock2": "#86988F", "slick": "#3A2616", "accent": "#4FB7A6", "brick": "#8C7B6C",
               "back": "#3F5A63", "back2": "#2E454D", "back3": "#1F3138", "sky": "#0A1216", "sun": 0.30, "amb": "#5E8690", "inside": 1.0},
-    "crystal": {"rock": "#CDB6F2", "rock2": "#B59BE6", "slick": "#170F3A", "accent": "#7FE3F0",
+    "crystal": {"rock": "#CDB6F2", "rock2": "#B59BE6", "slick": "#3A2616", "accent": "#7FE3F0",
                 "back": "#55409A", "back2": "#3D2C78", "back3": "#2A1C58", "sky": "#0E0824", "sun": 0.36, "amb": "#8E7ACB", "inside": 1.0},
-    "fungus": {"rock": "#B7C98C", "rock2": "#9DB274", "slick": "#0F1E10", "accent": "#F28A1E",
+    "fungus": {"rock": "#B7C98C", "rock2": "#9DB274", "slick": "#3A2616", "accent": "#F28A1E",
                "back": "#456B40", "back2": "#33522F", "back3": "#223A20", "sky": "#0A160B", "sun": 0.34, "amb": "#6E9E60", "inside": 1.0},
-    "temple": {"rock": "#D2A070", "rock2": "#BE8858", "slick": "#1C1210", "accent": "#2FA58A", "stone": "#D8BE94",
-               "back": "#7E5236", "back2": "#5E3C28", "back3": "#40281B", "sky": "#140C08", "sun": 0.34, "amb": "#9E7046", "inside": 1.0},
-    "chimney": {"rock": "#B8A092", "rock2": "#A08878", "slick": "#170E0C", "accent": "#F2A21E",
-                "back": "#7E3C2A", "back2": "#5C2A1E", "back3": "#3C1A12", "sky": "#1C0A06", "sun": 0.38, "amb": "#B05A38", "inside": 1.0},
-    "cliffs": {"rock": "#E6DCC6", "rock2": "#D2C4A6", "slick": "#232830", "accent": "#D8262E",
+    "temple": {"rock": "#D2A070", "rock2": "#BE8858", "slick": "#3A2616", "accent": "#2FA58A", "stone": "#D8BE94",
+               "back": "#4F4353", "back2": "#3B313F", "back3": "#29222C", "sky": "#140C08", "sun": 0.34, "amb": "#9E7046", "inside": 1.0},
+    "chimney": {"rock": "#B8A092", "rock2": "#A08878", "slick": "#3A2616", "accent": "#F2A21E",
+                "back": "#4C3038", "back2": "#38232B", "back3": "#26171D", "sky": "#1C0A06", "sun": 0.38, "amb": "#B05A38", "inside": 1.0},
+    "cliffs": {"rock": "#E6DCC6", "rock2": "#D2C4A6", "slick": "#3A2616", "accent": "#D8262E",
                "back": "#B9C4CE", "back2": "#9FB0C0", "back3": "#8AA0B6", "sky": "#58A8F0", "sun": 1.3, "amb": "#D5DCE6", "inside": 0.0},
-    "cable": {"rock": "#E2D2B4", "rock2": "#CDB893", "slick": "#22262C", "accent": "#D8262E", "iron": "#C4502C",
+    "cable": {"rock": "#E2D2B4", "rock2": "#CDB893", "slick": "#3A2616", "accent": "#D8262E", "iron": "#C4502C",
               "back": "#D9C6A6", "back2": "#C3AC8C", "back3": "#A9927A", "sky": "#F2B66A", "sun": 1.2, "amb": "#E6D2B8", "inside": 0.0},
-    "glacier": {"rock": "#C9D6DE", "rock2": "#AEBFCB", "slick": "#0B1826", "accent": "#3F8FD0",
+    "glacier": {"rock": "#C9D6DE", "rock2": "#AEBFCB", "slick": "#3A2616", "accent": "#3F8FD0",
                 "back": "#A8C8E0", "back2": "#8DB4D2", "back3": "#789FC2", "sky": "#9CCBEF", "sun": 1.35, "amb": "#C8DCEC", "inside": 0.0},
-    "storm": {"rock": "#A9AEB8", "rock2": "#8E949F", "slick": "#12151B", "accent": "#E0287A",
+    "storm": {"rock": "#A9AEB8", "rock2": "#8E949F", "slick": "#3A2616", "accent": "#E0287A",
               "back": "#5C6470", "back2": "#474E5A", "back3": "#343A45", "sky": "#3A414E", "sun": 0.55, "amb": "#7E8794", "inside": 0.0},
-    "summit": {"rock": "#EBD9A8", "rock2": "#D9C084", "slick": "#2A2420", "accent": "#F28A1E",
+    "summit": {"rock": "#EBD9A8", "rock2": "#D9C084", "slick": "#3A2616", "accent": "#F28A1E",
                "back": "#F2C46A", "back2": "#E8A552", "back3": "#D98A45", "sky": "#F7B85A", "sun": 1.15, "amb": "#E6CFA6", "inside": 0.0},
 }
 for _p in PALETTES.values():
@@ -173,15 +173,19 @@ class Area:
         self.warnings = []
 
     # ------------------------------------------------------------ static rock
-    def solid(self, pts, kind="rock", hold=None, z=None, tag=None, ghost=False):
+    def solid(self, pts, kind="rock", hold=None, z=None, tag=None, ghost=False, skin=None):
         """Any simple polygon of solid stuff. ghost=True: drawn, but nothing touches it
-        (a ladder's rails, a frame behind the holds)."""
+        (a ladder's rails, a frame behind the holds). skin="model_name": once that kit
+        model has landed this solid is not drawn (the model, placed by a deco with
+        skin=True, is its look); until then it is drawn as usual."""
         assert kind in KINDS, kind
         pts = ccw(pts)
         assert len(pts) >= 3
         s = {"pts": _pts(pts), "kind": kind}
         if ghost:
             s["ghost"] = True
+        if skin:
+            s["skin"] = skin
         if hold is not None:
             s["hold"] = hold
         if z is not None:
@@ -437,7 +441,7 @@ class Area:
         tone: a palette slot (back, back2, back3, rock, slick, accent ...) or "#RRGGBB"."""
         self.cards.append({"pts": _pts(pts), "z": _f(z), "tone": tone, "edge": bool(edge)})
 
-    def deco(self, model, x, y, z=-0.8, rot=0.0, scale=1.0, size=None, tone=None, flip=False):
+    def deco(self, model, x, y, z=-0.8, rot=0.0, scale=1.0, size=None, tone=None, flip=False, skin=False):
         """A prop. `model` is a kit model's name (docs/peak/PARTS.md); until it lands the
         game draws a stand-in. size (w, h, d) and tone help the stand-in."""
         d = {"model": model, "at": [_f(x), _f(y), _f(z)], "rot": _f(rot), "scale": _f(scale)}
@@ -447,6 +451,8 @@ class Area:
             d["tone"] = tone
         if flip:
             d["flip"] = True
+        if skin:
+            d["skin"] = True  # the look of solids that name it: no stand-in while it is missing, never rescaled
         self.decos.append(d)
 
     def light(self, x, y, color="#FFC070", rng=9.0, energy=1.6, z=1.6, flicker=False):

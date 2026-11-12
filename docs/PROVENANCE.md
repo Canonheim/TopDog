@@ -21,6 +21,7 @@
 | `tools/steam/upload_build.bat` | Golemheim `tools/steam/upload_build.bat` | App and depot IDs as settings; refuses until set |
 | Body measurements in `climber/body_layout.gd` | Golemheim `scripts/segmented_body.gd` joint constants and the Metal Knight's piece bounds | Re-expressed as a planar ragdoll |
 | Two-bone solve in `climber/climber.gd` | The idea of Golemheim's `_solve_chain` | Rewritten in 2D |
+| `scenes/effects/flame_metaball_3d.tscn`, `shaders/fx/flame_metaball_3d.gdshader`, `shaders/fx/flame_common.gdshaderinc`, `scripts/fire.gd` | Golemheim's 3D metaball fire, the same paths in `SwordGame` (its record: SwordGame `docs/METABALL_FIRE.md`) | 2026-11-12, Parker: "for torches and fires, we can use the 3d metaball fire we use in golemheim" |
 
 ## Downloaded
 

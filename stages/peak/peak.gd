@@ -20,6 +20,24 @@ const BLEND_M := 14.0  # areas' looks and sounds cross-fade over this far past a
 const SAVE_PATH := "user://peak.cfg"
 const SAVE_EVERY_S := 2.0
 const FALL_COUNT_M := 15.0  # a drop of this much is a fall on the tally
+## SLICK IS WET MUD (Parker 11-12: "the slick surfaces should be a muddy dark brown and
+## metallic max shiney to indicate they are wet"): one colour for everything that can't be
+## held, in every area, with the house shader's polished glint and rim.
+const SLICK := Color("#3A2616")
+static var _slick_mat: ShaderMaterial = null
+
+
+static func slick_material() -> ShaderMaterial:
+	if _slick_mat == null:
+		_slick_mat = ShaderMaterial.new()
+		_slick_mat.shader = CelPass.SHADER
+		_slick_mat.set_shader_parameter("color", SLICK)
+		# A tight bright glint (in this shader a LOW breadth is the pinpoint: a broad band
+		# whited out every flat face) and a warm rim on the edges.
+		_slick_mat.set_shader_parameter("specular", Color(0.72, 0.58, 0.42, 0.5))  # a broad wet sheen where light falls, not white
+		_slick_mat.set_shader_parameter("fresnel", Color(0.95, 0.8, 0.6, 0.5))
+		_slick_mat.resource_name = "SLICK"
+	return _slick_mat
 
 var game  # Game
 var course_dir := COURSE  # (the batteries point it at tests/peak_lab/)
@@ -167,6 +185,7 @@ func _build_area(a: Dictionary) -> void:
 	root.add_child(grip)
 	root.add_child(slick)
 	var mb := PeakMesh.new()
+	var ms := PeakMesh.new()  # the slick rock: its own shiny material
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str(a.id))
 	for s in a.get("solids", []):
@@ -202,9 +221,13 @@ func _build_area(a: Dictionary) -> void:
 			elif bool(s.get("ghost", false)):
 				vz0 = -0.26
 				vz1 = -0.14  # (a ladder's rails stand just behind the rungs)
+		# A SKIN: once its model has landed, the model is this solid's look (the deco that
+		# places it has skin = true) and the solid is only its collision.
+		var skinned: bool = s.has("skin") and LuchaKit.kit_model_exists(str(s.skin))
 		if bool(s.get("ghost", false)):
 			# Drawn only: nothing touches it.
-			mb.prism(pts, vz0, vz1, AtlasPalette.matte_uv(kind_color(a, kind).darkened(0.12)), AtlasPalette.matte_uv(tone(a, "edge")))
+			if not skinned:
+				mb.prism(pts, vz0, vz1, AtlasPalette.matte_uv(kind_color(a, kind).darkened(0.12)), AtlasPalette.matte_uv(tone(a, "edge")))
 			continue
 		if hold != null or s.has("tag"):
 			# A hold with a behaviour (or a tag): its own body and its own drawn piece.
@@ -217,8 +240,11 @@ func _build_area(a: Dictionary) -> void:
 			mi.mesh = one.commit()
 			CelPass.paint(mi, kind_color(a, kind))
 			sb.add_child(mi)
+			sb.set_meta("peak_pts", pts)
+			sb.set_meta("peak_z", Vector2(vz0, vz1))
 			if not kind_grips(kind):
 				sb.set_meta("no_weld", true)
+				mi.material_override = slick_material()
 			if s.has("tag"):
 				sb.set_meta("peak_tag", str(s.tag))
 				zones.tag(str(s.tag), sb)
@@ -227,19 +253,30 @@ func _build_area(a: Dictionary) -> void:
 			continue
 		var grips := kind_grips(kind)
 		_add_shapes(grip if grips else slick, pts, z0, z1)
-		var face := AtlasPalette.matte_uv(kind_color(a, kind))
-		var edge := AtlasPalette.matte_uv(tone(a, "edge") if grips else kind_color(a, kind).darkened(0.35))
-		mb.prism(pts, vz0, vz1, face, edge)
+		if skinned:
+			continue
 		if not grips:
-			# Slick reads wet: a faint shine along its edges and a few pale drips.
-			mb.rim(pts, z1 + 0.008, 0.09, AtlasPalette.matte_uv(kind_color(a, kind).lerp(tone(a, "drip"), 0.22)))
-			_drips(mb, pts, z1, AtlasPalette.matte_uv(tone(a, "drip")), rng)
+			ms.prism(pts, vz0, vz1, Vector2.ZERO, Vector2.ZERO)
+			# Painted wet: a paler band along its edges, runs of drips, a few bright glints.
+			mb.rim(pts, vz1 + 0.006, 0.09, AtlasPalette.matte_uv(Color("#8A5E34")))
+			_drips(mb, pts, vz1, AtlasPalette.matte_uv(Color("#A87A48")), rng)
+			continue
+		var face_c: Color = kind_color(a, kind)
+		mb.prism(pts, vz0, vz1, AtlasPalette.matte_uv(face_c), AtlasPalette.matte_uv(tone(a, "edge")))
+		PeakDress.dress(mb, pts, vz1 + 0.007, kind, face_c, rng)
 	if not mb.empty():
 		var mi := MeshInstance3D.new()
 		mi.mesh = mb.commit()
 		mi.material_override = CelPass.one()
 		mi.name = "Rock"
 		root.add_child(mi)
+	if not ms.empty():
+		var mi := MeshInstance3D.new()
+		mi.mesh = ms.commit()
+		mi.material_override = slick_material()
+		mi.name = "Slick"
+		root.add_child(mi)
+
 	# ---- the painted cards behind and in front
 	for c in a.get("cards", []):
 		var pts := _pts(c.pts)
@@ -348,6 +385,27 @@ func _drips(mb: PeakMesh, pts: PackedVector2Array, z: float, uv: Vector2, rng: R
 		mb.quad(Vector3(p.x - w, p.y - h, z + 0.012), Vector3(p.x + w, p.y - h, z + 0.012), Vector3(p.x + w, p.y, z + 0.012), Vector3(p.x - w, p.y, z + 0.012), Vector3(0, 0, 1), uv)
 
 
+## The bright points of light on wet mud: short slanted dashes, sparse.
+func _glints(mb: PeakMesh, pts: PackedVector2Array, z: float, uv: Vector2, rng: RandomNumberGenerator) -> void:
+	var lo := pts[0]
+	var hi := pts[0]
+	for p in pts:
+		lo = lo.min(p)
+		hi = hi.max(p)
+	var size := hi - lo
+	var want := clampi(int(size.x * size.y / 9.0), 0, 14)
+	var tries := 0
+	while want > 0 and tries < 80:
+		tries += 1
+		var p := Vector2(rng.randf_range(lo.x, hi.x), rng.randf_range(lo.y, hi.y))
+		var q := p + Vector2(0.22, 0.16) * rng.randf_range(0.7, 1.5)
+		if not Geometry2D.is_point_in_polygon(p, pts) or not Geometry2D.is_point_in_polygon(q, pts):
+			continue
+		want -= 1
+		var n := (q - p).normalized().orthogonal() * 0.022
+		mb.quad(Vector3(p.x - n.x, p.y - n.y, z + 0.014), Vector3(q.x - n.x, q.y - n.y, z + 0.014), Vector3(q.x + n.x, q.y + n.y, z + 0.014), Vector3(p.x + n.x, p.y + n.y, z + 0.014), Vector3(0, 0, 1), uv)
+
+
 ## A prop: the kit's model if it has landed, else a stand-in box in the area's tones.
 ## Lines of flags are units that TILE end to end (their cords meet); they are never stretched.
 const LINE_UNITS := {"papel_string": 8.0, "papel_tatters": 8.0, "papel_line": 8.0, "pennant_line": 6.0, "marigold_garland": 4.0}
@@ -359,6 +417,8 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 		model = "temple_banner_long"
 	var n := LuchaKit.kit_model(model)
 	var at := Vector3(float(d.at[0]), float(d.at[1]), float(d.at[2]))
+	if n == null and bool(d.get("skin", false)):
+		return null  # (a skin not landed yet: its solids are drawn instead)
 	if n != null and LINE_UNITS.has(model) and d.has("size"):
 		var unit := float(LINE_UNITS[model])
 		var span := float(d.size[0])
@@ -387,7 +447,7 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 	var s := float(d.get("scale", 1.0))
 	# A landed model far from the size the author drew for (a mask asked for at 21 m,
 	# modelled at 10) is scaled to it; within a quarter either way it is left as made.
-	if not n.has_meta("standin") and d.has("size"):
+	if not n.has_meta("standin") and d.has("size") and not bool(d.get("skin", false)):
 		var box := _model_box(n)
 		var want := Vector2(float(d.size[0]), float(d.size[1]))
 		if box.size.x > 0.05 and box.size.y > 0.05:
@@ -397,7 +457,31 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 				s *= ratio
 	n.scale = Vector3(-s if bool(d.get("flip", false)) else s, s, s)
 	n.name = str(d.model)
+	if model.contains("torch") and not n.has_meta("standin"):
+		_light_torch(n)
 	return n
+
+
+## A TORCH BURNS with Golemheim's 3D metaball fire (Parker 11-12: "for torches and fires,
+## we can use the 3d metaball fire we use in golemheim"): the flame alone, sized to the
+## torch's head. The course's own light is the torch's glow, so the fire's is off.
+const FIRE := preload("res://scenes/effects/flame_metaball_3d.tscn")
+
+
+func _light_torch(torch: Node3D) -> void:
+	var box := _model_box(torch)
+	for old in torch.find_children("*lame*", "MeshInstance3D", true, false):
+		(old as Node3D).visible = false  # (a modelled flame steps aside for the real one)
+	var fire: Node3D = FIRE.instantiate()
+	fire.set("light_energy", 0.0)
+	fire.set("flicker", 0.0)
+	var wide := clampf(maxf(box.size.x, box.size.z), 0.25, 1.2)
+	fire.scale = Vector3.ONE * (wide / 2.8) * 2.8
+	fire.position = Vector3(box.get_center().x, box.end.y - box.size.y * 0.42, box.get_center().z)  # (over the modelled flame)
+	torch.add_child(fire)
+	var glow := fire.get_node_or_null("Glow") as OmniLight3D
+	if glow != null:
+		glow.visible = false
 
 
 static func _model_box(root: Node3D) -> AABB:

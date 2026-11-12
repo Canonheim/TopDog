@@ -84,14 +84,27 @@ func add_hold(body: CollisionObject3D, def: Dictionary, vis: Node3D, col: Color,
 
 func _shapes_mesh(a: Dictionary, shapes: Array) -> MeshInstance3D:
 	var mb := PeakMesh.new()
+	var ms := PeakMesh.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
 	for sh in shapes:
 		var kind := str(sh.kind)
-		var grips: bool = peak.kind_grips(kind)
+		var pts: PackedVector2Array = peak._pts(sh.pts)
+		if not peak.kind_grips(kind):
+			ms.prism(pts, -Peak.HALF * 0.85, Peak.HALF * 0.85, Vector2.ZERO, Vector2.ZERO)
+			continue
 		var c: Color = peak.kind_color(a, kind)
-		mb.prism(peak._pts(sh.pts), -Peak.HALF * 0.85, Peak.HALF * 0.85, AtlasPalette.matte_uv(c), AtlasPalette.matte_uv(peak.tone(a, "edge") if grips else c.darkened(0.35)))
+		mb.prism(pts, -Peak.HALF * 0.85, Peak.HALF * 0.85, AtlasPalette.matte_uv(c), AtlasPalette.matte_uv(peak.tone(a, "edge")))
+		PeakDress.dress(mb, pts, Peak.HALF * 0.85 + 0.007, kind, c, rng)
 	var mi := MeshInstance3D.new()
-	mi.mesh = mb.commit()
-	mi.material_override = CelPass.one()
+	if not mb.empty():
+		mi.mesh = mb.commit()
+		mi.material_override = CelPass.one()
+	if not ms.empty():
+		var wet := MeshInstance3D.new()
+		wet.mesh = ms.commit()
+		wet.material_override = Peak.slick_material()
+		mi.add_child(wet)
 	return mi
 
 
@@ -417,6 +430,7 @@ func tick(delta: float) -> void:
 	_tick_rope_grabs()
 	_tick_strain(delta)
 	_tick_holds(delta)
+	_tick_debris()
 	_tick_spawners(delta)
 
 
@@ -809,12 +823,19 @@ func _tick_holds(delta: float) -> void:
 		var body: CollisionObject3D = h.body
 		match str(h.type):
 			"crumble":
+				if float(h.break_at) >= 0.0 and t < float(h.break_at):
+					# It shudders before it goes.
+					var left := float(h.break_at) - t
+					var amp := 0.035 * clampf(1.0 - left / maxf(0.2, float((h.def as Dictionary).t)), 0.2, 1.0)
+					(h.vis as Node3D).position = Vector3(randf_range(-amp, amp), randf_range(-amp, amp), 0)
 				if float(h.break_at) >= 0.0 and t >= float(h.break_at):
 					h.break_at = -1.0
 					h.back_at = t + float((h.def as Dictionary).get("respawn", 8.0))
 					_release_from([body])
 					body.collision_layer = 0
 					(h.vis as Node3D).visible = false
+					(h.vis as Node3D).position = Vector3.ZERO
+					_crumble(h)
 					var at := Vector2(body.global_position.x, body.global_position.y)
 					if body is StaticBody3D and body.get_child_count() > 0:
 						at = _body_centre(body)
@@ -823,7 +844,10 @@ func _tick_holds(delta: float) -> void:
 				elif float(h.back_at) >= 0.0 and t >= float(h.back_at):
 					h.back_at = -1.0
 					body.collision_layer = int(h.layer)
-					(h.vis as Node3D).visible = true
+					var v: Node3D = h.vis
+					v.visible = true
+					v.scale = Vector3(0.05, 0.05, 1.0)
+					v.create_tween().tween_property(v, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			"wet":
 				var def: Dictionary = h.def
 				var on := float(def.get("on", 2.0))
@@ -836,7 +860,81 @@ func _tick_holds(delta: float) -> void:
 					else:
 						body.remove_meta("no_weld")
 					if h.vis is GeometryInstance3D:
-						CelPass.paint(h.vis, (h.slick as Color) if wet else (h.col as Color))
+						if wet:
+							(h.vis as GeometryInstance3D).material_override = Peak.slick_material()
+						else:
+							CelPass.paint(h.vis, h.col as Color)
+
+
+## IT CRUMBLES AWAY (Parker 11-12: "make the breaking floors crumble away instead of
+## despawning"): the piece breaks into chunks that tumble and fall, knock about on the
+## rock below, shrink and are gone. They touch the world, never the climber.
+const DEBRIS_S := 2.6
+var _debris: Array = []  # [RigidBody3D, born]
+
+
+func _crumble(h: Dictionary) -> void:
+	var body: Node3D = h.body
+	if not body.has_meta("peak_pts"):
+		return
+	var pts: PackedVector2Array = body.get_meta("peak_pts")
+	var zz: Vector2 = body.get_meta("peak_z", Vector2(-0.4, 0.4))
+	var lo := pts[0]
+	var hi := pts[0]
+	for p in pts:
+		lo = lo.min(p)
+		hi = hi.max(p)
+	var size := hi - lo
+	var nx := clampi(int(size.x / 0.42), 1, 7)
+	var ny := clampi(int(size.y / 0.42), 1, 4)
+	var cell := Vector2(size.x / nx, size.y / ny)
+	var depth := clampf(zz.y - zz.x, 0.3, 1.2)
+	var col: Color = h.col
+	var root: Node3D = body.get_parent()
+	for ix in nx:
+		for iy in ny:
+			var c := lo + Vector2((ix + 0.5) * cell.x, (iy + 0.5) * cell.y)
+			if not Geometry2D.is_point_in_polygon(c, pts):
+				continue
+			for half in 2:  # two chunks deep, so it breaks through its thickness too
+				var rb := RigidBody3D.new()
+				rb.collision_layer = 0
+				rb.collision_mask = Climber.LAYER_WORLD
+				rb.mass = 2.0
+				rb.gravity_scale = 0.75
+				rb.angular_damp = 0.3
+				var chunk := Vector3(cell.x * randf_range(0.7, 0.95), cell.y * randf_range(0.7, 0.95), depth * 0.45)
+				var cs := CollisionShape3D.new()
+				var bx := BoxShape3D.new()
+				bx.size = chunk
+				cs.shape = bx
+				rb.add_child(cs)
+				rb.add_child(LuchaKit.box(chunk, col.darkened(randf_range(0.0, 0.14))))
+				rb.position = Vector3(c.x, c.y, (float(half) - 0.5) * depth * 0.5)
+				rb.rotation = Vector3(randf_range(-0.3, 0.3), randf_range(-0.3, 0.3), randf_range(-0.5, 0.5))
+				rb.linear_velocity = Vector3(randf_range(-1.2, 1.2), randf_range(-0.4, 1.4), randf_range(-0.6, 0.6))
+				rb.angular_velocity = Vector3(randf_range(-5, 5), randf_range(-5, 5), randf_range(-6, 6))
+				root.add_child(rb)
+				_debris.append([rb, peak.clock])
+	while _debris.size() > 160:
+		var old: Array = _debris.pop_front()
+		if is_instance_valid(old[0]):
+			(old[0] as Node).queue_free()
+
+
+func _tick_debris() -> void:
+	for i in range(_debris.size() - 1, -1, -1):
+		var row: Array = _debris[i]
+		var rb: RigidBody3D = row[0]
+		if not is_instance_valid(rb):
+			_debris.remove_at(i)
+			continue
+		var age := peak.clock - float(row[1])
+		if age > DEBRIS_S:
+			rb.queue_free()
+			_debris.remove_at(i)
+		elif age > DEBRIS_S - 0.6:
+			rb.scale = Vector3.ONE * maxf(0.05, (DEBRIS_S - age) / 0.6)
 
 
 func _body_centre(body: Node3D) -> Vector2:

@@ -211,19 +211,25 @@ A.challenge("5.4", "Engranajes", (-360.9, 412.0), 3, "B", moves=[
 
 
 def champion(sx, fy, plinth=True):
+    # Every solid of the statue names the skin "statue_champion_reach": a model made to
+    # exactly these shapes (origin between the feet at (sx, fy), the west arm the catch,
+    # the east fist the launch). Until it lands the shapes are drawn as carved stone.
+    # (The first models, statue_champion_a/b/c, were made to another pose: their flat
+    # climbing shapes stood in front of them. Parker 11-12: "fix the statues".)
+    SK = "statue_champion_reach"
     if plinth:
         A.box(sx, fy - 0.6, 2.6, 1.2, "stone")
-    A.box(sx, fy + 2.9, 1.8, 5.8, "stone")                       # legs and trunk
-    A.box(sx, fy + 5.8, 2.4, 0.8, "stone")                       # shoulders
-    A.solid(ngon(sx, fy + 7.0, 0.95, 8, rot=22.5), "stone")      # the masked head
-    A.beam((sx - 1.0, fy + 5.9), (sx - 3.2, fy + 7.6), 0.6, "stone")   # the west arm: the catch
-    A.solid(ngon(sx - 3.4, fy + 7.75, 0.5, 8), "stone")
-    A.beam((sx + 1.0, fy + 5.9), (sx + 2.6, fy + 7.0), 0.5, "stone")   # the east upper arm, to the elbow
+    A.box(sx, fy + 2.9, 1.8, 5.8, "stone", skin=SK)                       # legs and trunk
+    A.box(sx, fy + 5.8, 2.4, 0.8, "stone", skin=SK)                       # shoulders
+    A.solid(ngon(sx, fy + 7.0, 0.95, 8, rot=22.5), "stone", skin=SK)      # the masked head
+    A.beam((sx - 1.0, fy + 5.9), (sx - 3.2, fy + 7.6), 0.6, "stone", skin=SK)   # the west arm: the catch
+    A.solid(ngon(sx - 3.4, fy + 7.75, 0.5, 8), "stone", skin=SK)
+    A.beam((sx + 1.0, fy + 5.9), (sx + 2.6, fy + 7.0), 0.5, "stone", skin=SK)   # the east upper arm, to the elbow
     fist = (sx + 4.02, fy + 8.19)
-    A.solid(ngon(fist[0], fist[1], 0.45, 8), "gold")             # the fist: the launch hold
-    A.card([(sx + 2.5, fy + 6.75), (sx + 2.7, fy + 7.25), (fist[0] + 0.1, fist[1] + 0.3), (fist[0] + 0.3, fist[1] - 0.2)],
-           z=-0.5, tone="stone")                                  # the forearm, behind the plane
-    A.deco("statue_champion_" + "abc"[int(abs(sx)) % 3], sx, fy, z=0.0, size=(5.0, 9.0, 2.0), tone="stone")
+    A.solid(ngon(fist[0], fist[1], 0.45, 8), "gold", skin=SK)             # the fist: the launch hold
+    A.solid([(sx + 2.5, fy + 6.75), (sx + 2.7, fy + 7.25), (fist[0] + 0.1, fist[1] + 0.3), (fist[0] + 0.3, fist[1] - 0.2)],
+            "stone", ghost=True, skin=SK)                                 # the forearm: drawn, not held
+    A.deco(SK, sx, fy, z=0.0, skin=True)
     return fist
 
 
