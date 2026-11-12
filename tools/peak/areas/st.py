@@ -66,6 +66,15 @@ body = EAST + WEST + [(-700, -40), (-34, -40)]
 A.card(body, z=-9.0, tone="#8C8273", edge=True)
 A.card([(-281, 784), (-307, 884), (-334, 962), (-350, 1000), (-372, 950), (-430, 800), (-380, 770), (-330, 800)], z=-8.8, tone="#F4F7FA")
 
+# ---------------------------------------------------------------- the sky outside: cardboard clouds, far and near
+import random
+_r = random.Random(7)
+for i in range(34):
+    y = 540 + i * 14 + _r.uniform(-5, 5)
+    face_x = -230 - (y - 578) * 0.27  # roughly where the east face is at this height
+    x = face_x + _r.uniform(20, 130)
+    A.deco("cloud_" + "abcde"[i % 5], x, y, z=-_r.uniform(26, 80), scale=_r.uniform(1.4, 3.2), size=(8, 3, 0.2), tone="#FFFFFF")
+
 if __name__ == "__main__":
     save_meta()
     A.save()

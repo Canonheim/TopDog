@@ -55,6 +55,23 @@ func prism(pts: PackedVector2Array, z0: float, z1: float, face_uv: Vector2, edge
 		quad(Vector3(a.x, a.y, z1), Vector3(b.x, b.y, z1), Vector3(b.x, b.y, z0), Vector3(a.x, a.y, z0), Vector3(out.x, out.y, 0), edge_uv)
 
 
+## A thin band just inside a polygon's edge, on its face: the wet shine of slick rock.
+func rim(pts: PackedVector2Array, z: float, width: float, uv: Vector2) -> void:
+	var n := pts.size()
+	var area := 0.0
+	for i in n:
+		area += pts[i].cross(pts[(i + 1) % n])
+	var side := 1.0 if area > 0.0 else -1.0
+	for i in n:
+		var a := pts[i]
+		var b := pts[(i + 1) % n]
+		if a.distance_to(b) < 1.2:
+			continue
+		var inward := Vector2(-(b.y - a.y), b.x - a.x).normalized() * side * width
+		var along := (b - a).normalized() * width
+		quad(Vector3(a.x + along.x, a.y + along.y, z), Vector3(b.x - along.x, b.y - along.y, z), Vector3(b.x - along.x + inward.x, b.y - along.y + inward.y, z), Vector3(a.x + along.x + inward.x, a.y + along.y + inward.y, z), Vector3(0, 0, 1), uv)
+
+
 func commit() -> ArrayMesh:
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)

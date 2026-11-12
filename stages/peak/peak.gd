@@ -204,6 +204,8 @@ func _build_area(a: Dictionary) -> void:
 		var edge := AtlasPalette.matte_uv(tone(a, "edge") if grips else kind_color(a, kind).darkened(0.35))
 		mb.prism(pts, z0, z1, face, edge)
 		if not grips:
+			# Slick reads wet: a faint shine along its edges and a few pale drips.
+			mb.rim(pts, z1 + 0.008, 0.09, AtlasPalette.matte_uv(kind_color(a, kind).lerp(tone(a, "drip"), 0.22)))
 			_drips(mb, pts, z1, AtlasPalette.matte_uv(tone(a, "drip")), rng)
 	if not mb.empty():
 		var mi := MeshInstance3D.new()
@@ -328,16 +330,46 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 		if d.has("size"):
 			size = Vector3(float(d.size[0]), float(d.size[1]), float(d.size[2]))
 		var c := tone(a, str(d.get("tone", "rock2")))
-		n = Node3D.new()
-		var b := LuchaKit.box(size, c, Vector3(0, size.y * 0.5, 0))
-		b.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		n.add_child(b)
+		n = _standin(str(d.model), size, c)
 		n.set_meta("standin", true)
 	n.position = at
 	n.rotation.z = deg_to_rad(float(d.get("rot", 0.0)))
 	var s := float(d.get("scale", 1.0))
 	n.scale = Vector3(-s if bool(d.get("flip", false)) else s, s, s)
 	n.name = str(d.model)
+	return n
+
+
+## Until a prop's model lands: the common ones drawn simply but as themselves, the rest
+## as a flat cardboard cut-out in a quiet tone (never a loud box).
+func _standin(model: String, size: Vector3, c: Color) -> Node3D:
+	var n := Node3D.new()
+	if model.begins_with("papel"):
+		var torn := model.contains("tatter")
+		var flags := LuchaKit.bunting(Vector3(-size.x * 0.5, size.y, 0), Vector3(size.x * 0.5, size.y, 0), int(size.x / (0.9 if torn else 0.6)), 0.35)
+		if torn:
+			var i := 0
+			for f in flags.get_children():
+				i += 1
+				if i % 3 == 0:
+					(f as Node3D).visible = false
+		n.add_child(flags)
+		return n
+	if model.begins_with("lantern") or model.begins_with("torch"):
+		var body := LuchaKit.box(Vector3(0.22, 0.3, 0.22), Color("#F2D27A"), Vector3(0, 0.25, 0))
+		n.add_child(body)
+		n.add_child(LuchaKit.box(Vector3(0.3, 0.07, 0.3), Color("#6A4A2A"), Vector3(0, 0.44, 0)))
+		n.add_child(LuchaKit.box(Vector3(0.3, 0.08, 0.3), Color("#6A4A2A"), Vector3(0, 0.06, 0)))
+		return n
+	if model.begins_with("sign"):
+		n.add_child(LuchaKit.box(Vector3(0.12, size.y, 0.1), Color("#8A6A45"), Vector3(0, size.y * 0.5, 0)))
+		n.add_child(LuchaKit.box(Vector3(size.x, size.x * 0.7, 0.08), Color("#E9DCC0"), Vector3(0, size.y - size.x * 0.35, 0.06)))
+		n.add_child(LuchaKit.box(Vector3(size.x * 0.4, size.x * 0.34, 0.03), Color("#3A2A20") if model.contains("skull") else Color("#D8262E"), Vector3(0, size.y - size.x * 0.35, 0.12)))
+		return n
+	var quiet := c.lerp(Color(0.5, 0.47, 0.43), 0.45)
+	var card := LuchaKit.box(Vector3(size.x, size.y, minf(size.z, 0.12)), quiet, Vector3(0, size.y * 0.5, 0))
+	card.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	n.add_child(card)
 	return n
 
 

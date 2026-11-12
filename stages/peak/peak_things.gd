@@ -587,6 +587,8 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 			m.prog = clampf(float(m.prog) + rate / maxf(to.length(), 0.01), 0.0, 1.0)
 			m.offset = to * float(m.prog)
 	var pos := (m.home as Vector2) + (m.offset as Vector2)
+	if str(m.id).begins_with("cart"):
+		_cart_sound(m)
 	if jumped:
 		_release_from(m.nodes)
 	m.speed = 0.0 if jumped else pos.distance_to(m.prev) / maxf(delta, 0.0001)
@@ -595,6 +597,36 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 		node.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, 0))
 	if bool((m.def as Dictionary).get("ko", false)):
 		_mover_ko(m)
+
+
+## A cart's own voice: the roll while it runs, a clack at every rail joint (4 m).
+func _cart_sound(m: Dictionary) -> void:
+	var node: Node3D = m.nodes[0]
+	var roll: AudioStreamPlayer3D = m.get("roll")
+	if roll == null:
+		var s := PeakAudio._looped(PeakAudio.SFX_DIR + "cart_roll_loop.wav")
+		if s == null:
+			return
+		roll = AudioStreamPlayer3D.new()
+		roll.stream = s
+		roll.bus = "Effects"
+		roll.unit_size = 9.0
+		roll.max_distance = 60.0
+		node.add_child(roll)
+		m["roll"] = roll
+		m["clack_at"] = 0.0
+	if bool(m.run) and not roll.playing:
+		roll.play()
+	elif not bool(m.run) and roll.playing:
+		roll.stop()
+	if bool(m.run):
+		roll.pitch_scale = clampf(0.6 + float(m.v) * 0.07, 0.6, 1.5)
+		roll.volume_db = clampf(-8.0 + float(m.v) * 1.2, -8.0, 6.0)
+		if float(m.dist) - float(m.clack_at) > 4.0:
+			m.clack_at = m.dist
+			peak.audio.play("cart_clack", _mover_at(m), 0.0)
+	else:
+		m.clack_at = m.dist
 
 
 func _mover_at(m: Dictionary) -> Vector2:

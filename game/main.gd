@@ -151,6 +151,8 @@ func _ready() -> void:
 	for a3 in OS.get_cmdline_user_args():
 		if a3.begins_with("--warp="):
 			_peak_warp = a3.get_slice("=", 1)
+		if a3.begins_with("--peaktour="):
+			call_deferred("_peak_tour", a3.get_slice("=", 1))
 	if "--peak" in OS.get_cmdline_user_args():
 		call_deferred("_start_peak")
 	if "--demo-heap" in OS.get_cmdline_user_args():
@@ -453,6 +455,39 @@ func _on_peak_summit(time_s: float, falls: int, best_s: float) -> void:
 		_peak_hud.call("summit", time_s, falls, best_s)
 	else:
 		_on_announce("TOP DOG!  %s, %d falls" % [_clock_text(time_s), falls], true)
+
+
+## THE TOUR (dev): -- --peak --peaktour=DIR[,ID,ID...] stands the climber at every
+## challenge's start in turn (or just the ones named, or an area's with "a3"), lets the
+## scene settle, and saves the window to DIR/<id>.png. Then it quits.
+func _peak_tour(spec: String) -> void:
+	var parts := spec.split(",")
+	var dir := parts[0]
+	DirAccess.make_dir_recursive_absolute(dir)
+	for i in 400:
+		await get_tree().process_frame
+		if game.peak != null and game.peak.player != null and game.peak.player.live_time > 0.4:
+			break
+	var peak: Peak = game.peak
+	if peak == null:
+		get_tree().quit(1)
+		return
+	peak.dev_warp = true
+	for c in peak.challenges:
+		var id := str(c.id)
+		if parts.size() > 1:
+			var want := false
+			for k in range(1, parts.size()):
+				want = want or id == parts[k] or (parts[k].begins_with("a") and str(c.area) == parts[k])
+			if not want:
+				continue
+		peak.warp(id)
+		for i in 110:
+			await get_tree().process_frame
+		var img := get_viewport().get_texture().get_image()
+		img.save_png(dir.path_join(id.replace(".", "_") + ".png"))
+		print("TOUR ", id, " ", c.name, " at ", c.anchor)
+	get_tree().quit(0)
 
 
 static func _clock_text(seconds: float) -> String:
