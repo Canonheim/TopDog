@@ -4,8 +4,8 @@ extends RefCounted
 ## bounce lines, puffballs, lightning, the dark, the finish; and the drawn effects
 ## (waterfalls, mist, spores, snow...). Data: docs/peak/AUTHORING.md.
 
-const WATER_DRAG := 2.2  # 1/s: how fast the water takes a floating body to its own speed
-const HAND_DRAG := 4.2  # N per (m/s)^2 on a hand or foot moving under the surface: the swim
+const WATER_DRAG := 1.1  # 1/s: how fast the water takes a floating body to its own speed
+const HAND_DRAG := 7.5  # N per (m/s)^2 on a hand or foot moving under the surface: the swim
 const FLOAT_DEPTH := 0.16  # a piece rides this far under the surface
 const BOUNCE_COOL := 0.3
 
@@ -155,7 +155,7 @@ func _tick_water(c: Climber, _delta: float) -> void:
 			# hard (quadratic). Circle an arm and the stroke under the surface drives you.
 			var rel := v - flow
 			var push := -rel * rel.length() * HAND_DRAG
-			drag += push.limit_length(260.0)
+			drag += push.limit_length(420.0)
 			if rel.length() > 3.5 and _paddle_wait <= 0.0:
 				_paddle_wait = 0.28
 				peak.audio.play("water_paddle", p, -6.0)

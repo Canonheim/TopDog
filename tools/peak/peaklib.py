@@ -34,6 +34,7 @@ FRAME = {
     "a10": ("La Cresta de la Tormenta", (-360, 884, -285, 966), (-306, 888), (-336, 964)),
     "a11": ("La Cumbre", (-380, 962, -320, 1010), (-336, 966), (-350, 1000)),
     "st": ("The mountain's structure", (-720, -40, 40, 1020), (0, 0), (0, 0)),
+    "lab": ("The lab (tests only)", (-80, -10, 80, 60), (0, 0), (0, 0)),
 }
 POZO = (-306.0, -294.0, 176.0, 480.0)  # x west, x east, y bottom, y top (the well)
 
@@ -503,10 +504,11 @@ class Area:
                 "lights": self.lights, "cams": self.cams, "fx": self.fx, "statues": self.statues,
                 "challenges": self.challenges}
 
-    def save(self):
+    def save(self, folder=None):
         errs = self.check()
-        os.makedirs(COURSE_DIR, exist_ok=True)
-        path = os.path.join(COURSE_DIR, self.id + ".json")
+        folder = folder or COURSE_DIR
+        os.makedirs(folder, exist_ok=True)
+        path = os.path.join(folder, self.id + ".json")
         with open(path, "w", encoding="utf-8", newline="\n") as f:
             json.dump(self.to_json(), f, separators=(",", ":"))
         print("%s: %d solids, %d movers, %d ropes, %d bodies, %d zones, %d spawners, %d cards, %d decos, %d challenges -> %s" % (
@@ -519,10 +521,11 @@ class Area:
         return not errs
 
 
-def save_meta():
+def save_meta(folder=None, order=None):
     """The tables the game needs: the frame, the kinds, the palettes."""
-    os.makedirs(COURSE_DIR, exist_ok=True)
-    with open(os.path.join(COURSE_DIR, "_meta.json"), "w", encoding="utf-8", newline="\n") as f:
+    folder = folder or COURSE_DIR
+    os.makedirs(folder, exist_ok=True)
+    with open(os.path.join(folder, "_meta.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump({"frame": {k: {"name": v[0], "region": list(v[1]), "entry": list(v[2]), "exit": list(v[3])} for k, v in FRAME.items()},
-                   "order": ["st", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10", "a11"],
+                   "order": order or ["st", "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "a8", "a9", "a10", "a11"],
                    "pozo": list(POZO), "kinds": KINDS, "palettes": PALETTES, "gravity": G}, f, indent=1)

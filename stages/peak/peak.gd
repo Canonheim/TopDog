@@ -22,6 +22,7 @@ const SAVE_EVERY_S := 2.0
 const FALL_COUNT_M := 15.0  # a drop of this much is a fall on the tally
 
 var game  # Game
+var course_dir := COURSE  # (the batteries point it at tests/peak_lab/)
 var meta := {}
 var areas: Array = []  # the area dictionaries, in climbing order
 var challenges: Array = []  # every challenge, in order: {id, name, anchor, d, miss, area}
@@ -96,7 +97,7 @@ func setup(p_game) -> void:
 	if built:
 		return
 	built = true
-	var text := FileAccess.get_file_as_string(COURSE + "_meta.json")
+	var text := FileAccess.get_file_as_string(course_dir + "_meta.json")
 	meta = JSON.parse_string(text) if not text.is_empty() else {}
 	if meta.is_empty():
 		push_error("Peak: no course meta")
@@ -108,7 +109,7 @@ func setup(p_game) -> void:
 	add_child(audio)
 	audio.setup(self)
 	for id in meta.order:
-		var t2 := FileAccess.get_file_as_string(COURSE + str(id) + ".json")
+		var t2 := FileAccess.get_file_as_string(course_dir + str(id) + ".json")
 		if t2.is_empty():
 			continue
 		var a: Dictionary = JSON.parse_string(t2)
@@ -383,8 +384,8 @@ func tick(delta: float) -> void:
 	if not active or meta.is_empty():
 		return
 	clock += delta
-	if player != null and not is_instance_valid(player):
-		player = null
+	if not is_instance_valid(player):
+		player = null  # (a freed climber is not null by itself)
 	var p := player_at()
 	for a in areas:
 		var on: bool = player == null or rect_has(a.region, p, ACTIVE_PAD) or str(a.id) == "st"

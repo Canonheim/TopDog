@@ -3806,3 +3806,250 @@ func _run_aicalibration() -> void:
 			g.queue_free()
 			await frames(3)
 			await _clear()  # each trial must start with exactly one arena, not old overlapping stage colliders
+
+
+# ================================================================ THE PEAK (the solo climb): --peak, --peakride
+
+## The lab: one of each of the mountain's mechanics on a flat floor (tools/peak/areas/lab.py).
+func _peak(dir := "") -> Peak:
+	var pk := Peak.new()
+	world.add_child(pk)
+	if dir != "":
+		pk.course_dir = dir
+	pk.setup(null)
+	pk.begin()
+	pk.dev_warp = true  # a battery never writes the save
+	return pk
+
+
+func pticks(pk: Peak, n: int) -> void:
+	for i in n:
+		pk.tick(1.0 / Engine.physics_ticks_per_second)
+		await get_tree().physics_frame
+
+
+func psec(pk: Peak, s: float) -> void:
+	await pticks(pk, int(s * Engine.physics_ticks_per_second))
+
+
+func _peak_climber(pk: Peak, x: float, y: float) -> Climber:
+	var c := spawn(pk.world_of(Vector2(x, y)))
+	pk.on_player(c, true)
+	return c
+
+
+## Move the whole climber so limb `i`'s end sits on a world point.
+func _put_hand(c: Climber, i: int, at: Vector2) -> void:
+	var d := at - c.limb_end(i)
+	var p := c.pose()
+	for k in range(0, p.size(), 3):
+		p[k] += d.x
+		p[k + 1] += d.y
+	c.apply_pose(p)
+
+
+func _free(c: Climber) -> void:
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 99.0  # (it won't catch anything until told)
+
+
+func _run_peak() -> void:
+	var pk := _peak("res://tests/peak_lab/")
+	var hz := Engine.physics_ticks_per_second
+	t("peak: the lab loads (1 area, movers, ropes, zones)", pk.areas.size() == 1 and pk.things.movers.size() == 5 and pk.things.ropes.size() == 2 and pk.zones.waters.size() == 2)
+	# ---- the rope holds a hanging climber
+	var rope: Dictionary = pk.things.ropes[0]
+	var seg: RigidBody3D = rope.segs[rope.segs.size() - 2]
+	var c := _peak_climber(pk, -70, 6)
+	_free(c)
+	_put_hand(c, 0, Vector2(seg.global_position.x, seg.global_position.y))
+	c.attach(0, seg)
+	await psec(pk, 4.0)
+	var top := pk.world_of(Vector2(-70, 12))
+	var stretch := Vector2(seg.global_position.x, seg.global_position.y).distance_to(top)
+	t("peak rope: it holds a hanging climber for 4 s and doesn't stretch", c.limbs[0].grab_other == seg and stretch < 8.0 and finite_body(c), "hand %.2f m under the top (rope 8 m), joints %.3f" % [stretch, c.worst_joint_gap()])
+	t("peak rope: hanging on a rope counts as holding on (limbs work)", c.is_attached())
+	# ---- and swings when pumped
+	var d: Drivers.ScriptDriver = c.driver
+	var x0 := c.centre_of_mass().x
+	var swing := 0.0
+	for i in int(5.0 * hz):
+		var chest: RigidBody3D = c.bodies["chest"]
+		var v := Vector2(chest.linear_velocity.x, chest.linear_velocity.y)
+		d.set_limb(3, true, Vector2(1 if v.x >= 0.0 else -1, 0))
+		pk.tick(1.0 / hz)
+		await get_tree().physics_frame
+		swing = maxf(swing, absf(c.centre_of_mass().x - x0))
+	t("peak rope: pumping swings it", swing > 0.8, "%.2f m" % swing)
+	d.clear()
+	c.remove()
+	await pticks(pk, 2)
+	# ---- water: float, drift, swim
+	c = _peak_climber(pk, -42, 5.2)
+	_free(c)
+	await psec(pk, 5.0)
+	var fy := pk.local_of(c.centre_of_mass()).y
+	t("peak water: a body floats at the surface", c.float_mode and fy > 4.2 and fy < 5.3, "centre at %.2f (surface 5.0)" % fy)
+	c.remove()
+	await pticks(pk, 2)
+	var drift := []
+	for mode in [0, 1, -1]:
+		c = _peak_climber(pk, -30, 5.0)
+		_free(c)
+		await psec(pk, 1.5)
+		d = c.driver
+		var xs := pk.local_of(c.centre_of_mass()).x
+		for i in int(5.0 * hz):
+			if mode != 0:
+				d.set_limb(1, true, Vector2.from_angle(-mode * TAU * 1.3 * float(i) / hz))
+			pk.tick(1.0 / hz)
+			await get_tree().physics_frame
+		drift.append(pk.local_of(c.centre_of_mass()).x - xs)
+		d.clear()
+		c.remove()
+		await pticks(pk, 2)
+	t("peak water: the current carries a still body (1.5 m/s for 5 s)", drift[0] > 4.0, "%.1f m" % drift[0])
+	t("peak water: THE SWIM: circling an arm one way goes with the current, the other way fights it", absf(drift[1] - drift[2]) > 1.5, "still %.1f m, clockwise %.1f m, counter %.1f m" % drift)
+	# ---- a platform carries a standing climber
+	c = _peak_climber(pk, 0, 5)
+	var plat: Dictionary = pk.things.movers["plat"]
+	var pn: Node3D = plat.nodes[0]
+	var feet := Vector2(pn.global_position.x, pn.global_position.y + 0.22)
+	var low := INF
+	for b: RigidBody3D in c.bodies.values():
+		low = minf(low, b.global_position.y)
+	var p := c.pose()
+	for k in range(0, p.size(), 3):
+		p[k] += feet.x - c.centre_of_mass().x
+		p[k + 1] += feet.y - low + 0.08
+	c.apply_pose(p)
+	await psec(pk, 7.0)
+	var off := absf(c.centre_of_mass().x - pn.global_position.x)
+	t("peak mover: a platform carries the climber standing on it", off < 1.2 and c.touches_solid(), "%.2f m from its middle after 7 s" % off)
+	c.remove()
+	await pticks(pk, 2)
+	# ---- crumble and timed holds
+	var rotten: Dictionary = {}
+	var ice: Dictionary = {}
+	var burro: Dictionary = {}
+	for h in pk.things.holds:
+		if str(h.type) == "crumble":
+			rotten = h
+		elif str(h.type) == "timed":
+			ice = h
+		elif str(h.type) == "kick":
+			burro = h
+	c = _peak_climber(pk, 14, 6)
+	_free(c)
+	_put_hand(c, 0, pk.world_of(Vector2(14, 3.95)))
+	c.attach(0, rotten.body)
+	await psec(pk, 0.6)
+	var held: bool = c.limbs[0].grab_other == rotten.body
+	await psec(pk, 1.0)
+	t("peak hold: a rotten ledge holds, then breaks under the hand (1.2 s)", held and c.limbs[0].grab_other == null and (rotten.body as CollisionObject3D).collision_layer == 0)
+	await psec(pk, 8.5)
+	t("peak hold: ...and grows back", (rotten.body as CollisionObject3D).collision_layer != 0 and (rotten.vis as Node3D).visible)
+	c.remove()
+	await pticks(pk, 2)
+	c = _peak_climber(pk, 18, 6)
+	_free(c)
+	_put_hand(c, 0, pk.world_of(Vector2(18, 3.95)))
+	c.attach(0, ice.body)
+	await psec(pk, 1.5)
+	held = c.limbs[0].grab_other == ice.body
+	await psec(pk, 0.8)
+	t("peak hold: ice holds for 2 s, then lets go of you", held and c.limbs[0].grab_other == null)
+	c.remove()
+	await pticks(pk, 2)
+	# ---- the cap throws
+	c = _peak_climber(pk, 24, 5)
+	_free(c)
+	var up := 0.0
+	for i in int(4.0 * hz):
+		pk.tick(1.0 / hz)
+		await get_tree().physics_frame
+		up = maxf(up, (c.bodies["chest"] as RigidBody3D).linear_velocity.y)
+	t("peak bounce: a cap throws a falling climber up at its power (8 m/s)", up > 6.5 and up < 9.5, "%.1f m/s" % up)
+	c.remove()
+	await pticks(pk, 2)
+	# ---- geyser and wind
+	c = _peak_climber(pk, 30, 0.02)
+	_free(c)
+	var high := 0.0
+	for i in int(6.0 * hz):
+		pk.tick(1.0 / hz)
+		await get_tree().physics_frame
+		high = maxf(high, pk.local_of(c.centre_of_mass()).y)
+	t("peak geyser: it carries a climber up its column", high > 5.0, "to %.1f m" % high)
+	c.remove()
+	await pticks(pk, 2)
+	c = _peak_climber(pk, 35, 4)
+	_free(c)
+	await psec(pk, 1.2)
+	var wx := pk.local_of(c.centre_of_mass()).x
+	t("peak wind: it pushes a falling climber (4 m/s2)", wx > 36.5, "%.1f m in 1.2 s" % (wx - 35.0))
+	c.remove()
+	await pticks(pk, 2)
+	# ---- slick: nothing sticks, a slope pours you off; the softlock net
+	c = _peak_climber(pk, 49.5, 5.2)
+	await psec(pk, 5.0)
+	var sx := pk.local_of(c.centre_of_mass())
+	t("peak slick: a wet slope can't be held: the climber slides off it", sx.y < 2.6 and sx.x < 49.0, "now at %s" % sx)
+	c.remove()
+	await pticks(pk, 2)
+	c = _peak_climber(pk, 59, 0.45)
+	await psec(pk, 6.0)
+	t("peak softlock: lying on flat slick, the scramble wakes (or a hand found grip)", c.scramble or c.touches_solid(), "scramble %s, holding %s" % [c.scramble, c.touches_solid()])
+	c.remove()
+	await pticks(pk, 2)
+	# ---- the burro kicks
+	c = _peak_climber(pk, -76, 4)
+	_free(c)
+	_put_hand(c, 1, pk.world_of(Vector2(-76.86, 1.2)))
+	c.attach(1, burro.body)
+	await pticks(pk, 3)
+	var kv: Vector3 = (c.bodies["chest"] as RigidBody3D).linear_velocity
+	t("peak kick: grabbing the burro throws you", kv.y > 5.0 and c.limbs[1].grab_other == null, "%s" % kv)
+	c.remove()
+	await pticks(pk, 2)
+	# ---- the ones who tried: frozen and solid
+	var st: Climber = pk.things.statues[0]
+	t("peak statue: one of the ones who tried hangs frozen", st.state == Climber.State.FROZEN)
+	c = _peak_climber(pk, -20, 3)
+	_free(c)
+	var foot: RigidBody3D = st.bodies["foot_l"]
+	_put_hand(c, 0, Vector2(foot.global_position.x, foot.global_position.y - 0.1))
+	c.attach(0, foot)
+	await psec(pk, 2.0)
+	t("peak statue: you can hang off him", c.limbs[0].grab_other == foot and c.is_attached())
+	c.remove()
+	pk.leave()
+	await pticks(pk, 2)
+
+
+## The first ride: in the cart at the trailhead, into the mountain, out at the buffer.
+func _run_peakride() -> void:
+	var pk := _peak()
+	t("peak course: the mountain loads", pk.areas.size() >= 2 and pk.challenges.size() >= 3, "%d areas, %d challenges" % [pk.areas.size(), pk.challenges.size()])
+	var cart: Dictionary = pk.things.movers.get("cart0", {})
+	if cart.is_empty():
+		t("peak ride: the cart exists", false)
+		return
+	var c := _peak_climber(pk, -9.0, 2.8)
+	await psec(pk, 2.5)
+	t("peak ride: in the cart for a moment and it rolls", bool(cart.run), "boarded %.2f s" % float(cart.board_t))
+	var worst := 0.0
+	for i in int(24.0 * Engine.physics_ticks_per_second):
+		pk.tick(1.0 / Engine.physics_ticks_per_second)
+		await get_tree().physics_frame
+		if bool(cart.run):
+			worst = maxf(worst, pk.local_of(c.centre_of_mass()).distance_to((cart.home as Vector2) + (cart.offset as Vector2)))
+		elif float(cart.arrived) >= 0.0:
+			break
+	var at := pk.local_of(c.centre_of_mass())
+	t("peak ride: the cart reaches the buffer in the mine", float(cart.arrived) >= 0.0 and ((cart.home as Vector2) + (cart.offset as Vector2)).x < -147.0)
+	t("peak ride: the climber rode it all the way (never more than 2.5 m from it)", worst < 2.5 and at.x < -140.0, "worst %.2f m, now at %s" % [worst, at])
+	c.remove()
+	pk.leave()
+	await pticks(pk, 2)
