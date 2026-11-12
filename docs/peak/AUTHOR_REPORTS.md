@@ -57,3 +57,10 @@ Nobody has played any of this. These are the things each author asked to have te
 - Changes: 2.6's chain gaps are 6.4 and 4 m (the slide tube's fall line between them must hold no grip); 2.8's miss is a slip back to the last eddy, or everything if flushed into the Charco; 2.11 is five small crank lifts up a stepped dam face; a 34 m iron catwalk was added before the dam.
 - Not met: 2.3's landings are 2.5 to 3 m (a D2 wants 4); some headroom and widths are under the rule; barrels cover two thirds of the well's column, so a faller down the Pozo will often land on one.
 - Test first: a floating body passing under the slabs; the swim over the last 5.5 m sprint; taking a chain end 0.3 m over the water from the water; barrel to barrel, and what a rider feels when a barrel wraps back to its start; winding a crank a full circle and the 1.9 m pull-up before the lift sinks; the gates' 0.4 s slam.
+
+## A4 El Jardín de Hongos
+- Builds clean, leak 0. Worked from the engine's real bounce rule (it keeps the speed along a cap's face and replaces only the speed into it), so every cap is tuned to the speed a body arrives with.
+- Changes: 4.4's wall cap is tipped 10 degrees (a vertical face threw flat, straight back into the vine); the giant mushroom's stalk is a card (a solid stalk walled the terrace in two); the snails have no model (the kit snail's shell wouldn't sit where the grip is on a leaning wall).
+- Miss costs off in four places: 4.5's upper snails drop you back four (harsher than designed); 4.7's miss is back one; 4.10's east flank only costs the try.
+- Shortcuts left open: a fling from 4.4's vine straight to the ledge; 5 m/s flings off the hanging roots in 4.9 that skip the puffballs.
+- Test first: 4.10 (does a swing off the board arrive at about 1 m/s sideways and 3.6 down, and do A5's chains catch a body at 4 to 6 m/s); 4.4 (does the swinging vine re-catch you); the throw off a puffball from a root's end; how errors pile up over 4.7's five caps; the float height in 4.3.

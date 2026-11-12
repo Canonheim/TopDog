@@ -2,12 +2,13 @@
 
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
-uid="uid://bv3putn7yufsg"
-valid=false
+uid="uid://b1sapc5cuc3k3"
+path="res://.godot/imported/peak_a8.ogg-32738dbc53be03fb2ed6d6d9d8645893.oggvorbisstr"
 
 [deps]
 
 source_file="res://audio/music/peak/peak_a8.ogg"
+dest_files=["res://.godot/imported/peak_a8.ogg-32738dbc53be03fb2ed6d6d9d8645893.oggvorbisstr"]
 
 [params]
 

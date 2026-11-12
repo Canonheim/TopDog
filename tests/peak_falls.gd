@@ -1,6 +1,6 @@
 extends Node
 ## THE RAIN TEST: where does a miss land? For every challenge, three bodies are dropped
-## beside and above its start and followed down the real mountain. A body stops when it
+## beside and just above its start and followed down the real mountain. A body stops when it
 ## touches grip (a climber would catch there), floats off down any water it meets, and is
 ## reported as a POCKET if it comes to rest on slick (a softlock) or LOST if it leaves the
 ## world. Writes docs/peak/FALLS.md (the designed cost beside what happened).
@@ -20,10 +20,17 @@ func _ready() -> void:
 	pk.setup(null)
 	pk.begin()
 	pk.dev_warp = true
+	for i in 3:
+		await get_tree().physics_frame  # (the world's bodies must be in the space before it is asked)
 	for c in pk.challenges:
 		var a := Peak.v2(c.anchor)
-		for off in [Vector2(-3.5, 5.0), Vector2(3.5, 5.0), Vector2(0.0, 9.0)]:
-			_drop(c, a + off)
+		for off in [Vector2(-2.5, 3.0), Vector2(2.5, 3.0), Vector2(0.0, 4.5)]:
+			var at: Vector2 = a + off
+			if _in_rock(at):
+				at = a + Vector2(0.0, 2.2)  # (that spot is inside the rock: drop from just over the start)
+			if not _in_rock(at):
+				_drop(c, at)
+	await get_tree().physics_frame
 	print("RAIN %d bodies over %d challenges" % [balls.size(), pk.challenges.size()])
 	var hz := Engine.physics_ticks_per_second
 	var t := 0.0
@@ -40,6 +47,16 @@ func _ready() -> void:
 			break
 	_report()
 	get_tree().quit()
+
+
+func _in_rock(at: Vector2) -> bool:
+	var q := PhysicsShapeQueryParameters3D.new()
+	var sph := SphereShape3D.new()
+	sph.radius = R
+	q.shape = sph
+	q.transform = Transform3D(Basis(), Vector3(at.x, at.y, 0) + pk.global_position)
+	q.collision_mask = Climber.LAYER_WORLD
+	return not pk.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
 
 
 func _drop(c: Dictionary, at: Vector2) -> void:
@@ -91,7 +108,7 @@ func _step(b: Dictionary, t: float, dt: float) -> void:
 	for o in rb.get_colliding_bodies():
 		if o == null or not is_instance_valid(o):
 			continue
-		if not (o as Node).has_meta("no_weld") and not (o as Node).has_meta("peak_rope"):
+		if not (o as Node).has_meta("no_weld"):
 			_end(b, "grip", p)
 			return
 	if rb.linear_velocity.length() < 0.12:

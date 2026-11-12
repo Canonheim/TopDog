@@ -337,9 +337,37 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 	n.position = at
 	n.rotation.z = deg_to_rad(float(d.get("rot", 0.0)))
 	var s := float(d.get("scale", 1.0))
+	# A landed model far from the size the author drew for (a mask asked for at 21 m,
+	# modelled at 10) is scaled to it; within a quarter either way it is left as made.
+	if not n.has_meta("standin") and d.has("size"):
+		var box := _model_box(n)
+		var want := Vector2(float(d.size[0]), float(d.size[1]))
+		if box.size.x > 0.05 and box.size.y > 0.05:
+			var wide := want.x > want.y * 2.0
+			var ratio := (want.x / box.size.x) if wide else (want.y / box.size.y)
+			if ratio > 1.3 or ratio < 0.75:
+				s *= ratio
 	n.scale = Vector3(-s if bool(d.get("flip", false)) else s, s, s)
 	n.name = str(d.model)
 	return n
+
+
+static func _model_box(root: Node3D) -> AABB:
+	var box := AABB()
+	var first := true
+	for mi in root.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		if m.mesh == null:
+			continue
+		var xf := Transform3D()
+		var node: Node = m
+		while node != null and node != root:
+			xf = (node as Node3D).transform * xf
+			node = node.get_parent()
+		var b := xf * m.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return box
 
 
 ## Until a prop's model lands: the common ones drawn simply but as themselves, the rest
