@@ -166,7 +166,7 @@ for pid, wall, top, ph in PIST:
         at, to = (-364.8, top - 0.45), [-3.2, 0]    # hidden in the pier; tip reaches x -369.7
     A.mover(pid, at, [(box_pts(0, 0, 3.4, 0.9), "stone")],
             {"type": "cycle", "to": to, "t_out": 1.0, "hold_out": 4.0, "t_in": 1.0, "hold_in": 4.0, "phase": ph},
-            model="temple_piston", model_flip=(wall == "E"))
+            model="temple_piston")  # (the same from both ends: no flip for the east pier's)
 m53 = [["reach", [-368.8, 400.0], [-368.8, 401.2]]]
 for i in range(8):
     xa = -368.8 if i % 2 == 0 else -369.7
