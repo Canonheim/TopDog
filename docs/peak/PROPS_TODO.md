@@ -77,6 +77,13 @@ polished and glossy.** Not black, not blue, not green: in every area, on every m
 parts that can't be held are that brown and shiny. Earlier models' slick parts should be
 re-landed in it when their maker next touches them.
 
+**Ice and crystal are exempt (Parker 11-12, later the same day).** Slick glass is dark indigo
+glass `#160C3E`, black ice is blue-black ice `#0C2440`, both polished; everything else that
+can't be held stays the mud brown. The game cuts any face painted one of the three (from the
+atlas's POLISHED rows) out of a model and draws it with the course's own slick material, and
+the crystal and ice pieces that were landed brown are drawn as glass or ice by name
+(`Peak.WET_AS`), so nothing needs re-landing.
+
 | Model name to land | Area, ids in the file | Collider about the origin (m) | What it is | For |
 |---|---|---|---|---|
 | `statue_champion_reach` | a5 `champion()` | trunk 1.8 x 5.8, shoulders, head, a west arm up to a fist at (-3.4, 7.75), an east arm to a gold fist at (+4.02, 8.19) | A stone luchador champion, 9 m, made to EXACTLY the shapes of `champion()` in a5.py (origin between the feet). The west forearm and fist are a catch, the east fist (gilded) is the launch. The game hides its flat shapes the moment this lands | Building Maker |
