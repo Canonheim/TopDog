@@ -748,6 +748,23 @@ Commits 4714920, 7f37818 and the one after.
     4 s the name tiles turn a full circle. Online with Steam, each player's tile shows
     their machine's Steam name, then their game name. The roll waits out a flip. A
     local game has no Steam names, so nothing flips.
+- **The UI pass, batch 1 (Parker 11-11: "have it do a whole UI pass to make sure
+  everything makes sense. See how the word lobby is under the 3d UI here? It has full
+  authority to completely rework anything it doesn't like").** The UI creator's plan is
+  Top Dog Kit/docs/UI_PASS.md. Batch 1 (code only):
+  - Every screen's name is on the hud_banner at the top centre (`LuchaKit.banner`, 1.1 at
+    menu (0, 3.2)): Play together, Practice, Practice AI, Customize, Online, Join a friend,
+    Browse, Lobby, TIME OUT!. This fixed LOBBY sitting under the crest.
+  - `Menu3D.MENU_TOP_Y` is now 2.25.
+  - Controls' and Options' footers are on the status ribbon with A / B discs
+    (`LuchaKit.footer`); Options' BACK moved up to y -2.55.
+  - ROUND n and PRACTICE sit on a cream tab at the bottom right of the match.
+  - The "Pads: ..." line shows only with the F2 readout open.
+  - Customize: its column is where every column stands, the order ends ADD, DELETE,
+    BACK, and the four choice belts write their value alone (`value_only`).
+  - The pop rule (Parker: "make them pop up an off the back ground thing before landing,
+    dont just have them clip as they flip"): the Controls keycaps and the results name
+    tiles lift off, turn, then land.
 - **The line you can see (Parker 11-11: "there are times in both modes where my hand
   seems to be over the line but I cannot lock in").** Seven causes, all fixed:
   - **The plaza line lagged:** it glided up after the line moved (a lerp). It snaps now.
