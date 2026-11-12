@@ -392,6 +392,36 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
+## THE NARROW-WINDOW ANCHOR (the UI pass, 7a): the column keeps room for its widest belt
+## and the focus star inside the screen's left edge. `half_local` is the screen's half
+## width in this menu's own units. Returns how far the column moved right (local units).
+var base_column_x := NAN
+var anchor_header := false  # the title: its logo pulled in from the right edge too
+var _base_header_x := NAN
+
+
+func anchor_to(half_local: float) -> float:
+	if is_nan(base_column_x):
+		base_column_x = column_x
+	var widest := 0.0
+	for it in items:
+		if it.node != null and not it.has("layout_position"):
+			widest = maxf(widest, float((it.belt as Node3D).get_meta("width", BELT_W)) * 0.5)
+	var want := maxf(base_column_x, -half_local + widest + 1.16) if widest > 0.0 else base_column_x
+	if absf(want - column_x) > 0.001:
+		column_x = want
+		_layout()
+	if anchor_header and header != null:
+		if is_nan(_base_header_x):
+			_base_header_x = _header_home.x
+		var hx := minf(_base_header_x, half_local - 2.35)
+		if absf(hx - _header_home.x) > 0.001:
+			_header_home.x = hx
+			if _header_tween == null or not _header_tween.is_valid() or not _header_tween.is_running():
+				header.position.x = hx
+	return column_x - base_column_x
+
+
 ## The column's top belt (the crest's place).
 func _top_item() -> int:
 	for i in items.size():

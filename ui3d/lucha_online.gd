@@ -81,14 +81,21 @@ func build() -> void:
 		l.add_child(_mode_card)
 	# The status poster, shared by every online screen, and the lobby's boards.
 	_status_node = Node3D.new()
+	for n in [_status_node]:
+		n.add_to_group(LuchaUI.UI_ROOT)
+		n.set_meta("follow_column", true)
 	ui.cam.add_child(_status_node)
 	_status_node.position = Vector3(0.0, 1.0, -LuchaUI.MENU_DIST)
 	_status_node.scale = Vector3.ONE * LuchaUI.UI_SCALE
 	_board = Node3D.new()
+	_board.add_to_group(LuchaUI.UI_ROOT)
+	_board.set_meta("follow_column", true)
 	ui.cam.add_child(_board)
 	_board.position = Vector3(0.35, 0.9, -LuchaUI.MENU_DIST)
 	_board.scale = Vector3.ONE * LuchaUI.UI_SCALE
 	_chat_board = Node3D.new()
+	_chat_board.add_to_group(LuchaUI.UI_ROOT)
+	_chat_board.set_meta("follow_column", true)
 	ui.cam.add_child(_chat_board)
 	_chat_board.position = Vector3(0.6, -1.2, -LuchaUI.MENU_DIST)
 	_chat_board.scale = Vector3.ONE * LuchaUI.UI_SCALE

@@ -419,7 +419,10 @@ func _tick_camera(delta: float) -> void:
 		var on_tower := smoothstep(0.0, PODIUM_SHIFT_SECONDS, elapsed)
 		var podium_z: float = lucha._podium.position.z if lucha != null and lucha._podium != null else 1.08
 		var subject_d := 9.0 - lerpf(podium_z, 0.0, on_tower)
-		var aside := RESULTS_BOARD_EDGE * tan(deg_to_rad(cam.fov * 0.5)) * subject_d
+		var vs := get_viewport().get_visible_rect().size
+		var aspect := vs.x / maxf(vs.y, 1.0)
+		var centre_ndc: float = lucha.board_free_centre_ndc() if lucha != null else RESULTS_BOARD_EDGE / aspect
+		var aside := centre_ndc * tan(deg_to_rad(cam.fov * 0.5)) * aspect * subject_d
 		cam.position = Vector3(focus.x - aside, focus.y + 0.5, 9.0)
 		cam.look_at(Vector3(cam.position.x, focus.y, 0), Vector3.UP)
 		line_bar.visible = false

@@ -1448,6 +1448,7 @@ func _palm() -> Node3D:
 
 func _menu() -> Menu3D:
 	var m := Menu3D.new(cam)
+	m.add_to_group(UI_ROOT)
 	cam.add_child(m)
 	m.position = Vector3(0, 0, -MENU_DIST)
 	m.scale = Vector3.ONE * UI_SCALE
@@ -1460,6 +1461,7 @@ func _build_menus() -> void:
 	var logo_shift := cam.project_position(Vector2(10, 0), MENU_DIST).distance_to(cam.project_position(Vector2.ZERO, MENU_DIST)) / UI_SCALE
 	t.set_header(LuchaKit.title_logo(), Vector3(3.0 + logo_shift, 2.4, 0))
 	t.header_tilt = -0.07
+	t.anchor_header = true
 	t.column_x = Menu3D.MENU_COLUMN_X
 	t.top_y = Menu3D.MENU_TOP_Y
 	# PLAY TOGETHER is off the title for now (Parker 11-10: "completely remove play
@@ -1545,6 +1547,7 @@ func _build_menus() -> void:
 	# pinned, the rolling leaderboard, REMATCH! and BACK in its footer.
 	var r := ResultsBoard.new(cam)
 	r.lucha = self
+	r.add_to_group(UI_ROOT)
 	cam.add_child(r)
 	r.position = Vector3(0, 0, -MENU_DIST)
 	r.scale = Vector3.ONE * UI_SCALE
@@ -1560,6 +1563,8 @@ func _build_menus() -> void:
 	menus.results = r
 	# Player cards (Play together) and the podium (results) hang in the same frame.
 	_cards = Node3D.new()
+	_cards.add_to_group(UI_ROOT)
+	_cards.set_meta("follow_column", true)  # beside the column: it moves with it
 	cam.add_child(_cards)
 	_cards.position = Vector3(0.2, 0.30, -MENU_DIST)  # (the UI pass, batch 3: the crests clear the banner)
 	_cards.scale = Vector3.ONE * UI_SCALE
@@ -1659,6 +1664,70 @@ func _refresh_cards() -> void:
 ## A Play together card's place: one row of five, 1.35 apart, a second row only past five.
 func _card_at(s: int) -> Vector3:
 	return Vector3(-1.45 + (s % CARD_ROW) * CARD_ROW_DX, -(s / CARD_ROW) * CARD_DY * CARD_ROW_SCALE, 0)
+
+
+# ================================================================ narrow windows
+
+## THE NARROW-WINDOW RULE (the UI pass, batch 7). Every camera-hung UI root is in the
+## group UI_ROOT. From 16:10 up the column menus anchor to the screen's left edge (7a).
+## Narrower, the whole UI shrinks by k = half_w / 6.11 about the screen's centre and
+## lays out exactly as at 16:10 (7b): the edge anchors use virtual_half_w / _h.
+const UI_ROOT := &"ui_root"
+const NARROWEST_HALF_W := 6.11  # 16:10, in menu units
+var ui_k := 1.0
+var virtual_half_w := 6.79
+var virtual_half_h := 3.82
+var column_shift := {}  # menu id -> how far its column moved right (its own units)
+var _narrow_aspect := -1.0
+
+
+func _tick_narrow() -> void:
+	var vs: Vector2 = main.get_viewport().get_visible_rect().size
+	var aspect := vs.x / maxf(1.0, vs.y)
+	var half_h := tan(deg_to_rad(cam.fov * 0.5)) * MENU_DIST / UI_SCALE
+	var half_w := half_h * aspect
+	ui_k = minf(1.0, half_w / NARROWEST_HALF_W)
+	virtual_half_w = half_w / ui_k
+	virtual_half_h = half_h / ui_k
+	var roots := get_tree().get_nodes_in_group(UI_ROOT)
+	for n in roots:
+		_capture_home(n as Node3D)
+	if absf(aspect - _narrow_aspect) > 0.001:
+		_narrow_aspect = aspect
+		for id in menus:
+			var m = menus[id]
+			if m is ResultsBoard or not (m is Menu3D):
+				continue
+			var hp: Vector3 = (m as Node3D).get_meta("ui_home_p", (m as Node3D).position)
+			var hs: Vector3 = (m as Node3D).get_meta("ui_home_s", (m as Node3D).scale)
+			var local := virtual_half_w * UI_SCALE * (absf(hp.z) / MENU_DIST) / maxf(hs.x, 0.001)
+			column_shift[id] = (m as Menu3D).anchor_to(local)
+	var shift: float = float(column_shift.get(current, 0.0))
+	for n in roots:
+		var nd := n as Node3D
+		var hp: Vector3 = nd.get_meta("ui_home_p")
+		var hs: Vector3 = nd.get_meta("ui_home_s")
+		var dx := shift * UI_SCALE if nd.get_meta("follow_column", false) else 0.0
+		nd.position = Vector3((hp.x + dx) * ui_k, hp.y * ui_k, hp.z)
+		nd.scale = hs * ui_k
+		nd.set_meta("ui_applied_p", nd.position)
+		nd.set_meta("ui_applied_s", nd.scale)
+
+
+## A root's own place and size, as its code set them (re-read whenever code moves it).
+static func _capture_home(n: Node3D) -> void:
+	if n.get_meta("ui_code_home", false):
+		return  # (it writes its own ui_home_p / _s)
+	if not n.has_meta("ui_home_p") or not n.position.is_equal_approx(n.get_meta("ui_applied_p", n.position)):
+		n.set_meta("ui_home_p", n.position)
+	if not n.has_meta("ui_home_s") or not n.scale.is_equal_approx(n.get_meta("ui_applied_s", n.scale)):
+		n.set_meta("ui_home_s", n.scale)
+
+
+## Where the free space right of the results board is centred, in NDC x (the camera
+## shifts the podium there). 2.25 is the board's right edge (4.5) halved, in menu units.
+func board_free_centre_ndc() -> float:
+	return 2.25 / maxf(virtual_half_w, 0.01)
 
 
 ## Everything under `n` stops casting shadows (UI pieces hang in the sun's light).
@@ -1764,6 +1833,7 @@ func _fill_results() -> void:
 
 func _build_hud() -> void:
 	_hud = Node3D.new()
+	_hud.add_to_group(UI_ROOT)
 	cam.add_child(_hud)
 	_hud.position = Vector3(0, 0, -MENU_DIST)
 	_hud.scale = Vector3.ONE * UI_SCALE
@@ -1998,6 +2068,7 @@ func confetti(big := false) -> void:
 
 func _process(delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
+	_tick_narrow()
 	_festive_tick(delta, t)
 	for c in _clouds:
 		var n: Node3D = c
@@ -2022,9 +2093,8 @@ func _process(delta: float) -> void:
 		var g: Game = main.game
 		var show := g.phase in ["turn", "round"] and not g.practice
 		hud_bottom.get_node("Buckle").visible = show
-		var viewport_size := main.get_viewport().get_visible_rect().size
-		var half_h := tan(deg_to_rad(cam.fov * 0.5)) * MENU_DIST / UI_SCALE
-		var half_w := half_h * viewport_size.x / maxf(1.0, viewport_size.y)
+		var half_h := virtual_half_h  # (the HUD's own space, which shrinks in narrow windows)
+		var half_w := virtual_half_w
 		hud_bottom.get_node("Buckle").position = Vector3(half_w - 1.15, half_h - 1.05, 0)
 		_clock_text.position = hud_bottom.get_node("Buckle").position + Vector3(0, 0, 0.075)
 		_info.position = Vector3(half_w - 0.95, -half_h + 0.45, 0)

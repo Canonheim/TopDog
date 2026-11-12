@@ -442,13 +442,11 @@ func open() -> void:
 func _fit_screen() -> void:
 	if lucha == null or cam == null:
 		return
-	var vs: Vector2 = get_viewport().get_visible_rect().size if get_viewport() != null else Vector2(16, 9)
-	var aspect := vs.x / maxf(1.0, vs.y)
-	var half_h := tan(deg_to_rad(cam.fov * 0.5)) * LuchaUI.MENU_DIST / LuchaUI.UI_SCALE
-	var half_w := half_h * aspect
-	var s := 0.9 if aspect < 1.45 else 1.0
-	_hang.scale = Vector3.ONE * s
-	position.x = (-half_w + 0.30 + 2.10 * s) * LuchaUI.UI_SCALE
+	# In the UI's own space (narrow windows shrink the whole UI: LuchaUI._tick_narrow).
+	var half_w: float = lucha.virtual_half_w
+	set_meta("ui_code_home", true)
+	set_meta("ui_home_p", Vector3((-half_w + 0.30 + 2.10) * LuchaUI.UI_SCALE, 0, -LuchaUI.MENU_DIST))
+	set_meta("ui_home_s", Vector3.ONE * LuchaUI.UI_SCALE)
 
 
 func _process(delta: float) -> void:

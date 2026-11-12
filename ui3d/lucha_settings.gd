@@ -140,6 +140,7 @@ func _build_controls() -> void:
 	var holder := _controls
 	holder.position = Vector3.ZERO
 	var frame := Node3D.new()
+	frame.add_to_group(LuchaUI.UI_ROOT)  # (narrow windows shrink it with the rest)
 	_controls.add_child(frame)
 	frame.position = Vector3(0, 0, -LuchaUI.PAUSE_DIST)
 	frame.scale = Vector3.ONE * LuchaUI.UI_SCALE * LuchaUI.PAUSE_DIST / LuchaUI.MENU_DIST
@@ -340,6 +341,7 @@ func _build_options() -> void:
 	_opt_hud.name = "OptionsHud"
 	cam.add_child(_opt_hud)
 	var frame := Node3D.new()
+	frame.add_to_group(LuchaUI.UI_ROOT)
 	_opt_hud.add_child(frame)
 	frame.position = Vector3(0, 0, -LuchaUI.PAUSE_DIST)
 	frame.scale = Vector3.ONE * LuchaUI.UI_SCALE * LuchaUI.PAUSE_DIST / LuchaUI.MENU_DIST
