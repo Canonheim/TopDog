@@ -53,6 +53,7 @@ func _ready() -> void:
 	# THE STAR MARKS THE FOCUS in every menu (Parker 11-11, on the UI creator's pass: the
 	# pug crest stood over the belt above and hid its words, a guest's BASE for good).
 	cursor = LuchaKit.cursor_star()
+	cursor.scale = Vector3.ONE * 1.45  # (the UI pass, batch 6: it read small against the town)
 	add_child(cursor)
 	close()
 
@@ -558,7 +559,7 @@ func _process(delta: float) -> void:
 	if cursor != null and cursor.visible and _live(focus) and _open_t > 0.3:
 		var home: Vector3 = items[focus].node.get_meta("home")
 		var bw: float = (items[focus].belt as Node3D).get_meta("width", BELT_W)
-		var target := home + Vector3(-bw * 0.5 - 0.45, 0, 0.12)
+		var target := home + Vector3(-bw * 0.5 - 0.6, 0, 0.12)
 		cursor.position = cursor.position.lerp(target, 1.0 - exp(-delta * 14.0))
 		cursor.rotation.z = sin(t * 6.0) * 0.18
 		cursor.rotation.y = sin(t * 2.0) * 0.4
