@@ -273,8 +273,21 @@ func _listen(i: int) -> void:
 	_listen_before = (Players.binds[st.scheme][st.action][st.index] as Dictionary).duplicate()
 	main._rebind_wait = {"scheme": st.scheme, "action": st.action, "index": st.index, "button": null}
 	var cell: Node3D = st.node
-	create_tween().tween_property(cell, "rotation:x", PI, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_flip_cell(cell, PI)
 	Sound.play("ui_open", -8.0)
+
+
+## THE POP RULE (Parker 11-11: "on some of the flipping UI things, they flip right through
+## the thing behind them ... make them pop up an off the back ground thing before landing,
+## dont just have them clip as they flip"): a keycap lifts off the poster, turns, lands.
+func _flip_cell(cell: Node3D, to: float) -> void:
+	if not cell.has_meta("home_z"):
+		cell.set_meta("home_z", cell.position.z)
+	var z: float = cell.get_meta("home_z")
+	var tw := create_tween()
+	tw.tween_property(cell, "position:z", z + 0.15, 0.10).set_ease(Tween.EASE_OUT)
+	tw.tween_property(cell, "rotation:x", to, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(cell, "position:z", z, 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _cancel_listen() -> void:
@@ -289,7 +302,7 @@ func _end_listen(bound: bool) -> void:
 		return
 	var cell: Node3D = _stops[_listening].node
 	_listening = -1
-	create_tween().tween_property(cell, "rotation:x", 0.0, 0.22).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_flip_cell(cell, 0.0)
 	_refresh_cells()
 	if bound:
 		Sound.play("lock", -6.0)  # the bell dings on bind

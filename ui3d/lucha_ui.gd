@@ -1726,8 +1726,9 @@ func _fill_results() -> void:
 		step.add_child(figure)
 	# THE BOARD (PARTS.md J): the winner's plate and everyone else's row, in order.
 	var delmar: bool = g.stage != null and g.stage.delmar
+	# Del Mar's heights are metres out along the rope; only the winner's plate says OUT.
 	var height_of := func(v: float) -> String:
-		return ("%.2f M OUT" % maxf(0.0, v - Stage.PIER_END)) if delmar else ("%.2f M" % v)
+		return "%.2f M" % (maxf(0.0, v - Stage.PIER_END) if delmar else v)
 	var who := func(pid: int) -> Dictionary:
 		var e: Dictionary = g.roster_entry(pid)
 		var tc = e.get("tint", Color.WHITE)
@@ -1742,11 +1743,12 @@ func _fill_results() -> void:
 	for pid in order:
 		if int(pid) == w and w >= 0:
 			winner = who.call(int(pid))
+			if delmar:
+				winner.height = str(winner.height) + " OUT"
 		else:
 			others.append(who.call(int(pid)))
-	var n := int(res.get("tower", 0))
 	var top_s: String = height_of.call(float(res.get("top", 0.0)))
-	(menus.results as ResultsBoard).fill(winner, others, "TOWER " + top_s, "%d CLIMBER%s" % [n, "" if n == 1 else "S"], not main.local_mode and not Net.is_host())
+	(menus.results as ResultsBoard).fill(winner, others, "TOWER " + top_s, not main.local_mode and not Net.is_host())
 
 
 # ================================================================ the match HUD

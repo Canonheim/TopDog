@@ -3,13 +3,13 @@
 importer="scene"
 importer_version=1
 type="PackedScene"
-uid="uid://d82y788knhd8"
-path="res://.godot/imported/results_tower_row.glb-8176cd385236713d0cff9405043a3f8e.scn"
+uid="uid://cbxv124bkrjjf"
+path="res://.godot/imported/results_divider.glb-401a57a66e3588c66da68ac0fc808146.scn"
 
 [deps]
 
-source_file="res://kit/models/results_tower_row.glb"
-dest_files=["res://.godot/imported/results_tower_row.glb-8176cd385236713d0cff9405043a3f8e.scn"]
+source_file="res://kit/models/results_divider.glb"
+dest_files=["res://.godot/imported/results_divider.glb-401a57a66e3588c66da68ac0fc808146.scn"]
 
 [params]
 

@@ -23,7 +23,6 @@ const STEP_S := 0.22
 const NAVY := Color("#26124A")
 const OWN_ROW := Color("#FFE08A")
 const WAIT_FACE := Color("#5A5470")
-const WINNER_BACK := Color("#5A0A12")
 ## THE NAME FLIP (Parker 11-11: "after 4 seconds on the screen, the names section on the
 ## winner screen should flip like they do in the options menu, 360 degrees, and when it
 ## lands facing forward, it will show the person's steam username, then after another 4
@@ -31,7 +30,14 @@ const WINNER_BACK := Color("#5A0A12")
 const FLIP_EVERY := 4.0
 const FLIP_S := 0.45
 const FLIP_RIPPLE := 0.05
-const FLIP_BUSY := 0.70  # the whole ripple: the roll waits it out
+## THE POP RULE (Parker 11-11: "make them pop up an off the back ground thing before
+## landing, dont just have them clip as they flip"): lift, turn, land.
+const LIFT_S := 0.10
+const LAND_S := 0.12
+const LIFT_ROW := 0.20  # a row's name tile: its half height + 0.03
+const LIFT_WINNER := 0.27
+const WORDS_FRONT := 0.024  # words on a tile: its front (+0.018 from the pivot) and a hair
+const FLIP_BUSY := 0.97  # the whole ripple, lift to land: the roll waits it out
 
 var lucha: Node = null  # LuchaUI (half_w, the camera numbers)
 var _hang: Node3D  # the pivot on the straps' line
@@ -47,7 +53,7 @@ var _more: Array = []
 var _winner_words: Node3D = null
 var _rematch_plate: Node3D
 var _back_plate: Node3D
-var _wait_glass: Node3D
+var _glasses: Array = []  # the two hourglasses (a non-host waits)
 var _rematch_words: Node3D = null
 var _waiting := false
 var _t := 0.0  # since the screen opened
@@ -98,9 +104,11 @@ func _ready() -> void:
 	_space.add_child(_roll)
 	# The two buttons: Menu3D items, laid out in the board's space.
 	_rematch_plate = _button_plate("results_rematch", 2.94, 0.69, "REMATCH!")
-	_wait_glass = _rematch_plate.find_child("results_rematch_wait", true, false) as Node3D
-	if _wait_glass != null:
-		_wait_glass.visible = false
+	for gn in ["results_rematch_wait", "results_rematch_wait_r"]:
+		var g := _rematch_plate.find_child(gn, true, false) as Node3D
+		if g != null:
+			g.visible = false
+			_glasses.append(g)
 	_back_plate = _button_plate("results_back", 1.84, 0.44, "BACK")
 	_back_plate.add_child(_words("BACK", 0.97, 0.19, LuchaKit.CREAM, LuchaKit.INK, Vector3(0, 0, 0.07)))
 	super._ready()
@@ -181,7 +189,7 @@ func _words(s: String, w: float, max_size: float, face: Color, back, at: Vector3
 
 ## The board's words: the winner (or none: GAME OVER), everyone else in finishing order
 ## ({name, height, tint, own}), the tower's line, and whether this player only waits.
-func fill(winner: Dictionary, others: Array, tower_l: String, tower_r: String, waiting: bool) -> void:
+func fill(winner: Dictionary, others: Array, tower_s: String, waiting: bool) -> void:
 	for r in _rows:
 		(r as Node3D).queue_free()
 	_rows.clear()
@@ -198,25 +206,33 @@ func fill(winner: Dictionary, others: Array, tower_l: String, tower_r: String, w
 			(d.tile as Node3D).rotation.x = 0.0
 	_tiles.clear()
 	_show_steam = false
-	var nm := _words(name_s, 2.53, 0.30, LuchaKit.GOLD, WINNER_BACK, Vector3(0.32, 1.97, 0.272), 0.16)
+	var nm := _words(name_s.to_upper(), 2.53, 0.30, LuchaKit.GOLD, LuchaKit.INK, Vector3(0.32, 1.97, 0.244 + WORDS_FRONT), 0.18)
 	nm.name = "WinnerName"
 	_winner_words.add_child(nm)
 	var wtile := _board.find_child("results_winner_face", true, false) as Node3D
 	if wtile != null:
 		_onto_tile(nm, wtile)
-		_tiles.append({"tile": wtile, "words": nm, "game": name_s, "steam": str(winner.get("steam", "")) if has_winner else "", "row": null, "winner": true})
+		_tiles.append({"tile": wtile, "words": nm, "game": name_s.to_upper(), "steam": str(winner.get("steam", "")).to_upper() if has_winner else "", "row": null, "winner": true})
 	if has_winner:
-		_winner_words.add_child(_words(str(winner.get("height", "")), 1.27, 0.22, LuchaKit.CREAM, LuchaKit.INK, Vector3(0.32, 1.49, 0.265)))
+		_winner_words.add_child(_words(str(winner.get("height", "")), 1.16, 0.22, LuchaKit.CREAM, LuchaKit.INK, Vector3(-0.46, 1.49, 0.265)))
 		LuchaKit.tint_part(_board, "results_winner_tint", winner.get("tint", Color.WHITE))
 	if _medal != null:
 		_medal.visible = has_winner
 	var wt := _board.find_child("results_winner_tint", true, false) as Node3D
 	if wt != null:
 		wt.visible = has_winner
-	# The rows: ranks 2..N, then the tower slat.
+	# The tower's own plate, pinned beside the winner's height.
+	_winner_words.add_child(_words(tower_s, 1.16, 0.19, NAVY, null, Vector3(1.10, 1.49, 0.265)))
+	# The rows: ranks 2..N, players only; a loop that scrolls ends on the divider.
 	for i in others.size():
 		_rows.append(_player_row(i + 2, others[i]))
-	_rows.append(_tower_row(tower_l, tower_r))
+	if _rows.size() > SLOTS.size():
+		var dv := LuchaKit.kit_model("results_divider")
+		if dv == null:
+			dv = LuchaKit._plate(3.4, 0.2, LuchaKit.STRAP_BLUE)
+		var dr := Node3D.new()
+		dr.add_child(dv)
+		_rows.append(dr)
 	for r in _rows:
 		_roll.add_child(r)
 	for i in others.size():
@@ -225,7 +241,7 @@ func fill(winner: Dictionary, others: Array, tower_l: String, tower_r: String, w
 		var words: Node3D = row.get_meta("name_words")
 		if tile != null:
 			_onto_tile(words, tile)
-			_tiles.append({"tile": tile, "words": words, "game": str(others[i].get("name", "")), "steam": str(others[i].get("steam", "")), "row": row, "winner": false})
+			_tiles.append({"tile": tile, "words": words, "game": str(others[i].get("name", "")).to_upper(), "steam": str(others[i].get("steam", "")).to_upper(), "row": row, "winner": false})
 	_next_flip = FLIP_EVERY if _tiles.any(func(d): return str(d.steam) != "") else INF
 	_flip_until = 0.0
 	roll_off = 0.0
@@ -236,15 +252,15 @@ func fill(winner: Dictionary, others: Array, tower_l: String, tower_r: String, w
 	var shown := mini(_rows.size(), SLOTS.size())
 	_rows_in_at = 0.80 + 0.07 * maxf(shown - 1, 0) + 0.20
 	_next_step = _rows_in_at + HOLD_S if _scrolls() else INF
+	# (a pop, not a turn: a row turned on its edge cut through the covers, the pop rule)
 	for k in _rows.size():
 		var r: Node3D = _rows[k]
-		r.rotation.x = PI * 0.5
 		if k < shown:
+			r.scale = Vector3.ONE * 0.01
 			var tw := create_tween()
 			tw.tween_interval(0.80 + 0.07 * k)
-			tw.tween_property(r, "rotation:x", 0.0, 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		else:
-			r.rotation.x = 0.0
+			tw.tween_property(r, "scale", Vector3.ONE * 0.5, 0.0)
+			tw.tween_property(r, "scale", Vector3.ONE, 0.20).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_place_rows()
 	for m in _more:
 		(m as Node3D).visible = _scrolls()
@@ -256,10 +272,13 @@ func fill(winner: Dictionary, others: Array, tower_l: String, tower_r: String, w
 	LuchaKit.tint_part(rk, "results_rematch_face", WAIT_FACE if waiting else LuchaKit.RED)
 	_rematch_words = _words("WAITING FOR HOST" if waiting else "REMATCH!", 1.72, 0.24, LuchaKit.CREAM, LuchaKit.INK, Vector3(0, 0, 0.07))
 	_rematch_plate.add_child(_rematch_words)
-	if _wait_glass != null:
-		_wait_glass.visible = waiting
-		_wait_glass.rotation.z = 0.0
+	for g in _glasses:
+		(g as Node3D).visible = waiting
+		(g as Node3D).rotation.z = 0.0
 	_glass_t = 0.0
+	# A non-host's only real button is BACK: the focus opens there.
+	if items.size() >= 2:
+		focus = 1 if waiting else 0
 	# The buttons pop after the last row (input is live from the start).
 	for i in items.size():
 		var n: Node3D = items[i].node
@@ -289,8 +308,11 @@ func _player_row(rank: int, p: Dictionary) -> Node3D:
 		k = LuchaKit._plate(3.4, 0.4, LuchaKit.GOLD)
 	root.add_child(k)
 	LuchaKit.tint_part(k, "results_row_tint", p.get("tint", Color.WHITE))
-	if p.get("own", false):
-		LuchaKit.tint_part(k, "results_row_face", OWN_ROW)  # online: find yourself in a long lobby
+	var you := k.find_child("results_row_you", true, false) as Node3D
+	if you != null:
+		you.visible = bool(p.get("own", false))  # online: find yourself in a long lobby
+	elif p.get("own", false):
+		LuchaKit.tint_part(k, "results_row_face", OWN_ROW)
 	for nm in ["results_row_medal_silver", "results_row_medal_bronze", "results_row_medal_plain"]:
 		var m := k.find_child(nm, true, false) as Node3D
 		if m != null:
@@ -300,23 +322,12 @@ func _player_row(rank: int, p: Dictionary) -> Node3D:
 		rk.position = Vector3(-1.40, 0, 0.092)
 		LuchaKit.center_digits(rk)
 		root.add_child(rk)
-	var nmw := _words(str(p.get("name", "")), 1.46, 0.20, NAVY, null, Vector3(-0.03, 0, 0.0765), 0.12)
+	var nmw := _words(str(p.get("name", "")).to_upper(), 1.46, 0.20, NAVY, null, Vector3(-0.03, 0, 0.062 + WORDS_FRONT), 0.14)
 	root.add_child(nmw)
 	root.set_meta("name_words", nmw)
 	var h := _words(str(p.get("height", "")), 0.71, 0.17, LuchaKit.CREAM, LuchaKit.INK, Vector3(1.255, 0, 0.065))
 	LuchaKit.center_digits(h)
 	root.add_child(h)
-	return root
-
-
-func _tower_row(l: String, r: String) -> Node3D:
-	var root := Node3D.new()
-	var k := LuchaKit.kit_model("results_tower_row")
-	if k == null:
-		k = LuchaKit._plate(3.4, 0.4, LuchaKit.STRAP_BLUE)
-	root.add_child(k)
-	root.add_child(_words(l, 1.26, 0.18, NAVY, null, Vector3(-0.885, 0, 0.065)))
-	root.add_child(_words(r, 1.26, 0.18, NAVY, null, Vector3(0.885, 0, 0.065)))
 	return root
 
 
@@ -341,9 +352,9 @@ func _swap_words(d: Dictionary, steam: bool) -> void:
 		return
 	var nw: Node3D
 	if d.winner:
-		nw = _words(s, 2.53, 0.30, LuchaKit.GOLD, WINNER_BACK, Vector3.ZERO, 0.16)
+		nw = _words(s, 2.53, 0.30, LuchaKit.GOLD, LuchaKit.INK, Vector3.ZERO, 0.18)
 	else:
-		nw = _words(s, 1.46, 0.20, NAVY, null, Vector3.ZERO, 0.12)
+		nw = _words(s, 1.46, 0.20, NAVY, null, Vector3.ZERO, 0.14)
 	nw.transform = old.transform
 	nw.scale = Vector3.ONE
 	old.get_parent().add_child(nw)
@@ -370,12 +381,18 @@ func _flip() -> void:
 	for k in in_sight.size():
 		var d: Dictionary = in_sight[k]
 		var tile: Node3D = d.tile
+		if not tile.has_meta("home_z"):
+			tile.set_meta("home_z", tile.position.z)
+		var z: float = tile.get_meta("home_z")
+		var lift: float = LIFT_WINNER if d.winner else LIFT_ROW
 		var tw := create_tween()
 		tw.tween_interval(FLIP_RIPPLE * k)
+		tw.tween_property(tile, "position:z", z + lift, LIFT_S).set_ease(Tween.EASE_OUT)
 		tw.tween_property(tile, "rotation:x", TAU, FLIP_S).from(0.0).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(tile, "position:z", z, LAND_S).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		tw.tween_callback(func(): tile.rotation.x = 0.0)
 		var sw := create_tween()
-		sw.tween_interval(FLIP_RIPPLE * k + 0.2 * FLIP_S / 0.45)
+		sw.tween_interval(FLIP_RIPPLE * k + LIFT_S + 0.2)
 		sw.tween_callback(func(): _swap_words(d, to_steam))
 	_flip_until = _t + FLIP_BUSY
 	_next_flip = _t + FLIP_EVERY
@@ -470,9 +487,10 @@ func _process(delta: float) -> void:
 			_step()
 	if not _rows.is_empty():
 		_place_rows()
-	if _waiting and _wait_glass != null:
+	if _waiting and not _glasses.is_empty():
 		_glass_t += delta
 		if _glass_t >= 1.6:
 			_glass_t = 0.0
-			var gt := create_tween()
-			gt.tween_property(_wait_glass, "rotation:z", _wait_glass.rotation.z + PI, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			for g in _glasses:
+				var gt := create_tween()
+				gt.tween_property(g, "rotation:z", (g as Node3D).rotation.z + PI, 0.35).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
