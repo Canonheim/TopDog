@@ -166,7 +166,7 @@ static func _face(sts: Array, a: Vector3, b: Vector3, c: Vector3, h: float, snow
 ## as wide as true (a spire that thin read as a pole from the plaza), the fang thicker
 ## still. `peak_flag(on)` shows the flag on its summit; `peak_shown(on)` hides the whole
 ## model (the solo mode stands at the real mountain's foot, and must not see this one).
-const PEAK_AT := Vector3(-300.0, 0.0, -700.0)  # the summit's x, and how far back it stands
+const PEAK_AT := Vector3(-350.0, 0.0, -700.0)  # the summit's x, and how far back it stands
 const PEAK_H := 178.0  # the 1,000 m, in the plaza's metres
 const PEAK_WIDE := 2.0
 ## The course's outline from the summit down each side: [local x, local y].
