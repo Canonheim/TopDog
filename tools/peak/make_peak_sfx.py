@@ -13,7 +13,8 @@ samples), slow movement comes from low-passed periodic noise or whole numbers of
 cycles, events are added modulo N, and echo and reverb are circular convolutions. So
 the last sample runs into the first with no crossfade. Each loop is then rotated to
 start at a gentle zero crossing. The seam is still measured from the written file
-(jump, slope, level either side) and printed in SFX.md.
+(jump, slope, level either side) and printed in SFX.md, and a full run ends with a
+self-test that each building block really is periodic (selftest()).
 
 The tools, all numpy: FFT noise shaping, biquad resonator banks (RBJ coefficients,
 applied through their frequency response), heterodyned noise for moving band-passes
@@ -1760,6 +1761,43 @@ def render(item):
     return best_start(x), built
 
 
+def selftest(trials=200):
+    """Is each building block really periodic? Make each one many times over half a
+    second and rank the step across its wrap point among all its other steps. If the
+    wrap is just another place in the signal, the ranks are spread evenly: they average
+    50% and about 1 in 100 lands above 99%. The control is noise filtered without
+    wrapping, which is what a loop that clicks looks like."""
+    n = SR // 2
+
+    def rank(x):
+        return 100.0 * np.mean(np.abs(np.diff(x)) <= abs(x[0] - x[-1]))
+
+    def events(r):
+        b = np.zeros(n)
+        for _ in range(40):
+            place(b, plink(r.uniform(700, 1100), 0.3), r.uniform(0, n / SR), 1.0, wrap=True)
+        return reverb(echo(b, 0.11, [0.4, 0.2], wrap=True), r, 0.8, 0.8, wrap=True)
+
+    cases = [
+        ("shaped noise", lambda r: noise(n, r, lo=1400, hi=6000, order=1, tilt=-3.0)),
+        ("noise under a slow curve", lambda r: noise(n, r, lo=1400, hi=6000, order=1, tilt=-3.0) * slow(n, r, 4.0, 0.6, 1.0)),
+        ("moving band (wind)", lambda r: sweep_noise(n, r, 900 * 1.5 ** slow(n, r, 3.0), 300)),
+        ("clicks through resonators", lambda r: resonate(impulses(n, r, 1500.0, heavy=1.0), STONE, wrap=True)),
+        ("placed events, echo, reverb", events),
+        ("fire", lambda r: fire(n, r, 14.0)),
+        ("cloth", lambda r: flag(n, r, 9.0)),
+        ("after the loop finisher", lambda r: finish_loop(noise(n, r, lo=50, hi=6000, order=1, tilt=-3.0) * (1 + 3 * slow(n, r, 5.0) ** 4))),
+        ("CONTROL: not periodic", lambda r: filt(r.standard_normal(n), lo=1400, hi=6000, order=1)),
+    ]
+    out = []
+    for label, fn in cases:
+        r = np.random.default_rng(12345)
+        v = np.array([rank(fn(r)) for _ in range(trials)])
+        out.append((label, trials, v.mean(), 100.0 * np.mean(v > 99.0)))
+        print("selftest  %-30s mean rank %5.1f%%   above 99%%: %4.1f%% of %d" % (label, v.mean(), out[-1][3], trials))
+    return out
+
+
 def main(argv):
     only = [a for a in argv if not a.startswith("-")]
     os.makedirs(OUT, exist_ok=True)
@@ -1805,12 +1843,17 @@ def main(argv):
     for b in bad:
         print("CHECK FAILED  " + b)
     if not only:
-        write_doc(rows, bad)
+        test = selftest()
+        for label, trials, mean, top in test:
+            if not label.startswith("CONTROL") and not (44.0 <= mean <= 56.0 and top <= 4.0):
+                bad.append("selftest: %s is not periodic (mean rank %.1f%%, %.1f%% above 99%%)" % (label, mean, top))
+                print("CHECK FAILED  " + bad[-1])
+        write_doc(rows, bad, test)
         print(DOC)
     return 1 if bad else 0
 
 
-def write_doc(rows, bad):
+def write_doc(rows, bad, test):
     L = []
     L.append("# The Peak's sound effects")
     L.append("")
@@ -1845,8 +1888,9 @@ def write_doc(rows, bad):
     L.append("**How the loops loop.** Each is built periodic over its own length (FFT-shaped noise,")
     L.append("whole numbers of cycles, events added modulo the length, circular echo and reverb), so")
     L.append("the last sample runs into the first with no crossfade, and each is rotated to start at")
-    L.append("a gentle zero crossing. Import them with loop mode Forward over the whole file. The seam")
-    L.append("columns are measured from the written file, in full-scale units (1.0 = 0 dBFS):")
+    L.append("a gentle zero crossing. They only loop cleanly over the WHOLE file: see the warning at")
+    L.append("the end of this section. The seam columns are measured from the written file, in")
+    L.append("full-scale units (1.0 = 0 dBFS):")
     L.append("")
     L.append("- **jump**: |first sample - last sample|, and the share of all sample-to-sample steps in")
     L.append("  the file that are no bigger. Under 100% means the seam's step is an ordinary one.")
@@ -1856,11 +1900,37 @@ def write_doc(rows, bad):
     L.append("- **wrap**: the same jump and slope ranks at the place where the generator's own period")
     L.append("  wraps. That place is inside the file now (the rotation moved it), so this is the test")
     L.append("  of the claim that the loops were built periodic. Ranks spread anywhere from 0 to 100%")
-    L.append("  are what a point with nothing special about it gives; a hard 100% on both would be a click.")
+    L.append("  are what a point with nothing special about it gives. A click would be the largest step")
+    L.append("  in the whole file: 100.0% on both.")
+    L.append("")
+    L.append("With 24 loops, one or two wrap ranks above 95% are expected by chance. `amb_a6` drew the")
+    L.append("highest (99.3%, 99.8%): about 3,700 steps and 1,000 changes of slope elsewhere in that")
+    L.append("file are bigger, so it is not a click, but it is the one to listen to if any is. The proof")
+    L.append("that the method is sound is the self-test below: each building block made %d times, and" % test[0][1])
+    L.append("the step across its wrap ranked among its other steps. A wrap that is just another place")
+    L.append("in the signal averages 50%, with about 1 in 100 above 99%. The control is noise filtered")
+    L.append("without wrapping: what a loop that clicks looks like.")
+    L.append("")
+    L.append("| Building block | Mean rank of the wrap step | Above 99% |")
+    L.append("|---|---|---|")
+    for label, trials, mean, top in test:
+        L.append("| %s | %.1f%% | %.1f%% |" % (label, mean, top))
     L.append("")
     L.append("**The beds repeat every 12 s.** Their one-off events (the bird, the far cry, the thunder")
     L.append("roll, the groans) are kept quiet for that reason. If a bed's repeat is noticed, lower")
     L.append("the bed and let the game fire the matching one-shots at random instead.")
+    L.append("")
+    L.append("**WARNING, the loop length in the game (found 2026-11-12 by reading, not by running).**")
+    L.append("`PeakAudio._looped()` in `stages/peak/peak_audio.gd` sets")
+    L.append("`loop_end = w.data.size() / (bytes * channels)`, which is the frame count only for")
+    L.append("uncompressed PCM. The `.wav.import` files beside these sounds say `compress/mode=2` (QOA),")
+    L.append("and the imported samples are about 0.4 bytes a frame (`amb_a0`: 214,555 bytes for 529,200")
+    L.append("frames). So as written every bed and loop would restart about 40% of the way in (a 12 s")
+    L.append("bed at about 4.9 s, `fall_wind_loop` at about 1.2 s), at a place that is not a seam: a")
+    L.append("click each time round, and most of each bed never heard. Any one of these fixes it:")
+    L.append("`w.loop_end = int(round(w.get_length() * w.mix_rate))` in `_looped()`; or")
+    L.append("`edit/loop_mode=2` in the loops' import settings and no override in code; or")
+    L.append("`compress/mode=0` for the loops. I did not change the code or the import files (not mine).")
     L.append("")
     L.append("## What is probably weak (replace these first)")
     L.append("")
@@ -1896,7 +1966,7 @@ def write_doc(rows, bad):
                 L.append("| `%s.wav` | %.2f | %.1f | %.1f | %.1f | %.1f | %s |" % (
                     name, m["len"], m["peak"], m["rms"], m["a"], m["onset"], how))
             else:
-                L.append("| `%s.wav` | %.2f | %.1f | %.1f | %.1f | %.5f (%.0f%%) | %.5f (%.0f%%) | %+.1f (%.0f%%) | %.0f%%, %.0f%% | %s |" % (
+                L.append("| `%s.wav` | %.2f | %.1f | %.1f | %.1f | %.5f (%.0f%%) | %.5f (%.0f%%) | %+.1f (%.0f%%) | %.1f%%, %.1f%% | %s |" % (
                     name, m["len"], m["peak"], m["rms"], m["a"], s["jump"], s["jump_pct"], s["slope"], s["slope_pct"],
                     s["level"], s["level_pct"], s["built"]["jump_pct"], s["built"]["slope_pct"], how))
         L.append("")

@@ -57,10 +57,11 @@ static func _looped(path: String) -> AudioStream:
 		(s as AudioStreamOggVorbis).loop = true
 	elif s is AudioStreamWAV:
 		var w := s as AudioStreamWAV
-		var bytes := 2 if w.format == AudioStreamWAV.FORMAT_16_BITS else 1
+		# (By its length, not its data's size: imported WAVs are compressed, and a loop end
+		# counted from the bytes fell 40% of the way through.)
 		w.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		w.loop_begin = 0
-		w.loop_end = w.data.size() / (bytes * (2 if w.stereo else 1))
+		w.loop_end = int(round(w.get_length() * w.mix_rate))
 	return s
 
 
