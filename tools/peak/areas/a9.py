@@ -211,8 +211,8 @@ A.spawner("icicle", (-293.0, 834.0), period=11.0, phase=5.0, r=0.3, life=9.0, wa
 #   slot (x -321.4 .. -318.8) and the balcony's snow at the foot of the statue chimney.
 PIV = (-322.8, 832.0)
 A.mover("serac", PIV,
-        [(box_pts(-1.1, 3.55, 2.2, 7.1), ICE),          # the tower
-         (box_pts(-2.33, 3.6, 0.3, 6.8), "snow"),       # the snow up its west side
+        [(box_pts(-0.95, 3.55, 1.9, 7.1), ICE),         # the tower
+         (box_pts(-2.19, 3.6, 0.6, 6.8), "snow"),       # the snow up its west side (0.6 m: a strip of 0.3 read as a white line)
          (box_pts(-1.25, 7.3, 2.5, 0.4), "snow"),       # its cap
          (ngon(0.12, 7.42, 0.22, 6), "rock")],          # a horn of rock at the top corner
         {"type": "tip", "angle": -75.0, "time": 5.0, "trigger": "grab", "reset": 12.0}, model="serac")

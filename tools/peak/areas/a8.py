@@ -176,9 +176,9 @@ A.box(-191.0, 686.4, 0.3, 32.8, "scree")
 A.ledge(-196.0, -190.6, 703.0, "iron", t=0.3)  # the landing, 5.4 m: the cable ends 1.6 m over its west end
 A.box(-190.9, 703.06, 0.5, 0.12, "grease")  # the unease: oil dripped from the sheave above
 tower(-194.0, -191.0, 703.0, 719.4)
-A.wheel("sheave1", (-194.6, 705.8), 1.0, 9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28)  # counter-clockwise: its west side goes DOWN
+A.wheel("sheave1", (-194.6, 705.8), 1.0, 9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28, model="cable_sheave")  # counter-clockwise: its west side goes DOWN
 A.beam((-193.8, 708.4), (-191.2, 707.6), 0.16, "iron")  # brace
-A.wheel("sheave2", (-190.9, 710.3), 1.0, -9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28)  # clockwise: its east side goes DOWN
+A.wheel("sheave2", (-190.9, 710.3), 1.0, -9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28, model="cable_sheave")  # clockwise: its east side goes DOWN
 A.beam((-194.5, 712.8), (-191.9, 712.8), 0.16, "iron")  # rung
 A.ledge(-194.8, -190.8, 714.5, "plank", t=0.3)  # the head: a 4 m rest under the station roof
 A.box(-194.5, 714.56, 0.5, 0.12, "grease")  # the unease

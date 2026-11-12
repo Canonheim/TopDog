@@ -144,7 +144,7 @@ for i, (xa, xb, sp, wt, ph) in enumerate(((-278.8, -276.8, 0.7, 0.8, 0.0), (-273
                                           (-267.2, -265.0, 0.8, 0.7, 2.9))):
     pa, pb = [xa, slag_y(xa) + 0.5], [xb, slag_y(xb) + 0.5]  # raft 0.5 thick: its top rides 0.75 over the slag
     A.mover("balsa%d" % (i + 1), pa, [(box_pts(0, 0, 2.2, 0.5), "iron")],
-            {"type": "path", "pts": [pa, pb], "speed": sp, "mode": "pingpong", "wait": wt, "phase": ph})
+            {"type": "path", "pts": [pa, pb], "speed": sp, "mode": "pingpong", "wait": wt, "phase": ph}, model="slag_raft")
 for cx in (-275.0, -269.0):
     y = slag_y(cx)
     A.solid([(cx - 0.4, y - 0.1), (cx + 0.4, y - 0.1), (cx + 0.05, y + 0.6)], "slag")  # dead crust: a slick tooth, nothing to stand on

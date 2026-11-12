@@ -306,7 +306,7 @@ class Area:
         self._ids.add(i)
         return i
 
-    def mover(self, mid, at, shapes, motion, hold=None, model=None, ko=False, tag=None):
+    def mover(self, mid, at, shapes, motion, hold=None, model=None, ko=False, tag=None, model_flip=False):
         """A body that moves by itself. shapes: [(pts relative to `at`, kind), ...].
         motion: see AUTHORING.md (path / spin / swing / cycle / sink / link / tip / crank)."""
         m = {"id": self._id(mid), "at": _pt(at), "motion": motion,
@@ -317,6 +317,8 @@ class Area:
             m["hold"] = hold
         if model:
             m["model"] = model
+        if model_flip:
+            m["model_flip"] = True  # the model is mirrored left to right (a piston out of the east wall)
         if ko:
             m["ko"] = True  # it knocks out a climber it hits hard
         if tag:
@@ -348,7 +350,8 @@ class Area:
 
     def rope(self, rid, at, length, kind="rope", seg=0.5, bob=None, to=None, planks=0, anchor=None, slack=1.03):
         """A physics rope hung from `at`. kind: rope | chain | vine | cable | banner.
-        bob: {"w":, "h":, "mass":, "kind":} a weight on its end (a chandelier, a bell).
+        bob: {"w":, "h":, "mass":, "kind":, "model":, "model_scale":} a weight on its end (a
+        chandelier, a bell); a model's origin is its hanging point.
         to: its other end, if both ends are tied (a bridge; planks > 0 lays boards on it).
         anchor: a mover's id, if its top rides a mover (a chair, a kite, a balloon)."""
         r = {"id": self._id(rid), "at": _pt(at), "len": _f(length), "kind": kind, "seg": _f(seg), "slack": _f(slack)}

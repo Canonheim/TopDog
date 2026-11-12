@@ -220,7 +220,7 @@ for i, (x, L) in enumerate(CH):
     ay = roof_w(x)
     A.solid(ngon(x, ay + 0.1, 0.45, 6, rot=30), "glass")  # the boss its chain hangs from
     A.rope("chand%d" % (i + 1), (x, ay - 0.3), L - 0.3, kind="chain", seg=0.5,
-           bob={"w": 1.4, "h": 1.2, "mass": 30.0, "kind": "crystal"})
+           bob={"w": 1.4, "h": 1.2, "mass": 30.0, "kind": "crystal", "model": "chandelier_crystal", "model_scale": 0.6})  # (the kit's is 2 x 2.5: at 0.6 it is 1.2 x 1.5)
     A.light(x, ay - L - 0.6, color=WHITE, rng=9.0, energy=1.5, flicker=True)
 rest(-427.5, -424.0, 208.8, h=2.0)  # R3
 A.patch((-427.5, 206.6), (-427.5, 208.1), "crystal", t=0.3)  # a frosted face under its west lip
@@ -424,7 +424,6 @@ for x, y, w, h, lean, z, tone in (
 ):
     prism_card(x, y, w, h, lean, z, tone)
 # The column of 3.9, behind its rings.
-A.card([(-329.3, 240.5), (-326.7, 240.5), (-326.7, 277.5), (-328.0, 279.0), (-329.3, 277.5)], z=-1.4, tone="rock2")
 A.deco("crystal_column", COL_X, 240.5, z=-1.6, size=(2.6, 38.0, 2.6), tone="rock2")
 # Reflections: pale facets close behind the route that give the climber back to himself.
 for x, y, rot, sc in ((-443.2, 190.0, 23.0, 1.2), (-452.5, 182.0, -12.0, 1.0), (-430.0, 192.0, 15.0, 1.1), (-420.0, 204.5, -8.0, 0.9),

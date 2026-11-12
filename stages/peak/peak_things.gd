@@ -146,11 +146,13 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		nodes.append(ab)
 	if nodes.is_empty():
 		return
-	var vis: Node3D = LuchaKit.kit_model(str(def.model)) if def.has("model") else null
+	var vis: Node3D = Peak.kit(str(def.model)) if def.has("model") else null
 	if vis == null:
 		vis = _shapes_mesh(a, def.shapes)
 	elif def.has("model_scale"):
 		vis.scale = Vector3.ONE * float(def.model_scale)
+	elif bool(def.get("model_flip", false)):
+		vis.scale.x = -1.0
 	(nodes[0] as Node3D).add_child(vis)
 	var mo: Dictionary = def.motion
 	var m := {"id": str(def.id), "def": def, "area": str(a.id), "home": home, "nodes": nodes, "vis": vis, "mo": mo, "type": str(mo.type),
@@ -193,7 +195,7 @@ func _build_body(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	rb.position = Vector3(at.x, at.y, 0)
 	root.add_child(rb)
 	Climber.sync_server(rb)
-	var vis: Node3D = LuchaKit.kit_model(str(def.model)) if def.has("model") else null
+	var vis: Node3D = Peak.kit(str(def.model)) if def.has("model") else null
 	if vis == null:
 		vis = _shapes_mesh(a, def.shapes)
 	rb.add_child(vis)
@@ -310,11 +312,13 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		cs.shape = bx
 		bob.add_child(cs)
 		var bkind := str(bd.get("kind", "iron"))
-		var vis: Node3D = LuchaKit.kit_model(str(bd.model)) if bd.has("model") else null
+		var vis: Node3D = Peak.kit(str(bd.model)) if bd.has("model") else null
 		if vis == null:
 			vis = LuchaKit.box(Vector3(w, h, Peak.HALF * 1.2), peak.kind_color(a, bkind))
 		else:
-			vis.position.y = h * 0.5
+			vis.position.y = h * 0.5  # (a hung model's origin is its hanging point)
+			if bd.has("model_scale"):
+				vis.scale = Vector3.ONE * float(bd.model_scale)
 		bob.add_child(vis)
 		if not peak.kind_grips(bkind):
 			bob.set_meta("no_weld", true)

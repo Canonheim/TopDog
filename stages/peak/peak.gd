@@ -24,6 +24,7 @@ const FALL_COUNT_M := 15.0  # a drop of this much is a fall on the tally
 ## metallic max shiney to indicate they are wet"): one colour for everything that can't be
 ## held, in every area, with the house shader's polished glint and rim.
 const SLICK := Color("#3A2616")
+const STRETCH := ["hanger_chain", "counterweight_chain", "balloon_tether"]
 static var _slick_mat: ShaderMaterial = null
 
 
@@ -38,6 +39,104 @@ static func slick_material() -> ShaderMaterial:
 		_slick_mat.set_shader_parameter("fresnel", Color(0.95, 0.8, 0.6, 0.5))
 		_slick_mat.resource_name = "SLICK"
 	return _slick_mat
+
+
+## A KIT MODEL FOR THE PEAK, ITS SLICK PARTS WET. The makers paint what can't be held in
+## the one slick brown, from the atlas's polished rows; the one atlas material draws those
+## rows with a glint so broad a flat face goes white. So the faces painted that brown are
+## cut out into a surface of their own and drawn with slick_material(): a model's slick
+## part and a slick wall of the course are the same stuff, to the eye. Done once a mesh.
+static var _wet_meshes := {}  # the model's Mesh -> {mesh, from: [the old surface of each new one], wet: [is it the slick cut]}
+static var _wet_texels := {}  # atlas texel -> is it the slick brown
+static var _wet_atlas: Image
+
+
+static func kit(model: String) -> Node3D:
+	var n := LuchaKit.kit_model(model)
+	if n != null:
+		if n is MeshInstance3D:
+			_wet(n as MeshInstance3D)
+		for mi in n.find_children("*", "MeshInstance3D", true, false):
+			_wet(mi as MeshInstance3D)
+	return n
+
+
+static func _wet(mi: MeshInstance3D) -> void:
+	var src := mi.mesh as ArrayMesh
+	if src == null or src.get_blend_shape_count() > 0 or mi.skin != null:
+		return
+	if not _wet_meshes.has(src):
+		_wet_meshes[src] = _wet_cut(src)
+	var cut: Dictionary = _wet_meshes[src]
+	if cut.is_empty():
+		return
+	var over: Array = []
+	for i in src.get_surface_count():
+		over.append(mi.get_surface_override_material(i))
+	mi.mesh = cut.mesh
+	for i in (cut.from as Array).size():
+		mi.set_surface_override_material(i, slick_material() if bool(cut.wet[i]) else over[int(cut.from[i])])
+
+
+## The mesh with its slick-brown faces in surfaces of their own; {} when it has none.
+static func _wet_cut(src: ArrayMesh) -> Dictionary:
+	if _wet_atlas == null:
+		_wet_atlas = CelPass.ATLAS.get_image()
+		if _wet_atlas.is_compressed():
+			_wet_atlas.decompress()
+	var w := _wet_atlas.get_width()
+	var h := _wet_atlas.get_height()
+	var out := ArrayMesh.new()
+	var from: Array = []
+	var wet: Array = []
+	var any := false
+	for si in src.get_surface_count():
+		var arrays := src.surface_get_arrays(si)
+		var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV] if arrays[Mesh.ARRAY_TEX_UV] != null else PackedVector2Array()
+		var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+		var dry_i := PackedInt32Array()
+		var wet_i := PackedInt32Array()
+		if src.surface_get_primitive_type(si) == Mesh.PRIMITIVE_TRIANGLES and not uvs.is_empty():
+			if idx.is_empty():
+				idx.resize(uvs.size())
+				for i in uvs.size():
+					idx[i] = i
+			var flag := PackedByteArray()
+			flag.resize(uvs.size())
+			for i in uvs.size():
+				var px := Vector2i(clampi(int(uvs[i].x * w), 0, w - 1), clampi(int(uvs[i].y * h), 0, h - 1))
+				if not _wet_texels.has(px):
+					var c := _wet_atlas.get_pixelv(px)
+					_wet_texels[px] = px.y >= AtlasPalette.MATTE_ROWS and Vector3(c.r - SLICK.r, c.g - SLICK.g, c.b - SLICK.b).length() < 0.05
+				flag[i] = 1 if bool(_wet_texels[px]) else 0
+			for t in range(0, idx.size() - 2, 3):
+				if flag[idx[t]] == 1 and flag[idx[t + 1]] == 1 and flag[idx[t + 2]] == 1:
+					wet_i.append(idx[t])
+					wet_i.append(idx[t + 1])
+					wet_i.append(idx[t + 2])
+				else:
+					dry_i.append(idx[t])
+					dry_i.append(idx[t + 1])
+					dry_i.append(idx[t + 2])
+		if wet_i.is_empty():
+			out.add_surface_from_arrays(src.surface_get_primitive_type(si), arrays)
+			out.surface_set_material(out.get_surface_count() - 1, src.surface_get_material(si))
+			from.append(si)
+			wet.append(false)
+			continue
+		any = true
+		for k in 2:
+			var part := dry_i if k == 0 else wet_i
+			if part.is_empty():
+				continue
+			var a2 := arrays.duplicate()
+			a2[Mesh.ARRAY_INDEX] = part
+			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, a2)
+			out.surface_set_material(out.get_surface_count() - 1, slick_material() if k == 1 else src.surface_get_material(si))
+			from.append(si)
+			wet.append(k == 1)
+	return {"mesh": out, "from": from, "wet": wet} if any else {}
+
 
 var game  # Game
 var course_dir := COURSE  # (the batteries point it at tests/peak_lab/)
@@ -415,7 +514,7 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 	var model := str(d.model)
 	if model == "temple_banner" and d.has("size") and float(d.size[1]) > 8.0:
 		model = "temple_banner_long"
-	var n := LuchaKit.kit_model(model)
+	var n := kit(model)
 	var at := Vector3(float(d.at[0]), float(d.at[1]), float(d.at[2]))
 	if n == null and bool(d.get("skin", false)):
 		return null  # (a skin not landed yet: its solids are drawn instead)
@@ -425,7 +524,7 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 		var count := maxi(1, int(round(span / unit)))
 		var row := Node3D.new()
 		for i in count:
-			var piece: Node3D = n if i == 0 else LuchaKit.kit_model(model)
+			var piece: Node3D = n if i == 0 else kit(model)
 			piece.position.x = -span * 0.5 + (float(i) + 0.5) * span / count
 			piece.scale.x = span / (count * unit)
 			row.add_child(piece)
@@ -456,6 +555,12 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 			if ratio > 1.3 or ratio < 0.75:
 				s *= ratio
 	n.scale = Vector3(-s if bool(d.get("flip", false)) else s, s, s)
+	# A chain or a tether runs exactly from one end of its span to the other: stretched
+	# along its length alone (one model, many spans).
+	if model in STRETCH and not n.has_meta("standin") and d.has("size"):
+		var tall := _model_box(n).size.y
+		if tall > 0.05:
+			n.scale.y = float(d.size[1]) / tall
 	n.name = str(d.model)
 	if model.contains("torch") and not n.has_meta("standin"):
 		_light_torch(n)

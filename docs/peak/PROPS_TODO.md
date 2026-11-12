@@ -1,5 +1,10 @@
 # The Peak's props still without a model (TD Prop Maker's list)
 
+**State, 11-12 afternoon.** Sections 1 and 2 are LANDED and synced (TD Prop Maker, 37 files;
+slick parts in the one brown). Of section 3, `cable_sheave` (Carpenter) and `snail_wall`
+(Environment Maker) are landed and named in the course; the Building Maker's nine are still
+to come. What is left to make is section 3's Building Maker rows only.
+
 36 names the course uses that have no model yet. The game draws a plain card (or, for
 moving things, the bare collider shapes) until `kit/models/<name>.glb` exists. Land
 each in `Top Dog Kit\models` under its exact name and it goes live at the next sync

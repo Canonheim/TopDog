@@ -426,6 +426,25 @@ func _water_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 	return n
 
 
+static var _puff_tex: GradientTexture2D
+
+
+## A soft round blob, bright in the middle and gone at the rim.
+static func _puff() -> GradientTexture2D:
+	if _puff_tex == null:
+		var g := Gradient.new()
+		g.offsets = PackedFloat32Array([0.0, 0.55, 1.0])
+		g.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 0.6), Color(1, 1, 1, 0)])
+		_puff_tex = GradientTexture2D.new()
+		_puff_tex.gradient = g
+		_puff_tex.fill = GradientTexture2D.FILL_RADIAL
+		_puff_tex.fill_from = Vector2(0.5, 0.5)
+		_puff_tex.fill_to = Vector2(1.0, 0.5)
+		_puff_tex.width = 64
+		_puff_tex.height = 64
+	return _puff_tex
+
+
 func _particles(c: Color, size: float, amount: int, life: float) -> CPUParticles3D:
 	var p := CPUParticles3D.new()
 	var q := QuadMesh.new()
@@ -433,6 +452,8 @@ func _particles(c: Color, size: float, amount: int, life: float) -> CPUParticles
 	p.mesh = q
 	var m := _flat(c, 0.8)
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	if size >= 2.0:
+		m.albedo_texture = _puff()  # (mist, steam, cloud: a soft round puff, not a grey square)
 	p.material_override = m
 	p.amount = maxi(1, amount)
 	p.lifetime = life

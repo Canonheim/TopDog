@@ -215,7 +215,7 @@ for i in range(5):
         (box_pts(_n[0] * 0.17, _n[1] * 0.17, 1.9, 0.34, _tilt), "slime"),  # the foot, on the wall
         (ngon(_u[0] * 1.0 + _n[0] * 0.38, _u[1] * 1.0 + _n[1] * 0.38, 0.24, 6), "slime"),  # the head
     ], {"type": "path", "pts": [list(lo), list(hi)], "speed": 0.45, "mode": "pingpong", "wait": 1.6,
-        "phase": (SNAIL_ROUND / 2.0) * (i % 2)})
+        "phase": (SNAIL_ROUND / 2.0) * (i % 2)}, model="snail_wall")
 _s1 = (WALL_FOOT[0] + _u[0] * 3.4 + _n[0] * 0.7, WALL_FOOT[1] + _u[1] * 3.4 + _n[1] * 0.7)  # snail 1's shell, at its top
 _s2 = (WALL_FOOT[0] + _u[0] * 5.7 + _n[0] * 0.7, WALL_FOOT[1] + _u[1] * 5.7 + _n[1] * 0.7)  # snail 2's, at its bottom
 A.challenge("4.5", "La Baba", (-228.0, 311.0), 3, "B",

@@ -102,7 +102,7 @@ for k in range(1, 6):
         at = (x1 - 1.5, top - 0.5)
         A.mover("step%d" % k, at, [(box_pts(0, 0, 3.0, 1.0), "stone")],
                 {"type": "path", "pts": [list(at), [at[0] - 2.6, at[1]]], "speed": 1.3, "mode": "once",
-                 "trigger": "board", "reset": 4.0})
+                 "trigger": "board", "reset": 4.0}, model="temple_step")
     else:
         A.ledge(x1 - 3.0, x1, top, "stone", t=1.0)
 A.ledge(-354.0, -347.0, 381.0, "stone", t=1.0)    # the sixth step and the landing before the mask
@@ -155,7 +155,7 @@ A.challenge("5.2", "La Máscara", (-349.5, 381.0), 3, "B", moves=[
 # plunger and the brow catch the lucky (S).
 PL = (-367.65, 394.4)
 A.mover("plunger", PL, [(box_pts(0, 0, 2.3, 4.0), "stone")],
-        {"type": "cycle", "to": [0, 3.6], "t_out": 2.4, "hold_out": 2.5, "t_in": 2.4, "hold_in": 2.7, "phase": 0.0})
+        {"type": "cycle", "to": [0, 3.6], "t_out": 2.4, "hold_out": 2.5, "t_in": 2.4, "hold_in": 2.7, "phase": 0.0}, model="temple_plunger")
 PIST = []   # (id, wall, top y, phase)
 for i in range(9):
     PIST.append(("piston%d" % (i + 1), "W" if i % 2 == 0 else "E", 401.2 + 1.2 * i, (1.9 + 2.0 * i) % 10.0))
@@ -165,7 +165,8 @@ for pid, wall, top, ph in PIST:
     else:
         at, to = (-364.8, top - 0.45), [-3.2, 0]    # hidden in the pier; tip reaches x -369.7
     A.mover(pid, at, [(box_pts(0, 0, 3.4, 0.9), "stone")],
-            {"type": "cycle", "to": to, "t_out": 1.0, "hold_out": 4.0, "t_in": 1.0, "hold_in": 4.0, "phase": ph})
+            {"type": "cycle", "to": to, "t_out": 1.0, "hold_out": 4.0, "t_in": 1.0, "hold_in": 4.0, "phase": ph},
+            model="temple_piston", model_flip=(wall == "E"))
 m53 = [["reach", [-368.8, 400.0], [-368.8, 401.2]]]
 for i in range(8):
     xa = -368.8 if i % 2 == 0 else -369.7
@@ -186,7 +187,7 @@ def gear(gid, cx, cy, rpm, phase):
     for k in range(12):
         a = k * 30.0
         shapes.append((box_pts(math.cos(math.radians(a)) * 2.65, math.sin(math.radians(a)) * 2.65, 0.9, 0.55, a), "stone"))
-    A.mover(gid, (cx, cy), shapes, {"type": "spin", "rpm": rpm, "phase": phase})
+    A.mover(gid, (cx, cy), shapes, {"type": "spin", "rpm": rpm, "phase": phase}, model="temple_gear")
 
 
 GEARS = [("gear1", -364.6, 416.4, 2.5, 0.0), ("gear2", -368.56, 420.36, -2.5, 15.0),
@@ -272,9 +273,9 @@ A.rope("gallery_chain", (-311.0, 457.0), 12.4, kind="chain")
 # while slab B rises 3 m. Fling from A's west lip, low, to B, high; B then sinks back at
 # 0.35 m/s, and the exit ledge can only be reached from it while it is still up.
 A.mover("cw_a", (-354.8, 454.2), [(box_pts(0, 0, 2.4, 0.8), "stone")],
-        {"type": "sink", "to": [0, -3.0], "speed": 1.0, "back": 0.35})
+        {"type": "sink", "to": [0, -3.0], "speed": 1.0, "back": 0.35}, model="temple_slab")
 A.mover("cw_b", (-360.75, 451.2), [(box_pts(0, 0, 2.5, 0.8), "stone")],
-        {"type": "link", "to": "cw_a", "scale": -1.0})
+        {"type": "link", "to": "cw_a", "scale": -1.0}, model="temple_slab")
 A.ledge(-366.0, -362.3, 455.0, "stone", t=0.8)               # XL: the exit ledge
 A.patch((-363.2, 455.0), (-362.3, 455.0), "wet", t=0.12)
 A.deco("counterweight_chain", -354.8, 461.0, z=-0.6, size=(0.15, 12.0, 0.15), tone="iron")
@@ -319,7 +320,7 @@ for k in range(1, 6):
     top = 461.7 + 1.2 * k
     A.mover("phantom%d" % k, (left + 1.1 + 1.9, top - 0.6), [(box_pts(0, 0, 2.2, 1.2), "stone")],
             {"type": "cycle", "to": [-1.9, 0], "t_out": 0.3, "hold_out": 3.45, "t_in": 0.3, "hold_in": 0.95,
-             "phase": (COUNT * (k - 1)) % 5.0})
+             "phase": (COUNT * (k - 1)) % 5.0}, model="temple_block")
 m59 = [["reach", [-340.0, 461.7], [-340.0, 462.9]]]
 for k in range(1, 5):
     xk = -340.0 + 1.7 * k
@@ -340,7 +341,7 @@ A.deco("drum_temple", -342.5, 462.6, z=-1.2, size=(1.6, 1.8, 1.6), tone="accent"
 # off the exit ledge, a ladder that stops 4.6 m short of the beam. Brittle knobs sit in
 # the wall behind them.
 A.ledge(-323.5, -314.4, 468.9, "stone", t=0.5)
-A.wheel("altar_cross", (-318.0, 474.4), 5.0, 1.6, spokes=4, kind="stone", spoke_t=0.5, hub=0.9, phase=45.0, ko=True)
+A.wheel("altar_cross", (-318.0, 474.4), 5.0, 1.6, spokes=4, kind="stone", spoke_t=0.5, hub=0.9, phase=45.0, ko=True, model="altar_cross")
 WALL_X = -312.72
 for y in (469.4, 470.8, 472.2):
     A.hold(WALL_X, y, 0.25, "stone")
