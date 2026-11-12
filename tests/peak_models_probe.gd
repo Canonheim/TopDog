@@ -2,7 +2,8 @@ extends Node
 ## THE PEAK'S LIVING THINGS, IN THE GAME'S LIGHT (the TD Environment Maker): stands the kit
 ## models of PARTS.md's "TD Environment Maker" table in rows before a plain card, under
 ## the game's own cel shading and ink, and shoots each row. A missing model shows as a
-## red box of its table size. -- --out=DIR (pm_<row>.png)
+## red box of its table size. Models come through the Peak's own loader (Peak.kit), and the
+## "slick" row stands their slick beside a block of the course's own. -- --out=DIR (pm_<row>.png)
 ## [name, width, height, hangs from the top or stands at its centre (else on its base)]
 const ROWS := {
 	"fungus": [["mushroom_cap_s", 2.0, 1.5, ""], ["mushroom_cap_m", 4.0, 2.5, ""], ["mushroom_cap_l", 7.0, 4.0, ""], ["puffball", 1.2, 1.2, "centre"],
@@ -12,6 +13,7 @@ const ROWS := {
 	"giant": [["mushroom_giant", 16.0, 22.0, ""], ["giant_snail", 2.4, 1.8, ""], ["mushroom_cap_l", 7.0, 4.0, ""]],
 	"cliffs": [["vulture", 2.6, 1.5, ""], ["nest", 1.8, 0.6, ""], ["burro", 1.8, 1.5, ""], ["shrub", 1.0, 0.8, ""], ["boulder", 1.2, 1.2, "centre"], ["dead_tree", 6.0, 8.0, ""]],
 	"ice": [["icicle_big", 0.6, 2.5, "top"], ["ice_block", 2.0, 2.0, ""], ["snow_cornice", 6.0, 2.0, ""]],
+	"slick": [["snail_wall", 1.6, 2.6, "wall"], ["SLICK", 1.2, 2.4, ""], ["giant_snail", 2.4, 1.8, ""], ["mushroom_cap_s", 2.0, 1.5, ""]],
 }
 
 
@@ -49,7 +51,17 @@ func _ready() -> void:
 		for r in row:
 			var w: float = r[1]
 			var h: float = r[2]
-			var n: Node3D = LuchaKit.kit_model(str(r[0]))
+			var n: Node3D = null
+			if str(r[0]) == "SLICK":  # the course's own slick, to judge the models' slick against
+				var blk := PeakBackdrop._box(Vector3(w, h, 1.2), Color.WHITE, Vector3(0.0, h * 0.5, 0.0))
+				for c in blk.find_children("*", "GeometryInstance3D", true, false) + [blk]:
+					if c is GeometryInstance3D:
+						(c as GeometryInstance3D).material_override = Peak.slick_material()
+				n = Node3D.new()
+				n.add_child(blk)
+			else:
+				# (the Peak's own loader: a model's slick-brown faces wear the course's wet-mud material)
+				n = Peak.kit(str(r[0]))
 			if n == null:
 				n = PeakBackdrop._box(Vector3(w, h, w), Color("#D8262E"), Vector3(0.0, h * 0.5, 0.0))
 				var wrap := Node3D.new()
@@ -61,6 +73,8 @@ func _ready() -> void:
 				y = tall * 0.9 if h < tall * 0.9 else h
 			elif str(r[3]) == "centre":
 				y = h * 0.5
+			elif str(r[3]) == "wall":  # its origin is a point on the wall it crawls: about the middle of its height
+				y = 1.05
 			n.position = Vector3(x + w * 0.5 + 0.5, y, 0.0)
 			holder.add_child(n)
 			x += w + 1.0
