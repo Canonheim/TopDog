@@ -57,11 +57,11 @@ func _build() -> void:
 	menu.add_choice("HEAD", ["PUG", "SPIRAL"], 0, func(i): _set_choice("head", i))
 	menu.add_choice("SKIN", Wardrobe.SKIN_NAMES, 0, func(i): _set_choice("skin", i))
 	menu.add_choice("SPEEDO", Wardrobe.SUIT_NAMES, 0, func(i): _set_choice("speedo", i))
-	menu.add_choice("LOCK IN EFFECT", Wardrobe.EFFECT_NAMES, 0, func(i): _set_choice("effect", Wardrobe.EFFECTS[i]))
+	menu.add_choice("EFFECT", Wardrobe.EFFECT_NAMES, 0, func(i): _set_choice("effect", Wardrobe.EFFECTS[i]))
 	for i in [1, 2, 3, 4]:
 		menu.items[i].value_only = true  # the value alone: the climber beside them shows what each changes
-	menu.add_button("ADD NEW CLIMBER", _add_climber)
-	menu.add_button("DELETE CLIMBER", _ask_delete)
+	menu.add_button("NEW CLIMBER", _add_climber)
+	menu.add_button("DELETE", _ask_delete)
 	menu.add_button("BACK", func(): main.show_screen("title"))
 	stage = Node3D.new()
 	stage.name = "CustomizationDisplay"
@@ -147,7 +147,7 @@ func _refresh(direction := 0) -> void:
 	menu.items[4].index = Wardrobe.EFFECTS.find(p.effect)
 	for i in 5:
 		menu._relabel(i)
-	menu.set_label(5, "ADD NEW CLIMBER" if Wardrobe.profiles.size() < 100 else "CLIMBER LIMIT REACHED")
+	menu.set_label(5, "NEW CLIMBER" if Wardrobe.profiles.size() < 100 else "CLIMBER LIMIT REACHED")
 	menu.refresh()
 	if status != null:
 		status.free()

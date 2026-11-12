@@ -115,10 +115,15 @@ func clear_items() -> void:
 func _add(it: Dictionary) -> int:
 	var root := Node3D.new()
 	var belt: Node3D = it.get("plate", null)
+	if belt == null and (it.kind == "choice" or it.kind == "choice_button"):
+		belt = LuchaKit.belt_picker()  # (null without the kit piece: a belt and loose arrows)
+		if belt != null:
+			it.picker = true
+			it.arrows = belt.get_meta("arrows")
 	if belt == null:
 		belt = LuchaKit.belt_button(BELT_W)
 	root.add_child(belt)
-	if it.kind == "choice" or it.kind == "choice_button":
+	if (it.kind == "choice" or it.kind == "choice_button") and not it.get("picker", false):
 		# The < > cues either side: left / right flips this one.
 		var half: float = float(belt.get_meta("width", BELT_W)) * 0.5 + 0.22
 		var arrows: Array = []
@@ -139,7 +144,7 @@ func _add(it: Dictionary) -> int:
 	area.monitoring = false
 	var col := CollisionShape3D.new()
 	var bs := BoxShape3D.new()
-	bs.size = Vector3(float(belt.get_meta("width", BELT_W)) + (0.95 if it.has("arrows") else 0.2), maxf(0.55, float(belt.get_meta("height", 0.55))), 0.3)
+	bs.size = Vector3(float(belt.get_meta("width", BELT_W)) + (0.95 if it.has("arrows") and not it.get("picker", false) else 0.2), maxf(0.55, float(belt.get_meta("height", 0.55))), 0.3)
 	col.shape = bs
 	area.add_child(col)
 	root.add_child(area)
@@ -160,6 +165,21 @@ func _relabel(i: int) -> void:
 		ch.queue_free()
 	if it.get("custom_text", false):
 		return  # the plate carries its own words
+	if it.get("picker", false):
+		# The picker: the label on its navy cell, the value alone on the red face.
+		var pb: Node3D = it.belt
+		var fz: float = pb.get_meta("face_z")
+		var la: Vector2 = pb.get_meta("label_at")
+		var va: Vector2 = pb.get_meta("value_at")
+		var lt := LuchaKit.fit_words(str(it.label), la.y, float(pb.get_meta("label_size")), LuchaKit.CREAM, LuchaKit.INK)
+		lt.position = Vector3(la.x, 0, fz + 0.01)
+		LuchaKit.center_digits(lt)
+		it.text_node.add_child(lt)
+		var vt := LuchaKit.fit_words(str(it.options[it.index]), va.y, float(pb.get_meta("value_size")), LuchaKit.CREAM, LuchaKit.INK)
+		vt.position = Vector3(va.x, 0, fz + 0.01)
+		LuchaKit.center_digits(vt)
+		it.text_node.add_child(vt)
+		return
 	var s: String = it.label
 	if it.kind == "choice" or it.kind == "choice_button":
 		s = "%s  %s" % [it.label, str(it.options[it.index])]  # left / right flips it; the stars on the belt say so
@@ -350,7 +370,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_activate(h)
 			elif it.has("arrows"):
 				var local := _ray_local(h, (event as InputEventMouseButton).position)
-				var half: float = float(it.belt.get_meta("width", BELT_W)) * 0.5
+				var half: float = float(it.belt.get_meta("arrow_x")) if it.get("picker", false) else float(it.belt.get_meta("width", BELT_W)) * 0.5
 				if absf(local.x) > half:
 					_cycle(-1 if local.x < 0.0 else 1)
 				else:
@@ -407,6 +427,13 @@ func _cycle(dir: int) -> void:
 	_relabel(focus)
 	Sound.play("ui_click", -8.0)
 	_punch(focus)
+	if it.get("picker", false) and (it.arrows as Array).size() == 2:
+		# The pressed arrow nudges outward.
+		var a: Node3D = it.arrows[0 if dir < 0 else 1]
+		var home: Vector3 = a.get_meta("home")
+		var tw := create_tween()
+		tw.tween_property(a, "position:x", home.x + signf(home.x) * 0.04, 0.05)
+		tw.tween_property(a, "position:x", home.x, 0.05)
 	if it.on_change.is_valid():
 		it.on_change.call(it.index)
 
@@ -490,9 +517,14 @@ func _process(delta: float) -> void:
 				if is_instance_valid(rings[k]):
 					(rings[k] as Node3D).visible = i == focus and k == int(it.get("stop", 0))
 		if it.has("arrows"):
+			var picker: bool = it.get("picker", false)
 			for a in it.arrows:
-				(a as Node3D).visible = true
-				(a as Node3D).scale = Vector3.ONE * (1.0 + 0.12 * sin(t * 8.0))
+				(a as Node3D).visible = not it.get("locked", false)
+				if picker:
+					# The picker's own cues pulse on the focused belt only (1 to 1.15, 4 Hz).
+					(a as Node3D).scale = Vector3.ONE * ((1.075 + 0.075 * sin(t * TAU * 4.0)) if i == focus else 1.0)
+				else:
+					(a as Node3D).scale = Vector3.ONE * (1.0 + 0.12 * sin(t * 8.0))
 		if _open_t > 0.6:
 			n.scale = n.scale.lerp(Vector3.ONE * want, 1.0 - exp(-delta * 12.0))
 		n.rotation.z = (sin(t * 5.0 + i) * 0.035) if i == focus else lerpf(n.rotation.z, sin(t * 1.3 + i * 0.7) * 0.01, 0.1)

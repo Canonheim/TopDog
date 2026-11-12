@@ -28,6 +28,8 @@ const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaz
 const OWNED := ["practice_ai", "practice_settings", "customize", "title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat", "controls", "options"]
 const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
 const CARD_DY := 2.3  # and 2.05 m with its mask crest
+const CARD_ROW := 5  # Play together: one row of five (the UI pass, batch 3)
+const CARD_ROW_DX := 1.35
 
 var main: Node
 var cam: Camera3D
@@ -1558,7 +1560,7 @@ func _build_menus() -> void:
 	# Player cards (Play together) and the podium (results) hang in the same frame.
 	_cards = Node3D.new()
 	cam.add_child(_cards)
-	_cards.position = Vector3(0.2, 0.75, -MENU_DIST)
+	_cards.position = Vector3(0.2, 0.30, -MENU_DIST)  # (the UI pass, batch 3: the crests clear the banner)
 	_cards.scale = Vector3.ONE * UI_SCALE
 	_cards.visible = false
 	_podium = Node3D.new()
@@ -1621,7 +1623,7 @@ func _refresh_cards() -> void:
 	for s in mini(Players.slots.size(), 8):
 		var slot: Dictionary = Players.slots[s]
 		var card := LuchaKit.card_frame(LuchaKit.CREAM, slot.tint)
-		card.position = Vector3((s % 4) * CARD_DX, -(s / 4) * CARD_DY, 0)
+		card.position = _card_at(s)
 		card.rotation.z = sin(s * 1.7) * 0.05
 		var num := LuchaKit.poster_text("P%d" % (s + 1), 0.24, LuchaKit.CREAM, LuchaKit.INK, 0.04)
 		num.position = Vector3(0, 0.56, 0.06)  # on the band (y 0.37..0.71)
@@ -1643,13 +1645,18 @@ func _refresh_cards() -> void:
 	if Players.slots.size() < 8:
 		var s := Players.slots.size()
 		var empty := LuchaKit.card_frame(Color(0.9, 0.86, 0.78), LuchaKit.INK)
-		empty.position = Vector3((s % 4) * CARD_DX, -(s / 4) * CARD_DY, 0)
+		empty.position = _card_at(s)
 		var join := LuchaKit.poster_text("PRESS A\nOR SPACE", 0.12, LuchaKit.RED, LuchaKit.CREAM, 0.02)
 		join.position = Vector3(0, 0.05, 0.05)
 		empty.add_child(join)
 		empty.set_meta("pulse", true)
 		_cards.add_child(empty)
 	no_shadows(_cards)
+
+
+## A Play together card's place: one row of five, 1.35 apart, a second row only past five.
+func _card_at(s: int) -> Vector3:
+	return Vector3(-1.7 + (s % CARD_ROW) * CARD_ROW_DX, -(s / CARD_ROW) * CARD_DY, 0)
 
 
 ## Everything under `n` stops casting shadows (UI pieces hang in the sun's light).

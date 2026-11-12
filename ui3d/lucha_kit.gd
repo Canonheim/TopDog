@@ -424,6 +424,47 @@ static func belt_button(width := 2.2) -> Node3D:
 	return root
 
 
+## K1: THE PICKER BELT (the UI pass, batch 2): a choice's own control, wider than a
+## belt. The label on a navy cell, the value alone on the red face, its own arrow cues
+## inside the plate (they pulse on the focused belt), the pug crest as belt_button's.
+## Null when the kit has no picker (Menu3D falls back to a belt and loose arrows).
+static func belt_picker() -> Node3D:
+	var k := kit_model("belt_picker")
+	if k == null:
+		return null
+	var holder := Node3D.new()
+	var s := BELT_KIT_SCALE
+	k.scale = Vector3.ONE * s
+	holder.add_child(k)
+	holder.set_meta("picker", true)
+	holder.set_meta("face_z", 0.046 * s)
+	holder.set_meta("width", 2.36 * s)
+	holder.set_meta("height", 0.614 * s)
+	holder.set_meta("arrow_x", 0.80 * s)  # a click past this is the arrow
+	holder.set_meta("label_at", Vector2(-0.49 * s, 0.40 * s))  # centre x, fit width
+	holder.set_meta("value_at", Vector2(0.255 * s, 0.84 * s))
+	holder.set_meta("label_size", 0.14 * s)
+	holder.set_meta("value_size", 0.16 * s)
+	var arrows: Array = []
+	for nm in ["picker_left", "picker_right"]:
+		var a := k.find_child(nm, true, false) as Node3D
+		if a != null:
+			a.set_meta("home", a.position)
+			arrows.append(a)
+	holder.set_meta("arrows", arrows)
+	var crest := k.find_child("picker_crest", true, false)
+	if crest != null:
+		holder.set_meta("crest", crest)
+		(crest as Node3D).visible = false
+	return holder
+
+
+## Words fitted by the font's own measure to `w` (never past `max_size`).
+static func fit_words(t: String, w: float, max_size: float, face := CREAM, back := INK) -> Node3D:
+	var size := minf(max_size, w / maxf(text_width(t, 1.0), 0.001))
+	return poster_text(t, size, face, back, 0.02)
+
+
 ## A6: a fight-poster card (player slots).
 static func card_frame(face := CREAM, band := RED) -> Node3D:
 	var k := kit_model("card_frame")
