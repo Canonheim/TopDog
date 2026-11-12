@@ -33,6 +33,8 @@ const NEAR := 1.25  # metres from the lens
 const TOP_M := 1000.0
 const AREAS := 11
 const FELL_MIN := 15.0
+const FELL_STUB := 30.0  # under this the receipt is a stub: the number only, and it goes back in
+const STAMP := Color("#C8102E")  # rubber-stamp ink
 
 const KRAFT := Color("#B8895A")
 const KRAFT_DARK := Color("#8A6238")
@@ -46,7 +48,7 @@ const TRAIL_DIM := Color("#2B3A66")
 const PAPEL := [Color("#E0287A"), Color("#1FB8AE"), Color("#FFC928"), Color("#7CC83A"), Color("#8A3FC0"), Color("#F28A1E")]
 
 # ---- the altimeter's layout, in its own units (origin: its bottom-left corner) ----
-const ALT_SCALE := 0.9
+const ALT_SCALE := 1.0
 const ALT_MARGIN := Vector2(0.28, 0.2)
 const MOUNTAIN := [Vector2(0.0, 0.0), Vector2(0.22, 0.40), Vector2(0.36, 0.58), Vector2(0.50, 0.98),
 	Vector2(0.66, 1.36), Vector2(0.78, 1.74), Vector2(0.90, 2.15), Vector2(1.02, 1.86), Vector2(1.12, 1.52),
@@ -61,24 +63,25 @@ const MOUNTAIN_FANG := [Vector2(1.56, 1.50), Vector2(1.66, 1.02), Vector2(1.82, 
 const SUMMIT_AT := Vector2(0.90, 2.15)
 ## The trail: [share of 1,000 m, x, y]. It walks the real route: in at the foot, west
 ## through the caves, back east to the cliffs, up the cableway side to the bell.
-const TRAIL := [[0.0, 1.72, 0.07], [0.10, 1.30, 0.24], [0.27, 0.68, 0.58], [0.48, 0.98, 1.03],
+const TRAIL := [[0.0, 1.50, 0.10], [0.10, 1.22, 0.26], [0.27, 0.68, 0.58], [0.48, 0.98, 1.03],
 	[0.58, 1.18, 1.25], [0.78, 0.90, 1.68], [0.90, 0.87, 1.93], [1.0, 0.90, 2.10]]
-const ODO_S := 1.25  # the kit's hud_odometer case (1.9 x 0.72) as the drum box
-const CASE_AT := Vector3(2.92, 0.47, 0.0)
-const CASE_TOP := 0.92
+const ODO_S := 1.45  # the kit's hud_odometer case (1.9 x 0.72) as the drum box
+const CASE_AT := Vector3(3.13, 0.54, 0.0)
+const CASE_TOP := 1.06
+const DETENT := 0.25  # the units drum rests on its digit, then rolls in the metre's last quarter
 const DIGIT_STEP := TAU / 10.0
-const TICKET_W := 2.25
-const TICKET_H := 0.86
+const TICKET_W := 2.6
+const TICKET_H := 1.0
 const TICKET_HOLD := 4.6
 
 ## The receipt's one dry line, by how far you fell. {b}: the fall in burros (1.5 m
 ## each, stacked); {l}: in luchadors (1.8 m).
 const FELL_LINES := [
-	[40.0, ["NOTED.", "A SMALL ONE.", "THE MOUNTAIN SAW THAT.", "{l} LUCHADORS TALL.", "IT HAPPENS."]],
-	[120.0, ["THAT ONE COUNTED.", "THE SCENIC ROUTE.", "{b} BURROS, STACKED.", "YOU KNOW THIS PART.", "A FAIR DISTANCE."]],
-	[350.0, ["THE RIVER SAYS HELLO.", "THE VIEW WAS NICE, THOUGH.", "{b} BURROS. WE COUNTED.", "THE MOUNTAIN KEEPS THE CHANGE.", "WELL. THERE IT GOES."]],
+	[60.0, ["NOTED.", "A SMALL ONE.", "THE MOUNTAIN SAW THAT.", "{l} LUCHADORS TALL.", "IT HAPPENS.", "AY."]],
+	[150.0, ["WE WROTE IT DOWN.", "THE SCENIC ROUTE.", "{b} BURROS, STACKED.", "YOU KNOW THIS PART.", "KEEP THIS FOR YOUR RECORDS."]],
+	[350.0, ["GRAVITY SENDS ITS REGARDS.", "THE VIEW WAS NICE, THOUGH.", "{b} BURROS. WE COUNTED.", "KEEP THE CHANGE.", "WELL. THERE IT GOES.", "NO REFUNDS."]],
 	[800.0, ["THE DONKEY HEARD.", "TAKE A MOMENT.", "{l} LUCHADORS, END TO END.", "WE'LL SAY NO MORE.", "A LOT OF MOUNTAIN, THAT."]],
-	[INF, ["ALL OF IT, THEN.", "THE BELL WILL WAIT.", "THE WHOLE TOWN FELT THAT.", "FROM THE TOP, AS THEY SAY."]],
+	[INF, ["ALL OF IT, THEN.", "THE BELL WILL WAIT.", "THE TOWN LIT A CANDLE.", "FROM THE TOP, AS THEY SAY.", "HASTA ABAJO."]],
 ]
 
 var lucha: LuchaUI
@@ -91,6 +94,8 @@ var ticket_text := ""
 var summit_up := false
 var paused := false
 var longest_fall := 0.0
+## The receipts' serial: the falls so far (set_paused brings the game's own count).
+var falls_seen := 0
 
 var _near: Node3D
 var _mats := {}
@@ -99,6 +104,7 @@ var _atlas_mats := {}
 var _alt: Node3D
 var _drums: Array = []
 var _minus: Node3D
+var _first_digits: Node3D  # the left drum's digits (hidden behind the minus)
 var _marker: Node3D
 var _pennant: Node3D
 var _dots: Array = []  # [MeshInstance3D, share]
@@ -190,7 +196,8 @@ func show_area(area_name: String, number: int) -> void:
 	for ch in _area.get_children():
 		ch.queue_free()
 	var card := _kit("hud_banner")
-	var s := 2.0
+	var s := 1.55
+	var foot := -0.5
 	if card != null:
 		card.scale = Vector3.ONE * s
 		_area.add_child(card)
@@ -198,25 +205,26 @@ func show_area(area_name: String, number: int) -> void:
 		LuchaKit.center_digits(words)
 		words.position = Vector3(0, 0, 0.07 * s + 0.02)
 		_area.add_child(words)
+		foot = -0.238 * s
 	else:
-		_area.add_child(_card_rect(7.4, 0.9, LuchaKit.RED))
-		var words := LuchaKit.fit_words(area_name.to_upper(), 6.8, 0.42, LuchaKit.CREAM, LuchaKit.INK)
+		_area.add_child(_card_rect(5.8, 0.8, LuchaKit.RED))
+		var words := LuchaKit.fit_words(area_name.to_upper(), 5.3, 0.36, LuchaKit.CREAM, LuchaKit.INK)
 		LuchaKit.center_digits(words)
 		words.position = Vector3(0, 0, 0.06)
 		_area.add_child(words)
-	# The chip under it: which area of the eleven.
+	# The chip docked under it: which area of the eleven.
 	var chip_s := "THE TRAILHEAD" if number <= 0 else ("THE SUMMIT" if number >= AREAS else "AREA %d OF %d" % [number, AREAS])
 	var chip := Node3D.new()
-	chip.position = Vector3(0, -0.98, 0.04)
-	chip.add_child(_card_rect(2.3, 0.36, NAVY))
-	var cw := LuchaKit.fit_words(chip_s, 2.0, 0.19, LuchaKit.CREAM, LuchaKit.INK)
+	chip.position = Vector3(0, foot - 0.13, 0.03)
+	chip.add_child(_card_rect(2.0, 0.34, NAVY))
+	var cw := LuchaKit.fit_words(chip_s, 1.75, 0.19, LuchaKit.CREAM, LuchaKit.INK)
 	LuchaKit.center_digits(cw)
 	cw.position = Vector3(0, 0, 0.05)
 	chip.add_child(cw)
 	_area.add_child(chip)
 	LuchaUI.no_shadows(_area)
 	_area.visible = true
-	_area.rotation.z = randf_range(-0.05, 0.05)
+	_area.rotation.z = randf_range(-0.04, 0.04)
 	area_up = true
 	_area_off = 3.2
 	if _area_tw != null and _area_tw.is_valid():
@@ -245,7 +253,7 @@ func milestone(metres: int) -> void:
 	_seal.add_child(_prism(star, 0.04, LuchaKit.GOLD_DARK, Vector3(0.02, -0.03, -0.02)))
 	_seal.add_child(_prism(star, 0.04, LuchaKit.GOLD))
 	_seal.add_child(_disc(0.36, PAPER, Vector3(0, 0, 0.03)))
-	var tag := LuchaKit.fit_words("NEW BEST", 0.5, 0.1, LuchaKit.INK, PAPER)
+	var tag := LuchaKit.fit_words("NEW BEST", 0.56, 0.125, LuchaKit.INK, PAPER)
 	tag.position = Vector3(0, 0.17, 0.06)
 	_seal.add_child(tag)
 	var num := LuchaKit.fit_words("%d m" % metres, 0.6, 0.24, LuchaKit.RED, LuchaKit.INK)
@@ -253,8 +261,9 @@ func milestone(metres: int) -> void:
 	num.position = Vector3(0, -0.06, 0.06)
 	_seal.add_child(num)
 	LuchaUI.no_shadows(_seal)
-	var at := _trail_at(clampf(float(metres) / TOP_M, 0.0, 1.0))
-	_seal.position = Vector3(clampf(at.x + 0.85, 0.7, 3.2), clampf(at.y + 0.6, 1.0, 2.4), 0.5)
+	# Above the drums (where the receipt prints): the mountain and the pennant stay in view.
+	_drop_ticket()
+	_seal.position = Vector3(CASE_AT.x, CASE_TOP + 0.78, 0.5)
 	_seal.visible = true
 	_seal.scale = Vector3.ONE * 0.01
 	_seal.rotation.z = -0.5
@@ -262,7 +271,7 @@ func milestone(metres: int) -> void:
 		_seal_tw.kill()
 	_seal_tw = _tw()
 	_seal_tw.set_parallel(true)
-	_seal_tw.tween_property(_seal, "scale", Vector3.ONE * 1.25, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_seal_tw.tween_property(_seal, "scale", Vector3.ONE * 1.45, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_seal_tw.tween_property(_seal, "rotation:z", 0.12, 0.28).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_seal_tw.chain().tween_interval(2.0)
 	_seal_tw.chain().tween_property(_seal, "scale", Vector3.ONE * 0.01, 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
@@ -277,12 +286,14 @@ func milestone(metres: int) -> void:
 func fell(metres: float) -> void:
 	if metres < FELL_MIN or summit_up:
 		return
+	falls_seen += 1
 	var record := metres > longest_fall and metres >= 60.0 and longest_fall > 0.0
 	longest_fall = maxf(longest_fall, metres)
 	_shake_t = 0.0
 	_shake_amp = clampf(0.5 + metres / 250.0, 0.6, 2.4)
 	_stars_t = clampf(1.2 + metres / 150.0, 1.4, 5.0)
-	_print_ticket(metres, record)
+	_seal.visible = false
+	_print_ticket(metres, record, metres < FELL_STUB)
 
 
 ## The ending: TOP DOG, the plates, confetti, then it waits for a press.
@@ -363,6 +374,7 @@ func close_summit() -> void:
 ## it away. Safe to call every frame while paused.
 func set_paused(on: bool, time_s: float, falls: int, p_best_m: float) -> void:
 	if on:
+		falls_seen = maxi(falls_seen, falls)
 		var key := "%d|%d|%d" % [int(time_s), falls, int(round(p_best_m))]
 		if key != _pause_key:
 			_pause_key = key
@@ -400,12 +412,15 @@ static func clock(seconds: float, tenths := true) -> String:
 ## with the metres; each drum to its left steps on as the one beside it passes 9.
 static func drum_values(metres: float) -> Array:
 	var x := clampf(absf(metres), 0.0, 9999.0)
+	var whole := floorf(x)
+	var roll := clampf((x - whole - (1.0 - DETENT)) / DETENT, 0.0, 1.0)
+	roll = roll * roll * (3.0 - 2.0 * roll)
 	var out: Array = [0.0, 0.0, 0.0, 0.0]
-	out[3] = fmod(x, 10.0)
+	out[3] = fmod(whole, 10.0) + roll
 	var lower: float = out[3]
 	for i in [2, 1, 0]:
 		var place := pow(10.0, 3 - i)
-		var v := fmod(floorf(x / place), 10.0) + clampf(lower - 9.0, 0.0, 1.0)
+		var v := fmod(floorf(whole / place), 10.0) + clampf(lower - 9.0, 0.0, 1.0)
 		out[i] = v
 		lower = v
 	return out
@@ -437,7 +452,9 @@ func _process(delta: float) -> void:
 		(_drums[i] as Node3D).rotation.x = -float(vals[i]) * DIGIT_STEP
 	if _minus != null:
 		_minus.visible = shown_m < -0.5
-	var at := _trail_at(clampf(shown_m / TOP_M, -0.04, 1.0))
+		_first_digits.visible = not _minus.visible
+	# (Below the trailhead the mask waits at the mountain's foot; the drums say how deep.)
+	var at := _trail_at(clampf(shown_m / TOP_M, 0.0, 1.0))
 	_marker.position = Vector3(at.x, at.y, 0.16)
 	_marker.rotation.z = sin(_t * 2.2) * 0.08
 	# The shudder after a fall, and the stars round your mask.
@@ -451,11 +468,11 @@ func _process(delta: float) -> void:
 	_stars_t = maxf(0.0, _stars_t - delta)
 	_stars.visible = _stars_t > 0.0
 	if _stars.visible:
-		_stars.position = _marker.position + Vector3(0, 0.22, 0.06)
+		_stars.position = _marker.position + Vector3(0, 0.3, 0.06)
 		var k := 0
 		for st in _stars.get_children():
 			var a := _t * 5.0 + k * TAU / 3.0
-			(st as Node3D).position = Vector3(cos(a) * 0.24, sin(a) * 0.07, sin(a) * 0.02)
+			(st as Node3D).position = Vector3(cos(a) * 0.3, sin(a) * 0.08, sin(a) * 0.02)
 			(st as Node3D).rotation.z = _t * 3.0 + k
 			(st as Node3D).scale = Vector3.ONE * clampf(_stars_t * 2.0, 0.0, 1.0)
 			k += 1
@@ -476,8 +493,8 @@ func _place() -> void:
 		hh = lucha.virtual_half_h
 	_alt.position = Vector3(-hw + ALT_MARGIN.x, -hh + ALT_MARGIN.y, 0)
 	_ticket.position = Vector3(CASE_AT.x, CASE_TOP - TICKET_H * 0.5 + TICKET_H * _ticket_rise, -0.2) + _ticket_drop
-	_area.position = Vector3(0, hh - 0.95 + _area_off, 0.2)
-	_pause.position = Vector3(hw - 0.4 - 1.9 + (1.0 - _pause_in) * 5.0, 0.35, 0.1)
+	_area.position = Vector3(0, hh - 0.72 + _area_off, 0.2)
+	_pause.position = Vector3(hw - 0.45 - 1.95 + (1.0 - _pause_in) * 5.2, 0.35, 0.1)
 	_summit.position = Vector3(0, 0.25 + _summit_off, 0.3)
 
 
@@ -526,7 +543,12 @@ func _build_altimeter() -> void:
 	_marker = Node3D.new()
 	var mask := _kit("mask_icon", {"mask_hood": LuchaKit.RED})
 	if mask != null:
-		mask.scale = Vector3.ONE * 0.44
+		var key := PackedVector2Array()
+		for i in 24:
+			var a := TAU * i / 24.0
+			key.append(Vector2(cos(a) * 0.27, sin(a) * 0.2))
+		_marker.add_child(_prism(key, 0.008, Color.WHITE, Vector3(0, 0, -0.006)))
+		mask.scale = Vector3.ONE * 0.64
 		_marker.add_child(mask)
 	else:
 		_marker.add_child(_disc(0.11, LuchaKit.GOLD, Vector3.ZERO))
@@ -561,9 +583,11 @@ func _build_altimeter() -> void:
 	_alt.add_child(box)
 	for w in wheels.slice(0, 4):
 		_drums.append(_dress_drum(w as Node3D))
-	# Below the trailhead (the mine's sump): a minus on the case's left rim.
-	_minus = LuchaKit.text3d("−", 0.3 * ODO_S, LuchaKit.CREAM, 0.0, 2)
-	_minus.position = CASE_AT + Vector3(-0.865 * ODO_S, 0.02, 0.33 * ODO_S)
+	# Below the trailhead (the mine's sump): a minus in the left drum's window (-028).
+	_first_digits = (_drums[0] as Node3D).get_node("digits") as Node3D
+	_minus = LuchaKit.text3d("−", 0.26 * ODO_S, LuchaKit.GOLD, 0.0, 2)
+	LuchaKit.center_digits(_minus)
+	_minus.position = CASE_AT + Vector3(-0.65 * ODO_S, 0.0, 0.25 * ODO_S)
 	_minus.visible = false
 	_alt.add_child(_minus)
 	LuchaUI.no_shadows(_alt)
@@ -574,19 +598,22 @@ func _dress_drum(wheel: Node3D) -> Node3D:
 	var r: float = wheel.get_meta("radius", 0.24)
 	var width: float = wheel.get_meta("width", 0.26)
 	var spin := Node3D.new()
-	spin.name = "digits"
+	spin.name = "spin"
 	wheel.add_child(spin)
 	# The drum's own mesh turns with its digits.
 	for ch in wheel.get_children():
 		if ch is MeshInstance3D:
 			ch.reparent(spin, false)
+	var digits := Node3D.new()
+	digits.name = "digits"
+	spin.add_child(digits)
 	for k in 10:
 		var a := -k * DIGIT_STEP
-		var d := LuchaKit.text3d(str(k), minf(width * 0.8, r * 0.76), LuchaKit.CREAM, 0.0, 2)
+		var d := LuchaKit.text3d(str(k), minf(width * 0.84, r * 0.8), LuchaKit.CREAM, 0.0, 2)
 		LuchaKit.center_digits(d)
 		d.position = Vector3(0, r * sin(a), r * cos(a)) * 1.02
 		d.rotation.x = -a
-		spin.add_child(d)
+		digits.add_child(d)
 	return spin
 
 
@@ -651,50 +678,54 @@ func _build_ticket() -> void:
 	var pts := PackedVector2Array()
 	var hw := TICKET_W * 0.5
 	var hh := TICKET_H * 0.5
-	var teeth := 14
+	var teeth := 16
 	for i in teeth + 1:
-		pts.append(Vector2(-hw + TICKET_W * i / teeth, hh - (0.0 if i % 2 == 0 else 0.035)))
+		pts.append(Vector2(-hw + TICKET_W * i / teeth, hh - (0.0 if i % 2 == 0 else 0.04)))
 	for i in teeth + 1:
-		pts.append(Vector2(hw - TICKET_W * i / teeth, -hh + (0.0 if i % 2 == 0 else 0.035)))
-	_ticket.add_child(_prism(pts, 0.012, KRAFT_DARK, Vector3(0.025, -0.03, -0.012)))
+		pts.append(Vector2(hw - TICKET_W * i / teeth, -hh + (0.0 if i % 2 == 0 else 0.04)))
+	_ticket.add_child(_prism(pts, 0.012, KRAFT_DARK, Vector3(0.03, -0.035, -0.012)))
 	_ticket.add_child(_prism(pts, 0.012, PAPER))
 	_ticket_words = Node3D.new()
 	_ticket_words.position = Vector3(0, 0, 0.012)
 	_ticket.add_child(_ticket_words)
 
 
-func _print_ticket(metres: float, record: bool) -> void:
+func _print_ticket(metres: float, record: bool, stub: bool) -> void:
 	if _ticket_tw != null and _ticket_tw.is_valid():
 		_ticket_tw.kill()
 	for ch in _ticket_words.get_children():
 		ch.queue_free()
 	var number := "%d m" % int(round(metres))
-	var line := fell_line(metres)
-	ticket_text = "FELL %s %s" % [number, line]
-	var head := LuchaKit.text3d("FELL", 0.115, LuchaKit.INK, 0.0, 2)
-	head.position = Vector3(0, 0.305, 0)
+	var line := "" if stub else fell_line(metres)
+	ticket_text = ("FELL %s %s" % [number, line]).strip_edges()
+	# The head: the serial and FELL.
+	var serial := LuchaKit.text3d("No. %04d" % falls_seen, 0.1, KRAFT_DARK, 0.0, 2)
+	serial.position = Vector3(-TICKET_W * 0.5 + 0.42, 0.385, 0)
+	_ticket_words.add_child(serial)
+	var head := LuchaKit.text3d("FELL", 0.14, LuchaKit.INK, 0.0, 2)
+	head.position = Vector3(-0.2 if record else 0.0, 0.385, 0)  # (clear of the stamp)
 	_ticket_words.add_child(head)
-	var num := LuchaKit.fit_words(number, TICKET_W * 0.8, 0.33, LuchaKit.RED, LuchaKit.INK)
+	var num := LuchaKit.fit_words(number, TICKET_W * (0.42 if record else 0.8), 0.36, LuchaKit.RED, LuchaKit.INK)
 	LuchaKit.center_digits(num)
-	num.position = Vector3(0, 0.075, 0)
+	num.position = Vector3(-0.55 if record else 0.0, 0.13, 0)
 	_ticket_words.add_child(num)
 	# A dotted rule, then the dry line.
-	for i in 23:
-		_ticket_words.add_child(_box(Vector3(0.045, 0.012, 0.004), KRAFT_DARK, Vector3(-0.99 + i * 0.09, -0.15, 0)))
-	var words := LuchaKit.fit_words(line, TICKET_W * 0.9, 0.135, LuchaKit.INK, PAPER)
-	LuchaKit.center_digits(words)
-	words.position = Vector3(0, -0.29, 0)
-	_ticket_words.add_child(words)
+	for i in 21:
+		_ticket_words.add_child(_box(Vector3(0.04, 0.012, 0.004), KRAFT_DARK, Vector3(-1.0 + i * 0.1, -0.12, 0)))
+	if line != "":
+		var words := LuchaKit.fit_words(line, TICKET_W * 0.92, 0.17, LuchaKit.INK, PAPER)
+		LuchaKit.center_digits(words)
+		words.position = Vector3(0, -0.3, 0)
+		_ticket_words.add_child(words)
 	if record:
-		# The rubber stamp: your longest yet.
+		# The rubber stamp across the metres' right: your longest yet.
 		var stamp := Node3D.new()
-		stamp.position = Vector3(0.72, 0.27, 0.01)
-		stamp.rotation.z = -0.2
-		stamp.add_child(_box(Vector3(0.86, 0.19, 0.004), PAPER, Vector3(0, 0, -0.004)))
-		var sw := LuchaKit.text3d("LONGEST YET", 0.1, LuchaKit.MAGENTA, 0.0, 3)
+		stamp.position = Vector3(0.64, 0.1, 0.01)
+		stamp.rotation.z = -0.12
+		var sw := LuchaKit.text3d("LONGEST YET", 0.15, STAMP, 0.0, 3)
 		LuchaKit.center_digits(sw)
 		stamp.add_child(sw)
-		stamp.add_child(_frame(0.86, 0.19, 0.016, LuchaKit.MAGENTA))
+		stamp.add_child(_frame(1.16, 0.28, 0.022, STAMP))
 		_ticket_words.add_child(stamp)
 	LuchaUI.no_shadows(_ticket)
 	_ticket.visible = true
@@ -702,9 +733,20 @@ func _print_ticket(metres: float, record: bool) -> void:
 	_ticket_drop = Vector3.ZERO
 	_ticket_rise = 0.0
 	ticket_up = true
-	# It prints in steps, like a till roll; holds; then tears off and falls too.
 	_ticket_tw = _tw()
 	_ticket_tw.tween_interval(0.35)
+	if stub:
+		# A short fall: it prints the number, thinks better of it, and draws it back in.
+		for i in 4:
+			_ticket_tw.tween_property(self, "_ticket_rise", 0.6 * float(i + 1) / 4.0, 0.05)
+			_ticket_tw.tween_interval(0.04)
+		_ticket_tw.tween_interval(1.7)
+		_ticket_tw.tween_property(self, "_ticket_rise", 0.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		_ticket_tw.tween_callback(func() -> void:
+			_ticket.visible = false
+			ticket_up = false)
+		return
+	# It prints in steps, like a till roll; holds; then tears off and falls too.
 	var steps := 7
 	for i in steps:
 		_ticket_tw.tween_property(self, "_ticket_rise", float(i + 1) / steps, 0.05)
@@ -731,7 +773,7 @@ func _drop_ticket() -> void:
 # ================================================================ the plates (pause, summit)
 
 ## A plate: a navy label tile and a paper face for the value, on a kraft card.
-func _row(label: String, w: float, h := 0.5) -> Node3D:
+func _row(label: String, w: float, h := 0.5, noted := false) -> Node3D:
 	var r := Node3D.new()
 	var lw := w * 0.36
 	r.add_child(_box(Vector3(w + 0.1, h + 0.1, 0.03), KRAFT, Vector3(0, 0, -0.01)))
@@ -747,6 +789,7 @@ func _row(label: String, w: float, h := 0.5) -> Node3D:
 	r.add_child(val)
 	r.set_meta("value_w", (w - lw - 0.04) * 0.88)
 	r.set_meta("value_h", h * 0.62)
+	r.set_meta("noted", noted)  # the value on the left, a note's place kept on the right
 	return r
 
 
@@ -756,18 +799,17 @@ func _set_row(r: Node3D, value: String, note := "") -> void:
 		ch.queue_free()
 	var vw: float = r.get_meta("value_w")
 	var vh: float = r.get_meta("value_h")
-	if note == "":
+	if not r.get_meta("noted", false):
 		var t := LuchaKit.fit_words(value, vw * 0.8, vh, LuchaKit.RED, LuchaKit.INK)
 		LuchaKit.center_digits(t)
 		val.add_child(t)
 	else:
-		# The value, and a small dry note beside it.
 		var t := LuchaKit.fit_words(value, vw * 0.42, vh, LuchaKit.RED, LuchaKit.INK)
 		LuchaKit.center_digits(t)
 		t.position = Vector3(-vw * 0.27, 0, 0)
 		val.add_child(t)
 		if note.strip_edges() != "":
-			var n := LuchaKit.fit_words(note, vw * 0.5, vh * 0.4, LuchaKit.INK, PAPER)
+			var n := LuchaKit.fit_words(note, vw * 0.52, vh * 0.5, LuchaKit.INK, PAPER)
 			LuchaKit.center_digits(n)
 			n.position = Vector3(vw * 0.24, 0, 0)
 			val.add_child(n)
@@ -778,16 +820,19 @@ func _build_pause() -> void:
 	_pause = Node3D.new()
 	_pause.name = "PauseSlate"
 	_pause.visible = false
+	_pause.rotation.z = -0.025
 	_near.add_child(_pause)
+	# A small poster: paper on kraft card, a red rule round it.
 	var w := 3.5
-	_pause.add_child(_card_rect(w + 0.3, 2.75, KRAFT_DARK, Vector3(0, -0.1, -0.06), false))
-	var head := LuchaKit.fit_words("THE PEAK OF DEGAYO", w * 0.92, 0.2, LuchaKit.CREAM, LuchaKit.INK)
+	_pause.add_child(_card_rect(w + 0.4, 2.95, PAPER, Vector3(0, -0.08, -0.06)))
+	_pause.add_child(_frame(w + 0.2, 2.75, 0.04, LuchaKit.RED, Vector3(0, -0.08, -0.04)))
+	var head := LuchaKit.fit_words("THE PEAK OF DEGAYO", w * 0.86, 0.2, LuchaKit.INK, PAPER)
 	LuchaKit.center_digits(head)
-	head.position = Vector3(0, 0.98, 0)
+	head.position = Vector3(0, 1.0, 0)
 	_pause.add_child(head)
 	var y := 0.42
 	for id in ["time", "falls", "best"]:
-		var r := _row({"time": "TIME", "falls": "FALLS", "best": "BEST"}[id], w)
+		var r := _row({"time": "TIME", "falls": "FALLS", "best": "BEST HEIGHT"}[id], w)
 		r.position = Vector3(0, y, 0)
 		_pause.add_child(r)
 		_pause_rows[id] = r
@@ -799,11 +844,12 @@ func _build_pause() -> void:
 func _build_summit_card(time_s: float, falls: int, best_shown: float, new_best: bool, first: bool) -> Node3D:
 	var card := Node3D.new()
 	var w := 5.6
-	var h := 5.5
-	# The poster: kraft card, cream paper, a red sunburst behind the name.
-	card.add_child(_card_rect(w, h, PAPER))
-	var sun := Vector2(0, 1.55)
-	var rect := PackedVector2Array([Vector2(-w * 0.5 + 0.12, -h * 0.5 + 0.12), Vector2(w * 0.5 - 0.12, -h * 0.5 + 0.12), Vector2(w * 0.5 - 0.12, h * 0.5 - 0.12), Vector2(-w * 0.5 + 0.12, h * 0.5 - 0.12)])
+	var h := 5.0
+	var mid := 0.2  # the poster's centre: top 2.7, bottom -2.3
+	# The poster: kraft card, cream paper, a sunburst behind the name.
+	card.add_child(_card_rect(w, h, PAPER, Vector3(0, mid, 0)))
+	var sun := Vector2(0, 1.65)
+	var rect := PackedVector2Array([Vector2(-w * 0.5 + 0.12, mid - h * 0.5 + 0.12), Vector2(w * 0.5 - 0.12, mid - h * 0.5 + 0.12), Vector2(w * 0.5 - 0.12, mid + h * 0.5 - 0.12), Vector2(-w * 0.5 + 0.12, mid + h * 0.5 - 0.12)])
 	var rays := 20
 	for i in rays:
 		if i % 2 == 1:
@@ -813,51 +859,51 @@ func _build_summit_card(time_s: float, falls: int, best_shown: float, new_best: 
 		var wedge := PackedVector2Array([sun, sun + Vector2(cos(a0), sin(a0)) * 9.0, sun + Vector2(cos(a1), sin(a1)) * 9.0])
 		for piece in Geometry2D.intersect_polygons(wedge, rect):
 			card.add_child(_prism(piece, 0.004, Color("#F6D78C"), Vector3(0, 0, 0.022)))
-	card.add_child(_frame(w - 0.24, h - 0.24, 0.05, LuchaKit.RED, Vector3(0, 0, 0.024)))
+	card.add_child(_frame(w - 0.24, h - 0.24, 0.05, LuchaKit.RED, Vector3(0, mid, 0.024)))
 	# TOP DOG.
 	var logo := _kit("title_logo")
 	if logo != null:
 		logo.scale = Vector3.ONE * 1.42
-		logo.position = Vector3(0, 0.9, 0.05)
+		logo.position = Vector3(0, 0.98, 0.05)
 		card.add_child(logo)
 	else:
 		var td := LuchaKit.fit_words("TOP DOG", w * 0.8, 1.0, LuchaKit.RED, LuchaKit.INK)
-		td.position = Vector3(0, 1.6, 0.05)
+		td.position = Vector3(0, 1.7, 0.05)
 		card.add_child(td)
 	var sub := LuchaKit.fit_words("THE PEAK OF DEGAYO", w * 0.62, 0.2, LuchaKit.INK, PAPER)
 	LuchaKit.center_digits(sub)
-	sub.position = Vector3(0, 0.55, 0.05)
+	sub.position = Vector3(0, 0.62, 0.05)
 	card.add_child(sub)
-	# The plates.
+	# The plates: the value on the left, a note (or the stamp) on the right.
 	var rows: Array = []
-	var y := -0.12
-	var data := [["TIME", clock(time_s), ""], ["FALLS", str(falls), falls_note(falls)], ["BEST", clock(best_shown), "FIRST ASCENT" if first else (" " if new_best else "")]]
+	var y := -0.1
+	var best_note := "" if (first or new_best) else "STILL STANDS."
+	var data := [["TIME", clock(time_s, false), ""], ["FALLS", str(falls), falls_note(falls)], ["BEST", clock(best_shown, false), best_note]]
 	for d in data:
-		var r := _row(d[0], w - 0.9, 0.56)
+		var r := _row(d[0], w - 0.9, 0.56, true)
 		r.position = Vector3(0, y, 0.05)
 		_set_row(r, d[1], d[2])
 		card.add_child(r)
 		rows.append(r)
 		y -= 0.76
 	card.set_meta("rows", rows)
-	# The stamp.
-	var stamp: Node3D = null
-	if new_best and not first:
-		stamp = Node3D.new()
-		stamp.position = Vector3(1.5, -1.66, 0.12)  # the BEST plate's note space
-		stamp.rotation.z = -0.14
-		stamp.add_child(_box(Vector3(1.3, 0.38, 0.01), PAPER, Vector3(0, 0, -0.01)))
-		stamp.add_child(_frame(1.3, 0.38, 0.032, LuchaKit.MAGENTA))
-		var sw := LuchaKit.text3d("NEW BEST!", 0.2, LuchaKit.MAGENTA, 0.0, 3)
+	# The stamp in the BEST plate's note space: the first ascent, or a new best.
+	if first or new_best:
+		var words := "FIRST ASCENT" if first else "NEW BEST!"
+		var stamp := Node3D.new()
+		stamp.position = Vector3(1.5, -1.62, 0.12)
+		stamp.rotation.z = -0.12
+		var size := minf(0.2, 1.12 / maxf(LuchaKit.text_width(words, 1.0), 0.01))
+		var sw := LuchaKit.text3d(words, size, STAMP, 0.0, 3)
 		LuchaKit.center_digits(sw)
 		sw.position = Vector3(0, 0, 0.01)
 		stamp.add_child(sw)
+		stamp.add_child(_frame(1.34, 0.4, 0.034, STAMP))
 		card.add_child(stamp)
-	if stamp != null:
 		card.set_meta("stamp", stamp)
 	# The prompt.
 	var prompt := Node3D.new()
-	prompt.position = Vector3(0, -h * 0.5 - 0.42, 0.05)
+	prompt.position = Vector3(0, mid - h * 0.5 - 0.42, 0.05)
 	var ribbon := _kit("status_ribbon")
 	if ribbon != null:
 		ribbon.scale = Vector3.ONE * 1.5
@@ -882,7 +928,7 @@ static func falls_note(falls: int) -> String:
 	if falls < 25:
 		return "BARELY A SCRATCH."
 	if falls < 100:
-		return "A FEW."
+		return "A RESPECTABLE NUMBER."
 	if falls < 300:
 		return "IT ADDS UP."
 	return "THE MOUNTAIN KEPT COUNT."

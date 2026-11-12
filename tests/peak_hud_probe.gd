@@ -16,8 +16,8 @@ func _ready() -> void:
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--shots="):
 			shots = a.get_slice("=", 1)
-	_check("drums: 347.6 m reads 0 3 4 7.6", _near(PeakHud.drum_values(347.6), [0.0, 3.0, 4.0, 7.6]), PeakHud.drum_values(347.6))
-	_check("drums: 999.5 m is half way to 1000 on every drum", _near(PeakHud.drum_values(999.5), [0.5, 9.5, 9.5, 9.5]), PeakHud.drum_values(999.5))
+	_check("drums: 347.6 m rests on 0 3 4 7 (the units drum waits for the metre's last quarter)", _near(PeakHud.drum_values(347.6), [0.0, 3.0, 4.0, 7.0]), PeakHud.drum_values(347.6))
+	_check("drums: 999.875 m is half way to 1000 on every drum", _near(PeakHud.drum_values(999.875), [0.5, 9.5, 9.5, 9.5]), PeakHud.drum_values(999.875))
 	_check("drums: 1000 m reads 1 0 0 0", _near(PeakHud.drum_values(1000.0), [1.0, 0.0, 0.0, 0.0]), PeakHud.drum_values(1000.0))
 	_check("drums: -28 m (the sump) reads 0 0 2 8", _near(PeakHud.drum_values(-28.0), [0.0, 0.0, 2.0, 8.0]), PeakHud.drum_values(-28.0))
 	_check("clock: 9667 s is 2:41:07", PeakHud.clock(9667.0) == "2:41:07", PeakHud.clock(9667.0))
@@ -43,7 +43,7 @@ func _ready() -> void:
 	await _shot("peak_02_altimeter")
 	alt = -28.0
 	await _wait(1.6)
-	_check("below the trailhead the minus shows", hud._minus.visible)
+	_check("below the trailhead the minus takes the left drum's window", hud._minus.visible and not hud._first_digits.visible)
 	await _shot("peak_03_sump")
 	alt = 396.0
 	await _wait(1.2)
@@ -77,8 +77,14 @@ func _ready() -> void:
 	alt = 594.0
 	hud.fell(18.4)
 	await _wait(1.3)
-	_check("an 18 m fall prints a receipt", hud.ticket_up and hud.ticket_text.begins_with("FELL 18 m"), hud.ticket_text)
+	_check("an 18 m fall prints a stub: the number, no line", hud.ticket_up and hud.ticket_text == "FELL 18 m", hud.ticket_text)
 	await _shot("peak_08_fell_small")
+	await _wait(1.6)
+	_check("...which goes back in by itself", not hud.ticket_up)
+	hud.fell(44.0)
+	await _wait(1.3)
+	_check("a 44 m fall prints a receipt with its dry line", hud.ticket_up and hud.ticket_text.begins_with("FELL 44 m ") and hud.ticket_text.length() > 12, hud.ticket_text)
+	await _shot("peak_08b_fell_mid")
 	alt = 282.0
 	hud.fell(312.0)
 	await _wait(0.25)
@@ -95,13 +101,15 @@ func _ready() -> void:
 	var seen := {}
 	for i in 12:
 		seen[hud.fell_line(200.0)] = true
-	_check("the dry lines rotate (5 for a 200 m fall)", seen.size() == 5, seen.size())
+	_check("the dry lines rotate (6 for a 200 m fall)", seen.size() == 6, seen.size())
+	_check("the receipts are numbered", hud.falls_seen == 4, hud.falls_seen)
 	await _wait(1.0)
 	# ---- pause
 	alt = 282.0
 	hud.set_paused(true, 5025.0, 37, 612.0)
 	await _wait(0.6)
 	_check("the pause slate is up", hud.paused and hud._pause.visible)
+	_check("...and the serial takes the game's count", hud.falls_seen == 37, hud.falls_seen)
 	await _shot("peak_12_pause")
 	hud.set_paused(false, 5025.0, 37, 612.0)
 	await _wait(0.5)
