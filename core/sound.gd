@@ -31,7 +31,7 @@ const SFX := {
 	"hurt": ["hurt_1", "hurt_2", "hurt_3", "hurt_4"],
 	"fall": ["yell_1", "yell_2", "yell_3"],
 	"lock": ["lock_bell"],
-	"boot_drum_1": ["boot_drum_1"],  # the studio logo's two beats (the boot screens)
+	"boot_drum_1": ["boot_drum_1"],  # the studio logo's heartbeat (the boot screens): 1 is the DUB, 2 the deep LUB
 	"boot_drum_2": ["boot_drum_2"],
 	"church_bell": ["bell_tower_ring_01", "bell_tower_ring_02", "bell_tower_ring_03", "bell_tower_ring_04", "bell_tower_ring_05", "bell_tower_ring_06", "bell_tower_ring_07", "bell_tower_ring_08", "bell_single_11", "bell_single_12", "bell_single_13", "bell_single_14", "bell_single_15"],
 	"tick": ["clock_tick"],

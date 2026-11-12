@@ -1,7 +1,8 @@
 class_name BootScreens
 extends CanvasLayer
 ## THE BOOT SCREENS (Parker 11-11), after Godot's own splash and before the title:
-## 1. the DANGADORF studio logo fades in, pulses twice on two tribal drum beats, fades out;
+## 1. the DANGADORF studio logo fades in, beats like a heart on its drums (lub-dub,
+##    lub-dub), fades out;
 ## 2. a game pad and "THIS GAME IS BEST EXPERIENCED WITH A CONTROLLER" fade in
 ##    quickly, hold, fade out;
 ## 3. the black lifts off the title (in its PRESS ANY BUTTON TO START state).
@@ -15,8 +16,11 @@ extends CanvasLayer
 signal finished
 
 const STUDIO_IN := 0.5
-const DRUM_1 := 0.75  # seconds after the start
-const DRUM_2 := 1.3
+## A HEARTBEAT (Parker 11-12: "make the Dangadorf drum beat pulse more of a heartbeat
+## cadence"): two hearts' beats at 60 a minute, each a deep strong LUB and, a quarter second
+## on, a lighter higher DUB; then the long rest.
+const HEART := [0.75, 1.75]  # each LUB, seconds after the start
+const LUB_DUB := 0.27  # the DUB follows its LUB by this
 const STUDIO_OUT_AT := 2.8  # (Parker 11-11: half a second longer)
 const STUDIO_OUT := 0.45
 const PAD_IN := 0.3  # "fades in quickly"
@@ -147,11 +151,14 @@ func _run() -> void:
 	_tween = create_tween()
 	_tween.tween_callback(func(): _studio.visible = true)
 	_tween.tween_property(_view, "modulate:a", 1.0, STUDIO_IN)
-	_tween.tween_interval(DRUM_1 - STUDIO_IN)
-	_tween.tween_callback(_beat.bind(1))
-	_tween.tween_interval(DRUM_2 - DRUM_1)
-	_tween.tween_callback(_beat.bind(2))
-	_tween.tween_interval(STUDIO_OUT_AT - DRUM_2)
+	var at := STUDIO_IN
+	for lub: float in HEART:
+		_tween.tween_interval(lub - at)
+		_tween.tween_callback(_beat.bind(true))
+		_tween.tween_interval(LUB_DUB)
+		_tween.tween_callback(_beat.bind(false))
+		at = lub + LUB_DUB
+	_tween.tween_interval(STUDIO_OUT_AT - at)
 	_tween.tween_property(_view, "modulate:a", 0.0, STUDIO_OUT)
 	_tween.tween_callback(func():
 		_studio.visible = false
@@ -162,13 +169,27 @@ func _run() -> void:
 	_tween.tween_callback(_lift)
 
 
-func _beat(n: int) -> void:
-	Sound.play("boot_drum_%d" % n, 0.0 if n == 1 else 1.5)
+var _beat_tw: Tween
+var _word_home := Vector3.ZERO
+
+
+## One beat of the heart. The LUB is the deep drum (46 Hz), loud, and the word swells to
+## its full pulse; the DUB is the higher drum (79 Hz), softer, a smaller swell on top of
+## the first one's fall, and then it settles through the rest.
+func _beat(lub: bool) -> void:
+	Sound.play("boot_drum_2" if lub else "boot_drum_1", 1.5 if lub else -5.0, 1.0 if lub else 1.12)
 	var w := _studio_word
-	var home := w.scale
-	var tw := create_tween()
-	tw.tween_property(w, "scale", home * (PULSE + (0.02 if n == 2 else 0.0)), 0.07).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.tween_property(w, "scale", home, 0.32).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	if _word_home == Vector3.ZERO:
+		_word_home = w.scale
+	if _beat_tw != null and _beat_tw.is_valid():
+		_beat_tw.kill()
+	_beat_tw = create_tween()
+	if lub:
+		_beat_tw.tween_property(w, "scale", _word_home * (PULSE + 0.02), 0.07).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_beat_tw.tween_property(w, "scale", _word_home * 1.015, 0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	else:
+		_beat_tw.tween_property(w, "scale", _word_home * (1.0 + (PULSE - 1.0) * 0.6), 0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_beat_tw.tween_property(w, "scale", _word_home, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 ## Any button: straight to the title.

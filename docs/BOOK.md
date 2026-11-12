@@ -669,7 +669,8 @@ Commits 4714920, 7f37818 and the one after.
   the climbers' plane over all the open water, no longer herded right of the buoy, and the
   buoy floats 2 m behind the plane (`Stage.BUOY_Z`) so nothing clips it. DEL_MAR.md §7.
 - **The boot screens and PRESS ANY BUTTON (Parker 11-11).** After Godot's splash:
-  the DANGADORF studio logo fades in, pulses twice on two tribal drum beats, and fades out.
+  the DANGADORF studio logo fades in, beats like a heart on its drums (lub-dub, lub-dub:
+  Parker 11-12, "more of a heartbeat cadence"), and fades out.
   Then a game pad with "THIS GAME IS BEST EXPERIENCED WITH A CONTROLLER" fades in quickly,
   holds and fades out. Then the title, waiting on "PRESS ANY BUTTON TO START" under a big
   logo. A press shrinks the logo back to its spot, and the belts fall in from above the
