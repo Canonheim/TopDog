@@ -4,11 +4,16 @@ extends Node
 ## the game does for Del Mar, and shoots the Del Mar cameras.
 ## -- --out=DIR (writes dm_<name>.png)  --mountains=new (the modelled PlazaMountains in
 ## place of whatever the plaza built, to review them before they're wired in)
+## --plaza-only (stop after the plaza's cameras)  --flag (the Peak's summit flag shown)
 const PLAZA_CAMS := [
 	["title", Vector3(0.0, 2.13, 10.47), Vector3(0.0, 1.83, 0.0)],
 	["lobby", Vector3(-5.5, 5.85, 31.0), Vector3(-5.5, 4.85, 0.0)],
 	["plaza_wide", Vector3(14.0, 3.0, 32.0), Vector3(14.0, 2.5, 0.0)],
 	["plaza_high", Vector3(0.0, 15.0, 10.47), Vector3(0.0, 14.7, 0.0)],
+	["plaza_left", Vector3(-14.0, 3.0, 32.0), Vector3(-14.0, 2.5, 0.0)],
+	["play_20m", Vector3(0.0, 20.27, 6.71), Vector3(0.0, 19.97, 0.0)],
+	# the Peak of DeGayo through a long lens (fov 11), to review its detail
+	["peak_tele", Vector3(-5.5, 5.85, 31.0), Vector3(-290.0, 92.0, -700.0), 14.0],
 ]
 const CAMS := [
 	["start", Vector3(102.5, 2.8, 13.1), Vector3(102.5, 2.5, 0.0)],
@@ -24,11 +29,17 @@ const CAMS := [
 func _ready() -> void:
 	var out := "user://dm_frames"
 	var new_mountains := false
+	var plaza_only := false
+	var flag := false
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--out="):
 			out = a.get_slice("=", 1)
 		elif a == "--mountains=new":
 			new_mountains = true
+		elif a == "--plaza-only":
+			plaza_only = true
+		elif a == "--flag":
+			flag = true
 	DirAccess.make_dir_recursive_absolute(out)
 	var main = load("res://game/main.tscn").instantiate()
 	get_tree().root.add_child.call_deferred(main)
@@ -46,8 +57,12 @@ func _ready() -> void:
 	var cam := Camera3D.new()
 	cam.fov = 34.0
 	get_tree().root.add_child(cam)
+	PlazaMountains.peak_flag(flag)
 	for c in PLAZA_CAMS:
 		await _shoot(cam, c, out)
+	if plaza_only:
+		get_tree().quit()
+		return
 	# Del Mar: the scenery, and the mountains sunk (the game's option B).
 	var scenery := DelMarScenery.new()
 	main.world.add_child(scenery)
@@ -69,6 +84,7 @@ func _ready() -> void:
 
 func _shoot(cam: Camera3D, c: Array, out: String) -> void:
 	cam.position = c[1]
+	cam.fov = float(c[3]) if c.size() > 3 else 34.0
 	cam.look_at(c[2], Vector3.UP)
 	cam.make_current()
 	await get_tree().create_timer(0.4).timeout
