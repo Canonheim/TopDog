@@ -368,7 +368,8 @@ def ring(mid, cy, rpm, studs, stud0):
         a = math.radians(stud0 + k * 360.0 / studs)
         c, s = math.cos(a), math.sin(a)
         shapes.append(([(2.8 * c + 0.26 * s, 2.8 * s - 0.26 * c), (3.45 * c, 3.45 * s), (2.8 * c - 0.26 * s, 2.8 * s + 0.26 * c)], "crystal"))
-    A.mover(mid, (COL_X, cy), shapes, {"type": "spin", "rpm": rpm, "phase": 0.0}, model="crystal_ring_%d" % studs)
+    # (crystal_ring_4 has its studs at 0, 90, 180, 270; crystal_ring_4x at 45, 135, 225, 315)
+    A.mover(mid, (COL_X, cy), shapes, {"type": "spin", "rpm": rpm, "phase": 0.0}, model="crystal_ring_%d%s" % (studs, "x" if studs == 4 and stud0 % 90.0 else ""))
 
 
 RING_Y = (250.9, 258.7, 266.5)

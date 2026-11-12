@@ -9,7 +9,7 @@ Rebuilt by `tools/peak/props.py`. `landed` = `kit/models/<name>.glb` exists.
 | `anvil` | prop | 2 | a6 | 1.2 x 0.9 x 0.6 | yes |
 | `anvil_great` | prop | 3 | a6 | 2.6 x 1.6 x 1.2 | yes |
 | `balloon_tether` | prop | 1 | a10 | 0.08 x 24 x 0.08 |  |
-| `barrel_float` | moving | 13 | a2 |  |  |
+| `barrel_float` | moving | 13 | a2 |  | yes |
 | `bellows` | moving | 3 | a6 |  | yes |
 | `bellows_great` | prop | 1 | a6 | 7 x 6 x 2.5 | yes |
 | `boiler` | prop | 1 | a2 | 5 x 6 x 3 | yes |
@@ -36,25 +36,26 @@ Rebuilt by `tools/peak/props.py`. `landed` = `kit/models/<name>.glb` exists.
 | `counterweight` | moving | 1 | a1 |  | yes |
 | `counterweight_chain` | prop | 2 | a5 | 0.15 x 12 x 0.15 |  |
 | `counterweight_hung` | moving | 4 | a8 |  | yes |
-| `crank_small` | moving | 5 | a2 |  |  |
+| `crank_small` | moving | 5 | a2 |  | yes |
 | `crate_ore` | prop | 1 | a1 | 1.2 x 1.1 x 1.2 | yes |
 | `crystal_cluster_a` | prop | 2 | a3 | 2 x 3 x 2 | yes |
 | `crystal_cluster_b` | prop | 1 | a3 | 4 x 5 x 3 | yes |
 | `crystal_cluster_c` | prop | 3 | a3 | 1 x 1.5 x 1 | yes |
 | `crystal_column` | prop | 1 | a3 | 2.6 x 38 x 2.6 |  |
-| `crystal_raft` | moving | 1 | a3 |  |  |
-| `crystal_ring_3` | moving | 1 | a3 |  |  |
-| `crystal_ring_4` | moving | 2 | a3 |  |  |
+| `crystal_raft` | moving | 1 | a3 |  | yes |
+| `crystal_ring_3` | moving | 1 | a3 |  | yes |
+| `crystal_ring_4` | moving | 1 | a3 |  | yes |
+| `crystal_ring_4x` | moving | 1 | a3 |  | yes |
 | `crystal_shell_clear` | prop | 1 | a3 | 2.4 x 3.6 x 1.6 |  |
 | `crystal_spire` | prop | 3 | a3 | 2 x 10 x 2 | yes |
-| `dam_lift` | moving | 5 | a2 |  |  |
+| `dam_lift` | moving | 5 | a2 |  | yes |
 | `dead_tree_crown` | prop | 1 | a7 | 5 x 4 x 0.3 |  |
 | `drop_hammer` | moving | 3 | a6 |  | yes |
 | `drum_temple` | prop | 1 | a5 | 1.6 x 1.8 x 1.6 | yes |
 | `flume_pillar` | prop | 3 | a2 | 0.9 x 7 x 0.9 | yes |
 | `forge_hood_ribs` | prop | 1 | a6 | 17.5 x 12.5 x 0.4 | yes |
 | `frozen_climber_deep` | prop | 4 | a9 | 0.9 x 1.9 x 0.4 |  |
-| `geode_wheel` | moving | 1 | a3 |  |  |
+| `geode_wheel` | moving | 1 | a3 |  | yes |
 | `giant_snail` | prop | 1 | a4 | 2.4 x 1.8 x 1.2 | yes |
 | `glove_frozen` | prop | 2 | a8, a9 | 0.3 x 0.2 x 0.2 | yes |
 | `glow_moss` | prop | 6 | a4 | 3 x 0.3 x 1 | yes |
@@ -78,7 +79,7 @@ Rebuilt by `tools/peak/props.py`. `landed` = `kit/models/<name>.glb` exists.
 | `mask_first_dog` | prop | 1 | a5 | 16 x 21 x 2 | yes |
 | `mask_jaw` | moving | 1 | a5 |  | yes |
 | `mill_gate` | moving | 3 | a2 |  | yes |
-| `mill_wheel` | moving | 1 | a2 |  |  |
+| `mill_wheel` | moving | 1 | a2 |  | yes |
 | `mine_beam` | prop | 9 | a1 | 4 x 0.35 x 0.35 | yes |
 | `mine_frame` | prop | 5 | a0, a1 | 0.6 x 5 x 2.6 | yes |
 | `mine_post` | prop | 9 | a1 | 0.35 x 3 x 0.35 | yes |
@@ -104,7 +105,7 @@ Rebuilt by `tools/peak/props.py`. `landed` = `kit/models/<name>.glb` exists.
 | `pug_stamp` | prop | 1 | a2 | 3 x 3 x 0.1 | yes |
 | `pulley` | prop | 1 | a1 | 0.8 x 0.8 x 0.3 | yes |
 | `pylon_head_low` | prop | 1 | a7 | 8 x 5 x 1 |  |
-| `quartz_pendulum` | moving | 1 | a3 |  |  |
+| `quartz_pendulum` | moving | 1 | a3 |  | yes |
 | `rail_broken` | prop | 1 | a1 | 4 x 0.4 x 1.2 | yes |
 | `rail_straight` | prop | 40 | a0, a1 | 4 x 0.25 x 1.2 | yes |
 | `rain_gauge` | prop | 1 | a10 | 0.4 x 0.9 x 0.4 | yes |
@@ -115,7 +116,7 @@ Rebuilt by `tools/peak/props.py`. `landed` = `kit/models/<name>.glb` exists.
 | `rubble_pile` | prop | 1 | a7 | 3 x 1.6 x 1 |  |
 | `rung_stub` | prop | 1 | a10 | 0.35 x 0.12 x 0.3 |  |
 | `scaffold_frame` | prop | 1 | a7 | 24 x 25 x 0.5 |  |
-| `serac` | moving | 1 | a9 |  |  |
+| `serac` | moving | 1 | a9 |  | yes |
 | `serpent_head` | prop | 1 | a5 | 2.5 x 2 x 1.5 | yes |
 | `serpent_segment` | moving | 9 | a5 |  | yes |
 | `shelf_fungus` | prop | 5 | a4 | 3 x 0.8 x 2 |  |
