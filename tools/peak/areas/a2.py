@@ -71,7 +71,7 @@ A.beam((-229.5, 92.0), (-233.5, PY), 0.3, "paint")  # up from the ledge
 for x0, x1, k in ((-237.5, -233.5, "paint"), (-239.0, -237.5, "grease"), (-242.5, -239.0, "paint"),
                   (-244.0, -242.5, "grease"), (-253.0, -244.0, "paint")):
     A.beam((x0, PY), (x1, PY), 0.3, k)
-A.rope("last_chance", (-246.6, PY - 0.2), 3.0, kind="chain")  # THE ONE MERCY: its end 0.3 m over the water
+A.rope("last_chance", (-246.6, PY - 0.2), 2.5, kind="chain")  # THE ONE MERCY: its end 0.8 m over the water. (At 0.3 m a limp body drifting under it was caught without trying: tests/peak_drop. It has to be reached for.)
 A.challenge("2.1", "El Borde", (-229.0, 90.0), 2, "X",
             moves=[["reach", [-229.5, 90.2], [-229.5, 92.0]],
                    ["reach", [-237.5, PY], [-239.0, PY]], ["reach", [-242.5, PY], [-244.0, PY]]])

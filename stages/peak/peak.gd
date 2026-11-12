@@ -446,7 +446,7 @@ func tick(delta: float) -> void:
 	if not active or meta.is_empty():
 		return
 	clock += delta
-	if not is_instance_valid(player):
+	if not is_instance_valid(player) or player.removed:
 		player = null  # (a freed climber is not null by itself)
 	var p := player_at()
 	for a in areas:
