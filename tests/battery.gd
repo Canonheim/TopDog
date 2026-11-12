@@ -2640,7 +2640,8 @@ func _run_delmar() -> void:
 ## THE LINE YOU CAN SEE (Parker 11-11: "there are times in both modes where my hand
 ## seems to be over the line but I cannot lock in"): a press a moment early still locks
 ## once over, a lock while Del Mar's rope glides is judged by the rope as drawn, and the
-## rope's ends sit on the camera's sight lines to the judged line.
+## line a lock must clear is what the string and rope cover on screen (Parker 11-11: the
+## flags, rope and buoy stay where they were; only the invisible line follows the view).
 func _run_lockline() -> void:
 	var g := make_game("delmar", 2, 60.0, "plaza")
 	if not await wait_phase(g, "round"):
@@ -2655,6 +2656,7 @@ func _run_lockline() -> void:
 	var d1 := g.bot_drivers[1] as Drivers.ScriptDriver
 	var r0 := _stand_on_base(c0, st, -0.3)
 	var r1 := _stand_on_base(c1, st, 0.3)
+	g.judge_by_view = false  # (1-3 test the press and the glide on the plain line; 4-5 the view)
 	await frames(2)
 	r0 = g.measure(c0)
 	r1 = g.measure(c1)
@@ -2686,23 +2688,38 @@ func _run_lockline() -> void:
 	d1.lock = true
 	await frames(3)
 	t("lockline: Del Mar: past the gliding rope as drawn (the line already further out), the lock is taken", c1.state == Climber.State.FROZEN, [c1.state, g.line, g._shown_line, r1])
-	# 4. The rope's ends on the sight lines: from the camera, each end shows on x + y = c.
-	var c := 112.0
+	# 4. Del Mar: the rope as drawn, seen from the camera, IS the line.
+	g.judge_by_view = true
 	var worst := 0.0
+	var shifted := 0.0
 	for view in [Vector3(108.0, 3.0, 14.0), Vector3(99.0, 6.5, 9.0), Vector3(118.0, -0.5, 20.0)]:
-		st.view_from = view
-		var ends := [st.mast_eye(c), st.buoy_at(c) + Stage.BUOY_EYE]
-		for e: Vector3 in ends:
-			var hit: Vector3 = view + (e - view) * (view.z / (view.z - e.z))  # where its sight line meets z = 0
-			worst = maxf(worst, absf(hit.x + hit.y - c))
-		var me := st.mast_eye(c)
-		var bu := st.buoy_at(c)
-		worst = maxf(worst, maxf(absf(me.x - Stage.MAST_X), absf(me.z - Stage.MAST_EYE_Z)))
-		worst = maxf(worst, maxf(absf(bu.y - Stage.WATER_Y), absf(bu.z - Stage.BUOY_Z)))
-	st.view_from = Vector3.INF
-	var plain := st.buoy_at(c) + Stage.BUOY_EYE
-	t("lockline: Del Mar's rope ends show exactly over the judged line from any camera (mast keeps its x, buoy its waterline)", worst < 0.001 and absf(plain.x + plain.y - c) < 0.001, "worst %.5f" % worst)
-	t("lockline: the rope hangs straight at rest (no standing sag under the line)", Stage.ROPE_SAG == 0.0)
+		g.view_from = view
+		var c: float = g.lock_line()
+		var ends: Array = st.rope_ends(c)
+		var a: Vector3 = ends[0]
+		var b: Vector3 = ends[1]
+		for sv in [0.2, 0.5, 0.8]:
+			var pt: Vector3 = a + (b - a) * sv
+			pt.y -= Stage.ROPE_SAG * (b - a).length() * 4.0 * sv * (1.0 - sv)
+			var hit: Vector3 = view + (pt - view) * (view.z / (view.z - pt.z))  # where its sight line meets z = 0
+			worst = maxf(worst, absf(g.lock_gap([Vector2(hit.x, hit.y)])))
+			shifted = maxf(shifted, absf(hit.x + hit.y - c))
+	t("lockline: Del Mar: a hand where the rope shows on screen is exactly on the line", worst < 0.005, "worst %.5f, the view moves it up to %.2f" % [worst, shifted])
+	var ends0: Array = st.rope_ends(100.0)
+	t("lockline: Del Mar: the rope, mast and buoy stay where they were (eyes behind the plane, the sag back)", Stage.ROPE_SAG > 0.0 and (ends0[1] as Vector3).is_equal_approx(Vector3(Stage.MAST_X, 100.0 - Stage.MAST_X, Stage.MAST_EYE_Z)) and is_equal_approx((ends0[0] as Vector3).z, Stage.BUOY_Z) and not ("view_from" in st))
+	# 5. The plaza: a hand where the flag string shows on screen is exactly on the line.
+	g.view_from = Vector3(1.0, 3.5, 12.0)
+	g.shown_bar_y = g.line - 0.3  # (still gliding up to it)
+	g.shown_bar_z = -0.45
+	g.shown_bar_sag = LuchaUI.LINE_SAG
+	var pworst := 0.0
+	for sx in [-6.0, 0.0, 3.0]:
+		var f: float = (sx + LuchaUI.LINE_HALF_W) / (2.0 * LuchaUI.LINE_HALF_W)
+		var sp := Vector3(sx, g.shown_bar_y - LuchaUI.LINE_SAG * 4.0 * f * (1.0 - f), -0.45)
+		var e: Vector3 = g.view_from
+		var hit: Vector3 = e + (sp - e) * (e.z / (e.z - sp.z))
+		pworst = maxf(pworst, absf(hit.y - g._seen_bar_y(hit.x)))
+	t("lockline: the plaza: where the gliding, sagging flag string shows is the line", pworst < 0.002, "worst %.5f" % pworst)
 	g.queue_free()
 	await frames(2)
 

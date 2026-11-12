@@ -304,8 +304,13 @@ func _build_world() -> void:
 
 func _process(delta: float) -> void:
 	_tick_camera(delta)
-	if game.stage != null:
-		game.stage.view_from = cam.global_position  # Del Mar's rope is drawn over the line as this camera sees it
+	# THE LINE AS SEEN (Parker 11-11): the game judges a lock-in by what this camera shows,
+	# the plaza's flag string where it hangs and glides, Del Mar's rope where it's drawn.
+	game.view_from = cam.global_position
+	var flags := line_bar.has_node("LineFlags")
+	game.shown_bar_y = line_bar.position.y
+	game.shown_bar_z = line_bar.position.z + (LuchaUI.LINE_Z if flags else 0.0)
+	game.shown_bar_sag = LuchaUI.LINE_SAG if flags else 0.0
 	_tick_hud(delta)
 	var glyphs_on := screen != "pause" and screen != "results"  # (results: the board on the left would wear them)
 	if glyphs_on != _glyphs_on or game.climbers.size() != _glyphs_n:
@@ -525,14 +530,7 @@ func _tick_camera(delta: float) -> void:
 	_cam_target = Vector3(centre.x, centre.y + 0.3, dist)
 	cam.position = cam.position.lerp(_cam_target, 1.0 - exp(-delta * 2.5))
 	cam.look_at(Vector3(cam.position.x, cam.position.y - 0.3, 0.0), Vector3.UP)
-	# THE LINE WHERE IT'S JUDGED (Parker 11-11: "being over the line more closely
-	# matches what you can see"): no glide behind the line, and since the flag string
-	# hangs off the climbers' plane (the line node at z 0.35, the string LINE_Z behind
-	# it), the node is set on the camera's sight line to the true line at z = 0, so on
-	# screen the string lies exactly over where the lock-in is judged.
-	var eye := cam.global_position
-	var seen_z := line_bar.position.z + (LuchaUI.LINE_Z if line_bar.has_node("LineFlags") else 0.0)
-	line_bar.position.y = eye.y + (line_y - eye.y) * (eye.z - seen_z) / eye.z if eye.z > seen_z + 0.5 else line_y
+	line_bar.position.y = lerpf(line_bar.position.y, line_y, 1.0 - exp(-delta * 8.0))
 	line_bar.visible = game.phase in ["turn", "round", "between"] and not delmar  # Del Mar's line is the rope
 
 

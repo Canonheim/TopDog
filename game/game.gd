@@ -710,7 +710,7 @@ func _tick_owned(real_delta: float) -> void:
 		if _lock_want.has(cid):
 			if not can_lock:
 				_lock_want.erase(cid)
-			elif measure(c) > lock_line() + LOCK_MARGIN:
+			elif live_gap(c) > LOCK_MARGIN:
 				_lock_want.erase(cid)
 				if is_host():
 					_judge_lock(cid, c.pose(), c.welded_to_support())
@@ -804,8 +804,7 @@ func _judge_lock(cid: int, pose: PackedFloat32Array, welded := false) -> void:
 		return  # (in the sea: nobody locks in from the water)
 	if not (phase == "turn" or phase == "round") or not _valid_lock_pose(pose):
 		return
-	var top := pose_measure(c, pose)
-	if top <= lock_line() + LOCK_MARGIN:
+	if pose_gap(c, pose) <= LOCK_MARGIN - _slack(c):
 		if c.owner_peer != me():
 			_rpc_note.rpc_id(c.owner_peer, "The line moved! Climb higher.")
 		else:
@@ -916,7 +915,7 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded :
 		else:
 			_rpc_note.rpc_id(c.owner_peer, note)
 		return
-	var made := grounded and top > lock_line() + LOCK_MARGIN
+	var made := grounded and pose_gap(c, pose) > LOCK_MARGIN - _slack(c)
 	var verdict := "made" if made else "out"
 	if why == "left":
 		verdict = "out"
@@ -1086,6 +1085,102 @@ func lock_line() -> float:
 	if stage != null and stage.delmar:
 		return minf(line, _shown_line)
 	return line
+
+
+## THE LINE AS SEEN (Parker 11-11: "I wanted only the invisible boundary line that you
+## had to get over to be changed to match how it looked from the camera"). The flag
+## string and the rope stay where they hang and glide as they always did; the line a
+## lock-in must clear is what they cover on screen, carried onto the climbers' plane
+## (z = 0) along this machine's sight lines. Main sets these every frame; with no
+## camera (or judge_by_view off) it's the plain line.
+var view_from := Vector3.INF  # the camera
+var shown_bar_y := NAN  # the plaza: the flag string's height as drawn (it glides up)
+var shown_bar_z := 0.0  # ...how far behind the plane it hangs
+var shown_bar_sag := 0.0  # ...and its sag at its middle
+var judge_by_view := true
+## A climber owned by another machine: its owner judged by its own camera, which
+## frames the same way but may lag a touch; the host gives it this much.
+const REMOTE_SLACK := 0.06
+
+
+func _viewed() -> bool:
+	return judge_by_view and view_from.is_finite() and view_from.z > 1.0
+
+
+func _slack(c: Climber) -> float:
+	return REMOTE_SLACK if c.owner_peer != me() else 0.0
+
+
+func live_gap(c: Climber) -> float:
+	return lock_gap(c.reach_points(stage.line_dir()) if stage != null else c.reach_points(Vector2(0, 1)))
+
+
+func pose_gap(c: Climber, pose: PackedFloat32Array) -> float:
+	return lock_gap(c.pose_reach_points(pose, stage.line_dir()) if stage != null else c.pose_reach_points(pose, Vector2(0, 1)))
+
+
+## How far the furthest of `points` (z = 0) shows past the line on screen (> 0: over).
+func lock_gap(points: Array) -> float:
+	var delmar := stage != null and stage.delmar
+	var best := -INF
+	if not _viewed():
+		var d := Vector2(1, 1) if delmar else Vector2(0, 1)
+		for p: Vector2 in points:
+			best = maxf(best, p.dot(d))
+		return best - lock_line()
+	if delmar:
+		var seen := _seen_rope()
+		for p: Vector2 in points:
+			best = maxf(best, p.x + p.y - _seen_w(seen, p.x - p.y))
+	else:
+		for p: Vector2 in points:
+			best = maxf(best, p.y - _seen_bar_y(p.x))
+	return best
+
+
+## The plaza: the height the flag string shows at, on the plane, over x.
+func _seen_bar_y(x: float) -> float:
+	var e := view_from
+	var zs := shown_bar_z
+	if is_nan(shown_bar_y) or e.z <= zs + 0.5:
+		return lock_line()
+	var t := e.z / (e.z - zs)  # (a point on the string, seen from e, crosses z = 0 this far along)
+	var sx := e.x + (x - e.x) / t
+	var f := clampf((sx + LuchaUI.LINE_HALF_W) / (2.0 * LuchaUI.LINE_HALF_W), 0.0, 1.0)
+	var sy := minf(line, shown_bar_y) - shown_bar_sag * 4.0 * f * (1.0 - f)
+	return e.y + (sy - e.y) * t
+
+
+## Del Mar: the rope as drawn (its eyes, its sag), carried onto the plane: points as
+## (u, w) = (x - y, x + y), along the line and across it, in order of u.
+func _seen_rope() -> PackedVector2Array:
+	var ends: Array = stage.rope_ends(lock_line())
+	var a: Vector3 = ends[0]
+	var b: Vector3 = ends[1]
+	var sag := Stage.ROPE_SAG * (b - a).length()
+	var e := view_from
+	var out := PackedVector2Array()
+	for i in Stage.ROPE_POINTS + 1:
+		var s := float(i) / Stage.ROPE_POINTS
+		var p := a + (b - a) * s
+		p.y -= sag * 4.0 * s * (1.0 - s)
+		var q := e + (p - e) * (e.z / maxf(e.z - p.z, 0.01))
+		out.append(Vector2(q.x - q.y, q.x + q.y))
+	if out[0].x > out[out.size() - 1].x:
+		out.reverse()
+	return out
+
+
+## The seen rope's w at u (past its ends, its end stretches on straight).
+func _seen_w(seen: PackedVector2Array, u: float) -> float:
+	var n := seen.size()
+	var i := 0
+	while i < n - 2 and seen[i + 1].x < u:
+		i += 1
+	var p := seen[i]
+	var q := seen[i + 1]
+	var f := (u - p.x) / (q.x - p.x) if absf(q.x - p.x) > 0.0001 else 0.0
+	return p.y + (q.y - p.y) * f
 
 
 ## How far a climber gets toward the line: its top (the plaza), or its reach along the
@@ -1556,7 +1651,7 @@ func set_practice_ai(level: String) -> void:
 		partner.configure(self, level)
 
 func partner_can_lock() -> bool:
-	return practice and is_instance_valid(partner) and partner.state == Climber.State.LIVE and partner.knockout_left <= 0 and phase in ["turn", "round"] and measure(partner) > lock_line() + LOCK_MARGIN and (partner.welded_to_support() or _pose_on_support(partner, partner.pose()))
+	return practice and is_instance_valid(partner) and partner.state == Climber.State.LIVE and partner.knockout_left <= 0 and phase in ["turn", "round"] and live_gap(partner) > LOCK_MARGIN and (partner.welded_to_support() or _pose_on_support(partner, partner.pose()))
 
 func lock_partner() -> void:
 	if not partner_can_lock():

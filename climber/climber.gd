@@ -1803,6 +1803,48 @@ func reach_of(pname: String, xf: Transform2D, d: Vector2) -> float:
 	return xf.origin.dot(d)
 
 
+## The point where a piece reaches furthest along d (reach_of's own point).
+func reach_point_of(pname: String, xf: Transform2D, d: Vector2) -> Vector2:
+	var g: Array = _shape_geo[pname]
+	var n := d.normalized()
+	match g[0]:
+		"circle":
+			return xf.origin + n * float(g[1])
+		"capsule":
+			var p1: Vector2 = xf * (g[1] as Vector2)
+			var p2: Vector2 = xf * (g[2] as Vector2)
+			return (p1 if p1.dot(d) >= p2.dot(d) else p2) + n * float(g[3])
+		"box":
+			var he: Vector2 = g[1]
+			var best := xf.origin
+			var best_r := -INF
+			for c in [Vector2(-he.x, -he.y), Vector2(he.x, -he.y), Vector2(he.x, he.y), Vector2(-he.x, he.y)]:
+				var p: Vector2 = xf * c
+				if p.dot(d) > best_r:
+					best_r = p.dot(d)
+					best = p
+			return best
+	return xf.origin
+
+
+## Each piece's furthest point along d: live, and a pose's (the lock-in judges these
+## against the line as the camera shows it).
+func reach_points(d: Vector2) -> Array:
+	var out: Array = []
+	for pname in bodies:
+		out.append(reach_point_of(pname, xf2(bodies[pname]), d))
+	return out
+
+
+func pose_reach_points(p: PackedFloat32Array, d: Vector2) -> Array:
+	var out: Array = []
+	var k := 0
+	for pname in Layout.ORDER:
+		out.append(reach_point_of(pname, Transform2D(p[k + 2], Vector2(p[k], p[k + 1])), d))
+		k += 3
+	return out
+
+
 ## The climber's reach along d (live bodies), and a pose's (from the network).
 func reach(d: Vector2) -> float:
 	var best := -INF

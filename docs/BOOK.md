@@ -788,36 +788,44 @@ Commits 4714920, 7f37818 and the one after.
     - The card row scales itself to stay inside the right edge.
   - **Still to check:** a real guest lobby on a second machine.
 - **The line you can see (Parker 11-11: "there are times in both modes where my hand
-  seems to be over the line but I cannot lock in").** Seven causes, all fixed:
-  - **The plaza line lagged:** it glided up after the line moved (a lerp). It snaps now.
-  - **The plaza line hung off the plane:** its flag string hangs 0.45 m behind the
-    climbers (the line node at z 0.35, the string `LuchaUI.LINE_Z` behind it), so in
-    perspective it showed above or below the real line. The node is now set on the
-    camera's sight line to the line at z = 0, so on screen the string covers exactly
-    the judged line.
-  - **The plaza string sagged** 0.12 m at its middle, right over the tower. It's lifted
-    by its sag (`LINE_SAG`): exact over the ring, a touch high out by the poles.
-  - **Del Mar's rope stood behind the plane** (the mast's eye at z -1.15, the buoy at
-    -2): it showed nearer the screen's middle than the line. Each end now slides along
-    the camera's sight line (`Stage.view_from`, set by main each frame): the mast's eye
-    keeps its x, the buoy its waterline, and the rope lies over the judged line from
-    any camera. With no camera (the headless batteries) the ends sit on the line.
-  - **Del Mar's rope sagged** 3.5% of its length (0.35-0.7 m) under the line. No
-    standing sag now; it still flexes and wobbles when the buoy moves (kicked by the
-    buoy's own motion, not the camera sliding its end), and settles straight.
-  - **The rope's glide:** after each lock the rope glides out on its spring while the
-    line has already moved. A lock is judged by the rope as drawn, `Game.lock_line()`
-    = the lesser of the two (the plaza: the line, its bar snaps). The raised line is
-    still `maxf(line, ...)`.
-  - **A press a moment early:** Lock In stays wanted for `LOCK_BUFFER_S` (0.3 s) and
-    locks the first tick you're over; "Get above the line" shows only when it runs out.
-  - Checked, not changed: the drawn hands reach 1.1 cm past their collision circles
-    (nothing to fix). The drawn head (cheeks and ears) reaches 7-12 cm past the head's
-    ball, and only the ball counts toward the line. **Parker ruled (11-11): it stays on the
-    default body under the skins** ("no it should be based on the default we have under
-    the skins"): a skin's look never changes what counts for the line.
-  `--lockline` proves it (7 checks); a real-window check measured the drawn rope on the
-  judged line within 0.001 px.
+  seems to be over the line but I cannot lock in").**
+  - **First pass (bcda0c9), half undone.** It moved the pieces to fit the line:
+    - the plaza's flags snapped and were lifted;
+    - Del Mar's mast eye and buoy slid along the camera's sight lines;
+    - the rope's sag was taken out.
+
+    Parker: "I liked the way the flags slid up and the way location of things, I
+    wanted only the invisible boundary line that you had to get over to be changed to
+    match how it looked from the camera. That's all, i didn't want it to move the
+    flags or ropes or the buoy."
+  - **Back as they were:**
+    - the flag string glides up and sags 0.12 (`LuchaUI.LINE_SAG`);
+    - Del Mar's rope hangs from the mast's eye (z -1.15) to the buoy (z -2) with its 3.5%
+      sag.
+  - **The line follows the picture instead (`Game.lock_gap`).**
+    - Main tells the game, every frame, where the camera is, and where the string hangs
+      and how far it has glided.
+    - A lock-in must clear what the string or the rope covers on screen, carried onto
+      the climbers' plane along the camera's sight lines.
+    - Each piece's furthest point counts (`Climber.reach_points`). The plaza uses the
+      string's sag at that x; Del Mar uses the rope drawn as 12 points.
+    - A host judging another machine's climber gives it `REMOTE_SLACK` (6 cm), since that
+      camera frames the same way but may lag.
+    - With `judge_by_view` off, it is the plain line.
+  - **Kept from the first pass:**
+    - Lock In stays wanted for `LOCK_BUFFER_S` (0.3 s), so a press a moment early locks
+      the first tick you're over.
+    - The line judged is the lesser of the line and the line as drawn
+      (`Game.lock_line()`), so the rope's glide out and the string's glide up never
+      count against you.
+  - **Checked, not changed:**
+    - The drawn hands reach 1.1 cm past their collision circles.
+    - The drawn head reaches 7-12 cm past the head's ball, and only the ball counts: an
+      open call for Parker.
+  - `--lockline` proves it (8 checks):
+    - a hand where the rope shows is on the line within 5 mm, though the view moves the
+      line up to 0.72 m;
+    - the gliding, sagging string within 0.01 mm.
 
 ## Record
 
