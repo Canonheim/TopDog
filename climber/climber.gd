@@ -1585,6 +1585,13 @@ func _tick_joints(attached: bool, dt: float) -> void:
 		var next_v := v + f * dt / end.mass
 		next_v = next_v.limit_length(maxf(vmax, v.length()))
 		f = (next_v - v) * end.mass / dt
+		# HOLDING ONLY WHAT SWINGS (the Peak's ropes; Parker 11-12: "if you are attached to
+		# a rope you can basically fly"): the pull on the held limb is paid by whatever
+		# the other limbs hold, so it moves the climber on the rope, never the two of them
+		# through the air. Holding anything fixed, the pull is as it always was.
+		var loose := _loose_holds()
+		for o: RigidBody3D in loose:
+			o.apply_central_force(Vector3(-f.x, -f.y, 0.0) / float(loose.size()))
 		if (float_mode or scramble) and not touches_solid():
 			if float_mode:
 				(bodies["chest"] as RigidBody3D).apply_central_force(Vector3(-f.x, -f.y, 0.0))  # (the swim: no pull on nothing)
@@ -1663,6 +1670,22 @@ func _aim_target(i: int, aim: Variant) -> Vector2:
 				dir = _swim_dir(l, dir)
 			l.cursor = limb_root(i) + dir * radius
 	return l.cursor
+
+
+## What the stuck limbs hold, if ALL of it is free to move (a rope's segments, a crank, a
+## hanging gondola): the bodies a held limb's pull is paid by. Empty when anything fixed
+## is held (the arena, a frozen climber, a mover), or nothing is.
+func _loose_holds() -> Array:
+	var out: Array = []
+	for l in limbs:
+		var o = l.grab_other
+		if o == null or not is_instance_valid(o):
+			continue
+		if o is RigidBody3D and not (o as RigidBody3D).freeze and not (o as Node).has_meta("climber"):
+			out.append(o)
+		else:
+			return []
+	return out
 
 
 ## THE PINWHEEL (the Peak's swim, Parker 11-11: "pinwheel an arm fast to fight the

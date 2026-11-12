@@ -181,6 +181,31 @@ func _build_area(a: Dictionary) -> void:
 		if kind == "void":
 			_add_shapes(slick, pts, z0, z1)
 			continue
+		# SLIM BARS (Parker 11-12: ladders were "big chunky squares"): a rung, a peg or a
+		# small nub is drawn slim through the plane, a bar and not a shelf 2.4 m deep. Its
+		# collision keeps the full depth.
+		var vz0 := z0
+		var vz1 := z1
+		if not s.has("z"):
+			var lo := pts[0]
+			var hi := pts[0]
+			for p in pts:
+				lo = lo.min(p)
+				hi = hi.max(p)
+			var size := hi - lo
+			if minf(size.x, size.y) <= 0.3 and maxf(size.x, size.y) <= 1.5:
+				vz0 = -0.2
+				vz1 = 0.2
+			elif maxf(size.x, size.y) <= 0.75:
+				vz0 = -0.3
+				vz1 = 0.3
+			elif bool(s.get("ghost", false)):
+				vz0 = -0.26
+				vz1 = -0.14  # (a ladder's rails stand just behind the rungs)
+		if bool(s.get("ghost", false)):
+			# Drawn only: nothing touches it.
+			mb.prism(pts, vz0, vz1, AtlasPalette.matte_uv(kind_color(a, kind).darkened(0.12)), AtlasPalette.matte_uv(tone(a, "edge")))
+			continue
 		if hold != null or s.has("tag"):
 			# A hold with a behaviour (or a tag): its own body and its own drawn piece.
 			var sb := _static_body(1.0)
@@ -188,7 +213,7 @@ func _build_area(a: Dictionary) -> void:
 			_add_shapes(sb, pts, z0, z1)
 			var mi := MeshInstance3D.new()
 			var one := PeakMesh.new()
-			one.prism(pts, z0, z1, Vector2.ZERO, Vector2.ZERO)
+			one.prism(pts, vz0, vz1, Vector2.ZERO, Vector2.ZERO)
 			mi.mesh = one.commit()
 			CelPass.paint(mi, kind_color(a, kind))
 			sb.add_child(mi)
@@ -204,7 +229,7 @@ func _build_area(a: Dictionary) -> void:
 		_add_shapes(grip if grips else slick, pts, z0, z1)
 		var face := AtlasPalette.matte_uv(kind_color(a, kind))
 		var edge := AtlasPalette.matte_uv(tone(a, "edge") if grips else kind_color(a, kind).darkened(0.35))
-		mb.prism(pts, z0, z1, face, edge)
+		mb.prism(pts, vz0, vz1, face, edge)
 		if not grips:
 			# Slick reads wet: a faint shine along its edges and a few pale drips.
 			mb.rim(pts, z1 + 0.008, 0.09, AtlasPalette.matte_uv(kind_color(a, kind).lerp(tone(a, "drip"), 0.22)))

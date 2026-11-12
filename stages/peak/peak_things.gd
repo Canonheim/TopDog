@@ -7,7 +7,10 @@ extends RefCounted
 const ClimberScript := preload("res://climber/climber.gd")
 const Layout := preload("res://climber/body_layout.gd")
 const SEG_R := 0.065
-const ROPE_MASS := {"rope": 1.2, "chain": 2.2, "vine": 1.0, "cable": 2.0, "banner": 0.9}
+## Per half-metre segment. Three times what they were (Parker 11-12: "the ropes need to be
+## about 3x heavier": holding one, a climber could haul it anywhere and nearly fly).
+const ROPE_MASS := {"rope": 3.6, "chain": 6.6, "vine": 3.0, "cable": 6.0, "banner": 2.7}
+const ROPE_REACH := 0.17  # a free hand or foot this near a rope takes it
 const ROPE_TONE := {"rope": "#C9A36A", "chain": "#B5532A", "vine": "#7FA04A", "cable": "#B9B2A6", "banner": "#C9A36A"}
 const BOARD_S := 0.7  # in the cart this long and it rolls
 ## joints in parent-before-child order, with every piece that hangs off each one
@@ -309,7 +312,8 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		var j := PhysicsServer3D.joint_create()
 		PhysicsServer3D.joint_make_pin(j, prev.get_rid(), prev_local, bob.get_rid(), Vector3(0, h * 0.5, 0))
 		joints.append(j)
-	ropes.append({"id": str(def.id), "segs": segs, "bob": bob, "joints": joints, "area": str(a.id), "kind": kind, "creak": 0.0})
+	ropes.append({"id": str(def.id), "segs": segs, "bob": bob, "joints": joints, "area": str(a.id), "kind": kind, "creak": 0.0,
+		"planks": planks, "seg_len": seg_len, "top": top, "reach": length + 2.0})
 
 
 ## One of the ones who tried: a climber built, posed by joint turns from the T-pose, and frozen.
@@ -363,11 +367,14 @@ func on_player(c: Climber) -> void:
 	_grip_on.clear()
 	_grip_t.clear()
 	_last_grab.clear()
-	# The body passes through ropes; only hands and feet meet them (and take hold).
+	# NOTHING COLLIDES WITH A ROPE (Parker 11-12: "You should not have collision with ropes,
+	# only sticky hands and feet should grab them"): every piece passes through it, and a
+	# free hand or foot that comes within reach takes hold (_tick_rope_grabs). A bridge's
+	# planks are the exception: feet stand on those.
 	for r in ropes:
 		for seg: RigidBody3D in r.segs:
 			for pname in c.bodies:
-				if not Climber._is_end(pname):
+				if not bool(r.planks) or not Climber._is_end(pname):
 					seg.add_collision_exception_with(c.bodies[pname])
 
 
@@ -407,12 +414,98 @@ func tick(delta: float) -> void:
 		var m: Dictionary = movers[id]
 		if m.active:
 			_tick_mover(m, delta)
+	_tick_rope_grabs()
+	_tick_strain(delta)
 	_tick_holds(delta)
 	_tick_spawners(delta)
 
 
 func frame(_delta: float) -> void:
 	pass
+
+
+## A GRIP BREAKS BEFORE THE BODY DOES (Parker 11-12: "a certain amount of force should
+## break your welds ... if I grip a moving thing, it pulls me and stretches me across the
+## map instead of me losing my grip on something"). When the climber's joints are pulled
+## open, a grip lets go. THE MOVING THING WINS: the grip that goes is the one on whatever
+## is moving least (the dock you stand on when you take a gondola's rail, the wall your
+## hand brushes while you ride a lift), so you go with the ride. Stretched only by its
+## own swinging on fixed holds, nothing breaks: that's the climber's own doing.
+const STRAIN_GAP := 0.07  # joints open this far (m) for STRAIN_S, or STRAIN_SNAP at once
+const STRAIN_SNAP := 0.12
+const STRAIN_S := 0.05
+var _strain_t := 0.0
+
+
+func _tick_strain(delta: float) -> void:
+	var c := peak.player
+	if c == null or c.state != Climber.State.LIVE:
+		return
+	var slowest := -1
+	var slowest_v := INF
+	var fastest_v := 0.0
+	var stuck := 0
+	for i in c.limbs.size():
+		if c.limbs[i].grab_other == null:
+			continue
+		stuck += 1
+		var v: float = (c.bodies[c.limbs[i].def.end] as RigidBody3D).linear_velocity.length()
+		fastest_v = maxf(fastest_v, v)
+		if v < slowest_v:
+			slowest_v = v
+			slowest = i
+	if stuck < 2 or fastest_v < 0.4 or fastest_v - slowest_v < 0.3:
+		_strain_t = 0.0
+		return
+	var gap := c.worst_joint_gap()
+	if gap < STRAIN_GAP:
+		_strain_t = 0.0
+		return
+	_strain_t += delta
+	if gap < STRAIN_SNAP and _strain_t < STRAIN_S:
+		return
+	_strain_t = 0.0
+	var at := peak.local_of(c.limb_end(slowest))
+	c.release(slowest)
+	c.limbs[slowest].regrip = 0.5
+	Sound.play_at("grip", Vector3(c.limb_end(slowest).x, c.limb_end(slowest).y, 0), -2.0)
+	peak.audio.play("rope_creak", at, -6.0)
+
+
+## A free hand or foot (not held, holding nothing, past its regrip wait) within reach of
+## a rope takes it, as it would stick to anything it touched.
+func _tick_rope_grabs() -> void:
+	var c := peak.player
+	if c == null or c.state != Climber.State.LIVE or c.knockout_left > 0.0 or c.sinking:
+		return
+	var com := peak.local_of(c.centre_of_mass())
+	for i in c.limbs.size():
+		var l: Dictionary = c.limbs[i]
+		if bool(l.held) or l.grab_other != null or float(l.regrip) > 0.0:
+			continue
+		var end: RigidBody3D = c.bodies[l.def.end]
+		var p := Vector2(end.global_position.x, end.global_position.y)
+		var best: RigidBody3D = null
+		var best_d := ROPE_REACH
+		for r in ropes:
+			if bool(r.planks) or not bool(peak._area_active.get(r.area, true)):
+				continue
+			if com.distance_to(r.top) > float(r.reach) + 30.0:
+				continue  # (a rope on a mover wanders: a wide net, then the real test)
+			var half: float = float(r.seg_len) * 0.5
+			for seg: RigidBody3D in r.segs:
+				var sp := Vector2(seg.global_position.x, seg.global_position.y)
+				if absf(sp.x - p.x) > half + 0.3 or absf(sp.y - p.y) > half + 0.3:
+					continue
+				var axis := Vector2(seg.global_basis.y.x, seg.global_basis.y.y)
+				var along := clampf((p - sp).dot(axis), -half, half)
+				var d := p.distance_to(sp + axis * along)
+				if d < best_d:
+					best_d = d
+					best = seg
+		if best != null:
+			c.attach(i, best)
+			peak.audio.play("rope_creak", peak.local_of(p), -4.0)
 
 
 func _player_limbs_on(nodes: Array) -> bool:
@@ -675,8 +768,6 @@ func _tick_holds(delta: float) -> void:
 			if o == null or not is_instance_valid(o):
 				_grip_on.erase(i)
 				continue
-			if fresh and (o as Node).has_meta("peak_rope"):
-				peak.audio.play("rope_creak", peak.local_of(c.limb_end(i)), -4.0)
 			if not (o as Node).has_meta("peak_hold"):
 				_grip_on.erase(i)
 				continue

@@ -82,6 +82,7 @@ var _peak_over_t := 0.0
 var _peak_warp := ""
 var _peak_model_hidden := true  # (so the first frame shows it and sets the flag)
 var _peak_plaza_hidden := false
+var _peak_clock: Label  # the climb's clock, upper right (Parker 11-12)
 
 
 func _ready() -> void:
@@ -559,6 +560,27 @@ func _tick_peak(delta: float) -> void:
 		_peak_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui.add_child(_peak_label)
 	_peak_label.visible = on and _peak_hud == null and screen in ["hud", "pause"]
+	# THE CLIMB'S CLOCK (Parker 11-12: "the timer should be visible in the upper right of the
+	# screen during the climb").
+	if _peak_clock == null:
+		_peak_clock = Label.new()
+		if ResourceLoader.exists(LuchaKit.TITLE_FONT):
+			_peak_clock.add_theme_font_override("font", load(LuchaKit.TITLE_FONT))
+		_peak_clock.add_theme_font_size_override("font_size", 46)
+		_peak_clock.add_theme_color_override("font_color", Color("#FFF2CC"))
+		_peak_clock.add_theme_color_override("font_outline_color", Color("#201008"))
+		_peak_clock.add_theme_constant_override("outline_size", 12)
+		_peak_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_peak_clock.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		_peak_clock.offset_left = -360.0
+		_peak_clock.offset_right = -30.0
+		_peak_clock.offset_top = 18.0
+		_peak_clock.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ui.add_child(_peak_clock)
+	_peak_clock.visible = on and screen in ["hud", "pause"]
+	if on:
+		var secs := int(game.peak.time_s)
+		_peak_clock.text = ("%d:%02d:%02d" % [secs / 3600, (secs / 60) % 60, secs % 60]) if secs >= 3600 else ("%d:%02d" % [secs / 60, secs % 60])
 	if on != _peak_model_hidden:
 		# The model Peak behind the town steps aside while you're on the real one, and
 		# flies the flag once the bell has been rung.

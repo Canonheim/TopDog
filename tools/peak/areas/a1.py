@@ -155,16 +155,14 @@ A.challenge("1.1", "La Galería", (-154.0, -12.6), 1, "S", moves=[
 # (CHALLENGES asks 2.3 m for the last: hold to hold that is 3.6 m/s, over F1. 2.05 is F1's limit.)
 RUNGS = [-11.6, -10.85, -10.1, -9.35, -7.85, -7.1, -6.35, -5.6, -3.72, -2.97, -2.22, -1.47,
          0.58, 1.33, 2.08, 2.83, 3.58, 4.33, 5.08]
-for y in RUNGS:
-    A.box(-171.55, y - 0.07, 1.1, 0.14, "iron")  # x -172.1 .. -171.0: 0.9 m of rung out of the wall
+# A real ladder (Parker 11-12): rails drawn, only the rungs solid, rungs missing in three stretches.
+A.ladder(-171.55, RUNGS, w=0.9, kind="wood")
 A.ledge(-176.0, -172.0, 6.0, "rock", t=0.5)  # the ladder's head: a rest, and the catwalk's east end
 A.statue(-167.0, -12.28, "sit", flip=True)  # the one who kept count, by his cold lantern
 A.deco("lantern_mine", -166.2, -12.6, z=-0.5, size=(0.3, 0.5, 0.3), tone="iron")  # cold: no light on it
 A.deco("tally_marks", -167.0, -11.4, z=-1.15, size=(1.2, 0.8, 0.02), tone="bone")
 A.deco("camp_bedroll", -167.9, -12.6, z=-0.8, size=(1.6, 0.25, 0.6), tone="wood")
 A.deco("rope_coil", -166.6, -12.6, z=-0.9, size=(0.5, 0.2, 0.5), tone="wood")
-for y, rot in ((-12.4, 0.0), (-6.9, 7.0), (0.6, -5.0)):
-    A.deco("ladder_piece", -171.6, y, z=-0.75, rot=rot, size=(0.8, 2.0, 0.1), tone="wood")  # what is left of the real ladder
 A.challenge("1.2", "Escalera Rota", (-170.6, -12.6), 1, "S", moves=[
     ["reach", [-171.2, -9.35], [-171.2, -7.85]], ["reach", [-171.2, -5.6], [-171.2, -3.72]],
     ["fling", [-171.2, -1.47], [-171.2, 0.58], "F1"], ["reach", [-171.2, 5.08], [-172.2, 6.0]]])

@@ -173,12 +173,15 @@ class Area:
         self.warnings = []
 
     # ------------------------------------------------------------ static rock
-    def solid(self, pts, kind="rock", hold=None, z=None, tag=None):
-        """Any simple polygon of solid stuff."""
+    def solid(self, pts, kind="rock", hold=None, z=None, tag=None, ghost=False):
+        """Any simple polygon of solid stuff. ghost=True: drawn, but nothing touches it
+        (a ladder's rails, a frame behind the holds)."""
         assert kind in KINDS, kind
         pts = ccw(pts)
         assert len(pts) >= 3
         s = {"pts": _pts(pts), "kind": kind}
+        if ghost:
+            s["ghost"] = True
         if hold is not None:
             s["hold"] = hold
         if z is not None:
@@ -201,6 +204,20 @@ class Area:
         dx, dy = p1[0] - p0[0], p1[1] - p0[1]
         L = math.hypot(dx, dy)
         return self.box((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, L, t, kind, math.degrees(math.atan2(dy, dx)), **kw)
+
+    def ladder(self, x, ys, w=0.8, kind="wood", t=0.09, rail=0.08, rails=True):
+        """A real ladder (Parker 11-12: "make it an actual ladder you climb on but only
+        the sideways rungs have collision"). x is its middle, ys the height of each rung's
+        TOP, in order. Each rung is a thin bar you can hold and stand on; the two rails
+        are drawn and touch nothing. Leave rungs out of `ys` for a broken stretch: the
+        rails run on through the gap."""
+        ys = sorted(ys)
+        for y in ys:
+            self.solid([(x - w / 2, y - t), (x + w / 2, y - t), (x + w / 2, y), (x - w / 2, y)], kind)
+        if rails and ys:
+            y0, y1 = ys[0] - 0.45, ys[-1] + 0.35
+            for rx in (x - w / 2, x + w / 2):
+                self.solid([(rx - rail / 2, y0), (rx + rail / 2, y0), (rx + rail / 2, y1), (rx - rail / 2, y1)], kind, ghost=True)
 
     def hold(self, x, y, r=0.22, kind="rock", n=6, **kw):
         """A small nub to grab."""

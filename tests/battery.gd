@@ -3929,6 +3929,22 @@ func _run_peak() -> void:
 	t("peak mover: a platform carries the climber standing on it", off < 1.2 and c.touches_solid(), "%.2f m from its middle after 7 s" % off)
 	c.remove()
 	await pticks(pk, 2)
+	# ---- a grip breaks before the body does, and the moving thing wins
+	c = _peak_climber(pk, 0, 6)
+	_free(c)
+	_put_hand(c, 0, Vector2(pn.global_position.x, pn.global_position.y - 0.25))
+	c.attach(0, pn)
+	var foot_bar := bar_at(c.limb_end(2))
+	c.attach(2, foot_bar)
+	var worst_gap := 0.0
+	for i in int(5.0 * hz):
+		pk.tick(1.0 / hz)
+		await get_tree().physics_frame
+		worst_gap = maxf(worst_gap, c.worst_joint_gap())
+	t("peak strain: a hand on a moving platform and a foot on a fixed bar: the foot's grip breaks, the hand rides on", c.limbs[0].grab_other == pn and c.limbs[2].grab_other == null and worst_gap < 0.35, "joints opened %.2f m at most" % worst_gap)
+	c.remove()
+	foot_bar.queue_free()
+	await pticks(pk, 2)
 	# ---- crumble and timed holds
 	var rotten: Dictionary = {}
 	var ice: Dictionary = {}
