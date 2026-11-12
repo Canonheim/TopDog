@@ -84,14 +84,17 @@ func add_hold(body: CollisionObject3D, def: Dictionary, vis: Node3D, col: Color,
 
 func _shapes_mesh(a: Dictionary, shapes: Array) -> MeshInstance3D:
 	var mb := PeakMesh.new()
-	var ms := PeakMesh.new()
+	var ms := {}  # slick kind -> PeakMesh
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 5
 	for sh in shapes:
 		var kind := str(sh.kind)
 		var pts: PackedVector2Array = peak._pts(sh.pts)
 		if not peak.kind_grips(kind):
-			ms.prism(pts, -Peak.HALF * 0.85, Peak.HALF * 0.85, Vector2.ZERO, Vector2.ZERO)
+			var cls := Peak.slick_class(kind)
+			if not ms.has(cls):
+				ms[cls] = PeakMesh.new()
+			(ms[cls] as PeakMesh).prism(pts, -Peak.HALF * 0.85, Peak.HALF * 0.85, Vector2.ZERO, Vector2.ZERO)
 			continue
 		var c: Color = peak.kind_color(a, kind)
 		mb.prism(pts, -Peak.HALF * 0.85, Peak.HALF * 0.85, AtlasPalette.matte_uv(c), AtlasPalette.matte_uv(peak.tone(a, "edge")))
@@ -100,10 +103,10 @@ func _shapes_mesh(a: Dictionary, shapes: Array) -> MeshInstance3D:
 	if not mb.empty():
 		mi.mesh = mb.commit()
 		mi.material_override = CelPass.one()
-	if not ms.empty():
+	for cls: String in ms:
 		var wet := MeshInstance3D.new()
-		wet.mesh = ms.commit()
-		wet.material_override = Peak.slick_material()
+		wet.mesh = (ms[cls] as PeakMesh).commit()
+		wet.material_override = Peak.slick_material(cls)
 		mi.add_child(wet)
 	return mi
 
@@ -865,7 +868,7 @@ func _tick_holds(delta: float) -> void:
 						body.remove_meta("no_weld")
 					if h.vis is GeometryInstance3D:
 						if wet:
-							(h.vis as GeometryInstance3D).material_override = Peak.slick_material()
+							(h.vis as GeometryInstance3D).material_override = Peak.slick_material(str(body.get_meta("slick_class", "mud")))
 						else:
 							CelPass.paint(h.vis, h.col as Color)
 

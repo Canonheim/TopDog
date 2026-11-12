@@ -193,7 +193,9 @@ A.card([(-420, 940), (-290, 940), (-290, 961), (-305, 964), (-322, 961.5), (-341
        z=-22.0, tone="#FFF1D6")
 A.card([(-420, 940), (-290, 940), (-290, 958), (-312, 961.5), (-330, 958.5), (-352, 962.5), (-374, 959), (-396, 962), (-420, 958)],
        z=-10.0, tone="#FFFFFF")
-A.card([(-420, 940), (-290, 940), (-290, 957), (-318, 960.5), (-346, 957.5), (-372, 961), (-420, 957)], z=3.0, tone="#FFFFFF")
+# (This nearest bank of cloud stood IN FRONT of the plane, z 3: it hid the whole top of the storm
+# ridge, 10.6 to 10.9, behind a white sheet. Behind the climb now.)
+A.card([(-420, 940), (-290, 940), (-290, 957), (-318, 960.5), (-346, 957.5), (-372, 961), (-420, 957)], z=-5.0, tone="#FFFFFF")
 A.effect("clouds", (-392, 952, -316, 966))
 A.effect("dust", (-380, 966, -320, 1008), tone="gold", density=0.3)
 

@@ -237,14 +237,13 @@ A.cam((-318, 943.4, -284, 950), half_h=12.0, bias=(-4.0, -3.0))
 A.cam((-328, 943.4, -318, 946.4), half_h=12.0, bias=(2.0, -3.0))
 
 # ================================================================ 10.7 La Nube (D4, X)
-# Inside the cloud: dark 0.9, a flash every 4 s for 0.35 s. Five stones stand in it on a
-# rib you only see as a shadow (a back card): from the band, each one 1.0 east and 1.0 up
-# of the last. The fourth is NOT there: it sits 0.3 back west and 1.6 up. Then the rule
+# Through the cloud (it is BEHIND the climb now: the blind version, dark 0.9 with a flash
+# every 4 s, "feels like a bug", Parker 11-12). Five stones stand on a rib of dark rock (a
+# back card): from the band, each one 1.0 east and 1.0 up of the last. The fourth is NOT there: it sits 0.3 back west and 1.6 up. Then the rule
 # resumes, and the last stone is a reach from the balloon's ladder.
 NUBE = [(-326.72, 945.9), (-325.6, 947.0), (-324.6, 948.0), (-323.6, 949.0), (-323.9, 950.6), (-322.9, 951.6)]
 for x, y in NUBE[1:]:
     A.hold(x, y, r=0.28)
-A.dark((-328.5, 946.4, -317.5, 953.2), level=0.9, flash={"period": 4.0, "on": 0.35})
 A.challenge("10.7", "La Nube", (-326.2, 944.4), 4, "X",
             moves=[["reach", list(NUBE[i]), list(NUBE[i + 1])] for i in range(len(NUBE) - 1)]
             + [["reach", [-322.9, 951.6], [-321.8, 951.0]]])
@@ -315,7 +314,7 @@ cloud(-317.0, -307.0, 936.6, h=3.2)
 # La Nube: the cloud itself, and the rib its stones stand on (a shadow you see in the flash).
 A.card([(-327.0, 944.6), (-324.8, 946.0), (-322.0, 950.6), (-321.6, 952.6), (-324.4, 951.6), (-326.8, 948.0)], z=-1.2, tone="back3")
 A.card([(-330, 946.0), (-325, 944.8), (-318.5, 946.4), (-316.5, 950.0), (-318.5, 953.4), (-325, 954.0), (-330, 952.4)], z=-2.0, tone="#2B303A", edge=False)
-A.card([(-329, 951.6), (-323, 950.8), (-317.5, 952.0), (-318.5, 954.0), (-325, 954.6), (-329.5, 953.6)], z=3.0, tone="#59616E", edge=False)
+A.card([(-329, 951.6), (-323, 950.8), (-317.5, 952.0), (-318.5, 954.0), (-325, 954.6), (-329.5, 953.6)], z=-1.6, tone="#59616E", edge=False)  # (behind the climb: it hid the last two stones)
 
 # The prayer lines: papel picado, the town's colours at their loudest.
 for i, (p, q) in enumerate((L1, L2, L3)):

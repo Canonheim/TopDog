@@ -25,20 +25,41 @@ const FALL_COUNT_M := 15.0  # a drop of this much is a fall on the tally
 ## held, in every area, with the house shader's polished glint and rim.
 const SLICK := Color("#3A2616")
 const STRETCH := ["hanger_chain", "counterweight_chain", "balloon_tether"]
-static var _slick_mat: ShaderMaterial = null
+## ICE AND CRYSTAL ARE EXEMPT (Parker 11-12: "ice and crystal should be exempt"): slick
+## glass is dark indigo glass and black ice is blue-black ice, each as glossy as the mud.
+## Three kinds of slick, then: "mud" (everything else), "glass", "ice".
+const SLICK_GLASS := Color("#160C3E")
+const SLICK_ICE := Color("#0C2440")
+const SLICK_LOOKS := {
+	# colour, the sheen where light falls, the lit rim, the painted edge band, the drips ("" = none)
+	"mud": [SLICK, Color(0.72, 0.58, 0.42, 0.5), Color(0.95, 0.8, 0.6, 0.5), "#8A5E34", "#A87A48"],
+	"glass": [SLICK_GLASS, Color(0.55, 0.45, 0.95, 0.5), Color(0.85, 0.78, 1.0, 0.5), "#6A52C8", ""],
+	"ice": [SLICK_ICE, Color(0.45, 0.72, 0.95, 0.5), Color(0.78, 0.93, 1.0, 0.5), "#4E8FC4", "#8FC8E8"],
+}
+static var _slick_mats := {}
 
 
-static func slick_material() -> ShaderMaterial:
-	if _slick_mat == null:
-		_slick_mat = ShaderMaterial.new()
-		_slick_mat.shader = CelPass.SHADER
-		_slick_mat.set_shader_parameter("color", SLICK)
-		# A tight bright glint (in this shader a LOW breadth is the pinpoint: a broad band
-		# whited out every flat face) and a warm rim on the edges.
-		_slick_mat.set_shader_parameter("specular", Color(0.72, 0.58, 0.42, 0.5))  # a broad wet sheen where light falls, not white
-		_slick_mat.set_shader_parameter("fresnel", Color(0.95, 0.8, 0.6, 0.5))
-		_slick_mat.resource_name = "SLICK"
-	return _slick_mat
+static func slick_class(kind: String) -> String:
+	if kind in ["glass", "crystal"]:
+		return "glass"
+	if kind in ["blackice", "ice", "snow", "snowbridge"]:
+		return "ice"
+	return "mud"
+
+
+static func slick_material(cls := "mud") -> ShaderMaterial:
+	if not _slick_mats.has(cls):
+		var look: Array = SLICK_LOOKS[cls]
+		var m := ShaderMaterial.new()
+		m.shader = CelPass.SHADER
+		m.set_shader_parameter("color", look[0])
+		# A broad sheen where light falls, not white (in this shader a broad bright band
+		# whited out every flat face), and a lit rim on the edges.
+		m.set_shader_parameter("specular", look[1])
+		m.set_shader_parameter("fresnel", look[2])
+		m.resource_name = "SLICK_" + cls
+		_slick_mats[cls] = m
+	return _slick_mats[cls]
 
 
 ## A KIT MODEL FOR THE PEAK, ITS SLICK PARTS WET. The makers paint what can't be held in
@@ -46,22 +67,30 @@ static func slick_material() -> ShaderMaterial:
 ## rows with a glint so broad a flat face goes white. So the faces painted that brown are
 ## cut out into a surface of their own and drawn with slick_material(): a model's slick
 ## part and a slick wall of the course are the same stuff, to the eye. Done once a mesh.
-static var _wet_meshes := {}  # the model's Mesh -> {mesh, from: [the old surface of each new one], wet: [is it the slick cut]}
-static var _wet_texels := {}  # atlas texel -> is it the slick brown
+static var _wet_meshes := {}  # the model's Mesh -> {mesh, from: [the old surface of each new one], wet: [its slick kind, or ""]}
+static var _wet_texels := {}  # atlas texel -> 0, or 1 + the index of its slick kind in WET_KINDS
+const WET_KINDS := ["mud", "glass", "ice"]
 static var _wet_atlas: Image
+
+
+## Crystal and ice pieces the makers painted in the mud brown (the day slick was one colour
+## everywhere): their slick is glass or ice, whatever colour the file carries.
+const WET_AS := {"geode_wheel": "glass", "crystal_ring_3": "glass", "crystal_ring_4": "glass", "crystal_ring_4x": "glass",
+	"quartz_pendulum": "glass", "crystal_raft": "glass", "crystal_column": "glass", "serac": "ice"}
 
 
 static func kit(model: String) -> Node3D:
 	var n := LuchaKit.kit_model(model)
 	if n != null:
+		var mud_as := str(WET_AS.get(model, "mud"))
 		if n is MeshInstance3D:
-			_wet(n as MeshInstance3D)
+			_wet(n as MeshInstance3D, mud_as)
 		for mi in n.find_children("*", "MeshInstance3D", true, false):
-			_wet(mi as MeshInstance3D)
+			_wet(mi as MeshInstance3D, mud_as)
 	return n
 
 
-static func _wet(mi: MeshInstance3D) -> void:
+static func _wet(mi: MeshInstance3D, mud_as := "mud") -> void:
 	var src := mi.mesh as ArrayMesh
 	if src == null or src.get_blend_shape_count() > 0 or mi.skin != null:
 		return
@@ -75,7 +104,10 @@ static func _wet(mi: MeshInstance3D) -> void:
 		over.append(mi.get_surface_override_material(i))
 	mi.mesh = cut.mesh
 	for i in (cut.from as Array).size():
-		mi.set_surface_override_material(i, slick_material() if bool(cut.wet[i]) else over[int(cut.from[i])])
+		var cls := str(cut.wet[i])
+		if cls == "mud":
+			cls = mud_as
+		mi.set_surface_override_material(i, slick_material(cls) if cls != "" else over[int(cut.from[i])])
 
 
 ## The mesh with its slick-brown faces in surfaces of their own; {} when it has none.
@@ -94,8 +126,8 @@ static func _wet_cut(src: ArrayMesh) -> Dictionary:
 		var arrays := src.surface_get_arrays(si)
 		var uvs: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV] if arrays[Mesh.ARRAY_TEX_UV] != null else PackedVector2Array()
 		var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
-		var dry_i := PackedInt32Array()
-		var wet_i := PackedInt32Array()
+		var parts: Array = [PackedInt32Array(), PackedInt32Array(), PackedInt32Array(), PackedInt32Array()]  # dry, then each of WET_KINDS
+		var wet_n := 0
 		if src.surface_get_primitive_type(si) == Mesh.PRIMITIVE_TRIANGLES and not uvs.is_empty():
 			if idx.is_empty():
 				idx.resize(uvs.size())
@@ -107,34 +139,43 @@ static func _wet_cut(src: ArrayMesh) -> Dictionary:
 				var px := Vector2i(clampi(int(uvs[i].x * w), 0, w - 1), clampi(int(uvs[i].y * h), 0, h - 1))
 				if not _wet_texels.has(px):
 					var c := _wet_atlas.get_pixelv(px)
-					_wet_texels[px] = px.y >= AtlasPalette.MATTE_ROWS and Vector3(c.r - SLICK.r, c.g - SLICK.g, c.b - SLICK.b).length() < 0.05
-				flag[i] = 1 if bool(_wet_texels[px]) else 0
+					var which := 0
+					if px.y >= AtlasPalette.MATTE_ROWS:
+						for k in WET_KINDS.size():
+							var want: Color = SLICK_LOOKS[WET_KINDS[k]][0]
+							if Vector3(c.r - want.r, c.g - want.g, c.b - want.b).length() < 0.05:
+								which = k + 1
+								break
+					_wet_texels[px] = which
+				flag[i] = int(_wet_texels[px])
 			for t in range(0, idx.size() - 2, 3):
-				if flag[idx[t]] == 1 and flag[idx[t + 1]] == 1 and flag[idx[t + 2]] == 1:
-					wet_i.append(idx[t])
-					wet_i.append(idx[t + 1])
-					wet_i.append(idx[t + 2])
-				else:
-					dry_i.append(idx[t])
-					dry_i.append(idx[t + 1])
-					dry_i.append(idx[t + 2])
-		if wet_i.is_empty():
+				var f := flag[idx[t]]
+				var to: int = f if (f == flag[idx[t + 1]] and f == flag[idx[t + 2]]) else 0
+				var list: PackedInt32Array = parts[to]
+				list.append(idx[t])
+				list.append(idx[t + 1])
+				list.append(idx[t + 2])
+				parts[to] = list
+				if to > 0:
+					wet_n += 1
+		if wet_n == 0:
 			out.add_surface_from_arrays(src.surface_get_primitive_type(si), arrays)
 			out.surface_set_material(out.get_surface_count() - 1, src.surface_get_material(si))
 			from.append(si)
-			wet.append(false)
+			wet.append("")
 			continue
 		any = true
-		for k in 2:
-			var part := dry_i if k == 0 else wet_i
+		for k in parts.size():
+			var part: PackedInt32Array = parts[k]
 			if part.is_empty():
 				continue
 			var a2 := arrays.duplicate()
 			a2[Mesh.ARRAY_INDEX] = part
 			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, a2)
-			out.surface_set_material(out.get_surface_count() - 1, slick_material() if k == 1 else src.surface_get_material(si))
+			var cls: String = "" if k == 0 else str(WET_KINDS[k - 1])
+			out.surface_set_material(out.get_surface_count() - 1, slick_material(cls) if cls != "" else src.surface_get_material(si))
 			from.append(si)
-			wet.append(k == 1)
+			wet.append(cls)
 	return {"mesh": out, "from": from, "wet": wet} if any else {}
 
 
@@ -284,7 +325,7 @@ func _build_area(a: Dictionary) -> void:
 	root.add_child(grip)
 	root.add_child(slick)
 	var mb := PeakMesh.new()
-	var ms := PeakMesh.new()  # the slick rock: its own shiny material
+	var ms := {}  # the slick rock, a mesh for each kind of slick: "mud" / "glass" / "ice" -> PeakMesh
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str(a.id))
 	for s in a.get("solids", []):
@@ -341,9 +382,10 @@ func _build_area(a: Dictionary) -> void:
 			sb.add_child(mi)
 			sb.set_meta("peak_pts", pts)
 			sb.set_meta("peak_z", Vector2(vz0, vz1))
+			sb.set_meta("slick_class", slick_class(kind))  # (what it looks like when it turns slick)
 			if not kind_grips(kind):
 				sb.set_meta("no_weld", true)
-				mi.material_override = slick_material()
+				mi.material_override = slick_material(slick_class(kind))
 			if s.has("tag"):
 				sb.set_meta("peak_tag", str(s.tag))
 				zones.tag(str(s.tag), sb)
@@ -355,10 +397,15 @@ func _build_area(a: Dictionary) -> void:
 		if skinned:
 			continue
 		if not grips:
-			ms.prism(pts, vz0, vz1, Vector2.ZERO, Vector2.ZERO)
-			# Painted wet: a paler band along its edges, runs of drips, a few bright glints.
-			mb.rim(pts, vz1 + 0.006, 0.09, AtlasPalette.matte_uv(Color("#8A5E34")))
-			_drips(mb, pts, vz1, AtlasPalette.matte_uv(Color("#A87A48")), rng)
+			var cls := slick_class(kind)
+			if not ms.has(cls):
+				ms[cls] = PeakMesh.new()
+			(ms[cls] as PeakMesh).prism(pts, vz0, vz1, Vector2.ZERO, Vector2.ZERO)
+			# Painted wet: a paler band along its edges and runs of drips.
+			var look: Array = SLICK_LOOKS[cls]
+			mb.rim(pts, vz1 + 0.006, 0.09, AtlasPalette.matte_uv(Color(str(look[3]))))
+			if str(look[4]) != "":
+				_drips(mb, pts, vz1, AtlasPalette.matte_uv(Color(str(look[4]))), rng)
 			continue
 		var face_c: Color = kind_color(a, kind)
 		mb.prism(pts, vz0, vz1, AtlasPalette.matte_uv(face_c), AtlasPalette.matte_uv(tone(a, "edge")))
@@ -369,11 +416,11 @@ func _build_area(a: Dictionary) -> void:
 		mi.material_override = CelPass.one()
 		mi.name = "Rock"
 		root.add_child(mi)
-	if not ms.empty():
+	for cls: String in ms:
 		var mi := MeshInstance3D.new()
-		mi.mesh = ms.commit()
-		mi.material_override = slick_material()
-		mi.name = "Slick"
+		mi.mesh = (ms[cls] as PeakMesh).commit()
+		mi.material_override = slick_material(cls)
+		mi.name = "Slick_" + cls
 		root.add_child(mi)
 
 	# ---- the painted cards behind and in front
