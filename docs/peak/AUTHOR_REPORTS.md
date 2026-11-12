@@ -64,3 +64,16 @@ Nobody has played any of this. These are the things each author asked to have te
 - Miss costs off in four places: 4.5's upper snails drop you back four (harsher than designed); 4.7's miss is back one; 4.10's east flank only costs the try.
 - Shortcuts left open: a fling from 4.4's vine straight to the ledge; 5 m/s flings off the hanging roots in 4.9 that skip the puffballs.
 - Test first: 4.10 (does a swing off the board arrive at about 1 m/s sideways and 3.6 down, and do A5's chains catch a body at 4 to 6 m/s); 4.4 (does the swinging vine re-catch you); the throw off a puffball from a root's end; how errors pile up over 4.7's five caps; the float height in 4.3.
+
+## A9 El Glaciar
+- Builds clean. A tongue of ice whose east cliff is the slide; inside it a lower crevasse (9.1 to 9.3) and a tall ice cave (9.4), with the serac and the toboggan over the cave's top; from the window at 830 m the route is outside.
+- Changes: the glacier's lip is at (-271.5, 791.4) so slow bodies clear the cableway's high deck; the tongue bulges east so the toboggan's 15 m flight fits; 9.8's chute is also the drain for everything that falls from above.
+- Not met: 9.6's bowl has 2.9 m of near-flat slick, drained by a steady east wind and a crack before the kicker; one rest ledge is 2.2 m; 9.10's clear circle is 2.15 m.
+- Doubts: 9.6 may fall short for a tumbling body (a sliding ball reached the rope with the wind, missed by under a metre with a little friction); things on the slide can catch a faller (2 s ice plates, a frayed rope end, the 9.10 statue); a 16 m fling from the door statues could skip the chimney, 9.5 and 9.6.
+- Test first: 9.6 (does a real climber reach the rope; does a stalled one get pushed into the crack); the serac's hop to its landing mid-fall and from rest; the snow slabs through the chute and over the islands; a fall from 9.9 all the way off the lip clear of the deck; one move a second on the snow bridges and 0.7 s on the icicles.
+
+## A7 Los Riscos del Viento
+- Builds clean. A pierced rock tower stands on El Balcón's east end, joined to the face by a natural arch; on top of the arch a slick V pours through a hole in the crown ("El Ojo") 52 m down onto El Balcón. The tower's east side hangs over La Garganta.
+- Changes: 7.8 adds a vulture ride out to a horn 19 m off, then the big fling back west (17.9 m across, 4.4 up: 8.0 m/s in still air, 5.9 with the gust); a miss on 7.9 or 7.10 costs back to 7.8's start.
+- Doubts: 7.9 may be too hard or impossible (2.2 m between walls can't be reached, so each crossing is a lunge in a slot barely wider than the swing): narrow the walls to 1.8 m if so. 7.8 isn't strictly gust-only (an expert can spin to 8 m/s). El Ojo's fall column passes through 7.2's loop and 7.3's branches, so a rider there can be hit by a boulder.
+- Test first: 7.9's lunges; the three burro kicks landing on their ledges; 7.8 (the grab off the perch, the drop on the horn, the fling with and without the gust); the boulders and the pockets in 7.6; swinging 7.4's rope off its wall; the wheel ride in 7.10.

@@ -674,9 +674,9 @@ func look() -> Dictionary:
 	var dark: float = zones.darkness(player_at())
 	var flash: float = zones.flash
 	var out := {"sky": sky / total, "amb": amb / total, "sun": sun / total, "inside": maxf(inside / total, dark)}
-	out.sun = lerpf(float(out.sun), 0.12, dark) + flash * 2.5
-	out.amb = (out.amb as Color).lerp(Color(0.05, 0.05, 0.07), dark * 0.8) + Color(1, 1, 1) * flash * 0.6
-	out.sky = (out.sky as Color).lerp(Color(0.02, 0.02, 0.03), dark * 0.9) + Color(1, 1, 1) * flash * 0.5
+	out.sun = lerpf(float(out.sun), 0.12, dark) + flash * 0.9  # (a flash lights the scene: it must not white it out)
+	out.amb = (out.amb as Color).lerp(Color(0.05, 0.05, 0.07), dark * 0.8) + Color(1, 1, 1) * flash * 0.25
+	out.sky = (out.sky as Color).lerp(Color(0.02, 0.02, 0.03), dark * 0.9) + Color(1, 1, 1) * flash * 0.3
 	return out
 
 

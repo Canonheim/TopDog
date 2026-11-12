@@ -69,9 +69,13 @@ A.solid([(-327.5, 817), (-322.8, 817), (-322.8, 831.5), (-327.5, 831.5)], ICE)  
 A.ledge(-327.5, -322.8, 832.0, "snow", t=0.5)  # R4 (the serac stands on its east end)
 A.solid([(-322.8, 817), (-321.4, 817), (-321.4, 824.5), (-322.8, 825.5)], ICE)  # the pit's west funnel
 # The toboggan's mass: pit funnel, T's block, the ramp and the bowl (see 9.6).
-RAMP = [(-310.46, 834.15), (-309.62, 828.5), (-308.92, 827.29), (-308.12, 826.40), (-307.31, 825.81),
-        (-306.49, 825.44), (-305.61, 825.25), (-304.81, 825.25), (-304.02, 825.39)]
-A.solid([(-318.8, 817), (-304.02, 817)] + RAMP[::-1] + [(-312.96, 834.15), (-312.96, 828.5), (-318.8, 824.5)], ICE)
+# The ramp's profile (see 9.6): from T's east edge, each bend 10 degrees so a sliding body
+# keeps its speed. (angle below the horizontal, length along the face)
+RAMP = [(-310.46, 834.15)]
+for _ang, _len in ((82, 5.93), (72, 0.9), (62, 0.9), (52, 0.9), (42, 0.9), (32, 0.8), (22, 0.8), (12, 0.8), (2, 0.7), (-10, 0.6)):
+    RAMP.append((RAMP[-1][0] + math.cos(math.radians(_ang)) * _len, RAMP[-1][1] - math.sin(math.radians(_ang)) * _len))
+BOWL_END = RAMP[-1]  # (-304.22, 824.50): the crack's west edge
+A.solid([(-318.8, 817), (BOWL_END[0], 817)] + RAMP[::-1] + [(-312.96, 834.15), (-312.96, 828.5), (-318.8, 824.5)], ICE)
 A.ledge(-312.96, -310.46, 834.5, "snow", t=0.4)  # T: the serac's landing, the toboggan's top
 
 # The roof over the upper level, and everything above it up to the chute and the ridge's rock.
@@ -217,27 +221,38 @@ A.challenge("9.5", "El Serac", (-326.4, 832.0), 4, "B",
 A.cam((-327.6, 829, -310, 842), half_h=9.5, bias=(3.0, -4.0))
 
 # ================================================================ 9.6 Tobogan Helado
-# From T the ramp falls east: 82 degrees for 6 m, then it bends through 60, 48, 36, 24,
-# 12, 0 and +10 degrees (the bowl), a 0.9 m crack, and the kicker: a flake of ice wedged
-# in the crevasse's mouth, its face 1.8 m long at +32 degrees, lip at (-301.59, 826.09).
-#   Height dropped, T to the lip: 834.5 - 826.09 = 8.41 m.
-#   v = sqrt(2 x 2.79 x 8.41) = 6.85 m/s; at 85 per cent: 5.82 m/s, leaving at 32 degrees.
-#   The rope hangs 15.0 m east of the lip at x -286.59. At that x the flight is at
-#     y = 826.09 + 15 tan 32 - 2.79 x 15^2 / (2 x 5.82^2 x cos^2 32) = 826.09 + 9.37 - 12.88
-#       = 822.6  (3.5 m below the lip, 3.0 s in the air).
-#   The rope spans y 829.35 down to 816.65, so it also catches 70 per cent (4.8 m/s:
-#   y 816.5, its very end) up to 8.3 m/s (y 829.2: the full speed plus the draught).
+# From T the ramp falls east: 82 degrees for 5.9 m, then it bends ten degrees at a time
+# (72, 62, 52, 42, 32, 22, 12, 2) into the bowl and up to +10, then a 1.1 m crack, then
+# the kicker: a flake of ice wedged in the crevasse's mouth, its face 1.8 m long at +32
+# degrees, lip at (-301.59, 825.21).
+#   Height dropped, T to the lip: 834.5 - 825.21 = 9.29 m.
+#   v = sqrt(2 x 2.79 x 9.29) = 7.20 m/s; at 85 per cent: 6.12 m/s, leaving at 32 degrees.
+#   The rope hangs 15.0 m east of the lip, at x -286.59. At that x the flight is at
+#     y = 825.21 + 15 tan 32 - 2.79 x 15^2 / (2 x 6.12^2 x cos^2 32) = 825.21 + 9.37 - 11.65
+#       = 822.9  (2.3 m below the lip, 2.9 s in the air).
+#   The rope is 16 m long, y 829.35 down to 813.35: it catches anything from 4.55 m/s
+#   (63 per cent: y 813.5, its last metre) up to 8.4 m/s (y 828.4).
+#   A dead ball slid down this profile in a scratch check (no bounce; the engine's slick
+#   friction is 0.02): lip speed 4.8 m/s without the draught, 6.4 m/s with it; it crosses
+#   the rope's line at y 816.3 and 824.1. With friction 0.10 as well: 5.2 m/s, y 818.4.
+#   With 0.15: 4.4 m/s, and it falls just short. So a clean slide takes the rope's
+#   upper half, and a tumbled one its tail.
 #   Short or long, a miss falls 20 m to the cave's snow floor (804), at the foot of 9.4.
-# The bowl's shallow faces would hold a body that came in too slowly (slick under
-# 30 degrees is a trap), so a steady draught blows east across it and the crack is its
-# drain: a stalled body is pushed into the crack and drops past the flake to the balcony.
-A.solid([(-303.12, 825.14), (-301.59, 826.09), (-301.59, 825.3), (-302.6, 823.6), (-303.12, 823.6)], ICE)  # the flake
-LIP = (-301.59, 826.09)
-A.wind((-307.4, 824.9, -303.1, 828.2), (3.0, 0.0))
-A.rope("rope96", (-286.59, 829.35), 12.7, kind="rope")
+# The bowl's four shallow faces would hold a body that came in too slowly (slick under
+# 30 degrees is a trap), so a steady draught (3.6 m/s2) blows east across it and the
+# crack is its drain: a stalled body is pushed into the crack and drops past the flake
+# onto the balcony's snow (checked from three places in the bowl and from the flake).
+# The draught also gives a good slide about 1.5 m/s more.
+_fx, _fy = BOWL_END[0] + 1.1, BOWL_END[1] - 0.25
+LIP = (_fx + 1.8 * math.cos(math.radians(32)), _fy + 1.8 * math.sin(math.radians(32)))
+A.solid([(_fx, _fy), LIP, (LIP[0], LIP[1] - 0.8), (_fx + 0.5, _fy - 1.55), (_fx, _fy - 1.55)], ICE)  # the flake
+# The draught stops 0.3 m short of the crack (the engine's zones reach 0.4 m past their
+# rect): it must push a stalled body INTO the crack, never across it onto the flake.
+A.wind((-307.2, BOWL_END[1] - 0.4, BOWL_END[0] - 0.7, BOWL_END[1] + 2.9), (3.6, 0.0))
+A.rope("rope96", (-286.59, 829.35), 16.0, kind="rope")
 A.ledge(-286.6, -281.0, 830.2, "snow", t=0.8)  # R6: the rope's ledge and the window's floor
 A.challenge("9.6", "Tobogán Helado", (-311.6, 834.5), 4, "B",
-            moves=[["fling", list(LIP), [-286.59, 822.6], "F3"], ["reach", [-286.59, 829.3], [-286.5, 830.2]]])
+            moves=[["fling", list(LIP), [-286.59, 822.9], "F3"], ["reach", [-286.59, 829.3], [-286.5, 830.2]]])
 A.cam((-313.5, 816, -284.5, 836), half_h=13.0, bias=(5.0, -6.0))
 
 # ================================================================ 9.7 Ventisca
@@ -340,7 +355,7 @@ A.cam((-297.5, 862, -283, 875), half_h=10.5, bias=(0.0, -5.5))
 #   The fling: H to (-304.2, 886.0) on the ledge, 7.0 m across and 3.4 m up:
 #   fling_speed = 5.6 m/s (F3). The ledge's nose (0.9 m) is a lump of verglas: land past it.
 #   Miss: the rimaye, the chute (62, 32, 50 degrees), the mouth, the slide, the lip.
-A.solid([(-296.0, 877.35), (-295.5, 877.35), (-295.75, 875.2)], "ice")  # the fang at R9's mouth
+A.solid([(-296.0, 877.35), (-295.5, 877.35), (-295.75, 874.95)], "ice")  # the fang at R9's mouth
 A.hold(-296.2, 878.6, r=0.23, kind="ice")
 A.hold(-296.2, 879.9, r=0.23, kind="ice")
 HAND = (-297.17, 882.57)
@@ -349,7 +364,7 @@ bone(-295.74, 881.14)
 bone(-296.32, 881.72)
 bone(HAND[0], HAND[1], r=0.18)
 A.card(box_pts(-296.2, 881.5, 1.5, 2.2, 45), z=1.5, tone=BLUE, edge=False)  # ice up to his chest
-H910 = [(-295.75, 875.5), (-295.75, 876.9), (-296.2, 878.6), (-296.2, 879.9), (-295.74, 881.14), (-296.32, 881.72), HAND]
+H910 = [(-295.75, 875.35), (-295.75, 876.9), (-296.2, 878.6), (-296.2, 879.9), (-295.74, 881.14), (-296.32, 881.72), HAND]
 A.challenge("9.10", "El Rimaye", (-294.4, 873.3), 4, "X",
             moves=[["reach", list(H910[i]), list(H910[i + 1])] for i in range(len(H910) - 1)] +
                   [["fling", list(HAND), [-304.2, 886.0], "F3"]])

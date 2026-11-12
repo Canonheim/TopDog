@@ -111,7 +111,7 @@ PALETTES = {
     "storm": {"rock": "#A9AEB8", "rock2": "#8E949F", "slick": "#12151B", "accent": "#E0287A",
               "back": "#5C6470", "back2": "#474E5A", "back3": "#343A45", "sky": "#3A414E", "sun": 0.55, "amb": "#7E8794", "inside": 0.0},
     "summit": {"rock": "#EBD9A8", "rock2": "#D9C084", "slick": "#2A2420", "accent": "#F28A1E",
-               "back": "#FFE2A0", "back2": "#F6C877", "back3": "#EFAE5C", "sky": "#FFCF7A", "sun": 1.4, "amb": "#F2E2C0", "inside": 0.0},
+               "back": "#F2C46A", "back2": "#E8A552", "back3": "#D98A45", "sky": "#F7B85A", "sun": 1.15, "amb": "#E6CFA6", "inside": 0.0},
 }
 for _p in PALETTES.values():
     for _k, _v in _COMMON.items():

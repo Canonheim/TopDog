@@ -827,6 +827,57 @@ Commits 4714920, 7f37818 and the one after.
       line up to 0.72 m;
     - the gliding, sagging string within 0.01 mm.
 
+## The Peak of DeGayo: the solo climb (Parker, 2026-11-11 night, built 11-12)
+
+Parker: "you are now going to become my game designer on this next project ... design
+the solo mode ... To the left of the town there is a great mountain called the Peak of
+DeGayo. The goal of the solo mode is to scale this massive mountain ... at least 100
+different distinct challenges ... It will be a rage game ... No where should feel super
+safe." He was away for the night and asked for a showcase in the morning.
+
+**Read `docs/peak/PEAK_DESIGN.md` before any solo work.** The rest of the record is
+beside it: `CHALLENGES.md` (the 111), `AUTHORING.md` (how area data is written),
+`PARTS.md` (the makers' parts), `AUTHOR_REPORTS.md` (each area author's doubts),
+`MUSIC.md`, `SFX.md`, `FALLS.md`, `showcase.html`.
+
+- **What it is.** One mountain as one cross-section, 1,030 m from the Sump to the bell,
+  12 areas, 111 challenges, no checkpoints. Every fall is physical and lands somewhere
+  real: the well (El Pozo) through the middle, the throat and slide tube outside, and
+  the black river that carries everything over a 113 m waterfall into the Sump.
+- **The course is data.** `tools/peak/areas/<id>.py` (one Python file an area, on
+  `tools/peak/peaklib.py`) writes `stages/peak/course/<id>.json`. Never edit the JSON.
+  `tools/peak/preview.py` draws an area, a challenge's window, or the whole mountain,
+  and floods the air to find leaks.
+- **The engine** is `stages/peak/`: `peak.gd` (the loader, cardboard rock, the save,
+  the warp), `peak_things.gd` (movers, physics ropes, free bodies, fallers, holds that
+  crumble, let go or get wet, the frozen climbers), `peak_zones.gd` (water and the
+  swim, wind, geysers, bounce, puffballs, lightning, the dark), `peak_audio.gd` (twelve
+  loops in step, mixed by where you are), `peak_backdrop.gd` (the Environment Maker's
+  far layers). Slick is the meta `no_weld`, as Del Mar's buoy already was.
+- **In the game.** Mode row `peak`; `Game.peak` and `peak_on`; `main._start_peak`,
+  `_peak_camera`, `_tick_peak`; the title belt SOLO: THE PEAK; `PeakHud` (the Second
+  Director's). No line, no lock-in, no chair. The save is `user://peak.cfg`: the pose,
+  the course's clock, the time, the falls, the best height, the summits.
+- **Two things added to the climber** (`climber.gd`): `float_mode` (in water the limbs
+  work with nothing gripped, and a held limb's pull is paid by the chest, so only the
+  water's push on a moving hand carries the body: THE SWIM; a spun stick turns the arm
+  at up to 1.25 turns a second however fast it is spun) and `scramble` (the softlock
+  net: lying on slick with nothing to hold, a weak pull that drags along the ground).
+- **Measured** (`tests/peak_probe.tscn`, `peak_swim_probe.tscn`): the climber is 1.8 m,
+  reaches 2.13 m, falls at 2.79 m/s². A pumped one-hand swing has no ceiling (3 s gives
+  8 m/s: 23 m out or 11 m up). The swim tops out near 2.0 m/s.
+- **Checks.** `--peak` (the lab: one of each mechanic, 20 checks), `--peakride` (the
+  cart), `tests/peak_falls.tscn` (the rain test: three bodies at every challenge; 321
+  dropped, none stuck, none lost), `tests/peak_drop.tscn` (a real climber down each
+  great fall). Launch flags: `-- --peak`, `--warp=7.3`, `--peaktour=DIR`. In game F4
+  arms the warp keys, `[` and `]` step through the challenges; a warped run isn't saved.
+- **How it was built.** Eleven subagents each wrote one area from its row of the
+  design; one composed the music, one synthesised the sound. The five maker sessions
+  were briefed once each from `PARTS.md` and landed about 190 models. Top Dog wrote the
+  design, the tools, the engine, the trailhead and the mountain's shared structure.
+- **NOT DONE: nobody has played it.** Every challenge is right on paper only. Nobody
+  has heard the music or the sound. Nothing is pushed and no build was made.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

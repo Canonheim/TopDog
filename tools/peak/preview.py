@@ -204,6 +204,11 @@ def render(aids, out, window=None, labels=True, px_per_m=10.0, show_leak=False):
     ax = fig.add_axes([0, 0, 1, 1])
     ax.set_facecolor(PALETTES[areas[-1]["palette"]]["back2"] if len(areas) == 1 else "#8FB8D8")
     many = len(areas) > 2
+    if many:
+        for a in areas:
+            if a["id"] == "st":
+                for c in a["cards"]:  # the mountain's own card, so the poster shows its shape
+                    ax.add_patch(MPoly(c["pts"], closed=True, fc=c["tone"] if c["tone"].startswith("#") else "#8C8273", ec="#3A3028", lw=1.0, zorder=-1))
     for a in areas:
         if many and a["id"] != "st":
             r = a["region"]
