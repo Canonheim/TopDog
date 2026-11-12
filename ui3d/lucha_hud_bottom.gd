@@ -180,7 +180,7 @@ func set_name_text(s: String) -> void:
 ## LuchaUI calls this every frame the HUD shows.
 func tick(delta: float) -> void:
 	var g: Game = main.game
-	visible = g.phase in ["turn", "round", "between"]
+	visible = g.phase in ["turn", "round", "between"] and not g.peak_on  # (the Peak has its own HUD: PeakHud)
 	if not visible:
 		return
 	_to_corners()

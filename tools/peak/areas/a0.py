@@ -35,6 +35,17 @@ A.mover("cart0", RIDE[0], cart_shapes,
         {"type": "path", "pts": [list(p) for p in RIDE], "speed": 9.0, "mode": "once", "trigger": "board",
          "reset": 25.0, "tilt": True, "accel": 3.0},
         model="minecart")
+# The rails (the Carpenter's rail_straight, 4 m a piece): their base 0.55 under the cart's road.
+import math
+for (x0, y0), (x1, y1) in zip([(-4.6, 2.65)] + RIDE[1:-1], RIDE[1:]):
+    L = math.hypot(x1 - x0, y1 - y0)
+    n = max(1, round(L / 4.0))
+    ang = math.degrees(math.atan2(y1 - y0, x1 - x0))
+    if abs(ang) > 90:
+        ang -= math.copysign(180, ang)
+    for i in range(n):
+        f = (i + 0.5) / n
+        A.deco("rail_straight", x0 + (x1 - x0) * f, y0 + (y1 - y0) * f - 0.55, z=0.0, rot=ang, scale=L / n / 4.0, size=(4.0, 0.25, 1.2), tone="iron")
 A.challenge("0.2", "Súbete", (-6.2, 2.2), 1, "S")
 A.challenge("0.3", "El Descenso", (-9.0, 2.9), 1, "S")
 

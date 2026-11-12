@@ -423,6 +423,7 @@ func _start_peak() -> void:
 		game.peak.summit.connect(_on_peak_summit)
 		if ResourceLoader.exists("res://ui3d/peak_hud.gd") and lucha != null:
 			_peak_hud = load("res://ui3d/peak_hud.gd").call("make", lucha)
+			_peak_hud.set("falls_seen", game.peak.falls)  # (the fall receipts' serial carries on from the save)
 	show_screen("hud")
 
 

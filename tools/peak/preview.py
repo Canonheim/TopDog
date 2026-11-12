@@ -163,11 +163,14 @@ def leak(a, res=0.4):
     gx, gy = np.meshgrid(xs, ys)
     rock = unary_union([Polygon(s["pts"]).buffer(0.02) for s in a["solids"]])
     solid = shapely.contains_xy(rock, gx, gy)
+    # A declared opening is a door to somewhere else: the flood stops at it.
+    for o in a["openings"]:
+        solid |= (gx >= o[0] - 0.3) & (gx <= o[2] + 0.3) & (gy >= o[1] - 0.3) & (gy <= o[3] + 0.3)
     h, w = solid.shape
     seen = np.zeros_like(solid, dtype=bool)
-    ex, ey = a["entry"]
-    start = (int((ey + 1.0 - (y0 - pad)) / res), int((ex - (x0 - pad)) / res))
-    stack = [start]
+    # Flood from every challenge's start (the entry point itself may lie in the area before).
+    starts = [c["anchor"] for c in a["challenges"]] or [a["entry"]]
+    stack = [(int((p[1] + 1.2 - (y0 - pad)) / res), int((p[0] - (x0 - pad)) / res)) for p in starts]
     out = []
     while stack:
         j, i = stack.pop()
@@ -176,8 +179,7 @@ def leak(a, res=0.4):
         seen[j, i] = True
         x, y = xs[i], ys[j]
         if x < x0 - pad + 1 or x > x1 + pad - 1 or y < y0 - pad + 1 or y > y1 + pad - 1:
-            if not any(o[0] - pad - 2 <= x <= o[2] + pad + 2 and o[1] - pad - 2 <= y <= o[3] + pad + 2 for o in a["openings"]):
-                out.append((round(float(x), 1), round(float(y), 1)))
+            out.append((round(float(x), 1), round(float(y), 1)))
             continue
         stack.extend(((j + 1, i), (j - 1, i), (j, i + 1), (j, i - 1)))
     return out, seen, (xs, ys)
