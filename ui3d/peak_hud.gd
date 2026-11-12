@@ -192,7 +192,25 @@ func set_altitude(metres: float, best: float) -> void:
 
 
 ## Entering an area: its name slams in, holds 3 s, leaves. `number` 0 is the trailhead.
+## ONE CARD AT A TIME AT THE TOP OF THE FRAME (Parker 11-12: "we dont want UI to overlap
+## like this in game, make sure it always shows one after the other"): the area card waits
+## while the game's own title banner (or the last area card) is still up. Only the newest
+## area waits: falling through three areas shows the one you land in, not a backlog.
+var _area_wait: Array = []  # [name, number]
+
+
+func top_busy() -> bool:
+	return area_up or (lucha != null and lucha.banner_up())
+
+
 func show_area(area_name: String, number: int) -> void:
+	if top_busy():
+		_area_wait = [area_name, number]
+		return
+	_show_area_now(area_name, number)
+
+
+func _show_area_now(area_name: String, number: int) -> void:
 	for ch in _area.get_children():
 		ch.queue_free()
 	var card := _kit("hud_banner")
@@ -443,6 +461,10 @@ func fell_line(metres: float) -> String:
 func _process(delta: float) -> void:
 	_t += delta
 	_place()
+	if not _area_wait.is_empty() and not top_busy():
+		var next := _area_wait
+		_area_wait = []
+		_show_area_now(str(next[0]), int(next[1]))
 	# The drums ease to the height (in a long fall they spin down).
 	shown_m = lerpf(shown_m, _target_m, 1.0 - exp(-delta * 10.0))
 	if absf(shown_m - _target_m) < 0.02:

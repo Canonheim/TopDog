@@ -1969,8 +1969,25 @@ func _restyle_line() -> void:
 		_line_poles.append(pole)
 
 
+## One card at a time at the top of the frame (Parker 11-12): on the Peak an announcement
+## waits for the area card to leave (and the area card waits for this banner: peak_hud.gd).
+var _announce_wait: Array = []  # [text, big]
+
+
+func banner_up() -> bool:
+	return _banner != null and _banner.visible
+
+
+func _peak_card_up() -> bool:
+	var hud: Node = main._peak_hud
+	return hud != null and is_instance_valid(hud) and (hud as Node3D).visible and bool(hud.get("area_up"))
+
+
 func _on_announce(text: String, big: bool) -> void:
 	if _banner == null:
+		return
+	if _peak_card_up():
+		_announce_wait.append([text, big])
 		return
 	var low := text.to_lower()
 	if low.ends_with("'s turn") or low.begins_with("round "):
@@ -2231,6 +2248,9 @@ func _process(delta: float) -> void:
 					# so the pulse barely showed).
 					_pulse_tween.tween_property(_clock_text, "scale", Vector3.ONE, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 					_pulse_tween.tween_property(buckle_node, "scale", Vector3.ONE, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if not _announce_wait.is_empty() and not banner_up() and not _peak_card_up():
+		var next: Array = _announce_wait.pop_front()
+		_on_announce(str(next[0]), bool(next[1]))
 	if _banner != null and _banner.visible:
 		_banner_t -= delta
 		_banner.rotation.z = lerpf(_banner.rotation.z, sin(t * 3.0) * 0.03, 0.05)
