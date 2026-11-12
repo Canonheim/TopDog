@@ -401,9 +401,7 @@ A.cam((-312, 356, -296, 384), half_h=11.0, bias=(2.0, -3.0))   # the arrival: th
 A.card([(-378, 360), (-305, 360), (-305, 490), (-378, 490)], z=-6.0, tone="back2")
 A.card([(-376, 366), (-330, 366), (-336, 384), (-344, 384), (-350, 402), (-358, 402), (-364, 420), (-376, 420)], z=-12.0, tone="back3")
 A.card([(-366, 430), (-312, 404), (-312, 450), (-366, 450)], z=-10.0, tone="back3")          # the great hall's far wall
-A.card([(-365.5, 381), (-351, 381), (-350, 392), (-352, 399), (-358.2, 401.5), (-364.5, 399), (-366.5, 392)], z=-1.5, tone="accent")  # the mask's face
-A.card([(-366.5, 396), (-369.5, 403), (-364, 399.5)], z=-1.6, tone="accent")                 # its ears
-A.card([(-350, 396), (-347, 403), (-352.5, 399.5)], z=-1.6, tone="accent")
+# (The mask's face and ears were jade cards here; mask_first_dog is the mask now and they fought it.)
 A.card([(-335, 366), (-354, 381), (-354, 373.8), (-342, 366)], z=-2.0, tone="back")          # the wall that carries the stairs
 for sx, fy in ((-347.0, 431.0), (-331.5, 433.0)):                                              # the champions' pillars
     A.card([(sx - 1.0, fy - 1.2), (sx + 1.0, fy - 1.2), (sx + 1.0, ramp_y(sx + 1.0) - 1.0), (sx - 1.0, ramp_y(sx - 1.0) - 1.0)], z=-2.0, tone="back")
