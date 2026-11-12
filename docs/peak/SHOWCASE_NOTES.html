@@ -1,0 +1,36 @@
+<h3>Start here</h3>
+<p><b>To play it:</b> start the game from the editor or a build of <code>main</code> and pick <b>SOLO: THE PEAK</b> on the title. It picks your climb up where you left it. From a terminal: <code>-- --no-steam --peak</code>.</p>
+<p><b>To look at any challenge without climbing to it:</b> press <b>F4</b> in the solo mode, then <b>[</b> and <b>]</b> step through all 111. A warped run is never saved over your real climb. From a terminal: <code>-- --no-steam --peak --warp=8.2</code>.</p>
+<p><b>Read first:</b> <a href="PEAK_DESIGN.md">PEAK_DESIGN.md</a> (the design: the mountain, the falls, the look, the sound), then <a href="CHALLENGES.md">CHALLENGES.md</a> (all 111).</p>
+
+<h3>What is true today</h3>
+<ul>
+<li><b>Nobody has played it.</b> Every challenge is right on paper only: it passes the course lint (reaches and fling speeds against the measured climber), its map was drawn and checked, and the caves are sealed. The screenshots below are the real game, taken by standing the climber at each challenge's start.</li>
+<li><b>The mechanics are tested</b> in a lab course with a scripted climber (20 checks, all pass): the rope holds and swings, the pinwheel swim, platforms carry you, holds crumble and let go, caps throw you, geysers lift you, wind pushes, slick can't be held, the burro kicks, the frozen climbers can be climbed.</li>
+<li><b>The cart ride is tested:</b> get in, it rolls, you arrive in the mine 115 m later still in it.</li>
+<li><b>The great falls are tested with a real climber:</b>
+ <ul>
+ <li>Off the cliffs past El Balcón's edge: down the throat, into La Boca, down the slide tube, into the river, over the lip, down the waterfall, into the Sump. 628 m in 75 seconds.</li>
+ <li>Flung east of the fang: down the bare slope to the trailhead. 717 m in 49 seconds.</li>
+ <li>Into the lower river: over the lip and into the Sump in 27 seconds.</li>
+ <li>Down the well: 362 m in 27 seconds, onto the barrels in El Charco (the barrels cover most of the well's foot, so this fall is usually caught there).</li>
+ </ul></li>
+<li><b>The rain test is clean:</b> 321 bodies dropped at the 111 challenges; none came to rest on slick, none left the world.</li>
+<li><b>The rest of the game still passes</b> its batteries (tower, classic, Del Mar, the lock-in line, grabbing, the feel checks).</li>
+<li><b>It runs fast:</b> 440 to 565 frames a second across five areas at 1920 x 1009, uncapped.</li>
+<li><b>Nothing is pushed</b> and no build was made. About 25 commits sit on <code>main</code>.</li>
+</ul>
+
+<h3>Issues, most important first</h3>
+<ol>
+<li><b>It needs your hands.</b> I expect some challenges to be too hard, too easy, or impossible. Each area's author listed its doubts in <a href="AUTHOR_REPORTS.md">AUTHOR_REPORTS.md</a>. The ones I'd try first: 7.9 (the rock chimney may be impossible at 2.2 m wide), 8.10 (the express gondolas pass 0.15 m over your head), 9.6 (the toboggan jump may fall short), 10.5 (the kite tails cross at 6 m/s), 11.3 (the ring ropes), 4.10 and 5.11 (the well crossings: 5.11 has one good window every 30 s).</li>
+<li><b>The last jump does not fall all the way.</b> The design says a miss on the summit's last jump is the worst fall in the game. In the test, all five misses slid off the summit and were caught 35 m down by the weather balloon in the storm area. So it costs the summit (six challenges), not the mountain. I left it; if you want it to go all the way, the balloon or the summit's lip has to move.</li>
+<li><b>Nobody has heard the music or the sound.</b> Twelve loops and 143 effects were made and measured, not listened to. <a href="MUSIC.md">MUSIC.md</a> and <a href="SFX.md">SFX.md</a> say what to listen for first (the weak list starts with the vulture, the creaks, thunder and water). The players below let you hear each area's loop and ambience.</li>
+<li><b>The budget ran out at about 2 a.m.</b> Two area builders (the cliffs and the glacier) and the Building Maker stopped mid-work. They resumed and finished after you lifted it. Those two areas had less time than the others.</li>
+<li><b>Some miss costs differ from the design.</b> Where an author couldn't build the designed cost, the report says so (for example 4.5 drops you further than planned; 1.9 and 1.10 cost less).</li>
+<li><b>36 props are still plain cards.</b> 154 prop names are used; 118 have models. The list is <a href="PROPS_USED.md">PROPS_USED.md</a>.</li>
+<li><b>The temple's phantom blocks are not in time with the music.</b> They run on the course's own clock.</li>
+<li><b>The summit is pale.</b> Its gold light and cream cards wash out. The storm area's far cards read as rock rather than cloud.</li>
+<li><b>The solo HUD uses its own painted pieces.</b> The UI creator's altimeter and summit card are landed in the kit but not swapped in.</li>
+<li><b>The title screen shows only the Peak's snow head,</b> top left; the town's roofs and the menu cover the rest.</li>
+</ol>

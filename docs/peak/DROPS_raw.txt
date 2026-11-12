@@ -1,0 +1,14 @@
+DROP pozo: down the well from the third crossing, from (-300, 478): HOLDS ON at (-299, 115) after 27 s, 362 m lower, 0 s in water, nearest 2.7 El Charco del Pozo (12 m)
+DROP    path: 0s (-299, 478) > 6s (-299, 440) > 12s (-299, 358) > 18s (-299, 259) > 24s (-299, 152)
+DROP pozo1: down the well from the first crossing, from (-300, 270): HOLDS ON at (-299, 116) after 15 s, 153 m lower, 0 s in water, nearest 2.7 El Charco del Pozo (12 m)
+DROP    path: 0s (-299, 270) > 6s (-299, 232) > 12s (-299, 150)
+DROP garganta: off the cliffs past El Balcon's edge, from (-200, 600): FLOATS in still water at (-246, -28) after 75 s, 628 m lower, 18 s in water, nearest 1.5 El Cubo (58 m)
+DROP    path: 0s (-200, 600) > 6s (-200, 562) > 12s (-200, 480) > 18s (-175, 398) > 24s (-177, 351) > 30s (-172, 268) > 36s (-208, 219) > 42s (-258, 177) > 48s (-260, 120) > 54s (-252, 90) in water > 60s (-240, 85) > 66s (-247, -30) in water > 72s (-246, -28) in water
+DROP cable: off the cableway, mid-span, from (-215, 730): HOLDS ON at (-212, 699) after 6 s, 30 m lower, 0 s in water, nearest 8.3 El Cable (6 m)
+DROP    path: 0s (-215, 730) > 6s (-214, 699)
+DROP east: flung east of the fang, from (-140, 720): HOLDS ON at (-32, 2) after 49 s, 717 m lower, 0 s in water, nearest 0.3 El Descenso (23 m)
+DROP    path: 0s (-140, 720) > 6s (-140, 682) > 12s (-140, 600) > 18s (-139, 501) > 24s (-139, 394) > 30s (-137, 285) > 36s (-103, 187) > 42s (-67, 94) > 48s (-32, 2)
+DROP summit: the last jump, missed, from (-345, 992): HOLDS ON at (-321, 957) after 9 s, 34 m lower, 0 s in water, nearest 10.8 El Globo (5 m)
+DROP    path: 0s (-344, 992) > 6s (-333, 971)
+DROP river: into the lower river, 20 m above the lip, from (-262, 96): FLOATS in still water at (-246, -28) after 27 s, 124 m lower, 18 s in water, nearest 1.5 El Cubo (57 m)
+DROP    path: 0s (-261, 96) > 6s (-255, 90) in water > 12s (-243, 90) > 18s (-244, -7) > 24s (-246, -28) in water

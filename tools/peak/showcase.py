@@ -40,7 +40,7 @@ def load(aid):
 def shots(aid, challenges):
     out = []
     for c in challenges:
-        p = os.path.join(DOCS, "shots", c["id"].replace(".", "_") + ".png")
+        p = os.path.join(DOCS, "shots", c["id"].replace(".", "_") + ".jpg")
         if os.path.exists(p):
             out.append((c, p))
     return out
@@ -79,6 +79,33 @@ def section(a):
         parts.append('<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>' % (c["id"], html.escape(c["name"]), "&#9733;" * int(c["d"]), MISS.get(c["miss"], c["miss"])))
     parts.append('</tbody></table></section>')
     return "\n".join(parts)
+
+
+MAKER_CAPTIONS = {
+    "carpenter_minecart": "TD Carpenter: the minecart (39 timber, rope, rail and iron parts in all)",
+    "building_maker_1": "TD Building Maker: stone, steel and set pieces (57 models)",
+    "building_maker_2": "TD Building Maker, sheet two",
+    "mask_first_dog": "TD Building Maker: the First Top Dog's mask, the mountain's one recurring face",
+    "environment_models": "TD Environment Maker: the living things, standing in the game's light (25 models)",
+    "environment_backdrop": "TD Environment Maker: the far backdrops behind the climb",
+    "peak_from_town": "TD Environment Maker: the Peak of DeGayo seen from the town",
+    "peak_from_town_tele": "TD Environment Maker: the Peak, closer",
+    "ui_hud_and_signs": "TD UI creator: the altimeter, the summit card, the trail signs (35 models)",
+    "ui_camp_props": "TD UI creator: one climber's last camp",
+}
+
+
+def gallery(folder, title, blurb, captions=None, pattern="*.jpg"):
+    files = sorted(glob.glob(os.path.join(DOCS, folder, pattern)))
+    if not files:
+        return ""
+    out = ['<h3>%s</h3><p>%s</p><div class="shots wide">' % (title, blurb)]
+    for f in files:
+        stem = os.path.splitext(os.path.basename(f))[0]
+        cap = (captions or {}).get(stem, stem.replace("_", " "))
+        out.append('<figure><a href="%s"><img loading="lazy" src="%s" alt="%s"></a><figcaption>%s</figcaption></figure>' % (rel(f), rel(f), html.escape(cap), html.escape(cap)))
+    out.append("</div>")
+    return "\n".join(out)
 
 
 def main():
@@ -124,6 +151,7 @@ h3 { font: 900 24px/1.2 Impact, "Arial Black", sans-serif; margin: 44px 0 8px; }
 .audio { display:flex; flex-wrap:wrap; gap: 10px 26px; font: 13px Arial, sans-serif; }
 .audio audio { vertical-align: middle; height: 30px; }
 .shots { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; padding: 14px 20px; }
+.shots.wide { grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); padding: 14px 0; }
 figure { margin:0; }
 figure img { width:100%%; display:block; border: 2px solid var(--ink); border-radius: 6px; }
 figcaption { font: 12px Arial, sans-serif; color:#5a4a3a; padding: 3px 2px; }
@@ -152,7 +180,9 @@ code { background:#efe2c6; padding: 1px 5px; border-radius: 4px; font-size: 14px
         "areas": len(areas), "total": total, "nav": nav, "notes": notes,
         "falls": (" The rain test (three bodies dropped at every challenge): " + html.escape(falls)) if falls else "",
         "poster": ('<a href="%s"><img class="poster" src="%s" alt="the mountain"></a>' % (rel(mountain), rel(mountain))) if os.path.exists(mountain) else "",
-        "sections": "\n".join(section(a) for a in areas),
+        "sections": "\n".join(section(a) for a in areas)
+        + gallery(os.path.join("preview", "hud"), "The solo HUD", "The Second Director's PeakHud: the altimeter, the area cards, the fall receipts and the ending. These frames are from its own probe, over the plaza.")
+        + gallery("makers", "What the makers built", "About 190 models landed overnight. Each sheet is the maker's own.", MAKER_CAPTIONS),
     }
     out = os.path.join(DOCS, "showcase.html")
     open(out, "w", encoding="utf-8", newline="\n").write(page)

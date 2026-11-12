@@ -19,9 +19,14 @@ const MAX_S := 240.0
 
 func _ready() -> void:
 	var only := ""
+	var drops: Array = DROPS.duplicate()
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("--only="):
 			only = a.get_slice("=", 1)
+		if a.begins_with("--at="):  # --at=x,y[;x,y...]: drop there instead
+			drops = []
+			for pair in a.get_slice("=", 1).split(";"):
+				drops.append(["at", "a chosen spot", Vector2(float(pair.get_slice(",", 0)), float(pair.get_slice(",", 1)))])
 	var world := Node3D.new()
 	add_child(world)
 	var pk := Peak.new()
@@ -33,7 +38,7 @@ func _ready() -> void:
 	for i in 4:
 		await get_tree().physics_frame
 	var n := 0
-	for row in DROPS:
+	for row in drops:
 		if only != "" and str(row[0]) != only:
 			continue
 		n += 1

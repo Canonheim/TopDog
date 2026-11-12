@@ -255,7 +255,10 @@ A.cam((-330, 946.4, -318, 953.2), half_h=6.0, bias=(2.0, 1.0))
 # two 12 m ropes, 0.6 m apart: their feet swing between y 949 and 951. Up it, out of the
 # cloud, then pump a swing and let go west: 8.6 m across and 2 down to the headwall's
 # rest (4.4 m/s, F2). Long is safe (the face drops you on the ledge). Short is the cap.
-A.mover("globo", (-321.5, 961.0), [(box_pts(0, 0.3, 1.6, 0.6), "wood")],
+# Its envelope is solid and slick (it's a balloon): whatever falls on it from the summit
+# slides off its side, clear of the ropes under it. Without it a missed last jump was
+# caught by these ropes every time (tests/peak_drop).
+A.mover("globo", (-321.5, 961.0), [(box_pts(0, 0.3, 1.6, 0.6), "wood"), (ngon(0, 3.9, 2.1, 10, sy=1.15), "wet")],
         {"type": "path", "pts": [[-321.5, 961.0], [-321.5, 963.0]], "speed": 0.5, "mode": "pingpong", "wait": 0.6}, model="weather_balloon")
 A.rope("globo_a", (-321.8, 961.0), 12.0, kind="rope", anchor="globo")
 A.rope("globo_b", (-321.2, 961.0), 12.0, kind="rope", anchor="globo")
