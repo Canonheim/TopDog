@@ -81,6 +81,7 @@ var _peak_wired := false
 var _peak_over_t := 0.0
 var _peak_warp := ""
 var _peak_model_hidden := true  # (so the first frame shows it and sets the flag)
+var _peak_plaza_hidden := false
 
 
 func _ready() -> void:
@@ -564,6 +565,21 @@ func _tick_peak(delta: float) -> void:
 		_peak_model_hidden = on
 		PlazaMountains.peak_shown(not on)
 		PlazaMountains.peak_flag(Peak.summited())
+	# THE TOWN STAYS AT THE TRAILHEAD (Parker 11-12, a frame of a climber's body cut off at
+	# a tan line in the mine: "this sorta thing happens a lot"). The plaza's land runs to
+	# the horizon at the trailhead's height, so inside the mountain it sliced through
+	# every view near 0 m and hid whatever was under it. Once the cart is in the tunnel,
+	# or the climber is above the town, the plaza and its clouds are not drawn.
+	var away := false
+	if on and game.peak.player != null and is_instance_valid(game.peak.player):
+		var at: Vector2 = game.peak.player_at()
+		away = at.x < -34.0 or at.y > 30.0
+	if away != _peak_plaza_hidden:
+		_peak_plaza_hidden = away
+		for node_name in ["Plaza", "SwirlSky"]:
+			var n := world.get_node_or_null(node_name) as Node3D
+			if n != null:
+				n.visible = not away
 	if not on:
 		if _peak_look_on:
 			_peak_look_on = false
