@@ -80,6 +80,7 @@ var _peak_hud: Node  # ui3d/peak_hud.gd when it has landed
 var _peak_wired := false
 var _peak_over_t := 0.0
 var _peak_warp := ""
+var _peak_model_hidden := true  # (so the first frame shows it and sets the flag)
 
 
 func _ready() -> void:
@@ -557,6 +558,12 @@ func _tick_peak(delta: float) -> void:
 		_peak_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		ui.add_child(_peak_label)
 	_peak_label.visible = on and _peak_hud == null and screen in ["hud", "pause"]
+	if on != _peak_model_hidden:
+		# The model Peak behind the town steps aside while you're on the real one, and
+		# flies the flag once the bell has been rung.
+		_peak_model_hidden = on
+		PlazaMountains.peak_shown(not on)
+		PlazaMountains.peak_flag(Peak.summited())
 	if not on:
 		if _peak_look_on:
 			_peak_look_on = false
