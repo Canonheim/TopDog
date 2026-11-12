@@ -754,7 +754,9 @@ Commits 4714920, 7f37818 and the one after.
     locks the first tick you're over; "Get above the line" shows only when it runs out.
   - Checked, not changed: the drawn hands reach 1.1 cm past their collision circles
     (nothing to fix). The drawn head (cheeks and ears) reaches 7-12 cm past the head's
-    ball, and only the ball counts toward the line: an open call for Parker.
+    ball, and only the ball counts toward the line. **Parker ruled (11-11): it stays on the
+    default body under the skins** ("no it should be based on the default we have under
+    the skins"): a skin's look never changes what counts for the line.
   `--lockline` proves it (7 checks); a real-window check measured the drawn rope on the
   judged line within 0.001 px.
 
