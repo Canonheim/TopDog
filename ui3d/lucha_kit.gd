@@ -298,8 +298,10 @@ static func title_logo() -> Node3D:
 
 
 ## F12: the select marker, a blue star on a gold star plate, 0.56 x 0.53, origin its
-## centre: the Options screen's only (Parker 11-10: "I just wanted it replaced in the
-## Options specifically, not in the main UI"); the menus keep the pug crest and mask.
+## centre. Options first (Parker 11-10: "I just wanted it replaced in the Options
+## specifically, not in the main UI"); then every menu (Parker 11-11, choosing the UI
+## creator's batch 5: the crest over the belt above hid its words). The crest crowns
+## each column's top belt.
 ## Stand-in: a gold star with a smaller blue one on it.
 static func cursor_star() -> Node3D:
 	var k := kit_model("cursor_star")

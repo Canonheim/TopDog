@@ -50,8 +50,9 @@ func _init(p_cam: Camera3D) -> void:
 
 
 func _ready() -> void:
-	cursor = LuchaKit.mask_icon(LuchaKit.RED, LuchaKit.GOLD)
-	cursor.scale = Vector3.ONE * 0.55
+	# THE STAR MARKS THE FOCUS in every menu (Parker 11-11, on the UI creator's pass: the
+	# pug crest stood over the belt above and hid its words, a guest's BASE for good).
+	cursor = LuchaKit.cursor_star()
 	add_child(cursor)
 	close()
 
@@ -390,6 +391,14 @@ func _unhandled_input(event: InputEvent) -> void:
 	get_viewport().set_input_as_handled()
 
 
+## The column's top belt (the crest's place).
+func _top_item() -> int:
+	for i in items.size():
+		if items[i].node != null:
+			return i
+	return -1
+
+
 func _live(i: int) -> bool:
 	# (a locked choice only shows a value: a guest's view of the host's settings)
 	return i >= 0 and i < items.size() and items[i].node != null and not items[i].get("locked", false)
@@ -537,14 +546,15 @@ func _process(delta: float) -> void:
 		if _open_t > 0.6:
 			n.scale = n.scale.lerp(Vector3.ONE * want, 1.0 - exp(-delta * 12.0))
 		n.rotation.z = (sin(t * 5.0 + i) * 0.035) if i == focus else lerpf(n.rotation.z, sin(t * 1.3 + i * 0.7) * 0.01, 0.1)
-		# The kit belt's pug crest shows on the selected belt only (they stack tight).
+		# The pug crest is the column's crown now: on its top belt only, focused or not
+		# (nothing stands above the top belt, so it covers nothing). The star marks the focus.
 		var crest = (it.belt as Node3D).get_meta("crest") if (it.belt as Node3D).has_meta("crest") else null
 		if crest != null and is_instance_valid(crest):
-			(crest as Node3D).visible = i == focus
-	# The kit belt carries its own selection mark (the pug crest): no mask cursor then.
+			(crest as Node3D).visible = i == _top_item()
+	# The star beside the focused belt; rows with their own focus rings keep those.
 	if cursor != null and _live(focus):
 		var fb := items[focus].belt as Node3D
-		cursor.visible = not fb.has_meta("crest") and not fb.has_meta("focus_nodes")
+		cursor.visible = not fb.has_meta("focus_nodes")
 	if cursor != null and cursor.visible and _live(focus) and _open_t > 0.3:
 		var home: Vector3 = items[focus].node.get_meta("home")
 		var bw: float = (items[focus].belt as Node3D).get_meta("width", BELT_W)
