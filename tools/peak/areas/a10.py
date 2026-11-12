@@ -332,7 +332,7 @@ A.deco("insulator", -310.0, 917.6, z=0.4, size=(0.7, 0.5, 0.7), tone="bone")
 A.deco("insulator", -310.0, 921.6, z=0.4, size=(0.7, 0.5, 0.7), tone="bone")
 A.deco("insulator", -310.0, 925.6, z=0.4, size=(0.7, 0.5, 0.7), tone="bone")
 A.deco("vane_mast", -303.0, 913.5, z=-1.3, size=(0.5, 13.5, 0.5), tone="iron")  # the vane's own pole, behind
-A.deco("balloon_envelope", -321.5, 964.6, z=-0.6, size=(4.2, 5.0, 4.2), tone="bone")
+# (the balloon mover's own model, weather_balloon, carries the envelope)
 A.deco("balloon_tether", -321.5, 949.0, z=-1.0, size=(0.08, 24.0, 0.08), tone="wood")
 A.deco("rung_stub", F(959.05) + 0.2, 959.05, z=0.0, size=(0.35, 0.12, 0.3), tone="iron")
 A.deco("sign_pug_arrow", -331.6, 955.5, z=-1.0, size=(0.8, 1.8, 0.1), tone="wood")

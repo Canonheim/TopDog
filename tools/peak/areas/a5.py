@@ -33,7 +33,7 @@ def torch(x, y, rng=10.0, energy=1.6):
 
 def mask(x, y, w, h, z=-2.0, tone="accent"):
     """A carved luchador-dog mask of the First Top Dog (scenery)."""
-    A.deco("mask_first_dog", x, y, z=z, size=(w, h, 0.4), tone=tone)
+    A.deco("pug_mask", x, y, z=z, size=(w, h, 0.4), tone=tone)
 
 
 # ================================================================ the shell
@@ -242,9 +242,9 @@ A.cam((-366, 404, -309, 450), half_h=13.0, bias=(3.0, -3.0))
 # side, with periods 4, 5 and 6 s so they drift in and out of step. Their chains (rods)
 # hold: climb one and reach for the next bob when the two swing together. Under them is
 # the ramp's foot and the drain (A).
-A.pendulum("censer1", (-324.5, 449.8), 9.6, 9.6, 4.0, phase=0.0, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer")
-A.pendulum("censer2", (-320.0, 449.8), 7.8, 11.8, 5.0, phase=0.3, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer")
-A.pendulum("censer3", (-315.5, 449.8), 6.0, 15.5, 6.0, phase=0.6, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer")
+A.pendulum("censer1", (-324.5, 449.8), 9.6, 9.6, 4.0, phase=0.0, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer_l96")
+A.pendulum("censer2", (-320.0, 449.8), 7.8, 11.8, 5.0, phase=0.3, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer_l78")
+A.pendulum("censer3", (-315.5, 449.8), 6.0, 15.5, 6.0, phase=0.6, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer_l60")
 A.ledge(-312.8, -309.0, 443.6, "stone", t=0.9)               # EB: the east balcony
 A.patch((-312.8, 443.6), (-311.9, 443.6), "wet", t=0.12)    # unease: its lip is wet
 A.challenge("5.6", "Incensarios", (-331.5, 440.9), 4, "A", moves=[

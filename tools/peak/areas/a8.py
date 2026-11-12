@@ -279,7 +279,7 @@ XA, XB = -197.1, -200.3
 BLOCK = [(box_pts(0.0, -0.6, 1.6, 1.2), "paint"), (box_pts(0.0, 0.25, 0.1, 0.5), "iron")]
 for mid, x, ya, yb in (("cw_a1", XA, 720.5, 727.5), ("cw_b1", XB, 734.5, 727.5), ("cw_a2", XA, 734.5, 741.5), ("cw_b2", XB, 748.5, 741.5)):
     A.mover(mid, (x, ya), BLOCK, {"type": "path", "pts": [[x, ya], [x, yb]], "speed": 1.75, "mode": "pingpong", "wait": 1.0, "trigger": "none"},
-            model="counterweight")
+            model="counterweight_hung")
 A.challenge("8.8", "Contrapesos", (-193.0, 720.0), 3, "X",
             moves=[["reach", [-196.0, 720.0], [-196.3, 720.5]],
                    ["reach", [XA - 0.8, 727.5], [XB + 0.8, 727.5]],

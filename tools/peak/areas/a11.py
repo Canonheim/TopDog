@@ -216,8 +216,8 @@ A.card([(-332.6, 984.4), (-327.2, 984.4), (-326.0, 958.0), (-334.2, 958.0)], z=-
 A.card([(-323.5, 985.8), (-319.8, 985.8), (-318.4, 958.0), (-325.2, 958.0)], z=-1.8, tone="rock")  # east horn's root
 
 # The story: the town's colours, whole and bright.
-A.deco("summit_bell", ROPE_X, 1003.6, z=0.0, size=(2.2, 2.8, 2.2), tone="gold")
-A.deco("pug_mask", ROPE_X, 1003.4, z=1.2, size=(0.9, 0.9, 0.1), tone="accent")  # the First Top Dog, on the bell
+A.deco("summit_bell", ROPE_X, 1003.6 + 2.7, z=0.0, tone="gold")  # (the bell's origin is its hanging point)
+# (the bell has the First Top Dog's face cast on it)
 A.deco("champion_belt", POST_X, 1006.9, z=0.0, size=(1.2, 0.6, 0.2), tone="gold")
 A.deco("ring_post", -332.0, WTOP, z=0.0, size=(0.4, 3.0, 0.4), tone="accent")
 A.deco("ring_post", -320.6, 996.5, z=-0.4, size=(0.4, 3.4, 0.4), tone="accent")

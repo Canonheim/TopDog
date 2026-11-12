@@ -324,9 +324,32 @@ func _drips(mb: PeakMesh, pts: PackedVector2Array, z: float, uv: Vector2, rng: R
 
 
 ## A prop: the kit's model if it has landed, else a stand-in box in the area's tones.
+## Lines of flags are units that TILE end to end (their cords meet); they are never stretched.
+const LINE_UNITS := {"papel_string": 8.0, "papel_tatters": 8.0, "papel_line": 8.0, "pennant_line": 6.0, "marigold_garland": 4.0}
+
+
 func _deco(a: Dictionary, d: Dictionary) -> Node3D:
-	var n := LuchaKit.kit_model(str(d.model))
+	var model := str(d.model)
+	if model == "temple_banner" and d.has("size") and float(d.size[1]) > 8.0:
+		model = "temple_banner_long"
+	var n := LuchaKit.kit_model(model)
 	var at := Vector3(float(d.at[0]), float(d.at[1]), float(d.at[2]))
+	if n != null and LINE_UNITS.has(model) and d.has("size"):
+		var unit := float(LINE_UNITS[model])
+		var span := float(d.size[0])
+		var count := maxi(1, int(round(span / unit)))
+		var row := Node3D.new()
+		for i in count:
+			var piece: Node3D = n if i == 0 else LuchaKit.kit_model(model)
+			piece.position.x = -span * 0.5 + (float(i) + 0.5) * span / count
+			piece.scale.x = span / (count * unit)
+			row.add_child(piece)
+		row.position = at
+		row.rotation.z = deg_to_rad(float(d.get("rot", 0.0)))
+		var ls := float(d.get("scale", 1.0))
+		row.scale = Vector3(ls, ls, ls)
+		row.name = model
+		return row
 	if n == null:
 		var size := Vector3(0.6, 0.6, 0.3)
 		if d.has("size"):
