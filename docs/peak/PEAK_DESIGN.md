@@ -225,8 +225,8 @@ own background card stack:
 
 ## 8. The sound
 
-**Music: twelve loops that are one piece.** Every area's loop is 32 bars at 96 bpm
-(80.0 s), in D or a key one step from it, built on one four-note motif (the DeGayo
+**Music: twelve loops that are one piece.** Every area's loop is 32 bars at 98 bpm
+(78.4 s, 3,456,000 samples each), in D or a mode of it, built on one four-note motif (the DeGayo
 call: D, F#, A, B, a rising reach that falls back). All twelve play in step from the
 moment the climb loads. Only their volumes move, by where you are, so crossing an
 area's edge is a re-orchestration, never a cut. Two more layers ride on top:

@@ -11,6 +11,9 @@ const SFX_DIR := "res://audio/sfx/peak/"
 const MUSIC_DB := -5.0
 const AMB_DB := -9.0
 const BUS := "PeakMusic"
+## The loops are mastered to one loudness; the climb's story is told by these trims
+## (the still places quieter, the storm and the summit a touch up).
+const AREA_DB := {"a0": -3.0, "a1": -1.0, "a2": -2.0, "a3": -2.5, "a4": 0.0, "a5": -0.5, "a6": 0.5, "a7": -0.5, "a8": 0.0, "a9": -4.0, "a10": 1.0, "a11": 1.5}
 
 var peak: Peak
 var _music := {}  # area id -> AudioStreamPlayer
@@ -119,7 +122,7 @@ func frame(delta: float, weights: Dictionary, fall_speed: float, _drop: float) -
 		_lowpass.cutoff_hz = lerpf(20500.0, 420.0, pow(_duck, 0.6))
 	for id in _music:
 		var w := float(weights.get(id, 0.0))
-		(_music[id] as AudioStreamPlayer).volume_db = MUSIC_DB + linear_to_db(maxf(sqrt(w), 0.0001)) if w > 0.002 else -80.0
+		(_music[id] as AudioStreamPlayer).volume_db = MUSIC_DB + float(AREA_DB.get(id, 0.0)) + linear_to_db(maxf(sqrt(w), 0.0001)) if w > 0.002 else -80.0
 	for id in _amb:
 		var w := float(weights.get(id, 0.0))
 		(_amb[id] as AudioStreamPlayer).volume_db = AMB_DB + linear_to_db(maxf(sqrt(w), 0.0001)) if w > 0.002 else -80.0
