@@ -54,7 +54,7 @@ const HILL_SHADE := Color("#61745C")
 const FIELDS := [Color("#8E9A76"), Color("#869270"), Color("#9A9E7A"), Color("#A49A7C"), Color("#7C8A6C")]
 const RIVER := Color("#86AEC2")
 const ROAD := Color("#B4A88C")
-const SEA := Color("#A7ABC2")  # (a floor facing the sun draws far brighter: this comes out a pale lavender white)
+const SEA := Color("#9AA0BA")  # (a floor facing the sun draws far brighter: this comes out a pale lavender, under the white clouds)
 const SUN := Color("#FFD75A")
 const STORM := [Color("#565D6A"), Color("#474E5A"), Color("#5C6470"), Color("#6B7482")]  # the wall, then nearer
 ## Each cavern: [area id, motif]. Regions and tones come from the course's meta.
@@ -265,22 +265,9 @@ func _build_outside() -> void:
 			cx += cw * rng.randf_range(0.95, 1.5) * lerpf(1.0, 1.7, far)
 	# ---- the storm's deck: a dark wall of cloud close behind the ridge, and darker
 	# cut-outs drifting before it
-	var wall := PackedVector2Array()
-	var n_under := 22
-	for i in n_under:
-		var ccx := -760.0 + (float(i) + 0.5) / n_under * 1000.0
-		for k in 5:
-			var ang := PI + float(k) / 4.0 * PI
-			wall.append(Vector2(ccx + cos(ang) * 1000.0 / n_under * 0.5, 878.0 + sin(ang) * rng.randf_range(4.0, 9.0)))
-	var n_top := 11
-	for i in n_top:
-		var f := 1.0 - (float(i) + 0.5) / n_top
-		var ccx := -760.0 + f * 1000.0
-		var r := 1000.0 / n_top * rng.randf_range(0.56, 0.74)
-		var top := rng.randf_range(958.0, 980.0)
-		for k in 9:
-			var ang := (float(k) + 0.5) / 9.0 * PI
-			wall.append(Vector2(ccx + cos(ang) * r, top - r * 0.7 + sin(ang) * r * 0.7))
+	var wall := _cloud_poly(1040.0, 46.0, 22, 911, false)
+	for i in wall.size():
+		wall[i] += Vector2(-260.0, 905.0)
 	var deck := _cards([wall], -140.0, STORM[0])
 	deck.name = "StormDeck"
 	_sky.add_child(deck)
@@ -290,7 +277,7 @@ func _build_outside() -> void:
 		var lw: float = l[1]
 		for i in int(l[2]):
 			var cw := lw * rng.randf_range(0.8, 1.25)
-			var cloud := _cards([_cloud_poly(cw, cw * 0.26, 8, rng.randi())], 0.0, STORM[int(l[3])])
+			var cloud := _cards([_cloud_poly(cw, cw * 0.2, 6, rng.randi(), false)], 0.0, STORM[int(l[3])])
 			cloud.position = Vector3(-620.0 + float(i) / float(l[2]) * 760.0 + rng.randf_range(-30.0, 30.0), rng.randf_range(884.0, 944.0), lz)
 			_sky.add_child(cloud)
 			_clouds.append([cloud, rng.randf_range(1.2, 2.6), cw * 0.5, -700.0, 180.0])
@@ -571,26 +558,41 @@ static func _box(size: Vector3, col: Color, at: Vector3) -> MeshInstance3D:
 	return mi
 
 
-## A cut-out cloud's outline, origin at its middle: round bumps along the top, smaller
-## ones hanging along the bottom.
-static func _cloud_poly(w: float, h: float, lobes: int, seed: int) -> PackedVector2Array:
+## A cut-out cloud's outline, origin at the middle of its base: `lobes` round heads run
+## together, the tall ones in the middle (h is the tallest head's radius). `flat` cuts
+## the bottom level; otherwise the heads' own round undersides hang down.
+static func _cloud_poly(w: float, h: float, lobes: int, seed: int, flat := true) -> PackedVector2Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
-	var pts := PackedVector2Array()
-	var under := lobes + 2
-	for i in under:
-		var cx := (float(i) + 0.5) / under * w - w * 0.5
-		var r := w * 0.5 / under
-		var sag := h * rng.randf_range(0.12, 0.25)
-		for k in 5:
-			var ang := PI + float(k) / 4.0 * PI
-			pts.append(Vector2(cx + cos(ang) * r, sin(ang) * sag))
+	var acc := PackedVector2Array()
 	for i in lobes:
-		var f := 1.0 - (float(i) + 0.5) / lobes
-		var cx := (f - 0.5) * w * 0.92
-		var r := w * 0.5 / lobes * 1.25
-		var top := h * (0.45 + 0.55 * sin(f * PI)) * rng.randf_range(0.85, 1.1)
-		for k in 8:
-			var ang := (float(k) + 0.5) / 8.0 * PI
-			pts.append(Vector2(cx + cos(ang) * r, maxf(0.6, top - r + sin(ang) * r)))
-	return pts
+		var t := float(i) / float(maxi(lobes - 1, 1))
+		var r := h * (0.55 + 0.45 * sin(t * PI)) * rng.randf_range(0.82, 1.1)
+		var c := Vector2(lerpf(-w * 0.5 + r, w * 0.5 - r, t), r * rng.randf_range(0.35, 0.6))
+		var head := PackedVector2Array()
+		for k in 20:
+			var ang := float(k) / 20.0 * TAU
+			head.append(c + Vector2(cos(ang), sin(ang)) * r)
+		if acc.is_empty():
+			acc = head
+			continue
+		var best := acc
+		var best_area := -1.0
+		for piece in Geometry2D.merge_polygons(acc, head):
+			if Geometry2D.is_polygon_clockwise(piece):
+				continue
+			var lo := Vector2(INF, INF)
+			var hi := Vector2(-INF, -INF)
+			for q in piece:
+				lo = lo.min(q)
+				hi = hi.max(q)
+			var area := (hi.x - lo.x) * (hi.y - lo.y)
+			if area > best_area:
+				best_area = area
+				best = piece
+		acc = best
+	if flat:
+		var cut := Geometry2D.intersect_polygons(acc, PackedVector2Array([Vector2(-w, -h * 0.1), Vector2(w, -h * 0.1), Vector2(w, h * 4.0), Vector2(-w, h * 4.0)]))
+		if not cut.is_empty():
+			acc = cut[0]
+	return acc
