@@ -5,10 +5,10 @@ A3 LA GRUTA DE CRISTAL: glass and light. 176 to 276 m, west of the well.
 The plan (x negative = west, y up):
 
   One great hall. Its floor in the west is the start (grip, y 176, round the hole from
-  A2). East of x -412 the hall's floor is LA RAMPA: one glass slope, 35 degrees, 61 m
+  A2). East of x -410 the hall's floor is LA RAMPA: one glass slope, 35 degrees, 60 m
   high, that pours everything that falls on it back to the start floor, at the foot of
   the first stair. Everything else in the hall hangs in the air over that floor: crystal
-  ends growing out of the back wall (the game draws their roots behind them), chains from
+  ends growing out of the back wall (two cards behind each one draw its root), chains from
   the roof, turning crystal.
 
   The route folds once. From the hole you walk east under the stair to its foot, climb
@@ -42,7 +42,16 @@ VIOLET, WHITE, CYAN = "#C9B4FF", "#F2ECFF", "#9FE8F5"
 
 
 # ---------------------------------------------------------------- helpers
-def rest(x0, x1, top, h=1.6, slick="", square="", root=True):
+def root(pts):
+    """The pieces of this hall hang in the air: they are crystals growing out of the far
+    wall toward the camera. Two cards behind each one draw the rest of it, going back."""
+    cx = sum(p[0] for p in pts) / len(pts)
+    cy = sum(p[1] for p in pts) / len(pts)
+    for k, dx, dy, z, tone in ((1.22, -0.25, -0.35, -1.5, "rock2"), (1.5, -0.6, -0.9, -2.6, "back")):
+        A.card([(cx + (x - cx) * k + dx, cy + (y - cy) * k + dy) for x, y in pts], z=z, tone=tone)
+
+
+def rest(x0, x1, top, h=1.6, slick="", square="", root_=True):
     """A rest crystal: a broken crystal end seen from the side. Glass body, a frosted
     cap on top (grip), a bevelled lip at each end. A lip named in `slick` ("w", "e")
     stays glass: the drip on the edge that keeps a rest from being quite safe. An end
@@ -52,22 +61,23 @@ def rest(x0, x1, top, h=1.6, slick="", square="", root=True):
     west = [(x0, yt), (x0, yb)] if "w" in square else [(x0 + bw, yt), (x0, yt - bh), (x0 + u, yb)]
     east = [(x1, yb), (x1, yt)] if "e" in square else [(x1 - u, yb), (x1, yt - bh), (x1 - bw, yt)]
     A.solid(west + east, "glass")
+    if root_:
+        root(west + east)
     A.ledge(x0 if "w" in square else x0 + bw - 0.05, x1 if "e" in square else x1 - bw + 0.05, top, "crystal", t=0.3)
     if "w" not in slick and "w" not in square:
         A.patch((x0, yt - bh), (x0 + bw, yt), "crystal", t=0.3)
     if "e" not in slick and "e" not in square:
         A.patch((x1 - bw, yt), (x1, yt - bh), "crystal", t=0.3)
-    if root:
-        A.deco("crystal_root", (x0 + x1) / 2, top - h / 2, z=-0.9, size=(x1 - x0, h, 1.6), tone="rock2")
 
 
 def hexstep(cx, top, wt=2.2, w=3.4, west_slick=False):
     """A hexagonal column seen end-on: the flat top and its two shoulders are frosted
     (grip), the lower facets are glass."""
     yt = top - 0.15
-    A.solid([(cx - wt / 2, yt), (cx - w / 2, yt - 0.75), (cx - wt / 2, yt - 1.5), (cx + wt / 2, yt - 1.5),
-             (cx + w / 2, yt - 0.75), (cx + wt / 2, yt)], "glass")
-    A.deco("crystal_root", cx, top - 0.8, z=-0.9, size=(w, 1.6, 1.8), tone="rock2")
+    hexa = [(cx - wt / 2, yt), (cx - w / 2, yt - 0.75), (cx - wt / 2, yt - 1.5), (cx + wt / 2, yt - 1.5),
+            (cx + w / 2, yt - 0.75), (cx + wt / 2, yt)]
+    A.solid(hexa, "glass")
+    root(hexa)
     A.ledge(cx - wt / 2, cx + wt / 2, top, "crystal", t=0.3)
     if not west_slick:
         A.patch((cx - w / 2, yt - 0.75), (cx - wt / 2, yt), "crystal", t=0.3)
@@ -84,7 +94,8 @@ def needle(x, tip, length, w=1.1, tip_h=1.3, flat_base=False, frost=""):
     else:
         A.solid([(x, by), (x + w / 2, by + tip_h), (x + w / 2, tip - tip_h), (x - w / 2, tip - tip_h),
                  (x - w / 2, by + tip_h)], "glass")
-        A.deco("crystal_root", x, tip - length / 2, z=-0.9, rot=28.0, size=(w, length, 2.2), tone="rock2")
+        root([(x, by), (x + w / 2, by + tip_h), (x + w / 2, tip - tip_h), (x, tip), (x - w / 2, tip - tip_h),
+              (x - w / 2, by + tip_h)])
     A.solid([(x - w / 2, tip - tip_h), (x + w / 2, tip - tip_h), (x, tip)], "crystal")
     if "w" in frost:
         A.patch((x - w / 2, by + 0.1), (x - w / 2, tip - tip_h), "crystal", t=0.3)
@@ -179,7 +190,9 @@ M_DIR = (-math.cos(math.radians(67)), math.sin(math.radians(67)))  # up the face
 M_N = (math.sin(math.radians(67)), math.cos(math.radians(67)))     # out of the face (up and east)
 M_LEN = 9.1
 M_F = (M_T[0] - M_DIR[0] * M_LEN, M_T[1] - M_DIR[1] * M_LEN)
-A.solid([M_F, M_T, (M_T[0] - M_N[0] * 0.8, M_T[1] - M_N[1] * 0.8), (M_F[0] - M_N[0] * 0.8, M_F[1] - M_N[1] * 0.8)], "glass")
+MIRROR = [M_F, M_T, (M_T[0] - M_N[0] * 0.8, M_T[1] - M_N[1] * 0.8), (M_F[0] - M_N[0] * 0.8, M_F[1] - M_N[1] * 0.8)]
+A.solid(MIRROR, "glass")
+root(MIRROR)
 NUBS = []
 for s in (0.5, 2.2, 3.95, 5.6, 7.4):
     p = (M_F[0] + M_DIR[0] * s + M_N[0] * 0.1, M_F[1] + M_DIR[1] * s + M_N[1] * 0.1)
@@ -197,7 +210,7 @@ A.challenge("3.2", "El Espejo", (-438.2, 189.5), 3, "B", moves=m32)
 A.cam((-447, 189, -437, 199), 8.5, bias=(1.0, -4.0))
 # The one who tried: reaching up at the mirror, grown over with clear crystal.
 A.statue(-443.4, 176.95, "reach")
-A.deco("crystal_shell_clear", -443.4, 177.5, z=0.5, size=(2.4, 3.6, 1.4), tone="accent")
+A.deco("crystal_shell_clear", -443.4, 176.0, z=0.4, size=(2.4, 3.6, 1.6), tone="accent")
 
 # ---------------------------------------------------------------- 3.3 Candelabros
 # Three chandeliers on chains, 6 m apart, each hung 3.2 m higher than the last, over the
@@ -226,7 +239,7 @@ A.cam((-448.5, 197, -423, 219), 14.0, bias=(0.0, -9.5))
 # the spar's end, along it to R4.
 GEO = (-420.4, 210.1)
 geo_shapes = chords(3.05, 0.3, "glass", skip=(5, 6)) + chords(2.75, 0.3, "crystal", skip=(5, 6))
-A.mover("geode", GEO, geo_shapes, {"type": "spin", "rpm": 2.0, "phase": 0.0}, model="geode")
+A.mover("geode", GEO, geo_shapes, {"type": "spin", "rpm": 2.0, "phase": 0.0}, model="geode_wheel")
 A.box(-418.3, 214.05, 2.6, 0.7, "crystal")  # the spar: a broken shard, frosted all round, ending over the geode's crown
 rest(-417.0, -413.5, 214.4, h=1.4, slick="w", square="e")  # R4: the first needle stands on its east end
 GAP_EDGE = polar(GEO, 2.6, 60)
@@ -237,7 +250,7 @@ A.cam((-427.5, 206, -416, 216), 9.0, bias=(0.0, -3.0))
 
 # ---------------------------------------------------------------- 3.5 Agujas
 # Four needle tips: 7, 9 and 11 m apart, each a little higher. Under them nothing but
-# La Rampa, 30 m down, and it pours you to the foot of 3.1.
+# La Rampa, 30 to 40 m down, and it pours you to the foot of 3.1.
 TIPS = [(-414.1, 217.0), (-407.1, 220.5), (-398.1, 223.3), (-387.1, 224.5)]
 needle(TIPS[0][0], TIPS[0][1], 2.6, w=1.2, flat_base=True, frost="we")  # stands on R4
 needle(TIPS[1][0], TIPS[1][1], 6.5)
@@ -277,6 +290,7 @@ A.cam((-384.5, 221, -377, 233), 9.0, bias=(-3.0, -4.0))
 # and 3.6 are both to do again. Left empty, the raft goes home.
 PL_E, PL_W = (-376.2, 219.84), (-384.6, 219.84 - 0.7 * 8.4)
 A.solid([PL_W, PL_E, (PL_E[0], PL_E[1] - 0.8), (PL_W[0], PL_W[1] - 0.8)], "glass")
+root([PL_W, PL_E, (PL_E[0], PL_E[1] - 0.8), (PL_W[0], PL_W[1] - 0.8)])
 RAFT = (-386.45, 212.0)
 A.mover("balsa", RAFT, [
     (box_pts(0.0, -0.2, 4.3, 0.4), "rock"),       # its floor
@@ -303,7 +317,7 @@ A.cam((-372, 226, -349.5, 246), 12.5, bias=(0.0, -6.0))
 
 # ---------------------------------------------------------------- 3.8 Techo de Vidrio
 # A great glass plate tilted 32 degrees. You cross UNDER it on six frosted patches, each
-# a metre long and 2.1 m of glass from the next, rising 11 m. Under you is La Rampa.
+# a metre long and 2.1 m of glass from the next, rising 10 m. Under you is La Rampa.
 # Its TOP is the catch for 3.9: what falls off the rings slides down it to R7.
 SL_U, SL_L = (-324.3, 246.2), (-342.5, 246.2 - 0.625 * 18.2)
 
@@ -313,6 +327,7 @@ def under(x):
 
 
 A.solid([SL_L, SL_U, (SL_U[0], SL_U[1] - 1.0), (SL_L[0], SL_L[1] - 1.0)], "glass")
+root([SL_L, SL_U, (SL_U[0], SL_U[1] - 1.0), (SL_L[0], SL_L[1] - 1.0)])
 A.box(-342.1, under(-342.1) - 0.3, 0.36, 0.8, "crystal")  # a broken tooth under its lip: the first hold
 TOOTH = (-342.1, under(-342.1) - 0.55)
 A.patch((-340.9, under(-340.9)), (-339.3, under(-339.3)), "crystal", t=0.3)  # patch 1, the long one: a reach from the tooth
@@ -353,7 +368,7 @@ def ring(mid, cy, rpm, studs, stud0):
         a = math.radians(stud0 + k * 360.0 / studs)
         c, s = math.cos(a), math.sin(a)
         shapes.append(([(2.8 * c + 0.26 * s, 2.8 * s - 0.26 * c), (3.45 * c, 3.45 * s), (2.8 * c - 0.26 * s, 2.8 * s + 0.26 * c)], "crystal"))
-    A.mover(mid, (COL_X, cy), shapes, {"type": "spin", "rpm": rpm, "phase": 0.0}, model="crystal_ring")
+    A.mover(mid, (COL_X, cy), shapes, {"type": "spin", "rpm": rpm, "phase": 0.0}, model="crystal_ring_%d" % studs)
 
 
 RING_Y = (250.9, 258.7, 266.5)
@@ -409,34 +424,45 @@ for x, y, w, h, lean, z, tone in (
     prism_card(x, y, w, h, lean, z, tone)
 # The column of 3.9, behind its rings.
 A.card([(-329.3, 240.5), (-326.7, 240.5), (-326.7, 277.5), (-328.0, 279.0), (-329.3, 277.5)], z=-1.4, tone="rock2")
-A.deco("crystal_column", COL_X, 259.0, z=-1.2, size=(2.6, 38.0, 2.6), tone="rock2")
-# Reflections: pale facets close behind the route that mirror the climber.
-for x, y, w, h, rot in ((-443.2, 194.5, 3.6, 9.4, 23.0), (-452.5, 186.0, 5.0, 8.0, -12.0), (-430.0, 196.0, 6.0, 9.0, 15.0),
-                        (-401.0, 216.0, 7.0, 10.0, -20.0), (-373.0, 235.0, 6.0, 8.0, 10.0), (-345.5, 238.0, 5.0, 7.0, -8.0),
-                        (-318.5, 269.5, 9.0, 7.0, 6.0), (-312.0, 252.0, 4.0, 9.0, -6.0)):
-    A.deco("mirror_facet", x, y, z=-1.6, rot=rot, size=(w, h, 0.1), tone="accent")
-# In front of the route: dark shards.
+A.deco("crystal_column", COL_X, 240.5, z=-1.6, size=(2.6, 38.0, 2.6), tone="rock2")
+# Reflections: pale facets close behind the route that give the climber back to himself.
+for x, y, rot, sc in ((-443.2, 190.0, 23.0, 1.2), (-452.5, 182.0, -12.0, 1.0), (-430.0, 192.0, 15.0, 1.1), (-420.0, 204.5, -8.0, 0.9),
+                      (-401.0, 212.0, -20.0, 1.2), (-381.0, 219.0, 12.0, 1.0), (-373.0, 231.0, 10.0, 1.0), (-358.0, 226.0, -6.0, 1.3),
+                      (-345.5, 234.0, -8.0, 0.9), (-318.5, 266.0, 6.0, 1.2), (-312.0, 248.0, -6.0, 1.0)):
+    A.deco("mirror_facet", x, y, z=-1.9, rot=rot, scale=sc, size=(4.0, 7.0, 0.1), tone="accent")
+# In front of the route: dark shards along the floor and the roof.
 for x, w, h, lean in ((-458, 3, 7, 10), (-431, 2.5, 5, -14), (-399, 3, 6, 16), (-366, 3, 7, -12), (-336, 2.5, 6, 12)):
     prism_card(x, max(176.0, slide_y(x)) - 1.0, w, h, lean, 3.0, "back3")
-for x, y, w, h in ((-455, 204.3, 3, 6), (-415, 226.5, 3.5, 7), (-394, 235.0, 3, 6), (-360, 248.5, 2.5, 5), (-320, 278, 3, 6)):
+for x, y, w, h in ((-455, 204.3, 3, 6), (-415, 226.5, 3.5, 7), (-394, 235.0, 3, 6), (-360, 248.5, 2.5, 5), (-322, 278, 3, 6)):
     A.card([(x - w / 2, y + 0.8), (x + w / 2, y + 0.8), (x + w * 0.3, y - h * 0.6), (x, y - h), (x - w * 0.3, y - h * 0.6)], z=3.5, tone="back3")
-# Glass prisms hanging from the roof: big flat faces, slick, out of the route's reach.
-for x, w, drop in ((-453.5, 2.6, 6.0), (-393.0, 2.4, 3.2), (-368.5, 2.2, 3.0), (-353.5, 2.0, 2.6), (-318.5, 2.2, 3.0)):
-    ry = None
+
+
+def roof_y(x):
     for i in range(8, 18):
         (xa, ya), (xb, yb) = AIR[i], AIR[i + 1]
         if xb <= x <= xa:
-            ry = ya + (yb - ya) * (x - xa) / (xb - xa)
+            return ya + (yb - ya) * (x - xa) / (xb - xa)
+
+
+# Glass prisms hanging from the roof: big flat faces, slick, out of the route's reach.
+# The one at x -426 is a curtain: it shuts the high line from the last chandelier straight to the spar,
+# so the geode can't be flown over.
+for x, w, drop in ((-453.5, 2.6, 6.0), (-426.0, 2.4, 6.2), (-393.0, 2.4, 3.2), (-368.5, 2.2, 3.0), (-353.5, 2.0, 2.6),
+                   (-318.5, 2.2, 3.0)):
+    ry = roof_y(x)
     A.solid([(x - w / 2, ry + 1.2), (x + w / 2, ry + 1.2), (x + w / 2, ry - drop + w * 0.7), (x, ry - drop),
              (x - w / 2, ry - drop + w * 0.7)], "glass")
-# Props.
-for x, y, s in ((-457.6, 176, 1.6), (-446.5, 176, 1.2), (-427.0, 176, 1.4), (-417.8, 176, 1.0)):
-    A.deco("crystal_cluster", x, y, z=-1.0, size=(1.6 * s, 2.2 * s, 1.2 * s), tone="rock")
-for x, y in ((-452.0, 204.5), (-409.0, 229.0), (-364.0, 247.6), (-336.0, 268.5), (-316.0, 277.2)):
-    A.deco("chandelier_far", x, y, z=-2.4, size=(2.6, 3.4, 2.6), tone="crystal")
-A.deco("geode_rind", GEO[0], GEO[1], z=-0.6, size=(6.4, 6.4, 1.2), tone="rock2")
-A.deco("mirror_frame", (M_F[0] + M_T[0]) / 2, (M_F[1] + M_T[1]) / 2, z=-0.5, rot=23.0, size=(1.2, 9.4, 0.3), tone="accent")
-A.deco("root_curtain_far", -300.0, 273.0, z=-2.0, size=(4.0, 12.0, 0.4), tone="root")  # a hint of the far side
+# Props (names from PARTS.md where it has them).
+for x, y, m, sz in ((-457.6, 176, "crystal_cluster_a", (2, 3, 2)), (-446.6, 176, "crystal_cluster_c", (1, 1.5, 1)),
+                    (-427.0, 176, "crystal_cluster_b", (4, 5, 3)), (-419.0, 176, "crystal_cluster_c", (1, 1.5, 1)),
+                    (-316.0, 241.5, "crystal_cluster_a", (2, 3, 2)), (-311.0, 264.25, "crystal_cluster_c", (1, 1.5, 1))):
+    A.deco(m, x, y, z=-1.7, size=sz, tone="rock")
+for x in (-452.0, -409.0, -364.0, -343.0, -314.0):
+    A.deco("chandelier_crystal", x, roof_y(x), z=-2.4, size=(2, 2.5, 2), tone="crystal")  # far chandeliers, behind the climb
+for x in (-440.0, -403.0, -383.0, -346.0, -329.5):
+    A.deco("stalactite_b", x, roof_y(x), z=-1.8, size=(1.5, 6, 1.5), tone="rock2")
+for x in (-405.0, -378.0, -352.0):
+    A.deco("crystal_spire", x, slide_y(x) - 1.0, z=-2.2, size=(2, 10, 2), tone="rock2")  # spires behind the slope
 # Light: violet and ice-white, about one every 12 m of route.
 for x, y, col in ((-452.5, 180.5, VIOLET), (-436.0, 180.0, VIOLET), (-420.0, 180.5, CYAN), (-427.0, 187.5, WHITE),
                   (-442.5, 194.5, WHITE), (-425.8, 211.5, VIOLET), (-415.0, 218.5, WHITE), (-402.5, 224.0, VIOLET),
@@ -446,7 +472,7 @@ for x, y, col in ((-452.5, 180.5, VIOLET), (-436.0, 180.0, VIOLET), (-420.0, 180
     A.light(x, y, color=col, rng=10.0, energy=1.5)
 for x in (-400.0, -375.0, -350.0, -332.0):
     A.light(x, slide_y(x) + 2.5, color=CYAN, rng=11.0, energy=1.1)  # the slope is lit: you see what a miss costs
-A.light(-304.0, 266.0, color=VIOLET, rng=14.0, energy=1.3)  # and the well's mouth
+A.light(-307.0, 265.5, color=VIOLET, rng=14.0, energy=1.3)  # and the well's mouth
 # Effects: glitter in the air, a drip on three rests.
 A.effect("dust", (-459, 176, -309, 278), density=0.5, tone=WHITE)
 A.effect("drips", (-448.2, 198.7, -447.4, 208.0), tone=CYAN)

@@ -1658,8 +1658,33 @@ func _aim_target(i: int, aim: Variant) -> Vector2:
 		elif aim.has("dir"):
 			var reach: float = (l.l1 + l.l2) * Feel.get_k("stick_reach")
 			var radius := maxf(l.min_reach, clampf(float(aim.mag), 0.0, 1.0) * reach)
-			l.cursor = limb_root(i) + (aim.dir as Vector2).normalized() * radius
+			var dir := (aim.dir as Vector2).normalized()
+			if float_mode:
+				dir = _swim_dir(l, dir)
+			l.cursor = limb_root(i) + dir * radius
 	return l.cursor
+
+
+## THE PINWHEEL (the Peak's swim, Parker 11-11: "pinwheel an arm fast to fight the
+## current"). In water a stick being spun turns the arm round at up to SWIM_TURNS a
+## second, however fast the stick itself goes: spun faster than the arm could follow, the
+## hand used to stall at the shoulder and the stroke was lost, so spinning HARDER swam
+## slower. A stick that isn't spinning still points the limb as it always does.
+const SWIM_TURNS := 1.25
+func _swim_dir(l: Dictionary, dir: Vector2) -> Vector2:
+	var dt := 1.0 / Engine.physics_ticks_per_second
+	var now := dir.angle()
+	var was: float = l.get("swim_stick", now)
+	l["swim_stick"] = now
+	var w := angle_difference(was, now) / dt
+	var spin: float = lerpf(float(l.get("swim_spin", 0.0)), w, 0.25)  # the stick's turning rate, steadied
+	l["swim_spin"] = spin
+	if absf(spin) < 3.0:
+		l["swim_ang"] = now
+		return dir
+	var ang: float = float(l.get("swim_ang", now)) + clampf(spin, -SWIM_TURNS * TAU, SWIM_TURNS * TAU) * dt
+	l["swim_ang"] = ang
+	return Vector2.from_angle(ang)
 
 
 ## Is the limb whose elbow or knee this is stuck to something?

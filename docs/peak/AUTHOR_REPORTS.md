@@ -20,3 +20,40 @@ Nobody has played any of this. These are the things each author asked to have te
 - Nobody has heard any of it. Listen first for: the mode crossings between neighbours (a2 with a3, a8 with a9, a0 with a1, a4 with a5, a6 with a7); whether a10 is tense or just ugly; a8's deliberate lateness; a0's low-pass; one tune for the whole climb wearing thin.
 - Stand-ins from the soundfont: anvils (agogo and ride bell), pick-axes (side stick, triangle, wood block), clay flute (ocarina), glass harmonica (a pad).
 - The temple's phantom blocks (5.9) run on the course's own clock: they are NOT in time with the music.
+
+## A10 La Cresta de la Tormenta
+- Builds clean. The rock towers do not stand on the ridge (a tower on the slope makes a pocket): each floats 3 m clear of the slide, with a back card drawing its root and a cloud card across its foot.
+- Changes: the knife edge is a vertical blade climbed on alternate sides; the kites are stacked beside the needle; 10.8 adds a dismount fling; 10.9 is four rungs.
+- "No catches" is not fully met: a free-faller can land on lower pieces of the route (the likeliest lucky save is a short miss off the balloon). Tower B is 5.7 m.
+- Test first: the Veleta (does a hand survive taking a cup at 6.3 m/s; the cup passes 0.5 m from the nest); the kite tails cross at 6 m/s closing (may be impossible: fly kite 2 the same way, half a lap out, to fix); El Rayo (feet on metal count as holding it; 4 s a section in a 5.6 s window); the first move passes 1.5 m under the roof; whether floating towers read as rock.
+
+## A11 La Cumbre
+- Builds clean (one expected warning: the west closure runs out to the unseen wall).
+- Departures: the crown's teeth and the two horns are tips over card roots (a tooth standing in the bowl would dam it); every launch hold is reached from a brittle step (3 s) that leaves you hanging in clear air; the summit, the bell and the rope sit about 6 to 10 m west of the planned (-350, 1000) so the 20 m leap fits. The last statue sits on a perch 4 m under the bell.
+- Doubts: 11.3 (the ring ropes) was worked out for a throw purely along the rope's normal; the engine also keeps the speed along the rope, so its climb needs testing. Its entry needs about 6.2 m/s thrown flat. Tooth 3 to tooth 4 must be thrown flat. Skips exist (tooth 1 straight to tooth 4 at 6.6 m/s). A body flung west over the bell slides back to the area's start, not down the mountain.
+- Test first: the rope pinball from a 4 m/s entry; whether 3 s on a brittle step is enough; a deliberate miss on the last jump (does it slide the dome and clear A10's ledge); the flat throw under the horn's foot.
+
+## A8 El Teleférico
+- Builds clean: 19 movers, one free body. A 62 s time-stepped test found no mover touching a solid or another mover.
+- Changes: pylon towers are cards (a solid lattice leg is a wall in a cross-section); only pylon 2 has real legs below its landing. The zipline stops 4 m short of the deck (let go in its last 0.45 s). The fang's holds are 1.8 m apart.
+- Not met: several rests are small perches (1.2 to 2.4 m), not 2.5 m ledges.
+- Test first: 8.10 may not work as built (the upper express car's rail passes 0.15 m over a standing head at 12 m/s closing: change `EX_GAP`); 8.2 and 8.3 depend on the two loops staying in step; 8.7's landing was worked out for a straight hang, the real body will whip at the stop; 8.9 (does 120 kg swing under a 22 kg climber, does a climber fit the 1 m window); 8.1's window is 1.1 s in every 6 (sharp for a D2).
+
+## A6 La Chimenea
+- Builds clean, leak 0. One furnace hall under a narrowing flue; everything hangs in open air so a miss falls to the floor by the well mouth (which tilts a faller away from the well).
+- Changes: 6.3's drift between the twin vents is a light east draught; 6.5's slag is a run tilted 8 degrees so its bounce walks a body off the lip; 6.7's danger is a timed cross-gust through a window; 6.8 gains 24.6 m, not 30.
+- Not met: a miss doesn't always cost the whole area (ledges and anvils can catch).
+- Test first: the three geyser challenges (the engine now tears a climber off the grate when the vent blows: check it reads right); 6.3 end to end; the 0.8 m squeeze under a hammer in 6.6; that standing on a raft never trips the slag's bounce; 6.8's third window is 0.3 s (raise `on` from 1.35 if too mean); the fall from 6.9's pipe.
+
+## A5 El Templo del Primer Perro
+- Builds clean, leak 0: 40 movers. West and up through a lower hall, back east through the great hall, west along its roof, east again to the well.
+- Changes: 5.9's blocks move on two beats a count (one beat needed a 1.2 m step every 0.6 s); 5.5 has three champions and two flings; 5.1's steps slide under the step above. The three frozen climbers are the ladder up the altar's wall, through the band the cross sweeps, and stop 4.6 m short of the beam.
+- Doubts: each champion's fist has its own elbow 1.84 m away (inside the 2.3 m launch circle); 5.3 and 5.9 depend on how fast a climber really climbs (lengthen the periods if too fast); 5.11 has one 1.2 s transfer window every 30 s plus two lesser ones.
+- Test first: 5.11 (the tassel reach from the sill, the mid-well transfer, the drop onto A6's ledge); arriving from A4's throw onto a chain; the pistons' wave; spinning on a fist; a miss in the hall sliding the drain to the entry floor.
+
+## A2 Las Aguas Negras
+- Builds clean, leak 0: 22 movers, 5 free bodies (the cranks), 13 zones. Chambers cut from solid rock; every ledge over water hangs at least 1.5 m clear so a swimmer passes under.
+- River levels, flowing east: the dam's lake (still, y 166), the upper reach (151, 1.2 m/s), the Cascada's pool (136), the tail pool and flume (116; the flume was 2.2 m/s and is now 1.5 because the swim tops out near 2.0), El Charco (115), the lower river (91; 2.2 then 2.4 at the lip: you cannot swim up it, only slow your drift toward the one chain).
+- Changes: 2.6's chain gaps are 6.4 and 4 m (the slide tube's fall line between them must hold no grip); 2.8's miss is a slip back to the last eddy, or everything if flushed into the Charco; 2.11 is five small crank lifts up a stepped dam face; a 34 m iron catwalk was added before the dam.
+- Not met: 2.3's landings are 2.5 to 3 m (a D2 wants 4); some headroom and widths are under the rule; barrels cover two thirds of the well's column, so a faller down the Pozo will often land on one.
+- Test first: a floating body passing under the slabs; the swim over the last 5.5 m sprint; taking a chain end 0.3 m over the water from the water; barrel to barrel, and what a rider feels when a barrel wraps back to its start; winding a crank a full circle and the 1.9 m pull-up before the lift sinks; the gates' 0.4 s slam.

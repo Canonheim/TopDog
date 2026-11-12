@@ -230,6 +230,15 @@ func _tick_geysers(c: Climber) -> void:
 			continue
 		var half := float(z.w) * 0.5
 		var speed := float(z.speed)
+		# The blast tears you off whatever you hold inside its column (feet stuck to the
+		# grate would hold the whole body down: you ride a geyser, you don't resist it).
+		for i in c.limbs.size():
+			if c.limbs[i].grab_other == null:
+				continue
+			var e := peak.local_of(c.limb_end(i))
+			if absf(e.x - at.x) <= half + 0.25 and e.y >= at.y - 0.6 and e.y <= at.y + float(z.height):
+				c.release(i)
+				c.limbs[i].regrip = 0.6
 		for b: RigidBody3D in c.bodies.values():
 			var p := peak.local_of(Climber.pos2(b))
 			if absf(p.x - at.x) > half or p.y < at.y - 0.3 or p.y > at.y + float(z.height):
