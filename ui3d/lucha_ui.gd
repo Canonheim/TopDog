@@ -29,7 +29,8 @@ const OWNED := ["practice_ai", "practice_settings", "customize", "title", "local
 const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
 const CARD_DY := 2.3  # and 2.05 m with its mask crest
 const CARD_ROW := 5  # Play together: one row of five (the UI pass, batch 3)
-const CARD_ROW_DX := 1.35
+const CARD_ROW_DX := 1.5  # cards at 0.9 (1.44 wide with their tails): a 0.06 gap
+const CARD_ROW_SCALE := 0.9
 
 var main: Node
 var cam: Camera3D
@@ -1641,7 +1642,7 @@ func _refresh_cards() -> void:
 		card.add_child(dev)
 		_cards.add_child(card)
 		card.scale = Vector3.ONE * 0.01
-		create_tween().tween_property(card, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		create_tween().tween_property(card, "scale", Vector3.ONE * CARD_ROW_SCALE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if Players.slots.size() < 8:
 		var s := Players.slots.size()
 		var empty := LuchaKit.card_frame(Color(0.9, 0.86, 0.78), LuchaKit.INK)
@@ -1650,13 +1651,14 @@ func _refresh_cards() -> void:
 		join.position = Vector3(0, 0.05, 0.05)
 		empty.add_child(join)
 		empty.set_meta("pulse", true)
+		empty.scale = Vector3.ONE * CARD_ROW_SCALE
 		_cards.add_child(empty)
 	no_shadows(_cards)
 
 
 ## A Play together card's place: one row of five, 1.35 apart, a second row only past five.
 func _card_at(s: int) -> Vector3:
-	return Vector3(-1.7 + (s % CARD_ROW) * CARD_ROW_DX, -(s / CARD_ROW) * CARD_DY, 0)
+	return Vector3(-1.45 + (s % CARD_ROW) * CARD_ROW_DX, -(s / CARD_ROW) * CARD_DY * CARD_ROW_SCALE, 0)
 
 
 ## Everything under `n` stops casting shadows (UI pieces hang in the sun's light).
@@ -2074,10 +2076,21 @@ func _process(delta: float) -> void:
 				_info.add_child(tt)
 				no_shadows(_info)
 			elif info != "":
-				var it := LuchaKit.poster_text(info, 0.26, LuchaKit.GOLD, LuchaKit.INK, 0.05)
-				it.position = Vector3(0.7 - info.length() * 0.09, 0, 0)
-				_info.add_child(it)
-				no_shadows(it)
+				# The other match lines on a plate (the UI pass, 4c): the Controls row label,
+				# its right end against where the ROUND tab stands.
+				var plate := LuchaKit.kit_model("bind_label")
+				if plate == null:
+					plate = LuchaKit._plate(2.7, 0.46, Color("#1E2C5C"))
+				var hold := Node3D.new()
+				hold.position = Vector3(-1.8, 0, 0)
+				plate.scale = Vector3.ONE * 0.8
+				hold.add_child(plate)
+				var it := LuchaKit.fit_words(info, 1.5, 0.22, LuchaKit.CREAM, LuchaKit.INK)
+				it.position = Vector3(0, 0, 0.08)
+				LuchaKit.center_digits(it)
+				hold.add_child(it)
+				_info.add_child(hold)
+				no_shadows(hold)
 		var v := int(ceil(g.clock)) if show else -1
 		if v != _clock_val:
 			_clock_val = v

@@ -104,17 +104,17 @@ func _on_settings() -> void:
 		Stage.warm_delmar()
 	if ui.current != "lobby":
 		return
-	if Net.is_host():
-		_fill_lobby()
-	else:
-		_update_guest_settings()
+	_fill_lobby()  # (a guest's locked pickers show the host's settings too)
+
+
+var _guest_shown: Array = []  # the host's settings as this guest last saw them
 
 
 func _update_guest_settings() -> void:
-	var row := Modes.row(str(Net.settings.get("mode", "scramble")))
-	# Parker 11-10: guests aren't told to ready up; they're told who they wait for.
+	# Parker 11-10: guests aren't told to ready up; they're told who they wait for. The
+	# settings are on the locked pickers now (the UI pass, 4b).
 	var host_name := str((Net.members.get(1, {}) as Dictionary).get("name", "the host"))
-	set_status("Waiting for host %s to start the game. %s, %s clock, %s base." % [host_name, str(row.name), Modes.TIMER_NAMES[maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0))))], str(Net.settings.get("base", "random")).capitalize()])
+	set_status("WAITING FOR %s TO START" % host_name.to_upper())
 
 
 func _on_members() -> void:
@@ -350,10 +350,31 @@ func _fill_lobby() -> void:
 		m.add_button("INVITE FRIENDS", func(): Net.invite_friends())
 		m.add_button("LEAVE", main._leave_lobby)
 	else:
-		m.close()
-		return
+		# THE GUEST'S LOBBY (the UI pass, 4b): the host's screen, read-only: the host's
+		# settings on locked pickers, and LEAVE, which holds the focus.
+		var mode_ids := ["scramble", "tower", "delmar"]
+		var vals := [
+			["MODE", mode_ids.map(func(id): return str(Modes.row(id).name).to_upper()), maxi(0, mode_ids.find(str(Net.settings.get("mode", "scramble"))))],
+			["CLOCK", Modes.TIMER_NAMES, maxi(0, Modes.TIMERS.find(float(Net.settings.get("timer", 60.0))))],
+			["BASE", Modes.BASE_NAMES.map(func(n): return n.to_upper()), maxi(0, Modes.BASES.find(str(Net.settings.get("base", "random"))))],
+		]
+		for k in vals.size():
+			var v: Array = vals[k]
+			var i := m.add_choice(str(v[0]), v[1], int(v[2]), Callable())
+			m.lock_choice(i)
+			# The host changed it: a small punch, so the guest sees which.
+			if _guest_shown.size() == vals.size() and int(_guest_shown[k]) != int(v[2]):
+				var n: Node3D = m.items[i].node
+				n.scale = Vector3.ONE * 1.15
+				n.create_tween().tween_property(n, "scale", Vector3.ONE, 0.2).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_guest_shown = vals.map(func(v): return int(v[2]))
+		if _mode_card != null:
+			_mode_card.visible = str(Net.settings.get("mode", "scramble")) == "delmar"
+		m.add_button("LEAVE", main._leave_lobby)
+		if not m.visible:
+			m.open()
 	m.refresh()
-	m.focus = clampi(keep, 0, m.items.size() - 1)
+	m.focus = clampi(keep, 0, m.items.size() - 1) if host else m.items.size() - 1
 	_place_boards("lobby")
 	if not host:
 		_update_guest_settings()

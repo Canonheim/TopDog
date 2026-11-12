@@ -79,6 +79,14 @@ func add_choice_button(label: String, options: Array, index: int, cb: Callable) 
 	return _add({"kind": "choice_button", "label": label, "options": options, "index": index, "on_change": Callable(), "cb": cb})
 
 
+## A choice that only shows its value (a guest's lobby): no arrows, a dimmed face, and
+## the focus passes it by.
+func lock_choice(i: int) -> void:
+	items[i].locked = true
+	if items[i].get("picker", false):
+		LuchaKit.tint_part(items[i].belt, "picker_face", Color("#5A5470"))
+
+
 ## Rebuilt lists (friends, lobbies, members): lay the belts out again and keep the
 ## menu open, with no drop-in, the focus kept in range.
 func refresh() -> void:
@@ -383,7 +391,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _live(i: int) -> bool:
-	return i >= 0 and i < items.size() and items[i].node != null
+	# (a locked choice only shows a value: a guest's view of the host's settings)
+	return i >= 0 and i < items.size() and items[i].node != null and not items[i].get("locked", false)
 
 
 func _next_live(from: int, dir: int) -> int:
