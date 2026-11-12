@@ -1538,11 +1538,14 @@ func _build_menus() -> void:
 	ai.position = p.position
 	ai.scale = p.scale
 	menus.practice_ai = ai
-	# RESULTS
-	var r := _menu()
-	r.column_x = Menu3D.MENU_COLUMN_X
-	r.top_y = Menu3D.MENU_TOP_Y
-	r.add_button("REMATCH!", func():
+	# RESULTS: the UI creator's board on the left (PARTS.md J): TOP DOG and the winner
+	# pinned, the rolling leaderboard, REMATCH! and BACK in its footer.
+	var r := ResultsBoard.new(cam)
+	r.lucha = self
+	cam.add_child(r)
+	r.position = Vector3(0, 0, -MENU_DIST)
+	r.scale = Vector3.ONE * UI_SCALE
+	r.set_buttons(func():
 		if main.local_mode:
 			main.game.host_start(Net.settings.duplicate() if main.game.settings.mode != "practice" else main.game.settings, main.game.roster)
 			main.show_screen("hud")
@@ -1550,8 +1553,7 @@ func _build_menus() -> void:
 			if main.game.host_start(Net.settings.duplicate(), Net.build_roster()):
 				Net.set_in_match(true)
 		else:
-			main._on_announce("The host starts the next game.", false))
-	r.add_button("BACK", main.leave_results)
+			main._on_announce("The host starts the next game.", false), main.leave_results)
 	menus.results = r
 	# Player cards (Play together) and the podium (results) hang in the same frame.
 	_cards = Node3D.new()
@@ -1678,18 +1680,16 @@ func _raise_podium() -> void:
 
 func _fill_results() -> void:
 	_podium.position.x = main.results_podium_focus().x
-	if _winner_poster != null:
-		_winner_poster.queue_free()
 	var res: Dictionary = main.game.results
+	var g: Game = main.game
 	var w := int(res.get("winner", -1))
-	var title := ("%s IS TOP DOG!" % str(main.game.player_name(w)).split(" the ")[0].to_upper()) if w >= 0 else "GAME OVER"
-	_winner_poster = Node3D.new()
-	var big := LuchaKit.poster_text(title, 0.45 if title.length() < 18 else 0.32, LuchaKit.GOLD, LuchaKit.RED, 0.12)
-	big.position = Vector3(0, 2.1, 0)
-	_winner_poster.add_child(big)
 	var best: Dictionary = res.get("best", {})
 	var order := best.keys()
 	order.sort_custom(func(a, b): return float(best[a]) > float(best[b]))
+	# Everyone in the lobby: a player who never set a height still has a row.
+	for e in g.roster:
+		if not order.has(int(e.pid)) and not order.has(e.pid):
+			order.append(int(e.pid))
 	if w >= 0:
 		order.erase(w)
 		order.push_front(w)
@@ -1724,19 +1724,29 @@ func _fill_results() -> void:
 					limb.transform = (shoulder_pose if limb_name == "Shoulder" else forearm_pose) * limb.transform
 		CelPass.celify(figure)
 		step.add_child(figure)
-	var y := 1.2
-	for pid in order.slice(0, 4):
-		var line := LuchaKit.poster_text("%s  %.2f M" % [str(main.game.player_name(int(pid))).split(" the ")[0].to_upper(), float(best[pid])], 0.24, LuchaKit.CREAM, LuchaKit.INK, 0.04)
-		line.position = Vector3(0.0, y, 0)
-		_winner_poster.add_child(line)
-		y -= 0.32
-	cam.add_child(_winner_poster)
-	_winner_poster.position = Vector3(-1.3, 0, -MENU_DIST)
-	_winner_poster.scale = Vector3.ONE * UI_SCALE
-	_winner_poster.visible = true
-	var tw := create_tween()
-	_winner_poster.scale = Vector3.ONE * 0.2
-	tw.tween_property(_winner_poster, "scale", Vector3.ONE * UI_SCALE, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	# THE BOARD (PARTS.md J): the winner's plate and everyone else's row, in order.
+	var delmar: bool = g.stage != null and g.stage.delmar
+	var height_of := func(v: float) -> String:
+		return ("%.2f M OUT" % maxf(0.0, v - Stage.PIER_END)) if delmar else ("%.2f M" % v)
+	var who := func(pid: int) -> Dictionary:
+		var e: Dictionary = g.roster_entry(pid)
+		var tc = e.get("tint", Color.WHITE)
+		return {"name": str(g.player_name(pid)).split(" the ")[0].to_upper(),
+			"height": height_of.call(float(best.get(pid, 0.0))),
+			"tint": tc if tc is Color else Color(str(tc)),
+			"own": not main.local_mode and int(e.get("peer", -1)) == g.me(),
+			# Its machine's Steam name, for the name flip (none offline or for a local game).
+			"steam": str(Net.members.get(int(e.get("peer", -1)), {}).get("name", "")) if Net.online and Net.steam_ok and not main.local_mode else ""}
+	var winner := {}
+	var others: Array = []
+	for pid in order:
+		if int(pid) == w and w >= 0:
+			winner = who.call(int(pid))
+		else:
+			others.append(who.call(int(pid)))
+	var n := int(res.get("tower", 0))
+	var top_s: String = height_of.call(float(res.get("top", 0.0)))
+	(menus.results as ResultsBoard).fill(winner, others, "TOWER " + top_s, "%d CLIMBER%s" % [n, "" if n == 1 else "S"], not main.local_mode and not Net.is_host())
 
 
 # ================================================================ the match HUD

@@ -41,6 +41,7 @@ var _cam_fov := 34.0
 ## DEL MAR'S CAMERA RIDES UP (Parker 11-11: "raise the camera upwards by about this
 ## much, there is too much sea being shown"): the frame lifts by this share of its height.
 const DELMAR_CAM_LIFT := 0.14
+const RESULTS_BOARD_EDGE := 0.589  # the results board's right edge, x aspect of the width (Top Dog Kit PARTS.md J2)
 const FOLLOW_HALF_H := 2.05  # in play: the camera shows at least this many metres above and below you
 var _last_tick_s := -1
 var _lobby_back := "online"
@@ -306,7 +307,7 @@ func _process(delta: float) -> void:
 	if game.stage != null:
 		game.stage.view_from = cam.global_position  # Del Mar's rope is drawn over the line as this camera sees it
 	_tick_hud(delta)
-	var glyphs_on := screen != "pause"
+	var glyphs_on := screen != "pause" and screen != "results"  # (results: the board on the left would wear them)
 	if glyphs_on != _glyphs_on or game.climbers.size() != _glyphs_n:
 		_glyphs_on = glyphs_on
 		_glyphs_n = game.climbers.size()
@@ -408,7 +409,17 @@ func _tick_camera(delta: float) -> void:
 				var cycle := fposmod(distance, length * 2.0)
 				travel = cycle if cycle <= length else 2.0 * length - cycle
 			focus = start.move_toward(end, travel)
-		cam.position = Vector3(focus.x, focus.y + 0.5, 9.0)
+		# THE RESULTS BOARD takes the left of the screen (Parker 11-11: "the podium could be
+		# more to our right, based on how the camera is looking at it", all modes): the
+		# camera stands left of its subject so the podium, then the tower, sit centred in
+		# the space right of the board. Its right edge is at 0.589 / aspect of the width
+		# (PARTS.md J2), so the free space's centre is 0.589 x tan(fov / 2) x distance to the
+		# right of the view's centre, whatever the window's shape.
+		var on_tower := smoothstep(0.0, PODIUM_SHIFT_SECONDS, elapsed)
+		var podium_z: float = lucha._podium.position.z if lucha != null and lucha._podium != null else 1.08
+		var subject_d := 9.0 - lerpf(podium_z, 0.0, on_tower)
+		var aside := RESULTS_BOARD_EDGE * tan(deg_to_rad(cam.fov * 0.5)) * subject_d
+		cam.position = Vector3(focus.x - aside, focus.y + 0.5, 9.0)
 		cam.look_at(Vector3(cam.position.x, focus.y, 0), Vector3.UP)
 		line_bar.visible = false
 		return

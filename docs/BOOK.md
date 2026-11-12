@@ -728,6 +728,26 @@ Commits 4714920, 7f37818 and the one after.
   brigantine at the edge. The party boat, the lighthouse island, the teal sloop, the blue
   brigantine and the pinata island wait further right and are rarely seen in a match.
   The tables are `SHIPS` and `ISLES` in delmar_scenery.gd.
+- **The results board (Parker 11-11: "make all of that, including the buttons built into
+  one UI thing over on the left of the screen ... a leaderboard with all the heights that
+  people in the lobby made it to, one that auto scrolls. But the Top Dog's name should
+  always be displayed at the top").** The UI creator's marquee (Top Dog Kit PARTS.md J),
+  wired as `ui3d/results_board.gd` (the results Menu3D):
+  - TOP DOG and the winner's plate (gold medal, the name, the height) are pinned.
+  - A six-slot roll holds everyone else in finishing order, then the tower's line. Past
+    six it steps round like a flip board: hold 3 s, a step every 0.7 s.
+  - REMATCH! and BACK sit in its footer. A non-host online sees WAITING FOR HOST and a
+    turning hourglass.
+  - The camera stands left of the podium and of the tower it pans, so they sit centred in
+    the space right of the board, in every mode (`RESULTS_BOARD_EDGE`, main.gd).
+  - Climbers' button letters hide on the results screen, as on pause (they drew over the
+    board).
+  - **The name flip** (Parker: "after 4 seconds on the screen, the names section on the
+    winner screen should flip like they do in the options menu, 360 degrees ... show the
+    person's steam username, then after another 4 seconds, it will flip back"): every
+    4 s the name tiles turn a full circle. Online with Steam, each player's tile shows
+    their machine's Steam name, then their game name. The roll waits out a flip. A
+    local game has no Steam names, so nothing flips.
 - **The line you can see (Parker 11-11: "there are times in both modes where my hand
   seems to be over the line but I cannot lock in").** Seven causes, all fixed:
   - **The plaza line lagged:** it glided up after the line moved (a lerp). It snaps now.
