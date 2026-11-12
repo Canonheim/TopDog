@@ -407,7 +407,7 @@ func anchor_to(half_local: float) -> float:
 	for it in items:
 		if it.node != null and not it.has("layout_position"):
 			widest = maxf(widest, float((it.belt as Node3D).get_meta("width", BELT_W)) * 0.5)
-	var want := maxf(base_column_x, -half_local + widest + 1.16) if widest > 0.0 else base_column_x
+	var want := maxf(base_column_x, -half_local + widest + 1.36) if widest > 0.0 else base_column_x  # (the star's swing, 8a)
 	if absf(want - column_x) > 0.001:
 		column_x = want
 		_layout()

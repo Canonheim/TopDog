@@ -66,6 +66,8 @@ var _pulse_tween: Tween
 const BELL_AT := Vector3(1.05, 2.0, 0.05)
 const CLOCK_HIDE_UP := 2.6  # above the top of the frame
 var _cards: Node3D
+var _card_row: Node3D  # the cards themselves: the row fits itself to the window (8b)
+var _card_half_w := -1.0  # a card's measured half width, tails and all, at the row's scale
 var _mode_card: Node3D = null  # the UI creator's mode_card_delmar, beside MODE while it reads DEL MAR
 var _podium: Node3D
 var _winner_poster: Node3D
@@ -1569,6 +1571,8 @@ func _build_menus() -> void:
 	_cards.position = Vector3(0.2, 0.30, -MENU_DIST)  # (the UI pass, batch 3: the crests clear the banner)
 	_cards.scale = Vector3.ONE * UI_SCALE
 	_cards.visible = false
+	_card_row = Node3D.new()
+	_cards.add_child(_card_row)
 	_podium = Node3D.new()
 	main.world.add_child(_podium)
 	_podium.position = Vector3(0, 0, 1.08)
@@ -1623,7 +1627,7 @@ func _refresh_cards() -> void:
 		menus.local.set_label(_local_start, "JOIN 2 TO FIGHT" if Players.slots.size() < minimum else "FIGHT!")
 	if _cards == null:
 		return
-	for ch in _cards.get_children():
+	for ch in _card_row.get_children():
 		ch.queue_free()
 	var n := maxi(Players.slots.size(), 1)
 	for s in mini(Players.slots.size(), 8):
@@ -1645,7 +1649,7 @@ func _refresh_cards() -> void:
 		var dev := LuchaKit.poster_text(Players.device_label(int(slot.device)).to_upper(), 0.07, LuchaKit.CREAM, LuchaKit.INK, 0.015)
 		dev.position = Vector3(0, -0.63, 0.06)  # on the strip (y -0.71..-0.55)
 		card.add_child(dev)
-		_cards.add_child(card)
+		_card_row.add_child(card)
 		card.scale = Vector3.ONE * 0.01
 		create_tween().tween_property(card, "scale", Vector3.ONE * CARD_ROW_SCALE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if Players.slots.size() < 8:
@@ -1657,7 +1661,7 @@ func _refresh_cards() -> void:
 		empty.add_child(join)
 		empty.set_meta("pulse", true)
 		empty.scale = Vector3.ONE * CARD_ROW_SCALE
-		_cards.add_child(empty)
+		_card_row.add_child(empty)
 	no_shadows(_cards)
 
 
@@ -1678,7 +1682,7 @@ var ui_k := 1.0
 var virtual_half_w := 6.79
 var virtual_half_h := 3.82
 var column_shift := {}  # menu id -> how far its column moved right (its own units)
-var _narrow_aspect := -1.0
+var _narrow_key := ""
 
 
 func _tick_narrow() -> void:
@@ -1692,8 +1696,11 @@ func _tick_narrow() -> void:
 	var roots := get_tree().get_nodes_in_group(UI_ROOT)
 	for n in roots:
 		_capture_home(n as Node3D)
-	if absf(aspect - _narrow_aspect) > 0.001:
-		_narrow_aspect = aspect
+	# Again when the window's shape changes, a menu is built late (Customize, the delete
+	# question), or the screen changes (a lobby's belts are rebuilt).
+	var key := "%.4f %d %s" % [aspect, menus.size(), current]
+	if key != _narrow_key:
+		_narrow_key = key
 		for id in menus:
 			var m = menus[id]
 			if m is ResultsBoard or not (m is Menu3D):
@@ -1703,6 +1710,7 @@ func _tick_narrow() -> void:
 			var local := virtual_half_w * UI_SCALE * (absf(hp.z) / MENU_DIST) / maxf(hs.x, 0.001)
 			column_shift[id] = (m as Menu3D).anchor_to(local)
 	var shift: float = float(column_shift.get(current, 0.0))
+	_fit_card_row(shift)
 	for n in roots:
 		var nd := n as Node3D
 		var hp: Vector3 = nd.get_meta("ui_home_p")
@@ -1712,6 +1720,45 @@ func _tick_narrow() -> void:
 		nd.scale = hs * ui_k
 		nd.set_meta("ui_applied_p", nd.position)
 		nd.set_meta("ui_applied_s", nd.scale)
+
+
+## THE CARD ROW FITS ITSELF (the UI pass, 8b): its right end (the last card's tail) stays
+## 0.25 inside the screen's right edge, or the row scales down about its left end.
+func _fit_card_row(shift: float) -> void:
+	if _card_row == null or not _cards.visible:
+		return
+	if _card_half_w < 0.0:
+		_card_half_w = _measure_card_half_w() * CARD_ROW_SCALE
+	var hp: Vector3 = _cards.get_meta("ui_home_p", _cards.position)
+	var origin := hp.x / UI_SCALE + shift  # the row's origin, menu units
+	var left := -1.45 - _card_half_w
+	var right := left
+	for ch in _card_row.get_children():
+		if not (ch as Node).is_queued_for_deletion():
+			right = maxf(right, (ch as Node3D).position.x + _card_half_w)
+	var room := virtual_half_w - 0.25 - origin - left
+	var sc := clampf(room / maxf(right - left, 0.01), 0.5, 1.0)
+	_card_row.scale = Vector3.ONE * sc
+	_card_row.position.x = left * (1.0 - sc)
+
+
+## A card's half width as drawn (the kit card with its ribbon tails), measured once.
+func _measure_card_half_w() -> float:
+	var c := LuchaKit.card_frame(LuchaKit.CREAM, LuchaKit.RED)
+	var box := AABB()
+	var first := true
+	for mi in c.find_children("*", "MeshInstance3D", true, false):
+		var m := mi as MeshInstance3D
+		var xf := Transform3D()
+		var n: Node = m
+		while n != null and n != c:
+			xf = (n as Node3D).transform * xf
+			n = n.get_parent()
+		var b := xf * m.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	c.free()
+	return maxf(absf(box.position.x), absf(box.end.x)) if not first else 0.8
 
 
 ## A root's own place and size, as its code set them (re-read whenever code moves it).
@@ -2082,9 +2129,9 @@ func _process(delta: float) -> void:
 		n.rotation.x = sin(t * 1.7 + float(n.get_meta("sway")) * 1.3) * 0.25
 	# The join card pulses.
 	if _cards != null and _cards.visible:
-		for ch in _cards.get_children():
+		for ch in _card_row.get_children():
 			if ch.has_meta("pulse"):
-				(ch as Node3D).scale = Vector3.ONE * (1.0 + sin(t * 5.0) * 0.04)
+				(ch as Node3D).scale = Vector3.ONE * CARD_ROW_SCALE * (1.0 + sin(t * 5.0) * 0.04)
 	# HUD: the clock on the buckle; the banner rides up and away when its time is done.
 	if _hud != null and _hud.visible:
 		main.hud_clock.visible = false
