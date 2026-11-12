@@ -70,6 +70,16 @@ var _focus_notice: Label  # shown in a match while the window has lost the focus
 ## machinery under it stays (Players._refresh_pad_routes, its batteries).
 const COUCH_JOIN_ONLINE := false
 var _build_tag: Label  # "BUILD x.y.z" in the title's corner (Parker 11-07: know which build you booted)
+# THE PEAK (the solo climb): the world's light, kept so the mountain can change it and give it back
+var _world_env: Environment
+var _world_sky: ProceduralSkyMaterial
+var _world_sun: DirectionalLight3D
+var _peak_look_on := false
+var _peak_label: Label
+var _peak_hud: Node  # ui3d/peak_hud.gd when it has landed
+var _peak_wired := false
+var _peak_over_t := 0.0
+var _peak_warp := ""
 
 
 func _ready() -> void:
@@ -136,6 +146,13 @@ func _ready() -> void:
 		show_screen("title")
 	if "--demo" in OS.get_cmdline_user_args():
 		call_deferred("_demo")
+	# Straight into the solo climb: -- --peak (and --warp=7.3 to start at a challenge; a
+	# warped run isn't saved).
+	for a3 in OS.get_cmdline_user_args():
+		if a3.begins_with("--warp="):
+			_peak_warp = a3.get_slice("=", 1)
+	if "--peak" in OS.get_cmdline_user_args():
+		call_deferred("_start_peak")
 	if "--demo-heap" in OS.get_cmdline_user_args():
 		call_deferred("_demo_heap")
 	for a2 in OS.get_cmdline_user_args():
@@ -152,7 +169,7 @@ func _boot_wanted() -> bool:
 	if DisplayServer.get_name() == "headless" or get_tree().current_scene != self:
 		return false
 	for a in OS.get_cmdline_user_args():
-		if a == "--no-boot" or a.begins_with("--shot") or a.begins_with("--demo"):
+		if a == "--no-boot" or a == "--peak" or a.begins_with("--shot") or a.begins_with("--demo"):
 			return false
 	return true
 
@@ -284,6 +301,9 @@ func _build_world() -> void:
 	sun.directional_shadow_max_distance = 60.0
 	sun.rotation_degrees = Vector3(-38, 35, 0)  # from the front-left: side light that shows the knights' volume
 	add_child(sun)
+	_world_env = e
+	_world_sky = sm
+	_world_sun = sun
 	cam = Camera3D.new()
 	cam.fov = _cam_fov
 	cam.position = _cam_target
@@ -304,6 +324,7 @@ func _build_world() -> void:
 
 func _process(delta: float) -> void:
 	_tick_camera(delta)
+	_tick_peak(delta)
 	# THE LINE AS SEEN (Parker 11-11): the game judges a lock-in by what this camera shows,
 	# the plaza's flag string where it hangs and glides, Del Mar's rope where it's drawn.
 	game.view_from = cam.global_position
@@ -366,6 +387,179 @@ func _unhandled_input(event: InputEvent) -> void:
 		pad_nav.ensure_focus()
 	if not _rebind_wait.is_empty():
 		_capture_bind(event)
+	# THE PEAK'S WARP KEYS (dev): F4 arms them; [ and ] step through the challenges. A
+	# warped run is never saved over the real climb.
+	if game.peak_on and game.peak != null and event is InputEventKey and event.pressed and not event.echo:
+		if event.physical_keycode == KEY_F4:
+			game.peak.dev_warp = not game.peak.dev_warp
+			_on_announce("Warp keys ON: [ and ] step through the challenges (this run isn't saved)" if game.peak.dev_warp else "Warp keys off", false)
+		elif game.peak.dev_warp and event.physical_keycode in [KEY_BRACKETLEFT, KEY_BRACKETRIGHT]:
+			var where: String = game.peak.warp("", -1 if event.physical_keycode == KEY_BRACKETLEFT else 1)
+			if where != "":
+				_on_announce(where, false)
+
+
+# ---------------------------------------------------------------- the Peak of DeGayo (the solo climb)
+
+## SOLO: THE PEAK. Picks the climb up where it was left (the pose is saved), or starts at
+## the trailhead.
+func _start_peak() -> void:
+	Players.clear_players()
+	Players.add_player(Players.ANY)
+	local_mode = true
+	var s := Net.settings.duplicate()
+	s.mode = "peak"
+	s.stage = "plaza"
+	s.practice_npc = false
+	_peak_over_t = 0.0
+	game.host_start(s, [{"pid": 0, "name": Players.slots[0].name, "random": Players.slots[0].get("random", false), "tint": Players.slots[0].tint, "peer": 1, "slot": 0, "appearance": Wardrobe.for_slot(0)}])
+	if game.peak != null and not _peak_wired:
+		_peak_wired = true
+		game.peak.area_entered.connect(_on_peak_area)
+		game.peak.fell.connect(_on_peak_fell)
+		game.peak.milestone.connect(_on_peak_milestone)
+		game.peak.summit.connect(_on_peak_summit)
+		if ResourceLoader.exists("res://ui3d/peak_hud.gd") and lucha != null:
+			_peak_hud = load("res://ui3d/peak_hud.gd").call("make", lucha)
+	show_screen("hud")
+
+
+func _on_peak_area(_id: String, area_name: String, number: int) -> void:
+	if _peak_hud != null:
+		_peak_hud.call("show_area", area_name, number)
+	else:
+		_on_announce(area_name.to_upper(), true)
+
+
+func _on_peak_fell(metres: float) -> void:
+	if _peak_hud != null:
+		_peak_hud.call("fell", metres)
+	else:
+		_on_announce("%d m down" % int(metres), false)
+
+
+func _on_peak_milestone(metres: int) -> void:
+	if _peak_hud != null:
+		_peak_hud.call("milestone", metres)
+	else:
+		_on_announce("%d m!" % metres, false)
+
+
+func _on_peak_summit(time_s: float, falls: int, best_s: float) -> void:
+	_peak_over_t = 0.001
+	if lucha != null:
+		lucha.confetti(true)
+	if _peak_hud != null:
+		_peak_hud.call("summit", time_s, falls, best_s)
+	else:
+		_on_announce("TOP DOG!  %s, %d falls" % [_clock_text(time_s), falls], true)
+
+
+static func _clock_text(seconds: float) -> String:
+	var t := int(seconds)
+	return "%d:%02d:%02d" % [t / 3600, (t / 60) % 60, t % 60]
+
+
+var _peak_over_armed := 0.0
+
+
+## START OVER, from the pause menu: asked twice, since it throws the climb away.
+func _peak_start_over() -> void:
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - _peak_over_armed > 5.0:
+		_peak_over_armed = now
+		_on_announce("Start over from the trailhead? Press START OVER again.", false)
+		return
+	_peak_over_armed = 0.0
+	get_tree().paused = false
+	paused = false
+	game.end_match()
+	game.peak.reset_run()
+	_start_peak()
+
+
+func _peak_camera(delta: float) -> void:
+	var peak: Peak = game.peak
+	line_bar.visible = false
+	if peak.player == null or not is_instance_valid(peak.player):
+		return
+	var fr: Array = peak.cam_frame()
+	var half := float(fr[0])
+	var bias: Vector2 = fr[1]
+	var com := peak.player.centre_of_mass()
+	var chest: RigidBody3D = peak.player.bodies.get("chest")
+	var v := Vector2(chest.linear_velocity.x, chest.linear_velocity.y) if chest != null else Vector2.ZERO
+	var loose := 0.0 if peak.player.is_attached() else 1.0
+	half += clampf((v.length() - 5.0) * 0.35, 0.0, 6.0) * loose  # falling and flying: step back
+	var vs := get_viewport().get_visible_rect().size
+	var aspect := vs.x / maxf(1.0, vs.y)
+	half = maxf(half, 4.0 / maxf(aspect, 0.5) * 1.2)  # a narrow window still shows 4.8 m across
+	var dist := half / tan(deg_to_rad(cam.fov * 0.5))
+	var lead := Vector2(clampf(v.x * 0.3, -3.0, 3.0), clampf(v.y * 0.35, -half * 0.45, 2.0))
+	_cam_target = Vector3(com.x + bias.x + lead.x, com.y + bias.y + lead.y + half * 0.08, dist)
+	var rate := 3.2 + v.length() * 0.35
+	cam.position = Vector3(
+		lerpf(cam.position.x, _cam_target.x, 1.0 - exp(-delta * rate)),
+		lerpf(cam.position.y, _cam_target.y, 1.0 - exp(-delta * rate)),
+		lerpf(cam.position.z, _cam_target.z, 1.0 - exp(-delta * 2.0)))
+	if cam.position.distance_to(_cam_target) > 60.0:
+		cam.position = _cam_target  # (a warp, or the first frame)
+	cam.look_at(Vector3(cam.position.x, cam.position.y, 0.0), Vector3.UP)
+
+
+## The mountain's light, its sound and its HUD, every frame; and the world's own light
+## given back when the climb is left.
+func _tick_peak(delta: float) -> void:
+	var on: bool = game.peak_on and game.peak != null
+	if _peak_label == null:
+		_peak_label = Label.new()
+		_peak_label.add_theme_font_size_override("font_size", 40)
+		_peak_label.add_theme_color_override("font_color", Color("#FFF2CC"))
+		_peak_label.add_theme_color_override("font_outline_color", Color("#201008"))
+		_peak_label.add_theme_constant_override("outline_size", 10)
+		_peak_label.position = Vector2(28, 20)
+		_peak_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		ui.add_child(_peak_label)
+	_peak_label.visible = on and _peak_hud == null and screen in ["hud", "pause"]
+	if not on:
+		if _peak_look_on:
+			_peak_look_on = false
+			_world_sky.sky_top_color = Color("#1E6BFF")
+			_world_sky.sky_horizon_color = Color("#8FD0FF")
+			_world_sky.ground_horizon_color = Color("#8FD0FF")
+			_world_sky.ground_bottom_color = Color("#1E5FD0")
+			_world_env.ambient_light_color = Color(0.85, 0.845, 0.853)
+			_world_env.ambient_light_sky_contribution = 0.5
+			_world_sun.light_energy = 1.25
+			if _peak_hud != null:
+				_peak_hud.visible = false
+		return
+	var peak: Peak = game.peak
+	if not get_tree().paused:
+		peak.frame(delta, cam)
+	_peak_look_on = true
+	var look: Dictionary = peak.look()
+	var sky: Color = look.sky
+	_world_sky.sky_top_color = sky.darkened(0.25)
+	_world_sky.sky_horizon_color = sky.lightened(0.2)
+	_world_sky.ground_horizon_color = sky.lightened(0.2)
+	_world_sky.ground_bottom_color = sky.darkened(0.3)
+	_world_env.ambient_light_color = look.amb
+	_world_env.ambient_light_sky_contribution = lerpf(0.5, 0.0, float(look.inside))
+	_world_sun.light_energy = float(look.sun)
+	var alt := peak.player_at().y if peak.player != null else 0.0
+	if _peak_hud != null:
+		_peak_hud.visible = screen in ["hud", "pause"]
+		_peak_hud.call("set_altitude", alt, peak.best_m)
+		_peak_hud.call("set_paused", screen == "pause", peak.time_s, peak.falls, peak.best_m)
+	else:
+		_peak_label.text = "%d m" % int(round(alt))
+		if screen == "pause":
+			_peak_label.text += "\nbest %d m   %s   %d falls" % [int(peak.best_m), _clock_text(peak.time_s), peak.falls]
+	if _peak_warp != "" and peak.player != null and peak.player.live_time > 0.3:
+		peak.dev_warp = true
+		_on_announce(peak.warp(_peak_warp), false)
+		_peak_warp = ""
 
 
 # ---------------------------------------------------------------- camera
@@ -379,6 +573,9 @@ func results_podium_focus() -> Vector2:
 
 
 func _tick_camera(delta: float) -> void:
+	if game.peak_on and game.peak != null and screen in ["hud", "pause", "controls", "options"]:
+		_peak_camera(delta)
+		return
 	if screen == "lobby":
 		var focus := Vector2(-5.5, 4.85)
 		var viewport_size := get_viewport().get_visible_rect().size
@@ -673,7 +870,8 @@ func show_screen(id: String) -> void:
 		_results_elapsed = 0.0
 		_results_peak = game.tower_peak()
 		_tick_camera(0.0)
-	Sound.music("climb" if id in ["hud", "pause", "practice_ai"] else "title")  # the match music plays on through a pause
+	if not (game.peak_on and id in ["hud", "pause", "controls", "options"]):  # (the Peak plays its own)
+		Sound.music("climb" if id in ["hud", "pause", "practice_ai"] else "title")  # the match music plays on through a pause
 	for k in screens:
 		screens[k].visible = k == id
 	if pad_nav != null:

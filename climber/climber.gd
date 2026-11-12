@@ -113,6 +113,15 @@ var _incoming_pull := 0.0
 var remote_support := false
 var live_time := 0.0
 var removed := false
+## THE PEAK (stages/peak). In water (`float_mode`) the limbs work with nothing gripped,
+## and what a held limb pulls with is paid by the chest, so only the water's push on a
+## moving hand carries the body: that's the swim. `scramble` is the Peak's softlock
+## net: lying on slick with nothing to hold, a weak pull that drags along the ground.
+var float_mode := false
+var scramble := false
+var support_extra: bool:
+	get:
+		return float_mode or scramble
 var _shape_geo := {}  # piece -> [kind, data...] for height reads (local, m)
 var _grunt_wait := 2.0
 var _active_limb := -1
@@ -1059,7 +1068,7 @@ static func rope_throw(v: Vector2, side: float) -> Vector2:
 
 
 func is_attached() -> bool:
-	return remote_support or grounded_locally()
+	return remote_support or float_mode or scramble or grounded_locally()
 
 
 ## THE GROUNDED GROUP on this machine only (what the network pull is sent on, so
@@ -1576,6 +1585,11 @@ func _tick_joints(attached: bool, dt: float) -> void:
 		var next_v := v + f * dt / end.mass
 		next_v = next_v.limit_length(maxf(vmax, v.length()))
 		f = (next_v - v) * end.mass / dt
+		if (float_mode or scramble) and not touches_solid():
+			if float_mode:
+				(bodies["chest"] as RigidBody3D).apply_central_force(Vector3(-f.x, -f.y, 0.0))  # (the swim: no pull on nothing)
+			else:
+				f = f.limit_length(total_mass * 9.8 * 0.5)  # (the scramble: it drags, it never lifts)
 		_drag_total += f.length() + swing_force.length()
 		end.apply_central_force(Vector3(f.x, f.y, 0.0))
 

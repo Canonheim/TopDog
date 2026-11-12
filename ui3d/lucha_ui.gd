@@ -1470,6 +1470,7 @@ func _build_menus() -> void:
 	# together as a mode... first lets only focus on the online multiplayer"). Its
 	# screen below stays built for when local play comes back.
 	t.add_button("PLAY ONLINE", func(): main.show_screen("online"))
+	t.add_button("SOLO: THE PEAK", main._start_peak)  # the Peak of DeGayo (Parker 11-11)
 	t.add_button("PRACTICE", main._open_practice)
 	t.add_button("CUSTOMIZE", func(): main.show_screen("customize"))
 	t.add_button("CONTROLS", func(): main._controls_back = "title"; main.show_screen("controls"))
@@ -2158,7 +2159,7 @@ func _process(delta: float) -> void:
 			"between":
 				info = "GET READY..."
 		if g.practice:
-			info = "PRACTICE"
+			info = "" if g.peak_on else "PRACTICE"
 		# The Steam name, top left, read from its left edge (online only).
 		var steam := hud_bottom.steam_shown.to_upper() if show else ""
 		if steam != _steam_text:
@@ -2434,7 +2435,9 @@ func _fill_pause() -> void:
 	var p: Menu3D = menus.pause
 	p.clear_items()
 	p.add_button("RESUME", main._toggle_pause)
-	if main.game.practice:
+	if main.game.peak_on:
+		p.add_button("START OVER", main._peak_start_over)
+	elif main.game.practice:
 		p.add_button("AI SETTINGS", func(): main.show_screen("practice_ai"))
 	p.add_button("CONTROLS", func(): main._controls_back = "pause"; main.show_screen("controls"))
 	p.add_button("OPTIONS", func(): main._options_back = "pause"; main.show_screen("options"))

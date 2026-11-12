@@ -81,6 +81,8 @@ var best := {}  # pid -> best locked height
 var results := {}
 var bot_drivers := {}  # pid -> driver (batteries, bots)
 var practice := false
+var peak: Peak = null  # the solo climb's mountain (stages/peak), built the first time it's played
+var peak_on := false
 
 var _cid_next := 1
 var _spawn_n := 0
@@ -156,6 +158,13 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	partner_attempt = 0
 	mode = Modes.practice_row(str(settings.get("practice_mode", "scramble"))) if settings.get("mode") == "practice" else Modes.row(str(settings.get("mode", "scramble")))
 	practice = bool(mode.get("practice", false))
+	peak_on = str(mode.get("arena", "")) == "peak"
+	if peak_on and peak == null:
+		peak = Peak.new()
+		world.add_child(peak)
+		peak.setup(self)
+	elif not peak_on and peak != null:
+		peak.leave()
 	_fart_fuel.clear()
 	_fart_down.clear()
 	roster = p_roster
@@ -175,11 +184,11 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	stage.place_base()
 	_shown_line = stage.first_line
 	_shown_line_v = 0.0
-	Climber.rope_x = stage.ring_half() if str(stage.row.get("dress", "")) == "plaza" else 0.0
+	Climber.rope_x = stage.ring_half() if str(stage.row.get("dress", "")) == "plaza" and not peak_on else 0.0
 	_ring_out.clear()
 	if practice and bool(settings.get("practice_npc", false)) and multiplayer.multiplayer_peer is OfflineMultiplayerPeer:
 		_spawn_partner()
-	line = stage.first_line
+	line = 1.0e9 if peak_on else stage.first_line  # (the Peak has no line and no lock-in)
 	turn_order = roster.map(func(r): return int(r.pid))
 	_pairings = Modes.round_robin(turn_order)
 	_pair_i = 0
@@ -217,6 +226,8 @@ func _process(delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if peak_on and peak != null:
+		peak.tick(delta)
 	if stage != null and stage.delmar:
 		# THE BUOY'S GLIDE (Parker 11-10: "make the buoy have some acceleration or
 		# deceleration"): a spring, a touch under-damped, so it eases off, slows into
@@ -299,7 +310,7 @@ func _next() -> void:
 	if _game_decided(still):
 		_finish()
 		return
-	if stage.row.get("dress", "") == "plaza":
+	if stage.row.get("dress", "") == "plaza" and not peak_on:
 		_rpc_spawn_chair.rpc(chair_generation + 1, _delmar_chair_spot() if stage.delmar else tower_peak(), Vector2i(randi_range(8, 10), randi_range(11, 13)))
 	if mode.live == "turns":
 		# Next player still in, in order.
@@ -308,7 +319,7 @@ func _next() -> void:
 			if alive.get(turn_order[turn_i], false):
 				break
 		var pid: int = turn_order[turn_i]
-		_rpc_phase.rpc("turn", float(settings.get("timer", 60.0)), tower_top() if mode.line == "tower" else line, round_n, pid)
+		_rpc_phase.rpc("turn", float(settings.get("timer", 60.0)), 1.0e9 if peak_on else (tower_top() if mode.line == "tower" else line), round_n, pid)
 		_spawn(pid)
 		if practice and bool(settings.get("practice_npc", false)):
 			if not is_instance_valid(partner) or partner.state == Climber.State.FROZEN:
@@ -459,7 +470,7 @@ func _spawn(pid: int, preferred_side := 0) -> void:
 			side = _spawn_side()
 	if practice and stage.delmar and is_instance_valid(partner):
 		side = 1  # The NPC uses the other pier spawn.
-	var feet := _open_spawn(stage.spawn_point(side))
+	var feet := peak.begin() if peak_on else _open_spawn(stage.spawn_point(side))
 	var cid := _cid_next
 	_cid_next += 1
 	# A NEW NAME FOR EVERY CLIMBER (Parker 11-08): a player with a random name gets
@@ -501,7 +512,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 		return
 	_last_spawn_sides[pid] = -1 if feet.x < 0.0 else 1
 	r.name = nm  # banners, tags and results follow the climber now climbing
-	if phase == "turn" and _is_new_character(pid):
+	if phase == "turn" and _is_new_character(pid) and not peak_on:
 		announce.emit("%s's turn" % nm, true)
 	if live.has(pid) and climbers.has(live[pid]):
 		var old: Climber = climbers[live[pid]]
@@ -563,8 +574,10 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 	else:
 		c.driver = Drivers.NullDriver.new()
 		c.make_puppet()
-	if grow_spawns:
+	if grow_spawns and not peak_on:
 		c.grow_in()  # from nothing at the feet (glyphs and all), pushing what stands there aside
+	if peak_on and c.owner_peer == me():
+		peak.on_player(c, bool(settings.get("peak_fresh", false)))  # where the climb was left, pose and all
 	climber_spawned.emit(c)
 
 
@@ -604,6 +617,12 @@ func _check_bounds() -> void:
 			continue
 		var c: Climber = climbers[cid]
 		if c.state == Climber.State.FROZEN:
+			continue
+		if peak_on:
+			# The Peak has no out of bounds: a fall lands somewhere lower. Only a climber
+			# that has left the world itself (a bug) is put back on its last firm hold.
+			if peak.out_of_world(c.centre_of_mass()):
+				peak.rescue()
 			continue
 		if _ring_out.has(cid):
 			_ring_out[cid] = float(_ring_out[cid]) - get_physics_process_delta_time() / maxf(Engine.time_scale, 0.01)  # real seconds, as the partner's count
@@ -704,7 +723,7 @@ func _tick_owned(real_delta: float) -> void:
 		var c: Climber = climbers[cid]
 		if c.state != Climber.State.LIVE or c.owner_peer != me():
 			continue
-		var can_lock: bool = c.knockout_left <= 0 and not c.sinking and (phase == "turn" or phase == "round")
+		var can_lock: bool = c.knockout_left <= 0 and not c.sinking and (phase == "turn" or phase == "round") and not peak_on
 		if c.driver != null and c.driver.lock_pressed() and can_lock:
 			_lock_want[cid] = LOCK_BUFFER_S
 		if _lock_want.has(cid):
@@ -1865,6 +1884,9 @@ func _clear_climbers() -> void:
 
 
 func end_match() -> void:
+	if peak != null:
+		peak.leave()  # (it saves where the climber is)
+	peak_on = false
 	if stage != null and stage.delmar:
 		stage.set_delmar(world, false)  # the pier, the sea and the rope go with the match
 		stage.place_base()

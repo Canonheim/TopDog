@@ -33,6 +33,13 @@ const ROWS := {
 		"live": "all", "line": "raise", "round_end": "all_locked", "out": "under", "win": "last",
 		"min_players": 2, "round_robin": true, "arena": "delmar", "line_gap": 0.25,
 	},
+	# THE PEAK OF DEGAYO (Parker 11-11, docs/peak/PEAK_DESIGN.md): the solo climb. arena
+	# "peak" builds the mountain (stages/peak/peak.gd); no clock, no line, no lock-in.
+	"peak": {
+		"name": "The Peak of DeGayo", "blurb": "Alone, up the mountain. 1,000 metres, no checkpoints.",
+		"live": "turns", "line": "tower", "round_end": "lock", "out": "never", "win": "none",
+		"min_players": 1, "practice": true, "arena": "peak",
+	},
 	"practice": {
 		"name": "Practice", "blurb": "Climb alone, no clock pressure. Best height counts.",
 		"live": "turns", "line": "tower", "round_end": "lock", "out": "never", "win": "none",
