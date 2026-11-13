@@ -18,6 +18,10 @@ HOUSE_X, HOUSE_Z = -10.4, -1.5  # the station house: the middle of its front wal
 
 
 def dress(A):
+    # ------------------------------------------------------------ the yard's floor: packed earth over the plaza's pale ground
+    # (a flat slab 2 cm thick, from x 16 to x -36, from the wall's foot to 5.4 m in front of the climb)
+    A.deco("stn_yard_floor", -10.0, 0.0, z=WALL_Z, size=(52.0, 0.02, 9.0), tone="rock2")
+
     # ------------------------------------------------------------ the town side: the yard wall and the gate
     A.deco("stn_yard_wall", 7.25, 0.0, z=WALL_Z, size=(12.5, 4.2, 0.5), tone="back")
     # the town behind the wall: two real houses of the plaza, far enough back to be scenery
