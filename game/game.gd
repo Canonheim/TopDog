@@ -640,10 +640,9 @@ func _check_bounds() -> void:
 			_sinking[cid] = float(_sinking[cid]) + get_physics_process_delta_time() / maxf(Engine.time_scale, 0.01)
 			if stage.submerged(c) or float(_sinking[cid]) > SINK_MAX_S or stage.out_of_bounds(c.centre_of_mass()):
 				_sinking.erase(cid)
-				if practice:
-					_spawn(pid)
-				else:
-					_broadcast_freeze(cid, c.pose(), "sea")
+				# BACK ON THE DOCK (Parker 11-12: "If you fall in the water, you should respawn
+				# back on the dock, instead of being out of the game"). It was out, before.
+				_spawn(pid)
 			continue
 		if stage.ring_out(c):
 			_ring_out[cid] = RING_OUT_S

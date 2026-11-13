@@ -8,8 +8,10 @@ extends Node3D
 ## (Parker 11-11): the buoy stands back out of their way (Stage.BUOY_Z) and no longer
 ## herds them.
 ##
-## They're props, not bodies: each drifts on a seeded path (the same on every machine
-## for the same match seed) and bobs on the water. A
+## They're props, not bodies: each drifts from a seeded start (the same on every machine
+## for the same match seed), bumps slowly off its neighbours and the ends of the open
+## water (Parker 11-12: "the floating things were all phasing through eachother. Make
+## them slowly bounce off eachother"), and bobs on the water. A
 ## climber's piece falling onto one's top is thrown up (as a fall into the ring ropes)
 ## and a little left; the floatie squashes. Not solid, so nobody welds to one.
 
@@ -50,6 +52,11 @@ var _items: Array = []  # {node, kind, home, amp, freq, phase, x, squash_t}
 var _t := 0.0
 var _cooldown := {}  # climber id -> seconds
 var _peak := {}  # climber id -> the highest its centre has been since it last held on
+const DRIFT_MIN := 0.25  # m/s: how fast a floatie drifts
+const DRIFT_MAX := 0.6
+const GAP := 0.25  # m of clear water kept between two at the start
+var _order: Array = []  # the floaties' indices from the pier out (it never changes)
+var drifting := true  # (tests still the water to drop a climber on one floatie)
 
 
 func setup(seed_value: int, p_water_y: float, p_x_min: float, p_x_max: float) -> void:
@@ -86,11 +93,35 @@ func setup(seed_value: int, p_water_y: float, p_x_min: float, p_x_max: float) ->
 		add_child(node)
 		_items.append({
 			"node": node, "kind": kind,
-			"home": rng.randf_range(x_min + 3.0, x_max - 2.0),
-			"amp": rng.randf_range(1.5, 4.0), "freq": rng.randf_range(0.05, 0.12),
-			"phase": rng.randf_range(0.0, TAU), "bob": rng.randf_range(0.0, TAU),
-			"x": 0.0, "squash_t": 9.0, "hit_dir": 1.0,
+			"v": rng.randf_range(DRIFT_MIN, DRIFT_MAX) * (1.0 if rng.randf() < 0.5 else -1.0),
+			"bob": rng.randf_range(0.0, TAU),
+			"x": 0.0, "squash_t": 9.0, "hit_dir": 1.0, "bump_t": 9.0, "bump_dir": 1.0,
 		})
+	# Set out along the water in a seeded order, a seeded gap between each: never one
+	# inside another. They keep this order for the whole match (they bump, they don't pass).
+	var order: Array = range(COUNT)
+	for i in range(COUNT - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var swap = order[i]
+		order[i] = order[j]
+		order[j] = swap
+	_order = order
+	var widths := 0.0
+	for it: Dictionary in _items:
+		widths += float(it.kind[1]) * 2.0
+	var spare := maxf(0.0, (x_max - x_min) - widths - GAP * (COUNT + 1))
+	var cuts: Array = []
+	for i in COUNT + 1:
+		cuts.append(rng.randf())
+	var total := 0.0
+	for c in cuts:
+		total += float(c)
+	var x := x_min
+	for k in COUNT:
+		var it: Dictionary = _items[int(_order[k])]
+		x += GAP + spare * float(cuts[k]) / maxf(total, 0.001) + float(it.kind[1])
+		it.x = x
+		x += float(it.kind[1])
 	tick(0.0)
 
 
@@ -100,10 +131,10 @@ func tick(delta: float) -> void:
 		_cooldown[id] = float(_cooldown[id]) - delta
 		if float(_cooldown[id]) <= 0.0:
 			_cooldown.erase(id)
+	_drift(delta)
 	for it: Dictionary in _items:
-		var x: float = float(it.home) + float(it.amp) * sin(_t * float(it.freq) * TAU + float(it.phase))
-		x = clampf(x, x_min + float(it.kind[1]), x_max)
-		it.x = x
+		var x: float = it.x
+		it.bump_t = float(it.bump_t) + delta
 		var bob := sin(_t * 1.6 + float(it.bob)) * 0.05
 		var n: Node3D = it.node
 		# The landing: squashed flat and dunked in 0.07 s, then a springy rebound (tall
@@ -120,6 +151,10 @@ func tick(delta: float) -> void:
 			rock = exp(-u * 3.5) * sin(u * 11.0) * 0.32 * float(it.hit_dir)
 		var dunk := maxf(sq, 0.0) * DUNK - maxf(-sq, 0.0) * DUNK * 0.35
 		n.position = Vector3(x, water_y + bob - dunk, 0.0)
+		# (a bump off a neighbour: a small rock away from it, dying off)
+		var bt: float = it.bump_t
+		if bt < 1.2:
+			rock += exp(-bt * 3.0) * sin(bt * 9.0) * 0.16 * float(it.bump_dir)
 		n.rotation.z = sin(_t * 1.1 + float(it.bob)) * 0.06 + rock
 		n.rotation.x = sin(_t * 0.9 + float(it.bob) * 1.3) * 0.05  # rocking on the swell
 		n.rotation.y = float(it.bob) * 0.7  # each turned its own way on the water
@@ -127,6 +162,49 @@ func tick(delta: float) -> void:
 		var wide := 1.0 + (0.28 if sq > 0.0 else 0.16) * sq
 		var tall := 1.0 - (SQUASH_DEEP if sq > 0.0 else 0.3) * sq
 		n.scale = Vector3(sx * wide, tall, wide)
+
+
+## The drift, in fixed steps of the physics clock, so every machine's water agrees: each
+## floatie moves at its own slow speed, turns back at the pier's end and the far end, and
+## where two meet they bounce: the heavier (wider) one is turned less.
+func _drift(delta: float) -> void:
+	if delta <= 0.0 or not drifting or _order.size() != _items.size():
+		return
+	for it: Dictionary in _items:
+		it.x = float(it.x) + float(it.v) * delta
+		var r: float = it.kind[1]
+		if float(it.x) < x_min + r:
+			it.x = x_min + r
+			it.v = absf(float(it.v))
+		elif float(it.x) > x_max - r:
+			it.x = x_max - r
+			it.v = -absf(float(it.v))
+	for k in _order.size() - 1:
+		var a: Dictionary = _items[int(_order[k])]
+		var b: Dictionary = _items[int(_order[k + 1])]
+		var ra: float = a.kind[1]
+		var rb: float = b.kind[1]
+		var over := float(a.x) + ra + rb - float(b.x)
+		if over <= 0.0:
+			continue
+		# Apart again, each by its share; and if they are closing, the bounce.
+		var ma := ra * ra
+		var mb := rb * rb
+		a.x = float(a.x) - over * mb / (ma + mb)
+		b.x = float(b.x) + over * ma / (ma + mb)
+		var va: float = a.v
+		var vb: float = b.v
+		if va > vb:
+			a.v = ((ma - mb) * va + 2.0 * mb * vb) / (ma + mb)
+			b.v = ((mb - ma) * vb + 2.0 * ma * va) / (ma + mb)
+			a.bump_t = 0.0
+			a.bump_dir = 1.0
+			b.bump_t = 0.0
+			b.bump_dir = -1.0
+	# (never becalmed: a floatie the bumps have all but stopped is given its slow way back)
+	for it: Dictionary in _items:
+		if absf(float(it.v)) < DRIFT_MIN * 0.5:
+			it.v = DRIFT_MIN * (1.0 if float(it.v) >= 0.0 else -1.0)
 
 
 ## The owner's climbers only (their physics runs here): a piece coming down onto a

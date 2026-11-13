@@ -63,6 +63,7 @@ var _glyphs_on := true
 var _glyphs_n := -1
 var _input_health: Label  # F2: what the input system knows right now (Players.health)
 var _focus_notice: Label  # OS window-focus loss only; not idle/disconnected input
+var _lobby_wait: Label  # the guest's "WAITING FOR ... TO START", top of the screen (Parker 11-12)
 ## COUCH PLAYERS IN AN ONLINE LOBBY are parked with Play Together (Parker 11-10:
 ## "first lets only focus on the online multiplayer"). It was also a trap: a host on a
 ## pad pressing Space or Enter (the keyboard's Lock In, and the menus' accept) made a
@@ -352,9 +353,16 @@ func _process(delta: float) -> void:
 		var dev2 := Players.poll_join()
 		if dev2 != -2 and Players.slots.size() < 4:
 			Players.add_player(dev2)
+	# THE HOST WENT BACK TO THE LOBBY: SO DOES EVERYONE (Parker 11-12: "They should also be
+	# sent to the loby when the host returns to the loby, so they can go back to flopping
+	# around in the ring"). A guest still on the results once the waiting room has come.
+	if screen == "results" and not local_mode and Net.online and not Net.is_host() and game.phase == "lobby":
+		leave_results()
+	if _lobby_wait != null:
+		_lobby_wait.visible = screen == "lobby" and _lobby_wait.text != ""
 	for s in Players.slots.size():
-		if screen == "lobby" and not Net.is_host() and Players.pause_pressed(s):
-			_leave_lobby()
+		if screen == "lobby" and Players.pause_pressed(s):
+			_lobby_back_pressed()
 		elif screen in ["hud", "pause"] and Players.pause_pressed(s):
 			_toggle_pause()
 	if _input_health != null and _input_health.visible:
@@ -1043,6 +1051,19 @@ func _build_ui() -> void:
 	_input_health.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_input_health.visible = false
 	root.add_child(_input_health)
+	_lobby_wait = Label.new()
+	if ResourceLoader.exists(LuchaKit.TITLE_FONT):
+		_lobby_wait.add_theme_font_override("font", load(LuchaKit.TITLE_FONT))
+	_lobby_wait.add_theme_font_size_override("font_size", 40)
+	_lobby_wait.add_theme_color_override("font_color", Color("#FFD23F"))
+	_lobby_wait.add_theme_color_override("font_outline_color", Color("#201008"))
+	_lobby_wait.add_theme_constant_override("outline_size", 12)
+	_lobby_wait.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_lobby_wait.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	_lobby_wait.offset_top = 112.0  # (just under the LOBBY banner)
+	_lobby_wait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_lobby_wait.visible = false
+	root.add_child(_lobby_wait)
 	# Focus notifications in Players drive this in every screen, including paused
 	# submenus. Idle controllers and leaving a button's hover never trigger it.
 	_focus_notice = Label.new()
@@ -1458,6 +1479,42 @@ func quit_game() -> void:
 	get_tree().quit()
 
 
+## Back (or pause) in the lobby: the LEAVE belt comes up, or goes away again. Nobody is
+## thrown out of a lobby by one press any more.
+func _lobby_back_pressed() -> void:
+	if lucha != null and lucha.online != null:
+		lucha.online.toggle_leave()
+	else:
+		_leave_lobby()
+
+
+## A line of words at the top of the lobby (a guest's "WAITING FOR ... TO START"); "" hides it.
+func set_lobby_wait(text: String) -> void:
+	if _lobby_wait != null:
+		_lobby_wait.text = text
+
+
+## Whose climb this machine is watching once its own climbers are all locked in or out:
+## the next player still climbing, in roster order (the camera's rule). null when one of
+## its own is still climbing, or nobody is.
+func spectate_target() -> Climber:
+	var live_now: Array = game.live_climbers()
+	for c: Climber in live_now:
+		if c.owner_peer == game.me():
+			return null
+	var local_index := -1
+	for i in game.roster.size():
+		if int(game.roster[i].peer) == game.me():
+			local_index = i
+			break
+	for offset in range(1, game.roster.size() + 1):
+		var pid := int(game.roster[(local_index + offset) % game.roster.size()].pid)
+		for c: Climber in live_now:
+			if c.player_id == pid:
+				return c
+	return live_now[0] if not live_now.is_empty() else null
+
+
 func _leave_lobby() -> void:
 	Net.leave()
 	game.end_match()
@@ -1478,7 +1535,7 @@ func _back() -> void:
 		"local", "online", "practice_settings":
 			show_screen("title")
 		"lobby":
-			_leave_lobby()
+			_lobby_back_pressed()
 		"friends", "browse", "online_flat":
 			show_screen("online")
 		"controls":

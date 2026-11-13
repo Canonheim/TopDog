@@ -457,6 +457,22 @@ func _build_plaza() -> void:
 	var pb: Vector3 = tops[float(POLE_T[1])]
 	var mid := (pa + pb) * 0.5
 	_hang_pinata(plaza, Vector3(mid.x, mid.y - 0.85, mid.z))
+	# ONE FLAG LESS (Parker 11-12: "the pinata is hanging in the same space as the purple
+	# paper flag. Just remove that one"): the flag of that string nearest the pinata's line.
+	var crowded: Node3D = null
+	var crowded_d := INF
+	for f in _flags:
+		var hanger := (f as Node3D).get_parent() as Node3D
+		if hanger == null:
+			continue
+		# (a string's flags are placed in the plaza's own space, as `mid` is)
+		var d := Vector2(hanger.position.x - mid.x, hanger.position.z - mid.z).length()
+		if d < crowded_d:
+			crowded_d = d
+			crowded = hanger
+	if crowded != null and crowded_d < 1.2:
+		_flags.erase(crowded.get_child(0))
+		crowded.queue_free()
 
 
 ## The square: a grout bed over the whole lens, then courses that follow its

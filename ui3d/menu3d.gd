@@ -468,6 +468,34 @@ func _stop_at(i: int, screen_pos: Vector2) -> int:
 	return best
 
 
+## ACROSS TO THE LIST (Parker 11-12: on the games list with a pad, "you cant press to the
+## right to get to the listed public games"): left or right, from something that has
+## nothing of its own to do with it, goes to the nearest thing standing that way (the
+## buttons' column to the list beside it, the list back to the buttons).
+func _side_step(dir: int) -> bool:
+	if not _live(focus) or items[focus].node == null:
+		return false
+	var here: Vector3 = (items[focus].node as Node3D).position
+	var best := -1
+	var best_d := INF
+	for i in items.size():
+		if i == focus or not _live(i):
+			continue
+		var at: Vector3 = (items[i].node as Node3D).position
+		if (at.x - here.x) * dir < 1.0:
+			continue
+		var d := absf(at.y - here.y) + absf(at.x - here.x) * 0.1
+		if d < best_d:
+			best_d = d
+			best = i
+	if best == -1:
+		return false
+	pointer_navigation = false
+	focus = best
+	Sound.play("ui_hover", -12.0)
+	return true
+
+
 func _cycle(dir: int) -> void:
 	if not _live(focus):
 		return
@@ -478,8 +506,11 @@ func _cycle(dir: int) -> void:
 		if to != it.stop:
 			it.stop = to
 			Sound.play("ui_hover", -12.0)
+		else:
+			_side_step(dir)
 		return
 	if it.kind != "choice" and it.kind != "choice_button":
+		_side_step(dir)
 		return
 	it.index = wrapi(it.index + dir, 0, it.options.size())
 	_relabel(focus)

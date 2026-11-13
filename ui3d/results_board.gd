@@ -182,7 +182,98 @@ func _words(s: String, w: float, max_size: float, face: Color, back, at: Vector3
 	else:
 		n = LuchaKit.poster_text(str(fit[0]), float(fit[1]), face, back, 0.02)
 	n.position = at
+	# CENTRED ON ITS PLATE (Parker 11-12: "the letters are not centered on the geometry,
+	# they all sit slightly high except the meters"): capitals stand on the baseline as
+	# digits do, so every line of words on the board is set down as the metres were.
+	LuchaKit.center_digits(n)
 	return n
+
+
+## THE WHOLE NAME (Parker 11-12: "The ending screen of games should show the full name of
+## the climber, and have it scroll to the right slowly showing the entire name"): a name
+## too long for its plate is never cut with dots. The plate shows as much as fits, holds,
+## then moves along the name a letter at a time to its end, holds, and starts again.
+const SCROLL_HOLD := 1.4  # s at the name's start and at its end
+const SCROLL_STEP := 0.26  # s a letter
+const WINNER_FIT := [2.53, 0.30, 0.18]  # the winner's plate: width, biggest letters, smallest
+const ROW_FIT := [1.46, 0.20, 0.14]
+
+
+## The part of `s` from letter `off` that fits a plate `w` wide: [text, size, does the
+## name scroll at all, is this its end].
+static func window(s: String, w: float, max_size: float, min_size: float, off: int) -> Array:
+	var probe := LuchaKit.text3d(s, 1.0, Color.WHITE)
+	var f: Font = probe.font if probe.font != null else ThemeDB.fallback_font
+	probe.free()
+	var per := func(t: String) -> float: return f.get_string_size(t, HORIZONTAL_ALIGNMENT_LEFT, -1, 96).x / 96.0
+	var size := minf(max_size, w / maxf(per.call(s), 0.001))
+	if size >= min_size:
+		return [s, size, false, true]
+	var n := s.length()
+	off = clampi(off, 0, n - 1)
+	var end := off + 1
+	while end < n and per.call(s.substr(off, end - off + 1)) * min_size <= w:
+		end += 1
+	return [s.substr(off, end - off).strip_edges(), min_size, true, end >= n]
+
+
+## A name plate's words for where its name stands now (d.full from letter d.off).
+func _name_words(d: Dictionary) -> Node3D:
+	var fit: Array = WINNER_FIT if d.winner else ROW_FIT
+	var win := window(str(d.full), float(fit[0]), float(fit[1]), float(fit[2]), int(d.off))
+	d.scroll = bool(win[2])
+	d.at_end = bool(win[3])
+	var n: Node3D
+	if d.winner:
+		n = LuchaKit.poster_text(str(win[0]), float(win[1]), LuchaKit.GOLD, LuchaKit.INK, 0.02)
+	else:
+		n = LuchaKit.text3d(str(win[0]), float(win[1]), NAVY)
+	LuchaKit.center_digits(n)
+	return n
+
+
+## The plate's words drawn again, for where its name stands now.
+func _draw_name(d: Dictionary) -> void:
+	var old: Node3D = d.words
+	if not is_instance_valid(old):
+		return
+	var nw := _name_words(d)
+	nw.transform = old.transform
+	nw.scale = Vector3.ONE
+	old.get_parent().add_child(nw)
+	old.queue_free()
+	d.words = nw
+
+
+## The plate shows this name, from its start.
+func _set_name(d: Dictionary, full: String) -> void:
+	d.full = full
+	d.off = 0
+	d.next = _t + SCROLL_HOLD
+	_draw_name(d)
+	d.read = not bool(d.get("scroll", false))  # (a name that fits is read at once)
+
+
+## A long name moves along a letter, when it is time.
+func _tick_names() -> void:
+	for d: Dictionary in _tiles:
+		if not bool(d.get("scroll", false)) or _t < float(d.next) or _t < _flip_until:
+			continue
+		if bool(d.at_end):
+			d.off = 0
+			d.read = true  # (read through once: the flip may come)
+		else:
+			d.off = int(d.off) + 1
+		_draw_name(d)
+		d.next = _t + (SCROLL_HOLD if bool(d.at_end) or int(d.off) == 0 else SCROLL_STEP)
+
+
+## Has every long name on the board been read through to its end since it last changed?
+func _names_read() -> bool:
+	for d: Dictionary in _tiles:
+		if bool(d.get("scroll", false)) and not bool(d.get("read", false)):
+			return false
+	return true
 
 
 # ---------------------------------------------------------------- filling
@@ -213,6 +304,7 @@ func fill(winner: Dictionary, others: Array, tower_s: String, waiting: bool) -> 
 	if wtile != null:
 		_onto_tile(nm, wtile)
 		_tiles.append({"tile": wtile, "words": nm, "game": name_s.to_upper(), "steam": str(winner.get("steam", "")).to_upper() if has_winner else "", "row": null, "winner": true})
+		_set_name(_tiles[-1], name_s.to_upper())
 	if has_winner:
 		_winner_words.add_child(_words(str(winner.get("height", "")), 1.16, 0.22, LuchaKit.CREAM, LuchaKit.INK, Vector3(-0.46, 1.49, 0.265)))
 		LuchaKit.tint_part(_board, "results_winner_tint", winner.get("tint", Color.WHITE))
@@ -242,6 +334,7 @@ func fill(winner: Dictionary, others: Array, tower_s: String, waiting: bool) -> 
 		if tile != null:
 			_onto_tile(words, tile)
 			_tiles.append({"tile": tile, "words": words, "game": str(others[i].get("name", "")).to_upper(), "steam": str(others[i].get("steam", "")).to_upper(), "row": row, "winner": false})
+			_set_name(_tiles[-1], str(others[i].get("name", "")).to_upper())
 	_next_flip = FLIP_EVERY if _tiles.any(func(d): return str(d.steam) != "") else INF
 	_flip_until = 0.0
 	roll_off = 0.0
@@ -344,22 +437,20 @@ func _onto_tile(words: Node3D, tile: Node3D) -> void:
 	words.global_transform = at
 
 
-## New words in a tile's place: the same spot, the same fit rule.
+## New words in a tile's place: the climber's name or its player's Steam name, whole.
 func _swap_words(d: Dictionary, steam: bool) -> void:
-	var s: String = str(d.steam) if steam and str(d.steam) != "" else str(d.game)
-	var old: Node3D = d.words
-	if not is_instance_valid(old):
-		return
-	var nw: Node3D
-	if d.winner:
-		nw = _words(s, 2.53, 0.30, LuchaKit.GOLD, LuchaKit.INK, Vector3.ZERO, 0.18)
-	else:
-		nw = _words(s, 1.46, 0.20, NAVY, null, Vector3.ZERO, 0.14)
-	nw.transform = old.transform
-	nw.scale = Vector3.ONE
-	old.get_parent().add_child(nw)
-	old.queue_free()
-	d.words = nw
+	_set_name(d, str(d.steam) if steam and str(d.steam) != "" else str(d.game))
+
+
+## One step of a tile's turn. THE SWAP IS HIDDEN (Parker 11-12: "It should hide the steam
+## name / climber name swap during the flip so you cannot see the name change ... it
+## should happen when the 3d object is flipped over"): the words change the moment the
+## tile's back has come round to the camera, and not on a clock.
+func _turn_tile(a: float, tile: Node3D, d: Dictionary, to_steam: bool, state: Array) -> void:
+	tile.rotation.x = a
+	if a >= PI and not bool(state[0]):
+		state[0] = true
+		_swap_words(d, to_steam)
 
 
 ## The flip: the winner's tile, then the rows in sight top down, 0.05 s apart; a full
@@ -388,12 +479,9 @@ func _flip() -> void:
 		var tw := create_tween()
 		tw.tween_interval(FLIP_RIPPLE * k)
 		tw.tween_property(tile, "position:z", z + lift, LIFT_S).set_ease(Tween.EASE_OUT)
-		tw.tween_property(tile, "rotation:x", TAU, FLIP_S).from(0.0).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_method(_turn_tile.bind(tile, d, to_steam, [false]), 0.0, TAU, FLIP_S).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		tw.tween_property(tile, "position:z", z, LAND_S).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		tw.tween_callback(func(): tile.rotation.x = 0.0)
-		var sw := create_tween()
-		sw.tween_interval(FLIP_RIPPLE * k + LIFT_S + 0.2)
-		sw.tween_callback(func(): _swap_words(d, to_steam))
 	_flip_until = _t + FLIP_BUSY
 	_next_flip = _t + FLIP_EVERY
 
@@ -476,7 +564,8 @@ func _process(delta: float) -> void:
 		if (m as Node3D).visible:
 			(m as Node3D).position = (m.get_meta("home") as Vector3) + Vector3(0, 0.02 * sin(TAU * 1.5 * t), 0)
 	var stepping := _step_tween != null and _step_tween.is_valid() and _step_tween.is_running()
-	if _t >= _next_flip and not stepping:
+	_tick_names()
+	if _t >= _next_flip and not stepping and _names_read():
 		_flip()
 	if _scrolls() and _t >= _next_step:
 		if _t < _flip_until:

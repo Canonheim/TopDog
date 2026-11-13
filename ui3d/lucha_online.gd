@@ -115,13 +115,37 @@ func _on_settings() -> void:
 
 
 var _guest_shown: Array = []  # the host's settings as this guest last saw them
+## THE LEAVE BELT WAITS FOR THE BACK BUTTON (Parker 11-12: "make the leave button not show
+## unless someone presses the back button to open their pause menu. It should not be on
+## their screen when they are just flopping around the ring"): back, or pause, brings it
+## up (and puts the cursor on it); back again puts it away.
+var leave_shown := false
+var _leave_toggled_at := 0
+
+
+func toggle_leave() -> void:
+	# (Escape is both "back" and a pause key: one press, one toggle)
+	if Time.get_ticks_msec() - _leave_toggled_at < 250:
+		return
+	_leave_toggled_at = Time.get_ticks_msec()
+	leave_shown = not leave_shown
+	if ui.current == "lobby":
+		_fill_lobby()
+		var m: Menu3D = ui.menus.lobby
+		if leave_shown:
+			m.focus = m.items.size() - 1
+		Sound.play("ui_open" if leave_shown else "ui_close", -10.0)
 
 
 func _update_guest_settings() -> void:
 	# Parker 11-10: guests aren't told to ready up; they're told who they wait for. The
 	# settings are on the locked pickers now (the UI pass, 4b).
+	# NOT A SIGN OVER THE RING (Parker 11-12: "most of their screen was covered by the
+	# 'waiting for host to start' message. Make that at the top of the screen and not on
+	# 3d UI, just the colored text we use"): a line of words at the top (main's label).
 	var host_name := str((Net.members.get(1, {}) as Dictionary).get("name", "the host"))
-	set_status("WAITING FOR %s TO START" % host_name.to_upper())
+	set_status("")
+	main.set_lobby_wait("WAITING FOR %s TO START" % host_name.to_upper())
 
 
 func _on_members() -> void:
@@ -141,8 +165,11 @@ func _on_lobby_list(rows: Array) -> void:
 ## LuchaUI calls this on every screen change.
 func on_screen(id: String) -> void:
 	var online_ids := ["online", "friends", "browse", "lobby"]
-	# (the lobby too, for a guest: "Waiting for host ... to start the game")
-	_status_node.visible = id in ["friends", "browse"] or (id == "lobby" and not Net.is_host())
+	# (not the lobby: a guest's "waiting for the host" is a line of words at the top)
+	_status_node.visible = id in ["friends", "browse"]
+	if id != "lobby":
+		main.set_lobby_wait("")
+	leave_shown = false
 	_board.visible = false
 	_chat_board.visible = false
 	_place_boards(id)
@@ -355,7 +382,8 @@ func _fill_lobby() -> void:
 				_mode_card.create_tween().tween_property(_mode_card, "scale", Vector3.ONE * 0.8, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			_mode_card.visible = on
 		m.add_button("INVITE FRIENDS", func(): Net.invite_friends())
-		m.add_button("LEAVE", main._leave_lobby)
+		if leave_shown:
+			m.add_button("LEAVE", main._leave_lobby)
 	else:
 		# THE GUEST'S LOBBY (the UI pass, 4b): the host's screen, read-only: the host's
 		# settings on locked pickers, and LEAVE, which holds the focus.
@@ -377,7 +405,8 @@ func _fill_lobby() -> void:
 		_guest_shown = vals.map(func(v): return int(v[2]))
 		if _mode_card != null:
 			_mode_card.visible = str(Net.settings.get("mode", "scramble")) == "delmar"
-		m.add_button("LEAVE", main._leave_lobby)
+		if leave_shown:
+			m.add_button("LEAVE", main._leave_lobby)
 		if not m.visible:
 			m.open()
 	m.refresh()
@@ -385,7 +414,9 @@ func _fill_lobby() -> void:
 	_place_boards("lobby")
 	if not host:
 		_update_guest_settings()
-	elif status_text == "" or status_text.begins_with("Hosting"):
+	else:
+		main.set_lobby_wait("")
+	if host and (status_text == "" or status_text.begins_with("Hosting")):
 		set_status("You're hosting. Invite friends, then FIGHT! when everyone's ready.")
 
 

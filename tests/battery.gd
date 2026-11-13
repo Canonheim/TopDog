@@ -2532,13 +2532,15 @@ func _run_delmar() -> void:
 	t("delmar: in the sea the climber goes limp and sinks; not out yet", c1.sinking and all_let_go and g.live.has(1) and g._sinking.has(c1_id), [c1.sinking, all_let_go, g.live.keys()])
 	var highest := INF
 	for k in int(5.0 * Engine.physics_ticks_per_second):
-		if not g.live.has(1):
-			break
+		if not g.live.has(1) or int(g.live[1]) != c1_id or not is_instance_valid(c1) or c1.removed:
+			break  # (gone under: its player has a new climber on the dock)
 		highest = -INF
 		for b in c1.bodies.values():
 			highest = maxf(highest, (b as Node3D).global_position.y)
 		await get_tree().physics_frame
-	t("delmar: falling in the sea is out, once the whole body has gone under (and then some)", not g.alive[1] and not g.live.has(1) and highest < Stage.WATER_Y - 1.0, "alive %s, highest piece %.2f m (water %.2f)" % [g.alive, highest, Stage.WATER_Y])
+	await frames(4)
+	var back: Climber = g.climbers.get(g.live.get(1, -1))
+	t("delmar: falling in the sea puts you back on the dock (Parker 11-12), still in the game, once the body has gone under", highest < Stage.WATER_Y - 1.0 and g.alive[1] and g.live.has(1) and back != null and back.climber_id != c1_id and not back.sinking and back.centre_of_mass().x < Stage.PIER_END and back.centre_of_mass().y > Stage.WATER_Y, "alive %s, live %s, at %s" % [g.alive, g.live.keys(), back.centre_of_mass() if back != null else Vector2.ZERO])
 	# The water (the battery's stage is undressed, so on a sheet of its own): Golemheim's
 	# living surface goes on the sea, and a body going in throws a splash.
 	var sea := DelMarSea.new()
@@ -2599,8 +2601,22 @@ func _run_delmar() -> void:
 	spare.remove()
 	# STRONGER (Parker 11-11: "send you at least as far back up as you fell down"): a
 	# plain fall from 5 m over a floatie comes back up at least that high.
+	# The floaties bump (Parker 11-12): left to drift, none is ever inside another, and
+	# they stay in the open water.
+	var apart := true
+	var inside := true
+	for k in int(20.0 * Engine.physics_ticks_per_second):
+		fl.tick(1.0 / Engine.physics_ticks_per_second)
+		for a in fl._items.size():
+			inside = inside and float(fl._items[a].x) >= Stage.FLOAT_X.x and float(fl._items[a].x) <= Stage.FLOAT_X.y
+			for b in range(a + 1, fl._items.size()):
+				if absf(float(fl._items[a].x) - float(fl._items[b].x)) < float(fl._items[a].kind[1]) + float(fl._items[b].kind[1]) - 0.02:
+					apart = false
+	t("delmar: the floaties bump off each other and the water's ends: never one inside another", apart and inside and fl._items.all(func(it): return absf(float(it.v)) > 0.05), fl._items.map(func(it): return snappedf(float(it.x), 0.1)))
+	fl.drifting = false  # (still water for the drops: the faller is set over one floatie)
 	for drop_h in [3.0, 6.0]:
 		var faller := spawn(Vector2(float(fl._items[0].x), Stage.WATER_Y + float(fl._items[0].kind[2]) + drop_h))
+		faller.climber_id = 9000 + int(drop_h)  # (not the id of the game's own climber, back on the dock: the floaties keep each climber's fall by its id)
 		faller.release_all()
 		for l in faller.limbs:
 			l.regrip = 99.0

@@ -194,6 +194,11 @@ func tick(delta: float) -> void:
 		if cl.owner_peer == me and (mine == null or cl.top_height() > mine.top_height()):
 			mine = cl
 	var who: Climber = climbing if g.mode.get("live", "turns") == "turns" else mine
+	if who == null and main.has_method("spectate_target"):
+		# LOCKED IN, WATCHING (Parker 11-12: "I could not see the name of the climber I was
+		# spectating and it still showed my steam name"): the plate and the Steam name are
+		# the climber's this machine is watching now.
+		who = main.spectate_target()
 	set_name_text(who.display_name if who != null else "")
 	steam_shown = steam_name(who.owner_peer if who != null else g.me())
 	var raw := mine != null and g.measure(mine) > g.line + Game.LOCK_MARGIN and mine.touches_solid()

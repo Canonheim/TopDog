@@ -114,8 +114,14 @@ func _ready() -> void:
 	_check("host settings preserve guest buttons, focus and animation", lobby.items[0].node == guest_button and guest_button.scale == guest_scale and lobby.focus == 1)
 	multiplayer.multiplayer_peer = saved_peer
 	guest.close()
+	# (Parker 11-12: the LEAVE belt is not on the lobby's screen until back is pressed)
+	_check("the lobby shows no LEAVE belt while you flop about the ring", not main.lucha.online.leave_shown and not lobby.items.any(func(it): return str(it.get("label", "")) == "LEAVE"))
 	await _tap(JOY_BUTTON_B)
-	_check("raw B leaves the lobby and returns to its opener", main.screen == "online" and not Net.online, main.screen)
+	await _wait(0.4)
+	_check("raw B in the lobby brings up the LEAVE belt, the cursor on it, and throws nobody out", main.screen == "lobby" and main.lucha.online.leave_shown and str(lobby.items[lobby.items.size() - 1].get("label", "")) == "LEAVE" and lobby.focus == lobby.items.size() - 1, main.screen)
+	await _tap(JOY_BUTTON_A)
+	await _wait(0.4)
+	_check("LEAVE leaves the lobby and returns to its opener", main.screen == "online" and not Net.online, main.screen)
 	Net.members = {}
 	print("ONLINE3D RESULT fails=", fails)
 	get_tree().quit(fails)
