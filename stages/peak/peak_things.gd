@@ -92,6 +92,9 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 func add_hold(body: CollisionObject3D, def: Dictionary, vis: Node3D, col: Color, slick: Color, a: Dictionary) -> void:
 	var h := {"body": body, "def": def, "vis": vis, "col": col, "slick": slick, "area": str(a.id),
 		"type": str(def.type), "break_at": -1.0, "back_at": -1.0, "wet": false, "layer": body.collision_layer}
+	if body.has_meta("peak_cracks"):
+		h["cracks"] = body.get_meta("peak_cracks")  # the cracks that spread once it is touched
+	h["kind"] = str(body.get_meta("peak_kind", ""))
 	body.set_meta("peak_hold", h)
 	holds.append(h)
 
@@ -1052,7 +1055,16 @@ func _tick_holds(delta: float) -> void:
 				"crumble":
 					if float(h.break_at) < 0.0 and float(h.back_at) < 0.0:
 						h.break_at = t + float(def.t)
-						peak.audio.play("plank_creak" if str(h.area) in ["a0", "a1", "a7"] else ("crystal_chime" if str(h.area) == "a3" else "ice_tick"), at)
+						var note := str((o as Node).get_meta("peak_tag", ""))
+						if note.begins_with("chime"):
+							# THE SCALE, IN ORDER (the design asked for a rising scale up the
+							# prism's eight shelves; the eight notes were there, and the game
+							# picked one at random every time): each shelf plays its own.
+							peak.audio.play("crystal_chime_%02d" % clampi(int(note.substr(5)), 1, 8), at, 2.0)
+						elif str(h.get("kind", "")) == "rusty":
+							peak.audio.play("plank_creak", at, 0.0, 0.7)
+						else:
+							peak.audio.play("plank_creak" if str(h.area) in ["a0", "a1", "a7"] else ("crystal_chime" if str(h.area) == "a3" else "ice_tick"), at)
 				"kick":
 					if fresh:
 						var v := Peak.v2(def.v)
@@ -1072,6 +1084,13 @@ func _tick_holds(delta: float) -> void:
 					var left := float(h.break_at) - t
 					var amp := 0.035 * clampf(1.0 - left / maxf(0.2, float((h.def as Dictionary).t)), 0.2, 1.0)
 					(h.vis as Node3D).position = Vector3(randf_range(-amp, amp), randf_range(-amp, amp), 0)
+					if h.has("cracks"):
+						# Touched, the cracks spread and it sheds: you watch it go.
+						(h.cracks as Node3D).visible = true
+						if t >= float(h.get("chip_at", 0.0)):
+							h["chip_at"] = t + 0.22
+							var mid := _hold_at(h)
+							peak.zones.burst(mid + Vector2(randf_range(-0.4, 0.4), -0.1), "glitter" if str(h.kind) == "crazed" else "dust", 0.35, Vector2.DOWN)
 				if float(h.break_at) >= 0.0 and t >= float(h.break_at):
 					h.break_at = -1.0
 					h.back_at = t + float((h.def as Dictionary).get("respawn", 8.0))
@@ -1079,6 +1098,13 @@ func _tick_holds(delta: float) -> void:
 					body.collision_layer = 0
 					(h.vis as Node3D).visible = false
 					(h.vis as Node3D).position = Vector3.ZERO
+					if h.has("cracks"):
+						(h.cracks as Node3D).visible = false  # (it comes back cracked as it was, no worse)
+						var mid2 := _hold_at(h)
+						peak.zones.burst(mid2, "glitter" if str(h.kind) == "crazed" else "dust", 1.6)
+						if str(h.kind) == "rusty":
+							peak.zones.burst(mid2, "sparks", 0.8)
+							peak.audio.play("hammer_clang", mid2, -4.0, 0.8)
 					_crumble(h)
 					var at := Vector2(body.global_position.x, body.global_position.y)
 					if body is StaticBody3D and body.get_child_count() > 0:

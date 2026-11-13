@@ -76,6 +76,18 @@ KINDS = {
     "rotten": {"grip": True, "tone": "weak", "hold": {"type": "crumble", "t": 1.2, "respawn": 8.0}},
     "brittle": {"grip": True, "tone": "weak", "hold": {"type": "crumble", "t": 0.8, "respawn": 8.0}},
     "snowbridge": {"grip": True, "tone": "snow", "hold": {"type": "crumble", "t": 1.0, "respawn": 10.0}},
+    # (11-12 playtest: Parker asked for more things to break, and to LOOK breakable. Every
+    # breaking piece is drawn cracked by the game; these two are the iron and the crystal.)
+    "rusty": {"grip": True, "tone": "rust", "hold": {"type": "crumble", "t": 1.0, "respawn": 8.0}},      # iron rusted through
+    "crazed": {"grip": True, "tone": "crazed", "hold": {"type": "crumble", "t": 1.3, "respawn": 8.0}},   # a cracked crystal plate
+    # (11-12 playtest: Parker asked for more things to break, and to LOOK breakable. Every
+    # breaking piece is drawn cracked by the game; these two are the iron and the crystal.)
+    "rusty": {"grip": True, "tone": "rust", "hold": {"type": "crumble", "t": 1.0, "respawn": 8.0}},      # iron rusted through
+    "crazed": {"grip": True, "tone": "crazed", "hold": {"type": "crumble", "t": 1.3, "respawn": 8.0}},   # a cracked crystal plate
+    # (11-12 playtest: Parker asked for more things to break, and to LOOK breakable. Every
+    # breaking piece is drawn cracked by the game; these two are the iron and the crystal.)
+    "rusty": {"grip": True, "tone": "rust", "hold": {"type": "crumble", "t": 1.0, "respawn": 8.0}},      # iron rusted through
+    "crazed": {"grip": True, "tone": "crazed", "hold": {"type": "crumble", "t": 1.3, "respawn": 8.0}},   # a cracked crystal plate
     "metal": {"grip": True, "tone": "iron"},  # lightning takes it (see strike zones)
     "void": {"grip": False, "tone": "none"},  # an unseen wall at the world's edge (the structure only)
 }
@@ -86,7 +98,7 @@ KINDS = {
 _COMMON = {"wood": "#C9903F", "wood2": "#B07A32", "iron": "#B5532A", "root": "#A9825A", "bone": "#E9E2CE",
            "gold": "#E8B33A", "snow": "#F4F7FA", "ice": "#9FDDF2", "hot": "#F0541E", "weak": "#A99C86",
            "edge": "#8A6A45", "drip": "#8A6442", "stone": "#C8B79A", "brick": "#B8674A", "gill": "#F0E3C2",
-           "crystal": "#EDE3FF"}
+           "crystal": "#EDE3FF", "rust": "#C9935F", "crazed": "#E2D2FF"}
 PALETTES = {
     "town": {"rock": "#D9C7A2", "rock2": "#C7A77A", "slick": "#3A2616", "accent": "#D8262E",
              "back": "#C9B48E", "back2": "#B29A72", "back3": "#9C8460", "sky": "#8FD0FF", "sun": 1.25, "amb": "#D9D7DA", "inside": 0.0},

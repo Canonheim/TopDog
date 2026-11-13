@@ -265,8 +265,11 @@ A.challenge("3.5", "Agujas", (-415.6, 214.4), 4, "A", moves=[
 A.cam((-416.5, 213, -386, 232), 14.0, bias=(0.0, -8.0))
 
 # ---------------------------------------------------------------- 3.6 El Prisma
-# Eight shelves up a 12 m diagonal, each gone 0.8 s after it's taken. They chime the
-# scale of D as you go: the game rings them in this order.
+# Eight shelves up a 12 m diagonal, each gone 1.3 s after it's taken (Parker 11-12: "I
+# think these are supposed to be breakable crystals, make that more obvious. Make them
+# take .5 seconds longer to break"; it was 0.8). They are cracked crystal plates now (kind
+# "crazed"), not tan blocks. They chime the scale of D as you go: the game rings them in
+# this order (it used to pick one of the eight notes at random).
 E5, E6 = (-383.2, 222.3), (-377.2, 231.8)
 SCALE = ["D4 (do)", "E4 (re)", "F#4 (mi)", "G4 (fa)", "A4 (sol)", "B4 (la)", "C#5 (ti)", "D5 (do)"]
 SHELF = []
@@ -276,7 +279,7 @@ for i in range(8):
     y = E5[1] + (E6[1] - E5[1]) * f
     SHELF.append((x, y))
     # shelf i + 1 chimes SCALE[i]: D4, E4, F#4, G4, A4, B4, C#5, D5
-    A.solid([(x - 0.5, y - 0.26), (x + 0.5, y - 0.26), (x + 0.38, y), (x - 0.38, y)], "brittle", tag="chime%d" % (i + 1))
+    A.solid([(x - 0.5, y - 0.26), (x + 0.5, y - 0.26), (x + 0.38, y), (x - 0.38, y)], "crazed", tag="chime%d" % (i + 1))
 rest(-377.2, -369.1, 231.8, h=1.6, slick="e")  # R6: the pendulum's side. Its east lip is glass
 m36 = [["reach", list(E5), list(SHELF[0])]]
 for i in range(7):

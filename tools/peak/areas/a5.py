@@ -361,15 +361,26 @@ A.deco("drum_temple", -342.5, 462.6, z=-1.2, size=(1.6, 1.8, 1.6), tone="accent"
 # ================================================================ 5.10 El Altar
 # The altar's chamber has no floor: a stone beam crosses it, and under that is the
 # gallery, 16 m down (B: back to the counterweight). A stone cross 10 m across turns in it
-# counter-clockwise at 1.6 rpm, an arm every 9.4 s; a hard hit from it knocks you out.
+# counter-clockwise at 6.4 rpm (it was 1.6), an arm every 2.3 s; a hard hit from it knocks you out.
 # Its arms sweep 0.5 m over the beam's middle (they catch a standing head between x -321.4
 # and -314.6) and brush the east wall between y 473.4 and 475.4. Go WITH it: an arm passes
 # the bottom heading east, follow it across the beam, and it leads you up the east wall.
 # The wall's holds are three stone knobs, then the three who tried: frozen hand to ankle
 # off the exit ledge, a ladder that stops 4.6 m short of the beam. Brittle knobs sit in
 # the wall behind them.
-A.ledge(-323.5, -314.4, 468.9, "stone", t=0.5)
-A.wheel("altar_cross", (-318.0, 474.4), 5.0, 1.6, spokes=4, kind="stone", spoke_t=0.5, hub=0.9, phase=45.0, ko=True, model="altar_cross")
+# THE WHOLE BEAM BREAKS, AND THE CROSS TURNS FOUR TIMES AS FAST (Parker 11-12: "make this
+# whole platform break", "make the thing spin 4x as fast"). The beam is six pieces of
+# cracked stone, 1.52 m each. A piece gives way BEAM_T after the first hand or foot is on it
+# and comes back 8 s later, so the beam falls away behind you. BEAM_T is from a
+# measurement: kept low (a crawl), a climber makes 0.6 to 0.9 m/s and is 1.6 m long, so it
+# is wholly off a 1.52 m piece in about 3.5 s at the better pace. The cross turns once in
+# 9.4 s now (6.4 rpm): an arm over the beam every 2.3 s, its outer 2 m fast enough to
+# knock you out (the game's own rule: 2 m/s where it touches you). Cross low; keep moving.
+BEAM_T = 3.5
+_bx = [-323.5 + (9.1 / 6.0) * k for k in range(7)]
+for k in range(6):
+    A.ledge(_bx[k], _bx[k + 1], 468.9, "brittle", t=0.5, hold={"type": "crumble", "t": BEAM_T, "respawn": 8.0})
+A.wheel("altar_cross", (-318.0, 474.4), 5.0, 6.4, spokes=4, kind="stone", spoke_t=0.5, hub=0.9, phase=45.0, ko=True, model="altar_cross")
 WALL_X = -312.72
 for y in (469.4, 470.8, 472.2):
     A.hold(WALL_X, y, 0.25, "stone")

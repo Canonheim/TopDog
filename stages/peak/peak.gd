@@ -440,6 +440,8 @@ func _build_area(a: Dictionary) -> void:
 				sb.set_meta("peak_tag", str(s.tag))
 				zones.tag(str(s.tag), sb)
 			if hold != null:
+				if str((hold as Dictionary).get("type", "")) == "crumble" and CRACK_INK.has(kind):
+					_crack(sb, piece, pts, vz1, kind, rng)
 				things.add_hold(sb, hold, piece, kind_color(a, kind), tone(a, "slick"), a)
 			continue
 		var grips := kind_grips(kind)
@@ -591,6 +593,66 @@ static func _convex(pts: PackedVector2Array) -> bool:
 		elif signf(c) != sign:
 			return false
 	return true
+
+
+## A PIECE THAT WILL BREAK LOOKS IT (Parker 11-12: "make these dark parts breakable
+## pieces", "I think these are supposed to be breakable crystals, make that more obvious",
+## "make this whole platform break"). One language for the whole mountain: at rest it is
+## already cracked through and has a corner gone; once touched, the cracks spread (a second
+## set, shown while its clock runs: peak_things) and it shudders and sheds dust. The cracks
+## are drawn here, on the piece's own face, in an ink for its material. (Rotten planks have
+## the kit's own rotten look; ice and snow are left as they were until Parker has played
+## them.) Real cracked models are asked for in docs/peak/playtest/MODEL_REQUESTS.md.
+const CRACK_INK := {"brittle": "#4A3A2E", "rusty": "#5A2E16", "crazed": "#6A52B8"}
+
+
+func _crack(sb: Node, piece: Node3D, pts: PackedVector2Array, z: float, kind: String, rng: RandomNumberGenerator) -> void:
+	var lo := pts[0]
+	var hi := pts[0]
+	for p in pts:
+		lo = lo.min(p)
+		hi = hi.max(p)
+	var size := hi - lo
+	var across := size.x >= size.y  # cracks run through the short way
+	var long := maxf(size.x, size.y)
+	var short := minf(size.x, size.y)
+	var uv := AtlasPalette.matte_uv(Color(str(CRACK_INK[kind])))
+	if piece.has_meta("fitted"):
+		z += 0.07  # (a kit piece's face stands a little proud of its box: the cracks go on top of it)
+	var stages: Array = []
+	for stage in 2:
+		var mb := PeakMesh.new()
+		var count := clampi(int(long / (0.55 if stage == 0 else 0.3)), 2 if stage == 0 else 3, 14)
+		for k in count:
+			var at := (float(k) + rng.randf_range(0.25, 0.75)) / count * long
+			var steps := maxi(2, int(short / 0.12))
+			var prev := Vector2.ZERO
+			var drift := 0.0
+			var reach := 1.0 if (stage == 1 or k % 2 == 0) else rng.randf_range(0.45, 0.8)  # (some stop part way)
+			for sidx in steps + 1:
+				var f := float(sidx) / steps * reach
+				drift += rng.randf_range(-0.07, 0.07)
+				var q := Vector2(lo.x + at + drift, hi.y - f * short) if across else Vector2(lo.x + f * short, lo.y + at + drift)
+				if sidx > 0 and Geometry2D.is_point_in_polygon(q, pts) and Geometry2D.is_point_in_polygon(prev, pts):
+					var w := (q - prev).normalized().orthogonal() * (0.022 if stage == 0 else 0.016)
+					mb.quad(Vector3(prev.x - w.x, prev.y - w.y, z + 0.013), Vector3(q.x - w.x, q.y - w.y, z + 0.013),
+						Vector3(q.x + w.x, q.y + w.y, z + 0.013), Vector3(prev.x + w.x, prev.y + w.y, z + 0.013), Vector3(0, 0, 1), uv)
+				prev = q
+		if stage == 0 and long > 0.6:
+			# a corner gone
+			var c := Vector2(hi.x, hi.y) if rng.randf() < 0.5 else Vector2(lo.x, hi.y)
+			var inx := (-1.0 if c.x == hi.x else 1.0) * minf(0.22, long * 0.2)
+			mb.tri(Vector3(c.x, c.y, z + 0.014), Vector3(c.x + inx, c.y, z + 0.014), Vector3(c.x, c.y - minf(0.16, short * 0.6), z + 0.014), Vector3(0, 0, 1), uv)
+		var mi := MeshInstance3D.new()
+		if not mb.empty():
+			mi.mesh = mb.commit()
+			mi.material_override = CelPass.one()
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.visible = stage == 0
+		piece.add_child(mi)
+		stages.append(mi)
+	sb.set_meta("peak_cracks", stages[1])
+	sb.set_meta("peak_kind", kind)
 
 
 ## Wet look for slick rock: a few pale drip strokes on its face.

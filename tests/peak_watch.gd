@@ -1287,6 +1287,238 @@ func _w_ring(a: Array) -> void:
 	_free_cam = false
 
 
+## HOW FAST DOES A CLIMBER CROSS A FLOOR? (notes 24 and 53 hang on it.) A scripted crawl
+## along the temple's gallery floor, 12 m of level stone: one limb at a time is picked up,
+## aimed ahead and planted, as a player does it. gait[:low] keeps the body low (crouched).
+## It reports metres a second for a few rhythms; the fastest is "moving briskly".
+func _w_gait(a: Array) -> void:
+	var low := a.size() > 0 and str(a[0]) == "low"
+	const Drivers := preload("res://climber/drivers.gd")
+	pk.warp("5.7")
+	await secs(0.5)
+	var c := me()
+	var old_driver = c.driver
+	var d := Drivers.ScriptDriver.new()
+	var floor_y := 453.0 + Peak.ORIGIN.y
+	var best := 0.0
+	var best_name := ""
+	for plan: Array in [["hands then feet, 0.20 s a limb", [1, 0, 3, 2], 0.20, 1.05, 0.25], ["hands then feet, 0.14 s a limb", [1, 0, 3, 2], 0.14, 1.05, 0.25],
+			["hand, foot, hand, foot, 0.16 s a limb", [1, 3, 0, 2], 0.16, 1.0, 0.3], ["hands then feet, long reach, 0.18 s", [1, 0, 3, 2], 0.18, 1.3, 0.45],
+			["hand, foot, hand, foot, long reach, 0.12 s", [1, 3, 0, 2], 0.12, 1.3, 0.45]]:
+		stand(Vector2(-350.5, 453.0))
+		c.driver = d
+		d.clear()
+		await secs(0.8)
+		_free_cam = false
+		var x0 := where().x
+		var t0 := pk.clock
+		var k := 0
+		var seq: Array = plan[1]
+		var fell := false
+		while pk.clock - t0 < 8.0 and where().x < -340.5:
+			var limb: int = seq[k % seq.size()]
+			k += 1
+			var com := c.centre_of_mass()
+			var ahead := float(plan[3]) if limb < 2 else float(plan[4])
+			var up := 0.06 if (limb >= 2 or low) else 0.06
+			d.point_limb(limb, true, Vector2(com.x + ahead, floor_y + up))
+			await secs(float(plan[2]))
+			d.set_limb(limb, false)
+			await secs(0.05)
+			if where().y < 452.0:
+				fell = true
+				break
+		var dist := where().x - x0
+		var took := pk.clock - t0
+		var chest: RigidBody3D = c.bodies["chest"]
+		print("WATCH gait%s: %-44s %.1f m in %.1f s = %.2f m/s%s (chest %.2f m over the floor)" % [" (low)" if low else "", str(plan[0]) + ":", dist, took, dist / maxf(took, 0.01), "  FELL" if fell else "", chest.global_position.y - floor_y])
+		if not fell and dist / maxf(took, 0.01) > best:
+			best = dist / maxf(took, 0.01)
+			best_name = str(plan[0])
+	print("WATCH gait: the fastest that held: %.2f m/s (%s). At that pace 1.5 m takes %.1f s and 2 m takes %.1f s; a body is about 1.6 m long from leading hand to trailing foot, so to be wholly off a 1.5 m piece after first touching it takes %.1f s, and off a 2 m piece %.1f s." % [
+		best, best_name, 1.5 / maxf(best, 0.01), 2.0 / maxf(best, 0.01), 3.1 / maxf(best, 0.01), 3.6 / maxf(best, 0.01)])
+	d.clear()
+	c.driver = old_driver
+
+
+## A scripted crawl toward x = `to_x` (course metres) along a floor whose top is `floor_y`:
+## one limb at a time picked up, aimed ahead and planted. Returns [got there, seconds,
+## where it ended, was it knocked out]. `reach` and `beat` are the gait (see _w_gait).
+func crawl(to_x: float, floor_y: float, reach := 1.3, beat := 0.12, limit := 30.0) -> Array:
+	const Drivers := preload("res://climber/drivers.gd")
+	var c := me()
+	var old_driver = c.driver
+	var d := Drivers.ScriptDriver.new()
+	c.driver = d
+	var dir := signf(to_x - where().x)
+	var seq := [1, 3, 0, 2] if dir > 0.0 else [0, 2, 1, 3]
+	var t0 := pk.clock
+	var k := 0
+	var ko := false
+	while pk.clock - t0 < limit and (to_x - where().x) * dir > 0.0:
+		var limb: int = seq[k % 4]
+		k += 1
+		var com := c.centre_of_mass()
+		var ahead := reach if limb < 2 else reach * 0.35
+		d.point_limb(limb, true, Vector2(com.x + ahead * dir, floor_y + Peak.ORIGIN.y + 0.06))
+		await secs(beat)
+		d.set_limb(limb, false)
+		await secs(0.05)
+		if c.knockout_left > 0.0:
+			ko = true
+		if where().y < floor_y - 1.2:
+			break
+	d.clear()
+	c.driver = old_driver
+	return [(to_x - where().x) * dir <= 0.0, pk.clock - t0, where(), ko]
+
+
+## Group E: the breaking pieces. break:pipe | catwalk | shelves | beam
+func _w_break(a: Array) -> void:
+	var which := str(a[0]) if a.size() > 0 else "pipe"
+	var c := me()
+	if which == "pipe":
+		pk.warp("2.1")
+		await secs(0.6)
+		look(Vector2(-240.8, 94.2), 3.4)
+		await secs(4.0)
+		await shot("16_pipe_at_rest")
+		var h := hold_near(Vector2(-238.25, 94.5), "crumble")
+		c.release_all()
+		for l in c.limbs:
+			l.regrip = 99.0
+		c.limbs[0].regrip = 0.0
+		for k in 60:
+			put_limb(0, Vector2(-238.25, 94.7))
+			await get_tree().physics_frame
+			if c.limbs[0].grab_other != null:
+				break
+		var t0 := pk.clock
+		print("WATCH break pipe: a hand on the first rusted section: limbs %s" % holds())
+		await secs(0.55)
+		await shot("16_pipe_touched")
+		while c.limbs[0].grab_other != null and pk.clock - t0 < 4.0:
+			await get_tree().physics_frame
+		print("WATCH break pipe: it let go of the hand %.2f s after it was taken (its time is %.1f); the section is gone: %s" % [pk.clock - t0, float((h.def as Dictionary).t), (h.body as CollisionObject3D).collision_layer == 0])
+		await secs(0.15)
+		await shot("16_pipe_breaks")
+		var tb := pk.clock
+		while (h.body as CollisionObject3D).collision_layer == 0 and pk.clock - tb < 12.0:
+			await get_tree().physics_frame
+		print("WATCH break pipe: back %.1f s after it broke" % (pk.clock - tb))
+		for l in c.limbs:
+			l.regrip = 0.0
+	elif which == "catwalk":
+		pk.warp("2.11")
+		await secs(0.6)
+		look(Vector2(-408.5, 152.6), 9.0)
+		stand(Vector2(-424.6, 153.0))
+		await secs(4.0)
+		await shot("24_catwalk_at_rest")
+		look(Vector2(-420.0, 152.8), 3.2)
+		await secs(0.4)
+		await shot("24_catwalk_close")
+		_free_cam = false
+		# The crawl: from the west landing over two breaking pieces, the gap, two more, to the first rest plate.
+		# (The scripted crawl can't lunge a 1.3 m gap, which was there before too: each leg
+		# starts past one.)
+		var legs := [[-424.6, -420.2, "from the west landing over the two pieces to the first gap"],
+			[-418.1, -414.2, "the two pieces from the gap to the rest plate"],
+			[-403.6, -392.9, "the long run: five pieces, 10.5 m, to the east landing"]]
+		var fine := true
+		for leg: Array in legs:
+			stand(Vector2(float(leg[0]), 153.0))
+			await secs(0.4)
+			var r: Array = await crawl(float(leg[1]), 153.0)
+			print("WATCH break catwalk: %s: %s in %.1f s (%.2f m/s), now at %s" % [leg[2], "made it" if bool(r[0]) else "DID NOT", float(r[1]), absf(float(leg[1]) - float(leg[0])) / maxf(float(r[1]), 0.1), r[2]])
+			if not bool(r[0]):
+				fine = false
+			await secs(9.0)  # (everything it broke grows back)
+		await shot("24_catwalk_crawled")
+		var broken := 0
+		for h: Dictionary in pk.things.holds:
+			if str(h.area) == "a2" and str(h.get("kind", "")) == "rusty" and float(h.back_at) >= 0.0:
+				broken += 1
+		print("WATCH break catwalk: crossed at a crawl: %s; pieces broken behind it right now: %d" % [fine, broken])
+		# And standing still on one: it must drop you.
+		stand(Vector2(-410.4, 153.0))
+		var ts := -1.0
+		var t_in := pk.clock
+		while where().y > 152.0 and pk.clock - t_in < 10.0:
+			await get_tree().physics_frame
+			if ts < 0.0 and holds() != "- - - -":
+				ts = pk.clock
+		print("WATCH break catwalk: stood still on a piece: dropped %.1f s after first holding it (the piece's time is 3.4)" % (pk.clock - ts))
+	elif which == "shelves":
+		pk.warp("3.6")
+		await secs(0.6)
+		look(Vector2(-380.4, 227.2), 6.2)
+		await secs(4.0)
+		await shot("31_shelves_at_rest")
+		var order: Array = []
+		for h: Dictionary in pk.things.holds:
+			if str(h.area) == "a3" and str(h.get("kind", "")) == "crazed":
+				order.append(h)
+		order.sort_custom(func(x, y): return pk.things._hold_at(x).y < pk.things._hold_at(y).y)
+		var tags: Array = []
+		for h: Dictionary in order:
+			tags.append(str((h.body as Node).get_meta("peak_tag", "?")))
+		print("WATCH break shelves: %d shelves, bottom to top their notes are %s (each plays crystal_chime_NN of its own number)" % [order.size(), tags])
+		var h0: Dictionary = order[0]
+		c.release_all()
+		for l in c.limbs:
+			l.regrip = 99.0
+		c.limbs[0].regrip = 0.0
+		for k in 60:
+			put_limb(0, pk.things._hold_at(h0) + Vector2(0.0, 0.2))
+			await get_tree().physics_frame
+			if c.limbs[0].grab_other != null:
+				break
+		var t0 := pk.clock
+		look(pk.things._hold_at(h0) + Vector2(0.4, 0.3), 2.4)
+		await secs(0.7)
+		await shot("31_shelf_touched")
+		while c.limbs[0].grab_other != null and pk.clock - t0 < 4.0:
+			await get_tree().physics_frame
+		print("WATCH break shelves: the first shelf let go %.2f s after it was taken (was 0.8, asked 1.3)" % (pk.clock - t0))
+		await secs(0.1)
+		await shot("31_shelf_breaks")
+		for l in c.limbs:
+			l.regrip = 0.0
+	elif which == "beam":
+		pk.warp("5.10")
+		await secs(0.6)
+		look(Vector2(-318.6, 471.6), 6.0)
+		await secs(4.0)
+		await shot("53_beam_at_rest")
+		var m: Dictionary = pk.things.movers["altar_cross"]
+		var a0 := float(m.angle)
+		var tq := pk.clock
+		await secs(2.0)
+		print("WATCH break beam: the cross turned %.1f degrees in 2 s = %.2f rpm (asked 6.4); an arm passes every %.2f s" % [rad_to_deg(float(m.angle) - a0), (float(m.angle) - a0) / TAU * 30.0, 60.0 / (absf(float(m.angle) - a0) / TAU * 30.0) / 4.0])
+		_free_cam = false
+		stand(Vector2(-324.4, 468.9))
+		await secs(0.6)
+		for gait: Array in [["the brisk crawl (1.1 m/s, chest 0.75 m up)", 1.3, 0.12], ["the low crawl (0.9 m/s, chest 0.5 m up)", 1.3, 0.18], ["the lowest crawl (0.65 m/s, chest 0.3 m up)", 1.05, 0.2]]:
+			stand(Vector2(-324.4, 468.9))
+			# wait for every piece to be back
+			var tw := pk.clock
+			while pk.clock - tw < 10.0:
+				var all_back := true
+				for h: Dictionary in pk.things.holds:
+					if str(h.area) == "a5" and str(h.get("kind", "")) == "brittle" and pk.things._hold_at(h).y < 469.0 and (float(h.back_at) >= 0.0 or float(h.break_at) >= 0.0):
+						all_back = false
+				if all_back:
+					break
+				await get_tree().physics_frame
+			await secs(0.5)
+			var r: Array = await crawl(-314.2, 468.9, float(gait[1]), float(gait[2]), 20.0)
+			print("WATCH break beam: %s: %s in %.1f s, ended at %s%s" % [gait[0], "CROSSED" if bool(r[0]) else "did not cross", float(r[1]), r[2], ", KNOCKED OUT by the cross" if bool(r[3]) else ""])
+			if str(gait[0]).begins_with("the low crawl"):
+				await shot("53_beam_after_a_crawl")
+	_free_cam = false
+
+
 ## Note 4: what stands where the lift's two cables were.
 func _w_lift(_a: Array) -> void:
 	pk.warp("1.5")

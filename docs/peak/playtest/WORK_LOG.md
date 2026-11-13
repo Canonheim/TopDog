@@ -685,3 +685,106 @@ are `--watch=light:race`, `light:crystal`, `light2:race`, `light2:crystal`,
 - **First-try number:** the throw.
 - **Not checked:** a fall from the upper rows, which lands harder and further out;
   whether a body that slides off the slab's SIDE can miss the ring.
+
+## Group E: breakables, one look and one rule (notes 16, 24, 31, 53)
+
+### The measurement first: how fast a climber crosses a floor
+
+- `--watch=gait` in the probe: a scripted crawl along the temple's gallery floor (12 m
+  of level stone), one limb at a time picked up, aimed ahead and planted, as a player
+  does. Five rhythms:
+
+  | rhythm | metres a second | chest over the floor |
+  |---|---|---|
+  | hands then feet, 0.20 s a limb | 0.64 | 0.25 m |
+  | hands then feet, 0.14 s a limb | 0.65 | 0.43 m |
+  | hand, foot, hand, foot, 0.16 s | 0.63 | 0.35 m |
+  | hands then feet, long reach, 0.18 s | 0.90 | 0.51 m |
+  | hand, foot, hand, foot, long reach, 0.12 s | 1.11 | 0.75 m |
+
+- So **a brisk crawl is about 1.1 m/s, and a low one 0.65 to 0.9**. A crawl IS
+  crouched: the chest rides a quarter to three quarters of a metre up. A crawling
+  body is about 1.6 m from leading hand to trailing foot, so it is wholly off a piece
+  (L + 1.6) / speed after first touching it: 3.3 s for a 2.1 m piece at the brisk
+  pace, 3.5 s for a 1.52 m piece at 0.9.
+- This is a script, not a person. A person who lunges will be faster.
+
+### The shared look and rule
+
+- **Rule:** the game's existing breaking hold (it gives way `t` seconds after the
+  first hand or foot is on it, falls in pieces, comes back in its own place 8 s
+  later). Two new kinds carry it: `rusty` (iron rusted through) and `crazed` (a
+  cracked crystal plate), beside `brittle` (stone) and `rotten` (wood).
+- **Look, drawn by the game on every `brittle`, `rusty` and `crazed` piece** (`_crack`
+  in `stages/peak/peak.gd`): at rest it is cracked through in the ink of its material
+  and has a corner gone. Once touched a second, denser set of cracks appears, it
+  shudders harder as its time runs out, and it sheds dust (glitter for crystal). It
+  goes with a burst (sparks and a clang for iron).
+- This is a code-drawn look on plain shapes, not modelled damage. Cracked pieces for
+  the four materials are asked for in `MODEL_REQUESTS.md`.
+- Rotten planks keep the kit's own rotten look. Icicles and snow bridges are as they
+  were (areas Parker has not played).
+
+### Note 16: the first pipe's two dark sections
+
+- **State:** done, seen in the game.
+- **What changed:** the two 1.5 m grease stretches of challenge 2.1 are `rusty`
+  (`tools/peak/areas/a2.py`): a hand holds, and 1.0 s later the section snaps and
+  falls to the river.
+- **Watched:** a hand on the first section was let go at 1.01 s; the section was back
+  7.8 s after it broke. The chain past the second section is untouched.
+- **Pictures:** `16_pipe_before.jpg`, `16_pipe_at_rest.jpg`, `16_pipe_touched.jpg`,
+  `16_pipe_breaks.jpg`.
+- **Not checked:** the 1.5 m lunge across a missing section (it is the lunge the
+  challenge already had).
+
+### Note 24: the catwalk before the dam
+
+- **State:** done, crossed in the game by the scripted crawl.
+- **What changed (`a2.py`):** of 34 m, 22.2 m now breaks, in eleven pieces of 1.85 to
+  2.2 m. Solid: a 2 m landing at each end and two 2 m rest plates. The three 1.3 m
+  gaps are where they were. Each piece gives way `FLOOR_T` = 3.4 s after first touch.
+- **The delay is from the measurement above**, not the holds' 1.2 s (at which no
+  crawl could have crossed a single piece).
+- **Watched:** the crawl made each stretch: the two pieces from the west landing in
+  4.2 s (1.04 m/s), the two before the first rest plate in 2.7 s, and the long run of
+  five pieces, 10.5 m, in 12.1 s (0.88 m/s). Standing still on a piece: in the river
+  4.4 s after first holding it.
+- **The crawl could not cross the 1.3 m gaps** (it does not lunge). Those gaps were
+  there before and were not changed.
+- **Pictures:** `24_catwalk_before.jpg`, `24_catwalk_at_rest.jpg`,
+  `24_catwalk_close.jpg` (the red landing against two breaking pieces),
+  `24_catwalk_crawled.jpg`.
+
+### Note 31: the prism's shelves
+
+- **State:** done, seen in the game.
+- **What changed (`a3.py`):** the eight shelves are `crazed` crystal plates, pale
+  with purple cracks, not tan blocks. 1.3 s where it was 0.8, for these eight only.
+- **The scale, in order:** each shelf plays its own note, `crystal_chime_01` at the
+  bottom to `_08` at the top. It used to pick one of the eight at random.
+- **Watched:** the first shelf let go at 1.32 s. The probe read the eight shelves'
+  notes bottom to top: 1 to 8.
+- **Pictures:** `31_shelves_before.jpg`, `31_shelves_at_rest.jpg`,
+  `31_shelf_touched.jpg` (cracks spread, glitter falling), `31_shelf_breaks.jpg`.
+- **Not checked:** the sound of the scale. I can't hear it.
+- **Not done:** shards in place of boxes for the falling pieces (the pieces are the
+  game's usual chunks, in the shelf's colour, with a burst of glitter).
+
+### Note 53: the altar's beam and cross
+
+- **State:** done, crossed in the game by the scripted crawl.
+- **What changed (`a5.py`):** the beam is six pieces of cracked stone, 1.52 m each,
+  each giving way `BEAM_T` = 3.5 s after first touch. The cross turns at 6.4 rpm.
+- **Watched:** the cross turned 77.1 degrees in 2 s: 6.43 rpm, an arm every 2.33 s.
+  Three crawls from the threshold to the far end, the cross turning: the brisk one
+  crossed in 8.2 s, the low one in 10.2 s, the lowest in 13.3 s. None was knocked
+  out, the brisk one included (chest 0.75 m up, the arm's tip 0.5 m over the beam's
+  middle): the knock-out reads the middle of the head, chest and hips, and a crawl's
+  are under the arm.
+- **So the delay is not the hard part here; standing up is.** If Parker wants the
+  beam itself to press harder, `BEAM_T` is the number.
+- **Pictures:** `53_beam_before.jpg`, `53_beam_at_rest.jpg`,
+  `53_beam_after_a_crawl.jpg`.
+- **Not checked, and it matters:** the climb up the east wall after the beam. An arm
+  now brushes that wall every 2.3 s where it was every 9.4. Nothing tried it.

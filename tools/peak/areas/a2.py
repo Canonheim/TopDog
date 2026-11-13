@@ -68,8 +68,13 @@ A.water((-252, RIV_B, -244, RIV_S), RIV_S, flow=(2.4, 0.0))  # it quickens at th
 # ---------------------------------------------------------------- 2.1 El Borde
 PY = 94.5  # the pipes: a body hanging from them (2.1 m) clears the pier's peak
 A.beam((-229.5, 92.0), (-233.5, PY), 0.3, "paint")  # up from the ledge
-for x0, x1, k in ((-237.5, -233.5, "paint"), (-239.0, -237.5, "grease"), (-242.5, -239.0, "paint"),
-                  (-244.0, -242.5, "grease"), (-253.0, -244.0, "paint")):
+# (Parker 11-12: "make these dark parts breakable pieces". The two 1.5 m stretches were
+# grease: dark, slick, a hand on them held nothing. Dark on a dark cave did not say
+# "slippery". They are iron rusted through now: you can take one, and a second later it
+# snaps and falls in the river, and is back 8 s after. So each is a stepping stone if you
+# keep moving, and the 1.5 m lunge again if you break it and wait.)
+for x0, x1, k in ((-237.5, -233.5, "paint"), (-239.0, -237.5, "rusty"), (-242.5, -239.0, "paint"),
+                  (-244.0, -242.5, "rusty"), (-253.0, -244.0, "paint")):
     A.beam((x0, PY), (x1, PY), 0.3, k)
 A.rope("last_chance", (-246.6, PY - 0.2), 2.5, kind="chain")  # THE ONE MERCY: its end 0.8 m over the water. (At 0.3 m a limp body drifting under it was caught without trying: tests/peak_drop. It has to be reached for.)
 A.challenge("2.1", "El Borde", (-229.0, 90.0), 2, "X",
@@ -236,12 +241,34 @@ A.challenge("2.10", "La Cascada Chica", (-381.5, 138.0), 4, "B",
 US = 151.0
 airbox(-425.5, 149.5, -392, 158)
 A.water((-425.5, 149.5, -392, US), US, flow=(1.2, 0.0))
-slab(-404, -391.5, 153.0, "iron", t=0.4)
-slab(-407.3, -405.3, 153.0, "iron", t=0.4)
-A.ledge(-409.3, -407.3, 153.0, "rotten", t=0.3)  # the plank that creaks
-slab(-411.5, -409.3, 153.0, "iron", t=0.4)
-slab(-418.5, -412.8, 153.0, "iron", t=0.4)
-slab(-425.5, -419.8, 153.0, "iron", t=0.4)
+# MOSTLY BREAKABLE FLOOR (Parker 11-12: "make this area out of mostly breakable floor.
+# There is only one breakable thing here"). It was five slabs of solid iron and one plank
+# that broke: 2 m in 34. Now 22 m of it breaks, in pieces about 2 m long, rusted through.
+# What stays solid: a landing at each end and two rest plates. The three 1.3 m gaps stay.
+# A piece gives way FLOOR_T after the first hand or foot is on it and is back 8 s later.
+# FLOOR_T is from a measurement, not a guess: a climber crawls a level floor at up to
+# 1.1 m/s and is about 1.6 m from leading hand to trailing foot, so it is wholly off a
+# 2.1 m piece 3.3 s after first touching it. 3.4 s: move briskly and you are across; stop
+# and it drops you in the river, which runs back to the lip of La Cascada Chica.
+FLOOR_T = 3.4
+
+
+def weak(x0, x1):
+    A.ledge(x0, x1, 153.0, "rusty", t=0.3, hold={"type": "crumble", "t": FLOOR_T, "respawn": 8.0})
+
+
+slab(-393.5, -391.5, 153.0, "iron", t=0.4)                  # the landing at the top of the cascade
+for k in range(5):
+    weak(-404.0 + 2.1 * k, -404.0 + 2.1 * (k + 1))          # x -404 .. -393.5
+slab(-407.3, -405.3, 153.0, "iron", t=0.4)                  # a rest plate
+weak(-409.3, -407.3)                                        # (it was the one plank that creaked)
+weak(-411.5, -409.3)
+slab(-414.8, -412.8, 153.0, "iron", t=0.4)                  # a rest plate
+weak(-416.65, -414.8)
+weak(-418.5, -416.65)
+weak(-421.7, -419.8)
+weak(-423.6, -421.7)
+slab(-425.5, -423.6, 153.0, "iron", t=0.4)                  # the landing on the dam's apron
 
 # ================================================================ LA PRESA
 # Five lifts up the stepped face of the dam. Each rises 1.0 m while its crank is wound

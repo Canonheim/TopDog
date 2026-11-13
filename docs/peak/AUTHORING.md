@@ -121,7 +121,7 @@ hard hit from it knock a climber out.
 
 | | |
 |---|---|
-| `{"type": "crumble", "t": 1.2, "respawn": 8}` | breaks t seconds after it's taken (kinds `rotten`, `brittle`, `icicle`, `snowbridge` carry it) |
+| `{"type": "crumble", "t": 1.2, "respawn": 8}` | breaks t seconds after it's taken (kinds `rotten`, `brittle`, `rusty`, `crazed`, `icicle`, `snowbridge` carry it). The game draws `brittle`, `rusty` and `crazed` cracked, and cracks them further once touched. A FLOOR you walk needs a long `t`: a climber crawls at about 1 m/s and is 1.6 m long, so being wholly off a 2 m piece takes 3.2 s (measured 11-12) |
 | `{"type": "timed", "t": 2.0, "rearm": 0.6}` | lets go of you after t seconds (kinds `hot`, `hotpipe`, `ice`) |
 | `{"type": "wet", "on": 2.0, "off": 3.0, "phase": 0}` | slick for `on` seconds, grip for `off` (spray). With `"look": "water"` it turns a shiny wet blue-grey and drips, not the mud's near-black; and `A.drips(...)` with `Area.drip_phase(...)` shows a fat drip running down to it as the cause (La Cortina, 1.11) |
 | `{"type": "kick", "v": [vx, vy]}` | grabbing it throws you at that velocity (the burros) |
