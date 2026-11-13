@@ -132,7 +132,7 @@
 <tr><td>69</td><td><a href="#n69">Los Riscos: "what is the puzzle here?" (challenge 7.8)</a></td><td><span class="chip c-parked">Answered. Parker: a good puzzle; keep it</span></td></tr>
 <tr><td>70</td><td><a href="#n70">Los Riscos: the tail wind should cover the whole area, up to the rock on the right</a></td><td><span class="chip c-plan">Plan (one number); not sent to the thread</span></td></tr>
 <tr><td>71</td><td><a href="#n71">The mine: a little cave room with a frog, at the west end of the Sump</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
-<tr><td>72</td><td><a href="#n72">The station: pull the lever to start the cart</a></td><td><span class="chip c-plan">With the thread now, as part of the station test</span></td></tr>
+<tr><td>72</td><td><a href="#n72">The station: pull the lever to start the cart</a></td><td><span class="chip c-ask">Works in the game, by its test climber; its real model and its place in front of the cart are still to come</span></td></tr>
 <tr><td>73</td><td><a href="#n73">The cart ride: a real hop over a broken rail, with dust when it lands</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
 <tr><td>74</td><td><a href="#n74">La Gruta de Cristal: the column's rings become collars round the column</a></td><td><span class="chip c-ask">Needs a plan for how it plays; not sent to the thread</span></td></tr>
 <tr><td>75</td><td><a href="#n75">El Templo: the hall of statues gets broken arms, with only hands to hold</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
@@ -2577,7 +2577,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
 <div class="note" id="n72">
   <div class="head"><span class="num">72</span><h3>The station: pull the lever to start the cart</h3><span class="time">11-13</span></div>
   <blockquote>"make it so you have to pull the lever to start the cart, regardless of if you are in the cart. If you pull the lever it goes. It controls like the chair whaere you are hlding the activated limb"</blockquote>
-  <p><span class="chip c-plan">With the thread now, as part of the station test</span></p>
+  <p><span class="chip c-ask">Works in the game, by its test climber; its real model and its place in front of the cart are still to come</span></p>
   <h4>What is going on</h4>
   <p>This came out of a design question about the station. Today the red brake lever beside the cart is scenery. The cart starts by itself a second after you sit in it. The challenge list always said the lever should let it roll.</p>
   <h4>Plan</h4>
@@ -2588,6 +2588,31 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
     <li>The lever has to be reachable from the platform and from inside the cart. Its place is drawn on the station's design page.</li>
     <li>To decide when it is built: if the cart leaves without you, does it come back, or do you walk the tunnel? The tunnel can be walked today.</li>
   </ul>
+  <h4>After (from the thread)</h4>
+  <p>Commit 24d683f, built as part of the station test. Nothing played by a person.</p>
+  <ul>
+    <li><b>The cart no longer starts when you get in.</b> The test climber stood in it for 3 seconds and it stayed.</li>
+    <li><b>The lever is taken as the arena's chair is:</b> by the limb whose button is down, when that hand or foot comes within 0.3 m of the grip (the top 0.4 m), and kept while the button is held. While held it follows the hand round its pivot.</li>
+    <li><b>Drawn all the way</b> (0.7 m at its top) it drops into its second notch with a clunk, and the cart goes whether or not anyone is in it. Let go short of that and it springs back.</li>
+    <li>It stays over while the cart is away and goes back, with a quieter clunk, when the cart is home.</li>
+    <li><b>Watched:</b> from inside the cart the right hand took the handle and threw it in 0.28 seconds, and the cart rolled. From the deck, with nobody in the cart, the left hand threw it in 0.8 seconds and the cart left without the climber. The cart was home 42.8 seconds after the pull.</li>
+    <li>The cart's rule for coming home is the old one, unchanged: 25 seconds after it stops once you are 22 m from it, or 75 seconds if you stay near and are off it. So a cart that leaves without you does come back.</li>
+    <li>The same taking and keeping is ready for the dam's winch (note 25).</li>
+  </ul>
+  <figure>
+    <img src="after/72_lever_half_way.jpg" alt="After: in the cart, a hand on the lever, half way over. The dark block and bar are a stand-in; the tan and brown blocks behind are stand-ins for the station house and the crane.">
+    <figcaption>After: in the cart, a hand on the lever, half way over. The dark block and bar are a stand-in; the tan and brown blocks behind are stand-ins for the station house and the crane.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/72_cart_going.jpg" alt="After: the lever over, the cart going.">
+    <figcaption>After: the lever over, the cart going.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/72_pulled_from_the_deck.jpg" alt="After: pulled from the deck, with nobody in the cart.">
+    <figcaption>After: pulled from the deck, with nobody in the cart.</figcaption>
+  </figure>
+  <p><b>Still to come, from the station test:</b> the lever's real model (a red shaft 1.7 m tall with a pale grip, in an iron quadrant with two notches) has been made and is not in the game yet. And the lever moves from behind the cart, where the cart hides most of it, to just in front of the near rail, where the whole of it shows. The thread has been told.</p>
+  <p>The thread points out that nothing yet tells a player the cart needs the lever. The station's design answers that with a red arrow painted on the station house wall above the handle, which is being modelled.</p>
 </div>
 
 <div class="note" id="n73">
