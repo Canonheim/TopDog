@@ -95,6 +95,7 @@
 <tr><td>32</td><td><a href="#n32">La Gruta de Cristal: the little white block should be a tiny crystal bonsai tree</a></td><td><span class="chip c-plan">Plan, needs a model; not sent to the thread</span></td></tr>
 <tr><td>33</td><td><a href="#n33">La Gruta de Cristal: the flat ceiling crystals should be the same purple</a></td><td><span class="chip c-plan">Plan (part of the cave's restyle), not sent to the thread</span></td></tr>
 <tr><td>34</td><td><a href="#n34">La Gruta de Cristal: the spikes on the column's rings should pop in and out</a></td><td><span class="chip c-ask">Plan, one question; not sent to the thread</span></td></tr>
+<tr><td>35</td><td><a href="#n35">El Jardín de Hongos: a weird static noise</a></td><td><span class="chip c-plan">Likely cause found, not heard by me; not sent to the thread</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes from 12 on wait here until Parker says to send them.</p>
 
@@ -1005,13 +1006,13 @@
   <h4>What is going on</h4>
   <p>You are right. Challenge 3.6 is eight small shelves up a 12 m diagonal, each 1 m wide. A shelf shatters 0.8 seconds after you take it and comes back 8 seconds later. It was meant as a sprint.</p>
   <p>Nothing about them says so. They are drawn as plain tan blocks, like bricks, in a cave where nothing else is tan. There are no cracks, and nothing changes between taking one and it going.</p>
-  <p>One more thing I found: the design says each shelf chimes one note higher than the last, a rising scale as you climb. As far as I can find, that is not in the game. Every shelf plays the same chime.</p>
+  <p>One more thing I found: the design says each shelf chimes one note higher than the last, a rising scale as you climb. The eight notes were made and are in the game, but it picks one of them at random every time a shelf is taken. So the notes come in any order and never rise.</p>
   <h4>Plan</h4>
   <ul>
     <li><b>Half a second longer:</b> 1.3 seconds from taking a shelf to it shattering, where it is 0.8. For these eight shelves only. The same breaking kind is used in the temple, on the cliffs and at the summit, and those stay at 0.8 until you have played them.</li>
     <li><b>They look breakable before you touch them.</b> Thin plates of pale crystal, a little see-through, already crazed with fine cracks and with a chipped corner. In the cave's purple, not tan, once notes 26 and 30 restyle the cave.</li>
     <li><b>You watch it go.</b> From the moment you take one, the cracks spread across it and brighten over the 1.3 seconds, it trembles, and small chips start to fall. Then it bursts into shards with a puff of glitter, not boxes.</li>
-    <li><b>You hear it go.</b> A tinkle that rises as the cracks spread, and the rising scale the design asked for: each shelf one note higher, so the eight ring a full scale when you run them cleanly.</li>
+    <li><b>You hear it go.</b> A tinkle that rises as the cracks spread, and the rising scale the design asked for: each shelf plays its own note, one higher than the last, so the eight ring a full scale when you run them cleanly. The notes already exist; they only need playing in order.</li>
     <li><b>One breakable language for the whole mountain.</b> This, the pipe sections of note 16 and the catwalk of note 24 should share the same tells: cracked at rest, trembling and cracking further once touched. Each in its own material.</li>
     <li>The returning shelf grows back in its own place (note 1's fix, already done).</li>
   </ul>
@@ -1075,6 +1076,27 @@
     <li>The kit's ring models have their spikes built in, so the spikes need to become separate pieces. A small model change, through the Top Dog session.</li>
   </ul>
   <div class="ask"><b>One question for Parker:</b> is the popping meant to make this harder (a spike can drop you while you ride it, so you must change spikes in time), or mostly to make the rings feel alive (they pop where you are not relying on them)? I have written it as harder: any spike can go in under you, with the shake as your warning.</div>
+</div>
+
+<div class="note" id="n35">
+  <div class="head"><span class="num">35</span><h3>El Jardín de Hongos: a weird static noise</h3><span class="time">23:17</span></div>
+  <blockquote>"the garden green place has weird static noise"</blockquote>
+  <p><span class="chip c-plan">Likely cause found, not heard by me; not sent to the thread</span></p>
+  <h4>What is going on</h4>
+  <p>I can't hear the game, so this is from how the sounds were made. Every area has a background bed that loops every 12 seconds under the music. The mushroom garden's bed (<code>amb_a4.wav</code>) was built by a script, and its main layer is described in the sound list as random clicks pushed through high, ringing filters, meant as spores fizzing. Random clicks through high filters is very close to how you would make radio static on purpose. On top of that it has a few plops, three insect chirrs and a low room tone.</p>
+  <p>Two things make it stand out more than the other beds:</p>
+  <ul>
+    <li>The garden is the loudest of the areas so far. Its level is set 1 to 3 decibels above the mine, the black waters and the crystal cave.</li>
+    <li>The crystal cave just before it has a soft, tuned bed (faint glassy tones). Walking from that into a fizz is a sharp change.</li>
+  </ul>
+  <p>All of the Peak's sound was generated overnight and, as the showcase notes said, nobody had listened to it. The sound list itself flags the hissing sounds as weak.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>Confirm it first.</b> Play <code>amb_a4.wav</code> on its own. If that is the static, the cause is settled. If it is not, the next suspects are the garden's steady effects: the spore puffs and the updraughts' wind.</li>
+    <li><b>Rebuild the garden's bed without the fizz.</b> A soft damp garden: slow drips, the plops, a few insect chirrs, a low breath of air, and something gentle and tuned to the music's key, as the crystal cave has.</li>
+    <li><b>Bring its level down</b> to sit with its neighbours.</li>
+    <li>Dan is doing the audio pass. This may be his to replace with a real recording or his own bed. If so, the stopgap is simply to turn this one layer off until he does.</li>
+  </ul>
 </div>
 
 </main>
