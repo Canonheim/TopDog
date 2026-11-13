@@ -186,8 +186,10 @@ A.finish((POST_X - 0.75, 1006.15, POST_X + 0.75, 1007.65))  # the belt, on the p
 A.cam((-363, 989.5, -352.6, 1009), half_h=8.0, bias=(2.0, -1.5))
 
 # ================================================================ the picture
-# Sky, sun and the cloud sea.
-A.card([(-420, 940), (-290, 940), (-290, 1040), (-420, 1040)], z=-40.0, tone="#FFE7B0", edge=False)
+# Sun and the cloud sea. (TRIAL, Parker's far-facade rule, 11-13: the area's own sky is out,
+# so the Peak's real sea of cloud and far peaks show behind the summit
+# (stages/peak/peak_backdrop.gd). It was one pale card, 130 m by 100 m, at z -40 in "#FFE7B0",
+# from (-420, 940) to (-290, 1040), with no edge.)
 A.card(ngon(-352.0, 1003.0, 11.0, 24), z=-36.0, tone="#FFF6D8", edge=False)  # the sun, behind the bell
 A.card([(-420, 940), (-290, 940), (-290, 961), (-305, 964), (-322, 961.5), (-341, 965.5), (-360, 962), (-380, 966), (-400, 962.5), (-420, 965)],
        z=-22.0, tone="#FFF1D6")
