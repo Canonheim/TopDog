@@ -168,6 +168,7 @@ class Area:
         self.solids, self.movers, self.ropes, self.bodies = [], [], [], []
         self.zones, self.spawners, self.cards, self.decos = [], [], [], []
         self.lights, self.cams, self.fx, self.statues, self.challenges = [], [], [], [], []
+        self.boards = []  # the boards rock falls leave by (see `board`)
         self.openings = []  # [x0, y0, x1, y1]: where this area's shell is open on purpose
         self._ids = set()
         self.warnings = []
@@ -457,15 +458,57 @@ class Area:
             z["flash"] = flash
         self.zones.append(z)
 
-    def spawner(self, kind, at, period, vel=(0.0, 0.0), phase=0.0, r=0.45, life=8.0, warn=1.2, mass=30.0, hit=None):
+    def spawner(self, kind, at, period=None, vel=(0.0, 0.0), phase=0.0, r=0.45, life=8.0, warn=1.2, mass=30.0, hit=None,
+                times=None, loop=None):
         """Things that fall or roll on a timer. kind: rock | icicle | boulder | slab.
         A hit at speed knocks a climber out. hit: how near its middle must come to your
-        head, chest or hips to knock you out (the game's own is r + 0.32)."""
+        head, chest or hips to knock you out (the game's own is r + 0.32).
+        Either a steady `period`, or a WRITTEN RHYTHM: `times`, the seconds of a `loop`-second
+        loop at which it drops (several sources sharing one loop make one written pattern:
+        see `rhythm`)."""
+        if times is not None:
+            assert loop and all(0.0 <= t < loop for t in times) and list(times) == sorted(times), "times must be sorted, inside the loop"
+            period = loop / len(times)
+        assert period, "a spawner needs a period or its times"
         s = {"kind": kind, "at": _pt(at), "period": _f(period), "vel": _pt(vel), "phase": _f(phase),
              "r": _f(r), "life": _f(life), "warn": _f(warn), "mass": _f(mass)}
         if hit is not None:
             s["hit"] = _f(hit)
+        if times is not None:
+            s["times"] = [_f(t) for t in times]
+            s["loop"] = _f(loop)
         self.spawners.append(s)
+
+    @staticmethod
+    def rhythm(gaps, order):
+        """A written rock rhythm, for `spawner(times=..., loop=...)`. gaps: the seconds from
+        each drop to the next, round the loop. order: which source makes each drop, a
+        letter each ("ABAAB..."), the first at second 0. Returns ({letter: [its times]},
+        the loop's length)."""
+        assert len(gaps) == len(order)
+        out, t = {}, 0.0
+        for gap, who in zip(gaps, order):
+            out.setdefault(who, []).append(round(t, 3))
+            t += gap
+        return out, round(t, 3)
+
+    def board(self, p0, p1, p2=None, throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=None, t=0.13, model="plank"):
+        """A LITTLE MESSED UP BOARD at the foot of a rock fall (Parker 11-12: "the rocks
+        shouldnt despawn, they should bounce into the background off a little messed up
+        board"). It lies from p0 (its end on the ground, toward the fall) up to p1 (its
+        propped end); p2, if given, is the tip of its snapped-off end past the prop.
+        A falling thing from any spawner of this area that touches it is thrown at `throw`
+        (vx, vy, vz m/s; vz negative is away from you, into the background). From that
+        moment it touches nothing and can knock nobody out. It settles `depth` behind the
+        climb and is removed once it has dropped under y = `gone`, which must be somewhere
+        hidden (behind the floor the board stands on). The board is solid grip wood, drawn
+        with `model` (a kit board 2 m long, its zero the middle of its underside)."""
+        b = {"a": _pt(p0), "b": _pt(p1), "throw": [_f(v) for v in throw], "depth": _f(depth),
+             "gone": _f(gone if gone is not None else min(p0[1], p1[1]) - 1.0), "t": _f(t), "model": model}
+        if p2 is not None:
+            b["c"] = _pt(p2)
+        self.boards.append(b)
+        return b
 
     def finish(self, rect):
         self.zones.append({"type": "finish", "rect": self._rect(rect)})
@@ -558,7 +601,7 @@ class Area:
         return {"id": self.id, "name": self.name, "palette": self.palette, "region": list(self.region),
                 "entry": list(self.entry), "exit": list(self.exit), "openings": self.openings,
                 "solids": self.solids, "movers": self.movers, "ropes": self.ropes, "bodies": self.bodies,
-                "zones": self.zones, "spawners": self.spawners, "cards": self.cards, "decos": self.decos,
+                "zones": self.zones, "spawners": self.spawners, "boards": self.boards, "cards": self.cards, "decos": self.decos,
                 "lights": self.lights, "cams": self.cams, "fx": self.fx, "statues": self.statues,
                 "challenges": self.challenges}
 

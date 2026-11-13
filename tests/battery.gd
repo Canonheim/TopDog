@@ -3874,6 +3874,15 @@ func _run_peak() -> void:
 	var pk := _peak("res://tests/peak_lab/")
 	var hz := Engine.physics_ticks_per_second
 	t("peak: the lab loads (1 area, movers, ropes, zones)", pk.areas.size() == 1 and pk.things.movers.size() == 5 and pk.things.ropes.size() == 2 and pk.zones.waters.size() == 2)
+	# ---- a rock source on a written rhythm (the cave-in's, 11-12): drops on its list, round its loop
+	var beat := {"times": [0.0, 5.0, 10.5], "loop": 12.0}
+	var d0: Array = PeakThings._drops(beat, 4.9)
+	var d1: Array = PeakThings._drops(beat, 5.0)
+	var d2: Array = PeakThings._drops(beat, 11.0)
+	var d3: Array = PeakThings._drops(beat, 12.0)
+	t("peak spawner: a written rhythm drops on its list and loops", d0[0] == 1 and is_equal_approx(d0[1], 0.1) and d1[0] == 2 and d2[0] == 3 and is_equal_approx(d2[1], 1.0) and d3[0] == 4, [d0, d1, d2, d3])
+	var steady: Array = PeakThings._drops({"period": 4.0}, 9.0)
+	t("peak spawner: a steady period still counts as it did", steady[0] == 2 and is_equal_approx(steady[1], 3.0), steady)
 	# ---- the rope holds a hanging climber
 	var rope: Dictionary = pk.things.ropes[0]
 	var seg: RigidBody3D = rope.segs[rope.segs.size() - 2]

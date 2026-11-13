@@ -41,6 +41,7 @@ var ropes: Array = []
 var bodies := {}  # id -> {rb, last_angle, turned, area}
 var holds: Array = []  # Dictionary per hold with a behaviour
 var spawners: Array = []
+var boards: Array = []  # the boards a rock fall leaves by: {def, area, pts, pivot, reach}
 var statues: Array = []
 var _anchors := {}  # area id -> StaticBody3D the joints tie to
 var _grip_on := {}  # limb index -> the timed hold it's on
@@ -71,6 +72,8 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 		_build_rope(a, r, root)
 	for s in a.get("spawners", []):
 		spawners.append({"def": s, "area": str(a.id), "root": root, "n": -1, "live": [], "warned": -1})
+	for b in a.get("boards", []):
+		_build_board(a, b, root)
 	for s in a.get("statues", []):
 		_build_statue(a, s, root)
 
@@ -446,8 +449,8 @@ func tick(delta: float) -> void:
 	_tick_spawners(delta)
 
 
-func frame(_delta: float) -> void:
-	pass
+func frame(delta: float) -> void:
+	_fly_thrown(delta)
 
 
 ## A GRIP BREAKS BEFORE THE BODY DOES (Parker 11-12: "a certain amount of force should
@@ -992,6 +995,32 @@ func _body_centre(body: Node3D) -> Vector2:
 
 # ---------------------------------------------------------------- the things that fall
 
+## How many drops a source has made by second `ph` of the course's clock, and how long
+## until its next: on a steady `period`, or on its WRITTEN RHYTHM (`times`: the seconds
+## of a `loop`-second loop at which it drops. Parker 11-12 asked for a second more between
+## the cave-in's rocks and a half more after a double: two free timers can't say that,
+## a written list can).
+static func _drops(def: Dictionary, ph: float) -> Array:
+	if def.has("times"):
+		var times: Array = def.times
+		var loop := maxf(0.5, float(def.loop))
+		var cyc := floorf(ph / loop)
+		var within := ph - cyc * loop
+		var k := 0
+		while k < times.size() and float(times[k]) <= within:
+			k += 1
+		var next := (float(times[k]) - within) if k < times.size() else (loop - within + float(times[0]))
+		return [int(cyc) * times.size() + k, next]
+	var period := maxf(0.5, float(def.period))
+	return [int(floor(ph / period)), period - fposmod(ph, period)]
+
+
+const FALLER_G := 0.55  # a faller's gravity, against the engine's
+
+
+## A live faller's row: [body (once thrown: just its look), the second it gives up, the second a board threw it (-1:
+## not yet), its thrown velocity, its thrown spin, how long it has lain still, the depth
+## it settles at, the height it is gone under].
 func _tick_spawners(delta: float) -> void:
 	var t := peak.clock
 	var c := peak.player
@@ -999,39 +1028,206 @@ func _tick_spawners(delta: float) -> void:
 		if not bool(peak._area_active.get(sp.area, true)):
 			continue
 		var def: Dictionary = sp.def
-		var period := maxf(0.5, float(def.period))
 		var at := Peak.v2(def.at)
-		var ph := t + float(def.get("phase", 0.0))
-		var n := int(floor(ph / period))
+		var drops: Array = _drops(def, t + float(def.get("phase", 0.0)))
+		var n: int = drops[0]
 		var warn := float(def.get("warn", 1.2))
 		var near := c != null and peak.player_at().distance_to(at) < 45.0
-		if near and int(sp.warned) != n and fposmod(ph, period) > period - warn:
+		if near and int(sp.warned) != n and float(drops[1]) < warn:
 			sp.warned = n
 			peak.audio.play("dust_trickle" if str(def.kind) in ["rock", "boulder"] else "ice_tick", at, 2.0)
+		if int(sp.n) == -1:
+			sp.n = n  # (the first tick only takes its place in the rhythm: every source used to drop at once on a load)
 		if n != int(sp.n):
 			sp.n = n
 			if near:
 				_spawn_faller(sp, def, at)
+		var r := float(def.get("r", 0.45))
+		var has_board := not _area_boards(str(sp.area)).is_empty()
 		var keep: Array = []
-		for row in sp.live:
-			var rb: RigidBody3D = row[0]
-			if not is_instance_valid(rb):
+		for row: Array in sp.live:
+			if row[0] == null or not is_instance_valid(row[0]):
 				continue
-			if t > float(row[1]):
+			if float(row[2]) >= 0.0:
+				# Thrown by a board: it is scenery now (frame() flies it). The net under one
+				# that never dropped out of sight:
+				if t - float(row[2]) > 6.0:
+					(row[0] as Node).queue_free()
+					continue
+				keep.append(row)
+				continue
+			var rb: RigidBody3D = row[0]
+			var fp := Vector2(rb.position.x, rb.position.y)
+			if has_board:
+				var board := _board_under(str(sp.area), fp, r)
+				if not board.is_empty():
+					_board_throw(board, row)
+					keep.append(row)
+					continue
+				# Where the fall has a board, nothing blinks out: a rock that gave up or came
+				# to rest short of it breaks up where it lies.
+				row[5] = (float(row[5]) + delta) if rb.linear_velocity.length() < 0.35 else 0.0
+				if t > float(row[1]) or float(row[5]) > 1.5:
+					_break_faller(rb, r)
+					continue
+			elif t > float(row[1]):
 				rb.queue_free()
 				continue
 			keep.append(row)
 			if c != null and _ko_wait <= 0.0 and c.knockout_left <= 0.0 and rb.linear_velocity.length() > 2.2:
-				var fp := peak.local_of(Vector2(rb.global_position.x, rb.global_position.y))
 				for pname in ["head", "chest", "pelvis"]:
 					var b: RigidBody3D = c.bodies.get(pname)
-					if b != null and peak.local_of(Climber.pos2(b)).distance_to(fp) < float(def.get("hit", float(def.get("r", 0.45)) + 0.32)):
+					if b != null and peak.local_of(Climber.pos2(b)).distance_to(fp) < float(def.get("hit", r + 0.32)):
 						_ko_wait = 2.5
 						c.knock_out()
 						peak.audio.play("rock_hit", fp, 3.0)
 						peak.audio.play("knock_out_bonk", fp, 2.0)
 						break
 		sp.live = keep
+
+
+# ---------------------------------------------------------------- the board a rock fall leaves by
+
+## A LITTLE MESSED UP BOARD (Parker 11-12: "the rocks shouldnt despawn, they should bounce
+## into the background off a little messed up board"). A snapped board propped at the foot
+## of a rock fall: solid grip to a climber, and a falling thing that touches it is thrown
+## up and back behind the climb, where it can hit nobody, and is removed only once it has
+## dropped out of sight. Data: `A.board(...)` in tools/peak/peaklib.py.
+func _build_board(a: Dictionary, def: Dictionary, root: Node3D) -> void:
+	var pts: Array = [Peak.v2(def.a), Peak.v2(def.b)]
+	if def.has("c"):
+		pts.append(Peak.v2(def.c))
+	var thick := float(def.get("t", 0.13))
+	var sb: StaticBody3D = peak._static_body(1.0)
+	root.add_child(sb)
+	# It dips about its prop when a rock lands on it: the drawn pieces hang off a pivot there.
+	var pivot := Node3D.new()
+	pivot.position = Vector3((pts[1] as Vector2).x, (pts[1] as Vector2).y, 0)
+	root.add_child(pivot)
+	for i in pts.size() - 1:
+		var p0: Vector2 = pts[i]
+		var p1: Vector2 = pts[i + 1]
+		var along := (p1 - p0).normalized()
+		if along.x < 0.0:
+			along = -along  # (a board has no front: lay the model left to right)
+		var half := Vector2(-along.y, along.x) * thick * 0.5
+		peak._add_shapes(sb, PackedVector2Array([p0 - half, p1 - half, p1 + half, p0 + half]) if p1.x > p0.x else PackedVector2Array([p1 - half, p0 - half, p0 + half, p1 + half]), -0.45, 0.45)
+		var mid := (p0 + p1) * 0.5
+		var piece: Node3D = Peak.kit(str(def.get("model", "plank")))
+		if piece != null:
+			# (the kit's board is 2 m long, its zero the middle of its underside)
+			piece.scale = Vector3(p0.distance_to(p1) / 2.0, 1.0, 1.0)
+			piece.position = Vector3(mid.x - half.x, mid.y - half.y, 0) - pivot.position
+		else:
+			piece = LuchaKit.box(Vector3(p0.distance_to(p1), thick, 0.9), peak.kind_color(a, "wood").darkened(0.1 * i))
+			piece.position = Vector3(mid.x, mid.y, 0) - pivot.position
+		piece.rotation.z = atan2(along.y, along.x)
+		pivot.add_child(piece)
+	boards.append({"def": def, "area": str(a.id), "pts": pts, "pivot": pivot, "reach": thick * 0.5 + 0.1})
+
+
+func _area_boards(area: String) -> Array:
+	var out: Array = []
+	for b in boards:
+		if str(b.area) == area:
+			out.append(b)
+	return out
+
+
+## The board a falling thing at `p` (radius r) is touching, or {}.
+func _board_under(area: String, p: Vector2, r: float) -> Dictionary:
+	for b in boards:
+		if str(b.area) != area:
+			continue
+		var pts: Array = b.pts
+		for i in pts.size() - 1:
+			var near := Geometry2D.get_closest_point_to_segment(p, pts[i], pts[i + 1])
+			if near.distance_to(p) < r + float(b.reach):
+				return b
+	return {}
+
+
+func _board_throw(board: Dictionary, row: Array) -> void:
+	var rb: RigidBody3D = row[0]
+	var def: Dictionary = board.def
+	# From here it is a drawn thing only: its look goes on without its body, so nothing
+	# can touch it and the physics has no say in its flight.
+	var fly := Node3D.new()
+	fly.transform = rb.transform
+	rb.get_parent().add_child(fly)
+	for ch in rb.get_children():
+		if not ch is CollisionShape3D:
+			rb.remove_child(ch)
+			fly.add_child(ch)
+	rb.queue_free()
+	row[0] = fly
+	row[2] = peak.clock
+	row[3] = Vector3(float(def.throw[0]) * randf_range(0.8, 1.25), float(def.throw[1]) * randf_range(0.92, 1.1), float(def.throw[2]) * randf_range(0.9, 1.1))
+	row[4] = Vector3(randf_range(-3.0, 3.0), randf_range(-2.0, 2.0), randf_range(3.0, 7.0))
+	row[6] = float(def.depth)
+	row[7] = float(def.gone)
+	var at := Vector2(fly.position.x, fly.position.y)
+	peak.audio.play("kick_thwack", at, -5.0, randf_range(0.8, 0.95))
+	peak.audio.play("plank_creak", at, -3.0)
+	# The board dips under the rock and springs back.
+	var pivot: Node3D = board.pivot
+	var dip := -0.16 if ((board.pts[0] as Vector2).x > (board.pts[1] as Vector2).x) else 0.16
+	var tw := pivot.create_tween()
+	tw.tween_property(pivot, "rotation:z", dip, 0.07)
+	tw.tween_property(pivot, "rotation:z", 0.0, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+## A thrown faller's flight, every drawn frame: up and back, to its depth behind the
+## climb, then down out of sight.
+func _fly_thrown(delta: float) -> void:
+	for sp in spawners:
+		for row: Array in sp.live:
+			if float(row[2]) < 0.0 or row[0] == null or not is_instance_valid(row[0]):
+				continue
+			var rb: Node3D = row[0]
+			var v: Vector3 = row[3]
+			v.y -= 9.8 * FALLER_G * delta
+			var p := rb.position + v * delta
+			var depth := float(row[6])
+			if p.z <= depth:
+				p.z = depth
+				v.z = 0.0
+			row[3] = v
+			rb.position = p
+			rb.rotation += (row[4] as Vector3) * delta
+			# Smaller as it goes back (the camera is close: the depth alone hardly shows).
+			var s := lerpf(1.0, 0.6, clampf(p.z / minf(depth, -0.01), 0.0, 1.0))
+			rb.scale = Vector3(s, s, s)
+			if p.y < float(row[7]) and v.y < 0.0:
+				rb.queue_free()
+				row[0] = null
+
+
+## A faller that never reached its board breaks up where it lies (chunks that tumble,
+## shrink and are gone, as a breaking hold's do).
+func _break_faller(rb: RigidBody3D, r: float) -> void:
+	var root: Node3D = rb.get_parent()
+	var at := rb.position
+	rb.queue_free()
+	for i in 6:
+		var ch := RigidBody3D.new()
+		ch.collision_layer = 0
+		ch.collision_mask = Climber.LAYER_WORLD
+		ch.mass = 2.0
+		ch.gravity_scale = 0.75
+		var size := Vector3.ONE * r * randf_range(0.45, 0.7)
+		var cs := CollisionShape3D.new()
+		var bx := BoxShape3D.new()
+		bx.size = size
+		cs.shape = bx
+		ch.add_child(cs)
+		ch.add_child(LuchaKit.box(size, Color("#8C7B6C").darkened(randf_range(0.0, 0.2))))
+		ch.position = at + Vector3(randf_range(-r, r) * 0.5, randf_range(-r, r) * 0.5, randf_range(-0.3, 0.3))
+		ch.linear_velocity = Vector3(randf_range(-1.6, 1.6), randf_range(0.4, 2.2), randf_range(-0.6, 0.6))
+		ch.angular_velocity = Vector3(randf_range(-5, 5), randf_range(-5, 5), randf_range(-6, 6))
+		root.add_child(ch)
+		_debris.append([ch, peak.clock])
+	peak.audio.play("rock_crumble", Vector2(at.x, at.y), 0.0)
 
 
 func _spawn_faller(sp: Dictionary, def: Dictionary, at: Vector2) -> void:
@@ -1044,7 +1240,7 @@ func _spawn_faller(sp: Dictionary, def: Dictionary, at: Vector2) -> void:
 	rb.axis_lock_linear_z = true
 	rb.axis_lock_angular_x = true
 	rb.axis_lock_angular_y = true
-	rb.gravity_scale = 0.55
+	rb.gravity_scale = FALLER_G
 	rb.linear_damp = 0.02
 	var cs := CollisionShape3D.new()
 	var vis: Node3D = null
@@ -1083,5 +1279,5 @@ func _spawn_faller(sp: Dictionary, def: Dictionary, at: Vector2) -> void:
 	var v := Peak.v2(def.get("vel", [0, 0]))
 	rb.linear_velocity = Vector3(v.x, v.y, 0)
 	(sp.root as Node3D).add_child(rb)
-	sp.live.append([rb, peak.clock + float(def.get("life", 8.0))])
+	sp.live.append([rb, peak.clock + float(def.get("life", 8.0)), -1.0, Vector3.ZERO, Vector3.ZERO, 0.0, 0.0, 0.0])
 	peak.audio.play("icicle_drop" if kind == "icicle" else ("snow_whump" if kind == "slab" else "rock_crumble"), at, 1.0)

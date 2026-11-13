@@ -410,6 +410,87 @@ func _w_trackend(_a: Array) -> void:
 	await shot("06_track_end_game_camera")
 
 
+## Notes 9, 10, 11: the cave-in's rocks. One whole loop of the written rhythm, watched:
+## when each rock fell and from which source, where the board threw it, where it went out
+## of sight. rocks:SECONDS (default 46).
+func _w_rocks(a: Array) -> void:
+	var watch_s := float(a[0]) if a.size() > 0 else 46.0
+	pk.warp("1.10")
+	await secs(1.0)
+	stand(Vector2(-228.6, 57.4))  # west along the gallery, out of the rocks' road
+	look(Vector2(-223.6, 60.2), 4.6)
+	await secs(2.0)
+	await shot("09_board_idle")
+	var mine: Array = []
+	for sp in pk.things.spawners:
+		if str(sp.area) == "a1":
+			mine.append(sp)
+	var seen := {}  # instance id -> {src, born, thrown, at, last}
+	var order: Array = []
+	var t0 := pk.clock
+	var shots_left := 3
+	var shot_rock := 0
+	var shot_at := 0.0
+	var worst_low := INF
+	while pk.clock - t0 < watch_s:
+		await get_tree().physics_frame
+		for si in mine.size():
+			for row: Array in mine[si].live:
+				if row[0] == null or not is_instance_valid(row[0]):
+					continue
+				var rb: Node3D = row[0]
+				var id := rb.get_instance_id()
+				if float(row[2]) >= 0.0 and not seen.has(id):
+					for old in seen:  # (thrown, a rock's look goes on as a new node: the same rock)
+						if seen[old].get("row") == row:
+							seen[id] = seen[old]
+							order[order.find(old)] = id
+							seen.erase(old)
+							break
+				if not seen.has(id):
+					seen[id] = {"src": "AB"[si], "born": pk.clock, "thrown": -1.0, "at": Vector2.ZERO, "last": Vector3.ZERO, "rest": 0.0, "row": row}
+					order.append(id)
+				var e: Dictionary = seen[id]
+				e.last = rb.position
+				if float(row[2]) >= 0.0 and float(e.thrown) < 0.0:
+					e.thrown = float(row[2])
+					e.at = Vector2(rb.position.x, rb.position.y)
+					if shot_rock == 0 and order.size() >= 2:
+						shot_rock = id
+						shot_at = pk.clock
+				if float(row[2]) < 0.0 and rb.position.y < 58.6 and rb.position.x < -223.0:
+					worst_low = minf(worst_low, rb.position.x)  # a rock loose on the gallery floor
+		if shot_rock != 0 and shots_left > 0 and pk.clock - shot_at > [1.25, 0.7, 0.2][shots_left - 1]:
+			shots_left -= 1
+			await shot("09_rock_thrown_%d" % (2 - shots_left))
+	var prev := -1.0
+	var left_by_board := 0
+	var first := -1.0
+	var line: Array = []
+	for id in order:
+		var e: Dictionary = seen[id]
+		if first < 0.0:
+			first = float(e.born)
+		var gap := (float(e.born) - prev) if prev >= 0.0 else 0.0
+		prev = float(e.born)
+		var fate := "NOT thrown: last seen at (%.1f, %.1f)" % [e.last.x, e.last.y]
+		if float(e.thrown) >= 0.0:
+			var gone: bool = (e.last as Vector3).y < 57.4 and (e.last as Vector3).z < -2.0
+			fate = "board at (%.1f, %.1f) %.1f s after it fell; last seen (%.1f, %.1f) %.1f m behind the climb%s" % [e.at.x, e.at.y, float(e.thrown) - float(e.born), e.last.x, e.last.y, -e.last.z, "" if gone else " (still in sight when the watch ended)"]
+			if gone:
+				left_by_board += 1
+		line.append("%.1f" % gap)
+		print("WATCH rock %s at %5.1f s (gap %.1f): %s" % [e.src, float(e.born) - first, gap, fate])
+	print("WATCH rocks: %d fell in %.0f s; gaps %s; %d left by the board and dropped out of sight; furthest west any rolled loose on the gallery floor: %s" % [
+		order.size(), watch_s, " ".join(line), left_by_board, ("x %.1f" % worst_low) if worst_low < INF else "none past the beam's foot"])
+	await shot("09_board_after")
+	# The board itself: solid, and it holds.
+	stand(Vector2(-224.1, 57.9))
+	await secs(1.0)
+	print("WATCH board: stood on it: limbs %s, at %s" % [holds(), where()])
+	await shot("09_board_stood_on")
+
+
 ## Note 4: what stands where the lift's two cables were.
 func _w_lift(_a: Array) -> void:
 	pk.warp("1.5")

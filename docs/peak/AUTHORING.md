@@ -149,6 +149,20 @@ hard hit from it knock a climber out.
   speed in). A throw of `power` rises power² / 5.58 metres. A bounce line is not solid:
   lay it along the top of a solid (kind `cap`) so a slow arrival still lands.
 
+## Things that fall (`A.spawner`, `A.board`)
+
+- `A.spawner(kind, at, period, ...)` drops a rock, icicle, boulder or slab on a steady
+  timer. For a rhythm that is WRITTEN OUT (a pause after a double, a pattern shared by
+  several sources) give it `times=[...]` and `loop=`: the seconds of a loop at which it
+  drops. `Area.rhythm(gaps, "ABAB...")` turns one list of gaps and the order of the
+  sources into each source's times (the cave-in of 1.10 is the worked example).
+- `A.board(p0, p1, p2=None, throw=...)` is the way a rock fall ENDS: a snapped board at
+  its foot. A faller that touches it is thrown up and back behind the climb, can hit
+  nobody from then on, and is removed once it has dropped under `gone` (somewhere
+  hidden: behind the floor the board stands on). Nothing that falls should blink out
+  in front of the player: where an area has a board, a faller that never reaches it
+  breaks into chunks where it lies.
+
 ## Looks
 
 - `A.card(pts, z, tone)`: painted cardboard layers behind (z -2 to -30) and in front

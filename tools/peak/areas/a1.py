@@ -315,7 +315,7 @@ A.challenge("1.9", "La Polea Grande", (-232.6, 52.45), 2, "B", moves=[
 # The cave-in shaft, x -222.1 .. -218.5, from the rubble at its foot to the top drift
 # (y 72). Stubs of broken timber on the two walls; the route changes wall three times,
 # each time a 2.3 m lunge across the middle, and the middle is where the rocks come down
-# (two sources, every 4.0 s and every 5.6 s; each lives 3.0 s, so none rolls out of the gallery).
+# (two sources on one written rhythm; they leave by the broken board at the beam's foot).
 A.solid([(-223.2, 57.4), (-218.4, 57.4), (-218.4, 61.7)], "rock2")  # the rubble slope
 A.beam((-222.9, 57.75), (-218.75, 61.75), 0.36, "wood")  # a fallen cap beam lying on it
 STUBS = [("E", 63.0, 0.75), ("E", 64.3, 0.75), ("W", 65.2, 0.75), ("W", 66.5, 0.6), ("W", 67.8, 0.75),
@@ -325,11 +325,32 @@ for side, top, length in STUBS:
         A.solid([(-218.3, top - 0.3), (-218.3, top), (-218.5 - length, top), (-218.5 - length, top - 0.22)], "wood")
     else:
         A.solid([(-222.3, top - 0.3), (-222.1 + length, top - 0.22), (-222.1 + length, top), (-222.3, top)], "wood")
-# (Parker 11-12: "like a one second more delay": they were every 4.0 s and 5.6 s. And
-# "make the hitbox on the boulder here a little smaller": a knock-out was the rock's
+# THE ROCKS' RHYTHM IS WRITTEN OUT (Parker 11-12: "this part needs a longer delay between
+# rocks ... like a one second more delay, not a hugely longer delay", then "after the
+# double rock fall, there is an extra .5 seconds along with the extra one second we added",
+# and "just the 0.4 ones count as doubles"). The two sources were free-running timers,
+# every 4.0 s (from second 0) and every 5.6 s (from second 3.6): a 28 s pattern of 12
+# rocks with two doubles 0.4 s apart. Stretching the timers would have moved the doubles,
+# so the pattern itself is the data now: that same pattern with one second added to every
+# gap, one and a half to the gap straight after a double, the doubles left at 0.4. 39 s,
+# 12 rocks, each from the source it always fell from.
+ROCK_GAPS = [4.6, 0.4, 5.5, 2.2, 3.8, 3.8, 2.2, 5.0, 0.4, 5.1, 3.0, 3.0]
+ROCK_ORDER = "ABAABABAABAB"  # A is the west source (was every 4.0 s), B the east (every 5.6 s)
+_rock_times, _rock_loop = Area.rhythm(ROCK_GAPS, ROCK_ORDER)
+# ("make the hitbox on the boulder here a little smaller": a knock-out was the rock's
 # middle within 0.74 m of your head, chest or hips; now 0.60.)
-A.spawner("rock", (-220.4, 76.3), 5.0, phase=0.0, r=0.42, life=3.0, warn=1.2, hit=0.6)
-A.spawner("rock", (-220.2, 76.3), 6.6, phase=2.0, r=0.42, life=3.0, warn=1.2, hit=0.6)
+# life: a rock leaves by the board below, never by the clock. 12 s is only the net under
+# one that somehow never got there (it breaks up where it lies).
+A.spawner("rock", (-220.4, 76.3), times=_rock_times["A"], loop=_rock_loop, r=0.42, life=12.0, warn=1.2, hit=0.6)
+A.spawner("rock", (-220.2, 76.3), times=_rock_times["B"], loop=_rock_loop, r=0.42, life=12.0, warn=1.2, hit=0.6)
+# THE BOARD THEY LEAVE BY ("the rocks shouldnt despawn, they should bounce into the
+# background off a little messed up board"): a snapped catwalk board at the fallen beam's
+# foot, propped on a heap of rubble. A rock coming off the beam runs onto it and is thrown
+# up and back, into the dark behind the gallery; it drops out of sight behind the
+# gallery's own floor and is gone there (the floor's top is y 57.4, the rock under it 2 m
+# deep). They used to blink out 3 s after they fell, wherever they were.
+A.board((-223.25, 57.47), (-224.6, 58.03), p2=(-225.15, 57.93), throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=56.5)
+A.deco("rubble_pile", -224.55, 57.4, z=0.1, size=(1.1, 0.58, 0.36), tone="rock2")  # its prop (the size sets its scale)
 A.effect("dust", (-222.1, 61.0, -218.5, 77.0), density=0.5)
 A.ledge(-230.0, -222.1, 72.0, "rock2", t=0.5)  # the top drift
 A.ledge(-233.2, -229.6, 72.0, "plank", t=0.35)  # its balcony into the throat

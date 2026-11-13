@@ -135,3 +135,46 @@ Godot_console.exe --path . --audio-driver Dummy res://tests/peak_watch.tscn -- -
   `08_staging_west_end.jpg` (standing on what was the dark plank: held).
 - **Checked:** both feet stuck on the west end at x -236.6. The west end darkens a
   little in the pictures: that is the lantern's light falling off, not another piece.
+
+## Notes 9, 10, 11: the cave-in's rocks (challenge 1.10)
+
+- **State:** all three fixed and watched in the game.
+- **Note 11, the rhythm.** The two sources follow one written loop. In
+  `tools/peak/areas/a1.py`: `ROCK_GAPS = [4.6, 0.4, 5.5, 2.2, 3.8, 3.8, 2.2, 5.0, 0.4,
+  5.1, 3.0, 3.0]` (39 s, 12 rocks) and `ROCK_ORDER = "ABAABABAABAB"`, which is which
+  source makes each drop, read off today's two timers so every rock still falls from
+  its own source. `Area.rhythm` turns the two into each source's times;
+  `spawner(times=..., loop=...)` in `peaklib.py` and `_drops` in
+  `stages/peak/peak_things.gd` are what learned to follow a list. The parked periods
+  5.0 and 6.6 are gone.
+  **Watched:** 46 s of it. The gaps the probe measured between rocks appearing:
+  5.5 2.2 3.8 3.8 2.2 5.0 0.4 5.1 3.0 3.0 4.6 0.4, the written list (it joined the
+  loop part way round). Two checks were added to the `--peak` battery for the
+  list-following itself.
+- **Note 9, no vanishing.** A snapped catwalk board, propped on a heap of rubble, lies
+  at the fallen beam's foot (`A.board(...)` in `a1.py`, kit models `plank` and
+  `rubble_pile`, no new models). A rock that touches it is thrown up and back, 2.3 m
+  behind the climb, shrinking as it goes; from that moment it has no collision and can
+  knock nobody out; it drops behind the gallery's own floor and is removed there, out
+  of sight. The board is solid grip wood and dips when a rock lands on it.
+  **Watched:** 14 rocks in a row (a whole loop and two more) left by the board; every
+  one was last seen below the floor's top, 2.3 m behind the climb. None rolled past
+  the board onto the gallery (furthest west any loose rock got: x -223.4, the board).
+  Stood on the board: it holds.
+  **The net, not seen to fire:** a rock that somehow never reaches the board (12 s, or
+  lying still 1.5 s) breaks into chunks where it lies, as a breaking plank does. It
+  never blinks out.
+- **Note 10, the hitbox.** Kept at 0.60 m (the parked value). The rock is 0.42 m in
+  radius, so a knock-out now needs the rock's surface within 0.18 m of the middle of
+  your head, chest or hips: it has to be on you. I did not find it looking wrong.
+- **Also fixed on the way:** on the first tick after a load every rock source dropped
+  one at once (an unwritten double if you resumed in the gallery). A source now takes
+  its place in the rhythm silently.
+- **Pictures:** `09_board_idle.jpg`, `09_rock_thrown_0.jpg`, `09_rock_thrown_1.jpg`,
+  `09_rock_thrown_2.jpg` (the two rocks of a double going up and back; in the last
+  one passes behind the lantern), `09_board_stood_on.jpg`.
+- **First-try numbers:** the throw (1.4 m/s west, 5.2 up, 3.3 back) and how small the
+  rock gets (0.6 of its size at the back).
+- **Not checked:** a knock-out by a rock (nothing was changed there but the parked
+  reach); the sound of the board (a thwack and a creak, chosen blind from the Peak's
+  own sounds).
