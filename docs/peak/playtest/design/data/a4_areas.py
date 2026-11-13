@@ -4,6 +4,7 @@
 # The garden's version of "the ladder and its rungs":
 #   every cap that throws you has its stalk standing behind and below it, leaning forward;
 #   every vine hangs from a root or a roof you can see; every shelf fungus grows from a wall.
+# The far forest is the bell mushroom, the scenery kind (Parker, 11-13). Nothing orange is scenery, so an orange cap always means bounce.
 # In the sketches: far things are "solid", near stalks and roots are "pale", holes are "dark".
 
 
@@ -19,25 +20,19 @@ def _skirt(x, y, w=1.0):
     return ["poly", [[x - w * 0.5, y + 0.15], [x + w * 0.5, y + 0.15], [x + w * 0.95, y - 0.3], [x - w * 0.95, y - 0.3]], {"style": "solid"}]
 
 
-def _dome(cx, y, w, h):
-    """A cap's dome sitting on the height y."""
-    return ["poly", [[cx - w / 2, y], [cx - w * 0.46, y + h * 0.5], [cx - w * 0.3, y + h * 0.88], [cx, y + h],
-                     [cx + w * 0.3, y + h * 0.88], [cx + w * 0.46, y + h * 0.5], [cx + w / 2, y]]]
+def _bell(x, y0, h, w):
+    """One bell mushroom, the scenery kind: a thin stalk and a small bell-shaped cap. h is its height, w its cap's width."""
+    sw = max(0.3, w * 0.2)
+    top = y0 + h
+    yc = top - w
+    return ["poly", [[x - sw / 2, y0], [x + sw / 2, y0], [x + sw * 0.35, yc], [x + w * 0.55, yc - w * 0.1], [x + w * 0.45, yc + w * 0.3],
+                     [x + w * 0.3, yc + w * 0.75], [x, top], [x - w * 0.3, yc + w * 0.75], [x - w * 0.45, yc + w * 0.3],
+                     [x - w * 0.55, yc - w * 0.1], [x - sw * 0.35, yc]]]
 
 
-def _far(x, y0, top, capw, lean=0.0):
-    """A far mushroom of the scenery forest: stalk and cap in one outline."""
-    sw = capw * 0.1
-    ch = capw * 0.3
-    cx, yc = x + lean, top - ch
-    return ["poly", [[x - sw, y0], [x + sw, y0], [cx + sw * 0.7, yc], [cx + capw / 2, yc], [cx + capw * 0.46, yc + ch * 0.5],
-                     [cx + capw * 0.3, yc + ch * 0.88], [cx, top], [cx - capw * 0.3, yc + ch * 0.88],
-                     [cx - capw * 0.46, yc + ch * 0.5], [cx - capw / 2, yc], [cx - sw * 0.7, yc]]]
-
-
-def _trunk(x, y0, y1, w):
-    """A far stalk so tall that its cap is out of the picture."""
-    return ["poly", [[x - w * 0.55, y0], [x + w * 0.55, y0], [x + w * 0.42, y1], [x - w * 0.42, y1]]]
+def _stand(bells):
+    """A stand of bell mushrooms: a list of (x, foot, height, cap width)."""
+    return [_bell(x, y0, h, w) for x, y0, h, w in bells]
 
 
 def _gills(x0, x1, y, drop=0.55):
@@ -66,22 +61,24 @@ SOMBREROS = {
               "floor, and rears up as a broken stump. Where a root that size lies under moss, mushrooms come up along it in a row, and "
               "that is the challenge: four mushrooms of one family, each older and taller than the last. The first three are young and "
               "full of spring. The fourth is old: its cap has turned up like a saucer and gone dry, and it is the shelf you rest on. One "
-              "more, older still, fell off its stalk long ago and lies soft on the floor. A climber lay down on it and never got up."),
+              "more, older still, fell off its stalk long ago, and the moss has taken it: it is a soft green mound on the floor. A "
+              "climber lay down on it and never got up."),
     "keep": [
         "The stump you step off, and the three caps exactly where they are, each wider than the last: 3.2 m, 4.0 m, 4.4 m.",
         "Each cap's throwing face, flat and at its angle. The first leans 13 degrees east, the other two are level.",
-        "The shelf at 276 m, the soft old cap on the floor with the frozen climber on it, and the moss floor that catches every fall in the west hall.",
+        "The shelf at 276 m, the soft mound on the floor with the frozen climber on it, and the moss floor that catches every fall in the west hall.",
         "The root beam at the door and its three hanging roots, which catch the fling from the crystal cave.",
     ],
     "background": [
-        {"name": "The west hall, far back", "z": [-10.0, -6.0], "tag": [-270.9, 280.5],
-         "text": "Two stalks as thick as towers go up out of sight, 6 to 10 m behind you, dim and blue-green. Their caps are far overhead. Rounded mossy boulders stand along the foot of the back wall. The scenery mushrooms that stand 2 m behind you today move back here (note 37).",
-         "draw": [_trunk(-281.9, 264.0, 283.5, 2.8), _trunk(-270.9, 264.0, 283.5, 3.6),
-                  ["poly", [[-291.0, 264.0], [-290.2, 265.6], [-288.4, 266.2], [-286.9, 265.2], [-284.6, 266.6], [-282.4, 265.4], [-279.8, 266.9],
+        {"name": "The west hall, far back", "z": [-10.0, -6.0], "tag": [-283.5, 276.2],
+         "text": "Two stands of bell mushrooms, the garden's scenery kind: thin stalks 6 to 13.5 m tall with small pale blue-green caps like bells, 6 to 10 m behind you. Rounded mossy boulders stand along the foot of the back wall. The orange scenery mushrooms that stand 2 m behind you today are gone. Nothing orange grows in the scenery, so an orange cap always means bounce (Parker, 11-13).",
+         "draw": _stand([(-284.6, 264.0, 8.0, 1.6), (-283.5, 264.0, 13.5, 2.6), (-282.4, 264.0, 10.0, 2.0),
+                         (-265.6, 264.0, 7.5, 1.6), (-264.5, 264.0, 10.0, 2.2), (-263.5, 264.0, 6.0, 1.4)]) +
+                 [["poly", [[-291.0, 264.0], [-290.2, 265.6], [-288.4, 266.2], [-286.9, 265.2], [-284.6, 266.6], [-282.4, 265.4], [-279.8, 266.9],
                             [-277.2, 265.5], [-274.4, 266.4], [-272.0, 265.3], [-269.2, 266.8], [-266.4, 265.6], [-264.2, 266.5], [-262.5, 265.4], [-262.5, 264.0]]]]},
-        {"name": "A snail, asleep", "z": [-7.0, -6.0], "tag": [-264.3, 268.9],
-         "text": "On a boulder at the back, shell 1.8 m across, drawn in. It is the first snail you see, long before the ones you climb.",
-         "draw": _snail(-264.4, 266.4, 0.9)},
+        {"name": "A snail, asleep", "z": [-7.0, -6.0], "tag": [-290.9, 268.0],
+         "text": "On a boulder at the back, beside the door, shell 1.7 m across, drawn in. It is the first snail you see, long before the ones you climb.",
+         "draw": _snail(-289.5, 265.9, 0.85)},
         {"name": "The great root", "z": [-3.0, -1.4], "style": "pale", "tag": [-271.3, 264.7], "top": True,
          "text": "As thick as a barrel. It comes down the back of the door at the well, and lies along the floor 2 m behind the path, half under moss, humping up and down. The knee and the stump you climb are its near end, broken off.",
          "draw": [["poly", [[-285.4, 264.0], [-285.4, 265.0], [-283.0, 265.5], [-281.0, 265.0], [-279.0, 265.6], [-276.5, 265.1], [-274.5, 265.7],
@@ -99,43 +96,43 @@ SOMBREROS = {
     ],
     "play": [
         {"name": "Three caps, spotted", "z": [-1.2, 1.2], "style": "pale", "tag": [-279.2, 269.5],
-         "text": "Orange with pale spots, like the scenery mushrooms. No checks (note 37). The face you land on stays as flat as it is today. The roundness is in the rim, which rolls down all round, and in the cream gills underneath. Each cap sways a little at rest, squashes when you land and springs back taller, with a puff of spores from under the rim (note 36).",
+         "text": "Orange with pale spots. No checks (note 37). The face you land on stays as flat as it is today. The roundness is in the rim, which rolls down all round, and in the cream gills underneath. Each cap sways a little at rest, squashes when you land and springs back taller, with a puff of spores from under the rim (note 36).",
          "draw": [["circle", -285.6, 265.3, 0.33], ["circle", -282.8, 264.65, 0.33], ["circle", -281.1, 268.45, 0.33], ["circle", -277.3, 268.45, 0.33],
                   ["circle", -276.3, 271.95, 0.33], ["circle", -272.1, 271.95, 0.33]]},
         {"name": "The shelf: an old cap turned up", "z": [-1.2, 1.2], "style": "mark", "tag": [-266.0, 276.7],
          "text": "Cream and dry, with its gills on top as fine lines running out from the middle. It has no orange left, so nobody expects it to throw them.",
          "draw": [["line", -270.3, 276.05, -264.7, 276.05]]},
-        {"name": "The frozen climber, half under moss", "z": [-0.6, 0.6], "style": "pale", "tag": [-276.5, 266.3],
-         "text": "He lies on the soft old cap where he is today. Moss has grown over his legs and one arm like a blanket, and three tiny mushrooms come up beside him. The cap under him is slumped and faded to tan with no spots left, so it does not look like a cap that throws.",
-         "draw": [["poly", [[-280.4, 265.4], [-278.2, 265.4], [-278.4, 265.85], [-279.4, 266.05], [-280.3, 265.8]]],
+        {"name": "The frozen climber, on a mound of moss", "z": [-0.6, 0.6], "style": "pale", "tag": [-276.5, 266.3],
+         "text": "He lies where he is today. The old cap under him is orange in the course, and it does not throw. It becomes a low mound of green moss with a little grey-brown rot showing at its edges: no orange and no spots anywhere, so it can't be taken for a cap that throws (Parker, 11-13). The moss has grown on over his legs and one arm like a blanket, and three pale bell sprouts come up beside him.",
+         "draw": [["poly", [[-280.4, 264.0], [-280.4, 265.4], [-279.4, 266.05], [-278.4, 265.85], [-276.8, 265.4], [-276.8, 264.0]]],
                   ["circle", -277.5, 265.6, 0.14], ["circle", -277.15, 265.55, 0.1], ["circle", -280.6, 265.3, 0.12]]},
     ],
     "foreground": [
-        {"name": "Fern and one small cap", "z": [1.4, 2.2], "tag": [-265.5, 260.3], "top": True,
-         "text": "At the bottom right corner, below the floor's edge. Nothing else stands in front (note 40).",
+        {"name": "Fern and one small bell mushroom", "z": [1.4, 2.2], "tag": [-265.5, 260.3], "top": True,
+         "text": "At the bottom right corner, below the floor's edge: a fern clump and one small bell mushroom, both dark. Nothing else stands in front (note 40).",
          "draw": [["poly", [[-268.0, 259.5], [-267.4, 260.9], [-266.6, 259.9], [-265.8, 261.1], [-265.0, 259.9], [-264.3, 260.7], [-263.6, 259.5]]],
-                  _dome(-263.3, 260.2, 1.0, 0.5)]},
+                  _bell(-263.1, 259.5, 1.5, 0.8)]},
     ],
     "explains": [
         ["The three caps", "Three young mushrooms of one family, growing in a row", "Each one's stalk, rooted on the great root and leaning forward to hold the cap out"],
         ["The stump and the root knee", "The broken end of a great root", "The same root coming down the back of the door, and lying along the floor behind the path"],
         ["The shelf at 276 m", "The family's eldest: an old cap turned up like a saucer", "Its stalk, the thickest of the four"],
-        ["The soft cap and the frozen climber", "A cap that fell off its stalk and went soft, and the one who lay down on it", "The second cap's stalk, which came up where the old one stood"],
+        ["The soft mound and the frozen climber", "A cap that fell off its stalk and was taken by the moss, and the one who lay down on it", "The second cap's stalk, which came up where the old one stood"],
         ["The three hanging roots at the door", "Root ends hanging from the root beam", "Two thick roots down the back of the door: the beam is their branch"],
-        ["The moss floor", "The floor of the hall", "Boulders, and the feet of two far stalks"],
+        ["The moss floor", "The floor of the hall", "Boulders, and two stands of bell mushrooms"],
     ],
     "pieces": [
         ["Spotted mushroom cap with rolled rim and gills, flat on top", "3.2 m, 4.0 m, 4.4 m", "3", "Play space", "kit: spotted mushroom, middle, re-made spotted (note 37)"],
         ["Leaning stalk with skirt", "1 m thick; 0.8 m, 4 m, 7.6 m tall", "3", "Background", "kit: spotted mushroom stalk"],
         ["Old cap turned up like a saucer, on a stalk 1.4 m thick", "6 m across, stalk 11.4 m", "1", "Play space, background", "kit: old cap turned up (rest shelf)"],
-        ["Slumped soft cap, faded", "3.6 m by 1.4 m", "1", "Play space", "new, this area only"],
-        ["Moss blanket and three tiny mushrooms for the frozen climber", "2 m", "1", "Play space (drawn on)", "new, this area only"],
+        ["Mound of moss over a rotted cap", "3.6 m by 1.4 m", "1", "Play space", "new, this area only"],
+        ["Moss blanket and three bell sprouts for the frozen climber", "2 m", "1", "Play space (drawn on)", "new, this area only"],
         ["Great root, lying; great root, down a wall", "1.2 m thick; 21 m and 15 m", "1 lying, 2 down the door", "Background", "kit: thick root"],
-        ["Far stalk, blue-green", "3 to 4 m thick, taller than the screen", "2", "Background, far", "kit: spotted mushroom, great"],
+        ["Bell mushroom", "6 to 13.5 m tall, caps 1.4 to 2.6 m", "6, in two stands", "Background, far", "kit: bell mushroom"],
         ["Mossy boulder", "1.5 to 3 m", "8", "Background, far", "kit: mossy boulder"],
         ["Giant snail, asleep", "1.8 m shell", "1", "Background, far", "kit: giant snail"],
         ["Glow moss patch; spore lantern", "2.4 m; 0.5 m", "2 and 2", "Background", "kit: glow moss patch; spore lantern"],
-        ["Fern clump; small corner cap", "4 m; 1 m", "1 and 1", "Foreground", "kit: fern clump; small corner cap"],
+        ["Fern clump; one small bell mushroom", "4 m; 1.5 m", "1 and 1", "Foreground", "kit: fern clump; bell mushroom, small"],
     ],
     "effects": [
         "A puff of spores from under a cap's rim each time it throws you.",
@@ -143,7 +140,8 @@ SOMBREROS = {
     ],
     "notes": [
         "Note 36 (not built yet): the caps squash, spring and sway, and their stalks rock with them.",
-        "Note 37 (not built yet): the caps are spotted, not checked. The scenery mushrooms stand 6 to 10 m back and are dim.",
+        "Note 37 (not built yet): the caps are spotted, not checked. Parker, 11-13: the scenery is a second kind, the bell mushroom, 6 to 10 m back.",
+        "Course change, look only (Parker, 11-13): the soft old cap under the frozen climber is kind cap in the course, which paints it orange. It becomes a mossy kind, green. Its shape and where it is do not change.",
         "Note 40 (done): the front pieces are gone. One fern clump at a bottom corner is all that stands in front.",
     ],
 }
@@ -165,16 +163,17 @@ LIANAS = {
         "The slime ramp under the last two vines, which slides a fall back to the floor of Sombreros.",
     ],
     "background": [
-        {"name": "The forest, far back", "z": [-10.0, -6.0], "tag": [-250.4, 280.6],
-         "text": "One far stalk goes up behind the island, and one whole far mushroom stands on the back of the ramp. Dim and blue-green, 6 to 10 m behind you.",
-         "draw": [_trunk(-260.9, 264.0, 292.5, 2.8), _far(-250.4, 267.3, 283.0, 10.0, 0.4)]},
+        {"name": "The forest, far back", "z": [-10.0, -6.0], "tag": [-260.5, 274.6],
+         "text": "Two stands of bell mushrooms, 6 to 10 m behind you: one on the floor and one on the back of the ramp. Thin stalks, small pale blue-green bell caps. Their tops stay below the vines' ends, so no far stalk is ever seen behind a vine.",
+         "draw": _stand([(-261.6, 264.0, 9.0, 1.8), (-260.5, 264.0, 12.0, 2.4), (-259.6, 264.0, 7.0, 1.5),
+                         (-251.3, 266.7, 8.5, 1.8), (-250.2, 267.4, 9.6, 2.2), (-249.2, 268.1, 6.5, 1.5)])},
         {"name": "The island's belly, going back", "z": [-6.0, -4.0], "tag": [-256.0, 286.6], "top": True,
          "text": "The roof you hang under carries on 6 m back, and from its far part hangs the rest of the creeper as one thick, dim mass. It is far enough back, and solid enough, that nobody takes it for a fifth vine.",
          "draw": [["poly", [[-266.0, 288.0], [-246.0, 288.0], [-246.0, 286.6], [-248.5, 285.9], [-251.0, 286.8], [-253.5, 285.6], [-256.5, 286.7],
                             [-259.0, 285.8], [-262.0, 286.9], [-264.5, 286.0], [-266.0, 286.8]]]]},
-        {"name": "A snail, asleep on the slope", "z": [-7.0, -6.0], "tag": [-247.2, 270.9],
+        {"name": "A snail, asleep on the slope", "z": [-7.0, -6.0], "tag": [-246.4, 272.6],
          "text": "Far back on the ramp, stuck where it stopped.",
-         "draw": _snail(-249.0, 268.3, 0.9)},
+         "draw": _snail(-246.4, 270.1, 0.85)},
         {"name": "Four leaf collars", "z": [-2.2, -1.2], "style": "pale", "tag": [-260.8, 287.2], "top": True,
          "text": "Where each crack opens in the roof, just behind each vine: a clump of leaves 1.8 m wide with a root as thick as an arm running back along the crack. Each vine is seen to grow out of one.",
          "draw": [["poly", [[x - 0.9, 288.0], [x + 0.9, 288.0], [x + 0.6, 287.3], [x, 287.0], [x - 0.6, 287.3]]] for x in _VINES42]},
@@ -206,14 +205,14 @@ LIANAS = {
         ["The four vines", "The nearest strands of a creeper that roots in the roof's cracks", "A leaf collar at each vine's top, and the rest of the creeper as a far mass under the roof"],
         ["The roof they hang from", "The underside of the island", "The same roof going 6 m back"],
         ["The shelf you leave and the shelf you land on", "Two old caps turned up like saucers", "A stalk under each: one from the floor, one from the ramp"],
-        ["The slime ramp", "Where the island's slime runs to", "The ramp's far side, with a far mushroom and a sleeping snail on it"],
+        ["The slime ramp", "Where the island's slime runs to", "The ramp's far side, with a stand of bell mushrooms and a sleeping snail on it"],
     ],
     "pieces": [
         ["Vine with leaves, with a knot at its top", "9.5 m", "4", "Play space", "kit: vine with leaves"],
         ["Leaf collar with an arm-thick root", "1.8 m wide", "4", "Background", "kit: vine with leaves; thick root"],
         ["Creeper mass, far", "20 m wide, 2 m deep", "1", "Background, far", "new, this area only"],
         ["Old cap turned up like a saucer, on its stalk", "6 m and 4 m across", "2", "Play space, background", "kit: old cap turned up (rest shelf)"],
-        ["Far stalk; far mushroom", "3 m thick; 10 m cap", "1 and 1", "Background, far", "kit: spotted mushroom, great and large"],
+        ["Bell mushroom", "6.5 to 12 m tall, caps 1.5 to 2.4 m", "6, in two stands", "Background, far", "kit: bell mushroom"],
         ["Giant snail, asleep", "1.8 m shell", "1", "Background, far", "kit: giant snail"],
         ["Glow moss patch; spore lantern; spore pod", "3 m; 0.5 m; 0.6 m", "1 each", "Background", "kit: glow moss patch; spore lantern; spore pod"],
         ["Seep crack with moss, drawn on the slime", "2.5 m", "4", "Play space (drawn on)", "kit: slime sheet with drips, plus a crack"],
@@ -224,7 +223,7 @@ LIANAS = {
         "A few leaves let go by the creeper, turning as they fall.",
     ],
     "notes": [
-        "Note 37 (not built yet): the scenery mushrooms stand far back.",
+        "Note 37, and Parker, 11-13: the scenery is bell mushrooms, far back. Nothing orange is scenery.",
         "Note 39 (done): the scrap of mud on the landing shelf's lip is gone.",
     ],
 }
@@ -234,9 +233,9 @@ ASCENSOR = {
     "id": "4.3", "slug": "4_03_el_ascensor_de_esporas", "title": "El Ascensor de Esporas", "kind": "challenge",
     "window": [-248.5, 270.5, -226.5, 304.5], "screen": [-238.0, 286.0], "cut_y": 292.0, "climber": [-241.5, 277.5],
     "place": ("Half way up the slime ramp there is a hollow, and in the hollow grows a bed of spore pods, each as fat as a barrel. They "
-              "breathe out in turn, one after another, and their breath is a column of warm air full of orange spores, going straight up "
+              "breathe out in turn, one after another, and their breath is a column of warm air full of pale gold spores, going straight up "
               "for 15 m before it thins out. What is left drifts on up to the underside of the island, 9 m higher, where the spores "
-              "have settled as orange fur. Three vines hang down out of that fur with dust on their ends, into the top of the column. "
+              "have settled as gold fur. Three vines hang down out of that fur with dust on their ends, into the top of the column. "
               "So the lift has a bottom you can see making it, sides you can see, and a top you can see it reach for."),
     "keep": [
         "The column: 4.6 m wide, from 277 m to 292.5 m. Strong in its lower half, weak in its upper half.",
@@ -245,17 +244,17 @@ ASCENSOR = {
     ],
     "background": [
         {"name": "The dust shadow on the back wall", "z": [-6.5, -6.0], "tag": [-238.0, 296.8],
-         "text": "Years of spores have stained the back wall orange in a stripe exactly as wide as the column, spreading out where it meets the roof. Even between puffs, you can see where the column is and how high it goes.",
+         "text": "Years of spores have stained the back wall pale gold in a stripe exactly as wide as the column, spreading out where it meets the roof. Even between puffs, you can see where the column is and how high it goes.",
          "draw": [["poly", [[-240.3, 276.6], [-235.7, 276.6], [-235.7, 299.3], [-233.2, 301.5], [-242.8, 301.5], [-240.3, 299.3]]]]},
-        {"name": "The forest, far back", "z": [-10.0, -7.0], "tag": [-245.6, 285.4],
-         "text": "One far mushroom on the back of the ramp, dim and blue-green.",
-         "draw": [_far(-245.8, 270.5, 287.0, 8.0, 0.3)]},
+        {"name": "The forest, far back", "z": [-10.0, -7.0], "tag": [-246.9, 283.2],
+         "text": "One stand of three bell mushrooms on the back of the ramp, thin and pale blue-green, well to the west of the column.",
+         "draw": _stand([(-247.9, 270.5, 11.5, 2.2), (-246.9, 270.5, 14.0, 2.6), (-246.0, 271.0, 9.0, 1.8)])},
         {"name": "The pod bed", "z": [-2.6, -1.3], "style": "pale", "tag": [-241.2, 275.2], "top": True,
          "text": "Five spore pods in a row on the ramp, just behind where you step in, under the whole width of the column. Each swells, then puffs a ball of spores upward, one after another, so the bed never stops. This is what makes the lift (note 38).",
          "draw": [["circle", x, _ramp(x) + 0.55, 0.55] for x in (-239.9, -238.9, -237.9, -236.9, -236.0)] +
                  [["line", x, _ramp(x) + 1.1, x, _ramp(x) + 1.5] for x in (-239.9, -238.9, -237.9, -236.9, -236.0)]},
         {"name": "The furred roof and the vines' root", "z": [-2.2, -1.2], "style": "pale", "tag": [-241.6, 300.6], "top": True,
-         "text": "Above the column the island's underside is furred orange with settled spores. In the middle of the fur is a knot of root as big as a cart wheel, and the three vines hang from it.",
+         "text": "Above the column the island's underside is furred pale gold with settled spores. In the middle of the fur is a knot of root as big as a cart wheel, and the three vines hang from it.",
          "draw": [["poly", [[-240.9, 301.5], [-235.1, 301.5], [-236.0, 300.7], [-237.9, 300.35], [-239.8, 300.7]]]]},
         {"name": "The two shelves' stalks", "z": [-2.6, -1.2], "style": "pale", "tag": [-233.3, 286.5],
          "text": "The shelf you step off stands on a short stalk rooted in the ramp. The shelf you climb onto stands on a tall thin one, 15 m, also from the ramp, well clear of the column.",
@@ -267,18 +266,18 @@ ASCENSOR = {
     ],
     "play": [
         {"name": "The column, made visible", "z": [-1.2, 1.2], "style": "mark", "tag": [-238.0, 283.0],
-         "text": "A thick stream of orange spores with soft edges, so you can see where to step in and where you would drop out. The spores rise fast and thick below 285 m and slow and thin above it, so you can see where the lift gives out. Small leaves and motes are carried up in it, and your climber's arms and legs drift upward while you are inside (note 38).",
+         "text": "A thick stream of pale gold spores with soft edges, so you can see where to step in and where you would drop out. The spores rise fast and thick below 285 m and slow and thin above it, so you can see where the lift gives out. Small leaves and motes are carried up in it, and your climber's arms and legs drift upward while you are inside (note 38).",
          "draw": [["line", -240.3, 277.3, -240.3, 292.5], ["line", -235.7, 277.3, -235.7, 292.5], ["line", -240.3, 285.0, -235.7, 285.0]]},
         {"name": "Dusted vine ends", "z": [-0.3, 0.3], "style": "pale", "tag": [-241.3, 291.9],
-         "text": "The last metre of each of the three vines is furred orange, the same as the roof. They are the first thing the spores reach.",
+         "text": "The last metre of each of the three vines is furred gold, the same as the roof. They are the first thing the spores reach.",
          "draw": [["circle", x, 291.75, 0.2] for x in (-239.4, -237.9, -236.4)]},
         {"name": "A dusted lip", "z": [-1.2, 1.2], "style": "pale", "tag": [-241.9, 278.2],
-         "text": "The east lip of the shelf you step off is orange with spores for its last half metre. It marks the step in.",
+         "text": "The east lip of the shelf you step off is gold with spores for its last half metre. It marks the step in.",
          "draw": [["rect", -241.1, 277.5, -240.5, 277.64]]},
     ],
     "foreground": [],
     "explains": [
-        ["The lift", "The breath of a bed of spore pods", "The pod bed at its foot, and its orange stain up the back wall"],
+        ["The lift", "The breath of a bed of spore pods", "The pod bed at its foot, and its gold stain up the back wall"],
         ["The three vines at the top", "Vines hanging from a knot of root in the roof", "The root knot, and the spore fur all round it"],
         ["The shelf you step off", "An old cap turned up, on a short stalk", "Its stalk, rooted in the ramp"],
         ["The shelf at 295 m", "An old cap turned up, on a tall thin stalk", "Its stalk, 15 m, with a lantern pod under the cap"],
@@ -290,7 +289,7 @@ ASCENSOR = {
         ["Spore fur patch for a roof", "6 m", "1", "Play space (drawn on)", "new, this area only"],
         ["Root knot with three vines", "knot 1.2 m, vines 10 m", "1", "Play space, background", "kit: thick root; vine with leaves"],
         ["Old cap turned up like a saucer, on its stalk", "4 m and 5 m across", "2", "Play space, background", "kit: old cap turned up (rest shelf)"],
-        ["Far mushroom", "8 m cap", "1", "Background, far", "kit: spotted mushroom, large"],
+        ["Bell mushroom", "9 to 14 m tall, caps 1.8 to 2.6 m", "3, in one stand", "Background, far", "kit: bell mushroom"],
         ["Spore lantern", "0.5 m", "1", "Background", "kit: spore lantern"],
     ],
     "effects": [
@@ -302,6 +301,8 @@ ASCENSOR = {
     "notes": [
         "Note 38 (not built yet): the updraught shows itself, shows what makes it, and shows where it weakens. The whole page is this note.",
         "Note 39 (done): the scrap of mud on the shelf's lip is gone.",
+        "Parker, 11-13: the far forest is bell mushrooms. Nothing orange is scenery.",
+        "The spores are pale gold, the colour of the pods' glow. Note 38's plan had them orange. Orange is kept for the caps that throw you, so a gold-dusted shelf or vine is never taken for one.",
     ],
 }
 
@@ -320,10 +321,10 @@ REBOTE = {
         "The pit: a miss goes down the ramp to Sombreros.",
     ],
     "background": [
-        {"name": "The pocket's back wall and one far stalk", "z": [-10.0, -6.0], "tag": [-224.6, 304.5],
-         "text": "Rounded mossy rock closes the pocket 6 m back, with slime running down it and boulders where it meets the ramp. One far stalk goes up past it into the dark. It stands to one side of the vine, never behind it.",
-         "draw": [_trunk(-224.6, 285.5, 316.5, 2.4),
-                  ["poly", [[-226.5, 285.5], [-224.5, 287.2], [-222.6, 287.0], [-220.6, 289.4], [-218.4, 289.2], [-216.6, 291.6], [-215.2, 291.9], [-215.2, 285.5]]]]},
+        {"name": "The pocket's back wall and a stand of bell mushrooms", "z": [-10.0, -6.0], "tag": [-224.4, 298.4],
+         "text": "Rounded mossy rock closes the pocket 6 m back, with slime running down it and boulders where it meets the ramp. Three bell mushrooms stand on the back of the ramp, thin and pale blue-green. They stand to one side of the vine and stop below its end, never behind it.",
+         "draw": _stand([(-225.6, 285.5, 11.5, 2.2), (-224.4, 285.6, 12.2, 2.6), (-223.4, 286.2, 9.0, 1.8)]) +
+                 [["poly", [[-226.5, 285.5], [-224.5, 287.2], [-222.6, 287.0], [-220.6, 289.4], [-218.4, 289.2], [-216.6, 291.6], [-215.2, 291.9], [-215.2, 285.5]]]]},
         {"name": "The first cap's stalk", "z": [-2.6, -1.2], "style": "pale", "tag": [-229.9, 286.4], "top": True,
          "text": "10 m of cream stalk from the ramp, rooted 2 m back and leaning forward, with its skirt near the top. It dips and rocks when the cap throws you (note 36).",
          "draw": [_stalk(-229.0, 281.8, 291.6, 0.9, -229.7), _skirt(-229.1, 289.3, 0.9), _gills(-230.4, -227.6, 291.75, 0.5)]},
@@ -370,7 +371,7 @@ REBOTE = {
         ["Vine with leaves", "10 m", "1", "Play space", "kit: vine with leaves"],
         ["Shelf fungus", "2.8 m, 1.9 m, 1.2 m", "3", "Play space, background", "kit: shelf fungus"],
         ["Old cap turned up like a saucer, on its stalk", "5 m across", "1", "Play space, background", "kit: old cap turned up (rest shelf)"],
-        ["Far stalk; mossy boulders", "2.4 m thick; 2 m", "1 and 4", "Background, far", "kit: spotted mushroom, great; mossy boulder"],
+        ["Bell mushroom; mossy boulders", "9 to 12.2 m tall; 2 m", "3 and 4", "Background, far", "kit: bell mushroom; mossy boulder"],
         ["Spore lantern; glow moss patch", "0.5 m; 2.3 m", "2 and 1", "Background", "kit: spore lantern; glow moss patch"],
     ],
     "effects": [
@@ -379,7 +380,7 @@ REBOTE = {
     ],
     "notes": [
         "Note 36 (not built yet): both caps squash and spring.",
-        "Note 37 (not built yet): both caps are spotted. No scenery mushroom stands near them.",
+        "Note 37 (not built yet): both caps are spotted. Parker, 11-13: the only scenery mushrooms are bell mushrooms, far back.",
         "Note 39 (done): no scraps of mud on the rest shelves.",
     ],
 }
@@ -401,7 +402,7 @@ LA_BABA = {
     "window": [-237.0, 306.5, -210.5, 338.5], "screen": [-226.0, 322.0], "cut_y": 322.0, "climber": [-228.0, 311.0],
     "place": ("This is the snails' wall, and the slime is theirs. Water seeps out from under the moss at the top of the island and runs "
               "down its east face, and five snails the size of carts live on that face and turn the water to slime. Each keeps to its own "
-              "patch. It climbs 2.2 m to a tuft of glowing moss, eats, rests, and goes back down to where the wet is. The wall leans out "
+              "patch. It climbs 2.2 m to a patch of glowing moss, eats, rests, and goes back down to where the wet is. The wall leans out "
               "over the pit, and it curves round behind you into a cove where more snails sleep and where they keep their eggs. A snail's "
               "shell is the one dry thing on the wall."),
     "keep": [
@@ -410,9 +411,9 @@ LA_BABA = {
         "The shell is the only hold. The foot and the head are slime.",
     ],
     "background": [
-        {"name": "The forest, across the gap", "z": [-10.0, -7.0], "tag": [-216.0, 329.3],
-         "text": "One far mushroom rises out of the pit with its cap at the height of the middle snails, and a smaller one stands on the frog's garden beyond. Dim, blue-green, and well behind the snails.",
-         "draw": [_far(-217.6, 306.5, 331.0, 12.0, 0.4), _far(-211.9, 318.0, 327.5, 5.0)]},
+        {"name": "The forest, across the gap", "z": [-10.0, -7.0], "tag": [-212.2, 328.6],
+         "text": "A stand of three bell mushrooms on the frog's garden, thin and pale blue-green, well behind the snails and to one side of them.",
+         "draw": _stand([(-213.2, 318.0, 9.0, 2.0), (-212.2, 318.0, 12.0, 2.4), (-211.3, 318.0, 7.0, 1.6)])},
         {"name": "The cove", "z": [-6.0, -1.5], "tag": [-225.2, 310.3],
          "text": "The island's east face does not stop at the play space. It curves round to the east behind you and joins the back wall, so there is slick wall behind the snails all the way up, running with the same slime. Its top edge is the same mossy lip.",
          "draw": [["poly", [[-229.5, 306.5], [-229.5, 311.6], [-225.0, 333.0], [-220.8, 333.0], [-222.4, 325.0], [-224.0, 317.0], [-225.4, 311.0], [-225.8, 306.5]]],
@@ -435,8 +436,8 @@ LA_BABA = {
         {"name": "Each snail's patch", "z": [-1.2, 1.2], "style": "mark", "tag": [-230.3, 318.6],
          "text": "A stripe of fresh slime on the wall, wetter and glossier than the rest, exactly as long as that snail's crawl. You can read where each snail goes, and where the gaps between them are, before any of them moves.",
          "draw": [["line"] + _on_wall(s - 0.9, -0.12) + _on_wall(s + 3.1, -0.12) for s in _PATCH]},
-        {"name": "A tuft of glow moss above each patch", "z": [-1.2, 1.2], "style": "light", "tag": [-229.0, 325.0],
-         "text": "What each snail climbs for. It is small, green and glowing, not pale, and nobody would take it for a hold. The top snail has no tuft: it eats the moss of the lip.",
+        {"name": "A patch of glow moss above each stripe", "z": [1.0, 1.2], "style": "light", "tag": [-229.0, 325.0],
+         "text": "What each snail climbs for. It grows flat on the wall, drawn on like the stripe, small, green and glowing. It is not a thing that sticks out, so there is nothing to reach for. The top snail has none: it eats the moss of the lip.",
          "draw": [["circle"] + _on_wall(s + 3.45, 0.12) + [0.2] for s in _PATCH[:4]]},
         {"name": "The mossy lip", "z": [-1.2, 1.2], "style": "pale", "tag": [-226.8, 334.5],
          "text": "Thick moss hangs over the top edge of the wall, and the water comes out from under it. It is the dry edge you pull up onto.",
@@ -446,7 +447,7 @@ LA_BABA = {
     "explains": [
         ["The five shells", "Five giant snails, each grazing its own patch of wall", "More of the herd asleep in the cove behind, and their eggs"],
         ["The slime wall", "The island's east face, wet from a seep and slimed by the snails", "The same face curving round behind you as a cove"],
-        ["Why each snail goes up and down", "It climbs to a tuft of glow moss and goes back down to the wet", "The tuft above each patch, and the stripe of fresh slime"],
+        ["Why each snail goes up and down", "It climbs to a patch of glow moss and goes back down to the wet", "The patch above each stripe, and the stripe of fresh slime"],
         ["The shelf you start from", "A shelf fungus on the wall", "Two smaller shelves under it"],
         ["The top edge", "The terrace's moss, hanging over", "The same lip along the top of the cove"],
     ],
@@ -455,10 +456,10 @@ LA_BABA = {
         ["Giant snail, asleep, drawn in", "shell 1.6 m", "2", "Background", "kit: giant snail"],
         ["Clutch of snail eggs, glowing", "eggs 0.4 m, clutch 1 m", "1", "Background", "new, this area only"],
         ["Cove wall: slime sheet, curved", "4 m wide, 27 m tall", "1", "Background", "kit: slime sheet with drips"],
-        ["Stripe of fresh slime; tuft of glow moss", "4 m; 0.4 m", "5 and 4", "Play space (drawn on)", "kit: slime sheet with drips; glow moss patch"],
+        ["Stripe of fresh slime; patch of glow moss, flat", "4 m; 0.4 m", "5 and 4", "Play space (drawn on)", "kit: slime sheet with drips; glow moss patch"],
         ["Moss lip", "1.4 m, and 4 m along the cove", "2", "Play space, background", "new, shared with El Hongo Gigante's terrace"],
         ["Shelf fungus", "2.8 m, 1.9 m, 1.2 m", "3", "Play space, background", "kit: shelf fungus"],
-        ["Far mushroom", "12 m and 5 m caps", "2", "Background, far", "kit: spotted mushroom, great and middle"],
+        ["Bell mushroom", "7 to 12 m tall, caps 1.6 to 2.4 m", "3, in one stand", "Background, far", "kit: bell mushroom"],
     ],
     "effects": [
         "Slow drips down the wall and off each snail's foot.",
@@ -467,47 +468,55 @@ LA_BABA = {
     "notes": [
         "Note 39 (done): no scraps of mud on the rest shelves.",
         "Note 40 (done): nothing stands in front of the wall.",
+        "Parker, 11-13: the far forest is bell mushrooms. The glow moss is drawn flat on the wall, so nothing that can't be held sticks out into the play space.",
     ],
 }
 
 # ------------------------------------------------------------------ 4.0 the frog's hut
 _HX = -205.5   # the middle of the hut
+# The roof: a low dome with eaves, hollow underneath so the room has 2.6 m of headroom.
+_ROOF = ['poly', [[_HX - 2.4, 320.1], [_HX - 2.2, 321.0], [_HX - 1.44, 321.68], [_HX, 321.9], [_HX + 1.44, 321.68], [_HX + 2.2, 321.0],
+                  [_HX + 2.4, 320.1], [_HX + 1.5, 320.6], [_HX - 1.5, 320.6]]]
 
 LA_CHOZA = {
     "id": "4.0", "slug": "4_00_la_choza_de_la_rana", "title": "The frog's hut", "kind": "rest",
     "window": [-221.5, 313.5, -187.5, 333.5], "screen": [-205.5, 322.3], "cut_y": 318.6, "climber": [-206.1, 318.0],
     "place": ("East of the snail wall, across the gap, there is a quiet floor of moss at 318 m where nothing happens. It is where you land "
               "if you fly wide off the giant mushroom, and a root arm on its lip is the way back. It is also where the frog lives. The "
-              "frog has hollowed out the stump of a fat old stalk and kept its cap on for a roof. The side that faces you is open, like a "
-              "doll's house: you walk in along the floor, and you are standing in its one room. Behind the hut is a row of button "
-              "mushrooms in a straight line, the only tidy thing in the garden. A snail sleeps beside it."),
+              "frog has hollowed out the stump of a fat old stalk and kept its cap on for a roof, and the moss has grown right over the "
+              "cap. The side that faces you is open, like a doll's house: you walk in along the floor, and you are standing in its "
+              "one room. The roof is solid: you can land on it, stand on it, and pull yourself up onto it by an eave. Behind the hut "
+              "is a row of bell sprouts in a straight line, the only tidy thing in the garden. A snail sleeps beside it."),
     "keep": [
         "The floor, the lip, and the root arm with its 4.2 m reach over the gap: the way back to the shelf under the snail wall.",
         "Nothing here can hurt you or cost you height. It is a place to stop.",
+        "The hut's walls and everything in it stay behind you. Only its roof is in the play space.",
     ],
     "background": [
-        {"name": "The forest, moved back", "z": [-10.0, -6.0], "tag": [-198.2, 329.5],
-         "text": "The big scenery mushroom and the two smaller ones that stand on this floor today move 6 to 10 m back and turn dim and blue-green (note 37). The big one's cap ends up over the hut, far behind it.",
-         "draw": [_far(-199.4, 318.0, 331.6, 15.0, 0.5), _far(-192.0, 318.0, 325.2, 6.4, -0.3), _far(-211.6, 318.0, 323.6, 5.0, 0.2),
-                  ["poly", [[-215.2, 318.0], [-214.0, 319.2], [-211.8, 318.7], [-209.6, 319.5], [-203.0, 319.0], [-200.6, 319.7], [-197.2, 318.8],
+        {"name": "The forest", "z": [-10.0, -6.0], "tag": [-201.2, 330.4],
+         "text": "Three stands of bell mushrooms, thin and pale blue-green, 6 to 10 m back, with mossy boulders at their feet. The tallest stand is behind the hut, so the hut sits under a little wood. The big orange scenery mushroom and the two smaller ones that stand on this floor today are gone: nothing orange grows in the scenery (Parker, 11-13).",
+         "draw": _stand([(-213.2, 318.0, 9.0, 2.0), (-212.2, 318.0, 12.0, 2.4), (-211.3, 318.0, 7.0, 1.6),
+                         (-202.4, 318.0, 13.0, 2.6), (-201.2, 318.0, 14.0, 3.0), (-200.0, 318.0, 10.5, 2.2), (-199.0, 318.0, 12.5, 2.4), (-197.9, 318.0, 8.0, 1.8),
+                         (-194.6, 318.0, 8.0, 1.8), (-193.6, 318.0, 9.6, 2.2), (-192.7, 318.0, 6.5, 1.6)]) +
+                 [["poly", [[-215.2, 318.0], [-214.0, 319.2], [-211.8, 318.7], [-209.6, 319.5], [-203.0, 319.0], [-200.6, 319.7], [-197.2, 318.8],
                             [-194.6, 319.6], [-192.0, 318.9], [-190.0, 319.8], [-190.0, 318.0]]]]},
         {"name": "Shelf fungus up the east wall", "z": [-2.4, -1.4], "style": "pale", "tag": [-192.4, 330.3],
          "text": "Three brackets growing from the room's east wall in steps, 11 m up. Today one hangs there alone.",
          "draw": [["rect", -191.5, 329.6, -190.0, 329.9], ["rect", -191.0, 328.5, -190.0, 328.75], ["rect", -191.8, 330.9, -190.0, 331.2]]},
-        {"name": "The frog's snail", "z": [-4.6, -3.4], "tag": [-198.2, 320.9],
+        {"name": "The frog's snail", "z": [-4.6, -3.4], "tag": [-196.2, 320.9],
          "text": "Asleep beside the hut, 4 m back, shell 1.8 m across. It is the one that stands here today.",
-         "draw": _snail(-198.4, 318.0, 0.9)},
+         "draw": _snail(-196.4, 318.0, 0.9)},
         {"name": "The frog's garden row", "z": [-3.4, -2.6], "style": "pale", "tag": [-201.4, 319.1],
-         "text": "Six button mushrooms in a straight row behind the hut, each the size of a fist, on a strip of turned moss. Somebody planted them.",
+         "text": "Six bell sprouts in a straight row behind the hut, knee high and pale blue-green, on a strip of turned moss. Somebody planted them.",
          "draw": [["circle", x, 318.22, 0.17] for x in (-202.6, -202.1, -201.6, -201.1, -200.6, -200.1)] + [["rect", -202.9, 318.0, -199.8, 318.07]]},
         {"name": "The hut's back wall", "z": [-2.7, -1.2], "style": "pale", "tag": [-206.3, 320.2], "top": True,
          "text": "The back half of a hollow stalk, 3 m wide and 2.6 m tall inside, cream, with a round window in it. A round door of bark stands open against it at the west end. This is the only made thing in the garden.",
          "draw": [["poly", [[_HX - 1.5, 318.0], [_HX + 1.5, 318.0], [_HX + 1.38, 320.6], [_HX - 1.38, 320.6]]],
                   ["circle", _HX + 0.45, 319.75, 0.38, {"style": "dark"}],
                   ["rect", _HX - 1.5, 318.0, _HX - 1.1, 319.9, {"style": "solid"}]]},
-        {"name": "The roof, back half", "z": [-3.2, -1.2], "tag": [-207.3, 321.4], "top": True,
-         "text": "The stalk's own cap, 4.8 m across, kept on as a roof. It is the scenery's dim orange under a quilt of moss, so it does not look like a cap that throws. A crooked chimney of hollow root comes out of it.",
-         "draw": [_dome(_HX, 320.5, 4.8, 1.4), ["poly", [[_HX + 1.0, 321.4], [_HX + 1.35, 321.3], [_HX + 1.55, 322.6], [_HX + 1.2, 322.65]], {"style": "pale"}]]},
+        {"name": "The roof's back half, and the chimney", "z": [-3.2, -1.2], "tag": [-207.9, 321.9], "top": True,
+         "text": "The roof carries on 2 m back over the hut's back wall. All of it is green moss, shaggy at the eaves, with nothing orange showing: it is the colour of the garden's floors, which you stand on. A crooked chimney of hollow root comes out of the back half, behind the play space.",
+         "draw": [_ROOF, ["poly", [[_HX + 1.0, 321.5], [_HX + 1.35, 321.4], [_HX + 1.55, 322.7], [_HX + 1.2, 322.75]], {"style": "pale"}]]},
         {"name": "The frog and its things", "z": [-2.2, -1.3], "style": "line", "tag": [-204.5, 319.2],
          "text": "The frog, 0.3 m, sits on a toadstool stool against the back wall. It breathes, blinks, watches you and croaks now and then. Beside it are a shelf with three jars and a small clay stove whose pipe is the chimney. A friendly thing, and nothing more (note 41).",
          "draw": [["circle", _HX + 0.55, 318.68, 0.17, {"style": "light"}], ["rect", _HX + 0.3, 318.0, _HX + 0.8, 318.5, {"style": "solid"}],
@@ -521,9 +530,9 @@ LA_CHOZA = {
          "draw": [["poly", [[-214.9, 318.1], [-213.0, 318.1], [-213.3, 319.4], [-214.2, 320.5], [-214.9, 319.6]]]]},
     ],
     "play": [
-        {"name": "The roof, front half", "z": [-1.2, 1.2], "style": "line", "tag": [-203.6, 321.6], "top": True,
-         "text": "The same cap carries on forward over the path, so when you stand in the room the roof is over you. Its lowest edge is 2.5 m above the floor, out of a standing reach. Today it would be scenery: see the question below.",
-         "draw": [_dome(_HX, 320.5, 4.8, 1.4)]},
+        {"name": "The roof: solid", "z": [-1.2, 1.2], "tag": [-203.3, 321.9], "top": True,
+         "text": "The old stalk's cap, 4.8 m across, under a quilt of moss. It is a real thing in the play space (Parker, 11-13): a low dome you can land on and stand on. Its top is 3.9 m above the floor and nearly flat across the middle. Its eaves hang out 0.9 m past each end of the room and come down to 2.1 m above the floor, so you can reach one from outside the door and pull yourself up. It is hollow underneath: inside the room the ceiling is 2.6 m up, over your head.",
+         "draw": [_ROOF]},
         {"name": "The rug", "z": [-1.0, 1.0], "style": "pale", "tag": [-205.3, 317.6],
          "text": "A round mat of woven mycelium on the garden's floor, 2.6 m across. It is the room's floor: there is no step and no sill.",
          "draw": [["rect", _HX - 1.3, 318.0, _HX + 1.3, 318.08]]},
@@ -538,21 +547,22 @@ LA_CHOZA = {
     ],
     "explains": [
         ["The floor you walk in on", "The frog's floor: a rug on the moss", "The hollow stalk's back wall, with its window, shelf and stove"],
-        ["The roof over you", "The old stalk's own cap", "The back half of the same cap, and the chimney"],
-        ["The frog", "The frog, at home", "Its snail asleep outside, and its row of button mushrooms"],
+        ["The roof you can stand on", "The old stalk's own cap, mossed over", "The back half of the same cap, and the chimney"],
+        ["The frog", "The frog, at home", "Its snail asleep outside, and its row of bell sprouts"],
         ["The root arm", "An upright root that bends out over the gap", "The knee of root it grows from"],
-        ["The moss floor", "A quiet corner of the garden", "The far forest, and shelf fungus up the east wall"],
+        ["The moss floor", "A quiet corner of the garden", "Three stands of bell mushrooms, and shelf fungus up the east wall"],
     ],
     "pieces": [
-        ["The frog's hut: half a hollow stalk with a round window, an open bark door, and its cap for a roof", "3 m wide, 3.5 m tall, cap 4.8 m", "1", "Background, with the roof's front half over the play space", "kit: the frog's hut"],
+        ["The frog's hut: half a hollow stalk with a round window and an open bark door", "3 m wide, 2.6 m tall inside", "1", "Background", "kit: the frog's hut"],
+        ["The hut's roof: a mossed-over cap, solid", "4.8 m across, 1.8 m tall, 4.4 m front to back", "1", "Play space, carrying on into the background", "kit: the frog's hut"],
         ["The frog", "0.3 m", "1", "Background", "kit: the frog"],
         ["Toadstool stool; shelf with three jars; clay stove with a crooked root chimney", "0.5 m; 0.8 m; 0.85 m, chimney 3.8 m", "1 each", "Background", "new, this area only"],
         ["Woven mycelium rug; flat pebble", "2.6 m; 0.6 m", "1 and 5", "Play space (drawn on)", "new, this area only"],
         ["Spore lantern on a root hook", "0.5 m", "1", "Background", "kit: spore lantern"],
-        ["Button mushroom", "0.3 m", "6", "Background", "kit: spotted mushroom, small, made smaller"],
+        ["Bell sprout", "0.4 m", "6", "Background", "kit: bell mushroom, as a sprout"],
         ["Giant snail, asleep", "1.8 m shell", "1", "Background", "kit: giant snail"],
         ["Root arm, and the knee it grows from", "post 3.8 m, arm 4.2 m", "1", "Play space, background", "kit: root arm"],
-        ["Far mushroom", "15 m, 6.4 m and 5 m caps", "3", "Background, far", "kit: spotted mushroom, great and large"],
+        ["Bell mushroom; mossy boulder", "6.5 to 14 m tall, caps 1.6 to 3 m; 2 m", "11, in three stands; 6", "Background, far", "kit: bell mushroom; mossy boulder"],
         ["Shelf fungus", "1 to 1.8 m", "3", "Background", "kit: shelf fungus"],
         ["Fern clump", "4 m", "1", "Foreground", "kit: fern clump"],
     ],
@@ -562,14 +572,11 @@ LA_CHOZA = {
         "A low mist on the floor, as there is today.",
     ],
     "notes": [
-        "Note 41 (not built yet): the hut you can go into, and the friendly frog in it.",
-        "Note 37 (not built yet): this floor's scenery mushrooms move well back.",
-        "Note 40 (done): the far mushroom that stood in front of this floor is behind it now.",
+        "Note 41 (not built yet): the hut you can go into, and the friendly frog in it. The floor at 318 m is the spot (Parker, 11-13).",
+        "Course change (Parker, 11-13): the hut's roof is a new solid in the play space. It is a low dome 4.8 m wide, from 320.1 m at its eaves to 321.9 m at its top, centred on x -205.5. It can be held and stood on, and it does not throw.",
+        "Parker, 11-13: the scenery is bell mushrooms. This floor's orange scenery mushrooms go, and the roof is moss green, so nothing orange here fails to throw you.",
+        "Note 40 (done): the mushroom card that stood in front of this floor was moved behind it. In this design the bell mushrooms take its place.",
         "Note 60: this is the garden's frog.",
-    ],
-    "ask": [
-        "The picture with note 41 shows this floor, the frog's garden at 318 m: it has the root arm, the sleeping snail and the big scenery mushroom. The notes page took it for the terrace at 334 m. The hut is designed here. Is this the spot?",
-        "May the hut's roof be solid, so a climber who falls from the giant mushroom lands on it? As scenery, a falling climber would pass through it.",
     ],
 }
 
@@ -582,7 +589,7 @@ HONGO_GIGANTE = {
     "place": ("The biggest mushroom in the garden stands on the island's mossy top. Its cap is 19 m across and reaches out past the "
               "terrace's edge, over the gap. It is the same kind as every other mushroom here: stalk, skirt, cap and gills, orange with "
               "pale spots. But it is very old, and an old cap here sweats slime: its stalk and its whole cap are wet and can't be "
-              "held. Three things on it stay dry. The gills under its east half hang in the open air over the gap. The rim on that side "
+              "held, and under the slime its orange has gone to a dark rust, nearly black. Three things on it stay dry. The gills under its east half hang in the open air over the gap. The rim on that side "
               "has rolled up into a dry brim. And when the cap opened, the veil that covered its gills tore: most of it is the skirt on "
               "the stalk, and one shred still hangs from the east rim with a dried knob on its end. You go out along the gills, swing on "
               "the knob, and come up round the rim."),
@@ -592,10 +599,10 @@ HONGO_GIGANTE = {
         "The terrace's floor is open from end to end under the cap: the stalk stands behind you and is not solid.",
     ],
     "background": [
-        {"name": "The terrace's far side", "z": [-10.0, -6.0], "tag": [-242.8, 336.8],
-         "text": "One far mushroom on the terrace, the cap of another showing over the gap to the east, and mossy boulders along the back. A snail sleeps on one of them. The scenery mushrooms that stand on the terrace today move back here (note 37).",
-         "draw": [_far(-242.8, 333.6, 338.4, 5.2), _far(-217.6, 320.0, 331.0, 12.0, 0.4),
-                  ["poly", [[-246.0, 333.6], [-245.0, 334.6], [-243.0, 334.2], [-240.5, 334.9], [-238.0, 334.3], [-236.0, 334.8], [-228.0, 334.4], [-226.2, 334.9], [-225.0, 333.6]]]] +
+        {"name": "The terrace's far side", "z": [-10.0, -6.0], "tag": [-243.4, 337.4],
+         "text": "A stand of three young bell mushrooms on the terrace, thin and pale blue-green, and mossy boulders along the back. A snail sleeps on one of them. The orange scenery mushrooms that stand on the terrace today are gone (Parker, 11-13).",
+         "draw": _stand([(-244.5, 333.6, 4.2, 1.2), (-243.4, 333.6, 5.0, 1.4), (-242.4, 333.6, 3.8, 1.1)]) +
+                 [["poly", [[-246.0, 333.6], [-245.0, 334.6], [-243.0, 334.2], [-240.5, 334.9], [-238.0, 334.3], [-236.0, 334.8], [-228.0, 334.4], [-226.2, 334.9], [-225.0, 333.6]]]] +
                  _snail(-239.3, 334.8, 0.7)},
         {"name": "The stalk", "z": [-4.6, -1.3], "style": "pale", "tag": [-232.0, 335.3], "top": True,
          "text": "A real stalk, 5 m thick at the foot and 3 m at the top, standing behind the play space so the terrace stays open in front of it. It is wet and dark green, with runs of slime, so nobody reaches for it. Its skirt hangs 4 m up: a torn frill, the rest of the veil.",
@@ -613,9 +620,12 @@ HONGO_GIGANTE = {
          "draw": [["circle", -229.75, 335.1, 0.22], ["rect", -243.0, 333.75, -240.4, 333.9]]},
     ],
     "play": [
-        {"name": "A real cap: orange, spotted, wet", "z": [-1.2, 1.2], "style": "line", "tag": [-234.2, 342.2],
-         "text": "Today it is drawn as brown faceted rock. It becomes the garden's mushroom at its biggest: a rounded orange cap with pale spots, made to the same outline. A wet green-yellow sheen lies over all of it and slow drips fall from the rim, so it reads as slime and not as rock. The spots are flat and under the wet. Only raised, dry, cream things can be held (note 42).",
+        {"name": "A real cap: dark, wet, and plainly a mushroom", "z": [-1.2, 1.2], "style": "line", "tag": [-234.2, 342.2],
+         "text": "Today it is drawn as brown faceted rock. It becomes a real mushroom cap, rounded, made to the same outline (note 42). It is not the bright orange of the caps that throw you. Under its slime the orange has gone to a dark rust, nearly black where the slime is thick, with a wet green-yellow sheen and slow drips from the rim. Its spots show only as faint ghosts under the wet. Dark, glossy and wet says it can't be held, and nothing about it says bounce (Parker, 11-13). Only raised, dry, cream things on it can be held.",
          "draw": [["circle", -227.4, 340.9, 0.4], ["circle", -230.2, 342.6, 0.5], ["circle", -235.5, 343.4, 0.5], ["circle", -238.2, 341.2, 0.4], ["circle", -232.3, 344.9, 0.4]]},
+        {"name": "The crown: dry and cream", "z": [-1.2, 1.2], "style": "pale", "tag": [-232.0, 347.4],
+         "text": "The flat top of the cap, where the slime has run off and the skin has dried and cracked into pale scales. It is orange in the course today and it does not throw. It becomes cream, the same dry cream as the gills and the brim, so the three dry places on the giant are one colour and the crown reads as a place to stand.",
+         "draw": [["rect", -234.0, 346.2, -230.0, 346.5]]},
         {"name": "The brim", "z": [-1.2, 1.2], "style": "pale", "tag": [-222.0, 341.2], "top": True,
          "text": "The east rim's edge, rolled up and dry, cream like the gills. It is the pale lip you are aiming for when you let go.",
          "draw": [["rect", -224.1, 340.0, -222.5, 340.25], ["circle", -222.45, 340.1, 0.22]]},
@@ -627,30 +637,31 @@ HONGO_GIGANTE = {
          "draw": [["circle", -225.96, 342.10, 0.45], ["circle", -228.03, 344.27, 0.45]]},
     ],
     "foreground": [
-        {"name": "Fern and one small cap", "z": [1.3, 2.0], "tag": [-243.6, 331.3], "top": True,
-         "text": "At the bottom left, in front of the island's rock and below the terrace's floor.",
+        {"name": "Fern and one small bell mushroom", "z": [1.3, 2.0], "tag": [-243.6, 331.3], "top": True,
+         "text": "At the bottom left, in front of the island's rock and below the terrace's floor: a fern clump and one small bell mushroom, both dark.",
          "draw": [["poly", [[-245.8, 330.0], [-245.3, 331.9], [-244.5, 330.8], [-243.7, 332.5], [-242.9, 331.0], [-242.2, 332.0], [-241.6, 330.0]]],
-                  _dome(-240.6, 330.5, 1.0, 0.5)]},
+                  _bell(-240.6, 330.0, 1.7, 0.8)]},
     ],
     "explains": [
         ["The six gills", "The front ends of the giant's gill plates", "The plates running 5 m back under the cap to the stalk"],
         ["The knob on its strand", "A shred of the torn veil, with a dried end", "The skirt on the stalk: the rest of the same veil"],
         ["The brim", "The rim's dry rolled edge", "The rim going on round behind, and the pleated underside it belongs to"],
         ["The two little mushrooms", "Two small mushrooms that have rooted on the giant's shoulder", "The bare slick shoulder going back, with nothing else on it. There are only two on purpose"],
-        ["The dry crown", "The top of the cap, where the slime has run off and the skin has dried", "The cap's far side falling away behind it, and the stalactite that hangs over it"],
+        ["The dry crown", "The top of the cap, where the slime has run off and the skin has dried to cream scales", "The cap's far side falling away behind it, and the stalactite that hangs over it"],
         ["The slick cap", "The giant's cap, under its own slime", "Its wet dark stalk, and the slimed gills of its west half"],
-        ["The terrace", "The island's mossy top", "Boulders, a far mushroom and a sleeping snail"],
+        ["The terrace", "The island's mossy top", "Boulders, a stand of bell mushrooms and a sleeping snail"],
     ],
     "pieces": [
-        ["The giant mushroom: cap to today's outline, spotted and wet; stalk; torn skirt", "cap 19 m, stalk 5 m thick and 7.4 m tall", "1", "Play space, background", "kit: the giant mushroom, re-made (note 42)"],
+        ["The giant mushroom: cap to today's outline, dark rust under slime; stalk; torn skirt", "cap 19 m, stalk 5 m thick and 7.4 m tall", "1", "Play space, background", "kit: the giant mushroom, re-made (note 42)"],
+        ["Dry scaled crown, cream", "4 m", "1", "Play space", "kit: the giant mushroom"],
         ["Gill plate, dry cream", "0.2 m thick, 3.5 to 5.5 m tall at the front, 5 m deep", "6", "Play space, running into the background", "kit: the giant mushroom"],
         ["Slimed gill sheet", "8 m", "1", "Background", "kit: slime sheet with drips"],
         ["Dry brim; veil shred with a dried knob", "1.6 m; 2.8 m with a 0.5 m knob", "1 each", "Play space", "kit: the giant mushroom"],
         ["Small cream mushroom for the shoulder", "0.5 m", "2", "Play space", "kit: spotted mushroom, small, in the hold's cream"],
-        ["Far mushroom; mossy boulder", "5 m and 12 m caps; 2 m", "2 and 5", "Background, far", "kit: spotted mushroom; mossy boulder"],
+        ["Bell mushroom, young; mossy boulder", "3.8 to 5 m tall, caps 1.1 to 1.4 m; 2 m", "3, in one stand; 5", "Background, far", "kit: bell mushroom; mossy boulder"],
         ["Giant snail, asleep", "1.4 m shell", "1", "Background, far", "kit: giant snail"],
         ["Spore lantern; glow moss patch", "0.5 m; 2.6 m", "1 each", "Background", "kit: spore lantern; glow moss patch"],
-        ["Fern clump; small corner cap", "4 m; 1 m", "1 each", "Foreground", "kit: fern clump; small corner cap"],
+        ["Fern clump; one small bell mushroom", "4 m; 1.7 m", "1 each", "Foreground", "kit: fern clump; bell mushroom, small"],
     ],
     "effects": [
         "Slow drips of slime off the cap's rim onto the terrace.",
@@ -659,8 +670,10 @@ HONGO_GIGANTE = {
     ],
     "notes": [
         "Note 42 (not built yet): the giant is a real, readable mushroom. The route is the line of dry cream things on it.",
-        "Note 44 (not built yet): two little mushrooms on the shoulder, not five.",
-        "Note 37 (not built yet): the terrace's scenery mushrooms stand well back.",
+        "Parker, 11-13: an orange cap always means bounce. So the giant is not bright orange, as the note's plan had it: it is dark rust under slime.",
+        "Course change, look only (Parker, 11-13): the crown is kind cap in the course, which paints it orange. It becomes a dry cream kind. Its shape and where it is do not change.",
+        "Note 44 (not built yet): two little mushrooms on the shoulder, not five. This is a course change: three holds go.",
+        "Note 37, and Parker, 11-13: the terrace's scenery is bell mushrooms, well back.",
     ],
 }
 
@@ -681,9 +694,9 @@ TRAMPOLIN = {
         "The two slick walls, and the mossy ledge on top of the spur.",
     ],
     "background": [
-        {"name": "One far mushroom", "z": [-10.0, -7.0], "tag": [-250.3, 340.2],
-         "text": "On the terrace below the spur, dim and blue-green. Everything else behind this challenge is rock.",
-         "draw": [_far(-250.3, 338.0, 343.6, 5.6)]},
+        {"name": "A stand of bell mushrooms", "z": [-10.0, -7.0], "tag": [-250.1, 340.4],
+         "text": "Three bell mushrooms on the terrace below the spur, their pale blue-green caps just under it. Everything else behind this challenge is rock.",
+         "draw": _stand([(-251.2, 338.0, 5.0, 2.0), (-250.1, 338.0, 5.9, 2.4), (-249.0, 338.0, 4.0, 1.7)])},
         {"name": "The slot's back wall", "z": [-3.4, -2.6], "tag": [-239.4, 364.6],
          "text": "Rounded wet rock that joins the stalactite to the spur 3 m behind you. It closes the slot, so there is no black gap behind the caps.",
          "draw": [["poly", [[-242.8, 344.5], [-236.0, 346.6], [-236.0, 367.5], [-242.8, 367.5]]]]},
@@ -738,7 +751,7 @@ TRAMPOLIN = {
         ["Mossy stalactite, short", "1.4 m wide, 2.5 m long", "2", "Background", "kit: mossy stalactite"],
         ["Mossy boulder; spore lantern", "2.3 m; 0.5 m", "1 each", "Background", "kit: mossy boulder; spore lantern"],
         ["Slime sheet with drips", "15 m and 17 m tall", "2", "Play space (drawn on)", "kit: slime sheet with drips"],
-        ["Far mushroom", "5.6 m cap", "1", "Background, far", "kit: spotted mushroom, large"],
+        ["Bell mushroom", "8.4 to 10.3 m tall, caps 1.7 to 2.4 m", "3, in one stand", "Background, far", "kit: bell mushroom"],
     ],
     "effects": [
         "A puff of spores from each cap as it throws you, so a good run leaves five puffs hanging in the slot.",
@@ -746,7 +759,7 @@ TRAMPOLIN = {
     ],
     "notes": [
         "Note 36 (not built yet): the five caps squash and spring.",
-        "Note 37 (not built yet): the five caps are spotted, and no scenery mushroom stands near them.",
+        "Note 37 (not built yet): the five caps are spotted. Parker, 11-13: the only scenery mushrooms are bell mushrooms, far back.",
     ],
 }
 
@@ -768,9 +781,11 @@ PUENTE = {
         "The ledge you leave and the root shelf you reach.",
     ],
     "background": [
-        {"name": "A great cap, far below", "z": [-10.0, -8.0], "tag": [-250.0, 352.6],
-         "text": "The top of a far mushroom that stands on the terrace, dim and blue-green. You look down on it, which tells you how high the bridge is.",
-         "draw": [_dome(-256.5, 350.8, 17.0, 4.6)]},
+        {"name": "A ledge of bell mushrooms, below", "z": [-10.0, -8.0], "tag": [-257.0, 351.2],
+         "text": "A ledge on the far back wall, 8 m under the bridge, with two stands of young bell mushrooms on it, pale blue-green. You look down on their caps, which tells you how high the bridge is. Under the ledge the wall drops away to the terrace.",
+         "draw": [["poly", [[-266.0, 350.5], [-266.0, 351.4], [-262.0, 351.9], [-257.0, 351.5], [-252.0, 352.0], [-247.5, 351.4], [-246.0, 350.5]]]] +
+                 _stand([(-263.6, 351.6, 3.4, 1.2), (-262.5, 351.8, 4.6, 1.5), (-261.5, 351.8, 2.9, 1.1),
+                         (-252.7, 351.9, 4.0, 1.4), (-251.6, 351.9, 4.8, 1.6), (-250.6, 351.8, 3.2, 1.2)])},
         {"name": "The curtain", "z": [-3.0, -1.2], "tag": [-252.2, 366.2], "top": True,
          "text": "A net of mycelium with holes as wide as your hand, hanging from the roof's stalactites to the bridge. It leans back, 3 m behind you at the top and touching the bridge at the bottom. It is dim grey-green and plainly a sheet, not a line. Before a gust it bellies the way the gust will blow.",
          "draw": [["poly", [[-262.0, 370.0], [-249.0, 370.0], [-249.0, 361.3], [-251.0, 360.5], [-254.0, 359.6], [-254.8, 357.0], [-257.4, 357.0],
@@ -797,7 +812,7 @@ PUENTE = {
          "text": "Two white cords of mycelium, with fifteen small flat shelf fungi along them as treads, cream and dry. No planks and no rope. The sketch shows its sag, which the course's own line does not.",
          "draw": [["line", -249.0, 361.0, -252.5, 359.9], ["line", -252.5, 359.9, -256.0, 359.2], ["line", -256.0, 359.2, -259.5, 359.9], ["line", -259.5, 359.9, -263.0, 361.0]]},
         {"name": "The gusts, made visible", "z": [-1.2, 1.2], "style": "mark", "tag": [-259.6, 364.6],
-         "text": "Each gust is a burst of orange spores from its pod, thick enough to see its edges and which way it blows. A small puff comes first as the warning (note 38).",
+         "text": "Each gust is a burst of pale gold spores from its pod, thick enough to see its edges and which way it blows. A small puff comes first as the warning (note 38).",
          "draw": [["line", -255.2, 358.7, -250.0, 359.8], ["line", -256.9, 358.9, -261.6, 364.6]]},
         {"name": "The two tied ends", "z": [-0.5, 0.5], "style": "pale", "tag": [-264.2, 360.3],
          "text": "At the west end the cords are grown round the root loop. At the east end they run back to the boulder.",
@@ -809,6 +824,7 @@ PUENTE = {
         ["The gusts", "Two spore pods blowing in turn", "The pod nest under the bridge's middle, and the curtain bellying before each gust"],
         ["The shelf you reach", "The bottom of a loop of root", "The root, coming down out of the low roof"],
         ["The ledge you leave", "The spur's mossy top", "The boulder the bridge is tied to"],
+        ["The drop", "27 m of air over the terrace", "A ledge of bell mushrooms on the far wall, seen from above"],
     ],
     "pieces": [
         ["Mycelium bridge: two cords with shelf-fungus treads", "14 m, treads 0.8 m", "1", "Play space", "kit: mycelium net; shelf fungus"],
@@ -817,16 +833,18 @@ PUENTE = {
         ["Mossy stalactite, short", "1.2 m wide, 2 m long", "4", "Background", "kit: mossy stalactite"],
         ["Loop of thick root from a roof", "0.7 m thick, 4 m", "1", "Play space, background", "kit: thick root"],
         ["Mossy boulder; spore lantern", "2.3 m; 0.5 m", "1 each", "Background", "kit: mossy boulder; spore lantern"],
-        ["Far mushroom, seen from above", "17 m cap", "1", "Background, far", "kit: spotted mushroom, great"],
+        ["Bell mushroom, young; far ledge of mossy rock", "2.9 to 4.8 m tall, caps 1.1 to 1.6 m; 20 m", "6, in two stands; 1", "Background, far", "kit: bell mushroom; mossy boulder"],
     ],
     "effects": [
-        "Each gust as a burst of orange spores, with a small puff 0.8 seconds before it.",
+        "Each gust as a burst of pale gold spores, with a small puff 0.8 seconds before it.",
         "The curtain bellying with each gust, and the bridge's treads lifting in the west one.",
         "A rushing sound for each gust, louder inside it.",
     ],
     "notes": [
         "Note 38 (not built yet): the gusts show themselves and show what makes them, the same way as the lift of El Ascensor de Esporas.",
         "Note 39 (done): no scraps of mud on the ledges.",
+        "Parker, 11-13: the far forest is bell mushrooms. The gusts' spores are pale gold, not orange.",
+        "Course change, look only: the bridge's planks and rope become shelf-fungus treads on mycelium cords. Where they are and how they move do not change.",
     ],
 }
 
@@ -849,9 +867,12 @@ LOS_OJOS = {
         "It is dim, not black, and the puffballs are the brightest things in it (note 45).",
     ],
     "background": [
-        {"name": "A far cap, far below", "z": [-10.0, -8.0], "tag": [-284.6, 354.0],
-         "text": "The top of the west hall's tallest mushroom, a dim curve along the bottom of the screen. It is the only thing under you.",
-         "draw": [_dome(-272.5, 353.0, 30.0, 2.5)]},
+        {"name": "A far ledge of bell mushrooms", "z": [-10.0, -8.0], "tag": [-273.0, 353.4],
+         "text": "Along the bottom of the screen: a ledge on the hall's far wall with three small stands of young bell mushrooms, pale blue-green and dim. It is the only thing under you. Below it the hall goes down 90 m.",
+         "draw": [["poly", [[-288.0, 353.0], [-288.0, 353.6], [-282.0, 354.0], [-276.0, 353.5], [-270.0, 354.1], [-264.0, 353.6], [-259.5, 353.9], [-259.5, 353.0]]]] +
+                 _stand([(-286.6, 353.6, 3.8, 1.4), (-285.5, 353.7, 5.0, 1.6), (-284.5, 353.8, 3.0, 1.2),
+                         (-280.0, 353.9, 1.9, 1.0), (-279.0, 353.8, 2.3, 1.1), (-278.0, 353.6, 1.7, 0.9),
+                         (-268.6, 354.0, 2.1, 1.0), (-267.6, 353.9, 1.6, 0.9), (-266.7, 353.8, 2.4, 1.1)])},
         {"name": "The brow", "z": [-3.4, -2.2], "tag": [-273.9, 358.5], "top": True,
          "text": "The back wall under the low roof: rounded dark rock that hangs down to about 357 m, with a ragged lower edge. It carries on up into the dome in the roof. With it there, the dark place has a back, and the puffballs have something to grow from.",
          "draw": [["poly", [[-283.2, 365.0], [-262.0, 365.0], [-262.0, 357.8], [-264.0, 356.6], [-267.0, 357.3], [-270.0, 356.2], [-273.5, 357.4],
@@ -890,7 +911,7 @@ LOS_OJOS = {
         ["The roots you slide down and catch", "The thin ends of the same roots", "A knot of root in the dome, and a thick root down the far wall under the high roof"],
         ["The shelf you start from", "The bottom of a loop of root", "The loop, coming down out of the low roof"],
         ["The low ceiling", "The underside of a rock overhang", "The brow: the same rock, hanging lower behind you"],
-        ["The drop", "The whole height of the west hall", "The top of its tallest mushroom, far below"],
+        ["The drop", "The whole height of the west hall", "A ledge of bell mushrooms on the hall's far wall, and nothing under it"],
     ],
     "pieces": [
         ["Puffball on a short neck, with a dark pore", "1.2 m", "7", "Play space", "kit: puffball"],
@@ -900,7 +921,7 @@ LOS_OJOS = {
         ["Root knuckle for a ceiling", "0.5 m", "4", "Play space", "kit: thick root"],
         ["Loop of thick root from a roof", "0.7 m thick, 4 m", "1", "Play space, background", "kit: thick root"],
         ["Mossy stalactite; glow moss patch", "1.4 m wide, 2.6 m long; 2.4 m", "1 each", "Background", "kit: mossy stalactite; glow moss patch"],
-        ["Far mushroom, seen from above", "30 m cap", "1", "Background, far", "kit: spotted mushroom, great"],
+        ["Bell mushroom, young; far ledge of mossy rock", "1.6 to 5 m tall, caps 0.9 to 1.6 m; 28 m", "9, in three stands; 1", "Background, far", "kit: bell mushroom; mossy boulder"],
     ],
     "effects": [
         "Each puffball's pore turns slowly to face you, so the eyes seem to follow you.",
@@ -910,6 +931,7 @@ LOS_OJOS = {
     "notes": [
         "Note 45 (done): the place is dim, the light fades in and out, and each puffball casts a pool of light.",
         "Note 40 (done): nothing stands in front.",
+        "Parker, 11-13: the far forest is bell mushrooms.",
     ],
 }
 
@@ -920,14 +942,14 @@ SALTO_II = {
     "place": ("The second crossing of the well, and the place where the garden stops. On the east rim is the garden's last door, a cave "
               "mouth of rounded mossy rock. A root arm stands in it like a diving board, and under the board's lip the garden's "
               "grandest mushroom has grown out over the drop. On the west rim, 12 m away, is cut stone: the doorstep of the temple of "
-              "the First Top Dog. A stone beam sticks out over the well above it, and two bronze chains hang from the beam, each with a "
+              "the First Top Dog. A stone beam sticks out 5 m over the well above it, and two bronze chains hang from the beam, each with a "
               "long banner of cut paper behind it. Between the rims the well goes down out of sight. The garden has started across: "
-              "roots have crept round the back of the shaft, and there is moss and a mushroom or two in the joints of the temple's "
+              "roots have crept round the back of the shaft, and there is moss and a bell sprout or two in the joints of the temple's "
               "first blocks. Green light on one side, torch gold on the other."),
     "keep": [
         "The great cap's three throwing faces, exactly as they are: the middle 1 m, the east flank, and the west flank that hangs in the well.",
         "The root sill, the post, and the diving board whose lip is the launch.",
-        "The two chains at 1.5 m apart, their ends 2 m above the temple's doorstep, and the doorstep's 2 m reach into the well.",
+        "The two chains at 1.5 m apart, their ends 2 m above the temple's doorstep, and the doorstep's 2 m reach into the well. The beam above them grows; the chains do not move.",
         "You see what a miss costs before you jump: both rims and the drop are lit.",
     ],
     "background": [
@@ -935,7 +957,7 @@ SALTO_II = {
          "text": "The shaft is round, so behind the crossing its wall curves from one rim to the other, 7 m back at the middle. Slick black rock with pale runs, lit green from the east and gold from the west so that it shows. Today there is only black here (note 46).",
          "draw": [["rect", -306.0, 355.5, -294.0, 384.5]]},
         {"name": "Roots round the back of the shaft", "z": [-7.0, -5.0], "style": "pale", "tag": [-299.4, 364.2], "top": True,
-         "text": "A band of thick roots that leaves the garden's rim, follows a crack round the back of the well, and reaches the temple's doorstep. Three small mushrooms grow on it. It is far back and below the chains' ends, and it is how the garden got across.",
+         "text": "A band of thick roots that leaves the garden's rim, follows a crack round the back of the well, and reaches the temple's doorstep. Three small bell mushrooms grow on it, pale blue-green. It is far back and below the chains' ends, and it is how the garden got across.",
          "draw": [["poly", [[-294.0, 364.6], [-296.5, 363.4], [-299.5, 362.9], [-302.5, 363.2], [-306.0, 364.4], [-306.0, 363.6], [-302.5, 362.4],
                             [-299.5, 362.1], [-296.5, 362.6], [-294.0, 363.8]]],
                   ["circle", -297.6, 363.5, 0.22], ["circle", -300.6, 363.3, 0.22], ["circle", -303.6, 363.8, 0.22]]},
@@ -957,11 +979,13 @@ SALTO_II = {
          "draw": [["rect", -314.0, 366.0, -309.0, 384.5],
                   ["rect", -314.0, 371.0, -309.0, 371.8, {"style": "pale"}], ["rect", -314.0, 376.8, -309.0, 377.6, {"style": "pale"}],
                   ["circle", -311.5, 369.0, 0.22, {"style": "light"}]]},
-        {"name": "The door's side and the banner beam", "z": [-3.0, -1.2], "style": "pale", "tag": [-307.4, 374.4], "top": True,
-         "text": "The side of the doorway through the well's wall: pale fitted blocks, stepping out at the head in three steps to carry a long stone beam. Each chain hangs from a carved pug boss with a bronze ring under that beam. The beam you see today stops short of both chains: this one, just behind it, reaches them.",
+        {"name": "The door's side", "z": [-3.0, -1.2], "style": "pale", "tag": [-307.4, 374.4], "top": True,
+         "text": "The side of the doorway through the well's wall: pale fitted blocks, stepping out at the head in three steps under the banner beam. The steps are what carries the beam so far out over the well.",
          "draw": [["poly", [[-309.0, 366.0], [-305.8, 366.0], [-305.8, 376.6], [-305.0, 376.6], [-305.0, 377.7], [-304.0, 377.7], [-304.0, 378.7],
-                            [-302.8, 378.7], [-302.8, 379.7], [-300.9, 379.7], [-300.9, 380.6], [-309.0, 380.6]]],
-                  ["circle", -303.0, 379.45, 0.3, {"style": "line"}], ["circle", -301.5, 379.45, 0.3, {"style": "line"}]]},
+                            [-302.8, 378.7], [-302.8, 379.7], [-309.0, 379.7]]]]},
+        {"name": "The two banners", "z": [-1.5, -1.3], "style": "mark", "tag": [-300.0, 374.0], "top": True,
+         "text": "A banner of cut paper hangs behind each chain, 1.1 m wide and 11 m long, whole and bright in the town's colours with the pug's paw on it. Today they hang inside the play space, 0.4 m behind the chains. They move back to just behind it, so that what is in the play space is the chain you catch and nothing else. With the well's wall lit behind them they are the brightest things across the drop: the target.",
+         "draw": [["rect", -303.55, 368.5, -302.45, 379.5], ["rect", -302.05, 368.5, -300.95, 379.5]]},
         {"name": "Corbels under the doorstep", "z": [-2.2, -1.2], "style": "pale", "tag": [-304.6, 360.4],
          "text": "Three stepped stone brackets that carry the doorstep out over the well, with moss in their joints. The doorstep is the front of a stone landing, not a block stuck on a wall.",
          "draw": [["poly", [[-306.0, 362.0], [-304.2, 362.0], [-304.2, 361.3], [-304.9, 361.3], [-304.9, 360.5], [-305.5, 360.5], [-305.5, 359.7], [-306.0, 359.7]]]]},
@@ -971,11 +995,11 @@ SALTO_II = {
          "text": "Today it is a cream wedge with an orange band. It becomes the brightest spotted cap in the garden, with a fat rolled rim that droops over the well and cream gills under it. It is 4 m across the screen, as now, and about 6 m from front to back, most of that behind you. The three faces you land on keep their angles exactly. It squashes deepest of all the caps and springs highest (notes 36, 37, 46).",
          "draw": [["poly", [[-294.95, 365.2], [-294.55, 364.3], [-295.35, 364.0], [-295.6, 364.8]]],
                   ["circle", -293.3, 365.75, 0.2], ["circle", -292.1, 365.6, 0.16], ["circle", -294.2, 365.35, 0.16]]},
-        {"name": "The two banners", "z": [-0.6, -0.4], "style": "mark", "tag": [-300.0, 374.0], "top": True,
-         "text": "A banner of cut paper hangs behind each chain, 1.1 m wide and 11 m long, whole and bright in the town's colours with the pug's paw on it. They are there today. With the well's wall lit behind them they are the brightest things across the drop: the target.",
-         "draw": [["rect", -303.55, 368.5, -302.45, 379.5], ["rect", -302.05, 368.5, -300.95, 379.5]]},
+        {"name": "The beam, made longer", "z": [-1.2, 1.2], "tag": [-299.9, 380.9], "top": True,
+         "text": "The temple's stone beam is real stone in the play space, and today it stops at x -303.5, short of both chains. It is made 2.6 m longer, to x -300.9, so both chains hang from it (Parker, 11-13). Under it, at the head of each chain, is a carved pug boss with a bronze ring. The new length can be held like the rest. The throw off the great cap tops out under it and passes below its end: to be checked again when it is built.",
+         "draw": [["rect", -303.5, 379.7, -300.9, 380.3], ["circle", -303.0, 379.45, 0.28, {"style": "line"}], ["circle", -301.5, 379.45, 0.28, {"style": "line"}]]},
         {"name": "The garden on the temple's doorstep", "z": [0.9, 1.2], "style": "line", "tag": [-307.6, 364.2],
-         "text": "One root across the doorstep's face, moss in the joints of its first blocks, and three mushrooms no bigger than a hand. They are far too small to stand on or to throw anybody.",
+         "text": "Drawn onto the stone: one root across the doorstep's face, moss in the joints of its first blocks, and three pale bell sprouts no bigger than a hand. Nothing orange.",
          "draw": [["line", -304.0, 364.3, -306.4, 365.3], ["line", -306.4, 365.3, -308.9, 364.5],
                   ["circle", -305.2, 365.1, 0.14], ["circle", -307.4, 365.2, 0.12], ["circle", -308.4, 364.9, 0.12]]},
         {"name": "The doorstep's carved edge", "z": [1.0, 1.2], "style": "pale", "tag": [-303.2, 365.4],
@@ -990,7 +1014,7 @@ SALTO_II = {
     "explains": [
         ["The great cap", "The garden's grandest mushroom, grown out over the well", "Its thick stalk, growing from a crack in the well's wall and leaning out"],
         ["The sill, the post and the diving board", "One branch of a great root, turned toward the well", "The mother root, coming down from the roof at the back of the cave mouth"],
-        ["The two chains", "Bronze chains that carry the temple's banners", "A pug boss for each, under a stone beam carried by the stepped head of the door's side"],
+        ["The two chains", "Bronze chains hung from the temple's banner beam", "The stepped head of the door's side, which carries the beam, and a banner behind each chain"],
         ["The doorstep", "The front of the temple's stone landing", "Stepped corbels under it, and the first hall behind it"],
         ["The well", "The round shaft, between its second pair of doors", "Its back wall curving from rim to rim, with roots creeping round it"],
     ],
@@ -1001,10 +1025,12 @@ SALTO_II = {
         ["Great root down a wall", "1 m thick, 14 m", "1", "Background", "kit: thick root"],
         ["Shelf fungus; glow moss patch; spore lantern", "1.2 to 1.6 m; 2.3 m; 0.5 m", "3, 1 and 1", "Background", "kit: shelf fungus; glow moss patch; spore lantern"],
         ["Well wall, curved, slick, with pale runs", "12 m wide, as tall as the screen", "1", "Background", "new, shared by the three well crossings"],
-        ["Root band with three small mushrooms", "12 m long, 0.8 m thick", "1", "Background, far", "kit: thick root; spotted mushroom, small"],
-        ["Door side with a stepped head and a long beam", "3.2 m wide, 14 m tall, beam 8 m", "1", "Background", "the temple's kit: wall bay, cut to a door side"],
-        ["Chain boss: carved pug with a bronze ring", "0.9 m", "2", "Background", "the temple's kit: chain boss"],
-        ["Bronze chain with a banner of cut paper", "12 m; banner 1.1 m by 11 m", "2", "Play space", "the temple's kit: banner; chain"],
+        ["Root band with three small bell mushrooms", "12 m long, 0.8 m thick", "1", "Background, far", "kit: thick root; bell mushroom, small"],
+        ["Door side with a stepped head", "3.2 m wide, 13.7 m tall", "1", "Background", "the temple's kit: wall bay, cut to a door side"],
+        ["Banner beam, stone, made longer", "9.1 m long, 0.6 m thick", "1", "Play space", "the temple's kit: wall bay stone; today's beam plus 2.6 m"],
+        ["Chain boss: carved pug with a bronze ring", "0.9 m", "2", "Play space (under the beam)", "the temple's kit: chain boss"],
+        ["Bronze chain", "12 m", "2", "Play space", "the temple's kit: bronze chain"],
+        ["Banner of cut paper", "1.1 m by 11 m", "2", "Background, just behind the play space", "the temple's kit: banner"],
         ["Wall bay with carved band; torch", "5 m wide; 0.8 m", "2 and 1", "Background, far", "the temple's kit: wall bay, carved frieze strip, torch"],
         ["Stepped corbel; carved band for the doorstep", "1.8 m; 2.6 m", "1 each", "Background, play space (drawn on)", "the temple's kit: carved frieze strip"],
         ["Fern tuft", "3 m", "1", "Foreground", "kit: fern clump"],
@@ -1019,9 +1045,9 @@ SALTO_II = {
         "Note 46 (not built yet): the great cap is a real mushroom, the grandest in the garden, and the well beside it is lit so you can see across and down.",
         "Note 36 (not built yet): it squashes and springs. Note 37 (not built yet): it is spotted.",
         "Note 45 (done): the dim place stops about 11 m east of the cap, so the jump is in the garden's full light.",
-    ],
-    "ask": [
-        "The two chains hang 0.5 m and 2 m past the end of the stone beam above them. The design carries them on a longer beam just behind. Should the real beam be made longer instead, so that it reaches both chains?",
+        "Course change (Parker, 11-13): the temple's stone beam is made 2.6 m longer, from x -303.5 to x -300.9 at the same height, so it reaches both chains. The new length is solid stone and can be held. The chains do not move. This is in the temple's course file.",
+        "Scenery move: the two banners go from 0.4 m behind the chains to just behind the play space. Nothing you touch changes.",
+        "Parker, 11-13: nothing orange grows in the scenery. The garden's reach into the temple is roots, moss and pale bell sprouts.",
     ],
 }
 
