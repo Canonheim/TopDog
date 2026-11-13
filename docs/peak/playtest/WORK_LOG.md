@@ -12,6 +12,27 @@ scratch folder first, or the game goes full screen with Parker's own display set
 Godot_console.exe --path . --audio-driver Dummy res://tests/peak_watch.tscn -- --no-steam --out=DIR --watch=cam:1.4:1.6
 ```
 
+## Where each note stands (11-12, end of the pass)
+
+| # | Note | State | Commit |
+|---|---|---|---|
+| 1 | Breaking planks come back with a glitch | Fixed, seen in the game | `bc54ac8`, seen in `81f7130` |
+| 2 | Water: Del Mar's shader and splashes | Done, seen in the game. Colour is Parker's call | `de35654` |
+| 3 | The bucket: nothing sticks, collision wrong | Fixed, seen in the game | `bc54ac8`, seen in `81f7130` |
+| 4 | The two hanging lines look like ropes | Third try in the game, Parker's to judge | `81f7130` |
+| 5 | Wind streaks where there is no wind | Fixed, seen in the game | `bc54ac8`, seen in `81f7130` |
+| 6 | The cart falls too slow; the track end | Both fixed, seen in the game. One new rule for Parker to know | `022e0d5` (cart), `bc54ac8` (track end) |
+| 7 | Camera too pulled back, character too high | Fixed, seen in the game. First-try numbers; nine long jumps to decide | `65e26fc` |
+| 8 | The dark plank by the big wheel | Fixed, seen in the game | `bc54ac8`, seen in `81f7130` |
+| 9 | Rocks: more delay, bounce away off a board | Fixed, watched: 14 in a row left by the board | `7220cae` |
+| 10 | Rocks: a slightly smaller hitbox | Kept at 0.60 (parked value) | `bc54ac8` |
+| 11 | Rocks: half a second more after a double | Fixed, watched: the gaps as written | `7220cae` |
+
+Nothing was blocked. Lint (88 scripts, 0 failed) and the `--peak` battery (0 fails) were
+run after every commit's code. Nothing was merged, pushed or built. Nobody has PLAYED
+any of this: every check is the probe standing the climber somewhere and making the
+thing happen.
+
 ## Calls waiting for Parker
 
 1. **Camera numbers (note 7).** First try: at most 11 m of view (`PEAK_CAM_HALF_MAX`
