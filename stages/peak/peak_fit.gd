@@ -21,7 +21,7 @@ const MATERIAL := {
 	"iron": "iron", "metal": "iron", "paint": "iron", "grease": "iron",
 	"crystal": "crystal", "glass": "crystal",
 	"snow": "snow", "snowbridge": "snow", "ice": "ice", "blackice": "ice",
-	"bone": "bone", "root": "root", "gill": "gill",
+	"bone": "bone", "root": "root", "gill": "gill", "cap": "shroom",
 }
 ## Painted neutral by the makers and multiplied by the area's own colour.
 const TINTED := ["rock", "stone", "brick", "snow", "ice", "crystal"]
