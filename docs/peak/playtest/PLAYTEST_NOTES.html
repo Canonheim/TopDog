@@ -54,24 +54,28 @@
 <div class="box">
 <p><b>The rule for tonight</b> (Parker, 21:53): <i>"dont make the fixes yet, we will have a ton of them to work on all at once, we are just making the HTML and taking notes."</i></p>
 <p>So this page is notes, causes and a plan. Nothing is being changed in the game.</p>
-<p><b>One thing to know:</b> before that message I had already written the small fixes for notes 1, 3, 4, 5, 8, 10 and parts of 6 and 9. They are parked in one commit on the branch <code>luchador-ui</code>. They are not merged, not in any build, and nobody has looked at them in the game. They passed the script check and the Peak's own test battery (0 fails). They are marked <span class="chip c-parked">Written, parked</span> below. Say the word and I throw them away, or they wait for the big pass.</p>
+<p><b>Update, 22:01:</b> Parker asked for a thread to work on what is in this page so far. The session "Peak playtest fixes, notes 1 to 11" is doing notes 1 to 11 on the branch <code>luchador-ui</code>. Notes from 12 on stay here and are not sent to it until Parker says. The states below are as they were when it started; I update them as it reports.</p>
+<p><b>What "fixed, seen in the game" means below:</b> the thread made the change on the branch <code>luchador-ui</code> and took pictures of it in the running game, which I have looked at. It is not merged into <code>main</code>, not in any build, and neither of you has played it. The pictures marked "after" are the thread's, not from the stream.</p>
 </div>
 
 <h2>Where each note stands</h2>
 <table>
 <tr><th>#</th><th>Note</th><th>State</th></tr>
-<tr><td>1</td><td><a href="#n1">Breaking planks in the mine come back with a glitch</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
-<tr><td>2</td><td><a href="#n2">Water should use Del Mar's shader and splashes</a></td><td><span class="chip c-ask">Plan, one call for Parker</span></td></tr>
-<tr><td>3</td><td><a href="#n3">The mine's bucket: nothing sticks, collision is wrong</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
-<tr><td>4</td><td><a href="#n4">The two hanging lines in the mine look like ropes</a></td><td><span class="chip c-parked">First try written, parked, unseen</span></td></tr>
-<tr><td>5</td><td><a href="#n5">Wind streaks in the mine where there is no wind</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
-<tr><td>6</td><td><a href="#n6">The falling minecart is too slow; the track end has no collision</a></td><td><span class="chip c-plan">Cart: plan. Track end: written, parked</span></td></tr>
-<tr><td>7</td><td><a href="#n7">Camera far too pulled back, character too high</a></td><td><span class="chip c-plan">Plan</span></td></tr>
-<tr><td>8</td><td><a href="#n8">The dark plank by the big wheel should be part of the bridge</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
-<tr><td>9</td><td><a href="#n9">Cave-in rocks: one second more between them, and bounce away instead of vanishing</a></td><td><span class="chip c-plan">Bounce: plan. Gap: written, parked</span></td></tr>
-<tr><td>10</td><td><a href="#n10">Cave-in rocks: a slightly smaller hitbox</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
-<tr><td>11</td><td><a href="#n11">Cave-in rocks: an extra half second after the double fall</a></td><td><span class="chip c-plan">Plan, settled (replaces note 9's parked gap)</span></td></tr>
+<tr><td>1</td><td><a href="#n1">Breaking planks in the mine come back with a glitch</a></td><td><span class="chip c-parked">Fixed, seen in the game</span></td></tr>
+<tr><td>2</td><td><a href="#n2">Water should use Del Mar's shader and splashes</a></td><td><span class="chip c-plan">With the thread; one call for Parker</span></td></tr>
+<tr><td>3</td><td><a href="#n3">The mine's bucket: nothing sticks, collision is wrong</a></td><td><span class="chip c-parked">Fixed, seen in the game</span></td></tr>
+<tr><td>4</td><td><a href="#n4">The two hanging lines in the mine look like ropes</a></td><td><span class="chip c-ask">Third try in the game, Parker to judge</span></td></tr>
+<tr><td>5</td><td><a href="#n5">Wind streaks in the mine where there is no wind</a></td><td><span class="chip c-parked">Fixed, seen in the game</span></td></tr>
+<tr><td>6</td><td><a href="#n6">The falling minecart is too slow; the track end has no collision</a></td><td><span class="chip c-plan">Track end: fixed, seen. Cart: with the thread</span></td></tr>
+<tr><td>7</td><td><a href="#n7">Camera far too pulled back, character too high</a></td><td><span class="chip c-ask">Fixed, seen in the game; two calls for Parker</span></td></tr>
+<tr><td>8</td><td><a href="#n8">The dark plank by the big wheel should be part of the bridge</a></td><td><span class="chip c-parked">Fixed, seen in the game</span></td></tr>
+<tr><td>9</td><td><a href="#n9">Cave-in rocks: one second more between them, and bounce away instead of vanishing</a></td><td><span class="chip c-plan">With the thread</span></td></tr>
+<tr><td>10</td><td><a href="#n10">Cave-in rocks: a slightly smaller hitbox</a></td><td><span class="chip c-plan">Written; with the thread</span></td></tr>
+<tr><td>11</td><td><a href="#n11">Cave-in rocks: an extra half second after the double fall</a></td><td><span class="chip c-plan">With the thread</span></td></tr>
+<tr><td>12</td><td><a href="#n12">Cave-in rocks need a dark hole to come out of</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
+<tr><td>13</td><td><a href="#n13">The curtain's holds should visibly go in and out of the wall, with a shake first</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
 </table>
+<p class="sub">Notes 1 to 11 are with the thread. Notes from 12 on wait here until Parker says to send them.</p>
 
 <h2>The plan so far</h2>
 <p>For the big pass after the session. Order is by how much each one hurts the play, then by size.</p>
@@ -88,14 +92,16 @@
 <ul>
 <li><b>Water colour</b> (note 2): Del Mar's bright blue in the caves, or the same shader tinted dark per cave? I'd tint it.</li>
 <li><b>Chains past the track end</b> (note 6): with the boards made solid, the first chain is 1 m from the boards' end, so it can be taken without riding the cart. Move the chains out the same 1.6 m so the ride stays the only way? I'd move them.</li>
-<li><b>Camera numbers</b> (note 7): widest view 11 m of height, looking at most 1 m below you, as a first try?</li></ul>
+<li><b>Camera numbers</b> (note 7): the first try is in: widest view 11 m of height, looking at most 1 m below you. Right, closer, or further?</li>
+<li><b>Nine long jumps</b> (note 7): with the cap, 9 designed jumps land out of frame from the launch hold. Keep the cap strict, or let those zones stay wider? I'd let them stay wider.</li>
+<li><b>The lift</b> (note 4): does the dark hoistway read as a lift and not as something to hold?</li></ul>
 
 <h2>The notes</h2>
 
 <div class="note" id="n1">
   <div class="head"><span class="num">1</span><h3>Breaking planks in the mine come back with a glitch</h3><span class="time">21:39</span></div>
   <blockquote>"the crumbling path things in the mines respawn with weird graphical glitches."</blockquote>
-  <p><span class="chip c-parked">Written, parked</span></p>
+  <p><span class="chip c-parked">Fixed, seen in the game</span></p>
   <h4>What is going on</h4>
   <p>These are the four rotten planks in the plank bridge of challenge 1.3, Los Tablones (the grey crumbly ones in the picture under note 4). A plank breaks 1.2 seconds after you hold it and comes back 8 seconds later.</p>
   <p>When it comes back, the game grows it from tiny to full size over a third of a second, with a little overshoot. The mistake: it grows from the mine's zero point, not from the plank's own middle. The planks sit about 180 m from that point. So the returning plank starts about 9 m from the zero point, flies some 170 m across the mine to its place, shoots about 18 m past it, and settles back. On screen that is a stretched plank streaking through the frame.</p>
@@ -106,12 +112,22 @@
     <li>The same code runs every breaking hold: icicles, snow bridges, the brittle rock at the summit (seven of them). All of them have this glitch today and all get the fix.</li>
     <li>Still to do: a picture of a plank mid-return.</li>
   </ul>
+  <h4>After (the thread, 22:25)</h4>
+  <p>The thread measured the returning plank on every frame: its middle never strays more than 4 cm from its place. Breaking holds other than this plank (icicles, snow bridges, the summit's rock) use the same code but were not looked at.</p>
+  <figure>
+    <img src="after/01_plank_return_0.jpg" alt="After: a rotten plank of challenge 1.3 a twentieth of a second into its return, growing in its own gap.">
+    <figcaption>After: a rotten plank of challenge 1.3 a twentieth of a second into its return, growing in its own gap.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/01_plank_back.jpg" alt="After: the same plank back in place.">
+    <figcaption>After: the same plank back in place.</figcaption>
+  </figure>
 </div>
 
 <div class="note" id="n2">
   <div class="head"><span class="num">2</span><h3>Water should use Del Mar's shader and splashes</h3><span class="time">21:39</span></div>
   <blockquote>"the water should use the water shader and splash effects we use in del mar"</blockquote>
-  <p><span class="chip c-ask">Plan, one call for Parker</span></p>
+  <p><span class="chip c-plan">With the thread; one call for Parker</span></p>
   <figure>
     <img src="../shots/2_3.jpg" alt="The Peak's water today: a flat blue box with a pale strip on top">
     <figcaption>The Peak's water today (challenge 2.3, from last night's showcase pictures, not from tonight): a flat see-through blue box with a pale strip on top.</figcaption>
@@ -134,7 +150,7 @@
 <div class="note" id="n3">
   <div class="head"><span class="num">3</span><h3>The mine's bucket: nothing sticks, collision is wrong</h3><span class="time">21:41</span></div>
   <blockquote>"the bucket that goes up and down in the mines does not have stickyness for some reason and its collision is wrong. Fix it"</blockquote>
-  <p><span class="chip c-parked">Written, parked</span></p>
+  <p><span class="chip c-parked">Fixed, seen in the game</span></p>
   <figure>
     <svg viewBox="0 0 560 300" role="img" aria-label="The bucket's collision sits half a metre above the drawn bucket">
       <rect width="560" height="300" fill="#241d19"/>
@@ -176,12 +192,22 @@
     <li><b>The vultures</b> (3): the model sits about half a metre higher than its collision.</li>
     <li>Smaller ones, under half a metre: the crystal raft, the wall snails, the serpent's vertebrae.</li>
   </ul>
+  <h4>After (the thread, 22:25)</h4>
+  <p>Hands hold the lower wall and ride it; feet hold standing inside it. The counterweight was checked the same way and already matched.</p>
+  <figure>
+    <img src="after/03_bucket_solid_outline.jpg" alt="After: the bucket with its collision drawn over it in blue. They agree.">
+    <figcaption>After: the bucket with its collision drawn over it in blue. They agree.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/03_bucket_hand_holds.jpg" alt="After: a hand on the bucket's lower wall holds, and rides with it.">
+    <figcaption>After: a hand on the bucket's lower wall holds, and rides with it.</figcaption>
+  </figure>
 </div>
 
 <div class="note" id="n4">
   <div class="head"><span class="num">4</span><h3>The two hanging lines in the mine look like ropes</h3><span class="time">21:42</span></div>
   <blockquote>"in the mine area, remove these track things and replace them with something else. They look like the ropes you grab later."</blockquote>
-  <p><span class="chip c-parked">First try written, parked, unseen</span></p>
+  <p><span class="chip c-ask">Third try in the game, Parker to judge</span></p>
   <figure>
     <img src="shots/04_lift_cables.jpg" alt="Two thin dark red lines hang beside the real rope">
     <figcaption>Parker's picture: the two dark red lines under the blue arrow. The climber is on the real rope, to their left. The grey pieces in the bridge are note 1's rotten planks.</figcaption>
@@ -195,12 +221,27 @@
     <li>My doubt about it: orange timber is also the colour of things you hold. If the frame reads as a ladder, the next try is a plain dark iron mast, or nothing but the pulley.</li>
     <li>Still to do: a picture for you to judge.</li>
   </ul>
+  <h4>After (the thread, 22:25)</h4>
+  <p>My doubt was right: the timber frame looked like something to climb, so it is gone. A dark gallows on its own left the bucket floating in the air (try 2, also gone). Try 3 is a hoistway cut from flat dark card, in the back wall's grey: a gallows on the station deck and a board the bucket and counterweight run in front of. It is broad, dark and flat, with no rungs and no thin lines.</p>
+  <div class="ask"><b>For Parker to judge:</b> does try 3 read as a lift and not as something to hold? It is quiet. It can be made lighter or darker with one value.</div>
+  <figure>
+    <img src="after/04_lift_try1_scaffold_whole.jpg" alt="Try 1, thrown out: my timber frame. It reads as a bright orange climbing frame.">
+    <figcaption>Try 1, thrown out: my timber frame. It reads as a bright orange climbing frame.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/04_lift_try3_hoistway_whole.jpg" alt="Try 3, in the game now: a dark flat hoistway. The counterweight (top) and the bucket (bottom) run in front of it.">
+    <figcaption>Try 3, in the game now: a dark flat hoistway. The counterweight (top) and the bucket (bottom) run in front of it.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/04_lift_try3_hoistway_from_catwalk.jpg" alt="Try 3 from the catwalk.">
+    <figcaption>Try 3 from the catwalk.</figcaption>
+  </figure>
 </div>
 
 <div class="note" id="n5">
   <div class="head"><span class="num">5</span><h3>Wind streaks in the mine where there is no wind</h3><span class="time">21:45</span></div>
   <blockquote>"there is wind in the mine at this part that seams to do nothing"</blockquote>
-  <p><span class="chip c-parked">Written, parked</span></p>
+  <p><span class="chip c-parked">Fixed, seen in the game</span></p>
   <figure>
     <img src="shots/05_wind_streaks.jpg" alt="Long white upright streaks all over the dark to the right of the climber">
     <figcaption>Parker's picture: 36 m up, on the mud-vein wall under the cart ledge. The long white streaks are the stray wind.</figcaption>
@@ -214,12 +255,26 @@
     <li>Stand the streak itself upright and leave the streak-maker alone. (Written, parked.)</li>
     <li>Still to do: a picture of the waterfall column and of one updraught in the mushroom garden.</li>
   </ul>
+  <h4>After (the thread, 22:25)</h4>
+  <p>One aside from the thread, not changed: an updraught only gets 8 streaks, which is easy to miss.</p>
+  <figure>
+    <img src="after/05_wind_a1_where_the_stray_band_was.jpg" alt="After: the spot where you met the band. No streaks.">
+    <figcaption>After: the spot where you met the band. No streaks.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/05_wind_a1.jpg" alt="After: the streaks are inside the waterfall's column, where the wind is.">
+    <figcaption>After: the streaks are inside the waterfall's column, where the wind is.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/05_wind_a4.jpg" alt="After: an updraught in the mushroom garden, upright streaks in its own column.">
+    <figcaption>After: an updraught in the mushroom garden, upright streaks in its own column.</figcaption>
+  </figure>
 </div>
 
 <div class="note" id="n6">
   <div class="head"><span class="num">6</span><h3>The falling minecart is too slow; the track end has no collision</h3><span class="time">21:46</span></div>
   <blockquote>"the mine cart that falls here falls too slow and should instead have physics a little after it falls. Also this spot right here should have collision on the boards going across the tracks"</blockquote>
-  <p><span class="chip c-plan">Cart: plan. Track end: written, parked</span></p>
+  <p><span class="chip c-plan">Track end: fixed, seen. Cart: with the thread</span></p>
   <figure>
     <img src="shots/06_cart_track_end.png" alt="The climber on the tip of the broken track, past the trestle">
     <figcaption>Parker's picture: the tip of the broken track, past the trestle. The two lines hanging at the top left are the real chains.</figcaption>
@@ -235,12 +290,18 @@
     <li>The first cart (the ride in from the station) stays on its path. It has to deliver you.</li>
   </ul>
   <div class="ask"><b>One call for Parker:</b> with the boards solid, the first chain hangs 1 m from the boards' end at head height, so you can walk out and take it without the cart. Move both chains 1.6 m further out so the ride stays the only way? I'd move them.</div>
+  <h4>After (the thread, 22:25)</h4>
+  <p>The track end is solid to the end of the drawn boards. The chains were not moved. The cart itself is still to do.</p>
+  <figure>
+    <img src="after/06_track_end_close.jpg" alt="After: a climber held at the very end of the boards, past the trestle.">
+    <figcaption>After: a climber held at the very end of the boards, past the trestle.</figcaption>
+  </figure>
 </div>
 
 <div class="note" id="n7">
   <div class="head"><span class="num">7</span><h3>Camera far too pulled back, character too high</h3><span class="time">21:46</span></div>
   <blockquote>"the camera in general is wayyyy to backed out and the character is too high up on it"</blockquote>
-  <p><span class="chip c-plan">Plan</span></p>
+  <p><span class="chip c-ask">Fixed, seen in the game; two calls for Parker</span></p>
   <h4>What is going on</h4>
   <p>The course sets the camera per challenge, in 111 zones. The area authors were told to "show the drop": pull back so the launch, the landing and the fall below are all in frame, and look down. They did, everywhere.</p>
   <ul>
@@ -254,12 +315,39 @@
     <li>The camera already steps back by itself when you fall or fly. That stays, so a long fall still shows where you are going.</li>
     <li>Before and after pictures of the same three spots go here. The two numbers are yours to change.</li>
   </ul>
+  <h4>After (the thread, 22:25)</h4>
+  <p>One rule in the camera code, two numbers: the widest view is 11 m of height and the camera aims at most 1 m below you. It changes 101 of the 111 zones; no zone was edited by hand. Checked standing still at five spots. Not checked by eye: the camera while you fall, fling or ride the cart.</p>
+  <div class="ask"><b>A new call for Parker:</b> with the view capped, 9 of the mountain's 68 designed long jumps land outside the frame while you are still standing at the launch hold (in challenges 3.5, 7.8, 9.6, 10.6, 11.2 and 11.4; they are 7 to 20 m across). The camera still steps back once you are flying. Keep the cap strict everywhere, or let those few zones keep a wider view? I'd let those nine stay wider, since a blind jump in a rage game feels unfair.</div>
+  <figure>
+    <img src="after/07_camera_before_1_8.jpg" alt="Before: challenge 1.8, Las Vigas. 26 m of view, the climber 6 m above the middle.">
+    <figcaption>Before: challenge 1.8, Las Vigas. 26 m of view, the climber 6 m above the middle.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/07_camera_after_1_8.jpg" alt="After: the same spot. 11 m of view, the climber just above the middle.">
+    <figcaption>After: the same spot. 11 m of view, the climber just above the middle.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/07_camera_before_1_6.jpg" alt="Before: challenge 1.6, the mud-vein wall. 16 m of view.">
+    <figcaption>Before: challenge 1.6, the mud-vein wall. 16 m of view.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/07_camera_after_1_6.jpg" alt="After: the same spot, 11 m of view.">
+    <figcaption>After: the same spot, 11 m of view.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/07_camera_before_9_3.jpg" alt="Before: challenge 9.3 on the glacier. 19 m of view.">
+    <figcaption>Before: challenge 9.3 on the glacier. 19 m of view.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/07_camera_after_9_3.jpg" alt="After: the same spot, 11 m of view.">
+    <figcaption>After: the same spot, 11 m of view.</figcaption>
+  </figure>
 </div>
 
 <div class="note" id="n8">
   <div class="head"><span class="num">8</span><h3>The dark plank by the big wheel should be part of the bridge</h3><span class="time">21:47</span></div>
   <blockquote>"make this part just part of the larger bridge to the right"</blockquote>
-  <p><span class="chip c-parked">Written, parked</span></p>
+  <p><span class="chip c-parked">Fixed, seen in the game</span></p>
   <figure>
     <img src="shots/08_dark_plank.png" alt="A short dark plank at the left end of the staging, circled in blue">
     <figcaption>Parker's picture: the short dark plank at the waterfall end of the staging under the winding wheel.</figcaption>
@@ -272,13 +360,22 @@
     <li>If you want the wet end back later, the right way is to keep one bridge and darken its end only while it is wet.</li>
     <li>Still to do: a picture.</li>
   </ul>
+  <h4>After (the thread, 22:25)</h4>
+  <figure>
+    <img src="after/08_staging_close.jpg" alt="After: the staging under the winding wheel is one run of planks.">
+    <figcaption>After: the staging under the winding wheel is one run of planks.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/08_staging_west_end.jpg" alt="After: the waterfall end, held.">
+    <figcaption>After: the waterfall end, held.</figcaption>
+  </figure>
 </div>
 
 <div class="note" id="n9">
   <div class="head"><span class="num">9</span><h3>Cave-in rocks: one second more between them, and bounce away instead of vanishing</h3><span class="time">21:49, 21:52</span></div>
   <blockquote>"this part needs a longer delay between rocks and the rocks shouldnt despawn, they should bounce into the background off a little messed up board"</blockquote>
   <blockquote>"like a one second more delay, not a hugely longer delay"</blockquote>
-  <p><span class="chip c-plan">Bounce: plan. Gap: written, parked</span></p>
+  <p><span class="chip c-plan">With the thread</span></p>
   <figure>
     <img src="shots/09_cavein_rocks.jpg" alt="Two rocks coming down the fallen beam onto the gallery">
     <figcaption>Parker's picture: 57 m up, the gallery at the foot of the cave-in, two rocks on the fallen beam.</figcaption>
@@ -297,7 +394,7 @@
 <div class="note" id="n10">
   <div class="head"><span class="num">10</span><h3>Cave-in rocks: a slightly smaller hitbox</h3><span class="time">21:50</span></div>
   <blockquote>"make the hitbox on the boulder here a little smaller so it's slightly more forgiving"</blockquote>
-  <p><span class="chip c-parked">Written, parked</span></p>
+  <p><span class="chip c-plan">Written; with the thread</span></p>
   <h4>What is going on</h4>
   <p>A rock knocks you out when its middle comes within 0.74 m of the middle of your head, chest or hips while it is moving faster than 2.2 m/s. The rock itself is 0.42 m in radius, so the knock-out reaches 0.32 m past its surface.</p>
   <h4>Plan</h4>
@@ -311,7 +408,7 @@
 <div class="note" id="n11">
   <div class="head"><span class="num">11</span><h3>Cave-in rocks: an extra half second after the double fall</h3><span class="time">21:58</span></div>
   <blockquote>"make it so after the double rock fall, there is an extra .5 seconds along with the extra one second we added"</blockquote>
-  <p><span class="chip c-plan">Plan (replaces note 9's parked gap)</span></p>
+  <p><span class="chip c-plan">With the thread</span></p>
   <h4>What is going on</h4>
   <p>The "double" is not designed. It is what happens when the two timers (every 4.0 s and every 5.6 s) land almost together. Their pattern repeats every 28 seconds and holds 12 rocks. Twice in that loop two rocks fall 0.4 seconds apart: that is the double. Twice more they fall 1.2 seconds apart, a looser pair.</p>
   <p>Today's gaps round the loop, in seconds: 3.6, <b>0.4</b>, 4.0, 1.2, 2.8, 2.8, 1.2, 4.0, <b>0.4</b>, 3.6, 2.0, 2.0.</p>
@@ -325,6 +422,59 @@
     <li>Small: the rock sources learn to follow a written list of gaps. When this is done, note 9's parked gap change is dropped.</li>
   </ul>
   <p><b>Settled (Parker, 22:00):</b> <i>"no just the 0.4 ones count as doubles"</i>. The looser pairs, 1.2 seconds apart, are ordinary gaps and get the one second only. The list above stands as written.</p>
+</div>
+
+<div class="note" id="n12">
+  <div class="head"><span class="num">12</span><h3>Cave-in rocks need a dark hole to come out of</h3><span class="time">22:18</span></div>
+  <blockquote>"the rocks spawn right here, they need some kind of modeled dark hole they come out of"</blockquote>
+  <p><span class="chip c-plan">Plan, not sent to the thread</span></p>
+  <figure>
+    <img src="shots/12_rock_source.png" alt="The top of the cave-in shaft: a flat roof over a plain grey notch, beside the arrow sign">
+    <figcaption>Parker's picture: the top of the cave-in shaft, right of the arrow sign on the top drift. The rocks appear in the grey notch under the flat roof.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>The shaft of challenge 1.10 ends in a flat rock roof 77 m up. The two rock sources sit 0.7 m under that roof, in open air. So each rock simply appears just below a flat ceiling, in plain view from the top drift, with nothing it could have come from.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>Cut a chimney up into the roof.</b> A real hole about 2 m wide over the middle of the shaft, rising 4 to 5 m into the roof rock and closed at its top. There is room: the roof rock is 10 m thick there.</li>
+    <li><b>Make it dark.</b> The inside of the chimney is black, with no back wall showing, so it reads as a hole going up into the mountain.</li>
+    <li><b>Dress the mouth.</b> Snapped timber stubs and a lip of rubble round the opening (the kit has a rubble pile), so it looks like the place the roof gave way.</li>
+    <li><b>Move the sources up inside it,</b> out of sight. A rock then falls out of the dark instead of appearing. Both sources keep their left-to-right positions, so the rocks still come down the same two lines, and the rhythm of note 11 is unchanged. The warning trickle of dust comes out of the mouth.</li>
+    <li>One thing to watch: a rock that starts 4 m higher arrives a little later and a little faster. The warning time before each rock may need the same small stretch so the tell still matches the rock.</li>
+    <li>Check: a picture from the top drift and one from the foot of the shaft looking up, and that the rocks clear the mouth without catching on its rim.</li>
+  </ul>
+</div>
+
+<div class="note" id="n13">
+  <div class="head"><span class="num">13</span><h3>The curtain's holds should visibly go in and out of the wall, with a shake first</h3><span class="time">22:19 to 22:21</span></div>
+  <blockquote>"if these are going in and out of the wall, give them an in and out animation"</blockquote>
+  <blockquote>"make them shake before going in, and dont change the one further up since w are not there yet"</blockquote>
+  <p><span class="chip c-plan">Plan, not sent to the thread</span></p>
+  <figure>
+    <img src="shots/13_cortina_holds.png" alt="Two columns of small holds; some orange, some nearly black">
+    <figcaption>Parker's picture: the two columns of holds of challenge 1.11, La Cortina. The orange ones can be held; the nearly black ones can't.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>They are not going in and out. In the design the waterfall's spray drenches each hold in turn: 2.6 seconds wet, 3.4 seconds dry, each row 0.7 seconds ahead of the row under it, so the wet comes down the wall. A wet hold is slick and can't be held.</p>
+  <p>The only thing shown is a colour swap: a wet hold turns dark, all at once, with no warning and no water on it. Against a dark wall a dark hold looks like a hold that has gone. So it reads as holds popping in and out, with no animation. Note 8's dark plank was the same wet look misread as a different object.</p>
+  <p>This is all 28 holds of La Cortina, plus 7 holds in Las Aguas Negras that use the same wet-in-turn rule.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>Make it what it looks like.</b> The holds really slide into the wall and out again, on the same timing as today.</li>
+    <li><b>Shake first</b> (Parker). A hold trembles for about half a second before it goes, so you can let go or commit. Then it slides back into the rock in about a quarter of a second. A hand on it is let go as it goes in.</li>
+    <li><b>Coming out</b> it slides out the same way and can be held once it is fully out.</li>
+    <li>A small socket stays in the wall where a hold has gone in, so you can see where one will come back.</li>
+    <li>The numbers (half a second of shake, a quarter second of slide) are first tries.</li>
+  </ul>
+  <h4>Added at 22:21</h4>
+  <blockquote>"make it take longer so they are out for longer. When in, make sure you can pass thorugh the spot"</blockquote>
+  <ul>
+    <li><b>Out for longer.</b> Today a hold is out for 3.4 seconds and gone for 2.6. First try: out for 5 seconds, gone for 2. The half second of shake is the end of the 5, and the hold can still be held while it shakes. You didn't give a number, so say if 5 is not enough.</li>
+    <li>The two holds of each row stay half a turn apart and the rows stay staggered, so one hold of every pair is always out, as the challenge was designed.</li>
+    <li><b>Pass through when in.</b> Today a wet hold only stops being holdable: it is still a solid bump you knock against. When a hold is in, its collision is switched off, so a hand, a foot or your body goes straight through the spot. It turns solid again only once it is fully out.</li>
+    <li>If you are in the spot when a hold comes back out, it waits until you are clear, so it can't shove you off the wall or trap a limb.</li>
+  </ul>
+  <p><b>Settled (Parker, 22:20):</b> <i>"make them shake before going in, and dont change the one further up since w are not there yet"</i>. So: the shake before going in is confirmed, and this change is for the 28 holds of La Cortina only. The 7 wet holds in Las Aguas Negras stay exactly as they are until you have played that far.</p>
 </div>
 
 </main>
