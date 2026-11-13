@@ -376,13 +376,12 @@ A.challenge("8.11", "La Estación Alta", (-268.8, 786.0), 3, "X",
                    ["reach", [-269.4, 786.0], [-271.0, 786.0]]])
 
 # ---------------------------------------------------------------- the picture (all scenery: cards and props)
-# Late afternoon: far ranges going gold to violet, the valley and the tiny town under the void.
-A.card([(-140, 676), (-140, 722), (-152, 731), (-166, 717), (-184, 738), (-204, 724), (-226, 744), (-246, 728), (-262, 742), (-290, 760), (-290, 676)],
-       z=-30.0, tone="#C98F6A")
-A.card([(-140, 676), (-140, 704), (-158, 712), (-176, 700), (-198, 716), (-222, 702), (-244, 712), (-290, 730), (-290, 676)], z=-22.0, tone="#A9785E")
-A.card([(-140, 676), (-140, 690), (-170, 695), (-200, 688), (-232, 696), (-290, 700), (-290, 676)], z=-14.0, tone="#7E5E58")
-A.deco("town_tiny", -196.0, 689.0, z=-13.5, size=(9.0, 2.2, 0.1), tone="rock")  # the town, the ring a dot
-A.deco("sun_low", -150.0, 742.0, z=-34.0, size=(9.0, 9.0, 0.1), tone="gold")
+# Late afternoon over the void. (TRIAL, Parker's far-facade rule, 11-13: the area's own
+# stand-in far view is out, so the Peak's real far layers show through the void: the painted
+# valley with the town on it, the two painted ranges and the rows of cloud
+# (stages/peak/peak_backdrop.gd). It was three flat cards of far range at z -30, -22 and -14
+# in "#C98F6A", "#A9785E" and "#7E5E58", a `town_tiny` standing on the nearest at
+# (-196, 689), and a `sun_low` at (-150, 742).)
 A.effect("clouds", (-285, 676, -140, 700), density=0.5, tone="#F6D9B0")  # the void's floor is cloud
 A.effect("dust", (-240, 690, -160, 730), density=0.2, tone="gold")  # gold motes in the low sun
 A.effect("snow", (-285, 770, -262, 792), density=0.3)  # the first flakes at the high station
