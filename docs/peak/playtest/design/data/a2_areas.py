@@ -50,7 +50,7 @@ EL_BORDE = {
          "text": "The weir is as wide as the tunnel. Behind the slot you fall through, the same stone lip and the same white sheet of water run back into the scene, so the slot is the near end of a real weir.",
          "draw": [L(-243.2, 84.0, -243.2, 90.8), L(-241.4, 84.0, -241.4, 90.8), L(-239.6, 84.0, -239.6, 90.8), R(-244.6, 90.55, -243.8, 91.0, "pale")]},
         {"name": "The main's brackets and its two ends", "z": [-2.6, -1.2], "style": "pale", "tag": [-248.0, 95.5],
-         "text": "A cast bracket from the back wall under the main every few metres, and a bigger one where the chain hangs. At the west end the main turns up through the roof to the wheel pit. At the east end it turns back into the wall, runs along it and goes down the dry shaft. It comes from somewhere and goes somewhere.",
+         "text": "A cast bracket from the back wall under the main every few metres, and a bigger one where the chain hangs. At the west end the main turns up through the roof to the wheel pit. At the east end it turns straight back to the wall. From there on it is scenery: it runs flat along the back wall, 2.6 m behind you, and goes down the dry shaft. Every length of it that is in the play space is a length you can hold.",
          "draw": [R(x - 0.12, 94.0, x + 0.12, 95.3) for x in (-251.0, -248.0, -246.6, -241.0, -236.0, -234.2)]
                  + [R(-253.15, 94.5, -252.85, 96.0), L(-229.5, 92.0, -229.5, 91.1, "line"), L(-229.5, 91.1, -234.0, 91.1, "line"), L(-234.0, 91.1, -234.0, 84.0, "line")]},
         {"name": "What the landing hangs from", "z": [-2.6, -1.2], "style": "pale", "tag": [-254.5, 91.7],
@@ -76,7 +76,7 @@ EL_BORDE = {
     ],
     "foreground": [
         {"name": "A pipe at the frame's east edge", "z": [1.3, 1.6], "tag": [-225.35, 96.5],
-         "text": "One verdigris riser with an elbow, in front of the solid rock east of the ledge. It never crosses open space.",
+         "text": "One riser pipe with an elbow, in front of the solid rock east of the ledge. It stands in front of the play space, so it is scenery, and it never crosses open space.",
          "draw": [R(-225.5, 84.0, -225.2, 98.5)]},
         {"name": "The near bank's brick lip", "z": [1.3, 2.0], "style": "dark", "tag": [-252.0, 86.6],
          "text": "A low broken run of brick along the bottom of the frame, below the river's bed. It stops short of the weir, so nothing stands in front of the water or the fall.",
@@ -216,14 +216,17 @@ EL_ACUEDUCTO = {
         {"name": "The hatch", "z": [-2.0, -1.2], "style": "pale", "tag": [-226.9, 108.7],
          "text": "The ladder up the east wall goes through the roof by a brick-lined hatch with a cast iron rim.",
          "draw": [R(-227.8, 107.4, -226.0, 110.0)]},
+        {"name": "Ring pads and plates", "z": [-1.9, -1.2], "style": "pale", "tag": [-237.4, 104.6],
+         "text": "Note 18: the six chains are gone. Behind each ring, a short brick pad built out from the arcade's wall with a riveted iron plate on its face, the way a mooring ring sits on a quay. The pad stops at the back edge of the play space. It is scenery because of where it stands.",
+         "draw": [R(x - 0.4, y - 0.4, x + 0.4, y + 0.4) for x, y in _RINGS]},
         {"name": "Two works lanterns", "z": [-1.6, -1.3], "style": "light", "tag": [-241.6, 105.6],
          "text": "On brackets on the arcade's piers, not hung in the air between the rings. Steady.",
          "draw": [C(-241.6, 104.9, 0.17), C(-227.4, 105.0, 0.17)]},
     ],
     "play": [
-        {"name": "Ring plates", "z": [-1.2, -0.2], "style": "pale", "tag": [-246.6, 103.9],
-         "text": "Note 18: the six chains are gone. Each ring sits on a riveted iron plate on a short brick pad built out from the arcade's wall, the way a mooring ring sits on a quay. Nothing hangs above a ring. The pad and plate are dark wet brick and black iron and can't be held. Only the rust-orange ring can.",
-         "draw": [R(x - 0.4, y - 0.4, x + 0.4, y + 0.4) for x, y in _RINGS]},
+        {"name": "The rings' eye bolts", "z": [-1.2, 0.2], "style": "line", "tag": [-246.7, 104.3],
+         "text": "Each ring stands on a short eye bolt that points straight at you from its plate. From the side the bolt is hidden behind its own ring, so nothing new shows in the play space and nothing new can be held. Nothing hangs above a ring.",
+         "draw": [C(x, y, 0.3) for x, y in _RINGS]},
         {"name": "Broken ends", "z": [-1.2, 1.2], "style": "mark", "tag": [-242.0, 100.4],
          "text": "Each pier top shows the trough's section on its broken end, and under it the first few bricks of the arch that sprang from it, drawn on.",
          "draw": [L(-246.1, 100.5, -245.5, 99.9), L(-243.1, 100.9, -243.7, 100.3), L(-240.1, 100.9, -239.5, 100.3),
@@ -236,7 +239,7 @@ EL_ACUEDUCTO = {
     "explains": [
         ["The four pier tops", "Stumps of the aqueduct's trough", "The standing arcade's piers, right behind them"],
         ["The three gaps", "Fallen spans", "The same three arches, whole, in the standing arcade, and the brick heaps in the race"],
-        ["The six rings", "Lifting rings on plates, fixed to the wall", "The arcade's wall above each arch"],
+        ["The six rings", "Lifting rings on eye bolts, fixed to the wall", "A brick pad and an iron plate behind each one, on the arcade's wall"],
         ["The race below", "The mill's race", "Black water going back through the arches"],
         ["The hatch ladder", "Iron rungs up the east wall", "The hatch's brick lining"],
     ],
@@ -244,7 +247,7 @@ EL_ACUEDUCTO = {
         ["Arcade bay: pier, round arch, wall above", "4 to 5.7 m arch, 10.6 m tall", "3 bays", "Background", "kit: brick wall bay with a round arch; brick pier"],
         ["Far arcade", "2 to 3 m arches", "3", "Background, far", "kit: brick wall bay with a round arch"],
         ["Fallen brick heap", "2.4 to 4 m", "3", "Background", "new"],
-        ["Wall ring on a plate, on a brick pad", "0.8 m plate, pad 1 m deep", "6", "Play space", "kit: wall ring on a plate (note 18)"],
+        ["Wall ring on a plate, on a brick pad", "0.8 m plate, pad 0.7 m deep", "6", "Play space (the ring), background (plate and pad)", "kit: wall ring on a plate (note 18)"],
         ["Trough stump with a broken end and an arch springer", "3 m long, 0.9 m tall", "4", "Play space", "kit: brick pier and buttress with stone coping, broken end new"],
         ["Hatch lining with an iron rim", "1.8 m by 2.6 m", "1", "Background", "new, this area only"],
         ["Works lantern on a wall bracket", "0.4 m", "2", "Background", "kit: lantern on a wall bracket (added below)"],
@@ -254,7 +257,8 @@ EL_ACUEDUCTO = {
         "Shimmer from the race on the undersides of the standing arches.",
     ],
     "notes": [
-        "Note 18: the rings are bolted to the wall behind. The chains are gone.",
+        "Note 18: the rings are bolted to the wall behind.",
+        "Course change, scenery only: the six drawn chains go. No ring moves.",
         "Note 17: this is the place of the pulsing light. Lanterns here are steady and on the wall.",
         "Note 22: the race is one body of moving water, and the drain pours into it.",
     ],
@@ -363,7 +367,7 @@ COMPUERTAS = {
          "text": "Behind each ram: a sluice gate in a cast-iron frame, with the pug cast in the frame's head and a rack and gear, seized, beside it. The gate's leaf is yoked to the ram's head and goes up and down with it. While a gate is up you see black water moving behind it.",
          "draw": _frames},
         {"name": "The regulator and its pipes", "z": [-2.4, -1.6], "style": "pale", "tag": [-252.4, 125.9],
-         "text": "A riveted valve chest high on the wall, and a fat green pipe from it down to each ram. This is what drives them, and you can see it.",
+         "text": "A riveted valve chest high on the wall, and a fat pipe from it down to each ram, all of it flat on the back wall, well behind the play space. This is what drives them, and you can see it.",
          "draw": [R(-253.3, 123.9, -251.5, 125.2), L(-250.4, 124.5, -250.4, 116.6, "line"), L(-252.4, 123.9, -252.4, 119.6, "line"),
                   L(-254.6, 124.5, -254.6, 122.6, "line"), L(-253.3, 124.5, -254.6, 124.5, "line"), L(-251.5, 124.5, -250.4, 124.5, "line")]},
         {"name": "A works lantern", "z": [-2.4, -2.1], "style": "light", "tag": [-251.0, 122.4],
@@ -372,7 +376,7 @@ COMPUERTAS = {
     ],
     "play": [
         {"name": "Housing, ram and head", "z": [-1.0, 1.0], "style": "mark", "tag": [-250.28, 110.0],
-         "text": "Note 19: each rising block is redrawn as a machine piston, the same size and with the same top. A fixed iron housing stands on the step where the block rests today. A broad polished ram, as wide as the head, comes up out of it carrying the head. The ram is slick and can't be held.",
+         "text": "Note 19: each rising block is redrawn as a machine piston, the same size and with the same top. A fixed iron housing stands on the step where the block rests today. A broad ram, as wide as the head, comes up out of it carrying the head. Housing and ram stand in the play space but are black with oil and running wet, so they plainly can't be held.",
          "draw": [R(_cx - 1.02, _fl, _cx + 1.02, _top - 0.24) for _cx, _fl, _top in _GATES]},
         {"name": "The heads", "z": [-1.0, 1.0], "style": "pale", "tag": [-256.3, 118.3],
          "text": "The part you hold: a thick riveted plate in rust orange with a raised rim, drawn on today's top.",
@@ -380,7 +384,7 @@ COMPUERTAS = {
     ],
     "foreground": [
         {"name": "The regulator's supply pipe", "z": [1.3, 1.6], "tag": [-248.55, 122.0],
-         "text": "One green riser in front of the solid rock east of the hall, from the frame's bottom to its top. It never crosses the hall.",
+         "text": "One riser pipe in front of the solid rock east of the hall. It stands in front of the play space, so it is scenery, and it never crosses the hall.",
          "draw": [R(-248.7, 116.0, -248.4, 128.6)]},
     ],
     "explains": [
@@ -404,9 +408,7 @@ COMPUERTAS = {
     ],
     "notes": [
         "Note 19: the three rising gates are machine pistons. The housing stands where the block rests today, and the ram fills the space under the head as it rises, as the note's plan asks.",
-    ],
-    "ask": [
-        "Here each ram lifts a sluice gate that stands behind it, so the name Las Compuertas still fits. Keep the name?",
+        "Parker, 11-13: the name Las Compuertas stays. Each ram lifts a sluice gate that stands behind it.",
     ],
 }
 
@@ -476,6 +478,7 @@ CADENAS = {
     "notes": [
         "Note 20: the chains are real chains you swing on. Nothing here is a drawn chain.",
         "Note 18 applies here too: nothing thin that is only scenery hangs in this room.",
+        "Course change, scenery only: the lantern that hangs in the air between the chains moves to the wall.",
     ],
 }
 
@@ -503,7 +506,7 @@ FROG = {
          "text": "A riveted round door 1.9 m across with the pug cast in its middle and a hand wheel. It is hinged on the back jamb and stands half open against the pool hall's wall, out of your way. Its cast ring frame is set in the wall's end.",
          "draw": [C(-285.0, 118.4, 0.95), C(-285.0, 118.4, 0.25)]},
         {"name": "The outlet valve", "z": [-2.4, -1.6], "style": "line", "over": True, "tag": [-280.5, 118.5],
-         "text": "A fat green pipe up through the floor and into the east wall, with a big teal valve wheel on it at chest height and a round gauge above.",
+         "text": "Against the room's back wall, behind where you walk: a fat pipe up through the floor and into the east wall, with a big valve wheel on it at chest height and a round gauge above.",
          "draw": [C(-281.7, 118.5, 0.45), L(-281.7, 117.4, -281.7, 119.3), C(-281.7, 119.45, 0.14)]},
         {"name": "The frog", "z": [-2.0, -1.5], "style": "light", "over": True, "tag": [-283.1, 116.6],
          "text": "Sitting on the keeper's upturned bucket, 0.3 m tall, in a tiny oilskin hat. It breathes, blinks, watches you and croaks. You can hear it from the gallery above.",
@@ -537,9 +540,8 @@ FROG = {
     ],
     "notes": [
         "Note 60: one frog in every biome. The note's first idea was a barrel or the barrels' cove. This room is at the same pool, at its other end, and you can walk into it.",
-    ],
-    "ask": [
-        "The frog's room is under the gallery, opening off the east end of the ledge where El Charco del Pozo starts. Is that the right place for it?",
+        "Parker, 11-13: the room's place is settled.",
+        "Course change: a room is cut in brick that is solid today, from x -284 to -281 and from 117.4 to 120 m, with 3 m of new floor level with the ledge.",
     ],
 }
 
@@ -555,7 +557,7 @@ CHARCO = {
               "falls from those crossings lands here. This is the place the mountain sends you back to."),
     "keep": [
         "The pool, the two ledges, and the lip the pool goes over at its east end.",
-        "The barrels as note 21 has them: eight, unevenly spaced, out of the cove, drifting east, over the lip and down the fall.",
+        "The barrels as note 21 has them: eight, unevenly spaced, out of the cove, drifting east, over the lip and down the fall. Two of the eight gaps are too wide to step across and have to be swum (Parker, 11-13).",
         "The well's mouth in the roof: 12 m wide, from x -306 to -294, and the camera's lean upward here.",
     ],
     "background": [
@@ -632,9 +634,8 @@ CHARCO = {
         "Note 21: the barrels come out of a modelled cove, eight of them, unevenly spaced, and go over the fall.",
         "Note 22: the pool bends over its lip into the fall. Foam where barrels and ledges meet the water.",
         "Note 60: the frog is not on a barrel or in the cove. It is in the valve chamber at the ledge's east end.",
-    ],
-    "ask": [
-        "Under the well, far back: one fallen thing from each place above where you cross it (a crystal point, a mushroom cap, a carved temple block). Do you want that, or should the foot of the well be bare?",
+        "Parker, 11-13: the three fallen things under the well stay: a crystal point, a mushroom cap, a carved temple block.",
+        "Note 2 (Parker, 11-13): the water keeps its own tint in each cave. Here it is black where it is deep.",
     ],
 }
 
@@ -727,8 +728,9 @@ TUBERIA = {
     "place": ("The boiler house. The boiler stands at the bottom, behind the stoker's grating, with its fire still in. Its steam "
               "pipe climbs the hall in three flights to the pump engine at the top, which lifted water back up to the works. The "
               "hall's floor is the tail pool, so everything stands on three brick piers, each a storey taller than the last, like "
-              "a giant's stair. The steam pipe is wrapped in lagging except at its joints, and the bare joints are hot. Along the "
-              "top of each pier runs a cold feed pipe: those are the three level runs where you can rest."),
+              "a giant's stair. The steam pipe itself runs up the piers behind you, wrapped in lagging. At each joint a short bare stub comes forward "
+              "off it and ends in a bolted flange, and those flanges are hot. Along the top of each pier runs a cold feed pipe, out in "
+              "front where you can reach it: those are the three level runs where you can rest."),
     "keep": [
         "The eleven hot joints and the two cool ones, each exactly where it is, and how long a hot joint holds you (note 23).",
         "The three level runs, hand over hand.",
@@ -746,8 +748,8 @@ TUBERIA = {
          "text": "End on, 3 m across, on a brick setting behind the grating. Its fire door glows orange with the pug cast on it: the warmest thing in the biome. The first cool joint is its stop valve, and the first hot joints are on the pipe leaving its top. A flue goes up the east wall.",
          "draw": [R(-351.3, 114.5, -347.9, 118.3, "pale"), C(-349.6, 119.7, 1.5), R(-349.95, 118.45, -349.2, 119.05, "light"),
                   R(-347.6, 120.6, -346.9, 142.0, "pale")]},
-        {"name": "The steam pipe, lagged", "z": [-1.6, -1.25], "style": "line", "tag": [-361.9, 127.3],
-         "text": "Between the joints the pipe is wrapped in grey-green lagging with wire bands: dull, thick and plainly not a hold. Only the bare joints stick out of it. Today these lengths are thin green pipe.",
+        {"name": "The steam pipe, lagged", "z": [-2.2, -1.7], "style": "line", "tag": [-361.9, 127.3],
+         "text": "The steam pipe stands half a metre and more behind the play space, on the piers' faces, wrapped in lagging with wire bands. It is scenery because of where it stands. At each joint a bare stub comes straight forward off it to the flange you hold, hidden from the side behind its own flange. Today the pipe between the joints is drawn inside the play space and can't be held. By Parker's rule of 11-13 that is wrong, so it moves back.",
          "draw": _steam},
         {"name": "The pump engine", "z": [-4.6, -2.0], "style": "line", "tag": [-374.9, 140.2],
          "text": "On the top pier, where the steam pipe ends: a bed, a cylinder and a flywheel 3.2 m across, stopped. It is where the pipe was going.",
@@ -763,22 +765,22 @@ TUBERIA = {
          "draw": [C(-355.8, 123.3, 0.17), C(-366.0, 128.8, 0.17), C(-375.1, 134.1, 0.17), R(-348.55, 121.5, -347.95, 122.1, "pale")]},
     ],
     "play": [
-        {"name": "Saddles under the level runs", "z": [-1.2, 0.2], "style": "pale", "tag": [-355.8, 125.5],
-         "text": "Each level run sits in two cast saddles on its pier's coping, drawn under it. It is fixed to something.",
-         "draw": [s for x0, x1, y in _RUNS for s in (R(x0 + 0.5, y - 0.5, x0 + 0.8, y - 0.15), R(x1 - 0.8, y - 0.5, x1 - 0.5, y - 0.15))]},
+        {"name": "Straps on the level runs", "z": [-1.2, 0.2], "style": "mark", "tag": [-355.8, 125.5],
+         "text": "Each level run is held by two iron straps on arms that go straight back to its pier. From the side an arm is hidden behind the run, so the run looks fixed and nothing new shows that you could take for a hold. A strap is part of its run: you hold it like the rest.",
+         "draw": [s for x0, x1, y in _RUNS for s in (R(x0 + 0.5, y - 0.2, x0 + 0.8, y + 0.2), R(x1 - 0.8, y - 0.2, x1 - 0.5, y + 0.2))]},
         {"name": "The two cool joints", "z": [-0.4, 0.2], "style": "line", "tag": [-348.3, 120.6],
-         "text": "Teal valve wheels with the pug cast in the hub, on the first joint and the last. The eleven hot joints keep the glow, shimmer and flare the game already draws.",
+         "text": "Valve wheels with the pug cast in the hub, on the first joint and the last. A wheel is cool and a bare flange is hot: the shape tells you, and the glow. The eleven hot joints keep the glow, shimmer and flare the game already draws.",
          "draw": [C(-349.3, 120.0, 0.45), C(-377.6, 136.6, 0.45)]},
     ],
     "foreground": [
         {"name": "A riser at the frame's east edge", "z": [1.3, 1.6], "tag": [-345.45, 133.0],
-         "text": "One green pipe in front of the solid rock above the flume. It never crosses the hall or the pool.",
+         "text": "One riser pipe in front of the solid rock above the flume. It stands in front of the play space, so it is scenery, and it never crosses the hall or the pool.",
          "draw": [R(-345.6, 123.0, -345.3, 143.5)]},
     ],
     "explains": [
-        ["The eleven hot joints", "Bare flanges on a live steam pipe", "The lagged pipe between them, the boiler it leaves and the engine it reaches"],
+        ["The eleven hot joints", "Bare flanges on stubs off a live steam pipe", "The lagged pipe behind them, the boiler it leaves and the engine it reaches"],
         ["The two cool joints", "The boiler's stop valve and the engine's", "The boiler, and the pump engine"],
-        ["The three level runs", "The cold feed pipe, in saddles", "The pier under each one, and the feed tank"],
+        ["The three level runs", "The cold feed pipe, strapped to its piers", "The pier behind each one, and the feed tank"],
         ["The grating you start from", "The stoker's grating", "The boiler's fire door, right behind it"],
         ["The pool under you", "The boiler house's tail pool", "The piers standing in it, with an arch through each"],
     ],
@@ -786,10 +788,10 @@ TUBERIA = {
         ["Brick pier with stone coping and an arch through it", "5 to 7 m wide; 9.6, 15.1 and 20.4 m tall", "3", "Background", "kit: brick pier and buttress with stone coping"],
         ["Boiler, end on, with a glowing door and a cast pug", "3 m across", "1", "Background", "kit: boiler, pug_stamp"],
         ["Flue", "0.7 m across, 21 m", "1", "Background", "new, this area only"],
-        ["Lagged steam pipe", "0.5 m across", "11 short lengths", "Background", "new: pipe_verdigris, wrapped"],
+        ["Lagged steam pipe, with a bare stub at each joint", "0.5 m across; stubs 1 m long", "3 flights; 11 stubs", "Background", "new: pipe_verdigris, wrapped"],
         ["Hot joint: glowing flange", "0.5 m", "11", "Play space", "kit: hot joint"],
         ["Valve wheel, teal", "0.9 m", "2", "Play space", "kit: valve_wheel"],
-        ["Pipe run, rust orange, in saddles", "0.3 m across; 6.4, 6 and 4.4 m", "3 runs, 6 saddles", "Play space", "kit: pipe run, rust orange; saddle new"],
+        ["Pipe run, rust orange, with straps on arms", "0.3 m across; 6.4, 6 and 4.4 m", "3 runs, 6 straps", "Play space", "kit: pipe run, rust orange; strap and arm new"],
         ["Pump engine with a flywheel", "4 m", "1", "Background", "kit: pump engine"],
         ["Tank", "2.5 m", "1", "Background", "kit: tank"],
         ["Bunting", "10 m", "1", "Background", "kit: papel_tatters (the mine's)"],
@@ -805,6 +807,8 @@ TUBERIA = {
     "notes": [
         "Note 23 (done): the hot joints glow, shimmer and flare before they let go. The cool joints are teal valve wheels.",
         "Note 22: the spill down the west wall is water pouring off the pool above.",
+        "Parker, 11-13: a pipe that is in the play space can be held, so no scenery pipe stands in it.",
+        "Course change, scenery only: the drawn pipe between the joints moves from inside the play space to half a metre behind it. No hold moves.",
     ],
 }
 
@@ -901,12 +905,12 @@ PASARELA = {
         {"name": "The catwalk's brackets", "z": [-2.2, -1.2], "style": "pale", "tag": [-406.3, 151.4], "top": True,
          "text": "A cast bracket out of the back wall under every length: two under each sound plate, one, bent, under each rusted one. At each gap a bracket stands empty.",
          "draw": [R(x - 0.08, 151.9, x + 0.08, 152.65) for x in _BRK] + [R(x - 0.08, 152.2, x + 0.08, 152.65) for x in (-404.6, -412.1, -419.1)]},
-        {"name": "The back hand rail", "z": [-1.5, -1.3], "style": "line", "tag": [-398.0, 154.8],
-         "text": "On the wall side only, 1.1 m up, whole over the sound plates and bent or missing over the rest. There is no rail on the camera's side.",
+        {"name": "The back hand rail", "z": [-2.0, -1.7], "style": "line", "tag": [-398.0, 154.8],
+         "text": "On the wall side only, 1.1 m up and half a metre behind the play space, so it is scenery and not a hold. Whole over the sound plates, bent or missing over the rest. There is no rail on the camera's side.",
          "draw": [L(-425.5, 154.1, -423.6, 154.1), L(-414.8, 154.1, -412.8, 154.1), L(-407.3, 154.1, -405.3, 154.1), L(-393.5, 154.1, -391.5, 154.1),
                   L(-423.6, 154.1, -421.0, 153.6, "mark"), L(-404.0, 153.7, -399.0, 154.0, "mark"), L(-411.5, 153.6, -409.0, 154.0, "mark")]},
         {"name": "The dam's main", "z": [-2.2, -1.8], "style": "line", "tag": [-417.0, 157.1],
-         "text": "A fat green pipe along the wall under the roof, from the dam to the boiler house. Scenery, and out of reach.",
+         "text": "A fat pipe flat on the back wall under the roof, from the dam to the boiler house. It is 2 m behind the catwalk and 3 m above it: scenery.",
          "draw": [L(-425.5, 156.4, -392.0, 156.4)]},
         {"name": "Two works lanterns", "z": [-2.2, -1.9], "style": "light", "tag": [-409.9, 155.9],
          "text": "On wall brackets over the two rest plates, so the sound places are the lit places.",
@@ -914,7 +918,7 @@ PASARELA = {
     ],
     "play": [
         {"name": "The gaps' edges", "z": [-1.0, 1.0], "style": "dark", "tag": [-404.65, 153.7],
-         "text": "Note 52: the three gaps are on the list of small pits whose insides should not be holdable. Drawn here as clean cut plate edges, 0.3 m deep. If Parker picks them from that list they take the slick look for their whole depth.",
+         "text": "Note 52 (Parker, 11-13: all eight pits): the cut edge of the plate on each side of a gap can't be held. It is drawn black, greased and wet for its whole 0.3 m depth. The plates' tops, right up to the edge, hold as before.",
          "draw": [R(-405.3, 152.7, -405.2, 153.0), R(-404.1, 152.7, -404.0, 153.0), R(-412.8, 152.7, -412.7, 153.0), R(-411.6, 152.7, -411.5, 153.0),
                   R(-419.8, 152.7, -419.7, 153.0), R(-418.6, 152.7, -418.5, 153.0)]},
         {"name": "Sound plates", "z": [-1.0, 1.0], "style": "pale", "tag": [-413.8, 152.2],
@@ -941,91 +945,102 @@ PASARELA = {
     ],
     "notes": [
         "Note 24 (done): the catwalk is mostly breakable floor.",
-        "Note 52: the three gaps are among the eight small pits listed for Parker. Not changed here.",
+        "Note 52 (Parker, 11-13): all eight small pits get insides that can't be held. Three of them are these gaps.",
+        "Course change: the six cut edges of the plates at the three gaps become slick.",
         "Note 22: the river is one moving body from the dam's apron to the weir.",
     ],
 }
 
 # ------------------------------------------------------------------ 2.11 La Presa
-_STEPS = [[-426.6, 151.9], [-426.6, 154.8], [-429.2, 154.8], [-429.2, 157.7], [-431.8, 157.7], [-431.8, 160.6], [-434.4, 160.6],
-          [-434.4, 163.5], [-437.0, 163.5], [-437.0, 166.4], [-440.0, 166.4], [-440.0, 151.9]]
-
 PRESA = {
     "id": "2.11", "slug": "2_11_la_presa", "title": "La Presa", "kind": "challenge",
-    "window": [-462.0, 147.0, -422.0, 176.0], "screen": [-434.0, 160.0], "cut_y": 160.0, "climber": [-426.3, 152.2],
-    "place": ("The dam: a wall of brick 15 m tall with the works' lake behind it. Its downstream face leans back, and the keeper went "
-              "up it on an inclined lift: a small iron cage on a toothed rail laid up the face, with a hand winch in the cage. You "
-              "stand in it and wind, and the winch's pinion climbs the rail one tooth at a time. Stop winding and it creeps back "
-              "down. Behind the lift the dam's stepped buttress goes up beside you, with the dam's leak running down its steps."),
+    "window": [-462.0, 147.0, -422.0, 176.0], "screen": [-436.0, 159.5], "cut_y": 153.0, "climber": [-426.3, 152.2],
+    "place": ("The dam: a wall of brick 15 m tall with the works' lake behind it. Its downstream side comes down in great steps, and "
+              "those steps are its spillway: when the lake is high, water runs down them to the upper reach. The keeper did not climb "
+              "the spillway. He walked into the dam. A low brick gallery goes in through the dam's foot to a lift shaft, and the shaft "
+              "goes straight up inside the dam to its crest. In the shaft is one small iron cage with a hand winch on board. You stand "
+              "in it and wind, and the winch's pinion climbs a toothed rack on the shaft's back wall. Stop winding and the cage sinks. "
+              "The dam is cut open at the front, so you see the gallery, the shaft and the cage in section."),
     "keep": [
-        "Note 25: one lift, from the apron to the crest, in place of the five platforms and five cranks. It rises only while you wind and sinks when you stop.",
-        "The apron you start from and the crest you step off on to, at the heights they have today.",
-        "The lake behind the crest and the rungs out through the roof.",
+        "Note 25: one lift in place of the five platforms and five cranks. It travels the whole height they cover today, from the apron's level at 152.2 m to the crest's at 167 m, and it rises only while you wind.",
+        "Parker, 11-13: the lift goes straight up in a shaft, and it always sinks when you stop winding. There is no catch.",
+        "The apron you start from, the crest you step off on to, the lake behind it and the rungs out through the roof, all where they are today.",
     ],
     "background": [
-        {"name": "The dam hall's back wall", "z": [-7.0, -6.0], "tag": [-430.0, 168.6], "top": True,
+        {"name": "The dam hall's back wall", "z": [-7.0, -6.0], "tag": [-430.5, 167.6], "top": True,
          "text": "Brick, far back, blue-black. The hall is wide: the dam runs a long way back into the scene.",
          "draw": [R(-440.0, 151.9, -425.5, 170.0), R(-459.0, 163.0, -440.0, 173.0)]},
-        {"name": "The stepped buttress", "z": [-5.0, -1.4], "style": "pale", "tag": [-430.4, 156.2], "top": True,
-         "text": "Behind the lift: a brick buttress against the dam's face, rising in five steps of 2.9 m, each with a pale stone coping. These are the five steps the place has today, moved back out of the play space. The lift passes in front of them.",
-         "draw": [P(_STEPS)]},
-        {"name": "The leak", "z": [-5.0, -1.4], "style": "mark", "tag": [-433.0, 161.6],
-         "text": "Water from a crack near the crest runs down the buttress step by step, a thin white fall on each riser and a film on each tread, and off its foot into the upper reach.",
-         "draw": [L(-437.0, 163.6, -437.0, 166.3), L(-434.4, 160.7, -434.4, 163.4), L(-431.8, 157.8, -431.8, 160.5), L(-429.2, 154.9, -429.2, 157.6), L(-426.6, 152.0, -426.6, 154.7)]},
-        {"name": "The far rail", "z": [-1.4, -1.25], "style": "mark", "tag": [-436.6, 163.4],
-         "text": "The lift runs on two rails. The far one lies on the face just behind the play space, toothed, with the pug cast on its foot.",
-         "draw": [L(-429.3, 152.25, -439.7, 167.05)]},
-        {"name": "The head of the incline", "z": [-2.0, -1.3], "style": "pale", "tag": [-441.2, 169.2],
-         "text": "On the crest: a buffer post, and the pawl wheel that clicks as the lift comes up. It says the rail ends here.",
-         "draw": [R(-441.3, 167.0, -441.0, 168.4), C(-440.6, 168.1, 0.4, "line")]},
-        {"name": "Two works lanterns", "z": [-6.0, -5.7], "style": "light", "tag": [-427.2, 162.6],
-         "text": "On wall brackets, one half way up and one over the crest. They are the last of the works' teal lights.",
-         "draw": [C(-427.2, 161.8, 0.17), C(-446.0, 170.6, 0.17)]},
+        {"name": "The spillway, carried on behind", "z": [-6.0, -1.4], "style": "mark", "tag": [-432.9, 162.6], "top": True,
+         "text": "The same steps run back into the scene for the dam's whole width. A round spill arch stands at their head, and white water comes down them behind you: a thin fall on each riser and a sheet on each tread. On the lowest riser the fall comes down beside the gallery's mouth, not across it.",
+         "draw": [arch(-436.4, -435.0, 160.9, 162.0, "dark"), L(-434.65, 158.1, -434.65, 160.8), L(-432.05, 155.2, -432.05, 157.9), L(-429.45, 152.6, -429.45, 155.0)]},
+        {"name": "The inspection gallery", "z": [-2.6, -1.2], "style": "dark", "over": True, "tag": [-434.6, 153.5], "top": True,
+         "text": "Cut through brick that is solid today: a round barrel vault 7.8 m long and 2.6 m tall, from the apron to the foot of the shaft. Its back wall is brick streaked white where the dam seeps. Floor, back wall and roof, no front wall. Its mouth on the apron is a round arch with the pug cast on its keystone.",
+         "draw": [R(-437.4, 151.9, -429.6, 154.5)]},
+        {"name": "The lift shaft", "z": [-2.6, -1.2], "style": "dark", "over": True, "tag": [-438.7, 158.6], "top": True,
+         "text": "Brick, 2.6 m wide, straight up from the gallery to the hall's roof: 18 m. The lower 12 m of it is cut in brick that is solid today. Its back wall is dry and pale near the top and black and wet at the foot.",
+         "draw": [R(-440.0, 151.9, -437.4, 170.0)]},
+        {"name": "Guide rails and the rack", "z": [-1.5, -1.25], "style": "line", "over": True, "tag": [-438.7, 164.6],
+         "text": "On the shaft's back wall, just behind the play space: two iron guide rails the cage runs on, and between them a toothed rack that the winch's pinion climbs. They are scenery because of where they stand: flat on the back wall, behind the cage, where no hand reaches. The shaft's two side walls are bare.",
+         "draw": [L(-439.6, 152.2, -439.6, 169.5), L(-437.8, 152.2, -437.8, 169.5), L(-438.7, 152.2, -438.7, 169.5, "mark")]},
+        {"name": "The shaft's head and foot", "z": [-2.6, -1.2], "style": "pale", "over": True, "tag": [-438.7, 171.0],
+         "text": "At the top, a buffer beam across the shaft under the roof. At the foot, a spring buffer in a shallow pit. They say where the cage's travel ends.",
+         "draw": [R(-440.0, 169.5, -437.4, 169.8), R(-439.2, 151.9, -438.2, 152.15)]},
+        {"name": "Three works lanterns", "z": [-2.4, -2.1], "style": "light", "over": True, "tag": [-433.5, 154.9],
+         "text": "On wall brackets: one over the apron, one in the gallery, one over the crest. The one in the gallery is what you see first: a pool of teal light inside the dam. They are the last of the works' lanterns but one.",
+         "draw": [C(-426.6, 156.4, 0.17), C(-433.5, 154.0, 0.14), C(-446.0, 170.6, 0.17)]},
     ],
     "play": [
-        {"name": "One leaning face", "z": [-1.2, 1.2], "style": "line", "tag": [-433.4, 155.3],
-         "text": "Note 25: the five steps in the play space are smoothed into one leaning face of brick, from the apron at 152 m to the crest at 167 m, with a stone coping along its edge. It is slick: the lift is the only way up.",
-         "draw": [L(-429.6, 151.9, -440.0, 166.7)]},
-        {"name": "The lift", "z": [-1.0, 1.0], "style": "pale", "tag": [-426.0, 154.6],
-         "text": "Note 25: a level deck 2.4 m wide with an open iron cage, and the winch on a post at its east end, so you face the dam as you wind. Drawn at the apron, and dashed at the crest where you step off. The deck keeps level all the way up.",
-         "draw": [R(-429.6, 152.2, -427.2, 152.45), R(-427.5, 152.45, -427.35, 154.0), C(-427.6, 153.9, 0.34, "line"),
-                  R(-429.6, 152.45, -427.2, 154.65, "mark"), R(-440.0, 167.0, -437.6, 167.25, "mark"), R(-440.0, 167.25, -437.6, 169.45, "mark")]},
+        {"name": "The gallery's floor", "z": [-1.2, 1.2], "style": "pale", "over": True, "tag": [-431.0, 151.2],
+         "text": "New floor: the apron's stone coping runs on into the dam, level, 7.8 m to the shaft's foot. The gallery's roof is 2.6 m up, black and wet.",
+         "draw": [R(-437.4, 152.05, -429.6, 152.2)]},
+        {"name": "The cage", "z": [-1.0, 1.0], "style": "pale", "over": True, "tag": [-441.0, 153.9],
+         "text": "Note 25: a level deck 2 m wide with an open iron cage 2.2 m tall, no front and no sides at deck height, so you walk in from the gallery and out on to the crest. The winch stands on the cage's back frame with its crank facing you, 1.5 m above the deck. Its shaft goes straight back to the pinion on the rack. Drawn at the shaft's foot, and dashed at the crest where you step off. The crank, the deck and the cage's top bar can be held, as they are in the play space.",
+         "draw": [R(-439.7, 152.2, -437.7, 152.4), C(-438.7, 153.7, 0.34, "line"), R(-439.7, 152.4, -437.7, 154.4, "mark"),
+                  R(-439.7, 167.0, -437.7, 167.2, "mark"), R(-439.7, 167.2, -437.7, 169.2, "mark")]},
+        {"name": "The shaft's east wall, carried up", "z": [-1.2, 1.2], "style": "dark", "tag": [-435.6, 165.6],
+         "text": "New wall: today the shaft's east side would be open above the third step. A brick wall 0.6 m thick closes it from that step to the roof, black and wet. The cage stays in a shaft the whole way up.",
+         "draw": [R(-437.4, 160.9, -436.8, 170.0)]},
+        {"name": "The spillway steps", "z": [-1.2, 1.2], "style": "mark", "tag": [-431.0, 156.3],
+         "text": "The steps that are in the play space today stay where they are, without their platforms and cranks: black wet stone with a film of water, each riser 2.9 m. They are the spillway's near edge. Nobody climbs them.",
+         "draw": [L(-432.2, 155.1, -429.6, 155.1), L(-434.8, 158.0, -432.2, 158.0), L(-436.8, 160.9, -434.8, 160.9)]},
         {"name": "The cast pug", "z": [1.15, 1.2], "style": "line", "tag": [-444.5, 158.3],
-         "text": "On the dam's cut face, where it is today: the First Top Dog, 3 m across, cast in iron and let into the brick. The brick round it gets drawn courses and a slanting crack with white water in it.",
-         "draw": [C(-444.5, 160.5, 1.5), L(-441.5, 165.8, -443.0, 162.6, "mark")]},
+         "text": "On the dam's cut face, between the lake and the shaft, where it is today: the First Top Dog, 3 m across, cast in iron and let into the brick. The brick round it gets drawn courses.",
+         "draw": [C(-444.5, 160.5, 1.5)]},
     ],
-    "foreground": [
-        {"name": "The near rail", "z": [1.25, 1.4], "style": "line", "tag": [-436.0, 159.2],
-         "text": "The lift's other rail, lying flat on the leaning face in front of the dam's brick. It is the foreground pole to the far rail's background pole. It lies on solid wall and crosses no open space.",
-         "draw": [L(-430.0, 151.55, -440.4, 166.35)]},
-    ],
+    "foreground": [],
     "explains": [
-        ["The lift's deck", "The dam keeper's inclined lift", "The far rail it climbs, the buffer and pawl wheel at the top"],
-        ["The winch handle", "The lift's own hand winch", "The toothed rail its pinion climbs"],
-        ["The leaning face", "The dam's downstream face", "The stepped buttress against it, and the leak running down the steps"],
-        ["The apron", "The dam's stone apron", "The foot of the buttress, where the leak runs off"],
-        ["The crest", "The top of the dam", "The head of the incline, and the lake"],
+        ["The cage's deck", "The dam keeper's lift", "The shaft it runs in, and the two guide rails on the shaft's back wall"],
+        ["The winch handle", "The lift's own hand winch", "The toothed rack its pinion climbs, right behind it"],
+        ["The gallery you walk in by", "The dam's inspection gallery", "Its seeping back wall, its lantern, its arch on the apron"],
+        ["The big wet steps", "The near edge of the dam's spillway", "The same steps running back, the spill arch at their head and the water on them"],
+        ["The apron", "The spillway's foot", "The lowest fall coming down beside the gallery's mouth"],
+        ["The crest", "The top of the dam", "The shaft's head with its buffer beam, and the lake"],
     ],
     "pieces": [
-        ["Winch lift: a cage with a hand winch on board", "2.4 m by 2.2 m", "1", "Play space", "kit: winch lift (note 25)"],
-        ["Toothed rail", "18.1 m, in 2 m lengths", "2 rails", "Background, foreground", "new, this area only"],
-        ["Dam face: leaning brick with a stone coping", "18.1 m on the slope", "1", "Play space", "new, this area only"],
-        ["Stepped buttress with stone copings", "13.4 m wide, 14.5 m tall, steps of 2.9 m", "1", "Background", "kit: brick pier and buttress with stone coping"],
-        ["Buffer post; pawl wheel", "1.4 m; 0.8 m", "1 each", "Background", "new, small"],
-        ["Cast pug, large", "3 m", "1", "Play space (drawn on)", "kit: pug_stamp, as today"],
-        ["Spill off an edge; thin falling sheet", "2.9 m falls", "5", "Background", "kit: water pieces (note 22)"],
-        ["Works lantern on a wall bracket", "0.4 m", "2", "Background", "kit: lantern on a wall bracket (added below)"],
+        ["Winch lift: a cage with a hand winch on board", "2 m by 2.2 m", "1", "Play space", "kit: winch lift (note 25)"],
+        ["Lift shaft: brick, with guide rails and a rack", "2.6 m wide, 18 m tall", "1", "Background", "kit: lift shaft"],
+        ["Buffer beam; spring buffer", "2.6 m; 1 m", "1 each", "Background", "new, small"],
+        ["Inspection gallery: a barrel vault with a round-arched mouth", "7.8 m long, 2.6 m tall, 2.4 m deep", "1", "Background", "kit: brick wall bay with a round arch, made long"],
+        ["Shaft wall, black wet brick", "0.6 m thick, 9.1 m tall", "1", "Play space", "kit: brick pier and buttress, without a coping"],
+        ["Spillway steps with stone copings", "2.6 m treads, 2.9 m risers", "3 in the play space, and the same behind", "Play space, background", "kit: brick pier and buttress with stone coping"],
+        ["Spill arch", "1.4 m", "1", "Background", "kit: barrel cove, small"],
+        ["Cast pug: large, and one on the gallery's keystone", "3 m; 0.6 m", "1 each", "Play space (drawn on), background", "kit: pug_stamp"],
+        ["Spill off an edge; thin falling sheet", "2.9 m falls", "3 behind", "Background", "kit: water pieces (note 22)"],
+        ["Works lantern on a wall bracket", "0.4 m", "3", "Background", "kit: lantern on a wall bracket (added below)"],
     ],
     "effects": [
-        "A click from the pawl for every tooth you gain, and a slow ratchet whirr when the lift creeps back.",
-        "The leak's five little falls, and a film of water on the buttress.",
+        "A tick from the pinion for every tooth you gain, and a slow whirr from the winch's governor while the cage sinks.",
+        "A boom from the buffer beam when the cage reaches the top, and a soft thump from the spring buffer if you let it sink to the foot.",
+        "Water on the spillway behind, and its sound through the gallery's wall.",
     ],
     "notes": [
-        "Note 25: one lift with its winch on board, the whole height the five steps cover today: 14.8 m up and 10.4 m across.",
-        "Note 22: the dam's leak pours down the buttress step by step. It is not a slab of water beside the dam.",
-    ],
-    "ask": [
-        "The lift here runs up the dam's leaning face on a rail, as note 25's plan has it. Is that right, or should it go straight up in a shaft?",
+        "Note 25 and Parker, 11-13: one lift with its winch on board, straight up a shaft, 14.8 m, always sinking when you stop.",
+        "Course change: the five lift platforms and the five wall cranks go. One cage with its crank on board takes their place.",
+        "Course change: a shaft is cut in the dam from x -440 to -437.4, from 151.9 m up to where the top step is today at 163.8 m. The top step goes.",
+        "Course change: a gallery is cut through the dam's foot from the apron to the shaft, x -437.4 to -429.6, 2.6 m tall, with its floor at the apron's height.",
+        "Course change: a new slick wall, 0.6 m thick, closes the shaft's east side from the third step at 160.9 m to the roof at 170 m.",
+        "The other three steps stay where they are, bare. They become the spillway's near edge.",
+        "Note 22: the dam's leak is the spillway's water, pouring step by step behind you. It is not a slab of water beside the dam.",
     ],
 }
 
@@ -1045,7 +1060,7 @@ JOIN_3 = {
     ],
     "background": [
         {"name": "The lake's brick vault", "z": [-6.0, -4.0], "tag": [-456.5, 170.6], "top": True,
-         "text": "Slate-grey brick over the lake, in round-arched bays. The last round arches on the mountain. Its top three courses are cracked, and pale light shows in the cracks.",
+         "text": "Slate-grey brick over the lake, in round-arched bays. Its top three courses are cracked, and pale light shows in the cracks.",
          "draw": [R(-459.0, 163.0, -440.0, 173.0), arch(-458.2, -454.6, 166.2, 168.2, "line"), arch(-453.6, -450.0, 166.2, 168.2, "line")]},
         {"name": "The shaft's lining", "z": [-2.4, -1.2], "tag": [-451.6, 175.2],
          "text": "Brick, in a round shaft cut in half, from the hall's roof up to the cave's floor. Sound at the bottom, split open by crystal at the top.",
@@ -1064,6 +1079,9 @@ JOIN_3 = {
         {"name": "The last lantern and the last pug", "z": [-4.0, -1.4], "style": "line", "tag": [-447.3, 169.2],
          "text": "On the crest, far back: the dam's sluice wheel on its spindle, with the pug cast in its hub and a crust of crystal on its rim. Over it, the last works lantern. After this there is no iron, no brick and no lantern until the temple.",
          "draw": [C(-447.3, 168.0, 0.5), L(-447.3, 167.0, -447.3, 167.5), C(-443.0, 170.4, 0.17, "light")]},
+        {"name": "The head of the lift shaft", "z": [-1.5, -1.25], "style": "line", "over": True, "tag": [-438.7, 171.0],
+         "text": "At the crest's east end: the top of the dam's lift shaft, with its two guide rails and its buffer beam. It belongs to La Presa's page and is drawn here only so the two agree.",
+         "draw": [L(-439.6, 160.0, -439.6, 169.5), L(-437.8, 160.0, -437.8, 169.5), R(-440.0, 169.5, -437.4, 169.8, "pale")]},
         {"name": "The cave's first crystals", "z": [-4.0, -1.4], "style": "pale", "tag": [-457.6, 180.2],
          "text": "Above the roof: the clusters that stand on the cave's first floor today. They belong to the crystal cave's own pages and are drawn here only so the two agree.",
          "draw": [P([[-458.8, 176.0], [-456.4, 176.0], [-457.4, 179.2]]), P([[-447.2, 176.0], [-446.0, 176.0], [-446.4, 177.6]])]},
@@ -1103,6 +1121,7 @@ JOIN_3 = {
     ],
     "notes": [
         "Note 22: the lake is still water with a moving surface, and it is the one clear water in the biome.",
+        "Note 2 (Parker, 11-13): the water keeps its own tint in each cave. The lake is the black waters' tint at its thinnest, clear enough to see the bed.",
         "The cave's note 26 starts above: the first steps of Primer Destello are pointed crystals out of the back wall.",
     ],
 }
