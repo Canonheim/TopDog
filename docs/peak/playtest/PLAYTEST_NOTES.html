@@ -82,7 +82,7 @@
 <tr><td>19</td><td><a href="#n19">Las Aguas Negras: the rising gates should be machine pistons</a></td><td><span class="chip c-plan">Plan, needs a model; not sent to the thread</span></td></tr>
 <tr><td>20</td><td><a href="#n20">Rope physics: you can't get a good swing, and they launch you up</a></td><td><span class="chip c-ask">Done on the bench and seen in the game; four calls for Parker</span></td></tr>
 <tr><td>21</td><td><a href="#n21">Las Aguas Negras: the barrels should go over the fall, not vanish on screen</a></td><td><span class="chip c-parked">Done, seen in the game; Parker keeps the two swims</span></td></tr>
-<tr><td>22</td><td><a href="#n22">Water needs a full visual overhaul</a></td><td><span class="chip c-plan">With the thread now</span></td></tr>
+<tr><td>22</td><td><a href="#n22">Water needs a full visual overhaul</a></td><td><span class="chip c-ask">Done, seen in pictures; a first try at the look, for Parker's eye</span></td></tr>
 <tr><td>23</td><td><a href="#n23">Las Aguas Negras: the hot pipe joints show nothing of what they do</a></td><td><span class="chip c-parked">Done, seen in the game; needs a person to judge</span></td></tr>
 <tr><td>24</td><td><a href="#n24">Las Aguas Negras: the catwalk before the dam should be mostly breakable floor</a></td><td><span class="chip c-parked">Done, seen in the game; the delay is a measured first try</span></td></tr>
 <tr><td>25</td><td><a href="#n25">The dam: one elevator with its winch on board, in place of the five steps</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
@@ -156,8 +156,7 @@
 <p class="sub">Parker, 01:12: "make sure the not done stuff stays on the to do list". Nothing leaves this list until it is done and seen in the game.</p>
 <table>
 <tr><th>Where it stands</th><th>Notes</th></tr>
-<tr><td><b>With the thread now</b> (three of Parker's five; the barrels, note 21, and rope physics, note 20, are done)</td><td>
-<a href="#n22">22</a> the water's full overhaul;
+<tr><td><b>With the thread now</b> (two of Parker's five; the barrels, note 21, rope physics, note 20, and the water, note 22, are done)</td><td>
 <a href="#n28">28</a> and <a href="#n43">43</a> the camera controls;
 <a href="#n35">35</a> the garden's sound</td></tr>
 <tr><td><b>Sent to the thread, parked, not started</b></td><td>
@@ -233,6 +232,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
 <h2>Calls waiting for Parker</h2>
 <p class="sub">On the morning of 11-13 Parker answered every call that could be answered without looking at the game. His answers are written into the notes they belong to, each as a "Settled" line, and listed under <a href="#answers">Parker's answers, 11-13</a>. What is left here needs his eye in the game.</p>
 <ul>
+<li><b>The water</b> (note 22): the overhaul is in, as a first try. Is it water now? It needs your eye in the game. Pictures are under <a href="#n22">note 22</a>.</li>
 <li><b>The ropes</b> (note 20): four calls. The swing is slow (8 seconds there and back); every rope now reaches two to three times as far, so some flings became plain swings; the winds carry a light rope far out; and climbing a rope is slower. They are set out under <a href="#n20">note 20</a>.</li>
 <li><b>The light under the mill race</b> (note 17): the thread could not make it pulse. It changed the likely cause; is it gone when you swim it?</li>
 <li><b>Storm ridge clouds</b> (note 40): keep the six clouds that cross the climb, or move them back?</li>
@@ -1087,7 +1087,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
 <div class="note" id="n22">
   <div class="head"><span class="num">22</span><h3>Water needs a full visual overhaul</h3><span class="time">22:55</span></div>
   <blockquote>"water will need a full visual overhaul, it is in weird cubes and it doesn't pour off things or look like water"</blockquote>
-  <p><span class="chip c-plan">With the thread now</span></p>
+  <p><span class="chip c-ask">Done, seen in pictures; a first try at the look, for Parker's eye</span></p>
   <figure>
     <img src="shots/22_water_cubes.jpg" alt="A swimmer in flat blue water; a darker rectangle of water sits inside a lighter one, with square white specks">
     <figcaption>Parker's picture: 113 m up, swimming the flume. A darker block of water sits inside the lighter water, the surface is a ruled line, and the specks are white squares.</figcaption>
@@ -1118,6 +1118,43 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
     <li>This also settles note 17 if the flashing turns out to be the water box, and it is where note 21's barrels and note 6's cart get their splashes.</li>
   </ul>
   <p><b>Overtaken (the thread finished first):</b> I asked whether to tell the thread to leave the surface alone. Before you answered, it finished note 2 as first written: splashes everywhere, and Del Mar's surface on the existing boxes (pictures under note 2). The splashes are kept. The surface work is the part this overhaul replaces. Nothing here has been sent to the thread.</p>
+  <h4>After (from the thread)</h4>
+  <p>Commit 47dee34. The mill race was the sample, and because the new drawing is general, every stretch and every fall got it at once. The thread checked each one in pictures. Nothing has been played by a person, and stills can't show the water moving.</p>
+  <ul>
+    <li><b>No more cubes.</b> Each connected stretch of water is drawn as one body, from its joined outline: 9 bodies where there were 14 boxes. No seams, no darker box where a still patch lies over a river, no glass end walls. The currents and the still patches themselves have not changed.</li>
+    <li><b>It looks like water.</b> A waterline with a travelling ripple, a body with depth tinted to its cave, long soft streaks that slide with the current, slow turning arcs in the still patches, and foam at walls and at every pile. The square specks are gone.</li>
+    <li><b>It pours.</b> At a lip the pool's whole depth turns over and becomes the fall, thinning as it speeds up, white where it breaks, with mist, spray and rings where it lands. Three falls that were missing are now drawn: the mill channel's drain into the race, the race's drain onto the lip ledge, and the flume's one-metre spill into El Charco del Pozo. The river's fall into the mine is one line through both areas.</li>
+    <li><b>Things shed water.</b> The mill wheel's paddles drop water, and a climber just out of the water drips for a second and a half.</li>
+    <li>Note 2's splashes, rings, sounds and cave tints are kept.</li>
+    <li><b>It runs faster, not slower.</b> Frames a second, measured off-screen with no cap: the mill race 107 to 140, the flume 116 to 136, the upper pool 110 to 128, the mine over the Sump 130 to 171.</li>
+  </ul>
+  <figure>
+    <img src="after/22_before_race.jpg" alt="Before: the mill race.">
+    <figcaption>Before: the mill race.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/22_mill_race.jpg" alt="After: the mill race, with the channel's drain falling into it on the right.">
+    <figcaption>After: the mill race, with the channel's drain falling into it on the right.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/22_channel_over_the_lip.jpg" alt="After: the mill channel going over its lip.">
+    <figcaption>After: the mill channel going over its lip.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/22_before_cascade.jpg" alt="Before: the cascade at the end of the pool.">
+    <figcaption>Before: the cascade at the end of the pool.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/22_cascade.jpg" alt="After: the same cascade.">
+    <figcaption>After: the same cascade.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/22_step.jpg" alt="After: the flume's one-metre spill into the pool. This is the weakest one: it reads as a thick grey curl.">
+    <figcaption>After: the flume's one-metre spill into the pool. This is the weakest one: it reads as a thick grey curl.</figcaption>
+  </figure>
+  <p><b>What it does not do yet,</b> by the thread's own account: the one-metre spill above reads as a thick curl. The wheel's paddles end 0.6 m above the race, so the wheel drops water but does not visibly lift it. Barrels, chains and the cart do not drip, and no foam forms against the moving barrels. There are no thin spills where a channel overflows an edge, because nothing in the course says where one would be.</p>
+  <p>There are 18 pictures in all in <code>after/</code>, named 22_*. I looked at these four of the after pictures.</p>
+  <div class="ask"><b>For Parker:</b> this is a first try at a look, and it needs your eye in the game, moving. Is it water now? If you want to see it move before you play, the thread can make a short clip.</div>
 </div>
 
 <div class="note" id="n23">
