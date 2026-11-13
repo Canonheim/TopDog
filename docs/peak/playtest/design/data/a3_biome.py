@@ -5,7 +5,7 @@ BIOME = {
     "line": "The crystal cave, 176 to 276 m. Glass and light. The first place on the climb that nobody built.",
     "story": [
         "Above the dam the mountain is hollow and full of crystal: points the size of houses, growing out of the walls, the roof and the floor. Water did this, over more time than the town has existed. The mine company never got up here.",
-        "Somebody did, long before them. The people who built the temple higher up came down to this cave for its crystal. They left very little, and all of it is theirs: chains with bronze fittings let into the roof, a geode set turning on a stone axle, a great quartz hung as a pendulum, a column ringed with crystal collars. It is a shrine, or a workshop, or both.",
+        "Somebody did, long before them. The people who built the temple higher up came down to this cave for its crystal. They left very little, and all of it is theirs: chains with bronze fittings let into the roof, a geode set turning on a stone axle, a great quartz hung as a pendulum, a column with three crystal wheels turning on its face. It is a shrine, or a workshop, or both.",
         "So the cave has two voices. Nearly everything is natural crystal. A few things are temple work in pale stone, bronze and jade, and each of those is something that moves. They are your first sight of the people whose temple you will climb two biomes from now.",
     ],
     "built": [
@@ -23,7 +23,7 @@ BIOME = {
         ["It will break", "Pale crystal crazed with white cracks, a corner gone. It rings, sheds glitter, and goes (note 31)."],
         ["It moves", "It hangs from or turns on temple work: a bronze chain to a carved stone boss, a stone axle."],
         ["It is scenery", "Crystal further back: bigger, bluer and dimmer, with its points turned away from the climb. Never pale lilac."],
-        ["It will hurt you", "Spikes: thin, white and sharp, and on the column's rings they slide in and out (note 34)."],
+        ["It comes and goes", "The spikes on the column's rings, which are the rings' only holds: white and rough, they tremble, slide into the ring, and snap back out with a click and a little glitter (note 34)."],
     ],
     "layers": [
         ["Background", "Near: the wall the crystals you climb grow out of, rough dark rock crowded with smaller points. Far: crystals bigger than houses, dim and blue, and mirror faces that show a small moving reflection of you."],
@@ -42,8 +42,8 @@ BIOME = {
         ["Temple axle mount: two stone cheeks and a bronze pin", "1.4 m", "the geode, the pendulum's pivot, the ring column's cap", "Background", "new, shared with the temple's kit"],
         ["Bronze chain", "to suit", "real chains you hold only", "Play space", "in the kit as the chandeliers' chains"],
         ["Crystal chandelier", "2 m", "Candelabros", "Play space", "in the kit: chandelier_crystal"],
-        ["Crystal bonsai tree", "0.5 m", "one small thing on a ledge (note 32)", "Background", "new"],
-        ["Ring spike, sliding", "0.4 m", "La Columna (note 34)", "Play space", "new"],
+        ["Crystal bonsai tree", "0.6 m wide, 1.2 m tall", "the rest ledge after the pendulum: you can hold it, and it stops what rolls along the ledge (note 32)", "Play space", "new"],
+        ["Ring spike, sliding: the rings' holds", "0.4 m", "La Columna (note 34)", "Play space", "new"],
         ["Offering niche: a small carved hollow with a crystal set in it", "0.6 m", "one beside each piece of temple work", "Background", "new"],
         ["The frog, and its room: the inside of a split geode", "frog 0.3 m; room 3 m across", "one hidden room", "Background", "new (note 60)"],
     ],
