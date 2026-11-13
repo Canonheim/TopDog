@@ -53,13 +53,17 @@ def dress(A):
     A.deco("missing_poster_a", 4.55, 1.5, z=WALL_Z + 0.012, size=(0.5, 0.7, 0.02), tone="accent")
     A.deco("missing_poster_b", 5.2, 1.46, z=WALL_Z + 0.012, rot=-3.0, size=(0.5, 0.7, 0.02), tone="accent")
     A.deco("missing_poster_a_old", 2.45, 1.42, z=WALL_Z + 0.012, rot=4.0, size=(0.5, 0.7, 0.02), tone="back")
-    A.deco("sign_pug_arrow", 1.5, 0.0, z=-1.5, size=(1.0, 2.2, 0.1), tone="wood")
+    A.deco("sign_pug_arrow_west", 1.5, 0.0, z=-1.5, size=(1.24, 1.66, 0.16), tone="wood")  # it points west, at the dock (Parker 11-13)
 
-    # ------------------------------------------------------------ the bunting: from the houses to the station, no poles
-    # (each string is drawn at one depth, well behind the climb; its ends land on a house front and on the station's roof)
-    A.deco("papel_tatters", -2.3, 6.3, z=-3.4, rot=3.0, size=(9.6, 1.0, 0.05), tone="accent")  # house c's front to the station house's east eave
-    A.deco("papel_tatters", GATE_X, 6.7, z=-6.9, rot=-2.0, size=(4.4, 1.0, 0.05), tone="accent")  # across the alley, house to house
-    A.deco("papel_tatters", 4.3, 6.6, z=-6.9, rot=4.0, size=(3.6, 1.0, 0.05), tone="accent")  # house c to house a
+    # ------------------------------------------------------------ the bunting: fixed at both ends, no poles
+    # (Parker 11-13: "it looks like the flag strings are still not connected to anything".
+    # The kit's papel_tatters is a straight string at one depth, so its ends hung in the
+    # air. These two are modelled in real depth, each with a hook at both ends.)
+    # The long run: from the station house's roof (its east verge, by the front eave) through
+    # the air to the front corner of the tall house beside the alley. Origin: the station end.
+    A.deco("stn_bunting_run", -6.42, 5.3, z=-1.7, size=(18.6, 2.6, 5.8), tone="accent")
+    # across the alley, wall to wall. Origin: its west end, on the house's side wall.
+    A.deco("stn_bunting_alley", 8.7, 6.2, z=-8.6, size=(3.46, 0.9, 0.1), tone="accent")
 
     # ------------------------------------------------------------ the last load, behind the steps
     A.deco("barrel_side", -1.2, 0.0, z=-2.3, size=(1.1, 0.9, 0.9), tone="wood2")
