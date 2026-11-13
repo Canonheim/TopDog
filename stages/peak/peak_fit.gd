@@ -322,8 +322,18 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 			return []
 		_caps(out, mat, r.c, ax, ay, r.ang, w, h, zc, zs, true)
 		return out
+	# ---- a thick mushroom is one fat cap (the kit's is made 2.0 x 1.0), stretched to it
+	if mat == "shroom":
+		var fat := _pick("fit_shroom_cap_thick", _n)
+		if fat == "":
+			return []
+		out.append([fat, _xf(r.c, r.ang, Vector3(w / 2.0, h / 1.0, zs), zc)])
+		return out
 	# ---- a thick mass: panels both ways, and caps along its top where that is open air
-	if _pick("fit_%s_panel" % mat) == "":
+	var panel_base := "fit_%s_panel" % mat
+	if mat == "root" and _pick(panel_base) == "":
+		panel_base = "fit_wood_panel_b"  # (a root's mass wears the stump's bark)
+	if _pick(panel_base) == "" or (panel_base == "fit_wood_panel_b" and _mesh(panel_base) == null):
 		return []
 	var body_h := h
 	var top_open := _open(r.c + ay * (h * 0.5 + 0.2), ax, w)
@@ -340,7 +350,7 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 	for iy in ny:
 		for ix in nx:
 			var at: Vector2 = foot + ax * (-w * 0.5 + pw * (ix + 0.5)) + ay * (ph * (iy + 0.5))
-			var panel := _pick("fit_%s_panel" % mat, ix * 7 + iy * 13)
+			var panel := panel_base if panel_base == "fit_wood_panel_b" else _pick(panel_base, ix * 7 + iy * 13)
 			if mat == "wood":
 				# (the kit's two timber panels are different things: cribbing for the works of
 				# men, a stump's bark in the fungus garden)
