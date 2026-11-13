@@ -84,7 +84,7 @@ for i, y in enumerate((893.2, 894.4, 895.6, 896.8, 898.0, 899.2, 900.4)):
     A.hold(x, y, r=0.24)
     FILO.append((x, y))
 A.solid([(-297.6, 902.0), (-294.8, 902.0), (-294.8, 902.6), (-297.6, 902.6)], "rock")  # its top: the rest, 2.8 m
-A.box(-294.95, 902.75, 0.3, 0.3, "wet")  # a wet lip on the rest's east edge (law 4)
+# (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 FILO.append((-296.9, 901.55))
 A.hold(-296.9, 901.55, r=0.24)
 A.challenge("10.1", "El Filo", (-304.0, 886.0), 3, "X", moves=(
@@ -124,7 +124,6 @@ A.cam((-309, 904, -292, 914), half_h=7.0, bias=(0.0, -1.5))
 # 1.6 s to spare; leave when the hum starts and you are on the rungs when it lands.
 tower(-311.5, -308.0, 906.0, 909.5, 913.0)  # the station's gendarme
 A.ledge(-311.8, -307.7, 913.5, "plank", t=0.5)  # the deck: the rest (4.1 m), in W4/W5's lanes
-A.box(-307.85, 913.62, 0.3, 0.24, "wet")  # a wet board at its east lip, where line 3 lands (law 4)
 MX = -310.0
 P = [913.5, 917.5, 921.5, 925.5]  # the wood: deck, east crossarm, west crossarm, the nest
 A.ledge(MX + 0.15, MX + 1.8, P[1], "wood", t=0.3)  # crossarm 1, east
@@ -167,7 +166,6 @@ for k in range(3):
 A.solid([(-288.0, 920.5), (-285.0, 924.5), (-285.0, 932.5), (-291.0, 932.5), (-291.0, 924.5)], "wet")
 A.patch((-291.02, 928.6), (-291.02, 932.5), "rock", t=0.36)  # the catch band on its west face, 3.9 m
 A.ledge(-291.0, -287.5, 932.5, "rock", t=0.4)  # the shoulder: the rest (3.5 m), in W6's lane
-A.box(-290.85, 932.62, 0.3, 0.24, "wet")  # its west lip is wet (law 4)
 A.solid([(-287.5, 932.5), (-285.0, 932.5), (-285.0, 943.5), (-287.5, 943.5)], "wet")  # the needle, 11 m
 A.challenge("10.4", "Veleta", (-309.25, 925.5), 4, "X")
 A.cam((-312, 925.4, -284, 934), half_h=10.0, bias=(4.0, -2.0))
@@ -269,7 +267,6 @@ A.cam((-328.4, 953.2, -316, 962), half_h=8.0, bias=(-3.0, -1.0))
 # where two are gone, rung, ROTTEN rung, then out round the exit ledge's east end.
 # W9 gusts east at 4 m/s2: off the wall.
 A.ledge(-332.4, -328.9, 955.5, "rock", t=0.5)  # the rest (2.85 m of it clear of the face), in W9's lane
-A.box(-329.05, 955.62, 0.3, 0.24, "wet")  # its lip
 CIELO = []
 for y, kind in ((957.0, "iron"), (958.2, "rotten"), (959.9, "iron"), (961.1, "rotten")):
     A.beam((F(y) - 0.1, y), (F(y) + 0.8, y), t=0.16, kind=kind)

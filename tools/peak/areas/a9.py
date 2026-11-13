@@ -31,7 +31,9 @@ def bone(x, y, r=0.17):
 
 def encased(x, y, w=1.7, h=3.0):
     """The card of blue ice in FRONT of a frozen climber."""
-    A.card(box_pts(x, y + 0.15, w, h), z=1.5, tone=BLUE, edge=False)
+    # (It stood in FRONT, z 1.5, and covered whoever climbed him. Nothing stands in front of
+    # where a climber can be, Parker 11-12: the ice is at his back now.)
+    A.card(box_pts(x, y + 0.15, w, h), z=-0.9, tone=BLUE, edge=False)
 
 
 def climber(x, y, pose, flip=False, rot=0.0, grips=True, card=True):
@@ -363,7 +365,7 @@ A.statue(-296.32, 881.72, "reach", rot=45.0)
 bone(-295.74, 881.14)
 bone(-296.32, 881.72)
 bone(HAND[0], HAND[1], r=0.18)
-A.card(box_pts(-296.2, 881.5, 1.5, 2.2, 45), z=1.5, tone=BLUE, edge=False)  # ice up to his chest
+A.card(box_pts(-296.2, 881.5, 1.5, 2.2, 45), z=-0.9, tone=BLUE, edge=False)  # ice at his back (was in front)
 H910 = [(-295.75, 875.35), (-295.75, 876.9), (-296.2, 878.6), (-296.2, 879.9), (-295.74, 881.14), (-296.32, 881.72), HAND]
 A.challenge("9.10", "El Rimaye", (-294.4, 873.3), 4, "X",
             moves=[["reach", list(H910[i]), list(H910[i + 1])] for i in range(len(H910) - 1)] +

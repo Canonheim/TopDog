@@ -43,6 +43,28 @@ for x0, x1, spans in (
         A.solid([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], "wet")
 A.solid([(-310, 494), (-290, 494), (-290, 498), (-310, 498)], "wet")  # the cap over the well room
 A.card([(-312, 170), (-288, 170), (-288, 500), (-312, 500)], z=-5.0, tone="#0B0A10")
+# THE WELL'S DARK IS MEANT, AND LOOKS IT (Parker 11-12, of flat black beside the garden's
+# great cap: "another one of those weird black spots"). The well had one flat near-black
+# card: it read as a piece missing. Now its sides step back into the depth, lighter near
+# you and darker further in, ragged like old masonry, with a slot of black down the
+# middle and a few far glints in it.
+import random as _rnd
+_w = _rnd.Random(11)
+for _z, _tone, _reach in ((-3.2, "#2B2634", 2.0), (-4.1, "#1B1722", 3.3)):
+    for _side in (-1, 1):
+        _wall = -306.0 if _side < 0 else -294.0
+        _pts = [(_wall + (-6.0 if _side < 0 else 6.0), 172.0)]
+        _y = 172.0
+        _in = []
+        while _y < 498.0:
+            _in.append((_wall - _side * (_reach + _w.uniform(-0.5, 0.5)), _y))
+            _y += _w.uniform(5.0, 11.0)
+            _in.append((_wall - _side * (_reach + _w.uniform(-0.5, 0.5)), min(_y, 498.0)))
+        _pts += _in + [(_wall + (-6.0 if _side < 0 else 6.0), 498.0)]
+        A.card(_pts, z=_z, tone=_tone, edge=False)
+for _i in range(46):
+    _gx, _gy, _gs = _w.uniform(-301.6, -298.4), _w.uniform(180.0, 492.0), _w.uniform(0.07, 0.16)
+    A.card([(_gx - _gs, _gy), (_gx, _gy - _gs * 1.6), (_gx + _gs, _gy), (_gx, _gy + _gs * 1.6)], z=-4.9, tone="#7E789C", edge=False)
 
 # ---------------------------------------------------------------- the outer slope, slick scree
 # Below La Boca's east rim: the bare slope down to the trailhead (a body flung far east ends there).

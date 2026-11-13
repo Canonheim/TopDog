@@ -610,6 +610,53 @@ func _particles(c: Color, size: float, amount: int, life: float) -> CPUParticles
 	return p
 
 
+## A BURST: a puff of something at a point, once. One table for every kind the mountain
+## uses, so they speak the same language (the playtest of 11-12 asked again and again for
+## "obvious effects": Parker, "we can use particle effects if we need it").
+##   colour, size, how many, life s, speed lo, speed hi, gravity, spread deg, soft blob?
+const BURSTS := {
+	"dust": [Color("#E9DCC0"), 2.6, 14, 0.9, 0.5, 1.6, Vector3(0, -0.6, 0), 60.0, true],
+	"steam": [Color("#F4F8FF"), 3.6, 16, 0.9, 0.8, 2.4, Vector3(0, 1.6, 0), 40.0, true],
+	"smoke": [Color("#5A5048"), 3.0, 10, 1.1, 0.4, 1.2, Vector3(0, 1.2, 0), 35.0, true],
+	"sparks": [Color("#FFB03A"), 0.55, 22, 0.55, 2.0, 5.5, Vector3(0, -7.0, 0), 75.0, false],
+	"embers": [Color("#FF7A2A"), 0.5, 6, 0.8, 0.5, 1.6, Vector3(0, 1.0, 0), 50.0, false],
+	"glitter": [Color("#F2E8FF"), 0.5, 26, 0.7, 1.2, 4.0, Vector3(0, -5.0, 0), 80.0, false],
+	"spores": [Color("#F2A040"), 0.8, 22, 1.1, 1.0, 3.2, Vector3(0, 0.8, 0), 70.0, false],
+	"drops": [Color("#BFE4F6"), 0.5, 8, 0.6, 0.6, 2.0, Vector3(0, -6.0, 0), 50.0, false],
+	"frost": [Color("#DFF4FF"), 0.5, 18, 0.7, 0.8, 2.6, Vector3(0, -2.0, 0), 80.0, false],
+}
+
+
+func burst(at: Vector2, kind: String, scale := 1.0, dir := Vector2.UP, z := 0.5) -> void:
+	if not BURSTS.has(kind) or DisplayServer.get_name() == "headless":
+		return
+	var b: Array = BURSTS[kind]
+	var p := _particles(b[0], float(b[1]) * (0.75 + 0.25 * scale), int(round(float(b[2]) * scale)), float(b[3]))
+	if not bool(b[8]):
+		(p.material_override as StandardMaterial3D).albedo_texture = null
+	p.one_shot = true
+	p.explosiveness = 0.92
+	p.preprocess = 0.0
+	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	p.emission_sphere_radius = 0.12 * scale
+	p.direction = Vector3(dir.x, dir.y, 0).normalized()
+	p.spread = float(b[7])
+	p.initial_velocity_min = float(b[4])
+	p.initial_velocity_max = float(b[5]) * (0.7 + 0.3 * scale)
+	p.gravity = b[6]
+	p.scale_amount_min = 0.5
+	p.scale_amount_max = 1.3
+	var fade := Curve.new()
+	fade.add_point(Vector2(0.0, 0.6))
+	fade.add_point(Vector2(0.25, 1.0))
+	fade.add_point(Vector2(1.0, 0.0))
+	p.scale_amount_curve = fade
+	p.position = Vector3(at.x, at.y, z)
+	peak.add_child(p)
+	p.emitting = true
+	peak.get_tree().create_timer(float(b[3]) + 0.4).timeout.connect(p.queue_free)
+
+
 func _wind_fx(_a: Dictionary, z: Dictionary, root: Node3D) -> CPUParticles3D:
 	var r: Array = z.rect
 	var w := float(r[2]) - float(r[0])

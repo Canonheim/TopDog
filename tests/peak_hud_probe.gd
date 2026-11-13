@@ -48,6 +48,7 @@ func _ready() -> void:
 	alt = 396.0
 	await _wait(1.2)
 	# ---- the area card
+	hud.area_quiet_s = 0.0  # (the banner's 15 s quiet time is checked on its own, below)
 	hud.show_area("La Mina Vieja", 1)
 	await _wait(0.9)
 	_check("the area card is up", hud.area_up and hud._area.visible)
@@ -61,6 +62,30 @@ func _ready() -> void:
 	await _wait(0.9)
 	await _shot("peak_06_area_summit")
 	await _wait(3.4)
+	# ---- the banner's quiet time (Parker 11-12: a 15 s cool-down; 6 s here)
+	hud.area_quiet_s = 6.0
+	hud._area_said_t = -1.0e9
+	hud.show_area("La Mina Vieja", 1)
+	await _wait(0.5)
+	_check("quiet time: the first banner shows at once", hud.area_up)
+	hud.show_area("Las Aguas Negras", 2)  # (over the line...)
+	hud.show_area("La Mina Vieja", 1)  # (...and thrown back)
+	hud.show_area("Las Aguas Negras", 2)
+	await _wait(4.5)
+	_check("quiet time: nothing shows inside it, whatever lines are crossed", not hud.area_up)
+	await _wait(2.0)
+	_check("quiet time: when it ends, the area you settled in is announced once", hud.area_up and hud._area_said == "Las Aguas Negras")
+	await _wait(4.2)
+	hud._area_said_t = -1.0e9
+	hud.holding = false
+	hud.show_area("La Gruta de Cristal", 3)
+	await _wait(0.6)
+	_check("quiet time: no banner in the middle of a fall", not hud.area_up)
+	hud.holding = true
+	await _wait(0.4)
+	_check("quiet time: it shows once you have hold of something", hud.area_up)
+	await _wait(4.2)
+	hud.area_quiet_s = 0.0
 	# ---- a new best 100 m
 	alt = 400.4
 	best = 400.4

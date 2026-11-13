@@ -432,9 +432,9 @@ for x, y, rot, sc in ((-443.2, 190.0, 23.0, 1.2), (-452.5, 182.0, -12.0, 1.0), (
     A.deco("mirror_facet", x, y, z=-1.9, rot=rot, scale=sc, size=(4.0, 7.0, 0.1), tone="accent")
 # In front of the route: dark shards along the floor and the roof.
 for x, w, h, lean in ((-458, 3, 7, 10), (-431, 2.5, 5, -14), (-399, 3, 6, 16), (-366, 3, 7, -12), (-336, 2.5, 6, 12)):
-    prism_card(x, max(176.0, slide_y(x)) - 1.0, w, h, lean, 3.0, "back3")
+    prism_card(x, max(176.0, slide_y(x)) - 1.0, w, h, lean, -2.6, "back3")  # (they stood in FRONT, z 3: Parker 11-12, "these pieces in front of the screen ... most of them I think need to be romoved". Behind the climb now.)
 for x, y, w, h in ((-455, 204.3, 3, 6), (-415, 226.5, 3.5, 7), (-394, 235.0, 3, 6), (-360, 248.5, 2.5, 5), (-322, 278, 3, 6)):
-    A.card([(x - w / 2, y + 0.8), (x + w / 2, y + 0.8), (x + w * 0.3, y - h * 0.6), (x, y - h), (x - w * 0.3, y - h * 0.6)], z=3.5, tone="back3")
+    A.card([(x - w / 2, y + 0.8), (x + w / 2, y + 0.8), (x + w * 0.3, y - h * 0.6), (x, y - h), (x - w * 0.3, y - h * 0.6)], z=-2.8, tone="back3")  # (were z 3.5, in front)
 
 
 def roof_y(x):

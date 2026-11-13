@@ -119,7 +119,7 @@ cap(-279.2, 268.8, 4.0, lb, pb, name="4.1 B", v_in=v1)
 lc, pc, v3 = throw(v2, 5.6, 3.7, 5.6 / v2[0])
 cap(-274.2, 272.3, 4.4, lc, pc, name="4.1 C", v_in=v2)
 A.ledge(-270.5, -264.5, 276.0, "gill", t=0.6)  # L1: a flat shelf cap, the rest before the vines
-A.patch((-270.5, 276.0), (-270.0, 276.0), "slime", t=0.16)  # its west lip drips
+# (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 # The one who never stopped bouncing: a big old cap gone soft (no spring left), and him on it.
 A.box(-278.6, 264.7, 3.6, 1.4, "cap")
 A.statue(-278.6, 265.75, "star", rot=90.0)
@@ -142,7 +142,6 @@ A.ledge(-266.0, -225.0, 333.6, "rock", t=0.6)  # THE TERRACE: moss, 41 m of it. 
 for i, x in enumerate((-263.3, -258.3, -253.3, -248.3)):
     A.rope("liana%d" % i, (x, 288.0), 9.5, kind="vine")  # y 278.5 .. 288
 A.ledge(-244.5, -240.5, 277.5, "gill", t=0.6)  # L2
-A.patch((-244.5, 277.5), (-244.0, 277.5), "slime", t=0.16)
 A.challenge("4.2", "Lianas", (-266.5, 276.0), 3, "S",
             moves=[["reach", [-264.5, 277.6], [-263.3, 278.6]],
                    ["fling", [-248.3, 279.5], [-243.5, 277.5], "F2"]])
@@ -162,7 +161,6 @@ A.wind((-240.3, 285.0, -235.7, 292.5), (0.0, 2.00), look="spores")
 for i, x in enumerate((-239.4, -237.9, -236.4)):
     A.rope("lift%d" % i, (x, 301.5), 10.0, kind="vine")  # y 291.5 .. 301.5
 A.ledge(-235.5, -230.5, 295.0, "gill", t=0.6)  # L3
-A.patch((-231.0, 295.0), (-230.5, 295.0), "slime", t=0.16)
 A.challenge("4.3", "El Ascensor de Esporas", (-241.5, 277.5), 2, "B",
             moves=[["reach", [-236.4, 294.6], [-235.5, 295.0]]])
 A.cam((-246, 270, -228, 304), half_h=11.0, bias=(0.0, 4.0))
@@ -286,7 +284,6 @@ A.cam((-236, 330, -212, 350), half_h=11.0, bias=(3.0, -3.0))
 A.box(-233.0, 360.5, 6.0, 20.0, "slime")  # the east mass: x -236 .. -230, from y 350.5 into the roof
 A.box(-245.9, 352.45, 6.2, 15.9, "slime")  # the west mass: x -249 .. -242.8, y 344.5 .. 360.4
 A.ledge(-249.0, -242.8, 361.0, "rock", t=0.6)  # L7, on its top
-A.patch((-243.3, 361.0), (-242.8, 361.0), "slime", t=0.16)
 ROOTS47 = [(-232.6, 348.4), (-233.9, 348.9), (-235.2, 349.4)]  # the last is 2.2 m by hand from cap 3: out of reach
 for rx, ry in ROOTS47:
     A.box(rx, (ry + 350.6) / 2, 0.2, 350.6 - ry, "root")
@@ -312,7 +309,6 @@ A.rope("puente", (-249.0, 361.0), 14.0, kind="rope", to=(-263.0, 361.0), planks=
 A.wind((-256.0, 356.5, -249.5, 366.0), (4.0, 0.8), gust={"on": 1.6, "off": 3.2, "phase": 0.0, "warn": 0.8}, look="spores")
 A.wind((-262.5, 356.5, -256.0, 366.0), (-3.0, 3.4), gust={"on": 1.6, "off": 3.2, "phase": 2.4, "warn": 0.8}, look="spores")
 A.ledge(-266.0, -263.0, 361.0, "root", t=0.6)  # L8
-A.patch((-263.5, 361.0), (-263.0, 361.0), "slime", t=0.16)
 A.challenge("4.8", "Puente de Micelio", (-246.0, 361.0), 3, "B")
 A.cam((-267, 350, -244, 368), half_h=10.0, bias=(0.0, -4.0))
 
@@ -393,7 +389,6 @@ A.cam((-286, 350, -262, 376), half_h=13.0, bias=(-2.0, -4.0))
 A.ledge(-294.0, -283.2, 364.0, "root", t=0.8)  # the sill, and the floor the roots of eye B let you down to
 A.box(-288.7, 367.0, 0.4, 6.0, "root")  # the post: climb it
 A.ledge(-292.0, -287.5, 370.5, "root", t=0.5)  # L9, the diving board. Its lip is the launch
-A.patch((-288.0, 370.5), (-287.5, 370.5), "slime", t=0.16)
 V410 = (-1.0, -3.6)
 lean_c, power_c, _v = throw(V410, -9.0, 6.9, 9.0 / 1.9)
 _th = math.radians(lean_c)
@@ -463,8 +458,8 @@ A.card([(-216.3, 298.4), (-215.2, 296.6), (-215.2, 299.8)], z=-1.6, tone="back")
 # the giant's stalk: dark and wet, so nobody reaches for it
 A.card([(-234.2, 333.6), (-229.8, 333.6), (-230.6, 341.0), (-233.4, 341.0)], z=-1.5, tone="slick")
 # a front layer, only where nobody climbs: the east garden's far corner and the hall's foot
-tree(-192.5, 318, 16, 9, z=3.5, tone="back3", lean=-0.6)
-A.card([(-291, 264), (-286, 264), (-287.2, 265.0), (-289.6, 265.3), (-291, 265.1)], z=3.0, tone="back3")
+tree(-192.5, 318, 16, 9, z=-3.2, tone="back3", lean=-0.6)  # (was z 3.5, in FRONT: it covered the climber on the east garden's floor. Parker 11-12)
+A.card([(-291, 264), (-286, 264), (-287.2, 265.0), (-289.6, 265.3), (-291, 265.1)], z=-1.8, tone="back3")  # (was z 3.0, in front of the landing)
 
 # props (docs/peak/PARTS.md: the living mountain). Scenery only: all of it stands behind the climb.
 for name, x, y, z, size in (

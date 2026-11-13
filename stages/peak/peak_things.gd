@@ -44,6 +44,7 @@ var spawners: Array = []
 var boards: Array = []  # the boards a rock fall leaves by: {def, area, pts, pivot, reach}
 var statues: Array = []
 var _anchors := {}  # area id -> StaticBody3D the joints tie to
+var _rock := {}  # area id -> [[Rect2, outline], ...]: every solid of the area ("is this point inside rock?")
 var _grip_on := {}  # limb index -> the timed hold it's on
 var _grip_t := {}
 var _grip_warned := {}
@@ -64,6 +65,16 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 	root.add_child(anchor)
 	Climber.sync_server(anchor)
 	_anchors[a.id] = anchor
+	var rock: Array = []
+	for s in a.get("solids", []):
+		if bool(s.get("ghost", false)):
+			continue
+		var outline: PackedVector2Array = peak._pts(s.pts)
+		var box := Rect2(outline[0], Vector2.ZERO)
+		for p in outline:
+			box = box.expand(p)
+		rock.append([box, outline])
+	_rock[str(a.id)] = rock
 	for m in a.get("movers", []):
 		_build_mover(a, m, root)
 	for b in a.get("bodies", []):
@@ -163,7 +174,9 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		# Where the model's own zero sits against the collision's (the ore bucket's is its
 		# middle; its collision's is its floor).
 		var off := Peak.v2(def.model_at)
-		vis.position = Vector3(off.x, off.y, 0)
+		# (a third number sets the model back from the play plane: the mask's jaw stood a
+		# metre in front of whoever rode it)
+		vis.position = Vector3(off.x, off.y, float(def.model_at[2]) if (def.model_at as Array).size() > 2 else 0.0)
 	(nodes[0] as Node3D).add_child(vis)
 	var mo: Dictionary = def.motion
 	var m := {"id": str(def.id), "def": def, "area": str(a.id), "home": home, "nodes": nodes, "vis": vis, "mo": mo, "type": str(mo.type),
@@ -730,6 +743,55 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 		node.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, 0))
 	if bool((m.def as Dictionary).get("ko", false)):
 		_mover_ko(m)
+	if str(m.type) in ["cycle", "path"]:
+		_wall_wipe(m)
+		if (m.def as Dictionary).has("socket") and str(m.type) == "cycle":
+			_socket_tell(m)
+
+
+## A HOLD THAT GOES INTO A WALL LETS GO OF YOU AT THE WALL'S FACE (Parker 11-12, of the
+## temple's pistons: "when it goes into a wall and your hand is on it, it should not let you
+## still be grabbed on"). A hand or foot on a sliding piece is let go the moment the point
+## it holds passes into solid rock. Further out along the piece it keeps its hold until
+## that part reaches the wall too: you can ride a piston toward the wall, never into it.
+func _wall_wipe(m: Dictionary) -> void:
+	var c := peak.player
+	if c == null:
+		return
+	for i in c.limbs.size():
+		var o = c.limbs[i].grab_other
+		if o == null or not m.nodes.has(o):
+			continue
+		var p := peak.local_of(c.limb_end(i))
+		for row: Array in _rock.get(m.area, []):
+			if (row[0] as Rect2).has_point(p) and Geometry2D.is_point_in_polygon(p, row[1]):
+				c.release(i)
+				c.limbs[i].regrip = 0.35
+				Sound.play_at("grip", Vector3(c.limb_end(i).x, c.limb_end(i).y, 0), -3.0)
+				break
+
+
+## ...AND YOU CAN SEE IT COMING: a piece that lives in a socket grinds and puffs dust at
+## the socket's mouth just before it starts back in. (`socket`: where the mouth is.)
+const SOCKET_TELL_S := 0.5
+
+
+func _socket_tell(m: Dictionary) -> void:
+	var mo: Dictionary = m.mo
+	var t_out := float(mo.get("t_out", 0.5))
+	var h_out := float(mo.get("hold_out", 1.0))
+	var total := t_out + h_out + float(mo.get("t_in", 0.5)) + float(mo.get("hold_in", 1.0))
+	var ph := peak.clock + float(mo.get("phase", 0.0))
+	var cyc := fposmod(ph, total)
+	var n := int(floor(ph / total))
+	if int(m.get("told", -1)) == n or cyc < t_out + h_out - SOCKET_TELL_S or cyc > t_out + h_out:
+		return
+	m["told"] = n
+	var at := Peak.v2((m.def as Dictionary).socket)
+	if peak.player == null or peak.player_at().distance_to(at) > 26.0:
+		return
+	peak.audio.play("dust_trickle", at, -2.0, 1.25)
+	peak.zones.burst(at, "dust")
 
 
 ## OFF THE END OF ITS ROAD A MOVER IS A LOOSE THING (Parker 11-12, of the cart that runs

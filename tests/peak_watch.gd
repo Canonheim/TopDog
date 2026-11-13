@@ -700,6 +700,149 @@ func _w_fps(a: Array) -> void:
 		print("WATCH fps at %s: %.0f frames a second over %.1f s (average frame %.2f ms, worst %.1f ms), window %s" % [id, n / secs_taken, secs_taken, 1000.0 * secs_taken / n, worst, get_viewport().get_visible_rect().size])
 
 
+## Any spot, looked at: at:NAME:CHALLENGE:STANDX:STANDY:LOOKX:LOOKY:HALF[:WAIT] (stand
+## "-" "-" keeps the challenge's own start; look "-" "-" "-" keeps the game's camera).
+## Several spots in one run: --watch=at:a:5.3:-:-:-369:404:6,at:b:...
+func _w_at(a: Array) -> void:
+	pk.warp(str(a[1]))
+	await secs(0.4)
+	if str(a[2]) != "-":
+		stand(Vector2(float(a[2]), float(a[3])))
+	if str(a[4]) != "-":
+		look(Vector2(float(a[4]), float(a[5])), float(a[6]))
+	else:
+		_free_cam = false
+	await secs(float(a[7]) if a.size() > 7 else 3.0)
+	print("WATCH at %s: climber at %s, limbs %s" % [a[0], where(), holds()])
+	await shot(str(a[0]))
+
+
+## Note 48: the temple's pistons. A hand on a piston going in is let go at the wall's face;
+## a hand on the wall where a piston sleeps holds nothing.
+func _w_piston(_a: Array) -> void:
+	pk.warp("5.3")
+	await secs(1.0)
+	var c := me()
+	var m: Dictionary = pk.things.movers["piston1"]  # west wall, face x -372
+	look(Vector2(-369.3, 402.0), 3.6)
+	# wait for it to be fully out
+	var t0 := pk.clock
+	while (m.offset as Vector2).x < 3.5 and pk.clock - t0 < 12.0:
+		await get_tree().physics_frame
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 99.0
+	put_limb(1, mover_at("piston1") + Vector2(-0.9, 0.5))  # (on its top, 0.8 m out from the wall's face)
+	c.attach(1, m.nodes[0])
+	await secs(0.3)
+	print("WATCH piston: a hand on the piston's top, %.2f m out from the wall's face: limbs %s" % [me().limb_end(1).x - Peak.ORIGIN.x + 372.0, holds()])
+	await shot("48_piston_hand_on")
+	var let_go_x := INF
+	t0 = pk.clock
+	while pk.clock - t0 < 9.0:
+		await get_tree().physics_frame
+		if c.limbs[1].grab_other == null and let_go_x == INF:
+			let_go_x = c.limb_end(1).x - Peak.ORIGIN.x
+			print("WATCH piston: the hand was let go at x %.2f (the wall's face is x -372.00), %.2f s after the piston started back" % [let_go_x, pk.clock - t0])
+			await shot("48_piston_wiped")
+			break
+	if let_go_x == INF:
+		print("WATCH piston: the hand was NEVER let go; it is at x %.2f" % (c.limb_end(1).x - Peak.ORIGIN.x))
+	# Now the wall itself, at a sleeping socket and between sockets.
+	t0 = pk.clock
+	while (m.offset as Vector2).x > 0.01 and pk.clock - t0 < 12.0:
+		await get_tree().physics_frame
+	for spot: Vector2 in [Vector2(-371.95, 400.75), Vector2(-371.95, 401.9)]:
+		c.release_all()
+		for l in c.limbs:
+			l.regrip = 99.0
+		c.limbs[0].regrip = 0.0
+		var got := false
+		for i in 50:
+			put_limb(0, spot)
+			await get_tree().physics_frame
+			if c.limbs[0].grab_other != null:
+				got = true
+				break
+		print("WATCH piston: a hand pressed to the west wall at %s (piston in): holds %s" % [spot, "SOMETHING: " + holds() if got else "nothing"])
+	for l in c.limbs:
+		l.regrip = 0.0
+	stand(Vector2(-365.0, 396.4))
+	look(Vector2(-369.3, 404.6), 5.6)
+	await secs(2.5)
+	await shot("48_pistons_after")
+
+
+## Note 52: the gallery's slots. A climber dropped into one goes through; a hand on its lip holds.
+func _w_slot(_a: Array) -> void:
+	pk.warp("5.7")
+	await secs(0.6)
+	var c := me()
+	look(Vector2(-337.3, 451.6), 3.4)
+	stand(Vector2(-339.3, 453.0))
+	await secs(1.0)
+	await shot("52_slot_after")
+	# Dropped in feet first, limbs free to catch what they can.
+	stand(Vector2(-337.3, 452.6))
+	var t0 := pk.clock
+	var caught := ""
+	while pk.clock - t0 < 3.0:
+		await get_tree().physics_frame
+		if where().y > 449.8 and holds() != "- - - -" and caught == "":
+			caught = holds() + " at " + str(where())
+	print("WATCH slot: dropped into the west slot: %s; 3 s later the climber is at %s" % ["it CAUGHT the side (" + caught + ")" if caught != "" else "nothing inside it held", where()])
+	await shot("52_slot_fell_through")
+	# The lip: a hand laid on the floor's top right at the edge.
+	stand(Vector2(-339.3, 453.0))
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 99.0
+	c.limbs[0].regrip = 0.0
+	var got := false
+	for i in 50:
+		put_limb(0, Vector2(-338.12, 453.06))
+		await get_tree().physics_frame
+		if c.limbs[0].grab_other != null:
+			got = true
+			break
+	print("WATCH slot: a hand on the floor's top at the lip (x -338.12): %s" % ("holds" if got else "does NOT hold"))
+	for l in c.limbs:
+		l.regrip = 0.0
+
+
+## Note 55: the area banner's quiet time, on the game's own HUD (6 s here, 15 in play).
+func _w_banner(_a: Array) -> void:
+	var hud = main.get("_peak_hud")
+	if hud == null:
+		print("WATCH banner: no HUD")
+		return
+	await secs(5.0)  # (the first banner of the run has been and gone)
+	hud.area_quiet_s = 6.0
+	hud._area_said_t = -1.0e9
+	hud._area_said = ""
+	hud.show_area("La Mina Vieja", 1)
+	await secs(0.6)
+	print("WATCH banner: first one shows at once: %s" % hud.area_up)
+	hud.show_area("Las Aguas Negras", 2)
+	hud.show_area("La Mina Vieja", 1)
+	hud.show_area("Las Aguas Negras", 2)
+	await secs(4.5)
+	print("WATCH banner: 5.1 s in, three more asked for across the line: one on screen? %s (want false)" % hud.area_up)
+	await secs(2.0)
+	print("WATCH banner: 7.1 s in, the quiet over: showing %s? %s (want true, Las Aguas Negras)" % [hud._area_said, hud.area_up])
+	await shot("55_banner_after_quiet")
+	await secs(4.5)
+	hud._area_said_t = -1.0e9
+	stand(where() + Vector2(0, 30.0))  # (a fall)
+	hud.show_area("La Gruta de Cristal", 3)
+	await secs(0.5)
+	print("WATCH banner: asked for in mid fall (holding %s): on screen? %s (want false)" % [hud.holding, hud.area_up])
+	pk.warp("1.3")
+	await secs(1.5)
+	print("WATCH banner: holding again (%s): on screen? %s (want true)" % [hud.holding, hud.area_up])
+	hud.area_quiet_s = 15.0
+
+
 ## Note 4: what stands where the lift's two cables were.
 func _w_lift(_a: Array) -> void:
 	pk.warp("1.5")

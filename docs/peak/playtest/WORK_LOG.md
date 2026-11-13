@@ -314,3 +314,178 @@ thing happen.
 - **For whoever opens the editor next:** `stages/peak/peak_water_front.gdshader` and
   `tests/peak_watch.gd` have no `.uid` files yet (nothing here ran the editor); the
   editor will write them.
+
+
+---
+
+# SECOND BATCH: notes 12 to 57 (released by Parker 11-12 23:53)
+
+Same rules, same probe. Groups are the Second Director's. Each group has its commit in
+its heading once it lands.
+
+## Calls waiting for Parker from this batch
+
+(kept up as groups land; each is also in its note's entry)
+
+- **Note 51:** inside the mountain the sun no longer casts shadows at all. That is what
+  the black band was. If he misses the climber's own shadow on the back wall in the
+  caves, it is one line (`shadow_opacity` in `_tick_peak`, `game/main.gd`).
+- **Note 40:** six front layers were kept (list and pictures below). The storm ridge's
+  six clouds are among them because the note left them undecided.
+- **Note 52:** eight more slots were found on the mountain and NOT changed (list below).
+- **Note 39:** the count was 39 patches, not 19. All 39 are out.
+
+## Group A: bugs you can see (notes 39, 40, 47, 48, 51, 52, 55)
+
+### Note 48: the temple's pistons
+
+- **State:** fixed, seen in the game.
+- **Cause, confirmed in the game:** the note's reading was right. In, each piston's end
+  lay exactly in the wall's face (`48_pistons_before.jpg`).
+- **What changed (`tools/peak/areas/a5.py`):** each piston sits 0.33 m past the wall's
+  face when it is in (`SOCK`); its travel is 0.33 longer so the tip reaches where it
+  did. 2.4 m of rock was added behind the west wall so the longer run stays inside it.
+- **A sliding piece that goes into a wall lets go of you at the wall's face.** This is
+  now the game's rule for every `cycle` and `path` mover, with no authoring: a hand or
+  foot on such a piece is let go the moment the point it holds is inside solid rock
+  (`_wall_wipe` in `stages/peak/peak_things.gd`). So it also covers the temple's
+  phantom blocks, which slide into their ramp. It does NOT apply to the door's three
+  steps of 5.1 as the note thought: those slide under the next step into open air, not
+  into rock (they still scrape you off against the step above, as designed).
+- **You can see it coming:** half a second before a piston starts back, its socket
+  puffs dust and trickles (`socket` on the mover; the sound is the Peak's
+  `dust_trickle`, pitched up, chosen blind).
+- **Sockets you can see:** a pale carved frame and the dark of the channel on the
+  wall's cut face, one per piston. They are thin cards in front of the wall's rock
+  only.
+- **The walls reading as unholdable:** in the game they already draw as the dark wet
+  slick (`48_pistons_before.jpg`); nothing changed there. If Parker's picture showed
+  them pale, it was the lit edge of the wall, which is still there.
+- **Watched:** a hand set on a piston's top 0.6 m out from the west wall was carried in
+  and let go at x -371.93 (the face is -372.00), 4.04 s after the test began. A hand
+  pressed to the wall at a sleeping socket, and between two sockets: holds nothing.
+- **Pictures:** `48_pistons_before.jpg`, `48_piston_hand_on.jpg`,
+  `48_piston_wiped.jpg`, `48_pistons_after.jpg` (sockets, and two dust puffs).
+- **Not checked:** climbing all nine in time by play. Their timing was not touched.
+
+### Note 47: the climber goes behind the great mask
+
+- **State:** the climber is in front of the mask and the jaw now, seen in the game. The
+  later half of the note (the carved features become the holds) needs the mask's
+  outlines from the Building Maker: see `MODEL_REQUESTS.md`.
+- **Cause, confirmed:** `47_mask_before.jpg`: the climber on the jaw is not in the
+  picture at all, only its hand markers.
+- **What changed:** the mask's deco from z -1.2 to z -2.9 (its front face is now 0.8 m
+  behind the play plane); the jaw's model is set back 0.6 m (`model_at` takes a third
+  number now), so its front lip is at the climber's depth and no nearer; the jaw's
+  collision gained its chin (the model hangs 0.9 m under the lip and that part was
+  air).
+- **The sweep the note asked for** is `python tools/peak/checks.py fronts`: every
+  model's front face against the climber's depth. Besides the mask it lists door
+  frames (five `mine_frame`, meant: you walk through them), the champions (skins, at
+  the play plane by design), the temple's two counterweight slabs and the cableway's
+  eight gondolas (their models stand 0.3 m proud above what you stand on), the
+  crystal cave's `crystal_shell_clear`, the garden's great cap and the summit bell.
+  Only the mask was changed. The rest are for Parker when he reaches them.
+- **Pictures:** `47_mask_before.jpg`, `47_mask_after.jpg`.
+
+### Note 51: weird black spots
+
+- **State:** fixed, seen in the game. The cause is NOT the one in the note.
+- **Cause, confirmed:** the painted wall behind the east balcony was there all along
+  (the room's back card covers it). The black band was the SUN's shadow. The sun
+  stands front-right and shines on inside the mountain at a third of its strength, so
+  the rock wall east of the balcony threw a hard shadow 5 m west and 7 m down onto the
+  back wall. With the caves' low fill light a shadow there is pure black.
+- **What changed:** `_tick_peak` in `game/main.gd` fades the sun's shadows out as you
+  go inside (`shadow_opacity = 1 - inside`). Outside the mountain nothing changed. No
+  card was moved.
+- **The check the note asked for** is `python tools/peak/checks.py backs`: for every
+  place a climber can be inside the mountain, is there a painted layer behind it. It
+  reports none bare in any area.
+- **The well:** it did have a layer, one flat near-black card, which is why it read as
+  a piece missing. It now steps back into the depth (two ragged side layers, lighter
+  near you) with a slot of black down the middle and far glints
+  (`tools/peak/areas/st.py`).
+- **Pictures:** `51_band_before.jpg`, `51_band_after.jpg`, `51_well_after.jpg`.
+- **For Parker:** this also removes the climber's own cast shadow on the back wall in
+  the caves. One line to bring back.
+
+### Note 39: the small slick lip patches
+
+- **State:** all removed, every area.
+- **Count:** 39, not the note's 19 (a count by a different size): a2 3, a4 6, a5 6,
+  a6 7, a7 7, a8 6, a10 4. Each was the "unease" patch of a rest ledge, named so in
+  its area's file. Rest ledges keep any creak or gust they have. Nothing was added.
+- **Checked:** every changed area regenerated with no error; the semantic diff shows
+  only those 39 solids gone.
+
+### Note 40: pieces in front of the screen
+
+- **State:** done by the rule "nothing stands in front of where a climber can be".
+- **Moved behind the climb (20):** the crystal cave's ten shards (`40_a3_before.jpg`,
+  `40_a3_after.jpg`); the garden's 16 m stalk and the mound at its landing
+  (`40_a4_before.jpg`, `40_a4_after.jpg`); the temple's broken arch; the chimney's
+  soot under the hall roof (`40_moved_a6_soot.jpg`); the glacier's seven sheets of
+  ice in front of its frozen climbers, which are now at their backs
+  (`40_moved_a9_ice_at_his_back.jpg`).
+- **Kept in front (15), and why:**
+  1. Mine, the stalactite fringe under the east roof: its lowest point is 15 m above
+     the nearest hold (`40_kept_a1_stalactites.jpg`).
+  2. Mine, the strip along the bottom: below the Sump's floor
+     (`40_kept_a1_under_the_sump.jpg`).
+  3. Chimney, the floor's front lip: below the lowest floor
+     (`40_kept_a6_floor_lip.jpg`).
+  4. Glacier, three snow fringes: half a metre thick, lying on the rock's own front
+     face; at most they cover a boot (`40_kept_a9_snow_fringe.jpg`).
+  5. Storm ridge, six clouds across the towers' feet: the note left these undecided
+     ("could be part of that area's difficulty"). They DO cross the climb
+     (`40_kept_a10_clouds.jpg`). Parker's call when he gets there.
+  6. Summit, two snow sheets: they lie over the dome's own rock
+     (`40_kept_a11_snow.jpg`).
+- **New in front, on purpose:** the 18 small socket cards of note 48, over wall rock.
+- **Check:** `python tools/peak/checks.py fronts` lists every front layer and whether
+  it crosses climbing space.
+
+### Note 52: the insides of small pits
+
+- **State:** the gallery's two slots are fixed, seen in the game. The rest are listed,
+  not changed.
+- **What changed:** each side of both slots is lined slick from the slot's foot to
+  7 cm under the lip (four thin `wet` liners, `a5.py`). The 2.5 m under the floor was
+  already slick; it was the floor slab's own half-metre end faces that held.
+- **Watched:** a climber dropped into the west slot with every limb free to catch:
+  nothing held, and it was 10.6 m down in the hall 3 s later. A hand laid on the
+  floor's top at the lip: holds.
+- **Pictures:** `52_slot_before.jpg`, `52_slot_after.jpg`, `52_slot_fell_through.jpg`.
+- **Every other pit the check finds** (`python tools/peak/checks.py pits`: a slot up
+  to 2 m wide between two holdable blocks whose floors are level, with 3 m of drop
+  under it). Left for Parker:
+
+  - a1: slot x -201.00..-200.40 (0.60 m wide), floors at y 14.20: sides holdable for 0.04 m and 0.40 m
+  - a1: slot x -232.20..-231.80 (0.40 m wide), floors at y 52.30: sides holdable for 0.15 m and 0.40 m
+  - a2: slot x -405.30..-404.00 (1.30 m wide), floors at y 153.00: sides holdable for 0.30 m and 0.30 m
+  - a2: slot x -412.80..-411.50 (1.30 m wide), floors at y 153.00: sides holdable for 0.30 m and 0.30 m
+  - a2: slot x -419.80..-418.50 (1.30 m wide), floors at y 153.00: sides holdable for 0.30 m and 0.30 m
+  - a7: slot x -213.00..-211.60 (1.40 m wide), floors at y 672.00: sides holdable for 0.25 m and 0.25 m
+  - a7: slot x -229.50..-228.90 (0.60 m wide), floors at y 663.00: sides holdable for 0.25 m and 0.25 m
+  - a7: slot x -221.00..-220.40 (0.60 m wide), floors at y 663.00: sides holdable for 0.25 m and 0.25 m
+
+  The three in a2 are the catwalk's gaps of note 24. The two in a1 are a crack beside
+  the hoist's arm and one at the wheel's staging, both under half a metre.
+
+### Note 55: the area banner's cool-down
+
+- **State:** done, seen on the game's own HUD.
+- **What changed (`ui3d/peak_hud.gd`, and one line in `game/main.gd`):** after a banner
+  shows, none shows for `area_quiet_s` (15 s). Nothing asked for in that time is saved
+  up; only where you are is remembered. When the quiet ends, if that is not the area
+  last announced, its banner shows once. A banner also waits until the climber has
+  hold of something (`holding`, set by main every frame).
+- **Watched** (quiet set to 6 s for the test): the first banner showed at once; three
+  more asked for across the line showed nothing; at 7 s the area settled in was
+  announced; one asked for in mid fall waited and showed when the climber had a hold.
+- **Picture:** `55_banner_after_quiet.jpg`.
+- **Not run by me:** `tests/peak_hud_probe.gd` got five new checks for this, but that
+  probe opens a full window on Parker's screen, so I ran the same steps in my own
+  probe. Second Director: please run yours once.

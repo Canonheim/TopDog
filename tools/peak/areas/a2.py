@@ -61,7 +61,7 @@ A.opening(-244, 85, -238, 89)  # the waterfall's slot
 A.opening(-236, 85, -232, 91)  # the dry shaft from the mine
 A.solid([(-238, 91.5), (-236, 91.5), (-237, 92.2)], "wet")  # the pier's peaked top: sheds both ways
 cap(-232, -226, 90.0)  # THE LIP LEDGE (entry). The pier keeps the river (1 m higher) off it
-A.box(-231.75, 90.02, 0.5, 0.1, "wet")  # the drip that slicks its lip
+# (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 A.water((-288, RIV_B, -252, RIV_S), RIV_S, flow=(2.2, 0.0))
 A.water((-252, RIV_B, -244, RIV_S), RIV_S, flow=(2.4, 0.0))  # it quickens at the lip
 
@@ -152,7 +152,6 @@ air([(-284, Q4Y - 0.3), (-271.2, Q4Y - 0.3), (-265.5, FUN), (-258.2, FUN), (-258
      (-255.6, WINC), (-272, WINC), (-272, Q4Y + 4.6), (-284, Q4Y + 4.6)])  # the window, and the gallery west of it
 cap(-258.2, -255.6, Q4Y, "brick")  # Q4
 cap(-284, -271.2, Q4Y, "brick")  # Q5, the gallery
-A.box(-271.45, Q4Y + 0.02, 0.5, 0.1, "wet")
 
 # ---------------------------------------------------------------- 2.6 Cadenas
 A.rope("cadena1", (-258.9, WINC), 6.6, kind="chain")
@@ -172,7 +171,6 @@ A.opening(-306, 175, -294, 181)
 A.water((-320.5, 113, -288, CS), CS, flow=(1.0, 0.0), look="pool")
 slab(-291, -284, 117.4)  # Q6, over the cascade's lip
 slab(-320.5, -314, 117.2, t=0.7)  # Q7, the west bank
-A.box(-291.2 + 0.45, 117.42, 0.5, 0.1, "wet")
 
 # ---------------------------------------------------------------- 2.7 the barrels
 BARREL = [(-0.9, -0.3), (-0.6, -0.55), (0.6, -0.55), (0.9, -0.3), (0.9, 0.3), (0.6, 0.55), (-0.6, 0.55), (-0.9, 0.3)]

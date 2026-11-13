@@ -197,6 +197,18 @@ func set_altitude(metres: float, best: float) -> void:
 ## while the game's own title banner (or the last area card) is still up. Only the newest
 ## area waits: falling through three areas shows the one you land in, not a backlog.
 var _area_wait: Array = []  # [name, number]
+## THE BANNER'S QUIET TIME (Parker 11-12: "make it so once an area gives you it's name
+## banner, there is a 15 second cool down before the banner can show again"). Areas meet at
+## an invisible line; hanging about on one, or being thrown back and forth across it, fired
+## a banner at every crossing. Now: once a banner has shown, none shows for `area_quiet_s`.
+## Nothing asked for in that time is saved up. Only where you ARE is remembered, and when
+## the quiet ends, if that is not the area last announced, its banner shows once. And never
+## in the middle of a fall: it waits until you have hold of something (`holding`, set by
+## main every frame).
+var area_quiet_s := 15.0
+var holding := true
+var _area_said := ""  # the area last announced
+var _area_said_t := -1.0e9  # ...and when (the HUD's own clock)
 
 
 func top_busy() -> bool:
@@ -204,10 +216,7 @@ func top_busy() -> bool:
 
 
 func show_area(area_name: String, number: int) -> void:
-	if top_busy():
-		_area_wait = [area_name, number]
-		return
-	_show_area_now(area_name, number)
+	_area_wait = [area_name, number]  # (where you are now: _process shows it when it may)
 
 
 func _show_area_now(area_name: String, number: int) -> void:
@@ -461,9 +470,13 @@ func fell_line(metres: float) -> String:
 func _process(delta: float) -> void:
 	_t += delta
 	_place()
-	if not _area_wait.is_empty() and not top_busy():
+	if not _area_wait.is_empty() and str(_area_wait[0]) == _area_said:
+		_area_wait = []  # (back in the area already announced: nothing to say)
+	if not _area_wait.is_empty() and not top_busy() and holding and _t - _area_said_t >= area_quiet_s:
 		var next := _area_wait
 		_area_wait = []
+		_area_said = str(next[0])
+		_area_said_t = _t
 		_show_area_now(str(next[0]), int(next[1]))
 	# The drums ease to the height (in a long fall they spin down).
 	shown_m = lerpf(shown_m, _target_m, 1.0 - exp(-delta * 10.0))

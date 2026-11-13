@@ -637,6 +637,7 @@ func _tick_peak(delta: float) -> void:
 			_world_env.ambient_light_color = Color(0.85, 0.845, 0.853)
 			_world_env.ambient_light_sky_contribution = 0.5
 			_world_sun.light_energy = 1.25
+			_world_sun.shadow_opacity = 1.0
 			if _peak_hud != null:
 				_peak_hud.visible = false
 		return
@@ -654,9 +655,18 @@ func _tick_peak(delta: float) -> void:
 	_world_env.ambient_light_color = look.amb
 	_world_env.ambient_light_sky_contribution = lerpf(0.5, 0.0, float(look.inside))
 	_world_sun.light_energy = float(look.sun)
+	# INSIDE THE MOUNTAIN THE SUN CASTS NO SHADOW (Parker 11-12, of a pure black band up the
+	# wall behind the temple's east balcony: "another one of those weird black spots").
+	# The painted back wall was there. The black was the SUN's shadow of the rock in front,
+	# thrown 5 m west and 7 m down onto it (the sun stands front-right, and shines on at a
+	# third of its strength inside so the toon bands have a key light): a hard-edged shape
+	# with nothing lit inside it. Caves are lit by their lanterns; outside it is as it was.
+	_world_sun.shadow_opacity = clampf(1.0 - float(look.inside), 0.0, 1.0)
 	var alt := peak.player_at().y if peak.player != null else 0.0
 	if _peak_hud != null:
 		_peak_hud.visible = screen in ["hud", "pause"]
+		# (the area banner never drops across the middle of a fall: it waits for a hold)
+		_peak_hud.set("holding", peak.player == null or not is_instance_valid(peak.player) or peak.player.is_attached())
 		_peak_hud.call("set_altitude", alt, peak.best_m)
 		_peak_hud.call("set_paused", screen == "pause", peak.time_s, peak.falls, peak.best_m)
 	else:

@@ -95,7 +95,7 @@ A.wall(FACE, default="scree", thick=8.0, rock_on="left")
 # ---------------------------------------------------------------- the dock (a7 built the deck, top 688, x -250..-236)
 A.ledge(-240.0, -236.7, 688.7, "plank", t=0.7)  # the boarding gangway, on the deck's east end
 A.box(-239.85, 689.3, 0.14, 1.2, "iron")  # its one rail post
-A.box(-237.6, 688.76, 0.5, 0.12, "grease")  # the unease: a smear of grease on the boards
+# (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 A.challenge("8.1", "Abordar", (-238.6, 688.7), 2, "A",
             moves=[["reach", [-236.7, 688.7], [-236.6, 689.7]]])
 
@@ -174,14 +174,12 @@ A.challenge("8.3", "El Cable", (-205.9, 700.3), 4, "X",
 A.box(-194.0, 686.4, 0.3, 32.8, "scree")  # legs, y 670 .. 702.8
 A.box(-191.0, 686.4, 0.3, 32.8, "scree")
 A.ledge(-196.0, -190.6, 703.0, "iron", t=0.3)  # the landing, 5.4 m: the cable ends 1.6 m over its west end
-A.box(-190.9, 703.06, 0.5, 0.12, "grease")  # the unease: oil dripped from the sheave above
 tower(-194.0, -191.0, 703.0, 719.4)
 A.wheel("sheave1", (-194.6, 705.8), 1.0, 9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28, model="cable_sheave")  # counter-clockwise: its west side goes DOWN
 A.beam((-193.8, 708.4), (-191.2, 707.6), 0.16, "iron")  # brace
 A.wheel("sheave2", (-190.9, 710.3), 1.0, -9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28, model="cable_sheave")  # clockwise: its east side goes DOWN
 A.beam((-194.5, 712.8), (-191.9, 712.8), 0.16, "iron")  # rung
 A.ledge(-194.8, -190.8, 714.5, "plank", t=0.3)  # the head: a 4 m rest under the station roof
-A.box(-194.5, 714.56, 0.5, 0.12, "grease")  # the unease
 A.challenge("8.4", "El Pilón", (-194.7, 703.0), 3, "X",
             moves=[["reach", [-194.6, 703.0], [-194.6, 704.8]],
                    ["reach", [-194.6, 706.8], [-193.8, 708.4]],
@@ -243,7 +241,6 @@ for hx, hy in FANG_HOLDS:
     A.hold(hx, hy, 0.2, "rock")
 A.ledge(-166.6, -164.0, 725.4, "iron", t=0.4)  # the anchor plate on the top: 2.6 m
 A.box(-164.25, 726.75, 0.2, 2.7, "iron")  # the zipline's anchor post
-A.box(-166.35, 725.46, 0.4, 0.12, "grease")  # the unease: the plate's west lip is greased
 _route = [list(on_face(706.6))] + [list(p) for p in FANG_HOLDS] + [[-166.6, 725.2]]
 A.challenge("8.6", "El Colmillo", (-174.3, 702.9), 4, "X",
             moves=[["reach", _route[i], _route[i + 1]] for i in range(len(_route) - 1)])
@@ -263,7 +260,6 @@ A.mover("zip", Z0, [(box_pts(0.0, 0.0, 0.5, 0.22), "iron"), (box_pts(0.0, -0.45,
         {"type": "path", "pts": [list(Z0), list(Z1)], "speed": 9.0, "mode": "once", "trigger": "grab", "reset": 6.0, "accel": 30.0},
         model="zip_trolley")
 A.ledge(-196.0, -190.0, 720.0, "plank", t=0.4)  # the maintenance deck: 6 m
-A.box(-190.25, 720.06, 0.5, 0.12, "grease")  # the unease: its landing lip is greased
 A.challenge("8.7", "Tirolesa", (-165.3, 725.4), 4, "X",
             moves=[["reach", [-166.2, 725.4], [-166.2, 727.2]],
                    ["fling", [-186.0, 724.2], [-193.4, 720.0], "F4"]])
@@ -290,7 +286,6 @@ A.challenge("8.8", "Contrapesos", (-193.0, 720.0), 3, "X",
 # ---------------------------------------------------------------- pylon 3's head (a card tower; only the head is solid)
 A.ledge(-205.6, -201.5, 749.0, "plank", t=0.4)  # 4.1 m: the rest before the dead gondola
 A.box(-205.45, 749.6, 0.14, 1.2, "iron")  # the rail post you lean out from
-A.box(-201.8, 749.06, 0.5, 0.12, "grease")  # the unease
 A.beam((-202.0, 754.6), (-209.2, 754.6), 0.25, "iron")  # the crossarm the dead car hangs from (out of reach: 5.5 m up)
 tower(-205.0, -202.4, 664.0, 754.6)
 

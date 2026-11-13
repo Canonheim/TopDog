@@ -52,7 +52,7 @@ def chain(pts):
 A.solid([(-232, 577.5), (-204, 577.5), (-204, 575.0), (-212, 573.0), (-232, 573.0)], SL)
 A.ledge(-232.0, -209.9, 578.0, "rock", t=0.6)
 A.solid([(-210.0, 577.4), (-204.0, 577.4), (-204.0, 578.05), (-210.0, 578.05)], SL)  # under the tower: the lip stays slick
-A.box(-213.0, 578.03, 1.0, 0.1, SL)  # the unease: a seep of wet across the boards of rock
+# (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 # The designed mercy: one shrub on the east lip, 0.5 m of root over 180 m of throat.
 A.hold(-203.7, 577.3, 0.28, "root")
 A.deco("shrub_dry", -203.6, 577.4, z=0.0, size=(0.9, 0.7, 0.6), tone="root")
@@ -74,7 +74,6 @@ FACE = [(-230.0, 578.0), (-230.0, 586.0),  # 0 the door (None)
         (-251.0, 684.0)]  # 11 the bare face up to the station
 A.wall(FACE, kinds={0: None, 2: None, 3: "rock", 8: "rock"}, default=SL, thick=8.0, rock_on="left")
 A.solid([(-230, 586), (-230, 590), (-238, 600), (-238.5, 599.5), (-246, 599.5), (-246, 586)], SL)  # lintel + slab
-A.box(-239.2, 600.03, 0.9, 0.1, SL)  # R2's unease: guano, slick, by the lip
 # The mountain behind the skin (wall() leaves wedges behind its corners: nothing reaches them, this hides them).
 A.solid([(-244, 601), (-244, 605.5), (-240.5, 609), (-239.6, 626), (-245, 647), (-250.5, 647), (-250.5, 653.6),
          (-251.4, 659.2), (-252, 684), (-260, 684), (-260, 601)], SL)
@@ -109,8 +108,6 @@ A.ledge(-203.9, -202.8, 654.0, "plank", t=0.25)  # the perch plank out of R7's e
 A.ledge(-206.0, -202.5, 664.0, "rock", t=0.5)  # the porch: 3.5 m, 1.5 of it out over the throat
 A.solid([(-204, 663.5), (-202.5, 663.5), (-204, 661.5)], SL)
 A.ledge(TW, -208.2, 672.0, "rock", t=0.3)  # R9: the west fin's top
-A.box(-205.0, 624.03, 1.0, 0.1, SL)  # R4's unease: wet at the east mouth
-A.box(-211.5, 654.03, 1.0, 0.1, SL)  # R7's unease
 
 # ================================================================ 7.1 EL BALCON (D2, S)
 # Walk the Balcon east (22 m) to the tower's foot and climb its cracked west face: three
@@ -186,7 +183,6 @@ A.solid([(-223, 623.7), (-220, 623.7), (-220, 617.0), (-221.5, 614.0), (-223, 61
 A.ledge(-223.8, -220.0, 624.0, "rock", t=0.4)  # R3: the keyhole's floor and its sill
 A.ledge(-220.0, -218.5, 624.0, "plank", t=0.25)  # what is left of the deck, west
 A.ledge(-211.5, TW, 624.0, "plank", t=0.25)  # ... and east
-A.box(-221.0, 624.03, 0.8, 0.1, SL)  # R3's unease
 BOB = {"w": 1.2, "h": 0.14, "mass": 3.0, "kind": "plank"}
 A.rope("bridge_w", (-218.55, 623.7), 5.3, kind="rope", bob=dict(BOB))
 A.rope("bridge_e", (-211.45, 623.7), 5.3, kind="rope", bob=dict(BOB))
@@ -240,7 +236,6 @@ A.solid([(-224.0, 630.5), (TW, 639.6), (TW, 628.6), (-215.0, 629.4), (-219.9, 62
          (-223.1, 628.0), (-223.1, 628.9), (-224.0, 628.9)], SL)  # the east mass: counter-slope over, keyhole's roof under
 # R6's roof: the boulders run down its back and drop off its lip, past the ledge.
 A.solid([(-249.5, 653.0), (-243.8, 653.8), (-243.6, 654.4), (-250.2, 658.8), (-253.0, 658.8), (-253.0, 653.0)], SL)
-A.box(-244.6, 647.63, 0.8, 0.1, SL)  # R6's unease: grit on the lip
 
 # ================================================================ 7.6 DESPRENDIMIENTO (D4, A)
 # Boulders come down in waves of three every 9 s (a rumble 1.2 s before): off R6's roof,
@@ -376,7 +371,6 @@ for x0, x1 in ((-237.0, -229.5), (-228.9, -221.0), (-220.4, -213.0)):
 # The low station's deck (a8 starts from it): top 688, x -250..-236, and a plug behind it.
 A.ledge(-250.0, -236.0, 688.0, "plank", t=0.5)
 A.solid([(-253.0, 686.0), (-250.0, 686.0), (-250.0, 688.0), (-253.0, 688.0)], "rock")
-A.box(-237.0, 688.03, 0.8, 0.1, "grease")  # the deck's unease
 A.challenge("7.10", "La Estación Baja", (-209.2, 672.0), 3, "B",
             moves=[["reach", [-211.6, 672.0], [-213.0, 672.0]], ["reach", [-216.2, 672.0], [-217.16, 672.72]],
                    ["reach", list(bp(4.2)), list(bp(5.5))], ["reach", list(bp(5.5)), list(bp(6.8))]])

@@ -81,6 +81,13 @@ A.ledge(-365.0, -353.0, 430.0, "stone", t=1.0)    # the hall's west balcony
 for x0, x1 in ((-352.0, -338.0), (-336.6, -328.0), (-326.6, -312.8)):
     A.solid([(x0, 450.0), (x1, 450.0), (x1, 452.5), (x0, 452.5)], "wet")
     A.ledge(x0, x1, 453.0, "stone", t=0.5)
+# THE SLOTS' INSIDES CAN'T BE HELD (Parker 11-12: "make the insides of little pitfalls like
+# this not grabbable so pits are actually an issue"). The floor is holdable stone on every
+# face, its ends included, so a climber who dropped into a slot stuck to its sides and
+# climbed out. Each side is lined slick from the slot's foot to 7 cm under the lip: the
+# floor's top, right up to the edge, still saves a hand that catches it.
+for x, d in ((-338.0, 1), (-336.6, -1), (-328.0, 1), (-326.6, -1)):
+    A.solid([(x, 450.0), (x + 0.08 * d, 450.0), (x + 0.08 * d, 452.93), (x, 452.93)], "wet")
 # The upper works' spine: the serpent's head ledge, the phantom ramp, the altar's threshold.
 A.solid([(-344, 457.5), (-323.5, 457.5), (-323.5, 467.7), (-331.5, 467.7), (-340, 461.7), (-340, 461.1), (-344, 461.1)], "wet")
 A.ledge(-344.0, -340.0, 461.7, "stone", t=0.6)    # HL: the serpent's head
@@ -106,7 +113,7 @@ for k in range(1, 6):
     else:
         A.ledge(x1 - 3.0, x1, top, "stone", t=1.0)
 A.ledge(-354.0, -347.0, 381.0, "stone", t=1.0)    # the sixth step and the landing before the mask
-A.patch((-347.8, 381.0), (-347.0, 381.0), "wet", t=0.12)  # unease: the landing's lip weeps
+# (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 m51 = []
 for k in range(0, 6):
     x1 = STEP_X - 3.0 * k          # the next step's front face
@@ -124,8 +131,13 @@ JAW = (-358.15, 380.6)
 jaw_shapes = [(box_pts(0, 0, 4.7, 0.8), "stone")]
 for dx in (-1.9, 1.9):
     jaw_shapes.append((box_pts(dx, 0.6, 0.5, 0.4), "bone"))       # the two lower fangs
-A.mover("jaw", JAW, jaw_shapes, {"type": "cycle", "to": [0, 4.5], "t_out": 3.0, "hold_out": 1.4,
-                                 "t_in": 2.2, "hold_in": 2.4, "phase": 0.0}, model="mask_jaw")
+jaw_shapes.append((box_pts(0, -0.85, 4.4, 0.9), "stone"))            # its chin (the model's, drawn 0.9 m under the lip)
+_jaw = A.mover("jaw", JAW, jaw_shapes, {"type": "cycle", "to": [0, 4.5], "t_out": 3.0, "hold_out": 1.4,
+                                        "t_in": 2.2, "hold_in": 2.4, "phase": 0.0}, model="mask_jaw")
+# (Parker 11-12, riding it: "you should not be behind this part". The jaw's model reaches
+# a metre toward the camera, in front of whoever stands on it. Set back, its front lip is
+# at the climber's own depth and no nearer.)
+_jaw["model_at"] = [0.0, 0.0, -0.6]
 A.solid([(-359.7, 388.6), (-356.7, 388.6), (-356.7, 389.3), (-359.7, 389.3)], "stone")   # the upper lip
 for tx in (-359.3, -358.2, -357.1):
     A.solid([(tx - 0.25, 388.65), (tx, 387.6), (tx + 0.25, 388.65)], "bone")              # the upper teeth
@@ -136,7 +148,6 @@ A.hold(-360.3, 392.3, 0.25, "stone")
 A.ledge(-355.4, -353.0, 393.6, "stone", t=0.5)    # the right eye's rim
 A.ledge(-363.4, -361.0, 393.6, "stone", t=0.5)    # the left eye's rim
 A.ledge(-366.5, -354.2, 396.4, "stone", t=1.2)    # the brow, and the walk west to the pistons
-A.patch((-355.0, 396.4), (-354.2, 396.4), "wet", t=0.12)  # unease: its east end is wet
 A.challenge("5.2", "La Máscara", (-349.5, 381.0), 3, "B", moves=[
     ["reach", [-354.0, 381.0], [-355.8, 381.0]],       # landing to jaw (it waits low 2.4 s)
     ["reach", [-357.1, 387.6], [-356.7, 389.3]],       # tooth to lip
@@ -159,14 +170,34 @@ A.mover("plunger", PL, [(box_pts(0, 0, 2.3, 4.0), "stone")],
 PIST = []   # (id, wall, top y, phase)
 for i in range(9):
     PIST.append(("piston%d" % (i + 1), "W" if i % 2 == 0 else "E", 401.2 + 1.2 * i, (1.9 + 2.0 * i) % 10.0))
+# EACH PISTON LIVES IN A SOCKET, A THIRD OF A METRE PAST THE WALL'S FACE (Parker 11-12:
+# "these things are z fighting the walls and this area should not let you climb the walls,
+# you should only be able to grab the platforms that are moving back and forth"). In, a
+# piston's end used to sit exactly flush with the wall: its end and the wall's face were
+# drawn in the same place (the flicker), and a hand on the wall there took hold of the
+# piston's end: a holdable patch every 2.4 m up each slick wall, a ladder. Now nothing is
+# flush. The tips reach where they did (x -368.8 from the west, -369.7 from the pier).
+# A hand on a piston going in is let go at the wall's face (the game's rule for any sliding
+# piece), and the socket grinds and puffs dust half a second before it starts back.
+SOCK = 0.33
+A.solid([(-377.3, 399.6), (-374.9, 399.6), (-374.9, 411.4), (-377.3, 411.4)], "wet")  # rock behind the west sockets
 for pid, wall, top, ph in PIST:
     if wall == "W":
-        at, to = (-373.7, top - 0.45), [3.2, 0]     # hidden in the west wall; tip reaches x -368.8
+        at, to = (-373.7 - SOCK, top - 0.45), [3.2 + SOCK, 0]
+        face, into = -372.0, -1.0
     else:
-        at, to = (-364.8, top - 0.45), [-3.2, 0]    # hidden in the pier; tip reaches x -369.7
-    A.mover(pid, at, [(box_pts(0, 0, 3.4, 0.9), "stone")],
-            {"type": "cycle", "to": to, "t_out": 1.0, "hold_out": 4.0, "t_in": 1.0, "hold_in": 4.0, "phase": ph},
-            model="temple_piston")  # (the same from both ends: no flip for the east pier's)
+        at, to = (-364.8 + SOCK, top - 0.45), [-(3.2 + SOCK), 0]
+        face, into = -366.5, 1.0
+    _p = A.mover(pid, at, [(box_pts(0, 0, 3.4, 0.9), "stone")],
+                 {"type": "cycle", "to": to, "t_out": 1.0, "hold_out": 4.0, "t_in": 1.0, "hold_in": 4.0, "phase": ph},
+                 model="temple_piston")  # (the same from both ends: no flip for the east pier's)
+    _p["socket"] = [face, top - 0.45]
+    # The socket you can see: a carved frame on the wall's cut face and the dark of the
+    # channel in it. (In front of the plane, but over the wall's own rock and nothing else.)
+    xa, xb = sorted((face, face + into * 1.25))
+    A.card([(xa - 0.12 * (into < 0), top - 1.04), (xb + 0.12 * (into > 0), top - 1.04),
+            (xb + 0.12 * (into > 0), top + 0.14), (xa - 0.12 * (into < 0), top + 0.14)], z=1.27, tone="stone")
+    A.card([(xa, top - 0.94), (xb, top - 0.94), (xb, top + 0.04), (xa, top + 0.04)], z=1.3, tone="#1A1418")
 m53 = [["reach", [-368.8, 400.0], [-368.8, 401.2]]]
 for i in range(8):
     xa = -368.8 if i % 2 == 0 else -369.7
@@ -194,7 +225,6 @@ GEARS = [("gear1", -364.6, 416.4, 2.5, 0.0), ("gear2", -368.56, 420.36, -2.5, 15
          ("gear3", -364.6, 424.32, 2.5, 0.0), ("gear4", -368.56, 428.28, -2.5, 15.0)]
 for g in GEARS:
     gear(*g)
-A.patch((-364.4, 412.0), (-363.6, 412.0), "grease", t=0.12)   # unease: grease drips on R3 from the first gear
 A.challenge("5.4", "Engranajes", (-360.9, 412.0), 3, "B", moves=[
     ["reach", [-363.0, 412.0], [-363.0, 413.3]],          # R3 up to G1's lowest tooth
     ["reach", [-366.0, 419.2], [-366.4, 418.2]],          # G1's top-west to G2's east teeth
@@ -253,7 +283,6 @@ A.pendulum("censer1", (-324.5, 449.8), 9.6, 9.6, 4.0, phase=0.0, bob=(0.9, 0.8),
 A.pendulum("censer2", (-320.0, 449.8), 7.8, 11.8, 5.0, phase=0.3, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer_l78")
 A.pendulum("censer3", (-315.5, 449.8), 6.0, 15.5, 6.0, phase=0.6, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer_l60")
 A.ledge(-312.8, -309.0, 443.6, "stone", t=0.9)               # EB: the east balcony
-A.patch((-312.8, 443.6), (-311.9, 443.6), "wet", t=0.12)    # unease: its lip is wet
 A.challenge("5.6", "Incensarios", (-331.5, 440.9), 4, "A", moves=[
     ["reach", [-328.9, 440.0], list(F3)],
     ["fling", list(F3), [-326.1, 440.7], "F1"],            # drop onto censer 1 at its west end
@@ -277,7 +306,6 @@ A.mover("cw_a", (-354.8, 454.2), [(box_pts(0, 0, 2.4, 0.8), "stone")],
 A.mover("cw_b", (-360.75, 451.2), [(box_pts(0, 0, 2.5, 0.8), "stone")],
         {"type": "link", "to": "cw_a", "scale": -1.0}, model="temple_slab")
 A.ledge(-366.0, -362.3, 455.0, "stone", t=0.8)               # XL: the exit ledge
-A.patch((-363.2, 455.0), (-362.3, 455.0), "wet", t=0.12)
 A.deco("counterweight_chain", -354.8, 461.0, z=-0.6, size=(0.15, 12.0, 0.15), tone="iron")
 A.deco("counterweight_chain", -360.75, 459.5, z=-0.6, size=(0.15, 14.0, 0.15), tone="iron")
 A.challenge("5.7", "El Contrapeso", (-350.5, 453.0), 3, "B", moves=[
@@ -388,7 +416,6 @@ def great_censer(cid, px, period, phase):
 
 great_censer("sacrifice1", -303.0, 5.0, 0.0)
 great_censer("sacrifice2", -297.075, 6.0, 0.5417)
-A.patch((-309.4, 480.0), (-308.6, 480.0), "wet", t=0.12)    # unease: blood-dark wet on the sill
 A.challenge("5.11", "El Sacrificio", (-307.0, 480.0), 5, "P", moves=[
     ["reach", [-305.6, 480.0], [-305.61, 481.5]],          # the sill's end to tassel 1 (at its west end)
     ["reach", [-300.39, 481.5], [-299.69, 481.5]],         # tassel to tassel, mid-well
@@ -405,11 +432,15 @@ A.card([(-366, 430), (-312, 404), (-312, 450), (-366, 450)], z=-10.0, tone="back
 A.card([(-335, 366), (-354, 381), (-354, 373.8), (-342, 366)], z=-2.0, tone="back")          # the wall that carries the stairs
 for sx, fy in ((-347.0, 431.0), (-331.5, 433.0)):                                              # the champions' pillars
     A.card([(sx - 1.0, fy - 1.2), (sx + 1.0, fy - 1.2), (sx + 1.0, ramp_y(sx + 1.0) - 1.0), (sx - 1.0, ramp_y(sx - 1.0) - 1.0)], z=-2.0, tone="back")
-A.card([(-345, 398), (-330, 398), (-328, 404), (-343, 407)], z=3.0, tone="back3")            # a broken arch, in front, clear of every route
+A.card([(-345, 398), (-330, 398), (-328, 404), (-343, 407)], z=-3.0, tone="back3")           # a broken arch (it stood in FRONT, z 3: a faller from the mask or the shaft crossed behind it. Nothing stands in front of where a climber can be: Parker 11-12)
 for x in (-349.0, -335.0, -320.0):                                                             # the gallery's colonnade, behind
     A.card([(x - 0.6, 453), (x + 0.6, 453), (x + 0.6, 457.5), (x - 0.6, 457.5)], z=-2.5, tone="back")
 # ---- the First Top Dog, everywhere
-A.deco("mask_first_dog", -358.15, 380.2, z=-1.2, size=(16.0, 21.0, 2.0), tone="accent")     # 5.2: the mask itself
+# (Parker 11-12: "you should not be behind this part". The mask is modelled 10 m tall and
+# 2 m deep and is drawn at 21 m, so it is 4.2 m deep: at z -1.2 its face stood 0.9 m in
+# FRONT of the climb and the climber was inside the stone. At z -2.9 its face is 0.8 m
+# behind you. Its holds are separate pieces in the play plane and stay where they were.)
+A.deco("mask_first_dog", -358.15, 380.2, z=-2.9, size=(16.0, 21.0, 2.0), tone="accent")     # 5.2: the mask itself
 mask(-321.0, 376.0, 6.0, 6.5, z=-3.0)        # over the entry floor, watching the door
 mask(-318.5, 428.0, 5.0, 5.5, z=-4.0)        # in the hall, over the drain
 mask(-339.0, 444.0, 4.0, 4.4, z=-4.0)

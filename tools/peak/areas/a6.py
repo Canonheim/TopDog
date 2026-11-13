@@ -40,7 +40,7 @@ A.opening(-235, 580, -230, 586)  # daylight (to A7's Balcon)
 # grip ledge the censer drops you on, lipping 1.5 m out over the well.
 A.solid([(-294.0, 474.0), (-291.0, 474.0), (-291.0, 479.4), (-294.0, 479.4)], "wet")
 A.solid([(-295.5, 479.55), (-294.0, 479.0), (-290.9, 479.0), (-290.9, 480.0), (-295.5, 480.0)], "rock")
-A.hold(-294.6, 480.1, 0.2, "wet")  # the unease: a wet knuckle on the lip
+# (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 
 
 def ring(x, y, r=0.25):
@@ -57,7 +57,6 @@ A.geyser(-281.5, 479.5, 2.0, 3.5, 5.01, period=5.0, on=2.0, phase=0.0, warn=1.2)
 ring(-281.5, 491.6, 0.3)  # the nose ring
 A.rope("c61", (-281.5, 491.3), 4.6, kind="chain")  # hangs to y 486.7, in the column's top
 A.ledge(-280.3, -276.4, 486.0, "iron", t=0.5)  # L1, the tongue
-A.hold(-280.25, 486.02, 0.16, "grease")  # a bead of grease on its lip
 A.challenge("6.1", "Primer Vapor", (-281.5, 479.5), 2, "S",
             moves=[["reach", [-281.5, 487.0], [-280.3, 486.0]]])
 A.cam((-290, 478, -272, 494), half_h=8.0, bias=(0.0, 2.5))
@@ -71,7 +70,6 @@ HOT = [(-276.2, 487.5, "hot"), (-275.3, 488.3, "hot"), (-275.6, 489.4, "hot"), (
 for x, y, k in HOT:
     A.hold(x, y, 0.3 if k == "rock" else 0.22, k)
 A.ledge(-271.5, -266.8, 496.0, "rock", t=0.6)  # L2
-A.hold(-271.4, 496.02, 0.15, "wet")  # a hiss of condensation on its lip
 _route = [[-276.8, 487.6]] + [[x, y] for x, y, _ in HOT] + [[-271.5, 496.0]]
 A.challenge("6.2", "Piedra Caliente", (-277.4, 486.0), 3, "A",
             moves=[["reach", _route[i], _route[i + 1]] for i in range(len(_route) - 1)])
@@ -99,7 +97,6 @@ A.geyser(-263.0, 499.0, 2.4, 9.0, 4.0, period=7.0, on=3.2, phase=3.5, warn=1.0)
 ring(-262.1, 514.75, 0.28)  # the hook the chain hangs from (it hangs off the slag pan above)
 A.rope("c63", (-262.1, 514.5), 7.0, kind="chain")  # to y 507.5
 A.ledge(-267.6, -263.5, 512.0, "rock", t=0.6)  # L3
-A.hold(-267.5, 512.02, 0.15, "wet")  # the slag pan sweats on it
 A.challenge("6.3", "Géiseres Gemelos", (-270.4, 496.0), 4, "A",
             moves=[["reach", [-262.1, 511.8], [-263.5, 512.0]]])
 A.cam((-272, 494, -256, 516), half_h=11.0, bias=(0.0, -2.0))
@@ -115,7 +112,6 @@ for i, (bx, by) in enumerate(((-270.0, 512.8), (-273.4, 514.8), (-276.8, 516.8))
              "phase": 1.4 * i}, model="bellows")
 A.wind((-284.0, 513.0, -268.0, 520.5), (4.0, 0.0), gust={"on": 1.4, "off": 2.6, "phase": 0.0, "warn": 0.8}, look="steam")
 A.ledge(-288.0, -279.2, 519.5, "plank", t=0.6)  # L4, the great bellows' top board
-A.hold(-279.3, 519.52, 0.15, "grease")
 for y in (520.9, 522.0, 523.1, 524.2):
     A.beam((-286.4, y), (-285.6, y), 0.22, "iron")  # rungs up to the slag pan's shore
 A.ledge(-285.0, -280.3, 525.2, "iron", t=0.6)  # the shore
@@ -151,7 +147,6 @@ for cx in (-275.0, -269.0):
 ring(-262.3, 529.25, 0.28)
 A.rope("c65", (-262.3, 529.0), 5.6, kind="chain")  # the way off the last raft (and one last chance for a faller)
 A.ledge(-259.2, -256.2, 523.0, "rock", t=0.6)  # L5
-A.hold(-259.1, 523.02, 0.15, "wet")
 A.challenge("6.5", "Escoria", (-282.6, 525.2), 4, "A",
             moves=[["reach", [-280.3, 525.2], [-279.9, 525.14]], ["reach", [-275.7, 524.9], [-274.3, 524.6]],
                    ["reach", [-269.7, 524.0], [-268.3, 523.7]], ["reach", [-263.9, 523.25], [-262.3, 523.9]],
@@ -235,7 +230,6 @@ A.ledge(-249.0, -247.8, 565.4, "iron", t=0.4)  # grate 3
 A.geyser(-248.4, 565.4, 1.4, 4.5, 4.54, period=6.0, on=1.35, phase=4.0, warn=0.8)
 ring(-247.95, 573.5)
 A.ledge(-247.4, -243.4, 572.5, "rock", t=0.6)  # L8, the crack's doorstep
-A.hold(-247.3, 572.52, 0.15, "wet")
 A.challenge("6.8", "El Último Aliento", (-242.2, 549.0), 5, "A",
             moves=[["reach", [-245.25, 557.9], [-246.0, 557.2]], ["reach", [-247.05, 566.1], [-247.8, 565.4]],
                    ["reach", [-247.95, 573.5], [-247.4, 572.5]]])
@@ -280,7 +274,7 @@ A.card([(-243.6, 573.0), (-242.6, 573.0), (-238.0, 579.0), (-240.4, 579.0)], z=-
 A.card([(-240.4, 579.0), (-238.0, 579.0), (-229.0, 579.6), (-229.0, 588.5), (-237.0, 586.0)], z=-5.0, tone=SKY, edge=False)
 A.card([(-234.0, 580.0), (-234.0, 586.0), (-249.0, 566.0), (-250.5, 562.0)], z=-4.0, tone="#E9D9B8", edge=False)  # the light shaft
 A.card([(-250.5, 562.0), (-249.0, 566.0), (-254.0, 552.0), (-254.6, 550.0)], z=-4.0, tone="#B88A68", edge=False)  # ... dying into the red
-A.card([(-291, 536), (-262, 536), (-262, 541), (-291, 541)], z=3.0, tone="slick")  # soot under the hall's roof
+A.card([(-291, 536), (-262, 536), (-262, 541), (-291, 541)], z=-2.6, tone="slick")  # soot under the hall's roof (was z 3, in front: a vent can throw a climber up into it)
 A.card([(-291, 470), (-236, 470), (-236, 477.6), (-291, 477.6)], z=3.0, tone="back3")  # the floor's front lip
 
 A.deco("pug_mask_iron", -281.5, 483.6, z=-1.2, size=(8.0, 9.0, 0.6), tone="iron")  # cast over the first vent: the chain is its nose ring
