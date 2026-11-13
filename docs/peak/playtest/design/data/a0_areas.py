@@ -53,146 +53,254 @@ _FRONT_TEXT = ("The front post of every fourth set, so one every 10.4 m. Each is
                "past about every 1.2 seconds, and there are never more than two on screen. The back post of the same set stands "
                "behind it, so you pass between the two. All the other sets have a back post and a cap only.")
 
-# ------------------------------------------------------------------ 0.1 and 0.2: the station
-_house = [["rect", 2.6, 0.0, 8.6, 3.0],
-          ["poly", [[2.2, 3.0], [9.0, 3.0], [8.4, 4.2], [2.8, 4.2]], {"style": "pale"}],
-          ["rect", 3.3, 0.0, 4.3, 2.1, {"style": "dark"}],                       # the door
-          ["rect", 7.0, 1.1, 8.2, 2.1, {"style": "dark"}],                       # the ticket window
-          ["rect", 6.9, 1.0, 8.3, 1.1, {"style": "pale"}],                       # its sill
-          ["rect", 4.9, 1.1, 6.5, 2.3, {"style": "pale"}],                       # the board of the ones who tried
-          ["line", 5.1, 1.3, 5.5, 1.7, {"style": "mark"}], ["line", 5.1, 1.7, 5.5, 1.3, {"style": "mark"}],
-          ["line", 5.9, 1.7, 6.3, 2.1, {"style": "mark"}], ["line", 5.9, 2.1, 6.3, 1.7, {"style": "mark"}],
-          ["line", 2.6, 2.75, 2.0, 2.75, {"style": "line"}], ["circle", 2.0, 2.5, 0.2, {"style": "line"}]]   # the bell
+# ------------------------------------------------------------------ the Missing posters (Parker, 11-13)
+# Made the way ui3d/peso_bills.gd makes the lock-in money: a grid of small squares in four inks of
+# one colour. A poster is 16 squares by 22, each square 3.1 cm, so 0.5 m by 0.7 m.
+# Ink 0 is the poster's own colour, 1 is lighter, 3 is darker, 2 is darkest: the money's four.
+_PW, _PH = 16, 22
+_POSTER_COLOURS = {"stripe": "a59acb", "fangs": "9ebc84", "star": "d59280"}    # three of the money's six
 
-_far = [["poly", [[-18.5, 0.0], [-18.5, 7.2], [-15.6, 9.4], [-14.9, 9.7], [-14.2, 9.3], [-11.5, 6.3], [-8.5, 4.3], [-4.5, 2.8], [-0.5, 1.7], [2.6, 1.2], [2.6, 0.0]]],
-        ["circle", -14.9, 9.75, 0.12, {"style": "light"}],
-        ["rect", 9.0, 0.0, 10.1, 1.5, {"style": "pale"}], ["rect", 10.1, 0.0, 11.5, 2.1, {"style": "pale"}],
-        ["poly", [[8.9, 1.5], [10.2, 1.5], [9.55, 2.0]], {"style": "pale"}]]
+
+def _poster_ink(x, y, mark):
+    """Which ink a square gets. x from the left, y from the top. mark: stripe, fangs or star."""
+    if x in (0, _PW - 1) or y in (0, _PH - 1):
+        return 1                                            # the money's light outer border
+    if x in (1, _PW - 2) or y in (1, _PH - 2):
+        return 3                                            # and its darker inner one
+    if y in (2, 3):
+        return 2 if (x // 2) % 2 == 0 else 3                # the money's woven band, laid across the top
+    r = (((x - 7.5) / 5.2) ** 2 + ((y - 10.5) / 6.0) ** 2) ** 0.5
+    if r < 1.0:                                             # the face, where the money has its sun
+        if r > 0.8:
+            return 2                                        # the mask's dark rim
+        if abs(x - 5) + abs(y - 9) <= 1 or abs(x - 10) + abs(y - 9) <= 1:
+            return 2                                        # two diamond eyes
+        if y == 13 and 6 <= x <= 9:
+            return 2                                        # the mouth
+        if mark == "stripe" and x in (7, 8):
+            return 3
+        if mark == "fangs" and ((y == 11 and x in (4, 11)) or (y in (12, 13) and x in (4, 5, 10, 11))):
+            return 3
+        if mark == "star" and ((y in (6, 8, 14) and x in (7, 8)) or (y == 7 and 6 <= x <= 9)):
+            return 3
+        return 1                                            # the mask
+    if y == 18 and 3 <= x <= 12:
+        return 3 if x % 3 else 1                            # the money's dotted trim: the lines of print
+    return 0
+
+
+_INK_STYLE = {0: "pale", 1: "light", 2: "dark", 3: "solid"}
+
+
+def _poster_big(x0, y_top, cell, mark):
+    """One poster drawn large, square by square, joining squares of one ink along a row."""
+    out = []
+    for y in range(_PH):
+        x = 0
+        while x < _PW:
+            ink, x1 = _poster_ink(x, y, mark), x
+            while x1 < _PW and _poster_ink(x1, y, mark) == ink:
+                x1 += 1
+            out.append(["rect", round(x0 + x * cell, 3), round(y_top - (y + 1) * cell, 3), round(x0 + x1 * cell, 3), round(y_top - y * cell, 3),
+                        {"style": _INK_STYLE[ink]}])
+            x = x1
+    return out
+
+
+def _poster(x, y):
+    """A poster at its real size, 0.5 m by 0.7 m, with its lower left corner at (x, y)."""
+    return [["rect", x, y, x + 0.5, y + 0.7, {"style": "pale"}], ["circle", x + 0.25, y + 0.37, 0.14, {"style": "dark"}]]
+
+
+# ------------------------------------------------------------------ 0.1 and 0.2: the station (second pass)
+_far = [["poly", [[-19.5, 0.0], [-19.5, 7.0], [-16.2, 9.3], [-15.5, 9.7], [-14.8, 9.3], [-12.0, 6.4], [-9.0, 4.5], [-5.0, 3.0], [-1.0, 1.9], [1.0, 1.4], [1.0, 0.0]]],
+        ["circle", -15.5, 9.75, 0.12, {"style": "light"}],
+        ["poly", [[2.4, 2.4], [2.4, 3.0], [3.3, 3.6], [4.2, 3.0], [4.2, 2.4]], {"style": "pale"}],
+        ["rect", 5.6, 2.4, 7.6, 3.3, {"style": "pale"}],
+        ["poly", [[7.9, 2.4], [7.9, 2.9], [8.6, 3.4], [9.3, 2.9], [9.3, 2.4]], {"style": "pale"}]]
+
+_yard = [["rect", 1.2, 0.0, 13.5, 2.4], ["rect", 1.0, 2.4, 13.5, 2.55, {"style": "pale"}],
+         ["rect", 9.4, 2.4, 12.8, 3.9], ["rect", 9.2, 3.9, 13.0, 4.2, {"style": "pale"}],
+         ["poly", [[9.9, 0.0], [12.3, 0.0], [12.3, 2.4], [11.9, 3.0], [11.1, 3.3], [10.3, 3.0], [9.9, 2.4]], {"style": "dark"}],      # the gate
+         ["poly", [[10.4, 0.0], [10.4, 1.1], [11.1, 1.7], [11.8, 1.1], [11.8, 0.0]], {"style": "pale"}],                             # the street behind it
+         ["rect", 1.0, 1.4, 2.0, 2.2, {"style": "pale"}], ["line", 1.5, 0.0, 1.5, 1.4, {"style": "line"}]]                          # the pug arrow sign
+
+_posters_here = _poster(4.7, 1.15) + _poster(6.9, 1.2) + _poster(2.4, 1.05) + _poster(-12.6, 3.4)
+
+_poster_key = (_poster_big(4.0, 9.9, 0.1875, "stripe") + _poster_big(7.2, 9.9, 0.1875, "fangs") + _poster_big(10.4, 9.9, 0.1875, "star")
+               + [["text", 4.0, 5.3, "the three posters, drawn 6 times their size"]])
+
+_house = [["rect", -13.0, 2.2, -5.8, 5.0],
+          ["poly", [[-13.4, 5.0], [-5.4, 5.0], [-6.0, 6.1], [-12.8, 6.1]], {"style": "pale"}],
+          ["rect", -13.4, 4.85, -5.4, 5.0, {"style": "pale"}],                                    # the porch's edge
+          ["rect", -13.25, 2.2, -13.1, 4.85, {"style": "pale"}], ["rect", -5.7, 2.2, -5.55, 4.85, {"style": "pale"}],   # its two posts
+          ["rect", -6.9, 2.2, -6.0, 4.3, {"style": "dark"}],                                      # the door
+          ["rect", -11.7, 3.3, -10.5, 4.3, {"style": "dark"}],                                    # the ticket window
+          ["rect", -11.8, 3.2, -10.4, 3.3, {"style": "pale"}],                                    # its sill
+          ["poly", [[-8.2, 4.75], [-7.7, 4.75], [-7.7, 4.45], [-7.5, 4.45], [-7.95, 4.1], [-8.4, 4.45], [-8.2, 4.45]], {"style": "pale"}],   # the painted arrow
+          ["line", -13.0, 4.6, -13.6, 4.6, {"style": "line"}], ["circle", -13.6, 4.35, 0.2, {"style": "line"}]]          # the bell
+
+_crane = [["rect", -5.35, 2.2, -5.05, 5.2, {"style": "pale"}],
+          ["line", -5.2, 4.9, -2.4, 5.5], ["line", -5.2, 3.5, -3.8, 5.2],
+          ["circle", -5.2, 3.1, 0.3],
+          ["rect", -2.55, 5.05, -2.25, 5.45, {"style": "pale"}],
+          ["circle", -1.2, 0.45, 0.45, {"style": "pale"}],                                        # a second barrel, on its side
+          ["poly", [[-0.6, 0.0], [1.0, 0.0], [0.7, 0.45], [0.2, 0.75], [-0.4, 0.45]], {"style": "pale"}]]               # the ore sacks
 
 _dock_back = [["rect", -10.15, 0.0, -9.85, 1.75], ["rect", -18.15, 0.0, -17.85, 1.75],
-              ["rect", -6.5, 2.2, -6.3, 3.2], ["rect", -12.4, 2.2, -12.2, 3.2], ["rect", -18.3, 2.2, -18.1, 3.2],
-              ["line", -18.5, 3.2, -6.3, 3.2, {"style": "line"}]]
+              ["line", -19.5, 3.2, -13.4, 3.2, {"style": "line"}], ["rect", -19.3, 2.2, -19.1, 3.2], ["rect", -15.8, 2.2, -15.6, 3.2],
+              ["rect", -18.4, 2.5, -16.0, 3.3], ["rect", -18.1, 2.2, -17.7, 2.5], ["rect", -16.7, 2.2, -16.3, 2.5]]     # the second cart
 
-_crane = [["rect", -5.75, 2.2, -5.45, 5.2, {"style": "pale"}],
-          ["line", -5.6, 4.9, -2.8, 5.5], ["line", -5.6, 3.5, -4.2, 5.2],
-          ["circle", -5.6, 3.1, 0.3],
-          ["rect", -2.95, 5.05, -2.65, 5.45, {"style": "pale"}]]
-
-_bunting = [["line", 2.8, 4.2, -1.4, 4.4], ["line", -1.4, 4.4, -5.6, 5.2],
-            ["line", -5.6, 5.2, -9.5, 4.6], ["line", -9.5, 4.6, -13.4, 5.4], ["line", -13.4, 5.4, -18.5, 4.7],
-            ["rect", -13.5, 2.2, -13.3, 5.4, {"style": "pale"}]]
+_bunting = [["line", 11.1, 4.2, 6.0, 3.7], ["line", 6.0, 3.7, 1.2, 4.8], ["rect", 1.1, 2.55, 1.3, 4.8, {"style": "pale"}],
+            ["line", 1.2, 4.8, -2.0, 4.4], ["line", -2.0, 4.4, -5.2, 5.2],
+            ["line", -12.8, 6.1, -15.0, 5.4], ["rect", -15.1, 2.2, -14.9, 5.4, {"style": "pale"}], ["line", -15.0, 5.4, -19.5, 4.8]]
 
 LA_ESTACION = {
     "id": "0.1-0.2", "slug": "0_1_0_2_el_primer_paso_y_subete", "title": "El Primer Paso and Súbete", "kind": "challenge",
-    "window": [-18.5, -3.2, 11.5, 10.2], "screen": [-3.0, 3.3], "cut_y": 1.0, "climber": [4.0, 0.0],
-    "place": ("This is where the town stops and the mine's ground starts. The road ends at the station house, a small plastered building "
-              "with a ticket window and a tiled roof. West of it stands the ore dock: a timber platform 2.2 m high and 31 m long that runs "
-              "from the road to the tunnel mouth, with a siding along it. Ore came out of the mountain in carts, was swung down off the "
-              "dock's end by a hand crane, and went into town by wagon. The last load is still sitting where the crane put it down, under "
-              "the crane's arm. Its crates are your first steps. One cart is left on the siding with its brake on, and somebody still oils it."),
+    "window": [-19.5, -3.2, 13.5, 10.2], "screen": [-6.0, 3.3], "cut_y": 1.0, "climber": [4.0, 0.0],
+    "place": ("This is where the town stops and the mine's ground starts. You come out through the town's gate into a walled yard, and "
+              "the Peak fills the sky ahead. On the yard wall behind you are the Missing posters: the masked faces of the ones who went "
+              "up and did not come back. Across the yard stands the ore dock, a timber platform 2.2 m high and 31 m long that runs to the "
+              "tunnel mouth, with a siding along it and the little station house built on its back. Ore came out of the mountain in carts "
+              "and was swung down off the dock's end by a hand crane. The last load is still where the crane put it down, and it is your "
+              "first steps: a barrel, then two crates. On the siding one cart is left, held by a tall red lever, and somebody still oils "
+              "it. The frog is asleep in the station's ticket window."),
     "keep": [
-        "The three crates as steps: one, then two stacked against the dock's end. Each step is 1.1 m.",
+        "The three steps where they are: one box 1.1 m high, then two stacked against the dock's end. The first is now drawn as a barrel of the same size.",
         "The dock: its deck 2.2 m up, its east end at x -4.6, its legs where they are.",
-        "The cart on the siding at x -9, with its low sides, and that it rolls once you have been in it a moment.",
-        "The red lever beside the cart, at x -7.6.",
-        "The start: on the road at x 6, 8 m east of the crates, facing the mountain.",
+        "The cart on the siding at x -9, with its low sides.",
+        "The start: on the road at x 6, 8 m east of the steps, facing the mountain.",
+        "The lever changes: see the notes at the foot of this page.",
     ],
     "background": [
-        {"name": "The Peak and the town, far off", "z": [-40.0, -12.0], "tag": [-14.2, 7.0],
+        {"name": "The Peak and the town, far off", "z": [-40.0, -12.0], "tag": [-16.6, 7.4],
          "text": "Far cut-outs, the plaza's own. The Peak stands whole in the west half of the sky with the tiny bell on its top: the only "
-                 "time you see all of it until the ending. Low in the east, the town's roofs. Both are flat and sun-bleached, so nothing near is mistaken for them.",
+                 "time you see all of it until the ending. The town's roofs show over the yard wall. Both are flat and sun-bleached, so nothing near is mistaken for them.",
          "draw": _far},
-        {"name": "The station house", "z": [-4.6, -2.2], "tag": [5.7, 3.6],
-         "text": "Cream plaster, a terracotta roof, a painted door, a ticket window, and a small bell on a bracket at its corner. It stands on "
-                 "the road right behind where you start. On its wall, between the door and the window, hangs the board of the ones who tried: "
-                 "rows of small painted masks, most crossed out. The biome's sheet asks whether you want the board.",
+        {"name": "The yard wall, the town gate and the arrow sign", "z": [-4.2, -3.6], "tag": [8.5, 1.3],
+         "text": "A plastered wall 2.4 m tall with a tiled top closes the yard on the town's side, 3.6 m behind you. In it is the gate "
+                 "you came out of: an arch 2.4 m wide with the town's street going away behind it. It is why you can't walk back east: "
+                 "the way to town turns away from you, through the wall. The pug arrow sign stands by the wall's end where it does "
+                 "today, moved 0.4 m further back so it is out of the play space.",
+         "draw": _yard},
+        {"name": "The station house", "z": [-3.8, -1.3], "tag": [-9.4, 5.55],
+         "text": "Built on the back of the dock, behind the cart: cream plaster, a terracotta roof, a narrow porch on two slim posts, "
+                 "a shut door, a ticket window, and a small bell on a bracket at its west corner. Its wall is 1.5 m behind you, so you "
+                 "walk and ride along its front. On the wall, straight above the lever's handle, a red arrow is painted, pointing down.",
          "draw": _house},
-        {"name": "The frog", "z": [-2.4, -2.2], "style": "light", "tag": [7.6, 0.55], "top": True,
-         "text": "Asleep on the sill of the ticket window, 1.1 m above the road, in plain sight. It is the first frog, so it is not hidden: "
-                 "it teaches you there are frogs to find (note 60).",
-         "draw": [["circle", 7.6, 1.26, 0.16]]},
-        {"name": "The rest of the load", "z": [-3.2, -1.4], "style": "pale", "tag": [-0.1, 1.25],
-         "text": "A barrel and a heap of ore sacks on the road beside the crates, 1.4 m further back. They say the crates are a load that "
-                 "was set down, not a staircase somebody built. Greyer than the crates, and too low to look like another step.",
-         "draw": [["rect", -1.7, 0.0, -0.8, 0.9], ["line", -1.7, 0.3, -0.8, 0.3], ["line", -1.7, 0.6, -0.8, 0.6],
-                  ["poly", [[-0.6, 0.0], [1.0, 0.0], [0.7, 0.45], [0.2, 0.75], [-0.4, 0.45]]]]},
-        {"name": "The hand crane", "z": [-3.0, -2.3], "style": "line", "tag": [-4.3, 6.0], "top": True,
-         "text": "On the dock's back corner, 3 m tall, its arm swung out over the crates. The hook block is wound right up under the arm's "
-                 "tip, so nothing hangs from it. It is what put the crates there.",
+        {"name": "The Missing posters", "z": [-3.6, -3.55], "style": "pale", "tag": [6.05, 1.55], "top": True,
+         "text": "Four here (Parker, 11-13). Two fresh ones side by side on the yard wall, right behind where you start: the stripe and "
+                 "the fangs. An old copy of the stripe further along the same wall, by the arrow sign: sun-bleached, creased, one "
+                 "corner gone. And the star, on the station house wall beside the ticket window. Each is 0.5 m by 0.7 m and hangs at "
+                 "face height. The fifth is on the tunnel mouth's post, on the next page.",
+         "draw": _posters_here},
+        {"name": "The posters, drawn large", "z": [-3.6, -3.55], "tag": [3.4, 7.8],
+         "text": "A key, not a thing in the scene: the three posters at 6 times their size, square by square. They are made the way the "
+                 "lock-in money is made. Each is 16 squares by 22, a square 3.1 cm across, in four inks of one of the money's six "
+                 "colours (lavender, green, rose): the colour, a lighter one, a darker one and a darkest. Round the edge runs the "
+                 "money's two-line border. Across the top, the money's woven band. In the middle, where the money has its sun, is a "
+                 "masked face: an oval with a dark rim, two diamond eyes and a slot of a mouth. Each mask has its own mark: a stripe "
+                 "down the middle, two fangs up the cheeks, or a star on the brow with a dot on the chin. Under the face, the money's "
+                 "dotted trim stands for the lines of print. No words and no numbers. The paper curls and creases the way the bills do. "
+                 "In this sketch the four inks are drawn pale blue, yellow, slate and black.",
+         "draw": _poster_key},
+        {"name": "The frog", "z": [-1.5, -1.3], "style": "light", "tag": [-11.1, 2.75], "top": True,
+         "text": "Asleep on the sill of the ticket window, 1.1 m above the deck and 1 m west of the cart, in plain sight (Parker, 11-13). "
+                 "The cart carries you past it at arm's length as it pulls out. It is the first frog, so it is not hidden: it teaches "
+                 "you there are frogs to find (note 60).",
+         "draw": [["circle", -11.1, 3.46, 0.16]]},
+        {"name": "The hand crane and the rest of its load", "z": [-3.2, -1.4], "style": "line", "tag": [-3.6, 6.0], "top": True,
+         "text": "On the dock's back corner beside the house, 3 m tall, its arm swung out over the steps. The hook block is wound right "
+                 "up under the arm's tip, so nothing hangs from it. On the road behind the steps lies the rest of the load: a second "
+                 "barrel on its side and a heap of ore sacks, too low to look like another step.",
          "draw": _crane},
-        {"name": "The dock's back half", "z": [-3.8, -1.3], "style": "pale", "tag": [-10.0, 0.9],
-         "text": "The dock is 5 m deep and you climb only its front edge. Behind it runs the rest: a second row of posts, set between "
-                 "the front legs so both rows show, and a rail along the back edge.",
+        {"name": "The dock's back half and the second cart", "z": [-3.8, -1.3], "style": "pale", "tag": [-17.2, 3.95], "top": True,
+         "text": "The dock is 5 m deep and you climb only its front edge. Behind runs the rest: a second row of posts, set between "
+                 "the front legs so both rows show, and a rail along the back edge west of the house. Against that rail a second cart "
+                 "stands on blocks, its wheels gone. The cart you ride has been kept running with parts from this one.",
          "draw": _dock_back},
-        {"name": "The second cart", "z": [-3.4, -2.2], "style": "pale", "tag": [-15.7, 3.95], "top": True,
-         "text": "On blocks at the back of the dock, its wheels gone. The cart you ride has been kept running with parts from this one. "
-                 "Its own brake lever stands beside it, rusted, with the same rod and chock: the dead one shows you how the red one works.",
-         "draw": [["rect", -16.9, 2.5, -14.5, 3.3], ["rect", -16.6, 2.2, -16.2, 2.5], ["rect", -15.2, 2.2, -14.8, 2.5],
-                  ["line", -14.1, 2.2, -14.1, 3.1, {"style": "line"}], ["line", -14.1, 2.3, -14.6, 2.3, {"style": "line"}]]},
-        {"name": "The bunting", "z": [-2.6, -2.3], "style": "mark", "tag": [-9.5, 5.3], "top": True,
-         "text": "Torn papel picado from the station's roof to the crane's head, then from pole to pole along the dock's back rail, all "
-                 "the way to the tunnel. It points the way before the sign does. It is high, it is 2.3 m behind you, and its flags are 0.5 m deep, so it can't be taken for a rope.",
+        {"name": "The bunting", "z": [-3.6, -2.3], "style": "mark", "tag": [-0.2, 5.25], "top": True,
+         "text": "Torn papel picado from the gate's head to a pole on the wall's end, on to the crane's head, and from the house's roof "
+                 "west from pole to pole along the dock, all the way to the tunnel. It points the way before the sign does. It is "
+                 "high, it is 2.3 m or more behind you, and its flags are 0.5 m deep, so it can't be taken for a rope.",
          "draw": _bunting},
-        {"name": "The pug arrow sign", "z": [-1.6, -1.4], "style": "pale", "tag": [1.2, 3.3],
-         "text": "Where it stands today, moved 0.4 m further back so it is clear of the play space.",
-         "draw": [["rect", 1.0, 1.4, 2.0, 2.2], ["line", 1.5, 0.0, 1.5, 1.4]]},
     ],
     "play": [
-        {"name": "Stencils on the crates", "z": [1.15, 1.2], "style": "line", "tag": [-2.6, 1.6],
-         "text": "Each crate gets the mine's pug stencilled on its face and iron straps at its corners. The top edges are scuffed pale where hands and boots go.",
-         "draw": [["circle", -2.6, 0.55, 0.28], ["circle", -3.9, 0.55, 0.28], ["circle", -3.9, 1.65, 0.28]]},
+        {"name": "The barrel and the two crates", "z": [1.15, 1.2], "style": "line", "tag": [-2.6, 1.6],
+         "text": "The first step is drawn as a standing barrel, 1.1 m tall and 1.2 m across, banded with iron. It is the same box to "
+                 "stand on. The two crates above it get the mine's pug stencilled on their faces. All three are scuffed pale on top, where hands and boots go.",
+         "draw": [["line", -3.2, 0.3, -2.0, 0.3], ["line", -3.2, 0.8, -2.0, 0.8], ["circle", -3.9, 0.55, 0.28], ["circle", -3.9, 1.65, 0.28]]},
         {"name": "Sawn ends along the deck's edge", "z": [1.15, 1.2], "style": "pale", "tag": [-12.0, 1.2],
          "text": "The deck's cross-beams show as a row of square sawn ends along its face, one every 2 m. They say the deck carries on back. The mine uses the same mark on its rock.",
          "draw": [["rect", x - 0.1, 1.86, x + 0.1, 2.06] for x in (-5.4, -7.4, -9.4, -11.4, -13.4, -15.4, -17.4)]},
-        {"name": "The brake rod", "z": [-0.9, -0.6], "style": "line", "tag": [-6.9, 3.0],
-         "text": "The lever is red, and so is the band round the cart: here, red means it does something. A short iron rod runs along the "
-                 "deck from the lever's foot to a wooden chock under the cart's wheel, so you can see what the lever holds.",
-         "draw": [["line", -7.6, 2.3, -8.2, 2.3], ["poly", [[-8.5, 2.2], [-8.2, 2.2], [-8.2, 2.42]], {"style": "pale"}]]},
+        {"name": "The lever", "z": [-0.6, -0.3], "style": "line", "tag": [-6.7, 3.3],
+         "text": "As tall as you are: 1.7 m, standing in an iron quadrant bolted to the deck 0.2 m east of the cart. At rest it leans "
+                 "towards the cart, so its handle hangs right over the cart's east end, 1.65 m above the deck and 1.1 m above the "
+                 "cart's floor: at shoulder height from the deck, at chest height from inside the cart, and within 0.7 m of your "
+                 "shoulder either way. The shaft is red. The top 0.4 m is a pale wooden grip, because that is the part your hand "
+                 "takes. Take it as you take the chair, with the hand whose button you are holding, and draw it east: after 0.7 m "
+                 "it drops into its second notch and the cart is off (the dashed line). A rod along the deck ties the lever's foot "
+                 "to a chock under the cart's wheel, so you can see what it lets go. Pull it from the deck and the cart leaves "
+                 "without you unless you are over its end within a second. It comes back to the siding 25 seconds later, as it does today.",
+         "draw": [["line", -7.6, 2.2, -7.95, 3.86], ["circle", -7.95, 3.86, 0.12, {"style": "pale"}],
+                  ["line", -7.6, 2.2, -7.25, 3.86, {"style": "mark"}],
+                  ["poly", [[-7.95, 2.2], [-7.25, 2.2], [-7.32, 2.55], [-7.6, 2.7], [-7.88, 2.55]], {"style": "pale"}],
+                  ["line", -7.9, 2.28, -8.3, 2.28], ["poly", [[-8.6, 2.2], [-8.3, 2.2], [-8.3, 2.42]], {"style": "pale"}]]},
     ],
     "foreground": [
-        {"name": "A fence post with a tail of bunting", "z": [1.8, 2.0], "tag": [10.3, -1.6], "top": True,
-         "text": "The last post of the town's fence, at the right edge of the first screen, with a torn tail of bunting tied to it. It stands "
-                 "on the low ground in front of the road, and its top comes only 0.3 m above the road, so it never covers you.",
-         "draw": [["rect", 10.2, -1.1, 10.4, 0.3], ["line", 10.3, 0.2, 9.5, -0.3, {"style": "mark"}], ["line", 9.5, -0.3, 9.1, -0.9, {"style": "mark"}]]},
+        {"name": "A fence post with a tail of bunting", "z": [1.8, 2.0], "tag": [9.1, -1.6], "top": True,
+         "text": "The last post of the town's fence, with a torn tail of bunting tied to it. It stands on the low ground in front of "
+                 "the road, and its top comes only 0.3 m above the road, so it never covers you.",
+         "draw": [["rect", 9.0, -1.1, 9.2, 0.3], ["line", 9.1, 0.2, 8.3, -0.3, {"style": "mark"}], ["line", 8.3, -0.3, 7.9, -0.9, {"style": "mark"}]]},
         {"name": "An agave clump", "z": [1.6, 2.4], "style": "dark", "top": True,
          "text": "On the low ground at the bottom of the frame, in front of the road's face. It is below your feet wherever you stand.",
          "draw": [["poly", [[-9.7, -2.7], [-9.5, -1.7], [-9.2, -2.2], [-8.9, -1.4], [-8.6, -2.2], [-8.2, -1.6], [-8.0, -2.7]]]]},
     ],
     "explains": [
-        ["The road", "The end of the town's road, where the wagons turned", "The station house with its door and ticket window, and the town's roofs beyond"],
-        ["The three crates", "The front of the last load the crane set down, never collected", "The crane's arm over them, the barrel and the ore sacks beside them"],
-        ["The dock's deck and legs", "The front edge of the mine's ore dock", "Its back half: the second row of posts, the back rail, the bunting poles"],
+        ["The road", "The yard at the end of the town's road", "The yard wall, the gate you came out of, and the posters on the wall"],
+        ["The barrel and the two crates", "The front of the last load the crane set down, never collected", "The crane's arm over them, the second barrel and the ore sacks behind them"],
+        ["The dock's deck and legs", "The front edge of the mine's ore dock", "Its back half, with the station house built on it and a second row of posts under it"],
         ["The cart", "The one cart somebody still oils, on the siding", "The second cart on blocks, robbed of its wheels to keep this one going"],
-        ["The red lever", "The brake: a rod to a chock under the cart's wheel", "The second cart's own lever at the back of the dock, rusted, with the same rod and chock"],
+        ["The red lever", "The brake: by a rod, it holds a chock under the cart's wheel", "The red arrow painted on the house wall above it, pointing down at its handle"],
         ["The rails", "The siding, running west along the dock to the tunnel", "The bunting, which runs the same way and gets there first"],
     ],
     "pieces": [
-        ["Station house front: plaster wall, door, ticket window, tiled roof, bell on a bracket", "6 m wide, 4.2 m tall", "1", "Background", "kit: station house front"],
-        ["The board of the ones who tried", "1.6 m by 1.2 m", "1", "Background", "kit: the board"],
+        ["Yard wall with a tiled top; the town gate", "wall 12 m long, 2.4 m tall; gate 3.4 m wide, 4.2 m tall", "1 of each", "Background", "new, this area only"],
+        ["Missing poster: the stripe, the fangs, the star", "0.5 m by 0.7 m, 16 squares by 22", "4 hung here: 2 fresh, 1 old and creased, 1 on the house", "Background", "kit: Missing posters"],
+        ["Station house front: plaster wall, door, ticket window, tiled roof, porch on two posts, bell on a bracket", "7.2 m wide, 3.9 m tall, on the dock", "1", "Background", "kit: station house front"],
+        ["Painted red arrow on the house wall", "0.9 m by 0.65 m", "1", "Background", "new paint, this area only"],
         ["The frog, asleep", "0.3 m", "1", "Background", "kit: the frog"],
         ["Hand crane, hook wound up", "3 m tall, arm 3 m", "1", "Background", "kit: hand crane"],
-        ["Barrel; heap of ore sacks", "0.9 m; 1.6 m by 0.75 m", "1 of each", "Background", "kit: barrel, ore sacks"],
-        ["Dock back post; back rail", "post 0.3 m, 1.75 m tall; rail 1 m high", "2 posts, 12 m of rail", "Background", "kit: loading platform back posts and rail"],
-        ["Cart body on two blocks, no wheels; a rusted brake lever", "2.4 m long; lever 1 m", "1 of each", "Background", "kit: minecart, wheels taken off; brake_lever, unpainted"],
-        ["Bunting, torn; bunting pole", "strings of 8 m; pole 3.2 m", "3 strings, 1 pole", "Background", "kit: papel_tatters; pole new, in the list below"],
+        ["Barrel on its side; heap of ore sacks", "0.9 m; 1.6 m by 0.75 m", "1 of each", "Background", "kit: barrel, ore sacks"],
+        ["Dock back post; back rail", "post 0.3 m, 1.75 m tall; rail 1 m high", "2 posts, 6 m of rail", "Background", "kit: loading platform back posts and rail"],
+        ["Cart body on two blocks, no wheels", "2.4 m long", "1", "Background", "kit: minecart, wheels taken off"],
+        ["Bunting, torn; bunting pole", "strings of 5 to 10 m; pole 2.2 to 3.2 m", "5 strings, 2 poles", "Background", "kit: papel_tatters; pole in the list below"],
         ["Pug arrow sign", "1 m by 2.2 m", "1", "Background", "kit: sign_pug_arrow"],
         ["The Peak; the town's roofs", "the whole sky", "1 of each", "Background, far", "kit: the plaza's cut-outs"],
-        ["Ore crate with pug stencil and corner straps", "1.2 m by 1.1 m", "3", "Play space", "kit: crate_ore; the stencil is new paint"],
+        ["Standing barrel banded with iron (the first step)", "1.2 m across, 1.1 m tall", "1", "Play space", "kit: barrel, made to the step's size"],
+        ["Ore crate with pug stencil", "1.3 m by 1.1 m", "2", "Play space", "kit: crate_ore; the stencil is new paint"],
         ["Sawn beam end", "0.2 m square", "7", "Play space (drawn on)", "kit: sawn beam end (mine)"],
-        ["Brake rod and wheel chock", "rod 0.6 m; chock 0.3 m", "1", "Play space", "new, this area only; with kit: brake_lever"],
+        ["Tall brake lever: red shaft, pale grip, iron quadrant with two notches, rod and wheel chock", "1.7 m tall; quadrant 0.7 m; rod 0.4 m", "1", "Play space", "kit: brake_lever, remade taller; quadrant, rod and chock new"],
         ["Fence post with a tail of bunting", "1.4 m", "1", "Foreground", "kit: fence post"],
         ["Agave clump", "1.7 m by 1.3 m", "1", "Foreground", "kit: agave clump"],
     ],
     "effects": [
-        "The frog croaks now and then, loud enough to hear from the start. It does not wake.",
-        "The bunting stirs. Nothing else moves until you do.",
-        "Short hard shadows under the dock and the crates: the noon sun is straight overhead.",
+        "The lever goes over with a heavy clunk, the chock is kicked out from under the wheel, and the cart starts to roll.",
+        "The frog croaks now and then, loud enough to hear from the steps. It does not wake, even when the cart goes by.",
+        "The bunting stirs, and one corner of the old poster lifts and settles.",
+        "Short hard shadows under the dock and the steps: the noon sun is straight overhead.",
     ],
     "notes": [
-        "Note 60: the frog. It sleeps on the sill of the station's ticket window, in plain sight.",
-    ],
-    "ask": [
-        "The challenge list says grabbing the red lever lets the cart roll. In the course today the lever is scenery, and only sitting in the cart starts it. Should the lever work?",
+        "Parker, 11-13: the station may be completely reworked. This is the second pass. The station house moves up onto the back of "
+        "the dock, behind the cart. The road gets a yard wall and the town's gate. The first step is drawn as a barrel, as the challenge list has it.",
+        "Parker, 11-13: Missing posters, made the way the lock-in money is made, take the place of the board of crossed-out masks. Four hang here and one at the tunnel mouth.",
+        "Parker, 11-13: the frog sits in plain sight. It is on the ticket window's sill, beside the cart (note 60).",
+        "Parker, 11-13: the lever works. COURSE CHANGE, the play: pulling the lever starts the cart whether you are in the cart or not, "
+        "and getting into the cart no longer starts it. The lever becomes a thing your hand takes and keeps while you hold that limb's button, like the chair.",
+        "COURSE CHANGE, a thing you touch: the lever's foot stays at x -7.6. The lever grows from 1 m to 1.7 m, comes forward from "
+        "0.9 m behind you to 0.45 m behind you, and leans so that its handle is at x -7.95, 3.86 m up, over the cart's east end. Pulled, the handle is at x -7.25.",
+        "Nothing you stand on moves: not the steps, the deck, the legs or the rails. The first crate keeps its size and is only drawn as a barrel.",
+        "Scenery that is in the play space today and moves out of it: the pug arrow sign, 0.4 m further back.",
     ],
 }
 
@@ -242,6 +350,10 @@ LA_BOCA = {
          "text": "A round painted board, 1.2 m across, on an iron bracket above the cap, turned to face the camera like a shop sign. "
                  "A pug painted flat over the cap would face the town, and from the side you would see only its edge.",
          "draw": [["circle", -34.1, 7.95, 0.6], ["line", -36.0, 7.25, -34.1, 7.25, {"style": "line"}]]},
+        {"name": "A Missing poster on the mouth's post", "z": [-1.5, -1.3], "style": "pale", "tag": [-34.9, 4.65], "top": True,
+         "text": "The fifth and last poster (Parker, 11-13), on a board nailed to the mouth's back post and turned to face you, 1.2 m "
+                 "above the deck. It is an old copy of the fangs, sun-bleached, with its lower third torn away. It is the last face from the town before the dark.",
+         "draw": [["rect", -35.85, 3.3, -35.15, 4.2, {"style": "solid"}]] + _poster(-35.75, 3.4)},
         {"name": "The tunnel's back wall", "z": [-2.0, -1.7], "tag": [-50.0, 1.4],
          "text": "Plank lining, limewashed white as far as the second lantern. The planks are nailed on level while the floor falls "
                  "away under them, so the wall itself shows you how steep the track is.",
@@ -287,6 +399,7 @@ LA_BOCA = {
         ["Front post, whitewashed", "0.3 m square, 5 m tall", "3", "Foreground", "kit: tunnel timber set, whitewashed"],
         ["Plank lining panel, limewashed", "one set wide, 1.3 m tall", "10 bays", "Background", "kit: lining panel (mine); the limewash is new paint"],
         ["Painted pug board on an iron bracket", "1.2 m across", "1", "Background", "kit: tunnel mouth (the paint is new)"],
+        ["Missing poster, old and torn, on a plank board", "0.5 m by 0.7 m; board 0.7 m by 0.9 m", "1", "Background", "kit: Missing posters"],
         ["Tunnel lantern", "0.4 m", "2", "Background", "kit: lantern_mine"],
         ["Bunting, torn; bunting pole", "strings of 5 to 10 m; pole 3.2 m", "4 strings, 1 pole", "Background", "kit: papel_tatters; pole in the list below"],
         ["Ore hopper on legs, with its chute", "hopper 2.8 m by 2.4 m; chute 1 m wide, 4 m long", "1", "Background", "kit: ore chute (mine); the hopper is new, this area only"],
@@ -301,6 +414,12 @@ LA_BOCA = {
         "The cart's wheels change their sound at the sill: boards, then rock.",
         "The last flags of the bunting flick as the cart goes under them.",
     ],
+    "notes": [
+        "Parker, 11-13: a few Missing posters. The fifth hangs here, on the mouth's post.",
+        "Parker, 11-13: scenery stays out of the play space. In the tunnel the back posts, the lining, the lanterns and the bunting "
+        "stand behind it, and the front posts stand in front of it. The one piece that crosses it is each set's cap, flat under the roof 4.7 m above the bed, out of reach.",
+        "Scenery that is in the play space today and moves out of it: the seven lanterns, 0.4 m further back.",
+    ],
 }
 
 # ------------------------------------------------------------------ 0.3b: the dip, the crest, the banked drop
@@ -308,7 +427,7 @@ _rib = [["poly", [[-94.6, _fy(-94.6)], [-91.8, _fy(-91.8)], [-87.2, _ry(-87.2)],
         ["circle", -91.6, -1.4, 0.08, {"style": "dark"}], ["circle", -90.4, 0.3, 0.08, {"style": "dark"}], ["circle", -92.4, -2.2, 0.08, {"style": "dark"}]]
 
 _wall_b = [_wall(-62.5, -105.5)]
-for _x in (-97.0, -99.7, -102.3):
+for _x in (-102.3, -104.6):
     _wall_b.append(["rect", _x - 0.8, _fy(_x) + 1.3, _x + 0.8, _fy(_x) + 2.6, {"style": "dark"}])
 
 _shrine = [["poly", [[-74.5, -3.6], [-72.9, -3.6], [-72.9, -2.0], [-73.7, -1.5], [-74.5, -2.0]], {"style": "pale"}],
@@ -325,30 +444,31 @@ EL_BADEN = {
     "place": ("The miners drove this tunnel along a soft seam of rock, and the seam wandered. So the track runs down to a low point 42 m "
               "in, climbs 2 m over a rib of hard rock that was not worth cutting through, and then drops down the far side at 17 degrees, "
               "the steepest grade of the ride. Water gathers at the low point, so a hand pump stands there. The rib needs no timber, so "
-              "for two sets' length the roof is bare rock. Just past the crest one rail has snapped. This stretch is also where the town "
-              "lets go. The whitewash has stopped, and a small shrine in the wall at the bottom of the dip is the last thing in the town's paint."),
+              "for two sets' length the roof is bare rock. Carts always went light over that crest, and in the end the rails past it tore "
+              "out. So the cart leaves the track at the top, flies, and comes down 7.6 m further on, in a burst of dust. This stretch is "
+              "also where the town lets go. The whitewash has stopped, and a small shrine in the wall at the bottom of the dip is the last thing in the town's paint."),
     "keep": [
         "The track's line: down at 4 degrees to the low point at x -78, up at 9 degrees to the crest at x -90, then down at 17 degrees to x -104.",
-        "The cart's speed and its path. Today the cart never leaves the track.",
+        "The cart's speed, and its path everywhere but the hop.",
         "The lantern lights at x -78, -90 and -104.",
         "The bed grips all the way: dry and pale, even at the low point.",
     ],
     "background": [
         {"name": "The tunnel's back wall", "z": [-2.0, -1.7], "tag": [-68.5, -1.2],
-         "text": "Bare plank lining, the limewash gone. On the drop beyond the crest the first planks are missing and wet rock shows in "
-                 "the gaps: three dark patches, the first wet you see on the ride.",
+         "text": "Bare plank lining, the limewash gone. Behind the landing the planks are pale with old dust. Further down the drop "
+                 "the first planks are missing and wet rock shows in the gaps: two dark patches, the first wet you see on the ride.",
          "draw": _wall_b},
         {"name": "The hard rib", "z": [-1.9, -1.7], "style": "pale", "tag": [-90.8, -0.4], "top": True,
          "text": "A slanting band of harder, bluer rock, 3 m wide, crossing the back wall at the crest. It has old drill holes in it and "
                  "no timber on it: two sets are left out here, because this rock holds itself up. It is why the track climbs.",
          "draw": _rib},
-        {"name": "The timber sets, bare", "z": [-1.7, -1.3], "style": "pale", "tag": [-85.4, -0.6],
+        {"name": "The timber sets, bare", "z": [-1.7, -1.3], "style": "pale", "tag": [-82.8, 0.1],
          "text": "Bare wood, dull and dry, greyer than anything you can hold. At the low point the feet of three posts are stained dark "
                  "to knee height. Past the crest the wood starts to go grey.",
          "draw": _back_sets(list(range(11, 21)) + list(range(23, 27)))},
         {"name": "The shrine", "z": [-2.3, -1.7], "tag": [-73.7, -0.9],
          "text": "A small arched niche in the back wall at the bottom of the dip, whitewashed, with candle stubs in it and a scrap of "
-                 "papel picado over it. The miners touched it on the way in. From here down, nothing is painted.",
+                 "papel picado over it. The miners touched it on the way in. From here down, nothing is in the town's paint.",
          "draw": _shrine},
         {"name": "The hand pump and its trough", "z": [-1.7, -1.3], "style": "pale", "tag": [-80.6, -2.3],
          "text": "At the low point, against the back wall: an iron hand pump, 1.4 m tall, with its handle up. A wooden trough runs from "
@@ -356,51 +476,75 @@ EL_BADEN = {
          "draw": _pump},
         {"name": "Three lanterns", "z": [-1.5, -1.3], "style": "light", "tag": [-76.6, -0.3], "top": True,
          "text": "Where the course has its lights: at the low point, at the crest and at the foot of the drop. The one on the crest "
-                 "hangs from an iron spike driven into the rib, since there is no cap there.",
+                 "hangs from an iron spike driven into the rib, since there is no cap there. It lights the place where the rails stop, so you see the break coming.",
          "draw": [["circle", -78.0, -0.45, 0.25], ["circle", -90.0, 1.55, 0.25], ["circle", -104.0, -2.75, 0.25]]},
+        {"name": "The skull-pug sign", "z": [-1.5, -1.3], "style": "pale", "tag": [-84.2, -0.9], "top": True,
+         "text": "The mine's own danger sign, on a post against the back wall half way up the climb to the crest. It is the warning "
+                 "before the hop, and the first of these signs you see. The kit has it.",
+         "draw": [["poly", [[-84.65, -1.85], [-84.2, -1.4], [-83.75, -1.85], [-84.2, -2.3]]], ["line", -84.2, _fy(-84.2), -84.2, -2.3, {"style": "line"}]]},
     ],
     "play": [
-        {"name": "The broken rail", "z": [0.2, 0.6], "style": "mark", "tag": [-91.6, -4.2],
-         "text": "Just past the crest the near rail has snapped and 2 m of it is gone. The broken end is bent down. The far rail and the "
-                 "sleepers are whole. The kit has the piece.",
-         "draw": [["line", -90.4, -2.62, -92.6, -3.3], ["line", -92.6, -3.3, -93.2, -3.75, {"style": "line"}]]},
-        {"name": "Banked sleepers", "z": [-0.6, 0.6], "style": "pale", "tag": [-99.0, -6.4],
-         "text": "On the steep drop the track is laid banked: the far rail 0.2 m higher than the near one, so the tops of the sleepers "
+        {"name": "The broken rail", "z": [-0.6, 0.6], "style": "mark", "tag": [-92.3, -4.6],
+         "text": "From the crest at x -90 to x -94 both rails are gone and only the sleepers are left. The near rail's stub is bent "
+                 "up at the crest like the lip of a ramp. The far rail lies in the ballast beside the sleepers. The kit has the broken piece.",
+         "draw": [["line", -90.3, _fy(-90.3) + 0.12, -94.2, _fy(-94.2) + 0.12], ["line", -89.6, -2.6, -90.4, -2.3, {"style": "line"}]]},
+        {"name": "The hop", "z": [-0.6, 0.6], "style": "line", "tag": [-93.8, -1.5],
+         "text": "The cart leaves the rails at the crest, where the track turns from 9 degrees up to 17 degrees down. Thrown at its own "
+                 "9 m a second, it flies 7.6 m in 0.9 seconds, is 0.9 m clear of the sleepers at its highest, noses over in the "
+                 "air, and comes down at x -97.6. The line drawn is the cart's floor. These are the numbers of a real throw, as a "
+                 "place to start: the feel is for the thread to tune. You are light in the cart while it flies, so hold on.",
+         "draw": [["line", -90.0, -2.2, -91.9, -2.11], ["line", -91.9, -2.11, -93.8, -2.46], ["line", -93.8, -2.46, -95.7, -3.27],
+                  ["line", -95.7, -3.27, -97.6, -4.54], ["circle", -97.6, -4.54, 0.18, {"style": "pale"}]]},
+        {"name": "The landing", "z": [-0.6, 0.6], "style": "pale", "tag": [-98.6, -6.7],
+         "text": "Where the cart comes down, from x -97 to x -100, the rails are scraped bright and the sleepers are doubled, two side "
+                 "by side, because this is where they always broke. Pale dust lies thick between them. It is the dust that jumps "
+                 "off the wheels. The bed under it is unchanged and still grips.",
+         "draw": [["poly", [[-97.0, _fy(-97.0)], [-100.0, _fy(-100.0)], [-100.0, _fy(-100.0) + 0.3], [-97.0, _fy(-97.0) + 0.3]]]]},
+        {"name": "Banked sleepers", "z": [-0.6, 0.6], "style": "mark", "tag": [-102.2, -8.0],
+         "text": "Below the landing the track is laid banked: the far rail 0.2 m higher than the near one, so the tops of the sleepers "
                  "show. It reads as a track built to be run fast. The bed under your feet is unchanged.",
-         "draw": [["poly", [[-94.0, _fy(-94.0)], [-104.0, _fy(-104.0)], [-104.0, _fy(-104.0) + 0.22], [-94.0, _fy(-94.0) + 0.22]]]]},
+         "draw": [["line", -100.0, _fy(-100.0) + 0.2, -104.0, _fy(-104.0) + 0.2]]},
     ],
     "foreground": [
         {"name": "Four front posts", "z": [1.3, 1.6], "tag": [-77.6, -5.4], "top": True,
-         "text": _FRONT_TEXT + " Here: four, in bare wood, and none on the rib.",
-         "draw": _front_posts((12, 16, 20, 24))},
+         "text": _FRONT_TEXT + " Here: four, in bare wood, and none on the rib. The fourth is moved one set down the hill, to x -101, "
+                 "so that nothing crosses in front of the cart as it lands.",
+         "draw": _front_posts((12, 16, 20, 25))},
     ],
     "explains": [
         ["The dip and the climb out of it", "The tunnel following a soft seam down, then up over hard rock", "The hard rib itself, crossing the back wall at the crest"],
         ["The low point", "Where the tunnel's water gathers", "The hand pump, its trough, and the dark stain on the feet of the posts"],
-        ["The crest and the broken rail", "The hardest place on the line to lay track, and the first place it failed", "The rib, the bare roof where two sets were left out, the lantern on a spike"],
+        ["The crest, the broken rail and the hop", "The hardest place on the line to lay track: carts always went light here, and at last the rails tore out", "The rib, the bare roof where two sets were left out, the lantern on a spike, the skull-pug sign on the climb"],
+        ["The landing", "The place every cart has come down since", "The lining behind it, pale with old dust"],
         ["The banked drop", "The steepest grade, laid banked for speed", "The lining with its first planks gone and wet rock showing"],
         ["The tunnel's roof", "Rock, held by a set every 2.6 m except on the rib", "The back posts and caps, in bare wood"],
     ],
     "pieces": [
         ["Tunnel timber set, bare: back post and cap", "post 0.3 m square, 4.7 m tall; cap 3.2 m", "14", "Background", "kit: tunnel timber set, bare"],
         ["Front post, bare", "0.3 m square, 5 m tall", "4", "Foreground", "kit: tunnel timber set, bare"],
-        ["Plank lining panel: whole, planks missing", "one set wide, 1.3 m tall", "13 bays, 3 with planks missing", "Background", "kit: lining panel (mine)"],
+        ["Plank lining panel: whole, planks missing", "one set wide, 1.3 m tall", "13 bays, 2 with planks missing", "Background", "kit: lining panel (mine)"],
         ["The hard rib: a band of blue rock with drill holes", "3 m wide, 5.5 m tall, slanting", "1", "Background", "new, this area only; the drill holes are kit (mine)"],
         ["Shrine niche: whitewashed arch, candle stubs, a scrap of papel picado", "1.6 m by 2.1 m", "1", "Background", "new, this area only"],
         ["Hand pump", "0.4 m by 1.4 m", "1", "Background", "new, this area only"],
         ["Water trough along the wall's foot", "0.2 m square, in 2 m lengths", "26 m", "Background", "new, in the list below"],
         ["Tunnel lantern; one iron spike", "0.4 m", "3 lanterns, 1 spike", "Background", "kit: lantern_mine"],
-        ["Broken rail", "4 m piece with 2 m gone", "1", "Play space", "kit: rail_broken"],
-        ["Banked sleepers", "10 m of track", "1", "Play space (drawn on)", "kit: rail_straight, laid tilted"],
+        ["Skull-pug sign", "1 m by 2.2 m", "1", "Background", "kit: sign_pug_skull (mine)"],
+        ["Broken rail: the near stub bent up, the far rail lying loose, bare sleepers", "one 4 m piece", "1", "Play space", "kit: rail_broken"],
+        ["Landing track: scraped rails, doubled sleepers, dust between", "3 m of track", "1", "Play space (drawn on)", "kit: rail_straight, with new sleepers and dust"],
+        ["Banked sleepers", "4 m of track", "1", "Play space (drawn on)", "kit: rail_straight, laid tilted"],
     ],
     "effects": [
         "The candle in the shrine is the one small warm light between two lanterns.",
-        "A clank and a shake of the camera as the cart crosses the broken rail.",
+        "At the crest: a clank as the wheels leave the rail, and then the wheel noise stops dead. The silence is how you know you are in the air.",
+        "At the landing (Parker, 11-13): a bang, a burst of pale dust off all four wheels that hangs and blows back up the slope behind the cart, and a shake of the camera.",
         "The first drips, falling past the dark patches on the drop.",
     ],
-    "ask": [
-        "The challenge list says the cart jumps a broken rail. In the course today the cart's path has no break in it. Should the cart "
-        "get a small hop just past the crest, or is the broken rail only for show?",
+    "notes": [
+        "Parker, 11-13: the cart really hops the broken rail, and dust comes off its wheels when it lands.",
+        "COURSE CHANGE, the play: between x -90 and x -97.6 the cart's path becomes an arc in place of the straight line down the "
+        "slope. As heights of the cart's floor, the path goes through (-90, -2.2), (-91.9, -2.11), (-93.8, -2.46), (-95.7, -3.27) and (-97.6, -4.54), then on as today.",
+        "Nothing you stand on moves: the bed under the hop is unchanged and still grips. The rail piece from x -90 to x -94 changes from whole to broken, which is scenery.",
+        "Scenery that is in the play space today and moves out of it: the lanterns, 0.4 m further back.",
     ],
 }
 
@@ -599,8 +743,8 @@ FIN_DE_LA_VIA = {
         "Water running over the sill at the door: a thin bright thread on the back wall, not on the floor.",
         "The first sound of the mine through the door: the waterfall, far off and low.",
     ],
-    "ask": [
-        "The tunnel's floor is 0.6 m higher than the gallery's at the door. Keep the step, dressed with a sill? Or should the two floors be made level, which is a change to the course?",
+    "notes": [
+        "Parker, 11-13: the 0.6 m step at the door stays, with a sill. It is drawn here as it was.",
     ],
 }
 
@@ -608,6 +752,6 @@ AREAS = [LA_ESTACION, LA_BOCA, EL_BADEN, EL_BOQUETE, FIN_DE_LA_VIA]
 
 # New pieces that more than one of these areas uses. Same five columns as the sheet's kit.
 KIT_MORE = [
-    ["Bunting pole", "0.2 m thick, 3.2 m tall", "on the dock's back rail, one every 8 m, from the station to the mouth", "Background", "new"],
+    ["Bunting pole", "0.2 m thick, 3.2 m tall", "on the yard wall's end, and on the dock's back rail every 7 m from the station house to the mouth", "Background", "new"],
     ["Water trough along the wall's foot", "0.2 m square, in 2 m lengths", "the tunnel's back wall, from the pump in the dip to the door", "Background", "new"],
 ]
