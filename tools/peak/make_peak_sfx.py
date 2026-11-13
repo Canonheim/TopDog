@@ -655,28 +655,39 @@ def amb_a3(rng):
 
 
 def amb_a4(rng):
+    """The mushroom garden: soft and damp. (Parker 11-12, playing it: "the garden green
+    place has weird static noise". Its first bed was random clicks through 2.6 to 4.8 kHz
+    resonators with 2.5 to 6.5 kHz noise under them, "spores fizzing", over a room that
+    was itself noise up to 2.5 kHz: which is how static is made. None of that is here.
+    Nothing in this bed is noise above 900 Hz.)"""
     n = nsamp(BED)
-    y = noise(n, rng, lo=85, hi=450, tilt=-4.0) + 0.5 * noise(n, rng, lo=300, hi=2500, tilt=-6.0)
-    y = st("room", unit(y))
-    fz = resonate(impulses(n, rng, 500 + 900 * slow(n, rng, 0.35)),
-                  [(2600, 6, 1.0), (3600, 7, 0.8), (4800, 8, 0.45)], wrap=True)
-    fz = unit(fz) + 0.6 * noise(n, rng, lo=2500, hi=6500, tilt=-4.0) * slow(n, rng, 0.4, 0.4, 1.0)
-    y = y + st("fizz", 0.2 * unit(fz))
+    t = tvec(n)
+    y = st("room", unit(noise(n, rng, lo=85, hi=420, tilt=-4.0)))
+    y = y + st("breath", 0.45 * unit(noise(n, rng, lo=220, hi=900, tilt=-6.0) * slow(n, rng, 0.25, 0.15, 1.0)))
+    # A soft pad in the climb's key, as the crystal cave has its glass: D3 A3 D4 F#4 A4,
+    # each on whole cycles of the loop and breathing on its own slow swell.
+    pad = np.zeros(n)
+    for f, g in [(D5 / 4, 1.0), (A5 / 4, 0.7), (D5 / 2, 0.8), (FS5 / 2, 0.45), (A5 / 2, 0.35)]:
+        f = np.round(f * BED) / BED
+        k = rng.integers(1, 4)
+        pad += g * np.sin(TAU * f * t + rng.uniform(0, TAU)) * (0.55 + 0.45 * np.sin(TAU * k * t / BED + rng.uniform(0, TAU)))
+    y = y + st("pad", 0.5 * unit(pad))
     ev = np.zeros(n)
+    for at, f0, g in [(1.3, 700, 0.8), (4.9, 560, 0.6), (7.6, 820, 0.7), (10.1, 620, 0.5)]:
+        place(ev, plink(f0, 0.3), at, g * 0.5, wrap=True)  # slow drips
     for at in [0.7, 2.9, 4.4, 6.9, 8.3, 10.9]:
         f0 = rng.uniform(300, 620)
         m = nsamp(0.14)
         tt = tvec(m)
         p = np.sin(phase(f0 * (1 + 0.9 * (tt / 0.14) ** 1.3))) * np.exp(-tt / 0.03) * np.clip(tt / 0.002, 0, 1)
-        p += 0.2 * burst(m, rng, 1500, 4000, 0.012)
-        place(ev, p, at + rng.uniform(-0.2, 0.2), rng.uniform(0.9, 1.5), wrap=True)
+        place(ev, p, at + rng.uniform(-0.2, 0.2), rng.uniform(0.9, 1.5), wrap=True)  # plops (no noise burst on them now)
     for at, fc, rate, d in [(1.8, 3700, 52, 0.55), (5.6, 4100, 64, 0.38), (9.4, 3500, 47, 0.7)]:
         m = nsamp(d)
         tt = tvec(m)
         c = (np.sin(TAU * fc * tt) + 0.6 * np.sin(TAU * fc * 1.012 * tt))
         c *= (0.5 - 0.5 * np.cos(TAU * rate * tt)) ** 2 * np.sin(np.pi * tt / d)
-        place(ev, c, at, 0.18, wrap=True)
-    return y + st("plops+chirrs", reverb(ev, rng, 0.9, 0.4, hi=5000, wrap=True))
+        place(ev, c, at, 0.10, wrap=True)  # three insect chirrs, quieter than they were
+    return y + st("drips+plops+chirrs", reverb(ev, rng, 1.4, 0.5, hi=4000, wrap=True))
 
 
 def amb_a5(rng):
@@ -1640,7 +1651,7 @@ add("amb_a0", "bed", "wind band over a low body; a far crowd (pulse-train voices
 add("amb_a1", "bed", "narrow noise bands at 58 to 311 Hz for the hollow drone; five drips with a 0.31 s echo; two stick-slip timber creaks; long room", amb_a1)
 add("amb_a2", "bed", "pink roar 90 Hz to 5 kHz, a wandering mid band, 80 bubbles, four drips, cave room", amb_a2)
 add("amb_a3", "bed", "26 faint high sines twinkling on whole-cycle envelopes, a soft D/A glass drone, five glass pings (A6 D7 F#6 B6 E6) in a long room", amb_a3)
-add("amb_a4", "bed", "Poisson clicks through 2.6 to 4.8 kHz resonators (fizz), six rising-sine plops, three pulsed insect chirrs, low room tone", amb_a4)
+add("amb_a4", "bed", "low room tone (85 to 420 Hz), a slow breath of air (220 to 900 Hz), a soft pad in D (D3 A3 D4 F#4 A4), four slow drips, six rising-sine plops, three quiet insect chirrs. No fizz: the first bed's clicks through 2.6 to 4.8 kHz resonators read as static (Parker 11-12) and are gone", amb_a4)
 add("amb_a5", "bed", "low noise with bands at 62, 98 and 163 Hz, a torch (flutter and crackle), a soft far thump every 6 s in a 3 s room", amb_a5)
 add("amb_a6", "bed", "hiss 1.4 to 6 kHz, rumble, a boiling sputter, about 14 metal ticks (short modal pings) at uneven gaps", amb_a6)
 add("amb_a7", "bed", "gusting wind band 250 to 700 Hz with a higher whistle on the gusts; one falling bird-of-prey cry with an echo", amb_a7)

@@ -368,6 +368,10 @@ its heading once it lands.
   and also "your climber is still just in view on the opposite side". Those disagree:
   three quarters of a screen puts the climber off it. Built to the second: 85% of the
   way from the middle to the edge (`PEAK_LOOK_REACH`, `game/main.gd`).
+- **Note 35: I cannot hear it.** The garden's bed was rebuilt from its recipe, not by
+  ear. Dan (or Parker) has to say whether the static is gone. If it is still there,
+  the next suspects are the garden's steady effects: `spore_puff` (its recipe ends "a
+  little fizz") and the updraughts' wind loop.
 - **Note 20: climbing a rope is slower than it was, on purpose.** 3 m hand over hand
   takes about 5.6 s; it took 2 s, and that speed was the launch he complained of.
   `rope_pull` in the F1 panel sets it.
@@ -1233,11 +1237,76 @@ and a ribbon where there was a slab and up to 140 particles a fall.
   Steam; aiming a limb with the mouse while zoomed (the pointer's place on the wall
   moves as the view widens, as it does whenever the camera moves).
 
+## Note 35: the garden's static
+
+- **State:** changed from the recipe and the numbers. **Not heard by me: I cannot hear
+  the game.** Dan or Parker has to judge it.
+- **Parker 11-12:** "the garden green place has weird static noise".
+
+### Was it the fizz? What the recipe says
+
+The garden's background bed is `audio/sfx/peak/amb_a4.wav`, made by `amb_a4` in
+`tools/peak/make_peak_sfx.py`. As it was, it had three layers:
+
+1. **"room":** noise from 85 to 450 Hz, plus half as much noise from 300 to 2,500 Hz.
+2. **"fizz":** random clicks (500 to 1,400 a second) rung through three sharp filters
+   at 2,600, 3,600 and 4,800 Hz, with noise from 2,500 to 6,500 Hz under them.
+3. Six plops (each with a small noise burst) and three insect chirrs, in a short room.
+
+So yes: layer 2 is made the way you would make radio static on purpose. But layer 1 is
+noise too, up to 2,500 Hz, and by the script's own loudness guide it was the louder of
+the two (A-weighted, as they sat in the bed: room -23.1 dB, fizz -29.4 dB, the plops
+and chirrs -38.9 dB). The whole bed was noise with a few events on top. Taking the
+fizz out alone would have left a "shh". **Both noise layers are gone above 900 Hz.**
+
+### What the new bed is
+
+A soft damp garden, built to the plan on the page:
+
+1. **Room:** noise from 85 to 420 Hz only. A low tone.
+2. **A slow breath of air:** noise from 220 to 900 Hz, swelling and fading slowly.
+3. **A soft pad in the climb's key,** as the crystal cave has its glass: D3, A3, D4,
+   F#4, A4 as plain sines, each breathing on its own slow swell.
+4. **Four slow drips** (new), **the six plops** (without their noise burst), and **the
+   three insect chirrs**, a little under half as loud as they were (0.10 from 0.18).
+   A slightly longer room on them.
+
+| | Before | After |
+|---|---|---|
+| Share of the bed's power above 2 kHz | 4.34% | 0.03% |
+| Share between 2.5 and 6.5 kHz (the fizz's band) | 3.08% | 0.02% |
+| Share above 900 Hz | 8.16% | 0.84% |
+| Loudness guide (A-weighted; every bed is the same plain level, -16 dB) | -22.1 dB | -24.3 dB |
+
+What is left above 900 Hz is the drips, the plops' tops and the chirrs (3.5 to 4.1 kHz
+tones, pulsed 47 to 64 times a second: three of them in 12 s, 0.4 to 0.7 s each). If a
+buzz is still heard, the chirrs are the first thing to take out.
+
+### Its level
+
+- The beds are all mastered to one level and trimmed per area in
+  `stages/peak/peak_audio.gd` (`AREA_DB`). The garden's trim was 0.0, against -1.0 for
+  the mine, -2.0 for the black waters and -2.5 for the crystal cave. **It is -2.0 now.**
+- An honest note on "the loudest": by the loudness guide the old garden bed, as
+  played, was level with the crystal cave and the black waters (-22.1 against -22.0
+  and -22.5), and about 5 dB over the mine and the temple. It stood out for what it
+  was, not for how loud. As played now it is -26.3: 4.2 dB under where it was, between
+  the crystal cave before it (-22.0) and the temple after it (-27.5).
+
+- **Files:** `tools/peak/make_peak_sfx.py` (the recipe and its one-line description),
+  `audio/sfx/peak/amb_a4.wav` (rebuilt; the full script was run, and no other sound
+  changed by a byte), `docs/peak/SFX.md` (its row, written by the script),
+  `stages/peak/peak_audio.gd` (the trim).
+- **The game picks the new file up when Godot next imports** (opening the editor, or a
+  build). No import was run in this folder.
+- **Checked:** the loop's seam (the script's own test: passes); lint; `--peak`.
+- **Not checked:** by ear, any of it.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
 
-**In hand:** 35 (the garden's static).
+**In hand:** nothing. Notes 20, 21, 22, 28, 43 and 35 are done (each has its entry above).
 
 **Parked until Parker says** (his design job comes first):
 

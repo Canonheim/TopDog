@@ -13,7 +13,7 @@ const AMB_DB := -9.0
 const BUS := "PeakMusic"
 ## The loops are mastered to one loudness; the climb's story is told by these trims
 ## (the still places quieter, the storm and the summit a touch up).
-const AREA_DB := {"a0": -3.0, "a1": -1.0, "a2": -2.0, "a3": -2.5, "a4": 0.0, "a5": -0.5, "a6": 0.5, "a7": -0.5, "a8": 0.0, "a9": -4.0, "a10": 1.0, "a11": 1.5}
+const AREA_DB := {"a0": -3.0, "a1": -1.0, "a2": -2.0, "a3": -2.5, "a4": -2.0, "a5": -0.5, "a6": 0.5, "a7": -0.5, "a8": 0.0, "a9": -4.0, "a10": 1.0, "a11": 1.5}
 
 var peak: Peak
 var _music := {}  # area id -> AudioStreamPlayer
