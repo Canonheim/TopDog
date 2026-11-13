@@ -80,7 +80,7 @@
 <tr><td>17</td><td><a href="#n17">Las Aguas Negras: the light under the water pulses and flashes</a></td><td><span class="chip c-ask">Changed, but the pulse was not reproduced; Parker to look</span></td></tr>
 <tr><td>18</td><td><a href="#n18">Las Aguas Negras: the rings should be fixed to the wall behind, not hung on chains</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
 <tr><td>19</td><td><a href="#n19">Las Aguas Negras: the rising gates should be machine pistons</a></td><td><span class="chip c-plan">Plan, needs a model; not sent to the thread</span></td></tr>
-<tr><td>20</td><td><a href="#n20">Rope physics: you can't get a good swing, and they launch you up</a></td><td><span class="chip c-plan">With the thread now</span></td></tr>
+<tr><td>20</td><td><a href="#n20">Rope physics: you can't get a good swing, and they launch you up</a></td><td><span class="chip c-ask">Done on the bench and seen in the game; four calls for Parker</span></td></tr>
 <tr><td>21</td><td><a href="#n21">Las Aguas Negras: the barrels should go over the fall, not vanish on screen</a></td><td><span class="chip c-parked">Done, seen in the game; Parker keeps the two swims</span></td></tr>
 <tr><td>22</td><td><a href="#n22">Water needs a full visual overhaul</a></td><td><span class="chip c-plan">With the thread now</span></td></tr>
 <tr><td>23</td><td><a href="#n23">Las Aguas Negras: the hot pipe joints show nothing of what they do</a></td><td><span class="chip c-parked">Done, seen in the game; needs a person to judge</span></td></tr>
@@ -156,9 +156,8 @@
 <p class="sub">Parker, 01:12: "make sure the not done stuff stays on the to do list". Nothing leaves this list until it is done and seen in the game.</p>
 <table>
 <tr><th>Where it stands</th><th>Notes</th></tr>
-<tr><td><b>With the thread now</b> (four of Parker's five; the barrels, note 21, are done)</td><td>
+<tr><td><b>With the thread now</b> (three of Parker's five; the barrels, note 21, and rope physics, note 20, are done)</td><td>
 <a href="#n22">22</a> the water's full overhaul;
-<a href="#n20">20</a> rope physics;
 <a href="#n28">28</a> and <a href="#n43">43</a> the camera controls;
 <a href="#n35">35</a> the garden's sound</td></tr>
 <tr><td><b>Sent to the thread, parked, not started</b></td><td>
@@ -234,6 +233,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
 <h2>Calls waiting for Parker</h2>
 <p class="sub">On the morning of 11-13 Parker answered every call that could be answered without looking at the game. His answers are written into the notes they belong to, each as a "Settled" line, and listed under <a href="#answers">Parker's answers, 11-13</a>. What is left here needs his eye in the game.</p>
 <ul>
+<li><b>The ropes</b> (note 20): four calls. The swing is slow (8 seconds there and back); every rope now reaches two to three times as far, so some flings became plain swings; the winds carry a light rope far out; and climbing a rope is slower. They are set out under <a href="#n20">note 20</a>.</li>
 <li><b>The light under the mill race</b> (note 17): the thread could not make it pulse. It changed the likely cause; is it gone when you swim it?</li>
 <li><b>Storm ridge clouds</b> (note 40): keep the six clouds that cross the climb, or move them back?</li>
 <li><b>Camera numbers</b> (note 7): the first try is in: widest view 11 m of height, looking at most 1 m below you. Right, closer, or further?</li>
@@ -977,7 +977,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
 <div class="note" id="n20">
   <div class="head"><span class="num">20</span><h3>Rope physics: you can't get a good swing, and they launch you up</h3><span class="time">22:50</span></div>
   <blockquote>"we need to fix the rope physics. Make it so you can swing back and forth on them better. Right now they like launch you up weird but you can't get a good swing on them"</blockquote>
-  <p><span class="chip c-plan">With the thread now</span></p>
+  <p><span class="chip c-ask">Done on the bench and seen in the game; four calls for Parker</span></p>
   <h4>What is going on</h4>
   <p>This covers every rope, chain and vine on the mountain: they are all the same thing, a string of half-metre pieces pinned end to end. Four things in how they are set up work against a swing. I read these from the code and have not measured a swing yet.</p>
   <table>
@@ -1003,6 +1003,31 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
     <li><b>What "better" should mean,</b> for you to agree: from hanging still, four or five pumps take you to a swing of about 60 degrees each side; letting go at the bottom throws you forward and up in a way you can predict; nothing throws you upward unless you swung there.</li>
     <li><b>Then re-check every designed move that uses a rope or chain.</b> The course was laid out against the old ropes. A better swing reaches further, so some gaps will become too easy and some catches will sit in the wrong place.</li>
   </ul>
+  <h4>After (from the thread)</h4>
+  <p>Commit 3b09e96. The thread built a test bench first (two ropes of its own in open sky, and the mine's real rope), measured the ropes as they were, then changed them. Nothing has been played by a person.</p>
+  <p><b>The swing.</b> A climber hanging by one hand pumps with a leg. Degrees out to the side on each push, on a 5 m rope:</p>
+  <ul>
+    <li>Before: 0, 1, 1, 1, 18, 29, 39, 48, and never past 51. The first four pushes did nothing.</li>
+    <li>Now: 22, 40, 52, 60, 62. The fourth push reaches 60 degrees.</li>
+  </ul>
+  <p><b>"Launch you up weird."</b> With a free hand held straight up, the hand that was gripping the rope used to be carried 1.9 m up at 3.6 m a second. A rope can't push, so that was a throw. Now it moves 0.08 m: the body pulls up to its grip and stops there.</p>
+  <p><b>What was changed:</b> a rope weighs about a tenth of what it did (the mine's rope is 3 kg under a 22 kg climber; it was 36 kg), so you are the weight on it. It falls at the climber's own gravity. Its brakes are nearly off. A hand on a rope turns freely where it used to be welded. Steering a limb to one side pumps the swing. A limb's pull on a rope is smaller and never lifts the body above its grip. Two new numbers are in the F1 panel: rope_pull and rope_pump. The garden's plank bridge is as it was, and the arena and the tower see none of this.</p>
+  <figure>
+    <img src="after/20_rope_hanging_still.jpg" alt="After: the mine's rope, hanging still.">
+    <figcaption>After: the mine's rope, hanging still.</figcaption>
+  </figure>
+  <figure>
+    <img src="after/20_rope_push_4.jpg" alt="After: the same rope on the fourth push.">
+    <figcaption>After: the same rope on the fourth push.</figcaption>
+  </figure>
+  <div class="ask"><b>Four calls for Parker, from the thread's survey of all 55 ropes, chains and vines:</b>
+  <ul>
+    <li><b>Pace.</b> A swing there and back takes 8 seconds on a 5 m rope and 11 on a 9 m one. It was 5. That comes from the climber's own low gravity, and no rope number shortens it. Is that slow swing what you want?</li>
+    <li><b>Reach.</b> Every rope, chain and vine now carries you two to three times as far in 20 seconds of pumping: chains from about 2 m to nearly 5 m, the garden's vines from 2.6 to 5.5 m. So chain to chain in Cadenas (2.6) and vine to vine in Lianas (4.2) can now be swung across and taken by hand, where they were flings. Nothing in the course was moved. Leave them easier, or move the chains and vines apart?</li>
+    <li><b>Wind.</b> The winds push harder than the climber's gravity, and it was the old rope's weight that kept you near plumb in them. On a light rope the wind now carries you out 50 degrees and more: the balloon's ropes (10.8), the serac's rope (9.6), the prayer line (10.1). You have not played those yet. If it is too much, the thing to turn down is the winds.</li>
+    <li><b>Climbing a rope</b> hand over hand is slower: 3 m in about 5.6 seconds, where it took 2. The 2 seconds was the launch. All right?</li>
+  </ul></div>
+  <p><b>Two new things the survey turned up, not looked into:</b> at Los Ojos (4.9) the two short roots now swing far enough to touch a puffball, which throws you. And on the chain off the last slag raft (6.5) the climber lost its grip at the end of a wider swing; the cause is not known.</p>
 </div>
 
 <div class="note" id="n21">
