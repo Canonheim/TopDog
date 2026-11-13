@@ -631,7 +631,11 @@ def main():
         bm = load(bid + "_biome")
         if bm is None:
             continue
-        am = load(bid + "_areas")
+        try:
+            am = load(bid + "_areas")
+        except Exception as e:      # a file somebody is still writing
+            print("SKIPPED %s_areas.py: %s" % (bid, e))
+            am = None
         areas = list(getattr(am, "AREAS", [])) if am else []
         if am and getattr(am, "KIT_MORE", None):
             bm.BIOME["kit"] = list(bm.BIOME.get("kit", [])) + [list(r) for r in am.KIT_MORE]
