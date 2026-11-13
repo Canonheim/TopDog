@@ -173,7 +173,7 @@ class Area:
         self.warnings = []
 
     # ------------------------------------------------------------ static rock
-    def solid(self, pts, kind="rock", hold=None, z=None, tag=None, ghost=False, skin=None):
+    def solid(self, pts, kind="rock", hold=None, z=None, tag=None, ghost=False, skin=None, fit=None):
         """Any simple polygon of solid stuff. ghost=True: drawn, but nothing touches it
         (a ladder's rails, a frame behind the holds). skin="model_name": once that kit
         model has landed this solid is not drawn (the model, placed by a deco with
@@ -184,6 +184,8 @@ class Area:
         s = {"pts": _pts(pts), "kind": kind}
         if ghost:
             s["ghost"] = True
+        if fit:
+            s["fit"] = fit  # the kit piece this box wears: kit/models/fit_<fit>.glb (docs/peak/FITTED_KIT.md)
         if skin:
             s["skin"] = skin
         if hold is not None:
@@ -209,19 +211,40 @@ class Area:
         L = math.hypot(dx, dy)
         return self.box((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, L, t, kind, math.degrees(math.atan2(dy, dx)), **kw)
 
-    def ladder(self, x, ys, w=0.8, kind="wood", t=0.09, rail=0.08, rails=True):
-        """A real ladder (Parker 11-12: "make it an actual ladder you climb on but only
-        the sideways rungs have collision"). x is its middle, ys the height of each rung's
-        TOP, in order. Each rung is a thin bar you can hold and stand on; the two rails
-        are drawn and touch nothing. Leave rungs out of `ys` for a broken stretch: the
-        rails run on through the gap."""
+    def ladder(self, x, ys, w=0.8, kind="iron", t=0.09, rail=0.07, rails=True, crooked=None):
+        """A BROKEN IRON LADDER (Parker 11-12: "make it an actual ladder you climb on but
+        only the sideways rungs have collision"; then: "an actual broken rusted ish ladder
+        with rungs missing and some at angles ... a metal ladder with rungs that stick
+        outwards like a bracket kind of shape"). x is its middle, ys the height of each
+        rung's TOP. Each rung is a thin bar you can hold and stand on, and wears the kit's
+        bracket rung (fit_ladder_rung). Leave rungs out of `ys` for a broken stretch. The
+        rails are drawn only (fit_ladder_rail), and only beside the rungs that are left:
+        where the rungs are gone the rails are gone too. crooked: {index of a rung in the
+        sorted ys: degrees}: rungs that sag at an angle (still solid: they hold)."""
         ys = sorted(ys)
-        for y in ys:
-            self.solid([(x - w / 2, y - t), (x + w / 2, y - t), (x + w / 2, y), (x - w / 2, y)], kind)
-        if rails and ys:
-            y0, y1 = ys[0] - 0.45, ys[-1] + 0.35
+        crooked = crooked or {}
+        for i, y in enumerate(ys):
+            pts = box_pts(x, y - t / 2, w, t, crooked.get(i, 0.0))
+            self.solid(pts, kind, fit="ladder_rung")
+        if not (rails and ys):
+            return
+        gaps = sorted(b - a for a, b in zip(ys, ys[1:]))
+        step = gaps[len(gaps) // 2] if gaps else 0.75
+        runs = [[ys[0]]]
+        for a, b in zip(ys, ys[1:]):
+            if b - a > step * 1.6:
+                runs.append([b])
+            else:
+                runs[-1].append(b)
+        for run in runs:
+            y0, y1 = run[0] - 0.4, run[-1] + 0.3
+            n = max(1, math.ceil((y1 - y0) / 2.3))
+            seg = (y1 - y0) / n
             for rx in (x - w / 2, x + w / 2):
-                self.solid([(rx - rail / 2, y0), (rx + rail / 2, y0), (rx + rail / 2, y1), (rx - rail / 2, y1)], kind, ghost=True)
+                for k in range(n):
+                    a, b = y0 + seg * k, y0 + seg * (k + 1)
+                    self.solid([(rx - rail / 2, a), (rx + rail / 2, a), (rx + rail / 2, b), (rx - rail / 2, b)],
+                               kind, ghost=True, fit="ladder_rail")
 
     def hold(self, x, y, r=0.22, kind="rock", n=6, **kw):
         """A small nub to grab."""

@@ -25,6 +25,7 @@ const FALL_COUNT_M := 15.0  # a drop of this much is a fall on the tally
 ## held, in every area, with the house shader's polished glint and rim.
 const SLICK := Color("#3A2616")
 const STRETCH := ["hanger_chain", "counterweight_chain", "balloon_tether"]
+const FACET := 0.3  # how far a rock face's facets stand out of its body
 ## ICE AND CRYSTAL ARE EXEMPT (Parker 11-12: "ice and crystal should be exempt"): slick
 ## glass is dark indigo glass and black ice is blue-black ice, each as glossy as the mud.
 ## Three kinds of slick, then: "mud" (everything else), "glass", "ice".
@@ -32,9 +33,10 @@ const SLICK_GLASS := Color("#160C3E")
 const SLICK_ICE := Color("#0C2440")
 const SLICK_LOOKS := {
 	# colour, the sheen where light falls, the lit rim, the painted edge band, the drips ("" = none)
-	"mud": [SLICK, Color(0.72, 0.58, 0.42, 0.5), Color(0.95, 0.8, 0.6, 0.5), "#8A5E34", "#A87A48"],
-	"glass": [SLICK_GLASS, Color(0.55, 0.45, 0.95, 0.5), Color(0.85, 0.78, 1.0, 0.5), "#6A52C8", ""],
-	"ice": [SLICK_ICE, Color(0.45, 0.72, 0.95, 0.5), Color(0.78, 0.93, 1.0, 0.5), "#4E8FC4", "#8FC8E8"],
+	# (the sheen is kept a mid tone: at 0.72 a slick face in full sun went white)
+	"mud": [SLICK, Color(0.42, 0.31, 0.2, 0.5), Color(0.95, 0.8, 0.6, 0.5), "#8A5E34", "#A87A48"],
+	"glass": [SLICK_GLASS, Color(0.34, 0.27, 0.62, 0.5), Color(0.85, 0.78, 1.0, 0.5), "#6A52C8", ""],
+	"ice": [SLICK_ICE, Color(0.27, 0.45, 0.62, 0.5), Color(0.78, 0.93, 1.0, 0.5), "#4E8FC4", "#8FC8E8"],
 }
 static var _slick_mats := {}
 
@@ -47,12 +49,23 @@ static func slick_class(kind: String) -> String:
 	return "mud"
 
 
+## `cls` may end in "+" or "-": a lighter or a darker shade of the same wet stuff (a slick
+## rock face's facets).
 static func slick_material(cls := "mud") -> ShaderMaterial:
 	if not _slick_mats.has(cls):
-		var look: Array = SLICK_LOOKS[cls]
+		var shade := 1.0
+		var base := cls
+		if cls.ends_with("+"):
+			shade = 1.6
+			base = cls.left(-1)
+		elif cls.ends_with("-"):
+			shade = 0.62
+			base = cls.left(-1)
+		var look: Array = SLICK_LOOKS[base]
 		var m := ShaderMaterial.new()
 		m.shader = CelPass.SHADER
-		m.set_shader_parameter("color", look[0])
+		var col: Color = look[0]
+		m.set_shader_parameter("color", Color(minf(col.r * shade, 1.0), minf(col.g * shade, 1.0), minf(col.b * shade, 1.0)))
 		# A broad sheen where light falls, not white (in this shader a broad bright band
 		# whited out every flat face), and a lit rim on the edges.
 		m.set_shader_parameter("specular", look[1])
@@ -179,6 +192,8 @@ static func _wet_cut(src: ArrayMesh) -> Dictionary:
 	return {"mesh": out, "from": from, "wet": wet} if any else {}
 
 
+var fit_placed := 0  # solids wearing the fitted kit, and the tiles they took (the batteries read these)
+var fit_tiles := 0
 var game  # Game
 var course_dir := COURSE  # (the batteries point it at tests/peak_lab/)
 var meta := {}
@@ -328,6 +343,8 @@ func _build_area(a: Dictionary) -> void:
 	var ms := {}  # the slick rock, a mesh for each kind of slick: "mud" / "glass" / "ice" -> PeakMesh
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(str(a.id))
+	# THE FITTED KIT: a box wears the kit's modules where they have landed (peak_fit.gd).
+	var fit := PeakFit.new(self, a, root)
 	for s in a.get("solids", []):
 		var kind := str(s.kind)
 		var pts := _pts(s.pts)
@@ -366,7 +383,7 @@ func _build_area(a: Dictionary) -> void:
 		var skinned: bool = s.has("skin") and LuchaKit.kit_model_exists(str(s.skin))
 		if bool(s.get("ghost", false)):
 			# Drawn only: nothing touches it.
-			if not skinned:
+			if not skinned and not fit.place(s, pts, kind, vz0, vz1):
 				mb.prism(pts, vz0, vz1, AtlasPalette.matte_uv(kind_color(a, kind).darkened(0.12)), AtlasPalette.matte_uv(tone(a, "edge")))
 			continue
 		if hold != null or s.has("tag"):
@@ -374,42 +391,78 @@ func _build_area(a: Dictionary) -> void:
 			var sb := _static_body(1.0)
 			root.add_child(sb)
 			_add_shapes(sb, pts, z0, z1)
-			var mi := MeshInstance3D.new()
-			var one := PeakMesh.new()
-			one.prism(pts, vz0, vz1, Vector2.ZERO, Vector2.ZERO)
-			mi.mesh = one.commit()
-			CelPass.paint(mi, kind_color(a, kind))
-			sb.add_child(mi)
+			var piece: Node3D = fit.single(s, pts, kind, vz0, vz1)
+			var mi: MeshInstance3D = null
+			if piece == null:
+				mi = MeshInstance3D.new()
+				var one := PeakMesh.new()
+				one.prism(pts, vz0, vz1, Vector2.ZERO, Vector2.ZERO)
+				mi.mesh = one.commit()
+				CelPass.paint(mi, kind_color(a, kind))
+				piece = mi
+			sb.add_child(piece)
 			sb.set_meta("peak_pts", pts)
 			sb.set_meta("peak_z", Vector2(vz0, vz1))
 			sb.set_meta("slick_class", slick_class(kind))  # (what it looks like when it turns slick)
 			if not kind_grips(kind):
 				sb.set_meta("no_weld", true)
-				mi.material_override = slick_material(slick_class(kind))
+				if mi != null:
+					mi.material_override = slick_material(slick_class(kind))
 			if s.has("tag"):
 				sb.set_meta("peak_tag", str(s.tag))
 				zones.tag(str(s.tag), sb)
 			if hold != null:
-				things.add_hold(sb, hold, mi, kind_color(a, kind), tone(a, "slick"), a)
+				things.add_hold(sb, hold, piece, kind_color(a, kind), tone(a, "slick"), a)
 			continue
 		var grips := kind_grips(kind)
 		_add_shapes(grip if grips else slick, pts, z0, z1)
-		if skinned:
+		if skinned or fit.place(s, pts, kind, vz0, vz1):
 			continue
+		# A ROCK FACE: a big piece of rock, ice or crystal that no module fits (a slope, a
+		# wedge, the mountain's own masses) is cut into facets, and wears the kit's ground
+		# along its open top edges once that has landed.
+		var rocky := false
+		if str(PeakFit.MATERIAL.get(kind, "")) in ["rock", "ice", "crystal"] and not s.has("z"):
+			var blo := pts[0]
+			var bhi := pts[0]
+			for p in pts:
+				blo = blo.min(p)
+				bhi = bhi.max(p)
+			rocky = minf(bhi.x - blo.x, bhi.y - blo.y) >= 1.2
+		var front := vz1 - (FACET if rocky else 0.0)
+		if rocky and fit.buried(pts):
+			# A core set inside a bigger mass (grip rock in a slick wall: only its top is
+			# grip). The mass's face is the face; this one stands back behind it.
+			rocky = false
+			front = vz1 - FACET - 0.02
+			fit.top_caps(pts, kind, vz0, vz1)
+		if rocky:
+			fit.top_caps(pts, kind, vz0, vz1)
 		if not grips:
 			var cls := slick_class(kind)
 			if not ms.has(cls):
 				ms[cls] = PeakMesh.new()
-			(ms[cls] as PeakMesh).prism(pts, vz0, vz1, Vector2.ZERO, Vector2.ZERO)
+			(ms[cls] as PeakMesh).prism(pts, vz0, front, Vector2.ZERO, Vector2.ZERO)
+			if rocky:
+				for shade in ["+", "-"]:
+					if not ms.has(cls + shade):
+						ms[cls + shade] = PeakMesh.new()
+				(ms[cls] as PeakMesh).facets(pts, front, vz1, [], [ms[cls + "+"], ms[cls], ms[cls + "-"]])
 			# Painted wet: a paler band along its edges and runs of drips.
 			var look: Array = SLICK_LOOKS[cls]
-			mb.rim(pts, vz1 + 0.006, 0.09, AtlasPalette.matte_uv(Color(str(look[3]))))
-			if str(look[4]) != "":
+			mb.rim(pts, front + 0.006, 0.09, AtlasPalette.matte_uv(Color(str(look[3]))))
+			if str(look[4]) != "" and not rocky:
 				_drips(mb, pts, vz1, AtlasPalette.matte_uv(Color(str(look[4]))), rng)
 			continue
 		var face_c: Color = kind_color(a, kind)
-		mb.prism(pts, vz0, vz1, AtlasPalette.matte_uv(face_c), AtlasPalette.matte_uv(tone(a, "edge")))
-		PeakDress.dress(mb, pts, vz1 + 0.007, kind, face_c, rng)
+		mb.prism(pts, vz0, front, AtlasPalette.matte_uv(face_c), AtlasPalette.matte_uv(tone(a, "edge")))
+		if rocky:
+			mb.facets(pts, front, vz1, [AtlasPalette.matte_uv(face_c.lightened(0.1)), AtlasPalette.matte_uv(face_c), AtlasPalette.matte_uv(face_c.darkened(0.12))], [], 0.04)
+		else:
+			PeakDress.dress(mb, pts, vz1 + 0.007, kind, face_c, rng)
+	fit.commit()
+	fit_placed += fit.placed
+	fit_tiles += fit.tiles
 	if not mb.empty():
 		var mi := MeshInstance3D.new()
 		mi.mesh = mb.commit()
@@ -417,6 +470,8 @@ func _build_area(a: Dictionary) -> void:
 		mi.name = "Rock"
 		root.add_child(mi)
 	for cls: String in ms:
+		if (ms[cls] as PeakMesh).empty():
+			continue
 		var mi := MeshInstance3D.new()
 		mi.mesh = (ms[cls] as PeakMesh).commit()
 		mi.material_override = slick_material(cls)

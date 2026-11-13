@@ -156,7 +156,7 @@ A.challenge("1.1", "La Galería", (-154.0, -12.6), 1, "S", moves=[
 RUNGS = [-11.6, -10.85, -10.1, -9.35, -7.85, -7.1, -6.35, -5.6, -3.72, -2.97, -2.22, -1.47,
          0.58, 1.33, 2.08, 2.83, 3.58, 4.33, 5.08]
 # A real ladder (Parker 11-12): rails drawn, only the rungs solid, rungs missing in three stretches.
-A.ladder(-171.55, RUNGS, w=0.9, kind="wood")
+A.ladder(-171.55, RUNGS, w=0.9, kind="iron", crooked={2: -8.0, 6: 7.0, 9: -10.0, 13: 6.0})  # rusted iron, bracket rungs, some sagging
 A.ledge(-176.0, -172.0, 6.0, "rock", t=0.5)  # the ladder's head: a rest, and the catwalk's east end
 A.statue(-167.0, -12.28, "sit", flip=True)  # the one who kept count, by his cold lantern
 A.deco("lantern_mine", -166.2, -12.6, z=-0.5, size=(0.3, 0.5, 0.3), tone="iron")  # cold: no light on it
