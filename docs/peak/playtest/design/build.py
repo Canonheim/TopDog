@@ -5,6 +5,7 @@
     python docs/peak/playtest/design/build.py a1 --no-index --png DIR
                                                        # also a PNG of each side sketch into DIR, to look at
     python docs/peak/playtest/design/build.py --look a1 x0 y0 x1 y1 out.png
+    python docs/peak/playtest/design/build.py --look a3+a4 x0 y0 x1 y1 out.png   (two biomes at once)
                                                        # the course as it is today in that window, with a grid
 
 DESIGN ONLY. Nothing here changes the game. The pages are for Parker to judge and for
@@ -21,6 +22,9 @@ An AREA dict (all coordinates are the course's own metres, x negative into the m
     "window": [x0, y0, x1, y1]   what the side sketch shows (keep it under about 30 m wide)
     "screen": [cx, cy]           optional: centre of one screen of the close camera (19.5 x 11 m)
     "cut_y": 66.5                optional: the height the from-above sketch is cut at
+    "also": ["a4"]               optional: draw a neighbour biome's course too (a well crossing, a join).
+                                 The mountain's shared structure (the well, the east face) is always drawn.
+    "climber": [x, y]            optional: a 1.8 m figure standing at that point, for scale
     "place": "..."               the place in one paragraph
     "keep": ["...", ...]         what must not change about the play
     "background": [ITEM, ...]    "play": [ITEM, ...]    "foreground": [ITEM, ...]
@@ -302,12 +306,21 @@ def draw_course(sk, c, pal):
             sk.text(x - w * k / 2, y + h * k + 0.12, d["model"], "decot")
 
 
+def draw_all(sk, a, c, pal):
+    """Today's course in the window: the mountain's shared structure, any neighbour asked for, then the biome itself."""
+    draw_course(sk, course("st"), pal)
+    for other in a.get("also", []):
+        oc = course(other)
+        draw_course(sk, oc, META["palettes"].get(oc.get("palette", ""), pal))
+    draw_course(sk, c, pal)
+
+
 def side_sketch(a, c, pal, numbered):
     sk = Sketch(a["window"])
     for n, layer, item in numbered:
         if layer == "background" and not item.get("over"):
             draw_item(sk, layer, item)
-    draw_course(sk, c, pal)
+    draw_all(sk, a, c, pal)
     for n, layer, item in numbered:
         if layer == "background" and item.get("over"):
             draw_item(sk, layer, item)
@@ -349,7 +362,10 @@ def top_sketch(a, c, pal, numbered):
         o.append('<rect x="0" y="%s" width="%.1f" height="%.1f" class="%s"/>' % (Z(z0), w, (z1 - z0) * s, cls))
     band(1.2, zf, "band_fg"); band(-1.2, 1.2, "band_play"); band(-3.0, -1.2, "band_bg"); band(zb, -3.0, "band_far")
     if cut is not None:
-        for sol in c.get("solids", []):
+        sols = list(course("st").get("solids", [])) + list(c.get("solids", []))
+        for other in a.get("also", []):
+            sols += course(other).get("solids", [])
+        for sol in sols:
             pts = sol["pts"]
             xs, ys = [q[0] for q in pts], [q[1] for q in pts]
             if min(ys) <= cut <= max(ys) and max(xs) > x0 and min(xs) < x1:
@@ -433,10 +449,11 @@ def render_png(sk, path, k=2.0):
 def look(aid, win, path):
     """python build.py --look a1 x0 y0 x1 y1 out.png : the course as it is today in that window, with a metre grid."""
     import math
-    c = course(aid)
+    ids = aid.split("+")
+    c = course(ids[0])
     pal = META["palettes"].get(c.get("palette", ""), {})
     sk = Sketch(win, maxw=1100.0)
-    draw_course(sk, c, pal)
+    draw_all(sk, {"also": ids[1:]}, c, pal)
     x = math.ceil(sk.x0)
     while x < sk.x1:
         sk.line(x, sk.y0, x, sk.y1, "grid5" if x % 5 == 0 else "grid")
