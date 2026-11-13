@@ -26,6 +26,13 @@ const FALL_COUNT_M := 15.0  # a drop of this much is a fall on the tally
 const SLICK := Color("#3A2616")
 const STRETCH := ["hanger_chain", "counterweight_chain", "balloon_tether"]
 const FACET := 0.3  # how far a rock face's facets stand out of its body
+const LIGHT_FADE_S := 0.5  # a lantern takes this long to come on or go off
+const LIGHT_FLICKER := 0.05  # how far a flickering lantern's cast light swings (it was 0.14 each side of 0.86)
+const LAMP_OUT := 4.2  # the climber's lamp: metres out from the play plane, toward the camera (was 2.2)
+const LAMP_UP := 0.9  # ...above the climber's middle (was 0.6)
+const LAMP_RANGE := 12.0  # (was 9)
+const LAMP_ENERGY := 1.0  # (was 1.1)
+const LAMP_FOLLOW := 3.0  # 1/s: how fast it catches the climber up
 ## ICE AND CRYSTAL ARE EXEMPT (Parker 11-12: "ice and crystal should be exempt"): slick
 ## glass is dark indigo glass and black ice is blue-black ice, each as glossy as the mud.
 ## Three kinds of slick, then: "mud" (everything else), "glass", "ice".
@@ -240,7 +247,8 @@ var _falling := false
 var _yelled := false
 var _still_t := 0.0
 var _lamp: OmniLight3D
-var _lights: Array = []  # [OmniLight3D, base energy, flicker, area id]
+var _lamp_at := Vector2.INF  # where the lamp is: it follows the climber smoothly (see frame)
+var _lights: Array = []  # [OmniLight3D, base energy, flicker, area id, its own phase, how far it has faded in (0..1)]
 var _milestone := 0
 var dev_warp := false
 var _warp_i := 0
@@ -309,7 +317,7 @@ func setup(p_game) -> void:
 	backdrop = PeakBackdrop.build(self, ORIGIN)  # the far layers: the valley, the ranges, the sea of cloud (the Environment Maker's)
 	_lamp = OmniLight3D.new()
 	_lamp.light_color = Color("#FFD9A0")
-	_lamp.omni_range = 9.0
+	_lamp.omni_range = LAMP_RANGE
 	_lamp.light_energy = 0.0
 	_lamp.shadow_enabled = false
 	add_child(_lamp)
@@ -519,7 +527,7 @@ func _build_area(a: Dictionary) -> void:
 		o.shadow_enabled = false
 		o.visible = false
 		root.add_child(o)
-		_lights.append([o, float(l.energy), bool(l.get("flicker", false)), a.id, randf() * 10.0])
+		_lights.append([o, float(l.energy), bool(l.get("flicker", false)), a.id, randf() * 10.0, 0.0])
 	things.build_area(a, root)
 	zones.build_area(a, root)
 
@@ -840,18 +848,48 @@ func frame(delta: float, cam: Camera3D) -> void:
 	zones.frame(delta, cam)
 	if backdrop != null:
 		backdrop.tick(delta, cam)
-	# The lanterns near the climber burn; the rest are off.
+	# The lanterns near the climber burn; the rest are off. THEY FADE, AND THEIR CAST LIGHT
+	# BARELY FLICKERS (Parker 11-12, the mill race: "this area is pulsing and flashing weird,
+	# lighting glitch"). A lantern crossing the 34 m line used to snap on or off in one
+	# frame, and its light swung between 72% and 100% several times a second: the toon
+	# shading cuts light into hard bands, so on a flat floor that was a hard patch growing
+	# and shrinking. Now it fades over half a second and swings 5%. (The lively flicker is
+	# the flame's own, which is where the eye looks for it.)
 	var p := player_at()
 	for row in _lights:
 		var o: OmniLight3D = row[0]
 		var near := Vector2(o.position.x, o.position.y).distance_to(p) < 34.0
-		o.visible = near
-		if near and bool(row[2]):
-			o.light_energy = float(row[1]) * (0.86 + 0.14 * sin(clock * 9.0 + float(row[4])) * sin(clock * 5.3 + float(row[4]) * 2.0))
+		row[5] = move_toward(float(row[5]), 1.0 if near else 0.0, delta / LIGHT_FADE_S)
+		o.visible = float(row[5]) > 0.001
+		if o.visible:
+			var swing := 1.0
+			if bool(row[2]):
+				swing = 1.0 - LIGHT_FLICKER + LIGHT_FLICKER * sin(clock * 9.0 + float(row[4])) * sin(clock * 5.3 + float(row[4]) * 2.0)
+			o.light_energy = float(row[1]) * swing * float(row[5])
 	if player != null:
+		# THE CLIMBER'S OWN LAMP IS STEADY (Parker 11-12, the crystal cave: "the floor in here
+		# spazes out"; and it was the light under the mill race too). It rode 0.6 m over the
+		# climber's middle, frame by frame, 2.2 m out from the wall. A crawling or swimming
+		# body's middle wobbles, so a hard-edged warm patch jittered on whatever floor was a
+		# metre under it. Now it follows smoothly, stands well out toward the camera (floors
+		# and beds, which face up, catch little of it; what faces you catches it broadly), and
+		# takes half its colour from the cave it is in.
 		var inside := inside_now()
-		_lamp.position = Vector3(p.x, p.y + 0.6, 2.2)
-		_lamp.light_energy = 1.1 * inside
+		var want := Vector2(p.x, p.y + LAMP_UP)
+		if not _lamp_at.is_finite() or _lamp_at.distance_to(want) > 8.0:
+			_lamp_at = want  # (a warp, a rescue, the first frame)
+		_lamp_at = _lamp_at.lerp(want, 1.0 - exp(-delta * LAMP_FOLLOW))
+		_lamp.position = Vector3(_lamp_at.x, _lamp_at.y, LAMP_OUT)
+		_lamp.light_energy = LAMP_ENERGY * inside
+		var cave := Color(0, 0, 0)
+		var total := 0.0
+		for a in areas:
+			var w: float = float(weights.get(str(a.id), 0.0))
+			if w > 0.0005:
+				cave += Color(str(palette_of(a).amb)) * w
+				total += w
+		if total > 0.0:
+			_lamp.light_color = Color("#FFD9A0").lerp((cave / total).lightened(0.55), 0.5)
 
 
 func _fall_speed() -> float:

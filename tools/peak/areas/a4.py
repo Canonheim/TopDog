@@ -329,7 +329,9 @@ A.cam((-267, 350, -244, 368), half_h=10.0, bias=(0.0, -4.0))
 #     board, down onto the sill by the post. Two roots hang over the sill's end for a hand to find.
 # Without the eyes: a fling from a dangling root's end, 5 m across and 3.5 m up (A) or 3.8 across and
 # 4.3 up (B): 5 m/s off a rope, in the dark. The eyes are the way.
-A.dark((-282.0, 355.0, -262.0, 373.0), level=0.85)
+# (Parker 11-12: "its way too dark in here, it can be a little dim but not this". It was
+# 0.85. Half that, as a first try: the puffballs light it now, and the game fades it in.)
+A.dark((-282.0, 355.0, -262.0, 373.0), level=0.42)
 A.rope("ojo_v0", (-266.5, 365.0), 2.4, kind="vine")  # the way up off L8
 KNOTS = [(-267.5, 364.85), (-275.7, 364.85), (-277.0, 364.85), (-278.3, 364.85)]
 for kx, ky in KNOTS:

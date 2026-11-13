@@ -65,6 +65,20 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 				root.add_child(ball)
 				row["vis"] = ball
 				row["back"] = -1.0
+				# IN A DARK PLACE THE PUFFBALLS ARE THE LIGHT (they are "the eyes"): each
+				# casts a pale pool, so the route is drawn in light, and one that has burst
+				# is dark until it grows back.
+				for dz in a.get("zones", []):
+					if str(dz.type) == "dark" and Peak.rect_has(dz.rect, Peak.v2(z.at), 1.0):
+						var glow := OmniLight3D.new()
+						glow.light_color = Color("#FFF0C8")
+						glow.omni_range = 5.5
+						glow.light_energy = 1.3
+						glow.shadow_enabled = false
+						glow.position = Vector3(float(z.at[0]), float(z.at[1]), 1.6)
+						root.add_child(glow)
+						row["glow"] = glow
+						break
 				puffs.append(row)
 			"strike":
 				row["n"] = -1
@@ -146,17 +160,40 @@ func _pale(sea: DelMarSea) -> void:
 			(ch as GPUParticles3D).draw_pass_1 = _pale_blob
 
 
-func darkness(p: Vector2) -> float:
+## THE DARK FADES, AND HAS A FLOOR (Parker 11-12, the garden's Los Ojos: "its way too dark
+## in here, it can be a little dim but not this and the lighting needs to fade between the
+## places"). A dark box used to apply its whole strength in one frame the moment the
+## climber came within 2 m of it, and its strength could be anything up to black. Now it
+## deepens over DARK_FADE_M as you come up to the box, any change is eased in time, and no
+## dark place on the mountain is stronger than DARK_MAX: the climber and the holds have to
+## be readable everywhere.
+const DARK_FADE_M := 7.0
+const DARK_MAX := 0.55
+const DARK_EASE := 3.0  # 1/s
+var _dark := 0.0  # the darkness at the climber, eased
+
+
+## How dark it is at the climber (eased; `frame` keeps it).
+func darkness(_p: Vector2) -> float:
+	return _dark
+
+
+## How dark a point is by the boxes alone, before easing.
+func dark_at(p: Vector2) -> float:
 	var d := 0.0
 	for row in darks:
 		var z: Dictionary = row.def
-		if Peak.rect_has(z.rect, p, 2.0):
-			var level := float(z.level)
-			if z.has("flash"):
-				var fl: Dictionary = z.flash
-				if fposmod(peak.clock, float(fl.period)) < float(fl.on):
-					level *= 0.15
-			d = maxf(d, level)
+		var r: Array = z.rect
+		var out := Vector2(maxf(maxf(float(r[0]) - p.x, p.x - float(r[2])), 0.0), maxf(maxf(float(r[1]) - p.y, p.y - float(r[3])), 0.0)).length()
+		var near := clampf(1.0 - out / DARK_FADE_M, 0.0, 1.0)
+		if near <= 0.0:
+			continue
+		var level := minf(float(z.level), DARK_MAX) * near * near * (3.0 - 2.0 * near)
+		if z.has("flash"):
+			var fl: Dictionary = z.flash
+			if fposmod(peak.clock, float(fl.period)) < float(fl.on):
+				level *= 0.15
+		d = maxf(d, level)
 	return d
 
 
@@ -370,6 +407,8 @@ func _tick_puffs() -> void:
 			if peak.clock >= float(row.back):
 				row.back = -1.0
 				(row.vis as Node3D).visible = true
+				if row.has("glow"):
+					(row.glow as OmniLight3D).visible = true
 			continue
 		if c == null or c.state != Climber.State.LIVE:
 			continue
@@ -387,6 +426,8 @@ func _tick_puffs() -> void:
 					body.linear_velocity = Vector3(dir.x, dir.y, 0) * float(z.power)
 				row.back = peak.clock + float(z.get("respawn", 4.0))
 				(row.vis as Node3D).visible = false
+				if row.has("glow"):
+					(row.glow as OmniLight3D).visible = false
 				peak.audio.play("puffball_pop", at, 3.0)
 				break
 
@@ -431,6 +472,10 @@ func _tick_strikes(c: Climber) -> void:
 # ================================================================ drawn
 
 func frame(_delta: float, _cam: Camera3D) -> void:
+	var dark_want := dark_at(peak.player_at()) if peak.player != null else 0.0
+	_dark = lerpf(_dark, dark_want, 1.0 - exp(-_delta * DARK_EASE))
+	if absf(_dark - dark_want) < 0.002:
+		_dark = dark_want
 	for ch in _churns:
 		if peak.clock < float(ch[3]) or not bool(peak._area_active.get(ch[4], true)):
 			continue

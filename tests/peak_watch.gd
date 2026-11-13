@@ -66,10 +66,13 @@ func _window() -> void:
 func _process(_delta: float) -> void:
 	if main != null and main.get("_focus_notice") != null:
 		(main.get("_focus_notice") as CanvasItem).visible = false  # (the window is off screen and unfocused on purpose)
+	if _sun_shadow >= 0.0 and main != null:
+		(main.get("_world_sun") as DirectionalLight3D).shadow_opacity = _sun_shadow
 	if _free_cam and main != null:
 		var cam: Camera3D = main.cam
 		var dist := _cam_half / tan(deg_to_rad(cam.fov * 0.5))
-		cam.position = Vector3(_cam_at.x + Peak.ORIGIN.x, _cam_at.y + Peak.ORIGIN.y, dist)
+		var sway := sin(Time.get_ticks_msec() / 1000.0 * 2.2) * _cam_sway
+		cam.position = Vector3(_cam_at.x + Peak.ORIGIN.x + sway, _cam_at.y + Peak.ORIGIN.y, dist)
 		cam.look_at(Vector3(cam.position.x, cam.position.y, 0.0), Vector3.UP)
 
 
@@ -841,6 +844,225 @@ func _w_banner(_a: Array) -> void:
 	await secs(1.5)
 	print("WATCH banner: holding again (%s): on screen? %s (want true)" % [hud.holding, hud.area_up])
 	hud.area_quiet_s = 15.0
+
+
+## HOW MUCH A PART OF THE PICTURE CHANGES OVER TIME (a still can't show a flicker). The
+## part is given in fractions of the window. Returns [the average over its points of how
+## far each one's brightness strays (0..255), the biggest average jump between two frames].
+func flicker(part: Rect2, seconds: float) -> Array:
+	var frames: Array = []
+	var t0 := Time.get_ticks_msec()
+	while Time.get_ticks_msec() - t0 < int(seconds * 1000.0):
+		await RenderingServer.frame_post_draw
+		var img := get_viewport().get_texture().get_image()
+		var sz := img.get_size()
+		var crop := img.get_region(Rect2i(int(part.position.x * sz.x), int(part.position.y * sz.y), int(part.size.x * sz.x), int(part.size.y * sz.y)))
+		crop.resize(48, 27, Image.INTERPOLATE_BILINEAR)
+		var lum := PackedFloat32Array()
+		lum.resize(48 * 27)
+		for y in 27:
+			for x in 48:
+				lum[y * 48 + x] = crop.get_pixel(x, y).get_luminance() * 255.0
+		frames.append(lum)
+		await get_tree().process_frame
+	var n := frames.size()
+	if n < 3:
+		return [0.0, 0.0]
+	var stray := 0.0
+	for i in 48 * 27:
+		var mean := 0.0
+		for f: PackedFloat32Array in frames:
+			mean += f[i]
+		mean /= n
+		var dev := 0.0
+		for f: PackedFloat32Array in frames:
+			dev += (f[i] - mean) * (f[i] - mean)
+		stray += sqrt(dev / n)
+	stray /= 48.0 * 27.0
+	var jump := 0.0
+	for k in range(1, n):
+		var d := 0.0
+		for i in 48 * 27:
+			d += absf((frames[k] as PackedFloat32Array)[i] - (frames[k - 1] as PackedFloat32Array)[i])
+		jump = maxf(jump, d / (48.0 * 27.0))
+	return [stray, jump]
+
+
+var _sun_shadow := -1.0  # (>= 0: the probe holds the sun's shadow at this strength, over the game's own)
+var _wobble := 0.0  # (> 0: the climber is rocked this many metres, as if crawling)
+var _cam_sway := 0.0  # (> 0: the free camera slides this many metres side to side)
+var _wob_t := 0.0
+
+
+func _physics_process(delta: float) -> void:
+	if _wobble > 0.0 and pk != null and pk.player != null:
+		_wob_t += delta
+		var c := me()
+		var p := c.pose()
+		var d := Vector2(cos(_wob_t * 15.0), sin(_wob_t * 11.0)) * _wobble * delta * 13.0
+		for k in range(0, p.size(), 3):
+			p[k] += d.x
+			p[k + 1] += d.y
+		c.apply_pose(p)
+
+
+var _flick := {}  # lantern -> does it flicker by design
+
+
+func lights_steady(on: bool) -> void:
+	for row: Array in pk._lights:
+		if not _flick.has(row[0]):
+			_flick[row[0]] = row[2]
+		row[2] = (not on) and bool(_flick[row[0]])
+
+
+## Notes 17 and 27: which suspect makes the light pulse. light:race or light:crystal
+func _w_light(a: Array) -> void:
+	var which := str(a[0]) if a.size() > 0 else "race"
+	var part := Rect2(0.2, 0.35, 0.6, 0.5)
+	if which == "race":
+		pk.warp("2.3")
+		await secs(0.5)
+		look(Vector2(-241.0, 98.2), 3.6)
+	else:
+		pk.warp("3.1")
+		await secs(0.5)
+		look(Vector2(-415.0, 176.6), 3.0)
+		part = Rect2(0.15, 0.45, 0.7, 0.35)
+	await secs(5.0)
+	await shot("light_%s_as_played" % which)
+	var runs := [
+		# name, sun shadow (-1 = the game's own), lanterns steady, the climber's lamp off, climber rocked, camera sway
+		["as the branch is now", -1.0, false, false, 0.0, 0.0],
+		["as it was played: the sun's shadows on", 1.0, false, false, 0.0, 0.0],
+		["shadows on, lanterns held steady", 1.0, true, false, 0.0, 0.0],
+		["shadows off, lanterns held steady", 0.0, true, false, 0.0, 0.0],
+		["as played, the climber crawling (rocked 6 cm)", 1.0, false, false, 0.06, 0.0],
+		["...the same with the climber's own lamp off", 1.0, false, true, 0.06, 0.0],
+		["...lamp off and lanterns steady", 1.0, true, true, 0.06, 0.0],
+		["now, the climber crawling", -1.0, false, false, 0.06, 0.0],
+		["a still climber, everything steady, the camera sliding (two surfaces in one place would show here)", 0.0, true, true, 0.0, 0.5],
+	]
+	for r: Array in runs:
+		_sun_shadow = float(r[1])
+		lights_steady(bool(r[2]))
+		pk._lamp.visible = not bool(r[3])
+		_wobble = float(r[4])
+		_cam_sway = float(r[5])
+		await secs(0.6)
+		var f: Array = await flicker(part, 2.5)
+		print("WATCH light %s: %-90s stray %5.2f, biggest jump %5.2f" % [which, str(r[0]) + ":", f[0], f[1]])
+	_sun_shadow = -1.0
+	_wobble = 0.0
+	_cam_sway = 0.0
+	lights_steady(false)
+	pk._lamp.visible = true
+
+
+## Notes 17 and 27 again, on clean patches. light2:race puts the OLD water box back over
+## the mill race (a see-through box whose bottom lay in the bed's own top) and watches the
+## bed while the camera drifts; light2:crystal watches the floor beside a crawling climber.
+func _w_light2(a: Array) -> void:
+	var which := str(a[0]) if a.size() > 0 else "race"
+	if which == "race":
+		pk.warp("2.3")
+		await secs(0.5)
+		look(Vector2(-241.0, 98.6), 5.0)  # (from a little above, as the pulled-back camera saw it)
+		_cam_at.y = 100.4
+		await secs(4.0)
+		var bed := Rect2(0.05, 0.80, 0.9, 0.09)  # (the bed's top and the water just over it; the surface and its flecks are above this)
+		var old := MeshInstance3D.new()
+		var bm := BoxMesh.new()
+		bm.size = Vector3(24.5, 1.4, Peak.HALF * 2.4)
+		old.mesh = bm
+		old.material_override = PeakZones._flat(Color("#2A4660"), 0.62)
+		old.position = Vector3(-241.25, 97.5, 0)
+		old.visible = false
+		(pk._roots["a2"] as Node3D).add_child(old)
+		for r: Array in [["the branch's water, camera still", false, 0.0], ["the branch's water, camera drifting 5 cm", false, 0.05],
+				["the OLD box put back, camera still", true, 0.0], ["the OLD box put back, camera drifting 5 cm", true, 0.05],
+				["the OLD box, drifting, lanterns held steady", true, 0.05]]:
+			old.visible = bool(r[1])
+			_cam_sway = float(r[2])
+			lights_steady(str(r[0]).contains("steady"))
+			await secs(0.5)
+			var f: Array = await flicker(bed, 2.5)
+			print("WATCH light2 race: %-48s stray %5.2f, biggest jump %5.2f" % [str(r[0]) + ":", f[0], f[1]])
+			if bool(r[1]) and float(r[2]) > 0.0 and not str(r[0]).contains("steady"):
+				await shot("17_old_water_box_on_the_bed")
+		old.queue_free()
+		_cam_sway = 0.0
+		lights_steady(false)
+		return
+	if which == "swim":
+		# The race again, with a climber floating in it: the bed beside and under a swimmer.
+		pk.warp("2.3")
+		await secs(0.5)
+		stand(Vector2(-241.0, 97.6))
+		look(Vector2(-241.0, 98.6), 3.6)
+		await secs(4.0)
+		print("WATCH light2 swim: the climber floats at %s (in water %s); the bed is at y 96.8" % [where(), me().float_mode])
+		await shot("17_swimmer_over_the_bed")
+		var bed2 := Rect2(0.12, 0.735, 0.3, 0.035)
+		for r: Array in [["as played: lamp on, sun's shadows on", 1.0, false, false], ["lamp OFF, shadows on", 1.0, true, false],
+				["lamp on, shadows OFF", 0.0, false, false], ["lamp on, shadows on, lanterns steady", 1.0, false, true],
+				["lamp OFF, shadows OFF, lanterns steady", 0.0, true, true], ["as played (again)", 1.0, false, false]]:
+			_sun_shadow = float(r[1])
+			pk._lamp.visible = not bool(r[2])
+			lights_steady(bool(r[3]))
+			await secs(0.6)
+			var f: Array = await flicker(bed2, 3.0)
+			print("WATCH light2 swim: %-42s stray %5.2f, biggest jump %5.2f" % [str(r[0]) + ":", f[0], f[1]])
+		_sun_shadow = -1.0
+		pk._lamp.visible = true
+		lights_steady(false)
+		return
+	pk.warp("3.1")
+	await secs(0.5)
+	look(Vector2(-415.0, 176.6), 3.0)
+	await secs(5.0)
+	await shot("27_floor_before")
+	var floor_part := Rect2(0.08, 0.56, 0.3, 0.07)  # (the floor's top, 1.4 to 3.2 m west of the climber)
+	for r: Array in [["a still climber", 0.0, false], ["crawling (rocked 6 cm), its lamp on", 0.06, false], ["crawling, its lamp OFF", 0.06, true],
+			["crawling, its lamp on (again)", 0.06, false], ["crawling, its lamp OFF (again)", 0.06, true]]:
+		_wobble = float(r[1])
+		pk._lamp.visible = not bool(r[2])
+		await secs(0.6)
+		var f: Array = await flicker(floor_part, 2.5)
+		print("WATCH light2 crystal: %-40s stray %5.2f, biggest jump %5.2f" % [str(r[0]) + ":", f[0], f[1]])
+	_wobble = 0.0
+	pk._lamp.visible = true
+
+
+## Note 45: the dark place at Los Ojos. How dark it is as you walk up to it and into it
+## (it must deepen over metres, never snap), and a picture inside it.
+func _w_dark(_a: Array) -> void:
+	pk.warp("4.8")
+	await secs(4.0)
+	var z: Dictionary = {}
+	for row in pk.zones.darks:
+		if str(row.area) == "a4":
+			z = row.def
+	print("WATCH dark: the box is x %.0f..%.0f, y %.0f..%.0f, strength %.2f (the mountain's floor on darkness is %.2f)" % [z.rect[0], z.rect[2], z.rect[1], z.rect[3], float(z.level), PeakZones.DARK_MAX])
+	var line: Array = []
+	for d: float in [12.0, 8.0, 6.0, 4.0, 2.0, 0.0, -3.0]:
+		line.append("%.0f m out: %.2f" % [d, pk.zones.dark_at(Vector2(float(z.rect[2]) + d, 362.0))])
+	print("WATCH dark: by the boxes, coming from the east: %s" % ", ".join(line))
+	# Dropped straight into the middle of it: how fast does the picture's darkness follow?
+	var mid := Vector2((float(z.rect[0]) + float(z.rect[2])) * 0.5, 362.0)
+	pk.warp("4.9")
+	var t0 := Time.get_ticks_msec()
+	var steps: Array = []
+	for i in 6:
+		steps.append("%.1f s: %.2f" % [(Time.get_ticks_msec() - t0) / 1000.0, pk.zones.darkness(mid)])
+		await secs(0.4)
+	print("WATCH dark: warped to 4.9 from outside it, the darkness on screen went: %s" % ", ".join(steps))
+	await secs(3.0)
+	await shot("45_dark_after_game_camera")
+	look(mid + Vector2(0, 1.0), 7.0)
+	await secs(0.5)
+	await shot("45_dark_after_whole")
+	_free_cam = false
 
 
 ## Note 4: what stands where the lift's two cables were.

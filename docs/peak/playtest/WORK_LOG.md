@@ -489,3 +489,81 @@ its heading once it lands.
 - **Not run by me:** `tests/peak_hud_probe.gd` got five new checks for this, but that
   probe opens a full window on Parker's screen, so I ran the same steps in my own
   probe. Second Director: please run yours once.
+
+## Group B: one lighting pass (notes 17, 27, 45)
+
+A still can't show a flicker, so the probe learned to measure one (`flicker` in
+`tests/peak_watch.gd`): it watches a patch of the picture for a few seconds and
+reports how far its brightness strays (0 to 255, averaged over the patch). The runs
+are `--watch=light:race`, `light:crystal`, `light2:race`, `light2:crystal`,
+`light2:swim`.
+
+### Note 27: the crystal cave's floor flickers
+
+- **State:** fixed, measured. **It was suspect 1, the climber's own lamp.**
+- **Reproduced:** the floor's top, 1.4 to 3.2 m west of the climber. Climber still:
+  stray 0.00. Climber rocked 6 cm as if crawling, lamp on: 0.22 and 0.33 (two runs).
+  The same with the lamp switched off: 0.00 and 0.00. The cave's three lanterns are
+  steady and the sun's shadows made no difference. Suspect 2 (two surfaces in one
+  place) and suspect 3 (the sheen) were not needed to explain it: with the lamp off
+  nothing moved at all.
+- **What changed (`frame` in `stages/peak/peak.gd`, constants at the top):** the lamp
+  follows the climber smoothly (`LAMP_FOLLOW`), not frame by frame; it stands 4.2 m
+  out toward the camera where it was 2.2 (`LAMP_OUT`), so floors and beds, which face
+  up, catch little of it; range 12 (was 9), energy 1.0 (was 1.1); and it takes half
+  its colour from the cave it is in, so it no longer paints yellow on lavender.
+- **After:** crawling, lamp on: 0.01 and 0.04.
+- **Pictures:** `27_floor_before.jpg` (the bright patch on the floor by the climber),
+  `27_floor_after.jpg`; `17_lamp_in_the_mine.jpg` for how the new lamp looks in a
+  warm cave.
+- **This changes the look of every cave a little** (the climber's light is broader
+  and softer). First-try numbers.
+
+### Note 17: the light under the mill race pulses and flashes
+
+- **State:** changed, but **I did not reproduce the pulsing itself**, so read this as
+  "the likely causes are all gone", not "confirmed fixed".
+- **What the three suspects measured, at the race, climber standing still on the
+  pier, a patch on the bed under the water:**
+  1. Lantern flicker: stray 0.01 with the lanterns flickering as played, 0.00 with
+     them held steady. Not it, at this spot.
+  2. The on/off snap at 34 m: real in the code, not seen here (nothing crossed the
+     line while standing).
+  3. The old water box lying in the bed's own plane: the box is gone from the branch
+     (note 2 rebuilt the water), so I put one back for the test. With the camera
+     drifting 5 cm it added nothing (stray 0.40 with it, 0.84 without).
+- **What I think it was, from a picture and not a measurement:**
+  `17_swimmer_before.jpg`. A climber floating in the race: the bed under and east of
+  the swimmer carries a hard-edged bright yellow patch. That is the climber's own
+  lamp again, 0.6 m over a body that bobs and drifts at 1.4 m a second, cut into a
+  hard band on a flat bed 1.4 m below. It is the same thing as note 27 and was not on
+  the note's list. My flicker patch did not catch it because the swimmer drifted out
+  of the patch.
+- **What changed:** the lamp, as under note 27 (`17_swimmer_after.jpg`: the patch on
+  the bed is faint and soft). And the two lantern suspects were dealt with anyway,
+  since both are real: a lantern now fades on and off over half a second
+  (`LIGHT_FADE_S`), and its cast light swings 5 percent where it swung 28
+  (`LIGHT_FLICKER`). And inside the mountain the sun casts no shadows (note 51), so
+  the mill wheel's paddles no longer sweep hard shadows over the bed.
+- **Not checked:** a person swimming the race.
+
+### Note 45: the dark place at Los Ojos
+
+- **State:** done, seen in the game. Numbers are first tries.
+- **What changed:**
+  - The box's strength: 0.42 where it was 0.85 (`A.dark` in `tools/peak/areas/a4.py`).
+  - **A floor on darkness for the whole mountain:** no dark box counts for more than
+    0.55 (`DARK_MAX` in `stages/peak/peak_zones.gd`). The cart tunnel at the start
+    (0.8) is therefore 0.55 now. The glacier's (0.3) is untouched.
+  - **It fades in space:** the dark deepens over the last 7 m outside a box
+    (`DARK_FADE_M`), where it used to switch on whole at 2 m.
+  - **It fades in time:** any change is eased (`DARK_EASE`).
+  - **The puffballs light it:** each of the nine "eyes" in the box casts a pale pool
+    of light, which goes out when it bursts and comes back when it grows back.
+- **Watched:** by the boxes, coming from the east: 0.00 at 8 m out, 0.02 at 6 m, 0.17
+  at 4 m, 0.34 at 2 m, 0.42 at the edge. Warped into the middle from outside, the
+  darkness on screen went 0.00, 0.29 (0.5 s), 0.38 (1 s), 0.41, 0.42 (2 s).
+- **Pictures:** `45_dark_after_game_camera.jpg`, `45_dark_after_whole.jpg`. No
+  "before" of mine; Parker's own is `shots/45_too_dark.jpg`.
+- **Not checked:** a puffball bursting and its light going out, by eye (the code path
+  is two lines beside the ball's own hide and show).
