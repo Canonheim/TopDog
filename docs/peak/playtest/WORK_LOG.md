@@ -23,6 +23,15 @@ Godot_console.exe --path . --audio-driver Dummy res://tests/peak_watch.tscn -- -
    (two), 11.2 La Corona (two), 11.4 El Último Salto. They are 7 to 20 m across. The
    camera still steps back by itself once you fly faster than 5 m/s. Keep the cap
    strict, or let those zones keep a wider view (a flag on the zone, an hour's work)?
+3. **Water colour (note 2), the Second Director's call, now with pictures.** Built
+   tinted per cave. `WATER_TINTED` in `stages/peak/peak_zones.gd` is the one line:
+   `false` gives Del Mar's own bright blue everywhere.
+4. **The cart and the chain (note 6).** New rule: while the loose cart is in the air,
+   a climber who also holds something else (the chain) keeps that and loses the cart.
+   Is that the wanted outcome of catching the chain? (See note 6 below.)
+5. **Chains past the track end (note 6), the Second Director's call, unchanged:** not
+   moved. The first chain hangs 1.0 m from the end of the now-solid boards.
+6. **The lift's hoistway (note 4):** Parker's eye on `04_lift_try3_hoistway_whole.jpg`.
 
 ## Note 7: camera far too pulled back, character too high
 
@@ -224,3 +233,63 @@ Godot_console.exe --path . --audio-driver Dummy res://tests/peak_watch.tscn -- -
   it waits for him.
 - **Not checked:** a real player catching the chain by play; the splash when it hits
   the water is the old sound only until note 2 lands (below).
+
+## Note 2: water uses Del Mar's shader and splashes
+
+- **State:** done and seen in the game: splashes, surface, front, tint. One call for
+  Parker (the colour).
+- **Splashes.** They are Del Mar's own, thrown by Del Mar's own class: every pool has
+  a `DelMarSea` node (`stages/delmar/delmar_sea.gd`, not edited) and
+  `PeakZones.splash_at` calls its `splash`: the fan of pale blobs, two rings stamped
+  on the surface, the splash sound (the small sound for small things).
+  - Going in: sized by how fast you hit it (0.75 to 1.5 of Del Mar's climber splash).
+  - Coming out: a smaller one (0.5) where you left the water.
+  - Other things: a rock of a rock fall, the chunks of a broken plank, a loose barrel
+    or boulder (`_tick_wettings` in `peak_things.gd`), and the cart let loose (1.6).
+    Small ones in one pool are thinned to one every 0.22 s, so a plank's two dozen
+    chunks do not throw two dozen splashes.
+  - One difference from Del Mar, on purpose: Del Mar's blobs are lit by the scene, and
+    in a cave's lamp light their shaded side went smoke grey (first run). The Peak's
+    wear a copy of the same blob with a pale shade (`_pale` in `peak_zones.gd`).
+- **Surface.** The top of each pool is a sheet dressed by `DelMarSea.dress`, so it is
+  Del Mar's shader (`sea_surface_fast.gdshader`) with its foam circles, the ripple
+  rings a splash stamps in, and the ink replayed. Seen from the side it is a strip:
+  a line when the camera is level with the water, about half a metre of foam when
+  the camera is 3 m above it.
+- **Front.** New small shader `stages/peak/peak_water_front.gdshader`: a clean tint
+  that deepens downward, a waterline that is never a ruled line, a paler band under
+  it. A river's waterline ripples run with its current.
+- **Flecks kept** on every river and race, as before.
+- **Eddies** (three still patches laid over the river of 2.8): they were a second
+  see-through box, which is why they showed darker. They are now a darker patch of
+  the front only, so they still read, and their top is the river's own.
+- **A waterfall's foot** churns the pool it lands in (Del Mar's spray and rings),
+  while you are within 40 m. The Sump's is the only one today.
+- **Tint, one place:** `WATER_TINTED` and `water_colors` in `peak_zones.gd`. Tinted is
+  Del Mar's two blues pulled toward each area's own dark card colour.
+- **Frame rate, Las Aguas Negras with all 13 on** (the real game in the probe's
+  1280 x 720 window, vsync off, 5 s each, on Parker's PC while it was in use):
+
+  | standing at | before | after, run 1 | after, run 2 |
+  |---|---|---|---|
+  | 1.3 (the mine, the Sump in the area) | 342 | 333 | 319 |
+  | 2.3 (the race) | 263 | 230 | 264 |
+  | 2.8 (the river and its eddies) | 278 | 275 | 280 |
+  | 2.10 (the small pool) | 310 | 288 | 292 |
+
+  Frames a second. The two "after" runs differ from each other as much as from
+  "before", so the cost is inside this machine's noise; the worst single reading is
+  12 percent down at 2.3. Not measured at 4K or full screen.
+- **Pictures:** `02_before_sump.jpg`, `02_before_river.jpg` (yesterday's water),
+  `02_water_sump.jpg`, `02_water_race.jpg`, `02_water_river.jpg`,
+  `02_water_pool.jpg`, `02_water_lake.jpg`, `02_splash_in_0.jpg`,
+  `02_splash_in_1.jpg` (0.12 s and 0.32 s after hitting the Sump from 6 m),
+  `02_splash_out_0.jpg` (leaving), `02_splash_cart.jpg` (the cart going in),
+  `02_splash_chunks.jpg` (a chunk going in).
+- **Checked:** the five kinds of water in pictures; a climber in and out; the cart;
+  three chunks dropped together threw one splash (the thinning).
+- **Not checked:** the swim itself by play (the forces were not touched, and the
+  battery's swim checks pass); a2's water with a climber in it; the look at 4K.
+- **For whoever opens the editor next:** `stages/peak/peak_water_front.gdshader` and
+  `tests/peak_watch.gd` have no `.uid` files yet (nothing here ran the editor); the
+  editor will write them.

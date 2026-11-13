@@ -596,6 +596,110 @@ func _w_cart(_a: Array) -> void:
 	_free_cam = false
 
 
+## Note 2: the water. Pictures of the Sump, a race, the river with its eddies, a small
+## pool and the lake; then a climber dropped into the Sump (the splash going in), and
+## climbing out.
+func _w_water(_a: Array) -> void:
+	var spots := [
+		["sump", "1.3", Vector2(-188.7, -27.7), Vector2(-197.0, -27.5), 6.0],
+		["race", "2.3", Vector2(-247.6, 101.4), Vector2(-241.0, 99.0), 5.0],
+		["river", "2.8", Vector2(-323.0, 118.0), Vector2(-331.0, 116.5), 5.0],
+		["pool", "2.10", Vector2(-381.5, 138.0), Vector2(-386.0, 136.5), 4.5],
+		["lake", "2.11", Vector2(-447.5, 167.5), Vector2(-454.0, 165.5), 4.5],
+	]
+	for row: Array in spots:
+		pk.warp(str(row[1]))
+		await secs(0.4)
+		stand(row[2])
+		look(row[3], float(row[4]))
+		await secs(5.0 if str(row[0]) in ["sump", "race"] else 2.5)
+		print("WATCH water %s: climber at %s, limbs %s" % [row[0], where(), holds()])
+		await shot("02_water_" + str(row[0]))
+	# Into the Sump from 6 m up, by the old staging piles.
+	pk.warp("1.3")
+	await secs(0.4)
+	stand(Vector2(-215.0, -21.0))
+	me().release_all()
+	for l in me().limbs:
+		l.regrip = 99.0
+	look(Vector2(-215.0, -27.2), 4.2)
+	var t0 := pk.clock
+	while not me().float_mode and pk.clock - t0 < 6.0:
+		await get_tree().physics_frame
+	print("WATCH water: the climber hit the Sump %.2f s after the drop, at %s" % [pk.clock - t0, where()])
+	await secs(0.12)
+	await shot("02_splash_in_0")
+	await secs(0.2)
+	await shot("02_splash_in_1")
+	await secs(0.35)
+	await shot("02_splash_in_2")
+	await secs(1.2)
+	await shot("02_floating")
+	# Out again: lifted clear of the water by hand (the probe's doing), to see what leaving looks like.
+	for l in me().limbs:
+		l.regrip = 0.0
+	var p := me().pose()
+	for k in range(0, p.size(), 3):
+		p[k + 1] += 2.2
+	me().apply_pose(p)
+	for b: RigidBody3D in me().bodies.values():
+		b.linear_velocity = Vector3(0, 3.0, 0)
+	await secs(0.15)
+	await shot("02_splash_out_0")
+	await secs(0.25)
+	await shot("02_splash_out_1")
+	# Something else that falls in: a chunk like a broken plank's, dropped from 1.5 m.
+	stand(Vector2(-203.0, 6.0))
+	look(Vector2(-215.0, -27.2), 4.2)
+	await secs(1.0)
+	var before := 0
+	for ch in get_tree().get_nodes_in_group("splash_fx"):
+		before += 1
+	for i in 3:
+		var rb := RigidBody3D.new()
+		rb.collision_layer = 0
+		rb.collision_mask = Climber.LAYER_WORLD
+		rb.gravity_scale = 0.75
+		var cs := CollisionShape3D.new()
+		var bx := BoxShape3D.new()
+		bx.size = Vector3(0.35, 0.2, 0.4)
+		cs.shape = bx
+		rb.add_child(cs)
+		rb.add_child(LuchaKit.box(bx.size, Color("#B07A32")))
+		rb.position = Vector3(-216.5 + 1.5 * i, -26.5 + 0.4 * i, 0)
+		(pk._roots["a1"] as Node3D).add_child(rb)
+		pk.things._debris.append([rb, pk.clock])
+	await secs(0.75)
+	var after := 0
+	for ch in get_tree().get_nodes_in_group("splash_fx"):
+		after += 1
+	print("WATCH water: three chunks dropped into the Sump threw %d splash(es) (thinned on purpose: small ones 0.22 s apart a pool)" % (after - before))
+	await shot("02_splash_chunks")
+	_free_cam = false
+
+
+## The frame rate with all of Las Aguas Negras's water on: fps[:SECONDS]
+func _w_fps(a: Array) -> void:
+	var span := float(a[0]) if a.size() > 0 else 5.0
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	Engine.max_fps = 0
+	for id: String in ["1.3", "2.3", "2.8", "2.10"]:
+		pk.warp(id)
+		await secs(4.0)
+		var n := 0
+		var t0 := Time.get_ticks_usec()
+		var worst := 0.0
+		var last := t0
+		while Time.get_ticks_usec() - t0 < int(span * 1000000.0):
+			await get_tree().process_frame
+			var now := Time.get_ticks_usec()
+			worst = maxf(worst, float(now - last) / 1000.0)
+			last = now
+			n += 1
+		var secs_taken := float(Time.get_ticks_usec() - t0) / 1000000.0
+		print("WATCH fps at %s: %.0f frames a second over %.1f s (average frame %.2f ms, worst %.1f ms), window %s" % [id, n / secs_taken, secs_taken, 1000.0 * secs_taken / n, worst, get_viewport().get_visible_rect().size])
+
+
 ## Note 4: what stands where the lift's two cables were.
 func _w_lift(_a: Array) -> void:
 	pk.warp("1.5")

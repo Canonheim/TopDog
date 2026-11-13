@@ -449,6 +449,7 @@ func tick(delta: float) -> void:
 	_tick_holds(delta)
 	_tick_debris()
 	_tick_spawners(delta)
+	_tick_wettings()
 
 
 func frame(delta: float) -> void:
@@ -1034,6 +1035,44 @@ func _tick_holds(delta: float) -> void:
 							(h.vis as GeometryInstance3D).material_override = Peak.slick_material(str(body.get_meta("slick_class", "mud")))
 						else:
 							CelPass.paint(h.vis, h.col as Color)
+
+
+## WHAT FALLS IN WATER SPLASHES (Parker 11-12: "the water should use the water shader and
+## splash effects we use in del mar"): the rocks of a rock fall, the chunks of a broken
+## plank, a loose barrel or boulder. (The climber's own splash is the zones'; a cart let
+## loose makes its own.)
+var _wet_things := {}  # instance id -> true while it is under a surface
+
+
+func _tick_wettings() -> void:
+	for sp in spawners:
+		if not bool(peak._area_active.get(sp.area, true)):
+			continue
+		for row: Array in sp.live:
+			if float(row[2]) < 0.0 and row[0] != null and is_instance_valid(row[0]):
+				_wetting(row[0], float((sp.def as Dictionary).get("r", 0.45)) * 2.2)
+	for row: Array in _debris:
+		if is_instance_valid(row[0]):
+			_wetting(row[0], 0.3)
+	for id in bodies:
+		var b: Dictionary = bodies[id]
+		if bool(peak._area_active.get(b.area, true)):
+			_wetting(b.rb, clampf((b.rb as RigidBody3D).mass / 40.0, 0.5, 1.4))
+	if _wet_things.size() > 400:
+		for id in _wet_things.keys():
+			if not is_instance_id_valid(id):
+				_wet_things.erase(id)
+
+
+func _wetting(n: Node3D, size: float) -> void:
+	var p := Vector2(n.position.x, n.position.y)
+	var id := n.get_instance_id()
+	if peak.zones.water_at(p) != null:
+		if not _wet_things.has(id):
+			_wet_things[id] = true
+			peak.zones.splash_at(p, size)
+	elif _wet_things.has(id):
+		_wet_things.erase(id)
 
 
 ## IT CRUMBLES AWAY (Parker 11-12: "make the breaking floors crumble away instead of

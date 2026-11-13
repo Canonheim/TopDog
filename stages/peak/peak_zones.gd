@@ -22,8 +22,9 @@ var flash := 0.0  # lightning's light, 0..1, read by the look
 var _tags := {}  # tag -> Array of bodies
 var _bounce_wait := 0.0
 var _wet := false
-var _splash_wait := 0.0
+var _wet_zone: Dictionary = {}  # the water the climber is in (or was last in)
 var _paddle_wait := 0.0
+var _churns: Array = []  # [the water's row, x0, x1, the next second it sprays]: a waterfall's foot
 
 
 func _init(p: Peak) -> void:
@@ -41,7 +42,7 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 		var row: Dictionary = {"def": z, "area": str(a.id)}
 		match str(z.type):
 			"water":
-				row["vis"] = _water_vis(a, z, root)
+				row["vis"] = _water_vis(a, z, root, row)
 				waters.append(row)
 			"wind":
 				row["fx"] = _wind_fx(a, z, root)
@@ -93,10 +94,56 @@ func water_at(p: Vector2):
 	return zone
 
 
-## Something went into (or came out of) water at `p`: `size` is about its width in
-## metres, `speed` how fast it was going.
-func splash_at(p: Vector2, _size: float, _speed: float) -> void:
-	Sound.play_at("splash", Vector3(p.x + Peak.ORIGIN.x, p.y + Peak.ORIGIN.y, 0), 0.0)
+## The drawn water (its row) whose surface is nearest a point over or in it, or {}.
+func _water_row(p: Vector2) -> Dictionary:
+	var best := {}
+	var best_d := 2.5
+	for row in waters:
+		if not row.has("sea"):
+			continue
+		var z: Dictionary = row.def
+		if p.x < float(z.rect[0]) - 0.3 or p.x > float(z.rect[2]) + 0.3:
+			continue
+		var d := absf(p.y - float(z.surface))
+		if d < best_d:
+			best_d = d
+			best = row
+	return best
+
+
+## SPLASH (Del Mar's own: a fan of pale blobs thrown up and pulled back, two rings on the
+## surface, and its sound). Something went into, or came out of, the water at `p`. size 1
+## is a climber falling in. Small ones crowding one pool are thinned (a plank breaks into
+## two dozen chunks).
+func splash_at(p: Vector2, size: float, _speed := 3.0) -> void:
+	var row := _water_row(p)
+	if row.is_empty():
+		Sound.play_at("splash" if size >= 0.7 else "splash_small", Vector3(p.x + Peak.ORIGIN.x, p.y + Peak.ORIGIN.y, 0), 0.0)
+		return
+	var gap := 0.05 if size >= 0.7 else 0.22
+	if peak.clock - float(row.get("splashed", -9.0)) < gap:
+		return
+	row["splashed"] = peak.clock
+	var sea: DelMarSea = row.sea
+	sea.splash(p.x + Peak.ORIGIN.x, size, 0.0)
+	_pale(sea)
+
+
+## IN THE DARK THE SPRAY STAYS PALE. Del Mar's blobs are lit by the scene: in its sun they
+## are white, in a cave's lamp light their shaded side went smoke grey. The Peak's wear a
+## copy of the same blob whose shade is only a little under its light.
+static var _pale_blob: SphereMesh = null
+
+
+func _pale(sea: DelMarSea) -> void:
+	if _pale_blob == null:
+		_pale_blob = DelMarSea._blob_mesh().duplicate() as SphereMesh
+		var m := (_pale_blob.material as ShaderMaterial).duplicate() as ShaderMaterial
+		m.set_shader_parameter("shadow_color", DelMarSea.SPLASH_TINT.darkened(0.14))
+		_pale_blob.material = m
+	for ch in sea.get_children():
+		if ch is GPUParticles3D and (ch as GPUParticles3D).draw_pass_1 != _pale_blob:
+			(ch as GPUParticles3D).draw_pass_1 = _pale_blob
 
 
 func darkness(p: Vector2) -> float:
@@ -117,7 +164,6 @@ func darkness(p: Vector2) -> float:
 
 func tick(delta: float) -> void:
 	_bounce_wait = maxf(0.0, _bounce_wait - delta)
-	_splash_wait = maxf(0.0, _splash_wait - delta)
 	_paddle_wait = maxf(0.0, _paddle_wait - delta)
 	flash = maxf(0.0, flash - delta * 3.5)
 	var c := peak.player
@@ -146,9 +192,15 @@ func _tick_water(c: Climber, _delta: float) -> void:
 	var wet := not zone.is_empty()
 	if wet != _wet:
 		_wet = wet
-		if wet and _splash_wait <= 0.0:
-			_splash_wait = 1.0
-			Sound.play_at("splash", Vector3(c.centre_of_mass().x, c.centre_of_mass().y, 0), 0.0)
+		if wet:
+			# In: the faster you hit it, the bigger.
+			_wet_zone = zone
+			splash_at(Vector2(com.x, float(zone.surface)), clampf(0.75 + c.linear_speed() * 0.07, 0.75, 1.5))
+		elif not _wet_zone.is_empty():
+			# Out: a smaller one, where you left it.
+			splash_at(Vector2(clampf(com.x, float(_wet_zone.rect[0]), float(_wet_zone.rect[2])), float(_wet_zone.surface)), 0.5)
+	if wet:
+		_wet_zone = zone
 	c.float_mode = wet
 	if not wet:
 		return
@@ -379,6 +431,20 @@ func _tick_strikes(c: Climber) -> void:
 # ================================================================ drawn
 
 func frame(_delta: float, _cam: Camera3D) -> void:
+	for ch in _churns:
+		if peak.clock < float(ch[3]) or not bool(peak._area_active.get(ch[4], true)):
+			continue
+		ch[3] = peak.clock + randf_range(0.12, 0.22)
+		var z: Dictionary = (ch[0] as Dictionary).def
+		var at := Vector2(randf_range(float(ch[1]), float(ch[2])), float(z.surface))
+		if peak.player == null or peak.player_at().distance_to(at) > 40.0:
+			continue
+		var sea: DelMarSea = (ch[0] as Dictionary).sea
+		var world := Vector3(at.x + Peak.ORIGIN.x, at.y + Peak.ORIGIN.y, randf_range(-0.9, 0.9))
+		sea.spray(world, randf_range(0.9, 1.5))
+		_pale(sea)
+		if randf() < 0.35:
+			sea.ripple(world, randf_range(0.6, 1.1))
 	for row in winds:
 		var fx: CPUParticles3D = row.get("fx")
 		if fx != null:
@@ -398,7 +464,43 @@ static func _flat(c: Color, alpha: float) -> StandardMaterial3D:
 	return m
 
 
-func _water_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
+## THE WATER'S COLOUR, IN ONE PLACE. Parker's call is open (11-12): Del Mar's own bright
+## day blue in the caves, or that blue tinted dark to fit each cave (Las Aguas Negras is
+## the black waters). Built TINTED. To see Del Mar's blue everywhere, make this false.
+const WATER_TINTED := true
+const WATER_FRONT := preload("res://stages/peak/peak_water_front.gdshader")
+const WATER_DEPTH := Peak.HALF * 2.4  # how far through the play plane a pool reaches
+
+
+## [shallow, deep] for an area's water: Del Mar's two blues, pulled toward the area's own
+## dark when tinted. (The alphas are how much the front hides what is in the water.)
+func water_colors(a: Dictionary) -> Array:
+	var shallow := DelMarSea.SHALLOW
+	var deep := DelMarSea.DEEP
+	if WATER_TINTED:
+		var dark: Color = peak.tone(a, "back2")
+		shallow = shallow.lerp(dark, 0.5)
+		deep = deep.lerp(dark, 0.72)
+	return [Color(shallow.r, shallow.g, shallow.b, 0.42), Color(deep.r, deep.g, deep.b, 0.74)]
+
+
+## Is this water laid wholly over another with the same surface (an eddy in a river)?
+func _water_over(a: Dictionary, z: Dictionary) -> bool:
+	for o in a.get("zones", []):
+		if str(o.type) != "water" or o == z or not is_equal_approx(float(o.surface), float(z.surface)):
+			continue
+		if float(o.rect[0]) <= float(z.rect[0]) and float(o.rect[2]) >= float(z.rect[2]) and float(o.rect[2]) - float(o.rect[0]) > float(z.rect[2]) - float(z.rect[0]):
+			return true
+	return false
+
+
+## A POOL, A RIVER, THE SUMP (Parker 11-12: "the water should use the water shader and
+## splash effects we use in del mar"). Its top is Del Mar's own surface, dressed by Del
+## Mar's own DelMarSea (the foam circles, the ripple rings a splash stamps in, the ink
+## replayed), which also throws this pool's splashes. Its front is a clean tint with the
+## waterline (peak_water_front.gdshader): these pools are looked INTO, from the side.
+## A river keeps its flecks, so the current can be read.
+func _water_vis(a: Dictionary, z: Dictionary, root: Node3D, row: Dictionary = {}) -> Node3D:
 	var r: Array = z.rect
 	var w := float(r[2]) - float(r[0])
 	var surface := float(z.surface)
@@ -406,24 +508,54 @@ func _water_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 	if w <= 0.0 or h <= 0.0:
 		return null
 	var n := Node3D.new()
-	var body := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	bm.size = Vector3(w, h, Peak.HALF * 2.4)
-	body.mesh = bm
-	var deep: Color = peak.tone(a, "slick").lerp(Color("#1C5C8C"), 0.55)
-	body.material_override = _flat(deep, 0.62)
-	body.position = Vector3((float(r[0]) + float(r[2])) * 0.5, surface - h * 0.5, 0)
-	body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	n.add_child(body)
-	var top := MeshInstance3D.new()
-	var tm := BoxMesh.new()
-	tm.size = Vector3(w, 0.07, Peak.HALF * 2.42)
-	top.mesh = tm
-	top.material_override = _flat(Color("#CFEFFF"), 0.75)
-	top.position = Vector3((float(r[0]) + float(r[2])) * 0.5, surface, 0)
-	top.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	n.add_child(top)
+	var mid_x := (float(r[0]) + float(r[2])) * 0.5
+	var cols: Array = water_colors(a)
 	var flow := Peak.v2(z.flow)
+	if _water_over(a, z):
+		# An eddy: the river's own water, stiller. A darker patch of the front, no more.
+		var still := MeshInstance3D.new()
+		var sq := QuadMesh.new()
+		sq.size = Vector2(w, h)
+		still.mesh = sq
+		still.material_override = _flat((cols[1] as Color).darkened(0.35), 0.3)
+		still.position = Vector3(mid_x, surface - h * 0.5 - 0.03, WATER_DEPTH * 0.5 + 0.02)
+		still.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		n.add_child(still)
+		root.add_child(n)
+		return n
+	var top := MeshInstance3D.new()
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(w, WATER_DEPTH)
+	top.mesh = pm
+	top.position = Vector3(mid_x, surface, 0)
+	n.add_child(top)
+	var sea := DelMarSea.new()
+	n.add_child(sea)
+	sea.dress(top, surface + Peak.ORIGIN.y)
+	var tm := top.material_override as ShaderMaterial
+	if tm != null:
+		tm.set_shader_parameter("shallow_color", cols[0])
+		tm.set_shader_parameter("deep_color", cols[1])
+		tm.set_shader_parameter("foam_tile_m", 7.0)  # (a strip 3 m deep, seen edge on: smaller marks than a sea's)
+		tm.set_shader_parameter("foam_edge_m", 0.3)
+		tm.set_shader_parameter("murk_min", 0.8)
+		tm.set_shader_parameter("murk_max", 0.97)
+	var front := MeshInstance3D.new()
+	var fq := QuadMesh.new()
+	fq.size = Vector2(w, h)
+	front.mesh = fq
+	var fm := ShaderMaterial.new()
+	fm.shader = WATER_FRONT
+	fm.set_shader_parameter("shallow_color", cols[0])
+	fm.set_shader_parameter("deep_color", cols[1])
+	fm.set_shader_parameter("depth_m", h)
+	fm.set_shader_parameter("flow", flow.x)
+	fm.render_priority = 1  # (over the surface's underside, seen from below the waterline)
+	front.material_override = fm
+	front.position = Vector3(mid_x, surface - h * 0.5, WATER_DEPTH * 0.5)
+	front.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	n.add_child(front)
+	row["sea"] = sea
 	if flow.length() > 0.2:
 		# Foam flecks riding the current, so its speed can be read.
 		var p := _particles(Color("#E8F6FF"), 0.8, int(clampf(w * 0.8, 6, 60)), 5.0)
@@ -550,6 +682,11 @@ func _effect(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 		p.position = Vector3(mid.x, float(r[3]), mid.z + 0.3)
 		root.add_child(p)
 		peak.audio.emitter("waterfall_loop", Vector2(mid.x, float(r[1]) + minf(h * 0.3, 12.0)), 1.0, 40.0)
+		# Where it lands in a pool it churns it: Del Mar's spray and rings, for as long as
+		# the climber is near enough to see.
+		var foot := _water_row(Vector2(mid.x, float(r[1])))
+		if not foot.is_empty():
+			_churns.append([foot, float(r[0]), float(r[2]), 0.0, str(a.id)])
 		return
 	var cfg := {
 		"mist": [Color("#DCEFF8"), 5.0, 0.25, Vector3(0.2, 0.5, 0), 4.0, 0.35],
