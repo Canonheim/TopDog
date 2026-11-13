@@ -5,6 +5,7 @@ A0 LA ESTACION: the trailhead and the cart ride. Also the worked example for are
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from peaklib import Area, box_pts, ngon, save_meta
+import a0_station  # the station's scenery (the 11-13 diorama test): decos and cards only
 
 A = Area("a0", "town")
 
@@ -13,9 +14,14 @@ A.solid([(16, -3), (16, 0), (-36, 0), (-36, -3)], "rock")  # the road (grip: you
 A.box(15.0, 30.0, 2.0, 66.0, "void")  # the world's east edge, unseen: the town is that way
 
 # ---------------------------------------------------------------- 0.1 El Primer Paso: crates up to the platform
-A.box(-2.6, 0.55, 1.2, 1.1, "wood")  # one crate
-A.box(-3.9, 0.55, 1.4, 1.1, "wood")  # two crates stacked
-A.box(-3.9, 1.65, 1.3, 1.1, "wood")
+# The three steps are plain boxes to the body. Their looks are kit models once those land
+# (skins: until then the game draws the boxes as before).
+A.box(-2.6, 0.55, 1.2, 1.1, "wood", skin="barrel_step")  # the first step: a standing barrel
+A.box(-3.9, 0.55, 1.4, 1.1, "wood", skin="crate_pug_14")  # two crates stacked
+A.box(-3.9, 1.65, 1.3, 1.1, "wood", skin="crate_pug_13")
+A.deco("barrel_step", -2.6, 0.0, z=0.0, size=(1.2, 1.1, 1.2), skin=True)
+A.deco("crate_pug_14", -3.9, 0.0, z=0.0, size=(1.4, 1.1, 1.2), skin=True)
+A.deco("crate_pug_13", -3.9, 1.1, z=0.0, size=(1.3, 1.1, 1.2), skin=True)
 A.ledge(-36.0, -4.6, 2.2, "plank", t=0.45)  # the loading platform; the rails run along it
 for x in (-6.0, -14.0, -22.0, -30.0):
     A.box(x, 0.87, 0.35, 1.75, "wood")  # its legs
@@ -69,8 +75,7 @@ A.dark((-152, -16, -40, 9), level=0.8)  # inside the mountain: the light goes
 
 # ---------------------------------------------------------------- the picture
 A.card([(-152, -17), (-36, -17), (-36, 9), (-152, 9)], z=-3.0, tone="#33241A")  # the tunnel's back wall
-A.deco("sign_pug_arrow", 1.5, 0.0, z=-1.0, size=(1.0, 2.2, 0.1), tone="wood")
-A.deco("papel_tatters", -2.0, 4.2, z=-1.6, size=(8.0, 1.0, 0.05), tone="accent")
+a0_station.dress(A)  # the yard wall, the station house, the posters, the frog, the bunting, the foreground
 A.deco("mine_frame", -36.0, 2.2, z=0.0, size=(0.6, 5.0, 2.6), tone="wood")  # the mouth's timber frame
 A.deco("brake_lever", -7.6, 2.2, z=-0.9, size=(0.15, 1.0, 0.15), tone="accent")
 for i, (x, y) in enumerate(RIDE[2:-1]):
