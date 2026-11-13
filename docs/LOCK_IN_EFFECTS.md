@@ -12,7 +12,7 @@ User-approved standing requirements (2026-11-11). Apply to every future lock-in 
 
 ## Current examples
 
-- `ui3d/lucha_ui.gd`, `confetti()`: seven overlapping bands; every band gets all four shapes. Normal total 70; winner total 320. Per-shape quotas differ by at most one within a band. Bounded lean, lift, spread, color order and spin vary each activation.
+- `ui3d/confetti_effect.gd`, via `lucha_ui.confetti()`: 90 normal / 300 winner pieces; each screen third receives identical quotas of curved paper, discs, stars, S-streamers and spiral ribbons. Fifteen overlapping lanes and six height layers, stratified sizes, cached two-sided atlas meshes, local burst RNG and tumbling/flutter motion. Existing Confetti selection and winner dispatch are preserved.
 - `ui3d/rose_petals.gd`, `burst()`: six bands with all six petal variants, two of each per band (72 petals); 18 whole roses distributed across six lanes and three height layers, with a balanced mesh/size mix.
 - `ui3d/peso_bills.gd`, `burst()`: 72 bills in twelve lanes and six height layers, retaining 36 curled, 30 folded and six crumpled forms. Leave its approved behavior intact.
 - `tests/lock_effect_gif.gd`: capture/check harness for the current balanced confetti and roses. Extend/adapt checks for a new effect rather than assuming the harness already covers it.

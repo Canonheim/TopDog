@@ -2065,65 +2065,7 @@ func play_lock_effect(effect: String) -> void:
 
 
 func confetti(big := false) -> void:
-	# A fresh burst profile varies the silhouette without extra particles or per-frame work.
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	var lean := rng.randf_range(-0.18, 0.18)
-	var lift := rng.randf_range(0.94, 1.06)
-	var origin := Vector3(rng.randf_range(-0.18, 0.18), rng.randf_range(-0.06, 0.06), 0)
-	var root := Node3D.new()
-	root.name = "ConfettiBurst"
-	root.set_meta("burst_profile", [origin, lean, lift])
-	cam.add_child(root)
-	for side in ([-1.0, 1.0] if big else [0.0]):
-		for band in 7:
-			for shape in 4:
-				var p := CPUParticles3D.new()
-				p.one_shot = true
-				p.explosiveness = rng.randf_range(0.80, 0.90)
-				var band_count := (23 if band < 6 else 22) if big else 10
-				p.amount = band_count / 4 + (1 if (shape + band) % 4 < band_count % 4 else 0)
-				p.lifetime = 3.2 if big else 2.2
-				p.mesh = _confetti_mesh(shape)
-				p.set_meta("coverage_lane", band)
-				p.set_meta("shape", shape)
-				var m := StandardMaterial3D.new()
-				m.vertex_color_use_as_albedo = true
-				m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-				m.cull_mode = BaseMaterial3D.CULL_DISABLED
-				p.material_override = m
-				var grad := Gradient.new()
-				grad.offsets = PackedFloat32Array([0.0, 0.17, 0.34, 0.5, 0.67, 0.84])
-				var colors := PAPEL.duplicate()
-				for i in range(colors.size()-1, 0, -1):
-					var j := rng.randi_range(0, i)
-					var swap: Color = colors[i]
-					colors[i] = colors[j]
-					colors[j] = swap
-				grad.colors = PackedColorArray(colors)
-				grad.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
-				p.color_initial_ramp = grad
-				var angle := deg_to_rad(-42.0 + band * 14.0 + rng.randf_range(-2.5, 2.5))
-				p.direction = Vector3(-side * 0.6 + tan(angle) + lean, 1.0, rng.randf_range(-0.04, 0.04))
-				p.spread = rng.randf_range(17.0, 20.0)
-				p.initial_velocity_min = 0.8 * lift
-				p.initial_velocity_max = 7.0 * lift
-				p.gravity = Vector3(0, -4.0, 0)
-				p.damping_min = 1.0
-				p.damping_max = 2.0
-				p.angular_velocity_min = rng.randf_range(-400.0, -300.0)
-				p.angular_velocity_max = rng.randf_range(300.0, 400.0)
-				p.angle_max = 360.0
-				p.scale_amount_min = 0.85
-				p.scale_amount_max = 1.45
-				root.add_child(p)
-				p.position = Vector3(side * 2.6, -0.6 if big else 0.6, -5.0) + origin
-				p.set_meta("burst_profile", [origin, lean, lift, p.spread])
-				p.emitting = true
-				p.finished.connect(p.queue_free)
-	root.get_tree().create_timer(4.2 if big else 3.0).timeout.connect(func():
-		if is_instance_valid(root):
-			root.queue_free())
+	preload("res://ui3d/confetti_effect.gd").burst(cam, big)
 	Sound.play("clap", -4.0)
 
 
