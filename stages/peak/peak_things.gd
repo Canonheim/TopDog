@@ -464,6 +464,7 @@ func tick(delta: float) -> void:
 	_tick_strain(delta)
 	_tick_holds(delta)
 	_tick_burns()
+	_tick_strays()
 	_tick_debris()
 	_tick_spawners(delta)
 	_tick_wettings()
@@ -629,6 +630,26 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 					jumped = d < was - 1.0
 					m.vis.visible = d <= total
 					d = minf(d, total)
+					if mo.has("loose"):
+						# IT GOES OVER THE END FOR REAL (Parker 11-12, the pool's barrels: "the
+						# barrels should fall not despawn on screen"). Past `loose` metres the
+						# piece on the line is gone and a loose body with its look has taken
+						# its place, with whoever was on it (see _let_stray).
+						var gone := d >= float(mo.loose)
+						if gone and not bool(m.get("shed", false)) and not jumped:
+							_let_stray(m, d)
+						m["shed"] = gone
+						m.vis.visible = not gone
+					if mo.has("emerge"):
+						# IT ARRIVES, IT DOESN'T APPEAR ("they should come out of some modeled
+						# cove"): over its first metres it floats forward out of the back
+						# wall, and can't be touched until it is in the play plane.
+						var em: Dictionary = mo.emerge
+						var f := clampf(d / maxf(0.1, float(em.over)), 0.0, 1.0)
+						m["zoff"] = float(em.depth) * (1.0 - _ease(f))
+					var solid := not bool(m.get("shed", false)) and absf(float(m.get("zoff", 0.0))) < 0.45
+					for node: AnimatableBody3D in m.nodes:
+						node.collision_layer = Climber.LAYER_WORLD if solid else 0
 				"pingpong":
 					var leg := total / speed
 					var cyc := fposmod(tt, 2.0 * (leg + wait))
@@ -744,7 +765,7 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 	m.speed = 0.0 if jumped else pos.distance_to(m.prev) / maxf(delta, 0.0001)
 	m.prev = pos
 	for node: AnimatableBody3D in m.nodes:
-		node.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, 0))
+		node.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, float(m.get("zoff", 0.0))))
 	if bool((m.def as Dictionary).get("ko", false)):
 		_mover_ko(m)
 	if str(m.type) in ["cycle", "path"]:
@@ -871,6 +892,90 @@ func _let_loose(m: Dictionary) -> void:
 
 
 const LOOSE_G := 0.55  # a loose mover's gravity against the engine's (a faller's: 5.4 m/s2)
+
+
+## A wrapping mover's loose double: a rigid body where the piece was, with a copy of its
+## look, a little speed and a tip forward. Hands and feet on the piece go with it. The
+## piece itself carries on round its line unseen and comes back at its start. The stray
+## splashes where it lands, sinks, and is taken away once nobody holds it.
+var _strays: Array = []  # [body, born, went under at (-1: dry)]
+
+
+func _let_stray(m: Dictionary, d: float) -> void:
+	var mo: Dictionary = m.mo
+	var def: Dictionary = m.def
+	var at: Array = _along(m, d)
+	var pos: Vector2 = at[0]
+	var dir: Vector2 = at[1]
+	var rb := RigidBody3D.new()
+	rb.mass = float(mo.get("mass", 60.0))
+	rb.collision_layer = Climber.LAYER_WORLD
+	rb.collision_mask = Climber.LAYER_WORLD
+	rb.axis_lock_linear_z = true
+	rb.axis_lock_angular_x = true
+	rb.axis_lock_angular_y = true
+	rb.gravity_scale = float(mo.get("fall_g", LOOSE_G))
+	rb.linear_damp = 0.03
+	rb.angular_damp = 0.25
+	rb.can_sleep = false
+	var pm := PhysicsMaterial.new()
+	pm.friction = 0.6
+	pm.bounce = 0.35
+	rb.physics_material_override = pm
+	var grips := false
+	for sh in def.shapes:
+		peak._add_shapes(rb, peak._pts(sh.pts), -Peak.HALF * 0.5, Peak.HALF * 0.5)
+		grips = grips or peak.kind_grips(str(sh.kind))
+	if not grips:
+		rb.set_meta("no_weld", true)
+	rb.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, 0))
+	var first: Node3D = m.nodes[0]
+	first.get_parent().add_child(rb)
+	var push := float(mo.get("push", 1.2))
+	rb.linear_velocity = Vector3(dir.x, dir.y, 0) * maxf(push, float(mo.get("speed", 1.0)))
+	rb.angular_velocity = Vector3(0, 0, float(mo.get("tip", 1.4)) * (1.0 if dir.x < 0.0 else -1.0))
+	Climber.sync_server(rb)  # THE LATE TRANSFORM LAW
+	var look: Node3D = Peak.kit(str(def.model)) if def.has("model") else null
+	if look == null:
+		look = _shapes_mesh(peak.areas[0], def.shapes)
+	rb.add_child(look)
+	for r in ropes:
+		if r.area == m.area:
+			for seg: RigidBody3D in r.segs:
+				rb.add_collision_exception_with(seg)
+	var c := peak.player
+	if c != null:
+		for i in c.limbs.size():
+			if c.limbs[i].grab_other != null and m.nodes.has(c.limbs[i].grab_other):
+				c.release(i)
+				c.limbs[i].regrip = 0.0
+				c.attach(i, rb)
+	_strays.append([rb, peak.clock, -1.0])
+
+
+func _tick_strays() -> void:
+	var t := peak.clock
+	for k in range(_strays.size() - 1, -1, -1):
+		var row: Array = _strays[k]
+		var rb: RigidBody3D = row[0]
+		if not is_instance_valid(rb):
+			_strays.remove_at(k)
+			continue
+		var here := Vector2(rb.position.x, rb.position.y)
+		if float(row[2]) < 0.0 and peak.zones.water_at(here) != null:
+			row[2] = t
+			rb.linear_damp = 2.4
+			rb.angular_damp = 2.0
+			rb.gravity_scale *= 0.4
+			peak.zones.splash_at(here, 1.3, rb.linear_velocity.length())
+		# Gone once it has lain in the water a while, or long after it left, and nobody has it.
+		var done := (float(row[2]) >= 0.0 and t - float(row[2]) > 5.0) or t - float(row[1]) > 20.0 or here.y < -70.0
+		if done and not _player_limbs_on([rb]):
+			if rb.scale.x > 0.12:
+				rb.scale *= 0.9  # (it shrinks away, as a broken plank's pieces do)
+			else:
+				rb.queue_free()
+				_strays.remove_at(k)
 
 
 func _tick_loose(m: Dictionary) -> void:

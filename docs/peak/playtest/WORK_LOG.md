@@ -334,6 +334,12 @@ its heading once it lands.
   six clouds are among them because the note left them undecided.
 - **Note 52:** eight more slots were found on the mountain and NOT changed (list below).
 - **Note 39:** the count was 39 patches, not 19. All 39 are out.
+- **Note 21: the barrels' gaps are Parker's to choose.** Measured: about 1.3 m of
+  water between two barrels is a plain stretch. The first try has eight gaps: four
+  inside that, two a lunge (1.6, 1.7 m), two a swim (4.0, 4.4 m). `BARREL_GAPS` in
+  `tools/peak/areas/a2.py` is the list.
+- **Note 53:** the climb up the altar's east wall, now brushed by an arm every 2.3 s,
+  was not tried by anything.
 
 ## Group A: bugs you can see (notes 39, 40, 47, 48, 51, 52, 55)
 
@@ -788,3 +794,45 @@ are `--watch=light:race`, `light:crystal`, `light2:race`, `light2:crystal`,
   `53_beam_after_a_crawl.jpg`.
 - **Not checked, and it matters:** the climb up the east wall after the beam. An arm
   now brushes that wall every 2.3 s where it was every 9.4. Nothing tried it.
+
+## Group F: things that leave properly (note 21, the pool's barrels)
+
+- **State:** done, watched in the game. The gaps are a first try for Parker to set.
+- **What changed (`tools/peak/areas/a2.py`, the 2.7 block; `stages/peak/peak_things.gd`):**
+  - **Eight barrels where there were 13**, on a written rhythm: `BARREL_GAPS`, the
+    metres from each barrel's middle to the next, round a 30.8 m loop.
+  - **They come out of a cove.** The kit's own `brick_arch` (the aqueduct's arch,
+    drawn at 4.6 m) stands in the back wall at the waterline just east of the west
+    bank, black inside. A barrel floats forward out of the dark over its first 2.4 m
+    of drift and can't be touched until it is in the climb's plane (`emerge` on the
+    mover). No new model was needed.
+  - **They go over the lip for real.** 0.85 m past the end of the water the barrel on
+    the line is replaced by a loose 60 kg body with its look (`loose` on a `wrap`
+    mover: note 6's hand-over, made general in `_let_stray`). It tips over the lip,
+    falls the 24 m down the cascade, splashes into the river, sinks, and shrinks away
+    five seconds later if nobody is holding it. Hands and feet on it go with it.
+  - The barrel on the line carries on unseen and comes out of the cove again.
+- **The measurement asked for: how wide a gap can a climber stretch?** The probe set
+  two barrels a chosen distance apart, stood a climber at the west end of the east
+  one and had it aim a hand at the next barrel's near corner for a second at a time,
+  the body leaning out after it. The hand got 1.52 and 1.59 m past the rear foot at
+  most. Take off about 0.1 m for the foot's place on its barrel and 0.15 m for the
+  hand's on the next: **about 1.3 m of water is a plain stretch.** (The old barrels
+  had 0.8 m between them.) The script never took the far barrel, even at 1.2 m: it
+  cannot lunge, and it overbalanced. So this is "how far a hand goes", not "how far a
+  player gets". A lunge goes further; I can't put a number on it.
+- **The first-try gaps, as water between barrels:** 1.2, 1.6, 1.1, 4.0, 1.3, 1.7, 1.1,
+  4.4 m. Four are a stretch, two a lunge, two a swim against the pool's 1 m/s (the
+  swims in this area were designed for 1.0 to 1.6). Because the barrels all drift at
+  one speed a gap never closes while you wait.
+- **Watched:** 8 barrels, 7 on the pool at the moment looked at. Five in a row came
+  out of the cove into the climb's plane, all at x -310.8. Five in a row went over
+  the lip and hit the river 3.2 s later at x -285.2. A climber stood on one near the
+  lip: its feet were on the loose barrel the moment it went loose, and 4.3 s later it
+  was down in the river at (-283.3, 92.9) with all four limbs on the barrel.
+- **Pictures:** `21_cove.jpg`, `21_cove_coming_out.jpg`, `21_pool_whole.jpg`,
+  `21_over_the_lip.jpg`, `21_riding_it_over.jpg`. No "before" of mine; Parker's is
+  `shots/21_barrels.jpg`.
+- **First-try numbers:** the gaps; the drift (unchanged, 0.55 m/s); where it is let
+  loose; its mass, push and tip.
+- **Not checked:** hopping the barrels by play; the swim across a long gap.

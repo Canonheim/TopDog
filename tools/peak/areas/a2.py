@@ -179,10 +179,42 @@ slab(-320.5, -314, 117.2, t=0.7)  # Q7, the west bank
 
 # ---------------------------------------------------------------- 2.7 the barrels
 BARREL = [(-0.9, -0.3), (-0.6, -0.55), (0.6, -0.55), (0.9, -0.3), (0.9, 0.3), (0.6, 0.55), (-0.6, 0.55), (-0.9, 0.3)]
-for i in range(13):
-    A.mover("barril%d" % (i + 1), (-319.6, 115.3), [(BARREL, "wood")],
-            {"type": "path", "pts": [[-319.6, 115.3], [-285.8, 115.3]], "speed": 0.55, "mode": "wrap",
-             "phase": round(i * 2.6 / 0.55, 3), "trigger": "none"}, model="barrel_float")
+# THE BARRELS ARRIVE AND LEAVE (Parker 11-12: "the barrels should fall not despawn on
+# screen", then "they should come out of some modeled cove and they should have some more
+# space between them, like 40% less total barrels, and some variation in when they are
+# sent out"). There were 13 on one beat, 2.6 m apart, blinking in under the west bank and
+# blinking out over the lip. Now:
+#  - EIGHT, on a WRITTEN rhythm: BARREL_GAPS is the metres from each barrel's middle to the
+#    next one's, round the loop. A barrel is 1.8 m long, so the water between two is the
+#    gap less 1.8. They drift at one speed, so a gap never closes while you wait. Measured
+#    (work log): a climber leaning out after a hand gets it 1.55 m past its rear foot, so
+#    about 1.3 m of water is a plain stretch. Of these eight gaps four are inside that
+#    (1.1 to 1.3 m of water), two are a lunge (1.6, 1.7) and two are a swim against the
+#    pool's 1 m/s (4.0, 4.4). FIRST TRY: Parker chooses the gaps.
+#  - THE COVE: a brick arch in the back wall at the waterline, black inside, just east of
+#    the west bank. A barrel floats forward out of the dark over its first 2.4 m and
+#    can't be touched until it is in the climb's own plane.
+#  - OVER THE LIP: past the end of the water it is a loose thing: it tips over the lip and
+#    falls the 24 m down the cascade, tumbling, into the river, with you if you are on it.
+BARREL_SPEED = 0.55
+COVE_X, LIP_X = -312.6, -285.8
+BARREL_GAPS = [3.0, 3.4, 2.9, 5.8, 3.1, 3.5, 2.9, 6.2]   # a 30.8 m loop (the 13 were 2.6 apart: 33.8)
+_loop = sum(BARREL_GAPS)
+_road = LIP_X - COVE_X                                     # 26.8 m of it is the pool; the rest is out of sight
+_t = 0.0
+for i in range(8):
+    A.mover("barril%d" % (i + 1), (COVE_X, 115.3), [(BARREL, "wood")],
+            {"type": "path", "pts": [[COVE_X, 115.3], [LIP_X, 115.3]], "speed": BARREL_SPEED, "mode": "wrap",
+             "wait": round((_loop - _road) / BARREL_SPEED, 3), "phase": round(_t / BARREL_SPEED, 3), "trigger": "none",
+             "loose": round(-287.15 - COVE_X, 3), "mass": 60.0, "push": 1.3, "tip": 1.5,
+             "emerge": {"depth": -3.0, "over": 2.4}}, model="barrel_float")
+    _t += BARREL_GAPS[i]
+# The cove's mouth: the aqueduct's own brick arch (the kit's brick_arch, 7 m, drawn at 4.6:
+# the size sets its scale), and the dark inside it, cut to the arch's opening.
+_cx = COVE_X - 0.1
+A.deco("brick_arch", _cx, 114.5, z=-1.35, size=(4.6, 4.6, 0.66), tone="brick")
+A.card([(_cx - 1.42, 114.4), (_cx + 1.42, 114.4), (_cx + 1.42, 116.3), (_cx + 1.0, 117.3), (_cx, 117.75), (_cx - 1.0, 117.3),
+        (_cx - 1.42, 116.3)], z=-1.8, tone="#05060A")
 A.challenge("2.7", "El Charco del Pozo", (-287.0, 117.4), 3, "X")
 
 # ================================================================ THE FLUME AND THE PIPE HALL

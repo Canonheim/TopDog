@@ -1519,6 +1519,141 @@ func _w_break(a: Array) -> void:
 	_free_cam = false
 
 
+## Note 21: the pool's barrels. barrels:stretch measures how wide a gap of water a climber
+## can stretch from one barrel to the next; barrels:watch watches them arrive and leave.
+func _w_barrels(a: Array) -> void:
+	var which := str(a[0]) if a.size() > 0 else "watch"
+	const Drivers := preload("res://climber/drivers.gd")
+	pk.warp("2.7")
+	await secs(1.0)
+	var c := me()
+	var mine: Array = []
+	for id in pk.things.movers:
+		if str(id).begins_with("barril"):
+			mine.append(pk.things.movers[id])
+	if which == "stretch":
+		# Two barrels are set a chosen gap apart (the rest sent away); the climber stands on
+		# the east one and reaches a hand west for the other, as a player hopping west does.
+		var d := Drivers.ScriptDriver.new()
+		var old_driver = c.driver
+		var speed := float((mine[0].mo as Dictionary).speed)
+		var widest := 0.0
+		for gap: float in [1.2, 1.5, 1.7, 1.9, 2.1, 2.3, 2.5]:
+			var base := -(pk.clock) + 20.0 / speed  # (puts barrel A 20 m along its road right now)
+			for i in mine.size():
+				(mine[i].mo as Dictionary)["phase"] = base - (1.8 + gap) / speed if i == 1 else (base if i == 0 else base + 400.0 + 30.0 * i)
+			await secs(0.3)
+			var pa := mover_at("barril1")
+			var pb := mover_at("barril2")
+			stand(pa + Vector2(-0.7, 0.56))  # (at the first barrel's west end)
+			c.driver = d
+			d.clear()
+			await secs(1.2)
+			look(pa + Vector2(-1.5, 0.6), 3.0)
+			var took := false
+			var far := 0.0
+			var t0 := pk.clock
+			while pk.clock - t0 < 6.0 and not took:
+				# The hand is held and aimed at the next barrel's near top corner for a
+				# second (the body leans out after it on its feet), then let go to stick.
+				var th := pk.clock
+				while pk.clock - th < 1.0:
+					pb = mover_at("barril2")
+					d.point_limb(0, true, pb + Vector2(0.8, 0.52) + Vector2(Peak.ORIGIN.x, Peak.ORIGIN.y))
+					await get_tree().physics_frame
+					var foot_x := maxf(c.limb_end(2).x, c.limb_end(3).x)
+					far = maxf(far, foot_x - c.limb_end(0).x)
+				d.set_limb(0, false)
+				await secs(0.25)
+				took = c.limbs[0].grab_other == mine[1].nodes[0]
+			print("WATCH barrels stretch: (the hand got %.2f m west of the rear foot at most)" % far)
+			var feet_on: bool = c.limbs[2].grab_other == mine[0].nodes[0] or c.limbs[3].grab_other == mine[0].nodes[0]
+			print("WATCH barrels stretch: %.1f m of water between them (middles %.1f m apart): the hand %s; a foot still on the first barrel: %s" % [gap, gap + 1.8, "TOOK the next barrel" if took else "could not reach it", feet_on])
+			if took:
+				widest = gap
+				await shot("21_stretch_%.1f" % gap)
+			d.clear()
+			c.release_all()
+		c.driver = old_driver
+		print("WATCH barrels stretch: the widest gap of water a standing climber's hand crossed: %.1f m" % widest)
+		_free_cam = false
+		return
+	# Watch: what is on the pool, five arrivals at the cove, five over the lip.
+	look(Vector2(-300.0, 116.0), 9.0)
+	await secs(4.0)
+	var on_pool := 0
+	var xs: Array = []
+	for m: Dictionary in mine:
+		if (m.vis as Node3D).visible:
+			on_pool += 1
+			xs.append(snappedf(mover_at(str(m.id)).x, 0.1))
+	xs.sort()
+	print("WATCH barrels: %d barrels in all, %d on the pool now, at x %s" % [mine.size(), on_pool, xs])
+	await shot("21_pool_whole")
+	look(Vector2(-311.6, 116.0), 3.4)
+	var arrivals := 0
+	var last_z := {}
+	var t0 := pk.clock
+	var shot_a := 0
+	while arrivals < 5 and pk.clock - t0 < 75.0:
+		await get_tree().physics_frame
+		for m: Dictionary in mine:
+			var z := float(m.get("zoff", 0.0))
+			var id := str(m.id)
+			if last_z.has(id) and float(last_z[id]) < -0.45 and z >= -0.45:
+				arrivals += 1
+				print("WATCH barrels: %s came out of the cove into the climb's plane at x %.1f, %.1f s into the watch" % [id, mover_at(id).x, pk.clock - t0])
+			if shot_a < 2 and z < -1.0 - 1.2 * shot_a and z > -2.9 and (m.vis as Node3D).visible and last_z.has(id) and float(last_z[id]) != z:
+				shot_a += 1
+				await shot("21_cove_coming_out_%d" % shot_a)
+			last_z[id] = z
+	look(Vector2(-287.6, 108.0), 9.5)
+	var overs := 0
+	var seen := {}
+	t0 = pk.clock
+	var shot_o := 0
+	while overs < 5 and pk.clock - t0 < 75.0:
+		await get_tree().physics_frame
+		for row: Array in pk.things._strays:
+			var rb: RigidBody3D = row[0]
+			if not is_instance_valid(rb):
+				continue
+			var id := rb.get_instance_id()
+			if not seen.has(id):
+				seen[id] = pk.clock
+				if shot_o == 0:
+					shot_o = 1
+			if float(row[2]) >= 0.0 and float(seen[id]) > 0.0:
+				overs += 1
+				print("WATCH barrels: one went over the lip and hit the river %.1f s later at (%.1f, %.1f)" % [pk.clock - float(seen[id]), rb.position.x, rb.position.y])
+				seen[id] = -1.0
+			if shot_o == 1 and pk.clock - absf(float(seen[id])) > 1.2 and float(seen[id]) > 0.0:
+				shot_o = 2
+				await shot("21_over_the_lip")
+	# One with a climber on it.
+	_free_cam = false
+	var ride: Dictionary = {}
+	t0 = pk.clock
+	while ride.is_empty() and pk.clock - t0 < 40.0:
+		await get_tree().physics_frame
+		for m: Dictionary in mine:
+			var x := mover_at(str(m.id)).x
+			if (m.vis as Node3D).visible and x > -292.5 and x < -291.5:
+				ride = m
+	if not ride.is_empty():
+		stand(mover_at(str(ride.id)) + Vector2(0.0, 0.57))
+		t0 = pk.clock
+		while not holds().contains("RigidBody3D") and pk.clock - t0 < 20.0:
+			await get_tree().physics_frame  # (until the barrel under it is the loose one)
+		var after := holds()
+		print("WATCH barrels: the barrel it stood on went loose %.1f s after it stepped on, at x %.1f" % [pk.clock - t0, where().x])
+		await secs(1.3)
+		await shot("21_riding_it_over")
+		await secs(3.0)
+		print("WATCH barrels: ridden over the lip: limbs just after it went loose: %s; 4.3 s later the climber is at %s, in water %s, limbs %s" % [after, where(), c.float_mode, holds()])
+	_free_cam = false
+
+
 ## Note 4: what stands where the lift's two cables were.
 func _w_lift(_a: Array) -> void:
 	pk.warp("1.5")
