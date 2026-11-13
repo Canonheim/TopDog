@@ -4,7 +4,7 @@
 
 # ------------------------------------------------------------------ shared shapes
 def _arch(cx, y, w=3.0, h=4.5, style="dark"):
-    """A stepped arch doorway: two sides stepping in to a flat lintel. Never round."""
+    """A stepped arch doorway: two sides stepping in to a flat lintel."""
     a, b, c = w / 2.0, w / 3.0, w / 6.0
     return ["poly", [[cx - a, y], [cx - a, y + h * 0.62], [cx - b, y + h * 0.62], [cx - b, y + h * 0.82], [cx - c, y + h * 0.82], [cx - c, y + h],
                      [cx + c, y + h], [cx + c, y + h * 0.82], [cx + b, y + h * 0.82], [cx + b, y + h * 0.62], [cx + a, y + h * 0.62], [cx + a, y]],
@@ -67,22 +67,26 @@ LA_PUERTA = {
          "text": "Wall bays of pale fitted blocks, 4 m wide and 5 m tall, one row above another, with the carved band between the rows. It runs the whole width of the frame and out of its top, so there is no black behind anything (note 51). It is 6 m back, in brown shadow.",
          "draw": [["rect", -350.5, 366.0, -309.0, 386.5], _frieze(-332.0, -309.0, 371.8), _frieze(-332.0, -309.0, 377.6), _frieze(-341.0, -309.0, 383.4)]},
         {"name": "Two doorways", "z": [-7.0, -6.0], "style": "dark", "tag": [-327.5, 367.6],
-         "text": "Two stepped arch doorways in the back wall, dark inside, each with a small stone pug plaque over it and a cut-paper banner high above. The hall goes on behind you. Today one mask 6 m across hangs on this wall. It goes: the first big face you see should be the great mask at the top of the tiers.",
+         "text": "Two stepped arch doorways in the back wall, dark inside, each with a small stone pug plaque over it and a cut-paper banner high above. The hall goes on behind you. Today a string of cut paper hangs low across this wall, 1.8 m behind you, and one mask 6 m across hangs above it. Both go. Nothing thin hangs near the floor you walk on, and the first big face you see should be the great mask at the top of the tiers.",
          "draw": [_arch(-327.5, 366.0), _arch(-321.5, 366.0), ["circle", -327.5, 373.3, 0.75, {"style": "line"}], ["circle", -321.5, 373.3, 0.75, {"style": "line"}],
                   _banner(-327.5, 382.2), _banner(-321.5, 382.2)]},
         {"name": "The fall strip", "z": [-6.0, -5.6], "style": "pale", "tag": [-315.5, 380.0],
-         "text": "A carved strip 5 m wide runs up the back wall and out of the frame, behind the place where the great hall's drain comes down. Small carved figures fall down it, head first, all the way from the top. You walk past it on your way in, before you know what it is for.",
+         "text": "A carved strip 5 m wide runs up the back wall and out of the frame, behind the place where the great hall's drain comes down. It is carved with bones, tumbling, all the way from the top. You walk past it on your way in, before you know what it is for.",
          "draw": [["rect", -318.0, 366.0, -313.0, 386.5], ["line", -316.5, 386.5, -316.5, 366.4, {"style": "mark"}], ["line", -314.5, 386.5, -314.5, 366.4, {"style": "mark"}]]},
+        {"name": "Three broken forearms", "z": [-3.2, -1.5], "style": "solid", "tag": [-316.4, 368.1],
+         "text": "Three stone forearms, each 1.9 m long, lie at the foot of the fall strip. They broke off the champions in the great hall, far above, and came down the ramp and the drain (see El Salón de los Campeones). They lie back against the wall, behind the play space, so they are scenery and not something to stand on.",
+         "draw": [["poly", [[-317.7, 366.0], [-315.9, 366.0], [-315.9, 366.45], [-317.7, 366.45]]], ["poly", [[-315.3, 366.0], [-313.5, 366.0], [-313.6, 366.5], [-315.2, 366.42]]],
+                  ["poly", [[-316.9, 366.45], [-315.2, 366.9], [-315.3, 367.3], [-317.0, 366.85]]]]},
         {"name": "The platform the mask sits on", "z": [-5.5, -1.3], "style": "pale", "tag": [-345.5, 374.2], "top": True,
-         "text": "The body of the stepped platform, right behind the tiers you climb. Each tier you touch is the front edge of a terrace that runs 4 m back into the scene. On the platform's face under each tier, a carved band shows small figures climbing the tiers, and one of them being scraped off.",
+         "text": "The body of the stepped platform, right behind the tiers you climb. Each tier you touch is the front edge of a terrace that runs 4 m back into the scene. On the platform's face under each tier runs the temple's carved band: pug faces, belts and bones.",
          "draw": _platform},
         {"name": "Three slots", "z": [-2.4, -1.2], "style": "dark", "tag": [-339.7, 370.4],
          "text": "Each false tier rides in a slot cut along the platform's face and lined with bronze. The slot is 5.7 m long: the 3 m the tier fills, and 2.6 m of empty channel to the west of it. The empty channel shows you, before you step, that this tier moves and how far it goes. The true tiers have no slot.",
          "draw": _slots},
         {"name": "The door through the well's wall", "z": [-3.0, -1.2], "style": "pale", "tag": [-307.2, 375.0],
-         "text": "The side of the doorway: the same pale blocks, with the wall stepping in above your head. The mushroom garden has reached this far: thick roots lie in the joints of the first few blocks, and three small orange mushrooms grow at the foot of the wall.",
-         "draw": [["rect", -309.0, 366.0, -305.5, 382.0], ["circle", -306.3, 366.35, 0.3, {"style": "line"}], ["circle", -307.2, 366.25, 0.22, {"style": "line"}],
-                  ["circle", -308.1, 366.3, 0.25, {"style": "line"}], ["line", -305.5, 369.5, -308.6, 367.2, {"style": "mark"}]]},
+         "text": "The side of the doorway: the same pale blocks. At its head it steps out to carry the stone beam that the two banner chains hang from, out over the well. That beam is made longer, so that it reaches both chains (the garden's page for the crossing shows it). The mushroom garden has reached this far: one thick root lies in the joints of the first few blocks.",
+         "draw": [["rect", -309.0, 366.0, -305.5, 382.0],
+                  ["line", -305.8, 369.5, -308.6, 367.2, {"style": "mark"}]]},
         {"name": "Torches", "z": [-6.0, -5.7], "style": "light", "tag": [-324.5, 371.0],
          "text": "Four on the back wall along the floor and one on the platform's face. The floor and the tiers are warm and clear, and the wall above them falls away into brown.",
          "draw": _torches([(-324.5, 369.0), (-311.5, 369.0), (-319.0, 371.0), (-330.0, 369.0), (-336.5, 368.0)])},
@@ -94,7 +98,7 @@ LA_PUERTA = {
         {"name": "Deep carving on the true tiers", "z": [-1.2, 1.2], "style": "mark", "tag": [-331.6, 369.4],
          "text": "The front faces of the first and third tiers and the landing are carved deep and pale, with pug faces and belts. They are bonded into the platform, with no joint under them.",
          "draw": [["line", -332.0, 367.5, -332.0, 368.5], ["line", -338.0, 372.5, -338.0, 373.5], ["line", -347.0, 380.0, -347.0, 381.0]]},
-        {"name": "Polish and wear", "z": [-1.2, 1.2], "style": "mark", "tag": [-315.5, 366.6],
+        {"name": "Polish and wear", "z": [-1.2, 1.2], "style": "mark", "tag": [-312.2, 366.6],
          "text": "Drawn onto what is there. The chute is polished black with pale runs down it. Where the drain lands, the paving is worn into a shallow dish 5 m across, scuffed pale.",
          "draw": [["line", -318.0, 366.0, -313.0, 366.0], ["line", -342.6, 366.7, -350.0, 371.5]]},
     ],
@@ -119,8 +123,9 @@ LA_PUERTA = {
         ["Slot with bronze lining", "5.7 m long, 1.1 m tall", "3", "Background", "kit: slot and bronze-shod sliding block"],
         ["False tier: jade stripe, bronze shoe", "3 m by 1 m", "3", "Play space", "kit: slot and bronze-shod sliding block"],
         ["True tier and landing: deep carved front", "3 m and 7 m by 1 m", "3", "Play space", "new, this area only"],
-        ["Fall strip: a carved panel of falling figures", "5 m wide, to the roof", "1", "Background", "kit: fall strip (added below)"],
-        ["Doorway side with roots and three small mushrooms", "3.5 m wide, 16 m tall", "1", "Background", "kit: wall bay; roots and small caps from the garden's kit"],
+        ["Fall strip: a carved strip of tumbling bones", "5 m wide, to the roof", "1", "Background", "kit: fall strip (added below)"],
+        ["Broken forearm of a champion", "1.9 m", "3", "Background", "kit: broken forearm (added below)"],
+        ["Doorway side with a stepped head, and one thick root", "3.2 m wide, 16 m tall", "1", "Background", "kit: wall bay, cut to a door side; root from the garden's kit"],
         ["Torch", "0.8 m", "5", "Background", "kit: torch in a bronze bracket"],
         ["Low balustrade", "20 m long, 0.8 m tall", "1", "Foreground", "kit: low balustrade"],
     ],
@@ -132,6 +137,11 @@ LA_PUERTA = {
     "notes": [
         "Note 51: the back wall runs the whole frame. There is no black behind the floor or the tiers.",
         "Note 48, the part about these steps: they slide into open air under the next tier, not into a wall, so nothing here pins a hand. The slot is in the platform behind them.",
+        "Parker, 11-13: a jade band round everything that moves is confirmed. It is on the three false tiers here and on every moving thing in the temple.",
+        "Parker, 11-13: the carved band is pugs, belts and bones only. It never shows how a challenge is done. The fall strip is carved with bones for the same reason.",
+        "Course change, something you could touch is made longer: the stone beam over the door, which the two banner chains hang from, is carried out a further 2.6 m into the well so that it reaches both chains. The garden's page for the crossing has the picture.",
+        "Scenery moved out of the play space: every torch in the temple stands 0.9 m behind you today, which is inside the play space. In these designs every torch is on a back wall, at least 2 m behind you. The light each one gives stays where it is.",
+        "Scenery that goes: the string of cut paper low over the entry floor, and the 6 m mask above it. The two banners on this wall move up, high over the doorways.",
     ],
 }
 
@@ -155,7 +165,7 @@ LA_MASCARA = {
     ],
     "background": [
         {"name": "The hall's end wall", "z": [-7.0, -6.0], "tag": [-346.0, 402.5],
-         "text": "The same wall bays as the rest of the hall, rising out of the frame. Beside the mask the carved band shows small figures riding a jaw and climbing from tooth to nose to eye.",
+         "text": "The same wall bays as the rest of the hall, rising out of the frame, with the temple's carved band of pug faces, belts and bones beside the mask.",
          "draw": [["rect", -371.5, 376.5, -344.5, 404.5], _frieze(-350.1, -344.5, 386.8)]},
         {"name": "The mask's face", "z": [-5.0, -1.3], "style": "pale", "tag": [-352.2, 398.6], "top": True,
          "text": "The carved face, kept as it looks today: terracotta, jade and cream, with the ears and the crown above the brow. It is scenery. Its flat cheeks and forehead are out of reach behind you, so they are never mistaken for holds. Its colours are a shade browner than the bone white of the holds.",
@@ -220,6 +230,7 @@ LA_MASCARA = {
         "Note 47, first half (done): the face is set back so you are always in front of it. This design keeps the whole flat face in the background and brings only the holds forward.",
         "Note 47, second half (not built): what you can hold has to be plain. Here the holds are the carved features themselves, they are the only bone white and gold on the face, and each stands out on a stem.",
         "When the mask's features are measured, the holds move to where the carving is. If a gap is then too far, one more carved stud goes on the face, in the same bone white and gold.",
+        "Scenery moved out of the play space: the mask's face reaches to 0.8 m behind you today. Here the whole flat face is at least 1.3 m behind, so that only the holds are in the play space. Where a thing stands tells you what it is (Parker, 11-13).",
     ],
 }
 
@@ -256,7 +267,7 @@ LOS_PISTONES = {
          "text": "A slot up the back wall behind the plunger, 3.6 m taller than the plunger itself. The empty part above it is the height it will lift you.",
          "draw": [["rect", -368.3, 392.4, -367.0, 400.1]]},
         {"name": "The carved band", "z": [-2.7, -2.2], "style": "pale", "tag": [-360.5, 399.6],
-         "text": "Along the top of the wall under the pier, where you read it as you walk to the plunger: small figures stepping from bolt to bolt, left wall then right wall, and one being pushed off.",
+         "text": "Along the top of the wall under the pier, where you pass it as you walk to the plunger: the temple's band of pug faces, belts and bones. It shows nothing of how the shaft is climbed (Parker, 11-13).",
          "draw": [_frieze(-366.3, -354.0, 400.0)]},
         {"name": "An offering niche", "z": [-2.7, -2.2], "style": "dark", "tag": [-364.2, 397.9],
          "text": "Beside the plunger, at head height: a small square niche holding a bone and a jade bead. The temple's people left one beside every machine.",
@@ -282,7 +293,7 @@ LOS_PISTONES = {
         ["A piston's end", "The bronze face that shoves you", "The socket on the wall it comes out of"],
         ["The plunger", "The shaft's lift", "Its guide slot, with the empty 3.6 m above it"],
         ["The two walls", "Polished black stone, wet", "The back wall, dry and carved, to show what the side walls are not"],
-        ["The walk under the pier", "The mask's brow, carried on as a cornice", "The carved band that shows the shaft being climbed"],
+        ["The walk under the pier", "The mask's brow, carried on as a cornice", "The carved band along the wall, and the offering niche by the plunger"],
     ],
     "pieces": [
         ["Shaft back wall", "5.5 m wide, 16 m tall", "1", "Background", "kit: wall bay, cut to width"],
@@ -307,33 +318,37 @@ LOS_PISTONES = {
 
 # ------------------------------------------------------------------ 5.4 Engranajes
 _GEARS = [(-364.6, 416.4), (-368.56, 420.36), (-364.6, 424.32), (-368.56, 428.28)]
+_MESH = [418.38, 422.34, 426.3]   # the heights of the three places where two wheels meet, all at x -366.58
 
 ENGRANAJES = {
     "id": "5.4", "slug": "5_4_engranajes", "title": "Engranajes", "kind": "challenge",
     "window": [-380.5, 408.5, -352.5, 437.0], "screen": [-366.6, 422.5], "cut_y": 420.4, "climber": [-362.0, 412.0],
     "place": ("Above the piston shaft is the gear room: the place where the temple's turning comes from, as far as anyone can tell. Four stone "
-              "wheels, each 6 m across with its cogs, stand one above another in a zigzag and turn against each other. They are built the way "
-              "a mill's wheels are built: the wheel is one greased disc, and each of its twelve cogs is a separate block set into a socket "
-              "in the rim and pinned with bronze. The wheels hang on two tall stone posts on the back wall, two wheels to a post. Nobody "
-              "knows what turns them. The room is 14 m wide and 22 m tall, and it opens at its top corner onto the balcony of the great hall."),
+              "wheels, each 6 m across with its cogs, stand one above another in a zigzag and turn against each other, once round in 12 "
+              "seconds. They are built the way a mill's wheels are built: the wheel is one greased disc, and each of its twelve cogs is a "
+              "separate block set into a socket in the rim. The wheels hang on two tall stone posts on the back wall, two wheels to a post. "
+              "Where two wheels meet, the cogs close on each other like teeth, and whoever is between them is knocked out. The temple "
+              "marked those three places in dark bronze. Nobody knows what turns the wheels. The room is 14 m wide and 22 m tall, and it "
+              "opens at its top corner onto the balcony of the great hall."),
     "keep": [
-        "The four gears: where each is, its size, its twelve cogs, and that each turns against the one below.",
-        "The disc can't be held. Only cogs can.",
-        "Parker has still to choose how the gears get harder (note 49). Nothing here depends on which way he chooses.",
+        "The four gears: where each is, its size, and that each turns against the one below.",
+        "All twelve cogs on every wheel can be held. The disc can't.",
+        "Parker, 11-13: the wheels turn twice as fast as today, and being caught where two wheels meet knocks you out. No cogs are taken away and the wheels never turn back.",
         "Open air under the second and fourth gears, down to the piston shaft.",
     ],
     "background": [
         {"name": "The gear room's back wall", "z": [-3.4, -2.8], "tag": [-373.2, 432.6], "top": True,
-         "text": "Wall bays, 2.8 m behind you, browner than the cogs. At the top right the room is open to the great hall, and the hall's own back wall carries on behind the balcony.",
-         "draw": [["rect", -374.5, 408.5, -360.2, 434.0], ["rect", -366.0, 430.0, -352.5, 437.0]]},
+         "text": "Wall bays, 2.8 m behind you, browner than the cogs, with the temple's carved band of pug faces, belts and bones at three heights. At the top right the room is open to the great hall, and the hall's own back wall carries on behind the balcony.",
+         "draw": [["rect", -374.5, 408.5, -360.2, 434.0], ["rect", -366.0, 430.0, -352.5, 437.0],
+                  _frieze(-374.5, -360.2, 417.8), _frieze(-374.5, -360.2, 423.6), _frieze(-374.5, -360.2, 429.4)]},
         {"name": "Two posts", "z": [-2.6, -1.3], "style": "pale", "tag": [-368.56, 414.6], "top": True,
          "text": "Two square carved posts stand against the back wall from floor to roof, each with a pug capital. The east post carries the first and third wheels and the west post the second and fourth. Each wheel's axle runs back into its post between two carved cheeks. You see the posts above, below and between the wheels, so each wheel is plainly hung on something.",
          "draw": [["rect", -369.16, 412.6, -367.96, 434.0], ["rect", -365.2, 412.0, -364.0, 434.0],
                   ["poly", [[-369.6, 412.6], [-367.5, 412.6], [-367.9, 411.9], [-369.2, 411.9]]],
                   ["rect", -369.5, 433.3, -367.6, 434.0], ["rect", -365.55, 433.3, -363.65, 434.0]]},
-        {"name": "The carved band", "z": [-3.4, -2.8], "style": "pale", "tag": [-373.2, 417.4],
-         "text": "At three heights on the back wall: small figures riding cogs round, stepping from one wheel to the next, and one figure caught where two wheels meet. It is the only warning the room gives about the mesh.",
-         "draw": [_frieze(-374.5, -360.2, 417.8), _frieze(-374.5, -360.2, 423.6), _frieze(-374.5, -360.2, 429.4)]},
+        {"name": "Three bronze jaws", "z": [-2.6, -1.3], "style": "dark", "tag": [-366.58, 418.4], "top": True,
+         "text": "Between the two posts, right behind each of the three places where two wheels meet, is a plate of dark bronze 2.8 m wide and 1.8 m tall, cast as a pug's open jaws with its teeth showing. You see it through the closing cogs, and above and below them. Dark bronze is the temple's mark for what hurts, and these are the only three plates of it in the room. They say where the bite is before you are near it.",
+         "draw": [["rect", -367.96, y - 0.9, -365.2, y + 0.9] for y in _MESH]},
         {"name": "The grease shelf", "z": [-3.4, -2.8], "style": "dark", "tag": [-373.3, 413.0],
          "text": "Low in the west corner: an offering niche, and beside it a stone trough of black grease with a long ladle. Black runs of grease go down both posts from every axle. It says why the discs can't be held.",
          "draw": [["rect", -373.9, 413.4, -373.3, 414.0], ["rect", -372.9, 413.4, -371.3, 413.8, {"style": "pale"}],
@@ -343,42 +358,43 @@ ENGRANAJES = {
          "draw": _torches([(-373.5, 423.9), (-361.0, 419.9), (-362.5, 431.2)])},
     ],
     "play": [
-        {"name": "Cogs set into the rim", "z": [-1.2, 1.2], "style": "line", "tag": [-361.9, 414.6],
-         "text": "Each cog is its own block in its own socket, with a bronze pin through it. A cog you can hold is pale dry stone. A cog you can't is black and greased like the disc. Today all twelve on each wheel are pale. If Parker picks fewer (note 49), the others are swapped for black ones and nothing else changes. If the mesh is made to bite, every cog's two side faces get a dark bronze shoe, and its outer end stays pale.",
-         "draw": [["circle", x, y, 2.3] for x, y in _GEARS]},
+        {"name": "Hammer cogs", "z": [-1.2, 1.2], "style": "line", "tag": [-361.9, 414.6],
+         "text": "Each cog is its own block in its own socket in the rim, with a bronze pin through it. Its front and its outer end are pale dry stone: that is what you hold. Its two side faces, the faces that close on the next wheel's cogs, are shod in dark bronze, like the two faces of a hammer. So every cog shows the part that carries you and the part that bites. The three dashed rings mark where the wheels meet.",
+         "draw": [["circle", x, y, 2.3] for x, y in _GEARS] + [["circle", -366.58, y, 1.0, {"style": "mark"}] for y in _MESH]},
         {"name": "Running dogs round each disc", "z": [-1.2, 1.2], "style": "mark", "tag": [-364.6, 422.9],
-         "text": "A ring of small carved dogs runs round each disc's face, nose to tail, in shallow relief under the grease. They show which way a wheel turns and how fast, at any speed. If the wheels are made to stop and turn back, the dogs are seen to stop first.",
+         "text": "A ring of small carved dogs runs round each disc's face, nose to tail, in shallow relief under the grease. They show which way a wheel turns and how fast. A jade band round the rim says the wheel moves.",
          "draw": [["circle", x, y, 1.5] for x, y in _GEARS]},
-        {"name": "A pug boss at each hub", "z": [-1.2, 1.2], "style": "pale", "tag": [-368.56, 426.9],
-         "text": "The end of each axle shows at the wheel's centre as a carved pug's face in a jade ring. It is the same boss that chains hang from elsewhere in the temple.",
+        {"name": "A pug's face at each hub", "z": [-1.2, 1.2], "style": "dark", "tag": [-368.56, 426.9],
+         "text": "The end of each axle shows at the wheel's centre as a carved pug's face. It is cut in the disc's own dark stone and greased like the rest of the disc, so it does not read as a hold.",
          "draw": [["circle", x, y, 0.5] for x, y in _GEARS]},
     ],
     "foreground": [],
     "explains": [
-        ["A cog", "A stone block pinned into the wheel's rim", "The wheel, and the post its axle goes into"],
+        ["A cog", "A stone hammer pinned into the wheel's rim", "The wheel, and the post its axle goes into"],
         ["The four wheels", "The temple's gear train", "Two posts on the back wall, two wheels to a post"],
         ["The greased disc", "The wheel's body, kept slick", "The grease trough, and the black runs down the posts"],
-        ["Where two wheels meet", "The mesh", "The figure caught between wheels on the carved band"],
+        ["Where two wheels meet", "The bite", "A dark bronze pug's jaws behind each of the three meshes"],
         ["The ledge you start from", "The top of the pier", "The back wall and the foot of the east post"],
     ],
     "pieces": [
-        ["Gear wheel: greased disc, twelve cog sockets, running dogs on its face", "4.6 m disc, 6.2 m over the cogs", "4", "Play space", "new, this area only (the kit's temple_gear, re-made)"],
-        ["Cog: pale and dry", "0.9 m by 0.55 m", "48 today", "Play space", "new, this area only"],
-        ["Cog: black and greased", "0.9 m by 0.55 m", "none today; up to 32 (note 49)", "Play space", "new, this area only"],
-        ["Bronze shoe for a cog's side face", "0.9 m", "none today; up to 96 (note 49)", "Play space", "new, this area only"],
-        ["Pug boss in a jade ring, as a hub", "1 m", "4", "Play space", "kit: chain boss"],
+        ["Gear wheel: greased disc with a jade rim band, twelve cog sockets, running dogs and a dark pug hub on its face", "4.6 m disc, 6.2 m over the cogs", "4", "Play space", "new, this area only (the kit's temple_gear, re-made)"],
+        ["Hammer cog: pale front and end, dark bronze on its two side faces", "0.9 m by 0.55 m", "48", "Play space", "new, this area only"],
+        ["Bronze jaws: a plate cast as a pug's open jaws", "2.8 m by 1.8 m", "3", "Background", "new, this area only"],
         ["Post with a pug capital and two pairs of axle cheeks", "1.2 m square, 22 m tall", "2", "Background", "kit: column, stacked; axle cheeks and stone axle"],
         ["Wall bay; carved band", "4 m by 5 m; 0.8 m tall", "to fill; 3 runs", "Background", "kit: wall bay; carved frieze strip"],
         ["Grease trough with a ladle; offering niche", "1.6 m; 0.6 m", "1 each", "Background", "trough new, this area only; kit: offering niche"],
         ["Torch", "0.8 m", "3", "Background", "kit: torch in a bronze bracket"],
     ],
     "effects": [
-        "Stone dust falls from each of the three meshes all the time. If the mesh bites, a few sparks fall with it.",
-        "The whole train shakes and drops dust from its axles for a second before any change of direction, if Parker picks that.",
+        "A clank and a few sparks each time two bronze faces close, at all three meshes, all the time. You hear the bite and see it before you reach it.",
+        "Stone dust falls from each mesh onto the bronze jaws behind it.",
         "A drip of grease from the lowest wheel onto the ledge's west end.",
     ],
     "notes": [
-        "Note 49 (Parker to pick): fewer cogs that hold, a faster turn, a mesh that bites, a train that turns back. The room is designed so each of these is a small swap: cogs change colour, the dogs show speed and direction, bronze shoes mark a mesh that bites, and the shake before a move is the temple's own rule.",
+        "Note 49, Parker, 11-13: the gears turn twice as fast, and being crunched in the mesh knocks you out. Not fewer cogs that hold, and no turning back.",
+        "Course change: the four gears turn at 5 turns a minute, where they turn at 2.5 today. A cog comes past every second.",
+        "Course change: a climber caught between closing cogs is knocked out. The reaches from wheel to wheel have to be measured again at the new speed.",
+        "The mesh is marked twice with the temple's dark bronze: on the side faces of every cog, and on the three jaws behind the meshes.",
     ],
 }
 
@@ -397,64 +413,91 @@ def _pilaster(sx, y0, y1):
     return [["rect", sx - 1.3, y0, sx + 1.3, y1], ["rect", sx - 1.6, y1 - 0.6, sx + 1.6, y1], ["rect", sx - 1.9, y1 - 0.3, sx + 1.9, y1]]
 
 
+def _belt(sx, fy):
+    """The stone belt a champion holds over its head, behind the play space, with its plate in the middle."""
+    return [["poly", [[sx - 3.9, fy + 7.3], [sx, fy + 7.9], [sx + 4.5, fy + 7.75], [sx + 4.5, fy + 8.65], [sx, fy + 8.8], [sx - 3.9, fy + 8.2]]],
+            ["circle", sx, fy + 8.35, 0.5, {"style": "solid"}]]
+
+
+def _gone(x0, y0, x1, y1):
+    """A cross over a length of arm that has broken off."""
+    cx, cy = (x0 + x1) / 2.0, (y0 + y1) / 2.0
+    return [["line", cx - 0.55, cy - 0.55, cx + 0.55, cy + 0.55], ["line", cx - 0.55, cy + 0.55, cx + 0.55, cy - 0.55]]
+
+
 EL_SALON = {
     "id": "5.5", "slug": "5_5_el_salon_de_los_campeones", "title": "El Salón de los Campeones", "kind": "challenge",
     "window": [-367.5, 425.5, -324.5, 452.5], "screen": [-351.5, 437.5], "cut_y": 437.2, "climber": [-363.5, 430.0],
     "place": ("The great hall is where the temple kept its champions: everyone who ever finished the climb, carved 9 m tall, standing in two "
               "ranks down the length of the hall. The far rank stands in niches in the far wall with its arms down. The near rank, the three "
-              "you climb, stands out in the hall on great pilasters, each with both arms raised in victory and one fist gilded. The hall "
-              "has no floor you can use. Its floor is a polished black ramp that falls away to the east, so each champion's pilaster is "
-              "taller than the last: the second stands 4.5 m above the ramp and the third 16 m. The ramp is the hall's way back down. It "
-              "ends at the drain."),
+              "you climb, stands out in the hall on great pilasters. Each of these holds its champion's belt over its head in both hands: a "
+              "broad stone belt, behind you, with the hands gripping it from the front. They are very old and their arms have begun to go. "
+              "The first and the third have each lost a forearm: the arm ends at the elbow, and the gilded hand is still up there on the "
+              "belt, with nothing between. The second has lost both arms, and only its two hands are left on its belt. The hall has no "
+              "floor you can use. Its floor is a polished black ramp that falls away to the east and ends at the drain."),
     "keep": [
-        "The three champions: where each stands, its pose, and every part of it you can hold.",
-        "The two flings, fist to raised arm: 7 m, then 9.5 m.",
-        "The east forearm of each champion can't be held today, and the gilded fist hangs free at its end. See the question below.",
+        "The three champions where they stand, and their legs, trunks, shoulders and heads as they are.",
+        "The first and third champions: the whole west arm, the east arm as far as the elbow, and the gilded east hand hanging free 1.85 m beyond it.",
+        "Parker, 11-13: where the forearm used to be drawn there is nothing, and you fall through. Only the hand is left, sticking out of the background.",
+        "Parker, 11-13: the second champion has both arms broken and only its two hands to hold. This changes the play: see the notes.",
         "A miss lands on the ramp and slides to the drain. Nothing stands in front of any of it.",
     ],
     "background": [
         {"name": "The hall's far wall", "z": [-10.0, -9.0], "tag": [-345.5, 451.0], "top": True,
-         "text": "Wall bays from the ramp to the roof, 9 m back and brown with shadow. The carved band crosses it at three heights. The middle band, near the height of the fists, shows small figures swinging from fist to arm down a line of statues.",
+         "text": "Wall bays from the ramp to the roof, 9 m back and brown with shadow. The temple's carved band of pug faces, belts and bones crosses it at three heights.",
          "draw": [["rect", -366.0, 425.5, -324.5, 450.0], ["rect", -366.0, 450.0, -352.0, 452.5], _frieze(-366.0, -324.5, 435.8), _frieze(-366.0, -324.5, 441.6), _frieze(-366.0, -324.5, 447.4)]},
         {"name": "The far rank", "z": [-9.0, -7.5], "style": "dark", "tag": [-353.5, 433.6],
-         "text": "Two more champions, the same size and the same stone, in tall stepped niches in the far wall. Their arms are down. That is the temple's rule: a statue with its arms down is scenery, and a statue with an arm raised is climbed. They are 8 m back and browner, so they are never taken for the near rank.",
+         "text": "Two more champions, the same size and the same stone, in tall stepped niches in the far wall. Their arms are down and whole, and each wears its belt at the waist. They are 8 m back and browner. They show what the near rank looked like before it began to break.",
          "draw": _still_champion(-353.5, 431.5) + _still_champion(-339.5, 432.0)},
         {"name": "Two great pilasters", "z": [-2.6, -1.3], "style": "pale", "tag": [-347.0, 427.4], "top": True,
          "text": "The second and third champions each stand on a plinth, and each plinth is the top of a great pilaster that rises from the ramp behind you, with a stepped head that reaches forward to carry the plinth. The third pilaster is 16 m tall and goes out of the bottom of the frame. The first champion stands on the balcony and needs none.",
          "draw": _pilaster(-347.0, 425.5, 429.8) + _pilaster(-331.5, 425.5, 431.8)},
+        {"name": "Three belts, held overhead", "z": [-1.9, -1.3], "style": "pale", "tag": [-360.0, 439.4], "top": True,
+         "text": "Behind each champion's raised hands is its belt: a band of stone 8.4 m long and 0.9 m tall with a round bronze plate in the middle, held up over the head. It stands just behind the play space, on a square pillar that runs up the champion's back. This is the background the hands stick out of. A hand whose arm has gone is still gripping its belt. The belts are browner than the statues and are scenery: you pass in front of them.",
+         "draw": _belt(-360.0, 430.0) + _belt(-347.0, 431.0) + _belt(-331.5, 433.0)},
+        {"name": "The first champion's forearm", "z": [-2.6, -1.4], "style": "pale", "tag": [-357.6, 431.2],
+         "text": "The forearm that broke off the first champion lies on the balcony behind its feet, against the wall, 1.9 m of carved stone with a rough old break at each end. It is behind the play space and is scenery. The other three broken lengths fell onto the ramp and went down the drain: they lie at the foot of the fall strip, by the temple's door (see La Puerta).",
+         "draw": [["poly", [[-358.6, 430.0], [-356.7, 430.0], [-356.75, 430.45], [-358.55, 430.5]]]]},
         {"name": "Banners", "z": [-9.0, -8.9], "style": "pale", "tag": [-339.5, 448.2],
-         "text": "One over each niche, whole and bright, hung high on the far wall. None hangs near a fist or an arm, and none hangs in the hall's open air.",
+         "text": "One over each niche, whole and bright, hung high on the far wall. Today three banners hang 1.4 m behind you under the roof, beside the flight of the flings. They move back here, 9 m behind.",
          "draw": [_banner(-353.5, 449.8), _banner(-339.5, 449.8)]},
         {"name": "Torches", "z": [-9.0, -8.7], "style": "light", "tag": [-336.6, 438.7],
          "text": "One either side of each niche and one on the balcony. They sit low, below the line of the flings, so a climber in the air is seen against plain wall.",
          "draw": _torches([(-356.4, 436.0), (-350.6, 436.0), (-342.4, 436.4), (-336.6, 436.4), (-364.4, 432.0)])},
     ],
     "play": [
-        {"name": "A black bracer on each launch arm", "z": [-1.2, 1.2], "style": "line", "tag": [-343.3, 438.0],
-         "text": "Each champion's east forearm, from the elbow to the fist, can't be held. Today it looks like the rest of the arm. Here it wears a bracer of polished black stone, the temple's look for what you can't hold, so the arm reads as it plays: climb to the elbow, then take the fist.",
-         "draw": [["line", sx + 2.6, fy + 7.0, sx + 3.7, fy + 7.95] for sx, fy in _CHAMPS]},
-        {"name": "The gilded fist", "z": [-1.2, 1.2], "style": "line", "tag": [-355.2, 439.4],
-         "text": "Gold, with a jade band at the wrist. It is the only gold on each statue, and it is where you fling from.",
+        {"name": "Three gilded hands", "z": [-1.2, 1.2], "style": "line", "tag": [-355.2, 439.4],
+         "text": "The east hand of each champion: a fist of gold, in the play space, with its fingers closed round the belt behind it. It is the only gold on each statue, and it is where you fling from. On the first and third champions you reach it from the elbow's broken end, 1.85 m away.",
          "draw": [["circle", sx + 4.02, fy + 8.19, 0.65] for sx, fy in _CHAMPS]},
-        {"name": "The catching arm", "z": [-1.2, 1.2], "style": "mark", "tag": [-350.9, 439.7],
-         "text": "The raised west arm of each champion is carved deep and pale along its whole length, with a belt of small pug faces wound round it. It is 3 m of forearm and a fist: the biggest pale thing in front of you as you fly.",
-         "draw": [["line", sx - 1.0, fy + 5.9, sx - 3.2, fy + 7.6] for sx, fy in _CHAMPS]},
+        {"name": "What has broken off", "z": [-1.2, 1.2], "style": "mark", "tag": [-343.0, 437.6],
+         "text": "The four crosses mark the lengths of arm that are gone: the east forearm of all three champions, and the outer 1.6 m of the second champion's west arm. The first three are drawn in today's course but could never be held. The fourth can be held today and is taken away. Each stump ends in an old break: rough and weathered, with no cracks running back into the arm, so it does not read as a thing that will break under you.",
+         "draw": _gone(-357.4, 437.0, -356.3, 437.95) + _gone(-344.4, 438.0, -343.3, 438.95) + _gone(-328.9, 440.0, -327.8, 440.95) + _gone(-348.93, 437.63, -350.1, 438.52)},
+        {"name": "The second champion's west hand", "z": [-1.2, 1.2], "style": "line", "tag": [-351.6, 439.6],
+         "text": "A stone fist 1 m across, gripping the belt, with no arm behind it. It is what you catch after the first fling. From it you reach the stump at the shoulder, 1.85 m away, cross the shoulders and the head, and go out along the east stump to the gilded hand. This champion gives you two hands and two stumps where the others give you an arm.",
+         "draw": [["circle", -350.4, 438.75, 0.65]]},
+        {"name": "The whole arm", "z": [-1.2, 1.2], "style": "mark", "tag": [-336.0, 440.9],
+         "text": "The west arm of the first and third champions is whole: carved deep and pale along its length, with a belt of small pug faces wound round it. On the third it is your catch after the long fling: 3 m of forearm and a fist, the biggest pale thing in front of you as you fly.",
+         "draw": [["line", sx - 1.0, fy + 5.9, sx - 3.2, fy + 7.6] for sx, fy in (_CHAMPS[0], _CHAMPS[2])]},
         {"name": "The ramp's polish", "z": [-1.2, 1.2], "style": "mark", "tag": [-350.6, 426.4],
-         "text": "Polished black, with long pale scrapes running down it where others have slid.",
+         "text": "Polished black, with long pale scrapes running down it where others have slid, and three deeper gouges where the broken forearms went down.",
          "draw": [["line", -353.0, 428.7, -347.6, 425.5]]},
     ],
     "foreground": [],
     "explains": [
-        ["A champion's legs, trunk, shoulders and head", "A statue of someone who finished the climb", "The pilaster that carries it, and the far rank of the same statues"],
-        ["The gilded fist", "The victory fist: the launch", "The black bracer below it, which you can't hold"],
-        ["The raised west arm", "The other arm of the same salute: the catch", "The carved band, where small figures swing from fist to arm"],
+        ["A champion's legs, trunk, shoulders and head", "A statue of someone who finished the climb", "The pilaster that carries it, and the far rank of the same statues, still whole"],
+        ["A gilded hand", "All that is left of a raised forearm, still gripping the belt", "The stone belt it sticks out of"],
+        ["The first and third champions' west arm", "The other arm, still whole, holding the belt's other end", "The belt, and the pillar up the champion's back"],
+        ["The second champion's two hands and two stumps", "A champion that has lost both arms", "Its belt, still up on the back pillar, with both hands on it"],
         ["The plinths", "The tops of two great pilasters", "The pilasters, rising out of the ramp behind you"],
         ["The ramp", "The hall's floor, and its way back down", "The far wall's bays running down beside it to the drain"],
-        ["The balcony", "The hall's west gallery, where the gear room lets out", "The far wall and the first torch"],
+        ["The balcony", "The hall's west gallery, where the gear room lets out", "The first champion's broken forearm, lying against the wall"],
     ],
     "pieces": [
-        ["Champion, arms raised: gilded fist, black bracer, carved catching arm", "9 m tall", "3", "Play space", "kit: champion statue (statue_champion_reach); the bracer is new"],
-        ["Champion, arms down", "9 m tall", "2", "Background", "kit: champion statue, arms down"],
+        ["Champion, east forearm broken off: whole west arm, east stump to the elbow, gilded hand", "9 m tall", "2 (the first and third)", "Play space", "kit: champion statue, broken-armed (statue_champion_reach, re-made)"],
+        ["Champion, both arms broken off: two shoulder stumps, a stone west hand, a gilded east hand", "9 m tall", "1 (the second)", "Play space", "kit: champion statue, broken-armed"],
+        ["Stone belt with a bronze plate, on a back pillar", "8.4 m long, 0.9 m tall", "3", "Background", "new, this area only"],
+        ["Broken forearm", "1.9 m", "1 here; 3 more at the door", "Background", "kit: broken forearm (added below)"],
+        ["Champion, arms down, belt at the waist", "9 m tall", "2", "Background", "kit: champion statue, arms down"],
         ["Tall stepped niche", "4.2 m wide, 10 m tall", "2", "Background", "kit: stepped arch doorway, made taller"],
         ["Great pilaster with a stepped corbel head", "2.6 m wide; 4.5 m and 16 m tall", "2", "Background", "kit: great pilaster (added below)"],
         ["Wall bay; carved band", "4 m by 5 m; 0.8 m tall", "to fill; 3 runs", "Background", "kit: wall bay; carved frieze strip"],
@@ -463,15 +506,17 @@ EL_SALON = {
     ],
     "effects": [
         "Torchlight from the gallery above falls through the two slots in the roof as two thin bars of gold on the far wall.",
-        "Dust hangs in the hall's air. It is thicker low down, over the ramp.",
+        "A little grit falls now and then from the second champion's shoulders.",
         "A scrape and a long fading hiss when anything slides the ramp.",
     ],
     "notes": [
+        "Parker, 11-13: the part of the arm that was only background has broken off, and only the hand is left, sticking out of the background. The second champion has both arms broken, so it has only hands, which makes it harder.",
+        "Course change, something you touch is taken away: on the second champion, the outer 1.6 m of the west arm, between a 1.2 m stump at the shoulder and the hand. The catch after the first fling becomes a hand 1 m across where it was an arm 3 m long.",
+        "The 7 m fling to that hand and the 1.85 m reach from the hand to the stump have to be tried. The stump's length is one number, and it is set then.",
+        "Course change, drawn only: the forearm drawn between each east elbow and its hand comes off all three statues. It could never be held, so nothing you touch changes there.",
+        "New scenery: a stone belt behind each champion's hands, at least 1.3 m behind you. It is there so that a hand left in the air is the near end of something real. Where the four broken lengths lie is in item 5.",
+        "Scenery moved back: the three banners that hang 1.4 m behind you under the roof go to the far wall.",
         "Note 51: the far wall runs the whole hall and on behind the east balcony.",
-        "The statues were re-made to the shapes you climb after the playtest. This design adds one thing to them: the black bracer.",
-    ],
-    "ask": [
-        "Each champion's east forearm looks like stone you could hold, and it can't be held. Should it wear a polished black bracer, as drawn here, or should the forearm be made holdable instead?",
     ],
 }
 
@@ -497,15 +542,15 @@ INCENSARIOS = {
          "text": "The third champion's pilaster, 16 m of it, rising from the ramp. It is the last solid thing before the drain.",
          "draw": _pilaster(-331.5, 414.0, 431.8)},
         {"name": "The fall strip", "z": [-9.0, -8.6], "style": "line", "tag": [-315.5, 420.0],
-         "text": "The carved strip of falling figures starts here, at the height of the censer, and runs down the far wall behind the drain's mouth and on down. It is the same strip you walked past at the door. A stone pug's face looks down the drain from beside it.",
+         "text": "The carved strip of tumbling bones starts here, at the height of the censer, and runs down the far wall behind the drain's mouth and on down. It is the same strip you walked past at the door. A stone pug's face looks down the drain from beside it.",
          "draw": [["line", -318.0, 436.0, -318.0, 407.4], ["line", -313.0, 436.0, -313.0, 404.0], ["line", -318.0, 436.0, -313.0, 436.0], ["line", -316.5, 436.0, -316.5, 404.0, {"style": "mark"}], ["line", -314.5, 436.0, -314.5, 404.0, {"style": "mark"}],
                   ["circle", -321.0, 413.0, 1.6, {"style": "line"}]]},
         {"name": "The keeper's doorway", "z": [-3.0, -1.3], "style": "dark", "tag": [-310.6, 447.3],
          "text": "A stepped arch doorway behind the balcony, dark inside, with two incense jars and a long ladle beside it. The chain you climb hangs in front of it.",
          "draw": [_arch(-310.6, 443.6, 2.6, 4.2), ["circle", -312.4, 443.95, 0.3, {"style": "pale"}], ["circle", -312.3, 444.55, 0.22, {"style": "pale"}]]},
-        {"name": "The chain's boss", "z": [-2.0, -1.3], "style": "pale", "tag": [-309.9, 455.6],
-         "text": "A carved pug with a bronze ring in its mouth, set under the stone above the shaft. The chain to the gallery hangs from it.",
-         "draw": [["circle", -311.0, 456.5, 0.45]]},
+        {"name": "Two chain bosses", "z": [-2.0, -1.3], "style": "pale", "tag": [-309.9, 455.6],
+         "text": "A carved pug with a bronze ring in its mouth for each chain: one under the roof over the censer, one under the stone above the shaft for the chain to the gallery. Each is set just behind the play space and reaches its ring forward, so the boss is scenery and the chain is what you hold.",
+         "draw": [["circle", -311.0, 456.5, 0.45], ["circle", -320.0, 449.55, 0.45]]},
         {"name": "The gallery's columns", "z": [-3.0, -2.4], "style": "pale", "tag": [-325.3, 455.6],
          "text": "Above the roof: the gallery you will walk west along, with its square columns and its back wall.",
          "draw": _column(-325.3, 453.0, 457.5) + _column(-317.0, 453.0, 458.3)},
@@ -515,8 +560,8 @@ INCENSARIOS = {
     ],
     "play": [
         {"name": "The one censer", "z": [-1.2, 1.2], "style": "line", "tag": [-318.6, 441.4],
-         "text": "A pierced bronze bowl with a gold lid, coals glowing inside, and a jade band round it because it moves. Its chain is thick bronze, link by link, and can be held along its whole length. The chain hangs from a pug boss carved on the roof's underside.",
-         "draw": [["circle", -320.0, 442.0, 0.85], ["circle", -320.0, 449.55, 0.45, {"style": "pale"}]]},
+         "text": "A pierced bronze bowl with a gold lid, coals glowing inside, and a jade band round it because it moves. Its chain is thick bronze, link by link, and can be held along its whole length, up to the ring it hangs from.",
+         "draw": [["circle", -320.0, 442.0, 0.85]]},
         {"name": "The two that go", "z": [-1.2, 1.2], "style": "mark", "tag": [-326.0, 441.6],
          "text": "The first and third censers are in the course today and are crossed out here. They go, with their chains and their bosses (note 50). The banner that hangs beside the first chain today goes too.",
          "draw": [["line", -325.4, 439.3, -323.6, 441.1], ["line", -325.4, 441.1, -323.6, 439.3], ["line", -316.4, 442.9, -314.6, 444.7], ["line", -316.4, 444.7, -314.6, 442.9]]},
@@ -538,7 +583,7 @@ INCENSARIOS = {
     "pieces": [
         ["Censer: pierced bowl, gold lid, jade band", "0.9 m bowl; 1.6 m with its lid and ring", "1", "Play space", "kit: censer"],
         ["Bronze chain, to hold", "7.8 m; 12.4 m", "2", "Play space", "kit: censer, its chain"],
-        ["Chain boss", "0.9 m", "2", "Play space (on the roof), background", "kit: chain boss"],
+        ["Chain boss", "0.9 m", "2", "Background", "kit: chain boss"],
         ["Stepped arch doorway", "2.6 m wide, 4.2 m tall", "1", "Background", "kit: stepped arch doorway"],
         ["Incense jars and a ladle", "0.6 m jars; 2 m ladle", "2 jars, 1 ladle", "Background", "new, this area only"],
         ["Great pilaster", "2.6 m wide, 16 m tall", "1", "Background", "kit: great pilaster (added below)"],
@@ -557,6 +602,7 @@ INCENSARIOS = {
         "Note 50 (not built): only the middle censer stays. The design is drawn with one.",
         "Note 51 (done): the far wall carries on behind the balcony and the chain.",
         "Note 50 says the first fling, 7.3 m to a moving chain, still has to be tried. If the censer is moved half a metre, its boss moves with it and nothing else here changes.",
+        "Scenery that goes: the banner that hangs beside the first censer's chain today, 1.4 m behind you. No banner hangs at this end of the hall.",
     ],
 }
 
@@ -586,16 +632,13 @@ EL_CONTRAPESO = {
          "draw": [["poly", [[-354.8, 457.2], [-354.8, 457.8], [-360.75, 454.8], [-360.75, 454.2]]], ["rect", -358.55, 454.8, -358.1, 457.0], ["rect", -357.45, 454.8, -357.0, 457.0],
                   ["circle", -357.78, 456.0, 0.4, {"style": "dark"}]]},
         {"name": "Two hanger slots", "z": [-2.0, -1.2], "style": "dark", "tag": [-361.7, 453.2],
-         "text": "Each pan hangs from its end of the beam by a stone hanger that runs in a slot in the back wall. The slot is as long as the pan's travel, so the empty part of each slot shows how far that pan will go. Today each slab has a thin chain that goes straight up through the serpent's back. Those go.",
+         "text": "Each pan hangs from its end of the beam by a stone hanger that runs in a slot in the back wall. The slot is as long as the pan's travel, so the empty part of each slot shows how far that pan will go. Today each slab has a thin chain that hangs 0.6 m behind you, inside the play space, and goes straight up through the serpent's back. Those two chains go.",
          "draw": [["rect", -355.05, 450.8, -354.55, 457.9], ["rect", -361.0, 450.8, -360.5, 457.9]]},
-        {"name": "The carved panel", "z": [-3.2, -2.6], "style": "pale", "tag": [-357.8, 449.0],
-         "text": "Under the scale: a small figure standing on the low pan and another leaping for the high one.",
-         "draw": [["rect", -359.2, 449.6, -356.4, 451.2]]},
         {"name": "The serpent's bed", "z": [-2.2, -1.3], "style": "pale", "tag": [-347.2, 458.2],
          "text": "Overhead: the long carved beam the serpent's back rises out of (see La Serpiente). Its east end stands on the gallery's first column.",
          "draw": [["rect", -362.9, 457.6, -344.8, 458.8]]},
         {"name": "The gallery's columns", "z": [-3.0, -2.4], "style": "pale", "tag": [-343.0, 456.8],
-         "text": "Square carved columns with pug capitals along the back of the gallery. Each has a base to match it in front of the floor (item 13), so you walk between a column and a column's base.",
+         "text": "Square carved columns with pug capitals along the back of the gallery. Each has a base to match it in front of the floor (item 12), so you walk between a column and a column's base.",
          "draw": _column(-349.0, 453.0, 457.6) + _column(-343.0, 453.0, 457.5) + _column(-332.3, 453.0, 457.5) + _column(-325.3, 453.0, 457.5)},
         {"name": "Three doorways and a plaque", "z": [-3.2, -2.6], "style": "dark", "tag": [-339.9, 454.4],
          "text": "Stepped arch doorways between the columns, dark inside, and one stone pug plaque. The temple goes on behind the gallery.",
@@ -635,7 +678,6 @@ EL_CONTRAPESO = {
         ["Axle cheeks and axle", "1.4 m", "1", "Background", "kit: axle cheeks and stone axle"],
         ["Hanger slot with bronze lining", "0.5 m wide, 7 m tall", "2", "Background", "kit: slot and bronze-shod sliding block"],
         ["Pan: slab with a jade band and bronze ends", "2.4 m by 0.8 m", "2", "Play space", "kit: slot and bronze-shod sliding block"],
-        ["Carved panel: the two figures", "2.8 m by 1.6 m", "1", "Background", "kit: carved frieze strip, as a panel"],
         ["Column", "1.2 m square, 4.5 m", "4", "Background", "kit: column"],
         ["Column base", "1.5 m wide, 1.45 m tall", "4", "Foreground", "kit: column base"],
         ["Stepped arch doorway", "3 m wide, 4 m tall", "3", "Background", "kit: stepped arch doorway"],
@@ -649,8 +691,10 @@ EL_CONTRAPESO = {
         "The first pan shakes once as your weight comes on, before it sinks.",
     ],
     "notes": [
-        "Note 52 (done): the insides of the two slots can't be held. They are item 11 here.",
+        "Note 52 (done): the insides of the two slots can't be held. They are item 10 here.",
         "Note 51: the back wall is unbroken behind the open west end.",
+        "Scenery moved out of the play space: the two counterweight chains over the slabs are inside the play space today and cross the serpent's vertebrae. They go. The pans hang from the scale's beam on the back wall instead. Nothing you touch moves.",
+        "Parker, 11-13: no carving shows how a challenge is done, so there is no carved panel under the scale.",
     ],
 }
 
@@ -718,9 +762,8 @@ FROG_ROOM = {
     "notes": [
         "Note 60: one frog in every biome, friendly, off the main way, found by its croak.",
         "Rule 10 of the mountain: a room you can enter is cut away at the front.",
-    ],
-    "ask": [
-        "The frog's shrine is in the west wall at the ledge after El Contrapeso, where the serpent's tail hangs. Is that the right place for it?",
+        "Parker, 11-13: the place is right.",
+        "Course change, something you touch is added: a room 2.8 m deep and 2.8 m tall is cut into the west wall at the ledge, with its floor level with the ledge. The wall behind it is made about a metre thicker. Only the room's floor can be stood on.",
     ],
 }
 
@@ -748,7 +791,7 @@ LA_SERPIENTE = {
          "text": "Wall bays from below the scale up to the roof. Behind the serpent the blocks are carved in shallow relief with its coils and scales, browner than the spine.",
          "draw": [["rect", -366.0, 451.5, -337.5, 469.5]]},
         {"name": "The serpent's bed", "z": [-2.2, -1.3], "style": "pale", "tag": [-345.6, 458.2], "top": True,
-         "text": "A carved stone beam 19 m long and 1.2 m tall, fixed to the back wall just under the spine. It is the serpent's body. The nine rams rise out of its top. At its west end a roller's axle turns in two carved cheeks: that is what works the rams. A row of small figures is carved along its face, walking the spine and ducking under each fang.",
+         "text": "A carved stone beam 19 m long and 1.2 m tall, fixed to the back wall just under the spine. It is the serpent's body. The nine rams rise out of its top. At its west end a roller's axle turns in two carved cheeks: that is what works the rams. Its face is carved with scales, and with a belt of small pug faces along its top edge.",
          "draw": [["rect", -362.9, 457.6, -344.0, 458.8], ["rect", -363.6, 457.3, -362.9, 459.1], ["circle", -363.25, 458.2, 0.3, {"style": "dark"}],
                   ["line", -362.4, 458.2, -344.6, 458.2, {"style": "mark"}]]},
         {"name": "Nine slots", "z": [-2.4, -1.3], "style": "dark", "tag": [-350.0, 462.6],
@@ -809,18 +852,13 @@ LA_SERPIENTE = {
     ],
     "notes": [
         "No playtest note is about this place. It follows the mountain's rules: the moving thing shows its machine, and the danger shows where it comes from.",
-        "Today a 3 m pug mask hangs on the back wall behind the vertebrae, and a banner hangs behind the last one. Both go: nothing pale hangs behind the spine.",
+        "Scenery moved out of the play space: the serpent's head reaches to 0.15 m behind you today. It moves back against the wall, at least 1.3 m behind.",
+        "Scenery that goes: the 3 m pug mask on the back wall behind the vertebrae, and the banner that hangs behind the last one. Nothing pale hangs behind the spine.",
     ],
 }
 
 # ------------------------------------------------------------------ 5.9 Bloques Fantasma
 _BLOCKS = [(-340.0 + 1.7 * (k - 1), 461.7 + 1.2 * k) for k in range(1, 6)]   # each block's west edge when out, and its top
-_PAWS = [4, 1, 2, 3, 4]                                                       # the count each block is gone on
-
-_counts = []
-for (_l, _t), _n in zip(_BLOCKS, _PAWS):
-    _counts.append(["rect", _l - 0.1, _t + 2.3, _l + 1.5, _t + 3.1])
-    _counts += [["circle", _l + 0.16 + 0.36 * _i, _t + 2.7, 0.11, {"style": "dark"}] for _i in range(_n)]
 
 BLOQUES_FANTASMA = {
     "id": "5.9", "slug": "5_9_bloques_fantasma", "title": "Bloques Fantasma", "kind": "challenge",
@@ -828,20 +866,18 @@ BLOQUES_FANTASMA = {
     "place": ("The stair to the altar. It was built as a ramp of polished black stone, 10 m long, that nobody could walk up. Five blocks "
               "slide out of the ramp's face to make steps, and slide back in, to the beat of a drum. The drum stands on a shelf over the "
               "serpent's head, and a stone mallet on an axle beats it: four counts to the bar. Each block is out for three counts and gone "
-              "for one. The temple wrote the answer on the wall: over each block is a small carved panel with paw prints on it, one to "
-              "four, for the count that block is gone on. At the top of the stair is the altar's threshold."),
+              "for one, and the gone count walks up the stair. Nothing on the walls tells you which block goes when. You learn it by "
+              "watching the stair and listening to the drum. At the top is the altar's threshold."),
     "keep": [
         "The five blocks: where each comes out, its size, and the count it is gone on. Four counts of two beats, 96 beats a minute.",
         "The ramp under them can't be held. A block that goes while you are on it leaves you on the ramp.",
         "The serpent's head ledge at the foot and the threshold at the top.",
+        "Parker, 11-13: no carving gives the count away.",
     ],
     "background": [
         {"name": "The stair hall's back wall", "z": [-3.2, -2.6], "tag": [-346.8, 455.4], "top": True,
-         "text": "Wall bays behind the ledge, the stair and the threshold, and below them the gallery's back wall. Unbroken.",
-         "draw": [["rect", -348.5, 454.5, -320.5, 476.5]]},
-        {"name": "The count panels", "z": [-3.2, -2.6], "style": "pale", "tag": [-338.2, 467.3],
-         "text": "One over each block, 2.3 m above its top: a carved panel 1.6 m wide with paw prints in it. Four paws over the first block, then one, two, three, and four again over the fifth. A block is gone on the count its panel shows. This is the stair's carved band.",
-         "draw": _counts},
+         "text": "Wall bays behind the ledge, the stair and the threshold, and below them the gallery's back wall. Unbroken. The temple's carved band of pug faces, belts and bones runs along it high over the stair, and tells you nothing about the blocks.",
+         "draw": [["rect", -348.5, 454.5, -320.5, 476.5], _frieze(-341.0, -332.0, 472.4)]},
         {"name": "The drum and its mallet", "z": [-2.6, -1.3], "style": "pale", "tag": [-344.6, 464.9], "top": True,
          "text": "The temple drum, 1.6 m across, on a stone shelf on the back wall above the serpent's head. A stone arm with a bone mallet swings on an axle between two cheeks and strikes it on every count, hardest on the first. You see the mallet lift before each stroke. Today the drum hangs in the air in front of the serpent's head. It moves up onto the shelf.",
          "draw": [["rect", -343.6, 463.9, -341.4, 464.2], ["rect", -343.3, 464.2, -341.7, 465.7], ["line", -341.1, 466.0, -341.9, 465.2], ["circle", -341.1, 466.0, 0.28, {"style": "dark"}]]},
@@ -852,8 +888,8 @@ BLOQUES_FANTASMA = {
          "text": "At the head of the stair: two square columns, and between them the stepped niche with the altar in it (see El Altar). It is what you are climbing toward, and it is lit.",
          "draw": [_arch(-327.5, 468.9, 4.4, 3.9), ["rect", -329.0, 468.9, -326.0, 470.4]] + _column(-331.0, 468.9, 473.0) + _column(-324.2, 468.9, 473.0)},
         {"name": "Torches", "z": [-2.6, -2.3], "style": "light", "tag": [-346.0, 464.6],
-         "text": "One by the drum, one over the middle of the stair above the panels, one at the threshold.",
-         "draw": _torches([(-346.0, 462.8), (-336.4, 470.4), (-322.4, 470.4)])},
+         "text": "One by the drum, one over the middle of the stair, one at the threshold.",
+         "draw": _torches([(-346.0, 462.8), (-336.4, 469.6), (-322.4, 470.4)])},
     ],
     "play": [
         {"name": "Five sockets in the ramp's face", "z": [1.15, 1.2], "style": "line", "tag": [-331.6, 465.9],
@@ -870,19 +906,18 @@ BLOQUES_FANTASMA = {
     "explains": [
         ["A block", "A step that the ramp puts out and takes back", "Its socket in the ramp's face, with empty socket behind it"],
         ["The beat", "The temple drum, beaten by a stone mallet", "The drum on its shelf, and the mallet lifting before each stroke"],
-        ["Which block goes when", "The count", "The panel of paw prints over each block"],
         ["The ramp", "A stair with its steps taken away", "The serpent's head at its foot, where a slide ends"],
         ["The threshold", "The floor before the altar", "Two columns and the altar's apse"],
     ],
     "pieces": [
         ["Block: jade band, bronze shoe", "2.2 m by 1.2 m", "5", "Play space", "kit: slot and bronze-shod sliding block"],
         ["Socket frame on the ramp's face", "2.4 m by 1.2 m", "5", "Play space (drawn on)", "kit: slot and bronze-shod sliding block"],
-        ["Count panel: one to four paw prints", "1.6 m by 0.8 m", "5", "Background", "kit: carved frieze strip, as a panel"],
         ["Temple drum", "1.6 m across, 1.5 m tall", "1", "Background", "kit: temple drum on a stand"],
         ["Stone shelf", "2.2 m", "1", "Background", "kit: stepped corbel (added below)"],
         ["Mallet arm on an axle", "1.2 m arm", "1", "Background", "new, this area only; kit: axle cheeks and stone axle"],
         ["Serpent head", "3 m", "1", "Background", "kit: serpent head (the same one as La Serpiente's)"],
         ["Column; stepped niche; altar", "1.2 m square, 4.1 m; 4.4 m wide; 3 m", "2; 1; 1", "Background", "kit: column; stepped arch doorway; altar"],
+        ["Wall bay; carved band", "4 m by 5 m; 0.8 m tall", "to fill; 1 run", "Background", "kit: wall bay; carved frieze strip"],
         ["Torch", "0.8 m", "3", "Background", "kit: torch in a bronze bracket"],
     ],
     "effects": [
@@ -891,10 +926,9 @@ BLOQUES_FANTASMA = {
         "Each socket breathes out a puff of dust as its block goes in.",
     ],
     "notes": [
+        "Parker, 11-13: the temple's carving never shows how a challenge is done. The paw-print panels that gave each block's count are gone, and the stair keeps its secret.",
         "No playtest note is about this place. The sockets follow note 48's answer for the pistons: show where each moving block lives.",
-    ],
-    "ask": [
-        "A panel of paw prints over each block tells you the count it is gone on. Do you want the answer carved on the wall like that, or should the stair keep its secret?",
+        "Scenery moved out of the play space: the drum reaches to 0.4 m behind you today and hangs in the air. It goes up onto a shelf on the back wall, at least 1.3 m behind.",
     ],
 }
 
@@ -936,10 +970,10 @@ EL_ALTAR = {
          "text": "A stepped stone bracket sticks out of the back wall under each joint of the bridge. The six slabs lie on them, which is why the bridge is in six pieces. When a slab falls its brackets stay, out of reach behind you, and the slab comes back onto them.",
          "draw": [["rect", bx - 0.25, 467.9, bx + 0.25, 468.4] for bx in _BX]},
         {"name": "The carved band", "z": [-4.0, -3.4], "style": "pale", "tag": [-316.0, 483.6],
-         "text": "High on the back wall, level with the sill: a line of small figures hanging one from another, hand to ankle, down a wall. The three who tried were following the carving.",
+         "text": "High on the back wall, level with the sill: the temple's band of pug faces, belts and bones. It is plain here as everywhere, and shows nothing of the way up (Parker, 11-13).",
          "draw": [_frieze(-319.5, -309.2, 483.0)]},
         {"name": "A banner", "z": [-3.4, -3.3], "style": "pale", "tag": [-322.4, 482.6],
-         "text": "One, whole and bright, high in the west corner, as far from the pegs as the chamber allows.",
+         "text": "One, whole and bright, high in the west corner, as far from the pegs as the chamber allows. Today two banners 5 m long hang here and go up through the roof. This one, 3 m long, takes their place.",
          "draw": [_banner(-322.4, 483.6)]},
         {"name": "Torches", "z": [-3.4, -3.1], "style": "light", "tag": [-313.9, 472.6],
          "text": "Two on the back wall beside the pegs, one by each column, and one far down the pit so you see how deep it is.",
@@ -960,7 +994,7 @@ EL_ALTAR = {
          "text": "Three frozen climbers hang down the wall beside the cracked pegs. The first holds the sill's edge with both hands. The second holds the first one's ankles and the third holds the second's. They are bone pale and dusty, in the pose they died in, and you climb them like carved stone. Their chain stops 4.6 m short of the bridge.",
          "draw": [["line", -313.3, 480.0, -313.3, 473.55]]},
         {"name": "The place to stand", "z": [-1.2, 1.2], "style": "line", "tag": [-327.5, 468.1],
-         "text": "A ring of jade paw prints 1.6 m across, inlaid in the threshold right in front of the altar. It marks where a climber stands to pay respects (note 54). The figure in the sketch is standing on it.",
+         "text": "A ring of jade paw prints 1.6 m across, inlaid in the threshold right in front of the altar. It marks where a climber stands to pay respects (note 54). It is drawn onto the floor and adds nothing to stand on. The figure in the sketch is standing on it.",
          "draw": [["line", -328.3, 468.9, -326.7, 468.9]]},
     ],
     "foreground": [],
@@ -969,7 +1003,7 @@ EL_ALTAR = {
         ["The cross", "A great turning wheel of four arms", "Its axle and cheeks, and the sun stone it turns in front of"],
         ["The three sound pegs", "The foot of a peg ladder up to the sill", "The lit back wall, and the carved band far above"],
         ["The five cracked pegs", "The top of the same ladder, gone bad", "The three climbers who would not trust them"],
-        ["The three frozen climbers", "A ladder made of people", "The carved band of hanging figures they copied"],
+        ["The three frozen climbers", "A ladder made of people", "The lit back wall beside them, and the sill they hang from"],
         ["The threshold", "The floor before the altar", "The altar in its niche, and the paw ring in front of it"],
     ],
     "pieces": [
@@ -994,22 +1028,29 @@ EL_ALTAR = {
     ],
     "notes": [
         "Note 53 (done): the whole beam is six breaking pieces and the cross turns four times as fast. Both are drawn as built.",
-        "Note 53 also says the climb up the east wall has not been tried at the new speed. If pegs have to move, they stay a column of pug noses, sound below and cracked above.",
-        "Note 54 (not built): 'Pay Your Respects'. The altar gets a marked place to stand in front of it, and the bowl answers. The second altar is on the sill above: see El Sacrificio.",
+        "Note 53 also says the climb up the east wall has not been tried at the new speed. Parker, 11-13: it is not tested first. He will find out by playing. If pegs have to move afterwards, they stay a column of pug noses, sound below and cracked above.",
+        "Note 54 (not built): 'Pay Your Respects'. The altar gets a marked place to stand in front of it, and its bowl answers. Parker, 11-13: both altars count, and F is the keyboard key. The second altar is on the sill above: see El Sacrificio.",
+        "Scenery moved out of the play space: the altar's front reaches to 0.45 m behind you today. It moves back into its niche, so that all of it is at least 1.3 m behind.",
+        "Scenery that goes: the two long banners that go up through the roof. One shorter banner hangs in the west corner.",
         "Note 52: nothing in the pit can be held.",
     ],
 }
 
 # ------------------------------------------------------------------ 5.11 El Sacrificio, and the join into the chimney
+# The east side is drawn the way the chimney's own page for its first challenge (6.1 Primer Vapor) has it.
+_iron_mask = ["poly", [[-285.1, 487.2], [-285.5, 490.4], [-285.1, 493.6], [-283.7, 495.2], [-279.3, 495.2], [-277.9, 493.6], [-277.5, 490.4], [-277.9, 487.2],
+                       [-279.6, 484.2], [-283.4, 484.2]]]
+
 EL_SACRIFICIO = {
     "id": "5.11", "slug": "5_11_el_sacrificio", "title": "El Sacrificio", "kind": "challenge", "also": ["a6"],
-    "window": [-315.5, 469.5, -275.5, 499.0], "screen": [-300.0, 484.5], "cut_y": 479.7, "climber": [-310.5, 480.0],
+    "window": [-315.5, 474.5, -275.5, 499.0], "screen": [-300.0, 484.5], "cut_y": 479.7, "climber": [-310.5, 480.0],
     "place": ("The top of the Pozo del Diablo. The temple roofed the well's mouth with a stepped vault and hung two great censers in it, and "
-              "from the sill on the west side it gave things to the well: the stone on the sill is the sacrifice stone. This is the third "
-              "crossing and the last. You go from the temple's sill to the first censer's tassel, from censer to censer in the middle, "
-              "and off the second onto the east lip, with the whole well under you. The east side is not the temple any more. It is the "
-              "foot of the chimney, where the temple's smiths had their forge: the same fitted blocks and the same stepped doorway, grey "
-              "with soot, then iron, and red light coming up through the first grate in the floor."),
+              "from the sill on the west side it gave things to the well: the stone on the sill is the sacrifice stone, the temple's second "
+              "altar. This is the third crossing and the last. You go from the temple's sill to the first censer's tassel, from censer to "
+              "censer in the middle, and off the second onto the east lip, with the whole well under you. The east side is not the temple "
+              "any more. It is the foot of the chimney, where the temple's smiths had their forge: the same fitted blocks and the same "
+              "stepped doorway, black with soot, one last torch at the door, and then iron, and red light coming up through the first "
+              "grate in the floor."),
     "keep": [
         "The two censers: where they hang, their 9.8 m chains, their swings of 5 and 6 seconds, and the tassel under each.",
         "The 14 m between the temple's sill and the forge's lip, and the heights of both.",
@@ -1019,34 +1060,34 @@ EL_SACRIFICIO = {
     "background": [
         {"name": "The well's far wall", "z": [-8.0, -6.0], "tag": [-300.0, 486.6], "top": True,
          "text": "The round back of the well, 6 m behind you. Down to the level of the sills it is the temple's fitted blocks. Below that it is the well's own rough rock, stepping back into the dark, with a few glints of wet far down (note 51). The dashed line is the far rim, which is dark and far back and does not read as a floor.",
-         "draw": [["rect", -306.0, 469.5, -294.0, 494.0], ["poly", [[-305.0, 478.4], [-295.0, 478.4], [-296.4, 469.5], [-303.6, 469.5]], {"style": "dark"}],
-                  ["line", -306.0, 479.9, -294.0, 479.9, {"style": "mark"}], ["circle", -301.2, 472.0, 0.08, {"style": "light"}], ["circle", -298.3, 470.6, 0.08, {"style": "light"}]]},
+         "draw": [["rect", -306.0, 474.5, -294.0, 494.0], ["poly", [[-305.0, 478.4], [-295.0, 478.4], [-295.6, 474.5], [-304.4, 474.5]], {"style": "dark"}],
+                  ["line", -306.0, 479.9, -294.0, 479.9, {"style": "mark"}], ["circle", -301.2, 476.3, 0.08, {"style": "light"}], ["circle", -298.3, 475.3, 0.08, {"style": "light"}]]},
         {"name": "The stepped vault and its keystone", "z": [-6.0, -1.3], "style": "pale", "tag": [-300.0, 489.0],
-         "text": "The roof over the well steps in from both sides to a flat cap. In the middle of the back wall, under the cap, is a stone pug's face 3.4 m across. It is between the two chains and well above the bowls.",
+         "text": "The roof over the well steps in from both sides to a flat cap. In the middle of the back wall, under the cap, is a stone pug's face 3.4 m across. It is between the two chains and well above the bowls. Today a string of cut paper crosses behind the two chains, and a banner hangs in each top corner. All three go. Nothing hangs in the well room but the two censers.",
          "draw": [["rect", -306.0, 489.6, -305.0, 494.0], ["rect", -305.0, 491.8, -304.2, 494.0], ["rect", -295.0, 489.6, -294.0, 494.0], ["rect", -295.8, 491.8, -295.0, 494.0],
                   ["circle", -300.0, 491.2, 1.7, {"style": "line"}]]},
-        {"name": "Two chain bosses", "z": [-1.6, -1.2], "style": "pale", "tag": [-303.0, 492.2],
-         "text": "A carved pug with a bronze ring under the cap for each censer. The same boss as every other chain in the temple, at twice the size.",
+        {"name": "Two chain bosses", "z": [-1.9, -1.3], "style": "pale", "tag": [-303.0, 492.2],
+         "text": "A carved pug with a bronze ring under the cap for each censer, set just behind the play space. The same boss as every other chain in the temple, at twice the size.",
          "draw": [["circle", -303.0, 493.4, 0.5], ["circle", -297.075, 493.4, 0.5]]},
         {"name": "The temple's side", "z": [-4.0, -1.3], "tag": [-314.0, 483.0],
-         "text": "The altar chamber's back wall, and the side of the doorway through the well's wall: pale blocks, a carved band, and the last torch of the temple.",
-         "draw": [["rect", -315.5, 469.5, -306.0, 484.0], ["rect", -309.0, 480.0, -306.0, 484.0, {"style": "pale"}], _frieze(-315.5, -309.2, 483.0)] + _torches([(-312.7, 481.2)])},
+         "text": "The altar chamber's back wall, and the side of the doorway through the well's wall: pale blocks, the carved band, and a torch on the sill.",
+         "draw": [["rect", -315.5, 474.5, -306.0, 484.0], ["rect", -309.0, 480.0, -306.0, 484.0, {"style": "pale"}], _frieze(-315.5, -309.2, 483.0)] + _torches([(-312.7, 481.2)])},
         {"name": "The sacrifice stone", "z": [-2.7, -1.3], "style": "pale", "tag": [-310.5, 482.5], "top": True,
-         "text": "The second altar: a low stone 2.2 m wide in a stepped niche on the sill, with a bronze bowl on it. It is 1.3 m behind you and you can stand in front of it. Whether it counts for 'Pay Your Respects' is the question note 54 already asks.",
+         "text": "The second altar: a low stone 2.2 m wide in a stepped niche on the sill, with a bronze bowl on it. All of it is at least 1.3 m behind you, and you can stand in front of it. It counts for 'Pay Your Respects' just as the first altar does (Parker, 11-13), and its bowl answers in the same way.",
          "draw": [_arch(-310.5, 480.0, 3.0, 3.4), ["rect", -311.6, 480.0, -309.4, 481.1], ["circle", -310.5, 481.3, 0.18, {"style": "light"}]]},
-        {"name": "The forge's side", "z": [-3.2, -1.3], "tag": [-277.4, 497.6], "top": True,
-         "text": "East of the well the wall is the same fitted blocks in the same bays, but dull grey with soot, with the carving worn nearly flat. The doorway through the well's east wall is the same stepped shape as the temple's. There is no torch on this side. The light is red and comes from below.",
-         "draw": [["rect", -294.0, 469.5, -275.5, 499.0]]},
-        {"name": "A furnace mouth under a hood", "z": [-3.2, -1.3], "style": "dark", "tag": [-287.5, 484.8],
-         "text": "The first of the forge's furnaces: a stepped arch in the back wall with fire inside it, and a ribbed iron hood over it. The small anvil that stands in the course today is in front of it.",
-         "draw": [_arch(-287.5, 479.9, 3.0, 3.4), ["circle", -287.5, 480.7, 0.5, {"style": "light"}],
-                  ["poly", [[-289.6, 483.5], [-285.4, 483.5], [-286.3, 485.7], [-288.7, 485.7]], {"style": "pale"}]]},
-        {"name": "The vent pipe", "z": [-1.9, -1.3], "style": "pale", "tag": [-284.4, 481.0],
-         "text": "A ribbed iron pipe, 0.6 m across, runs along the foot of the wall from the furnace and turns down into the floor beside the grate. It is what feeds the grate.",
-         "draw": [["rect", -285.9, 479.75, -282.9, 480.35]]},
-        {"name": "An iron pug", "z": [-3.2, -3.0], "style": "line", "tag": [-289.8, 488.6],
-         "text": "Over the forge's doorway, on the back wall: the pug's face again, 1.5 m, in black iron this time.",
-         "draw": [["circle", -289.8, 487.2, 0.75]]},
+        {"name": "The forge's back wall", "z": [-4.6, -3.6], "tag": [-276.6, 497.6], "top": True,
+         "text": "East of the well the wall is the same fitted blocks in the same bays, with the carved band at the temple's own heights. Here it is black with soot and the carving is worn nearly flat. The chimney's first page has all of it.",
+         "draw": [["rect", -294.0, 474.5, -275.5, 499.0], ["rect", -291.0, 484.0, -285.7, 484.6, {"style": "pale"}], ["rect", -291.0, 490.0, -285.7, 490.6, {"style": "pale"}]]},
+        {"name": "The forge's door, a small iron pug, and the last torch", "z": [-2.2, -1.3], "style": "pale", "tag": [-288.7, 487.6],
+         "text": "The same stepped doorway as the temple's, seen from the well, with a small pug's face in black iron over it and one torch beside it. That torch is the last of the temple's. East of it the light is red and comes from below.",
+         "draw": [["rect", -291.0, 487.2, -289.8, 488.0], ["rect", -291.0, 488.0, -289.2, 488.8], ["circle", -290.0, 489.7, 0.75, {"style": "line"}], ["circle", -290.4, 486.4, 0.2, {"style": "light"}]]},
+        {"name": "The work place by the door", "z": [-2.4, -1.3], "style": "pale", "tag": [-288.6, 483.0],
+         "text": "A small anvil, a rack of tongs on the wall over it, and a stone quenching trough. They are the first made things of the forge, and all of them stand behind the play space.",
+         "draw": [["rect", -286.8, 479.69, -286.2, 480.15], ["rect", -287.1, 480.15, -285.9, 480.55], ["rect", -289.7, 481.9, -287.7, 482.1], ["rect", -289.4, 481.2, -289.3, 481.9],
+                  ["rect", -288.9, 481.2, -288.8, 481.9], ["rect", -288.4, 481.2, -288.3, 481.9], ["rect", -289.6, 479.87, -287.9, 480.4]]},
+        {"name": "The great iron mask and its breath pipe", "z": [-2.4, -1.3], "style": "pale", "tag": [-281.5, 490.4],
+         "text": "Across the first room of the forge: an iron pug's face 8 m wide and 11 m tall on the back wall, and a fat ribbed pipe that comes up out of the floor behind the grate and goes into its chin. It is the first thing you see from the temple's sill, lit red from underneath. It belongs to the chimney's first challenge and is designed on that page.",
+         "draw": [_iron_mask, ["rect", -281.8, 479.4, -281.2, 484.2], ["circle", -283.5, 492.7, 0.7, {"style": "dark"}], ["circle", -279.5, 492.7, 0.7, {"style": "dark"}]]},
     ],
     "play": [
         {"name": "The two great censers", "z": [-1.2, 1.2], "style": "line", "tag": [-300.0, 483.2],
@@ -1056,29 +1097,29 @@ EL_SACRIFICIO = {
          "text": "Under each bowl hangs a tassel 1.5 m long: a string of five bronze bells with a jade bead at the end. The bead is what you reach for from the sill, and what brings you down onto the far lip. It is the lowest bright thing over the well.",
          "draw": [["circle", -303.0, 481.4, 0.3], ["circle", -297.075, 481.4, 0.3]]},
         {"name": "The temple's sill", "z": [-1.2, 1.2], "style": "line", "tag": [-306.6, 479.2],
-         "text": "Pale carved stone with a worn notch at its very end, where the first tassel comes to hand. In front of the sacrifice stone the same ring of jade paw prints as at the altar marks the place to stand.",
+         "text": "Pale carved stone with a worn notch at its very end, where the first tassel comes to hand. In front of the sacrifice stone the same ring of jade paw prints as at the altar marks the place to stand. It is drawn onto the sill and adds nothing to stand on.",
          "draw": [["line", -311.3, 480.0, -309.7, 480.0], ["line", -305.6, 479.2, -305.6, 480.0]]},
         {"name": "The forge's lip", "z": [-1.2, 1.2], "style": "mark", "tag": [-293.6, 478.4],
-         "text": "The east lip is the same blocks, dry and matte, grey with soot and rubbed pale along its edge and top by hands and feet. It has to read as stone you can hold. The wall above it and below it is wet black, which you can't.",
-         "draw": [["line", -295.5, 480.0, -291.0, 480.0]]},
-        {"name": "The first grate", "z": [-1.2, 1.2], "style": "line", "tag": [-281.5, 478.2],
-         "text": "An iron grate of square bars set in the floor, 3 m long, rust orange where feet have worn it, with red light and a wisp of steam coming up through it. It is the chimney's first challenge and is designed on its own page.",
-         "draw": [["rect", -283.0, 479.0, -280.0, 479.5]]},
+         "text": "The ledge the second censer drops you on is temple stone: soot black on its face, and worn pale and dry on top and along its edge, where it is held. Its edge carries the temple's carved band one last time. The wall above it and below it is wet black, which you can't hold.",
+         "draw": [["line", -295.4, 479.95, -291.0, 479.95]]},
+        {"name": "The first grate", "z": [-1.2, 1.2], "style": "pale", "tag": [-281.5, 478.2],
+         "text": "An iron grate of square bars in a raised rim, 3 m long, rust orange where feet have worn it, with red light and a wisp of steam coming up through it. It is the chimney's first challenge and is designed on its own page.",
+         "draw": [["rect", -283.1, 479.5, -279.9, 479.62]]},
     ],
     "foreground": [
-        {"name": "A column base, west", "z": [1.3, 1.9], "tag": [-311.0, 470.4], "top": True,
+        {"name": "A column base, west", "z": [1.3, 1.9], "tag": [-311.0, 475.4], "top": True,
          "text": "At the bottom edge of the frame on the temple's side, in front of solid rock.",
-         "draw": [["rect", -311.9, 469.5, -310.1, 471.3]]},
-        {"name": "A quenching trough's rim, east", "z": [1.3, 1.9], "style": "dark", "tag": [-287.0, 478.5], "top": True,
-         "text": "On the forge's side, low in front of the floor's thickness: the iron rim of a trough. Its top is below the floor you walk on. The two sides of the well get two different front pieces, stone and iron.",
-         "draw": [["rect", -288.6, 478.1, -285.4, 479.0]]},
+         "draw": [["rect", -311.9, 474.5, -310.1, 476.3]]},
+        {"name": "The forge floor's kerb, east", "z": [1.3, 2.0], "style": "dark", "tag": [-283.0, 475.2], "top": True,
+         "text": "A low lip of soot-black blocks along the bottom of the frame on the forge's side, below the floor. It is the same kerb that runs the whole length of the forge floor. The two sides of the well get two different front pieces, pale stone and black.",
+         "draw": [["poly", [[-291.0, 474.5], [-291.0, 475.9], [-285.0, 476.1], [-279.0, 475.8], [-275.5, 475.7], [-275.5, 474.5]]]]},
     ],
     "explains": [
-        ["The temple's sill", "The ledge the temple gave to the well from", "The sacrifice stone in its niche, and the last torch"],
+        ["The temple's sill", "The ledge the temple gave to the well from", "The sacrifice stone in its niche, and the torch beside it"],
         ["A tassel", "A string of bronze bells under a censer", "The bowl above it"],
         ["A bowl and its chain", "A great censer", "Its pug boss under the cap, and the vault stepping in"],
-        ["The forge's lip", "The sill of the forge's door, grey with soot", "The same stepped doorway, and red light inside it"],
-        ["The first grate", "A vent in the forge's floor", "The pipe that feeds it, from the furnace mouth"],
+        ["The forge's lip", "The sill of the forge's door, black with soot", "The same stepped doorway, the iron pug over it and the last torch"],
+        ["The first grate", "A vent in the forge's floor", "The breath pipe behind it, going up into the great iron mask"],
     ],
     "pieces": [
         ["Great censer: bowl, gold lid, jade band, chain, tassel of bells", "1.4 m bowl, 9.8 m chain, 1.5 m tassel", "2", "Play space", "kit: censer, made larger; the tassel is new"],
@@ -1088,14 +1129,14 @@ EL_SACRIFICIO = {
         ["Well wall: fitted blocks above, rough rock stepping back below", "12 m wide", "1", "Background", "blocks from kit: wall bay; the rock is the well's own"],
         ["Sacrifice stone with a bowl; its stepped niche", "2.2 m wide; 3 m wide", "1 each", "Background", "kit: altar, made small; stepped arch doorway"],
         ["Paw ring", "1.6 m across", "1", "Play space (drawn on)", "kit: paw ring (added below)"],
-        ["Forge wall bay, soot grey", "4 m wide, 5 m tall", "about 12", "Background", "the chimney's kit: forge wall bay"],
-        ["Furnace mouth; forge hood", "3 m wide; 4 m", "1 each", "Background", "the chimney's kit: forge wall bay with a furnace mouth; forge hood"],
-        ["Vent pipe", "0.6 m across, 3 m long", "1", "Background", "the chimney's kit: vent pipe"],
-        ["Iron pug mask", "1.5 m", "1", "Background", "the chimney's kit: iron pug mask"],
-        ["Steam grate", "3 m", "1", "Play space", "the chimney's kit: steam grate"],
+        ["Torch", "0.8 m", "2", "Background", "kit: torch in a bronze bracket"],
         ["Column base", "1.8 m wide", "1", "Foreground", "kit: column base"],
-        ["Quenching trough", "3.2 m long", "1", "Foreground", "the chimney's kit: quenching trough"],
-        ["Torch", "0.8 m", "1", "Background", "kit: torch in a bronze bracket"],
+        ["Forge wall bay, plain", "4 m by 5 m", "about 12", "Background", "the chimney's kit: forge wall bay"],
+        ["Door lintel blocks; small iron pug mask", "2 m; 1.5 m", "1 each", "Background", "the chimney's kit: forge wall bay, pug_mask_iron"],
+        ["Small anvil; tongs rack; quenching trough", "1.2 m; 2 m; 1.7 m", "1 each", "Background", "the chimney's kit: anvil, tongs_rack, quenching trough"],
+        ["The great iron mask; breath pipe", "8 m wide, 11 m tall; 0.6 m across", "1 each", "Background", "the chimney's kit: pug_mask_iron, remade taller; vent_pipe"],
+        ["Steam grate with a rim", "3 m", "1", "Play space", "the chimney's kit: steam_grate"],
+        ["Floor kerb", "0.9 m tall", "15 m of it here", "Foreground", "the chimney's kit: floor kerb"],
     ],
     "effects": [
         "Both censers trail smoke, so their two swings are drawn in the air and you can see them coming together.",
@@ -1104,9 +1145,12 @@ EL_SACRIFICIO = {
         "A wisp of steam and a gurgle at the grate before it blows.",
     ],
     "notes": [
-        "Note 54: the second altar. It has a place to stand, like the first. Whether it counts is Parker's to say, and note 54 asks it.",
+        "Note 54, Parker, 11-13: both altars count for 'Pay Your Respects', and F is the keyboard key. The sacrifice stone has its own place to stand.",
         "Note 51 (done): the well steps back into depth with far glints and is not a black hole.",
-        "The join follows the two sheets: the temple leaves by the censers over the well's mouth, and the chimney begins on soot-grey temple stone beside the first grate, where the torches stop.",
+        "The join follows the two sheets and the chimney's first page: the temple leaves by the censers over the well's mouth, and the chimney begins on soot-black temple stone, with one last torch at its door, beside the first grate.",
+        "Scenery moved out of the play space: the sacrifice stone's front reaches to 0.45 m behind you today. It moves back into a niche, so that all of it is at least 1.3 m behind.",
+        "Scenery that goes: the string of cut paper that crosses the well room behind the two chains, and the two banners in its top corners. Nothing hangs in the well room but the two censers.",
+        "Nothing you touch moves or is added on either side of the well.",
     ],
 }
 
@@ -1116,6 +1160,7 @@ AREAS = [LA_PUERTA, LA_MASCARA, LOS_PISTONES, ENGRANAJES, EL_SALON, INCENSARIOS,
 KIT_MORE = [
     ["Great pilaster with a stepped corbel head", "2.6 m wide, 4.5 to 16 m tall", "carries a champion's plinth out from the far wall", "Background", "new"],
     ["Stepped corbel", "0.5 to 2.2 m", "the bridge's brackets, the drum's shelf, the vault over the well, the foot of a post", "Background", "new"],
-    ["Fall strip: a carved panel of falling figures", "5 m wide, to suit", "behind the great drain, at its top and at its foot", "Background", "new"],
+    ["Fall strip: a carved strip of tumbling bones", "5 m wide, to suit", "behind the great drain, at its top and at its foot", "Background", "new"],
+    ["Broken forearm of a champion", "1.9 m", "lying where it fell: one on the great hall's balcony, three at the foot of the drain", "Background", "new"],
     ["Paw ring: jade paw prints inlaid in a floor", "1.6 m across; single prints 0.2 m", "the place to stand before an altar (note 54); the way to the frog's door", "Play space (drawn on)", "new"],
 ]

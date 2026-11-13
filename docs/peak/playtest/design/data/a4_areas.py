@@ -1003,7 +1003,7 @@ SALTO_II = {
          "draw": [["line", -304.0, 364.3, -306.4, 365.3], ["line", -306.4, 365.3, -308.9, 364.5],
                   ["circle", -305.2, 365.1, 0.14], ["circle", -307.4, 365.2, 0.12], ["circle", -308.4, 364.9, 0.12]]},
         {"name": "The doorstep's carved edge", "z": [1.0, 1.2], "style": "pale", "tag": [-303.2, 365.4],
-         "text": "The well side of the doorstep gets the temple's carved band, deep and pale: pug faces and small climbers. Deep pale carving is the temple's sign for stone you can hold.",
+         "text": "The well side of the doorstep gets the temple's carved band, deep and pale: pug faces, belts and bones. Deep pale carving is the temple's sign for stone you can hold.",
          "draw": [["rect", -304.4, 363.2, -304.0, 365.8]]},
     ],
     "foreground": [
