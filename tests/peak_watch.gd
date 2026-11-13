@@ -1666,3 +1666,69 @@ func _w_lift(_a: Array) -> void:
 	stand(Vector2(-186.0, 6.0))
 	await secs(3.0)
 	await shot("04_lift_from_catwalk")
+
+
+## NOTE 20, THE ROPES: a climber on the mine's rope (1.4), pumped by the bench's own
+## script (a leg thrown the way the body is going), pictured still, at the end of the
+## second, fourth and fifth pushes, and half way through the flight after letting go.
+func _w_rope(_a: Array) -> void:
+	const Drivers := preload("res://climber/drivers.gd")
+	pk.warp("1.4")
+	await secs(0.5)
+	var c := me()
+	var rope: Dictionary = {}
+	for r in pk.things.ropes:
+		if str(r.id) == "cuerda_minero":
+			rope = r
+	var segs: Array = rope.segs
+	var seg: RigidBody3D = segs[segs.size() - 2]
+	var top: Vector2 = pk.world_of(rope.top)
+	c.release_all()
+	var d := Drivers.ScriptDriver.new()
+	c.driver = d
+	for l in c.limbs:
+		l.regrip = 999.0
+	var off := Vector2(seg.global_position.x, seg.global_position.y) - c.limb_end(0)
+	var p := c.pose()
+	for k in range(0, p.size(), 3):
+		p[k] += off.x
+		p[k + 1] += off.y
+	c.apply_pose(p)
+	c.attach(0, seg)
+	look(pk.local_of(top) + Vector2(0, -3.2), 5.0)
+	await secs(3.0)
+	await shot("20_rope_hanging_still")
+	var going := 0.0
+	var pushes := 0
+	var widest := 0.0
+	var t0 := pk.clock
+	while pk.clock - t0 < 26.0 and pushes < 5:
+		var v := c.velocity()
+		d.set_limb(3, true, Vector2(1 if v.x >= 0.0 else -1, 0))
+		await ticks(1)
+		var com := c.centre_of_mass()
+		widest = maxf(widest, rad_to_deg(absf(atan2(com.x - top.x, top.y - com.y))))
+		if absf(v.x) > 0.12:
+			if going != 0.0 and signf(v.x) != going:
+				pushes += 1
+				print("WATCH rope: push %d took it %.0f degrees out, %.1f s in" % [pushes, widest, pk.clock - t0])
+				if pushes in [2, 4, 5]:
+					await shot("20_rope_push_%d" % pushes)
+				widest = 0.0
+			going = signf(v.x)
+	# through the bottom going east, and let go
+	var last_x := c.centre_of_mass().x - top.x
+	while pk.clock - t0 < 40.0:
+		var v := c.velocity()
+		d.set_limb(3, true, Vector2(1 if v.x >= 0.0 else -1, 0))
+		await ticks(1)
+		var x := c.centre_of_mass().x - top.x
+		if last_x < 0.0 and x >= 0.0:
+			break
+		last_x = x
+	d.clear()
+	c.release_all()
+	var lv := c.velocity()
+	print("WATCH rope: let go at the bottom at %.1f m/s (%.1f east, %.1f up)" % [lv.length(), lv.x, lv.y])
+	await secs(0.7)
+	await shot("20_rope_let_go")

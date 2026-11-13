@@ -490,6 +490,7 @@ func _build_limbs() -> void:
 			"end_joint": ("wrist" if ld.arm else "ankle") + (ld.id as String).substr((ld.id as String).length() - 2),
 			"grab_rel0": 0.0,  # the end's angle against its hold when it stuck (rad)
 			"slipping": false,  # THE SLIP: the weld is turning as a friction pivot
+			"pivot": false,  # the grip is on a rope: a free pivot, never a weld
 			"cursor": Vector2.ZERO,  # where a held hand or foot is being steered (world m)
 			"driving": false,
 		})
@@ -1401,10 +1402,18 @@ func attach(i: int, other: Object) -> void:
 		var rid := PhysicsServer3D.joint_create()
 		var frame_end := Transform3D(Basis(), Vector3.ZERO)
 		var frame_other := ob.global_transform.affine_inverse() * end.global_transform
+		# A HAND ON A ROPE PIVOTS (the Peak, Parker 11-12: "you can't get a good swing on
+		# them"): held firmly on the rope's own line, free to turn, as a hand holds a
+		# real rope. Welded, every push of the arm twisted one half-metre piece of rope
+		# and the rope whipped it straight again.
+		l.pivot = ob.has_meta("peak_rope")
+		if l.pivot:
+			frame_other.origin.x = 0.0  # (a rope piece's long axis is its own y)
 		PhysicsServer3D.joint_make_hinge(rid, end.get_rid(), frame_end, ob.get_rid(), Transform3D(Basis(Vector3.BACK, 0.0) * frame_other.basis.orthonormalized(), frame_other.origin))
-		PhysicsServer3D.hinge_joint_set_flag(rid, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, true)
-		PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_LIMIT_LOWER, 0.0)
-		PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_LIMIT_UPPER, 0.0)
+		if not l.pivot:
+			PhysicsServer3D.hinge_joint_set_flag(rid, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, true)
+			PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_LIMIT_LOWER, 0.0)
+			PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_LIMIT_UPPER, 0.0)
 		# The end and what it holds must not push apart while stuck. NOT the joint's own
 		# disable-collisions flag: on Jolt that exception outlived the freed joint, so a
 		# released foot never touched the deck again (0.1.3). An explicit exception,
@@ -1464,7 +1473,7 @@ func _tick_slip(dt: float) -> void:
 			set_hinge_limits(wj.rid, -rad_to_deg(win), rad_to_deg(win))
 			wj.stop_on = true
 	for l: Dictionary in limbs:
-		if not (l.grab as RID).is_valid():
+		if not (l.grab as RID).is_valid() or bool(l.pivot):
 			continue
 		var jn: String = l.end_joint
 		var jd: Dictionary = joints[jn]
@@ -1509,6 +1518,7 @@ func release(i: int) -> void:
 	l.grab_other = null
 	l.grab_climber = null
 	l.grab_piece = ""
+	l.pivot = false
 	l.regrip = Feel.get_k("regrip_delay")
 	grab_lost.emit(self, i)
 
@@ -1616,6 +1626,31 @@ func _tick_joints(attached: bool, dt: float) -> void:
 	var vmax := Feel.get_k("drag_max_speed")
 	var k := Feel.get_k("drag_stiffness") * total_mass
 	var c := Feel.get_k("drag_damping") * total_mass
+	var loose := _loose_holds()
+	# HANGING BY ROPES ONLY (the Peak, Parker 11-12: ropes "launch you up weird"): a rope
+	# takes any pull along itself and none against it, so a limb pulled as hard as it is
+	# against rock threw the body up past its own grip. On ropes the pull is a little more
+	# than the climber's weight, and it is paid by the climber's own gripping hands: it
+	# moves the body on the rope and never the body through the air.
+	var on_ropes := _all_ropes(loose)
+	var rope_lift := 1.0
+	if on_ropes:
+		cap = Feel.get_k("rope_pull") * weight
+		# A ROPE HOLDS YOU UP ONLY FROM ABOVE: an upward pull lifts the body (through the
+		# rope) while its middle hangs below its highest grip, less and less over the
+		# last ROPE_LIFT_FADE metres, and not at all once it is level with it. Then the
+		# limb still goes where it is pointed, but against the body's own chest. (Lifted
+		# all the way, the body rose past its grip at speed and the slack rope let it fly.)
+		var top_grip := -INF
+		for grip: Dictionary in limbs:
+			if grip.grab_other != null:
+				top_grip = maxf(top_grip, pos2(bodies[grip.def.end]).y)
+		rope_lift = clampf((top_grip - centre_of_mass().y) / ROPE_LIFT_FADE, 0.0, 1.0)
+		# ...and never at speed: past ROPE_LIFT_SLOW the lift eases off, and it is gone
+		# by ROPE_LIFT_FAST (m/s, the whole body's rise). From a straight-armed hang
+		# there is a metre to rise through, and at full pull the body arrived going
+		# fast enough to sail a metre past its grip.
+		rope_lift *= 1.0 - smoothstep(ROPE_LIFT_SLOW, ROPE_LIFT_FAST, velocity().y)
 	for i in limbs.size():
 		var l: Dictionary = limbs[i]
 		if not l.held:
@@ -1646,9 +1681,15 @@ func _tick_joints(attached: bool, dt: float) -> void:
 		# a rope you can basically fly"): the pull on the held limb is paid by whatever
 		# the other limbs hold, so it moves the climber on the rope, never the two of them
 		# through the air. Holding anything fixed, the pull is as it always was.
-		var loose := _loose_holds()
-		for o: RigidBody3D in loose:
-			o.apply_central_force(Vector3(-f.x, -f.y, 0.0) / float(loose.size()))
+		if on_ropes:
+			var through := f.y * rope_lift if f.y > 0.0 else f.y  # (the part the rope answers)
+			for grip: Dictionary in limbs:
+				if grip.grab_other != null:
+					(bodies[grip.def.end] as RigidBody3D).apply_central_force(Vector3(-f.x, -through, 0.0) / float(loose.size()))
+			(bodies["chest"] as RigidBody3D).apply_central_force(Vector3(0.0, through - f.y, 0.0))
+		else:
+			for o: RigidBody3D in loose:
+				o.apply_central_force(Vector3(-f.x, -f.y, 0.0) / float(loose.size()))
 		if (float_mode or scramble) and not touches_solid():
 			if float_mode:
 				(bodies["chest"] as RigidBody3D).apply_central_force(Vector3(-f.x, -f.y, 0.0))  # (the swim: no pull on nothing)
@@ -1661,11 +1702,16 @@ func _tick_joints(attached: bool, dt: float) -> void:
 ## Use part of the active limb's budget to turn the whole body about its sole grip.
 ## Apply the opposite force at the planted end so a moving anchor feels the reaction.
 func _drive_swing(aim: Variant, target_error: Vector2, reach: float, cap: float) -> Vector2:
-	if not (aim is Dictionary) or stuck_count() != 1:
+	if not (aim is Dictionary):
 		return Vector2.ZERO
 	var steer := (target_error / reach).limit_length(1.0)
 	if aim.has("dir"):
 		steer = (aim.dir as Vector2).normalized() * clampf(aim.mag, 0, 1)
+	var head: Variant = _swing_head()
+	if head != null:
+		return _pump(head, steer)
+	if stuck_count() != 1:
+		return Vector2.ZERO
 	for anchor in limbs:
 		if anchor.grab_other == null:
 			continue
@@ -1727,6 +1773,65 @@ func _aim_target(i: int, aim: Variant) -> Vector2:
 				dir = _swim_dir(l, dir)
 			l.cursor = limb_root(i) + dir * radius
 	return l.cursor
+
+
+const ROPE_LIFT_FADE := 0.35  # m
+const ROPE_LIFT_SLOW := 0.8  # m/s
+const ROPE_LIFT_FAST := 1.3
+
+
+## THE PUMP (the Peak, Parker 11-12: "Make it so you can swing back and forth on them
+## better"). Hanging only from something that hangs (a rope, a chain, a vine, the weight on
+## its end), steering a limb to one side pushes the whole body that way along the swing:
+## a sixth of its weight (Feel rope_pump). Pushed in time with the swing it builds, push
+## by push; held against the swing it takes it off again. By itself it cannot hold the
+## body more than about 9 degrees off straight down, so it carries nobody anywhere. (The turn about a single grip, which is what a limb's push does on rock,
+## spun the body round its hand on a rope and left the rope where it was.)
+func _pump(head: Array, steer: Vector2) -> Vector2:
+	var first: Node3D = head[0]
+	var top := Vector2(first.global_position.x, first.global_position.y) + Vector2(first.global_basis.y.x, first.global_basis.y.y) * float(head[1])
+	var down := centre_of_mass() - top
+	if down.length() < 0.3:
+		return Vector2.ZERO
+	var tangent := down.normalized().orthogonal()
+	var along := steer.dot(tangent)
+	var g := 9.8 * Feel.climber_gravity(true)
+	var push := tangent * along * Feel.get_k("rope_pump") * g
+	for piece: RigidBody3D in bodies.values():
+		piece.apply_central_force(Vector3(push.x, push.y, 0.0) * piece.mass)
+	var seen := {}
+	for l in limbs:
+		var o = l.grab_other
+		if o != null and not seen.has(o) and float((o as RigidBody3D).mass) > 2.0:
+			seen[o] = true  # (the weight on a rope's end swings with you: it is pushed too)
+			(o as RigidBody3D).apply_central_force(Vector3(push.x, push.y, 0.0) * (o as RigidBody3D).mass)
+	return push * total_mass
+
+
+## The top of what the climber hangs from, if every grip it has is on something that
+## hangs from one point (the Peak's ropes mark their pieces "peak_swing": [first piece,
+## half its length]); or null.
+func _swing_head() -> Variant:
+	var head: Variant = null
+	for l in limbs:
+		var o = l.grab_other
+		if o == null:
+			continue
+		if not is_instance_valid(o) or not (o is RigidBody3D) or (o as RigidBody3D).freeze or not (o as Node).has_meta("peak_swing"):
+			return null
+		head = (o as Node).get_meta("peak_swing")
+	if head != null and not is_instance_valid(head[0]):
+		return null
+	return head
+
+
+func _all_ropes(loose: Array) -> bool:
+	if loose.is_empty():
+		return false
+	for o: Node in loose:
+		if not o.has_meta("peak_rope"):
+			return false
+	return true
 
 
 ## What the stuck limbs hold, if ALL of it is free to move (a rope's segments, a crank, a
@@ -2015,6 +2120,15 @@ func linear_speed() -> float:
 	for b in bodies.values():
 		acc += b.linear_velocity * b.mass
 	return (acc / maxf(total_mass, 0.001)).length()
+
+
+## The whole body's velocity (m/s): its centre of mass's.
+func velocity() -> Vector2:
+	var acc := Vector3.ZERO
+	for b in bodies.values():
+		acc += b.linear_velocity * b.mass
+	acc /= maxf(total_mass, 0.001)
+	return Vector2(acc.x, acc.y)
 
 
 ## Largest gap between a joint's two anchors (m): the "did it tear" number.

@@ -340,6 +340,23 @@ its heading once it lands.
   `tools/peak/areas/a2.py` is the list.
 - **Note 53:** the climb up the altar's east wall, now brushed by an arm every 2.3 s,
   was not tried by anything.
+- **Note 20: the pace of a swing is the game's gravity.** A climber falls at 2.79 m/s2,
+  and a rope that swings with it swings at that pace: 8 s there and back on a 5 m
+  rope, 11 s on 9 m. The old rope fell at 9.8 and came back in 5 s, dragging the
+  climber. If 8 s feels slow there is no rope number that shortens it; it is the
+  climber's gravity or nothing.
+- **Note 20: a swing now reaches two to three times as far**, on every rope, chain and
+  vine. The table under group G lists each one. Moves laid out as "fling from a rope to
+  the next thing" can now mostly be swung to and taken. Nothing in the course was moved.
+- **Note 20: wind and a climber on a rope.** The winds push at 3 to 4.5 m/s2, harder
+  than the climber's gravity. The old rope's weight held a climber near plumb in them
+  (about 12 degrees off). On a light rope the wind carries the climber out to 50
+  degrees and more: the balloon's ropes (10.8), the serac's rope (9.6), the prayer
+  line (10.1). Whether that is the storm doing its job or too much is his call; the
+  knob would be the winds, not the ropes.
+- **Note 20: climbing a rope is slower than it was, on purpose.** 3 m hand over hand
+  takes about 5.6 s; it took 2 s, and that speed was the launch he complained of.
+  `rope_pull` in the F1 panel sets it.
 
 ## Group A: bugs you can see (notes 39, 40, 47, 48, 51, 52, 55)
 
@@ -836,3 +853,246 @@ are `--watch=light:race`, `light:crystal`, `light2:race`, `light2:crystal`,
 - **First-try numbers:** the gaps; the drift (unchanged, 0.55 m/s); where it is let
   loose; its mass, push and tip.
 - **Not checked:** hopping the barrels by play; the swim across a long gap.
+
+## Group G: the ropes swing with you (note 20)
+
+- **State:** done on the bench and watched in the game; nothing played by a person.
+- **Parker 11-12:** "we need to fix the rope physics. Make it so you can swing back and
+  forth on them better. Right now they like launch you up weird but you can't get a
+  good swing on them".
+
+### The bench first
+
+`tests/peak_rope_bench.tscn` (headless; the header of `tests/peak_rope_bench.gd` says how
+to run it). It hangs two ropes of its own in open sky, built by the game's own rope
+builder, so nothing is near to hit: a 5 m rope and a 9 m chain. It also uses the mine's
+real rope. A climber is hung by one hand near the foot and put through six scripts.
+The pump is the battery's own: a leg thrown the way the body is going. One push is one
+swing to one side.
+
+**Before (the committed ropes: 3.6 kg a half metre, a chain 6.6; full gravity, 9.8;
+brakes 0.25 and 1.2; the hand welded):**
+
+| | 5 m rope | 9 m chain | the mine's rope |
+|---|---|---|---|
+| The rope weighs | 36 kg | 119 kg | 36 kg |
+| How far out each push took it (degrees) | 0 1 1 1 18 29 39 48 48 47 48 49 | 0 0 0 0 0 0 0 0 0 0 0 1 | 0 0 1 1 17 16 16 16 9 10 7 13 |
+| The fifth push reached | 18 | 0 | 17 |
+| Widest in 24 s of pumping | 51 | 20 | 49 |
+| There and back | 4.8 s | 3.8 s | 5.0 s |
+| A leg held to one side, 8 s: off plumb at most | 27 | 11 | 25 |
+| Free hand held straight up 3 s: the GRIPPING hand was carried up | 1.93 m | 1.76 m | 1.89 m |
+| ...the body's middle got above its own grip by | 1.13 m | 1.15 m | 1.13 m |
+| ...fastest upward | 3.6 m/s | 3.6 m/s | 3.7 m/s |
+| Hand over hand, 3 m up | 2.1 s | 1.7 s | 3.4 s |
+| One push from a still hang, then let go | leaves at 2.3 m/s, nearly straight up | | |
+
+The gripping hand carried 1.9 m up is the "launch you up weird": a rope cannot push, so
+a hand on a rope that rises was thrown. The first four pushes doing nothing is "you
+can't get a good swing".
+
+**After:**
+
+| | 5 m rope | 9 m chain | the mine's rope |
+|---|---|---|---|
+| The rope weighs | 3 kg | 9 kg | 3 kg |
+| How far out each push took it (degrees) | 22 40 52 60 62 61 | 17 32 38 41 43 | 22 39 49 51 56 60 |
+| The fifth push reached | 62 | 43 | 56 |
+| First past 60 degrees | 15.6 s in (the fourth push) | not in 24 s | 6th push |
+| There and back | 8.0 s | 10.9 s | 8.0 s |
+| A leg held to one side, 8 s: off plumb at most | 26 | 28 | 27 |
+| Free hand held straight up 3 s: the gripping hand was carried up | 0.08 m | 0.12 m | 0.05 m |
+| ...the body's middle got above its own grip by | 0.32 m | 0.34 m | 0.34 m |
+| ...fastest upward | 1.1 m/s | 1.2 m/s | 1.2 m/s |
+| Hand over hand, 3 m up | 5.6 s | 5.7 s | 6.0 s |
+| Let go at the bottom after 24 s of pumping | 4.2 m/s | (4.2 m/s on an earlier run) | 4.4 m/s |
+| One push from a still hang, then let go | leaves at 0.9 m/s | | |
+
+The page's own test for "better" was: from hanging still, four or five pumps to about
+60 degrees each side; nothing throws you upward unless you swung there. On the 5 m rope
+the fourth push reaches 60. On the 9 m chain five pushes reach 43 degrees, which is
+5.6 m to each side.
+
+The bench's numbers move a few degrees from run to run (a thrown leg is not tidy).
+
+### What changed
+
+- **`stages/peak/peak_things.gd`** (`ROPE_MASS`, `_build_rope`, `tick`):
+  - **You are the weight.** A half-metre piece of rope or vine weighs 0.3 kg (it was
+    3.6 and 3.0), of chain or cable 0.5 (6.6 and 6.0), of banner line 0.25 (2.7). The
+    miner's rope is 3 kg under a 22 kg climber.
+  - **One gravity.** Every piece falls at the climber's own gravity, read from the Feel
+    table, and follows it if the F1 panel changes it.
+  - **The brakes are off.** 0.03 and 0.15, from 0.25 and 1.2: enough that a rope left
+    alone comes to rest.
+  - A weight on a rope's end (the chandeliers, the bell, the drawbridge's) falls at the
+    same gravity.
+  - **A plank bridge is exactly as it was** (the garden's `puente`): you stand on it.
+- **`climber/climber.gd`**, and only for a grip on a Peak rope (the arena and the tower
+  never see any of it):
+  - **A hand on a rope pivots** (`attach`): held on the rope's own line, free to turn.
+    On rock it is still the weld.
+  - **The pump** (`_pump`): hanging only from things that hang, steering a limb to one
+    side pushes the whole body that way along the swing, at a sixth of its weight (Feel
+    `rope_pump`, 0.16). In time with the swing it builds; held one way it cannot carry
+    you. It replaces, on ropes only, the turn about a single grip, which spun the body
+    round its hand.
+  - **No launch** (`_tick_joints`). Hanging by ropes only, the limb you steer pulls at
+    2.4 body-weights of the climber's own gravity (Feel `rope_pull`; on rock it is 3.1
+    at full gravity, about four and a half times as much), and the pull is paid by the
+    climber's own gripping hands, not the rope. An upward pull lifts the body only
+    while its middle is below its highest grip, and eases off above 0.8 m/s. So a hand
+    reaching up pulls you up to your grip, as a pull-up does, and no further.
+- **`data/feel.gd`:** two new numbers in the F1 panel, `rope_pull` and `rope_pump`.
+- **What keeps the old complaint from coming back** ("a climber hauling a light rope
+  anywhere and nearly flying", the reason the ropes were tripled on 11-12): the bench's
+  HAUL and LEAN rows. A hand held up moves the gripping hand 0.08 m, where the heavy
+  rope let it go 1.9 m. A leg held to one side for 8 s swings the body out to 26
+  degrees at most, the same as before.
+
+### Every rope, chain and vine on the mountain, old against new
+
+`-- --survey` on the same bench: a climber on the foot of each one, where it really
+hangs, pumped for 20 s by the same script. "Reach" is how far east / west of the rope's
+own top the gripping hand got. A rope in a shaft or beside a wall stops where the wall
+is, before and after.
+
+| Area | Rope | What | Reach before (east / west) | Reach now | There and back | Its move |
+|---|---|---|---|---|---|---|
+| a1 | cuerda_minero | rope 5.0 m | 2.9 / 3.4 m | 3.6 / 3.9 m | 4.7 s to 6.5 s | 1.4 La Cuerda del Minero: the rope over the 5.1 m gap |
+| a1 | cadena_a | chain 9.0 m | 1.6 / 1.5 m | 4.9 / 5.2 m | 5.6 s to 10.9 s | 1.8 Las Vigas: the chain you climb to the first beam |
+| a1 | cadena_b | chain 9.0 m | 1.9 / 1.9 m | 4.8 / 5.6 m | 5.7 s to 10.7 s | 1.8 Las Vigas: the second chain beside it |
+| a1 | cuerda_cortina | rope 8.0 m | 1.8 / 0.9 m | 1.8 / 1.2 m | 2.8 s to 1.8 s | 1.11 La Cortina: the new rope down the wet slab (note 14). It lies against the slab |
+| a2 | last_chance | chain 2.5 m | 1.5 / 1.6 m | 1.7 / 1.6 m | 3.3 s to 5.4 s | 2.4: the one mercy over the river |
+| a2 | cadena1 | chain 7.0 m | 2.1 / 2.3 m | 4.6 / 4.6 m | 5.2 s to 9.4 s | 2.6 Cadenas: chain to chain over the fast water |
+| a2 | cadena2 | chain 7.5 m | 1.9 / 1.7 m | 4.8 / 4.9 m | 2.2 s to 9.6 s | 2.6 Cadenas |
+| a2 | cadena3 | chain 6.5 m | 2.4 / 2.5 m | 4.4 / 4.4 m | 4.9 s to 7.5 s | 2.6 Cadenas |
+| a2 | flume_out | chain 1.5 m | 0.8 / 0.8 m | 0.8 / 0.7 m | 1.8 s to 5.2 s | 2.8: the way out of the flume, taken with a raised arm |
+| a2 | cuerda_niebla | rope 14.0 m | 1.2 / 1.3 m | 5.8 / 4.6 m | 2.8 s to - | 2.10: the long rope up through the mist |
+| a3 | chand1 | chain 9.0 m, weighted | 1.7 / 2.1 m | 2.6 / 3.1 m | 7.3 s to - | 3.3 Candelabros: a chandelier on a chain |
+| a3 | chand2 | chain 9.0 m, weighted | 2.1 / 2.2 m | 3.5 / 0.8 m | 8.6 s to - | 3.3 Candelabros |
+| a3 | chand3 | chain 9.0 m, weighted | 1.6 / 1.7 m | 2.2 / 2.4 m | 3.4 s to - | 3.3 Candelabros |
+| a4 | root_in0 | vine 12.0 m | 1.8 / 1.5 m | 5.8 / 6.8 m | 3.3 s to - | the garden's entry: the roots that catch the throw from the crystal cave |
+| a4 | root_in1 | vine 12.0 m | 2.1 / 2.2 m | 5.8 / 6.7 m | 7.8 s to - | the garden's entry |
+| a4 | root_in2 | vine 12.0 m | 2.2 / 2.1 m | 5.8 / 6.7 m | 3.8 s to - | the garden's entry |
+| a4 | liana0 | vine 9.5 m | 2.6 / 2.2 m | 5.2 / 5.7 m | 6.2 s to 11.4 s | 4.2 Lianas: four vines 5 m apart |
+| a4 | liana1 | vine 9.5 m | 2.5 / 2.9 m | 5.2 / 5.8 m | 5.9 s to 11.4 s | 4.2 Lianas |
+| a4 | liana2 | vine 9.5 m | 2.8 / 2.6 m | 5.2 / 5.7 m | 6.3 s to 11.4 s | 4.2 Lianas |
+| a4 | liana3 | vine 9.5 m | 2.7 / 2.9 m | 5.2 / 5.7 m | 5.9 s to 11.4 s | 4.2 Lianas |
+| a4 | lift0 | vine 10.0 m | 2.5 / 2.0 m | 5.6 / 5.6 m | 4.8 s to - | 4.3 El Ascensor de Esporas: the vines at the top of the spore lift |
+| a4 | lift1 | vine 10.0 m | 2.5 / 2.5 m | 5.5 / 6.2 m | 6.7 s to - | 4.3 |
+| a4 | lift2 | vine 10.0 m | 2.3 / 2.3 m | 5.8 / 6.5 m | 6.8 s to - | 4.3 |
+| a4 | rebote | vine 10.0 m | 1.3 / 2.0 m | 3.0 / 4.8 m | 4.6 s to 9.3 s | 4.4: the vine before the bounce wall |
+| a4 | ojo_v0 | vine 2.5 m | 0.0 / 3.7 m | 1.1 / 2.8 m | - to 4.5 s | 4.9 Los Ojos: the way up off the root shelf |
+| a4 | ojo_ra | vine 3.5 m | 1.7 / 1.1 m | 4.4 / 17.4 m | 2.2 s to - | 4.9 Los Ojos: the root over eye A **(it lost its grip in the new run: see below)** |
+| a4 | ojo_ca0 | vine 7.5 m | 2.0 / 0.9 m | 3.5 / 1.2 m | 2.0 s to 6.7 s | 4.9 Los Ojos: the catch in the dome |
+| a4 | ojo_ca1 | vine 7.5 m | 2.5 / 0.4 m | 3.5 / 0.7 m | 3.0 s to 4.7 s | 4.9 Los Ojos |
+| a4 | ojo_rb | vine 3.5 m | 1.4 / 1.7 m | 1.0 / 10.5 m | 4.0 s to - | 4.9 Los Ojos: the root over eye B |
+| a4 | ojo_cb0 | vine 11.5 m | 2.5 / 2.2 m | 3.6 / 3.9 m | 3.3 s to 8.4 s | 4.9 Los Ojos: over the sill's end |
+| a4 | ojo_cb1 | vine 11.5 m | 2.2 / 2.3 m | 4.0 / 2.9 m | 8.2 s to 8.3 s | 4.9 Los Ojos |
+| a5 | banner_chain_1 | chain 12.0 m | 1.2 / 1.2 m | 6.6 / 5.4 m | 3.1 s to - | the temple's door: the chains that catch the throw from the garden |
+| a5 | banner_chain_2 | chain 12.0 m | 1.3 / 1.7 m | 6.6 / 5.4 m | 2.9 s to - | the temple's door |
+| a5 | gallery_chain | chain 12.5 m | 0.5 / 2.2 m | 0.7 / 2.8 m | 1.7 s to 6.2 s | 5.6: the chain up the 3.8 m shaft to the gallery (the shaft's walls stop any swing) |
+| a5 | serpent_tail | chain 4.5 m | 1.6 / 1.4 m | 2.8 / 1.9 m | 3.2 s to 5.8 s | 5.8: the serpent's tail |
+| a6 | c61 | chain 5.0 m | 2.0 / 2.4 m | 3.6 / 3.8 m | 4.7 s to 7.8 s | 6.1: the chain from the mask's nose ring that catches the column's throw |
+| a6 | c63 | chain 7.0 m | 1.6 / 2.2 m | 4.4 / 4.3 m | 2.5 s to - | 6.3: the chain |
+| a6 | c65 | chain 6.0 m | 2.4 / 2.4 m | 3.5 / 5.5 m | 4.7 s to - | 6.5 Escoria: the way off the last raft **(it lost its grip in the new run: see below)** |
+| a6 | c66_1 | chain 4.5 m | 3.0 / 2.9 m | 3.3 / 3.7 m | 3.7 s to 5.1 s | 6.6: a chain on a moving hammer |
+| a6 | c66_2 | chain 4.5 m | 11.7 / 2.3 m | 3.4 / 3.3 m | 4.4 s to 12.4 s | 6.6 |
+| a6 | c66_3 | chain 4.5 m | 5.3 / 0.5 m | 3.7 / 3.8 m | - to 5.8 s | 6.6 |
+| a7 | bridge_w | rope 5.5 m, weighted | 5.1 / 5.1 m | 1.0 / 6.6 m | 4.4 s to - | 7.4: the drawbridge's west rope, with its weight |
+| a7 | bridge_e | rope 5.5 m, weighted | 1.5 / 5.1 m | 1.6 / 5.0 m | 2.0 s to 2.8 s | 7.4: the east rope |
+| a9 | rope96 | rope 16.0 m | 1.1 / 2.1 m | 2.0 / 5.5 m | 2.6 s to - | 9.6: the 16 m rope down the serac, in the gusts |
+| a9 | rope98 | rope 5.5 m | 1.5 / 2.0 m | 3.2 / 2.3 m | 3.9 s to 6.0 s | 9.8 Ventisca: the dead man's rope out of the chute |
+| a10 | filo_line | banner 4.5 m | 3.3 / 2.6 m | 3.8 / 2.8 m | 5.2 s to 5.6 s | 10.1 El Filo: the torn prayer line under the Alero, in the wind |
+| a10 | banda1 | banner 8.5 m, strung | sags 0.27 m under a climber | sags 0.33 m | - | 10.3: a prayer line strung between two points |
+| a10 | banda2 | banner 9.1 m, strung | sags 0.26 m under a climber | sags 0.43 m | - | 10.3 |
+| a10 | banda3 | banner 12.2 m, strung | sags 0.34 m under a climber | sags 0.53 m | - | 10.3 |
+| a10 | papalote1_cola | banner 6.0 m | 3.7 / 4.5 m | 4.5 / 5.3 m | 4.5 s to 4.3 s | 10.6: a kite's tail (the kite moves) |
+| a10 | papalote2_cola | banner 6.0 m | 4.4 / 5.2 m | 4.9 / 5.3 m | 4.4 s to 4.2 s | 10.6 |
+| a10 | papalote3_cola | banner 6.0 m | 5.1 / 4.8 m | 4.0 / 5.3 m | 4.3 s to 2.6 s | 10.6 |
+| a10 | globo_a | rope 12.0 m | 4.5 / 1.9 m | 9.7 / 1.1 m | 3.8 s to - | 10.8: the balloon's rope, in a 4 m/s2 wind |
+| a10 | globo_b | rope 12.0 m | 4.8 / 1.8 m | 9.7 / 2.0 m | 3.8 s to - | 10.8 |
+| a11 | bell_rope | rope 10.0 m, weighted | 6.7 / 4.3 m | 12.9 / 11.5 m | - to 2.6 s | 11.4: the bell's rope (the bell swings it) |
+
+**What changed, move by move:**
+
+- **1.4, the miner's rope:** 2.9 / 3.4 m becomes 3.6 / 3.9 m. Watched in the game: five
+  pushes take it to 59 degrees, and let go at the bottom it lands on the far dock.
+  Before, a swing there took a long fight.
+- **1.8 and 2.6, chain to chain:** a chain's reach goes from about 2 m to nearly 5 m.
+  The chains of 2.6 hang 4 to 6.4 m apart, so the next chain can now be swung to and
+  taken by hand, where it was a fling. Easier. Not moved.
+- **1.11, La Cortina's rope (note 14):** unchanged in reach (1.8 / 1.2 m): it lies
+  against the slab. It is climbed, and climbing is the slower hand over hand above.
+- **2.10, the 13.6 m rope:** 1.2 m of reach becomes 5.8 m. It was a rope you could only
+  climb; now it swings.
+- **3.3, the chandeliers:** 2 m becomes about 3 m. They are 6 m apart and each weighs
+  more than the chain, so they changed least. The east one hit something on its west
+  side in the new run (0.8 m).
+- **The garden's entry roots and the temple's door chains** (they catch a throw from
+  the area below): they hang lighter, so a body that hits one carries it along more.
+  The catch itself was not tried.
+- **4.2, the lianas:** 2.6 m becomes 5.2 to 5.8 m, with the vines 5 m apart: vine to
+  vine by hand. Easier.
+- **4.3, the spore lift's vines:** the updraught there is 3.7 m/s2 up, more than the
+  climber's gravity. On a light vine a climber in the draught is carried up with the
+  vine slack. Not tried by play.
+- **4.9, Los Ojos:** the two short roots over the eyes now swing far enough to touch a
+  puffball, and it throws you: in the new run the climber on `ojo_ra` was thrown 17 m
+  and lost the rope, and on `ojo_rb` 10 m. Before, a swing there never reached the
+  eyes. The eyes are that challenge's way across, so this may be right; it is new.
+- **6.5, the chain off the last raft:** the climber lost its grip at the west end of a
+  5.5 m swing (it was 2.4 m). Something there took it off: not looked into.
+- **6.6, the hammers' chains, 10.6, the kites' tails, 11.4, the bell's rope, 7.4, the
+  drawbridge's ropes:** these are thrown about by what they hang from, before and
+  after. Their numbers say only that.
+- **9.6, 10.1, 10.8, ropes in the wind:** see the call above. The balloon's ropes hang
+  9.7 m downwind at the gust's height, where they hung 4.5 to 4.8 m.
+- **10.3, the prayer lines:** strung lines sag 0.1 to 0.2 m more under a climber.
+- **Flings off a rope:** the area files give a speed for each ("5 m/s off a rope", "4.6
+  m/s from a dead hang"). One push from a still hang gave 2.3 m/s before, nearly
+  straight up, and gives 0.9 m/s now. The speed comes from the swing now: 4.2 to 4.4
+  m/s at the bottom after five or six pushes on a 5 m rope, more on a longer one.
+
+- **Pictures:** `20_rope_hanging_still.jpg`, `20_rope_push_2.jpg`, `20_rope_push_4.jpg`,
+  `20_rope_push_5.jpg` (the mine's rope, 1.4). No "before" picture: a still does not
+  show a swing; the tables do.
+- **Checked:** lint; the `--peak` battery; and, because the climber is shared with the
+  arena, `--swing --grab --climb --feel --neutral --peakride`: all clean.
+- **First-try numbers:** the rope's weights; `rope_pull` 2.4; `rope_pump` 0.16; the
+  lift's limits (0.35 m below the grip, 0.8 to 1.3 m/s).
+- **Not checked:** any of it by play. No designed move was replayed end to end: the
+  script can swing and climb, it cannot fling and catch.
+
+## To do: every note of 12 to 57 not done yet
+
+Kept here so nothing is lost (Parker 11-13). The page has the same list.
+
+**In hand, in this order:** 22 (the water's full overhaul), 28 and 43 (the camera
+controls), 35 (the garden's static).
+
+**Parked until Parker says** (his design job comes first):
+
+- 12: a dark chimney in the cave-in's roof for the rocks to fall from.
+- 18: the rings fixed to the wall, six chains out.
+- 19: the gate's pistons (needs a model).
+- 25: the dam as one inclined elevator with its winch on board.
+- 26, 30, 33: the crystal cave's pieces in the pale purple cluster look (needs models;
+  the white "you can hold this" finish may be possible in code).
+- 29: the geode at 3 rpm.
+- 32: the crystal bonsai (needs a model).
+- 34: the ring's spikes pop in and out with a shake.
+- 36: the bounce caps squash and spring.
+- 37: the bouncy caps spotted (needs a model); the scenery mushrooms pushed back 6 to 10 m.
+- 38: the spore updraught drawn as a real column with a source at its foot.
+- 41: the mushroom hut and the frog (need models).
+- 42: the giant mushroom (needs a model).
+- 44: two warts, and the lunges checked.
+- 46: the great cap (needs a model).
+- 49: the gears, options 1 to 3.
+- 50: only the middle censer stays.
+- 54: the achievements list, "Pay Your Respects" first.
+- 57: the great bellows works its gust; the three small ones breathe.
+- The model requests still to be written into `MODEL_REQUESTS.md`: 19, 26/30/33, 32,
+  37, 41, 42, 46, and the four cracked pieces of group E.

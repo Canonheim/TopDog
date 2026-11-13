@@ -9,7 +9,19 @@ const Layout := preload("res://climber/body_layout.gd")
 const SEG_R := 0.065
 ## Per half-metre segment. Three times what they were (Parker 11-12: "the ropes need to be
 ## about 3x heavier": holding one, a climber could haul it anywhere and nearly fly).
-const ROPE_MASS := {"rope": 3.6, "chain": 6.6, "vine": 3.0, "cable": 6.0, "banner": 2.7}
+## THE ROPES SWING WITH YOU (playtest note 20, Parker 11-12: "Make it so you can swing back
+## and forth on them better. Right now they like launch you up weird but you can't get a
+## good swing on them"). A rope is a string of half-metre pieces. Each weighs a fraction
+## of the climber (22 kg), falls at the climber's own slow gravity so the two swing as one
+## pendulum, and is barely braked. The old rope outweighed its climber six to one, fell
+## three and a half times as fast and lost a quarter of its speed every second. What
+## keeps a climber from hauling a light rope about and flying (Parker, earlier on 11-12,
+## which is why these were once tripled) is in the climber: Feel rope_pull, and a pull
+## paid by its own hands (Climber._tick_joints). tests/peak_rope_bench.tscn has the numbers.
+const ROPE_MASS := {"rope": 0.3, "chain": 0.5, "vine": 0.3, "cable": 0.5, "banner": 0.25}
+const PLANK_MASS := 7.2  # a bridge's planks are stood on, not swung on: as they were
+const ROPE_DAMP := 0.03
+const ROPE_SPIN_DAMP := 0.15
 const ROPE_REACH := 0.17  # a free hand or foot this near a rope takes it
 const ROPE_TONE := {"rope": "#C9A36A", "chain": "#B5532A", "vine": "#7FA04A", "cable": "#B9B2A6", "banner": "#C9A36A"}
 const BOARD_S := 0.7  # in the cart this long and it rolls
@@ -265,14 +277,16 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	var seg_len := step.length()
 	for i in n:
 		var rb := RigidBody3D.new()
-		rb.mass = float(ROPE_MASS.get(kind, 1.2)) * (2.0 if planks else 1.0)
+		rb.mass = PLANK_MASS if planks else float(ROPE_MASS.get(kind, 0.3))
 		rb.collision_layer = Climber.LAYER_WORLD
 		rb.collision_mask = 0
 		rb.axis_lock_linear_z = true
 		rb.axis_lock_angular_x = true
 		rb.axis_lock_angular_y = true
-		rb.linear_damp = 0.25
-		rb.angular_damp = 1.2
+		rb.linear_damp = 0.25 if planks else ROPE_DAMP
+		rb.angular_damp = 1.2 if planks else ROPE_SPIN_DAMP
+		if not planks:
+			rb.gravity_scale = Feel.climber_gravity(true)
 		rb.can_sleep = false
 		var cs := CollisionShape3D.new()
 		var mi := MeshInstance3D.new()
@@ -305,6 +319,8 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		# The segment's long axis is its own y: hang it along the rope.
 		rb.transform = Transform3D(Basis(Vector3.BACK, dir.angle() + PI * 0.5), Vector3(c.x, c.y, 0))
 		rb.set_meta("peak_rope", true)
+		if not both:
+			rb.set_meta("peak_swing", [segs[0] if i > 0 else rb, seg_len * 0.5])
 		root.add_child(rb)
 		Climber.sync_server(rb)
 		var j := PhysicsServer3D.joint_create()
@@ -330,8 +346,10 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		bob.axis_lock_linear_z = true
 		bob.axis_lock_angular_x = true
 		bob.axis_lock_angular_y = true
-		bob.linear_damp = 0.15
+		bob.linear_damp = ROPE_DAMP
 		bob.angular_damp = 1.0
+		bob.gravity_scale = Feel.climber_gravity(true)
+		bob.set_meta("peak_swing", [segs[0], seg_len * 0.5])
 		bob.can_sleep = false
 		var cs := CollisionShape3D.new()
 		var bx := BoxShape3D.new()
@@ -449,8 +467,21 @@ func sleep_all() -> void:
 
 # ================================================================ tick
 
+var _rope_g := -1.0
+
+
 func tick(delta: float) -> void:
 	_ko_wait = maxf(0.0, _ko_wait - delta)
+	var rope_g := Feel.climber_gravity(true)
+	if not is_equal_approx(rope_g, _rope_g):
+		_rope_g = rope_g  # (the F1 panel changed the climber's gravity: the ropes follow)
+		for r in ropes:
+			if bool(r.planks):
+				continue
+			for seg: RigidBody3D in r.segs:
+				seg.gravity_scale = rope_g
+			if r.bob != null:
+				(r.bob as RigidBody3D).gravity_scale = rope_g
 	for id in bodies:
 		var b: Dictionary = bodies[id]
 		var ang := (b.rb as RigidBody3D).rotation.z
