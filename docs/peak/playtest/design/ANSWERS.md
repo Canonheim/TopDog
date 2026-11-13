@@ -83,3 +83,30 @@ unless a line says so.
 34. **The smith's hut: stone and iron with no timber, or a timber and iron lean-to?** Picked: "Stone and iron, no timber".
 
 36. **Chimney, El Fuelle: an open box of dynamite behind the rungs, to explain the dynamite rung?** Picked: "Yes, the box".
+
+## The playtest notes' own calls (11-13)
+
+- **Note 21, the barrels: two of the eight gaps have to be swum. Keep them?** Picked: "Keep the two swims".
+- **Note 6, cart and chain: catch a chain while riding the falling cart and you keep the chain?** Picked: "Yes, chain wins".
+- **Note 6, the chains past the track's end: move them out so the cart is the only way?**
+  "make it one chain and move it out and also make it an actual chain, we have some nice ones from higher up in the mountain we can use, just make it rusty red to match the current chain color"
+- **Note 53, the altar's east wall under the fast cross: have the thread test it first?** Picked: "No, I'll find out".
+- **Note 52, eight more small pits: make all their insides unholdable?** Picked: "Yes, all eight".
+- **Note 7, nine long jumps that land out of frame: strict camera cap, or wider there?** Picked: "Wider at those nine".
+- **Note 25, the dam's lift: always sinks when you stop winding, or a catch?** Picked: "Always sinks".
+- **Note 26, the crystal steps: same play with a new look, or truly slanted pointed shafts?** Picked: "Truly slanted shafts".
+- **Note 30, the needles of Agujas: only the point holdable, or the whole shaft?** Picked: "Point only, as now".
+- **Note 34, the ring spikes that pop in and out: harder, or only alive?** Picked: "Harder".
+- **Note 49, the temple's gears: which ways to make them harder?**
+  "Make them knock you out if you get crunched by them and also move 2x as fast"
+  - So: the mesh bites (knocks you out), and twice as fast (a turn in 12 seconds). Not fewer holdable teeth, not reversing.
+- **Note 54, "Pay Your Respects": the second altar too, and F for the keyboard fart?** Picked: "Both altars, F key".
+- **Note 13, La Cortina: keep "dry for longer" and the always-dry holds in another colour?** Picked: "Yes, keep both".
+- **Note 2, the water's colour: tinted per cave, or Del Mar's bright blue?** Picked: "Tinted per cave".
+
+## Not asked, because they need his eye in the game
+
+- Note 4: does the lift's dark hoistway read as a lift and not as something to hold?
+- Note 7: the camera numbers (widest view 11 m of height, looking at most 1 m below you).
+- Note 17: is the pulsing light under the mill race gone?
+- Note 40: the storm ridge's six clouds (he has not played that far).
