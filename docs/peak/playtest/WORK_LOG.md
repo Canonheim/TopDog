@@ -1065,12 +1065,94 @@ is, before and after.
 - **Not checked:** any of it by play. No designed move was replayed end to end: the
   script can swing and climb, it cannot fling and catch.
 
+## Note 22: the water's full overhaul
+
+- **State:** done on every stretch and fall, watched in the game. Nothing played by a
+  person. It is a first try at a look: Parker's eye decides.
+- **Parker 11-12:** "water will need a full visual overhaul, it is in weird cubes and it
+  doesn't pour off things or look like water".
+- **The sample stretch** is the mill race of 2.2 and 2.3: `22_mill_race.jpg`,
+  `22_race_close.jpg`, `22_wheel.jpg`, `22_channel_over_the_lip.jpg`,
+  `22_channel_fall_lands.jpg`, `22_race_over_the_lip.jpg`. Before: `22_before_race.jpg`.
+- **Rolled out in the same change** (the drawing is general; nothing is per-stretch):
+  all 14 stretches and the falls. `22_flume.jpg` (before: `22_before_flume.jpg`),
+  `22_step.jpg`, `22_cascade.jpg` (before: `22_before_cascade.jpg`),
+  `22_cascade_foot.jpg`, `22_river_lip.jpg`, `22_pool_210.jpg`, `22_chica.jpg`,
+  `22_dam_leak.jpg`, `22_lake.jpg`, `22_sump.jpg`, `22_climber_drips.jpg`.
+
+### What changed (`stages/peak/peak_zones.gd`, two new shaders)
+
+- **The look is separate from the rules.** A water rule (a box with its own current) is
+  never drawn. Rules that touch at one surface are drawn as ONE body, from their
+  joined outline (`_build_bodies`, `_body_vis`): the flume, the tail pool and the three
+  still patches behind the pillars are one piece of water. No seam, no darker box
+  where a still patch lies over a river. The 14 rules make 9 bodies.
+- **A waterline that moves.** A travelling ripple cuts the body's top edge
+  (`stages/peak/peak_water_body.gdshader`); it runs with the current.
+- **A body with depth.** The cave's two blues, lighter at the surface, darker down; the
+  climber and the bed show through it as before, with no box edges.
+- **Current you can read.** Long soft streaks slide with the flow, longer and stronger
+  where it is faster. Each point of the body carries its own speed, so the river's
+  quick end and its still patches are one surface. In a still patch the streaks fade
+  out and slow turning arcs take their place. **The square specks are gone.**
+- **Foam where water meets something:** at a body's ends, and at every pile or pillar
+  that stands through the waterline (found from the rock itself).
+- **Water that pours** (`_fall_vis`, `stages/peak/peak_water_fall.gdshader`). A fall is a
+  ribbon along the water's own path. At a lip the pool's WHOLE depth turns over: the
+  ribbon's top is the waterline and its bottom is the bed's corner, so the pool has no
+  end wall; its end is the fall. It thins as it speeds up, as falling water does. It
+  starts in the pool's own colour, breaks white from its outer edge, runs in streaks
+  that stretch as they fall, and turns white where it lands. At its foot: foam on the
+  pool's waterline, Del Mar's spray and rings, and a mist. On a floor it spatters.
+  The old fall was a pale slab as wide as its whole shaft.
+- **Three falls that were missing are drawn** (`tools/peak/areas/a2.py`): the mill
+  channel's drain into the race, the race's drain onto the lip ledge, and the flume's
+  one-metre spill into El Charco del Pozo. Those pools ended in mid air before.
+- **The river's fall into the mine is one line** through both areas (a2 draws it to
+  y 84, a1 the rest, on the same x and thickness).
+- **Things shed water.** The mill wheel's paddles drop water on their way up
+  (`_find_sheds`). A climber just out of the water drips for a second and a half.
+  Drops are round.
+- **Kept:** note 2's splashes, rings and sounds; the cave tints; `WATER_TINTED`.
+- **Gone:** `stages/peak/peak_water_front.gdshader` (note 2's front), the foam flecks.
+
+### Frame rate (the probe's `fps` scene, 5 s each, uncapped, off-screen)
+
+| Standing at | Before | After |
+|---|---|---|
+| 1.3 (the mine, over the Sump) | 130 | 171 |
+| 2.3 (the mill race) | 107 | 140 |
+| 2.8 (the flume) | 116 | 136 |
+| 2.10 (the upper pool) | 110 | 128 |
+
+It went up: one mesh a body where there was a box, a plane and a particle cloud a rule,
+and a ribbon where there was a slab and up to 140 particles a fall.
+
+### Honest limits
+
+- **The flume's one-metre spill reads as a thick curl** (`22_step.jpg`): the whole depth
+  of the flume turning over a drop shorter than it is deep. A first try.
+- **The wheel does not reach the water.** Its paddles end 0.6 m above the race, in the
+  model and in the collision. The drops are there; the lifting is not.
+- **Barrels, chains and the cart do not drip** when they come up. Only the wheel and
+  the climber do.
+- **"Thin spills where a channel overflows an edge"** (the page's plan): none added.
+  There is nowhere in the data that says a channel overflows.
+- **Foam against the barrels:** none. They move; the foam is found once, from the rock.
+- **The top of each body** is still Del Mar's flat surface, seen at a slant: it does
+  not rise and fall with the front's ripple (3 cm).
+- `after/02_water_*.jpg` show note 2's surface, which this replaces. The `02_splash_*`
+  pictures still hold.
+- **Not checked:** by play; the swims' feel (no rule changed); how it reads in motion
+  to a person. Stills cannot show the streaks sliding.
+- **First-try numbers:** the streaks' strength (`streak`, 0.7) and the ripple's height
+  (`wave_m`, 0.03) in the body shader; `FALL_G` 7.0, the pull the falls are drawn under.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
 
-**In hand, in this order:** 22 (the water's full overhaul), 28 and 43 (the camera
-controls), 35 (the garden's static).
+**In hand, in this order:** 28 and 43 (the camera controls), 35 (the garden's static).
 
 **Parked until Parker says** (his design job comes first):
 

@@ -26,6 +26,10 @@ var _wet := false
 var _wet_zone: Dictionary = {}  # the water the climber is in (or was last in)
 var _paddle_wait := 0.0
 var _churns: Array = []  # [the water's row, x0, x1, the next second it sprays]: a waterfall's foot
+var water_bodies: Array = []  # the DRAWN water: one per connected stretch (see _build_bodies)
+var _sheds: Array = []  # wheels that lift water and drop it
+var _drip_until := 0.0  # the climber, just out of the water, drips until this second
+var _drip_next := 0.0
 
 
 func _init(p: Peak) -> void:
@@ -39,11 +43,16 @@ func tag(name: String, body: Object) -> void:
 
 
 func build_area(a: Dictionary, root: Node3D) -> void:
+	var body_of := _build_bodies(a, root)
+	var zi := -1
 	for z in a.get("zones", []):
+		zi += 1
 		var row: Dictionary = {"def": z, "area": str(a.id)}
 		match str(z.type):
 			"water":
-				row["vis"] = _water_vis(a, z, root, row)
+				if body_of.has(zi):
+					row["body"] = body_of[zi]
+					row["sea"] = (body_of[zi] as Dictionary).sea
 				waters.append(row)
 			"wind":
 				row["fx"] = _wind_fx(a, z, root)
@@ -96,6 +105,8 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 				finishes.append(row)
 	for e in a.get("fx", []):
 		_effect(a, e, root)
+	_finish_bodies(str(a.id))
+	_find_sheds(a, root)
 
 
 # ================================================================ queries
@@ -240,8 +251,9 @@ func _tick_water(c: Climber, _delta: float) -> void:
 			_wet_zone = zone
 			splash_at(Vector2(com.x, float(zone.surface)), clampf(0.75 + c.linear_speed() * 0.07, 0.75, 1.5))
 		elif not _wet_zone.is_empty():
-			# Out: a smaller one, where you left it.
+			# Out: a smaller one, where you left it. And the body drips for a moment.
 			splash_at(Vector2(clampf(com.x, float(_wet_zone.rect[0]), float(_wet_zone.rect[2])), float(_wet_zone.surface)), 0.5)
+			_drip_until = peak.clock + 1.6
 	if wet:
 		_wet_zone = zone
 	c.float_mode = wet
@@ -487,6 +499,12 @@ func _tick_strikes(c: Climber) -> void:
 func frame(_delta: float, _cam: Camera3D) -> void:
 	_frame_bounces(_delta)
 	_frame_drips()
+	_frame_sheds()
+	if peak.clock < _drip_until and peak.clock >= _drip_next and peak.player != null and not _wet:
+		_drip_next = peak.clock + 0.11
+		var parts: Array = peak.player.bodies.values()
+		var part: RigidBody3D = parts[randi() % parts.size()]
+		burst(peak.local_of(Climber.pos2(part)), "drops", 0.45, Vector2.DOWN, 0.4)
 	var dark_want := dark_at(peak.player_at()) if peak.player != null else 0.0
 	_dark = lerpf(_dark, dark_want, 1.0 - exp(-_delta * DARK_EASE))
 	if absf(_dark - dark_want) < 0.002:
@@ -528,7 +546,9 @@ static func _flat(c: Color, alpha: float) -> StandardMaterial3D:
 ## day blue in the caves, or that blue tinted dark to fit each cave (Las Aguas Negras is
 ## the black waters). Built TINTED. To see Del Mar's blue everywhere, make this false.
 const WATER_TINTED := true
-const WATER_FRONT := preload("res://stages/peak/peak_water_front.gdshader")
+const WATER_BODY := preload("res://stages/peak/peak_water_body.gdshader")
+const WATER_FALL := preload("res://stages/peak/peak_water_fall.gdshader")
+const FALL_G := 7.0  # m/s2: the pull a fall is DRAWN under (a look, not a rule)
 const WATER_DEPTH := Peak.HALF * 2.4  # how far through the play plane a pool reaches
 
 
@@ -544,45 +564,95 @@ func water_colors(a: Dictionary) -> Array:
 	return [Color(shallow.r, shallow.g, shallow.b, 0.42), Color(deep.r, deep.g, deep.b, 0.74)]
 
 
-## Is this water laid wholly over another with the same surface (an eddy in a river)?
-func _water_over(a: Dictionary, z: Dictionary) -> bool:
-	for o in a.get("zones", []):
-		if str(o.type) != "water" or o == z or not is_equal_approx(float(o.surface), float(z.surface)):
+## ONE BODY OF WATER PER CONNECTED STRETCH (playtest note 22, Parker 11-12: "water will
+## need a full visual overhaul, it is in weird cubes and it doesn't pour off things or look
+## like water"). The RULES are boxes and stay boxes (a river, its quick end, the still
+## patch behind each pillar: every one its own current) and are never drawn. What is drawn
+## is one body for every run of rules that touch at one surface: the joined outline, so
+## there is no seam between two currents, no darker box where a still patch lies over a
+## river, and no glass wall where a pool ends. Each body has Del Mar's own surface on top
+## (DelMarSea: its foam circles, the rings a splash stamps in, its ink), and one front
+## (peak_water_body.gdshader) that carries the waterline, the depth, the current and the
+## foam. Returns {index of a water rule in the area's zones -> its body}.
+func _build_bodies(a: Dictionary, root: Node3D) -> Dictionary:
+	var all: Array = a.get("zones", [])
+	var groups: Array = []
+	for i in all.size():
+		if str(all[i].type) != "water":
 			continue
-		if float(o.rect[0]) <= float(z.rect[0]) and float(o.rect[2]) >= float(z.rect[2]) and float(o.rect[2]) - float(o.rect[0]) > float(z.rect[2]) - float(z.rect[0]):
+		var mine: Array = [i]
+		var keep: Array = []
+		for g: Array in groups:
+			var touches := false
+			for j: int in g:
+				if _water_touch(all[i], all[j]):
+					touches = true
+					break
+			if touches:
+				mine.append_array(g)
+			else:
+				keep.append(g)
+		keep.append(mine)
+		groups = keep
+	var out := {}
+	for g: Array in groups:
+		g.sort()
+		var zs: Array = []
+		for i: int in g:
+			zs.append(all[i])
+		var body := _body_vis(a, zs, root)
+		if body.is_empty():
+			continue
+		for i: int in g:
+			out[i] = body
+	return out
+
+
+static func _water_touch(p: Dictionary, q: Dictionary) -> bool:
+	return is_equal_approx(float(p.surface), float(q.surface)) and float(p.rect[0]) <= float(q.rect[2]) + 0.05 and float(q.rect[0]) <= float(p.rect[2]) + 0.05
+
+
+## The current at x in a body: [m/s along x, how still a patch it is 0..1]. The rule laid
+## last wins, as it does for a climber.
+static func _flow_at(zs: Array, x: float, fast: float) -> Vector2:
+	var flow := 0.0
+	var still := 0.0
+	for z: Dictionary in zs:
+		if x >= float(z.rect[0]) and x <= float(z.rect[2]):
+			flow = float(z.flow[0])
+			still = 1.0 if (str(z.get("look", "")) == "eddy" or (absf(flow) < 0.45 and fast >= 1.0)) else 0.0
+	return Vector2(flow, still)
+
+
+func _in_rock(area: String, p: Vector2) -> bool:
+	for row: Array in peak.things._rock.get(area, []):
+		if (row[0] as Rect2).has_point(p) and Geometry2D.is_point_in_polygon(p, row[1]):
 			return true
 	return false
 
 
-## A POOL, A RIVER, THE SUMP (Parker 11-12: "the water should use the water shader and
-## splash effects we use in del mar"). Its top is Del Mar's own surface, dressed by Del
-## Mar's own DelMarSea (the foam circles, the ripple rings a splash stamps in, the ink
-## replayed), which also throws this pool's splashes. Its front is a clean tint with the
-## waterline (peak_water_front.gdshader): these pools are looked INTO, from the side.
-## A river keeps its flecks, so the current can be read.
-func _water_vis(a: Dictionary, z: Dictionary, root: Node3D, row: Dictionary = {}) -> Node3D:
-	var r: Array = z.rect
-	var w := float(r[2]) - float(r[0])
-	var surface := float(z.surface)
-	var h := surface - float(r[1])
-	if w <= 0.0 or h <= 0.0:
-		return null
+func _body_vis(a: Dictionary, zs: Array, root: Node3D) -> Dictionary:
+	var surface := float(zs[0].surface)
+	var x0 := INF
+	var x1 := -INF
+	var low := INF
+	var fast := 0.0
+	var edges: Array = []
+	for z: Dictionary in zs:
+		x0 = minf(x0, float(z.rect[0]))
+		x1 = maxf(x1, float(z.rect[2]))
+		low = minf(low, float(z.rect[1]))
+		fast = maxf(fast, absf(float(z.flow[0])))
+		edges.append(float(z.rect[0]))
+		edges.append(float(z.rect[2]))
+	var w := x1 - x0
+	if w <= 0.0 or surface - low <= 0.0:
+		return {}
+	edges.sort()
 	var n := Node3D.new()
-	var mid_x := (float(r[0]) + float(r[2])) * 0.5
+	var mid_x := (x0 + x1) * 0.5
 	var cols: Array = water_colors(a)
-	var flow := Peak.v2(z.flow)
-	if _water_over(a, z):
-		# An eddy: the river's own water, stiller. A darker patch of the front, no more.
-		var still := MeshInstance3D.new()
-		var sq := QuadMesh.new()
-		sq.size = Vector2(w, h)
-		still.mesh = sq
-		still.material_override = _flat((cols[1] as Color).darkened(0.35), 0.3)
-		still.position = Vector3(mid_x, surface - h * 0.5 - 0.03, WATER_DEPTH * 0.5 + 0.02)
-		still.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		n.add_child(still)
-		root.add_child(n)
-		return n
+	# the top: Del Mar's surface, once for the whole body
 	var top := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
 	pm.size = Vector2(w, WATER_DEPTH)
@@ -600,38 +670,345 @@ func _water_vis(a: Dictionary, z: Dictionary, root: Node3D, row: Dictionary = {}
 		tm.set_shader_parameter("foam_edge_m", 0.3)
 		tm.set_shader_parameter("murk_min", 0.8)
 		tm.set_shader_parameter("murk_max", 0.97)
+	# the front: one mesh along the joined outline, the bed stepping where the rules' beds do
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var sum_flow := 0.0
+	var sum_w := 0.0
+	for k in edges.size() - 1:
+		var xa: float = edges[k]
+		var xb: float = edges[k + 1]
+		if xb - xa < 0.01:
+			continue
+		var bed := low
+		var covered := false
+		var here := INF
+		for z: Dictionary in zs:
+			if (xa + xb) * 0.5 >= float(z.rect[0]) and (xa + xb) * 0.5 <= float(z.rect[2]):
+				here = minf(here, float(z.rect[1]))
+				covered = true
+		if not covered:
+			continue
+		bed = here
+		var f_mid := _flow_at(zs, (xa + xb) * 0.5, fast)
+		sum_flow += f_mid.x * (xb - xa) * (1.0 - f_mid.y)
+		sum_w += (xb - xa) * (1.0 - f_mid.y)
+		var steps := maxi(1, int(ceil((xb - xa) / 0.5)))
+		for i in steps:
+			var xl := lerpf(xa, xb, float(i) / steps)
+			var xr := lerpf(xa, xb, float(i + 1) / steps)
+			var cl := _body_color(zs, xl, x0, x1, fast)
+			var cr := _body_color(zs, xr, x0, x1, fast)
+			var tl := Vector3(xl, surface + 0.16, 0)
+			var tr := Vector3(xr, surface + 0.16, 0)
+			var bl := Vector3(xl, bed, 0)
+			var br := Vector3(xr, bed, 0)
+			for row: Array in [[tl, cl], [tr, cr], [br, cr], [tl, cl], [br, cr], [bl, cl]]:
+				st.set_color(row[1])
+				st.add_vertex(row[0])
 	var front := MeshInstance3D.new()
-	var fq := QuadMesh.new()
-	fq.size = Vector2(w, h)
-	front.mesh = fq
+	front.mesh = st.commit()
 	var fm := ShaderMaterial.new()
-	fm.shader = WATER_FRONT
+	fm.shader = WATER_BODY
 	fm.set_shader_parameter("shallow_color", cols[0])
 	fm.set_shader_parameter("deep_color", cols[1])
-	fm.set_shader_parameter("depth_m", h)
-	fm.set_shader_parameter("flow", flow.x)
+	fm.set_shader_parameter("surface_y", surface + Peak.ORIGIN.y)
+	fm.set_shader_parameter("mean_flow", sum_flow / maxf(sum_w, 0.01))
 	fm.render_priority = 1  # (over the surface's underside, seen from below the waterline)
 	front.material_override = fm
-	front.position = Vector3(mid_x, surface - h * 0.5, WATER_DEPTH * 0.5)
+	front.position = Vector3(0, 0, WATER_DEPTH * 0.5)
 	front.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	front.extra_cull_margin = 1.0
 	n.add_child(front)
-	row["sea"] = sea
-	if flow.length() > 0.2:
-		# Foam flecks riding the current, so its speed can be read.
-		var p := _particles(Color("#E8F6FF"), 0.8, int(clampf(w * 0.8, 6, 60)), 5.0)
-		p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-		p.emission_box_extents = Vector3(w * 0.5, 0.05, Peak.HALF)
-		p.direction = Vector3(flow.x, flow.y, 0).normalized()
-		p.spread = 4.0
-		p.initial_velocity_min = flow.length() * 0.9
-		p.initial_velocity_max = flow.length() * 1.1
-		p.gravity = Vector3.ZERO
-		p.scale_amount_min = 0.5
-		p.scale_amount_max = 1.4
-		p.position = Vector3((float(r[0]) + float(r[2])) * 0.5, surface + 0.05, 0.2)
-		n.add_child(p)
 	root.add_child(n)
-	return n
+	var body := {"area": str(a.id), "x0": x0, "x1": x1, "surface": surface, "zs": zs, "sea": sea, "mat": fm, "node": n, "foams": [], "first": []}
+	# FOAM WHERE THE WATER MEETS SOMETHING: its two ends, and every pile or pillar that
+	# stands through the waterline. (A lip and the foot of a fall add theirs: _fall_vis.)
+	var area := str(a.id)
+	body.foams.append(Vector3(x0, 0.55, 1.0))
+	body.foams.append(Vector3(x1, 0.55, 1.0))
+	var was := false
+	var x := x0 + 0.15
+	while x < x1 - 0.15:
+		var now := _in_rock(area, Vector2(x, surface - 0.08))
+		if now != was:
+			body.foams.append(Vector3(x - 0.05 if now else x, 0.45, 0.9))
+			was = now
+		x += 0.1
+	water_bodies.append(body)
+	return body
+
+
+## A vertex's colour for the body's shader: r the flow (smoothed over a metre, so a quick
+## end and a still patch run into the river with no line), g how still.
+static func _body_color(zs: Array, x: float, x0: float, x1: float, fast: float) -> Color:
+	var acc := Vector2.ZERO
+	for d: float in [-0.6, -0.3, 0.0, 0.3, 0.6]:
+		acc += _flow_at(zs, clampf(x + d, x0 + 0.01, x1 - 0.01), fast)
+	acc /= 5.0
+	return Color(clampf(acc.x / 8.0 + 0.5, 0.0, 1.0), acc.y, 0.0, 1.0)
+
+
+## The foam is known only once the area's falls are (a lip, a foot): hand each body its list.
+func _finish_bodies(area: String) -> void:
+	for body: Dictionary in water_bodies:
+		if str(body.area) != area:
+			continue
+		var list: Array = (body.first as Array) + (body.foams as Array)
+		var packed := PackedVector3Array()
+		for i in mini(list.size(), 12):
+			var f: Vector3 = list[i]
+			packed.append(Vector3(f.x + Peak.ORIGIN.x, f.y, f.z))
+		var count := packed.size()
+		while packed.size() < 12:
+			packed.append(Vector3.ZERO)
+		(body.mat as ShaderMaterial).set_shader_parameter("foam_count", count)
+		(body.mat as ShaderMaterial).set_shader_parameter("foams", packed)
+
+
+## The water rule in this area that pours into a fall's box: {x the lip, dir +1 east / -1
+## west, surface, flow m/s, depth m, body}, or {} (a fall that comes out of the rock, or
+## carries on from the area above).
+func _fall_lip(a: Dictionary, r: Array) -> Dictionary:
+	var top := float(r[3])
+	var all: Array = a.get("zones", [])
+	for i in all.size():
+		var z: Dictionary = all[i]
+		if str(z.type) != "water":
+			continue
+		var s := float(z.surface)
+		if s < top - 0.3 or s > top + 1.6:
+			continue
+		var f := float(z.flow[0])
+		var hit := {}
+		if f >= 0.0 and absf(float(z.rect[2]) - float(r[0])) <= 0.8:
+			hit = {"x": float(z.rect[2]), "dir": 1.0}
+		elif f <= 0.0 and absf(float(z.rect[0]) - float(r[2])) <= 0.8:
+			hit = {"x": float(z.rect[0]), "dir": -1.0}
+		if hit.is_empty():
+			continue
+		hit["surface"] = s
+		hit["flow"] = absf(f)
+		hit["depth"] = s - float(z.rect[1])
+		for row in waters:
+			if row.def == z and row.has("body"):
+				hit["body"] = row.body
+		return hit
+	return {}
+
+
+## WATER THAT POURS. A fall is a ribbon along the water's own path, seen from the side as
+## everything here is: out of its pool over the lip in a bend, then down to whatever it
+## lands on, with broken white over the lip, streaks that speed up as they fall, and
+## white, mist and churn at its foot. (It was a pale slab the width of its whole shaft,
+## standing beside the pool it came from.) The box in the data is the shaft it falls in.
+## In the data: "x" places a fall that no pool in this area feeds, "head" (0..1) is how
+## white its top is then, "through" says it carries on into the area below (no foot),
+## "density" under 1 is a thinner one.
+func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
+	var r: Array = e.rect
+	var density := float(e.get("density", 1.0))
+	var w := float(r[2]) - float(r[0])
+	var top_y := float(r[3])
+	var foot_y := float(r[1])
+	var lip := _fall_lip(a, r)
+	var width := float(e.get("width", clampf(0.42 * density + 0.14, 0.2, 0.6)))
+	var xr := float(e.get("x", (float(r[0]) + float(r[2])) * 0.5))
+	var v0 := 1.4
+	var mid: Array = []  # the ribbon's middle line, and at each point its normal and width
+	if lip.is_empty():
+		mid.append([Vector2(xr, top_y), Vector2(1, 0), width])
+		mid.append([Vector2(xr, foot_y), Vector2(1, 0), width * 0.8])
+	else:
+		# THE WHOLE DEPTH OF THE POOL GOES OVER: the ribbon starts as thick as the pool is
+		# deep, its top the waterline and its bottom the bed's corner, and thins as it
+		# speeds up, as falling water does (thickness x speed stays the same). So the
+		# pool has no end wall: its end IS the fall.
+		var dir := float(lip.dir)
+		var depth := float(lip.depth)
+		v0 = maxf(float(lip.flow), 1.0)
+		var out := clampf(v0 * 0.9, 0.5, maxf(0.5, w - 0.3))  # how far out from the lip it ends up
+		var c0 := Vector2(float(lip.x), float(lip.surface) - depth * 0.5)
+		var t_end := sqrt(2.0 * maxf(0.1, c0.y - foot_y) / FALL_G)
+		var times: Array = []
+		var t := 0.0
+		while t < minf(1.2, t_end):
+			times.append(t)
+			t += 0.06
+		while t < t_end:
+			times.append(t)
+			t += 0.3
+		times.append(t_end)
+		for tt: float in times:
+			var c := Vector2(c0.x + dir * out * (1.0 - exp(-v0 * tt / out)), c0.y - 0.5 * FALL_G * tt * tt)
+			var tan := Vector2(dir * v0 * exp(-v0 * tt / out), -FALL_G * tt).normalized()
+			var nrm := Vector2(-tan.y, tan.x) * dir
+			var thick := clampf(depth * v0 / sqrt(v0 * v0 + FALL_G * FALL_G * tt * tt), 0.13, depth)
+			mid.append([c, nrm, thick])
+		xr = (mid[mid.size() - 1][0] as Vector2).x
+		width = float(mid[mid.size() - 1][2])
+	# the ribbon: UV.x runs across it from its outer edge, UV.y is metres along it
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var along := 0.0
+	var left: Array = []
+	var right: Array = []
+	var dist: Array = []
+	for i in mid.size():
+		var c: Vector2 = mid[i][0]
+		if i > 0:
+			along += c.distance_to(mid[i - 1][0])
+		left.append(c + (mid[i][1] as Vector2) * float(mid[i][2]) * 0.5)
+		right.append(c - (mid[i][1] as Vector2) * float(mid[i][2]) * 0.5)
+		dist.append(along)
+	for i in mid.size() - 1:
+		for row: Array in [[left[i], 0.0, dist[i]], [right[i], 1.0, dist[i]], [right[i + 1], 1.0, dist[i + 1]],
+				[left[i], 0.0, dist[i]], [right[i + 1], 1.0, dist[i + 1]], [left[i + 1], 0.0, dist[i + 1]]]:
+			st.set_uv(Vector2(float(row[1]), float(row[2])))
+			st.add_vertex(Vector3((row[0] as Vector2).x, (row[0] as Vector2).y, 0))
+	var sheet := MeshInstance3D.new()
+	sheet.mesh = st.commit()
+	var cols: Array = water_colors(a)
+	var fm := ShaderMaterial.new()
+	fm.shader = WATER_FALL
+	var wc: Color = (cols[0] as Color).lerp(Color("#DDF2FB"), 0.62)
+	fm.set_shader_parameter("water_color", Color(wc.r, wc.g, wc.b, 0.66))
+	fm.set_shader_parameter("head_color", (cols[0] as Color).lerp(cols[1], 0.35) if not lip.is_empty() else Color(wc.r, wc.g, wc.b, 0.66))
+	fm.set_shader_parameter("length_m", along)
+	fm.set_shader_parameter("width_m", width)
+	fm.set_shader_parameter("v0", v0)
+	fm.set_shader_parameter("top_white", 1.0 if not lip.is_empty() else float(e.get("head", 0.5)))
+	var through := bool(e.get("through", false))  # it carries on into the area below: no foot here
+	fm.set_shader_parameter("foot_white", 0.0 if through else 1.0)
+	sheet.material_override = fm
+	# A fall that leaves a pool is drawn where the pool's front is, so the two are one
+	# piece of water (and it is in front of the climber, as the pool is). One that comes
+	# out of the rock stays behind the climb unless the data says "front".
+	var in_front := not lip.is_empty() or bool(e.get("front", false))
+	sheet.position = Vector3(0, 0, WATER_DEPTH * 0.5 - 0.01 if in_front else float(e.get("z", -0.4)))
+	sheet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sheet.extra_cull_margin = 1.0
+	root.add_child(sheet)
+	peak.audio.emitter("waterfall_loop", Vector2(xr, foot_y + minf((top_y - foot_y) * 0.3, 12.0)), 1.0, 40.0)
+	if lip.has("body"):
+		# (no foam piled against a wall at this end: there is no wall, it goes over)
+		var kept: Array = []
+		for f: Vector3 in (lip.body as Dictionary).foams:
+			if absf(f.x - float(lip.x)) > 0.3:
+				kept.append(f)
+		(lip.body as Dictionary).foams = kept
+	if through:
+		return
+	# Where it lands in a pool it churns it: foam on the waterline, Del Mar's spray and
+	# rings for as long as the climber is near enough to see, and a mist over it.
+	var foot := _water_row(Vector2(xr, foot_y))
+	if not foot.is_empty():
+		_churns.append([foot, xr - 0.45, xr + 0.45, 0.0, str(a.id)])
+		if foot.has("body"):
+			((foot.body as Dictionary).first as Array).append(Vector3(xr, 1.3, 1.6))
+	if top_y - foot_y > 2.5:
+		var mist := _particles(Color("#EAF6FC"), 5.0, int(clampf(7.0 * density + 4.0, 5.0, 14.0)), 2.6)
+		(mist.material_override as StandardMaterial3D).albedo_color.a = 0.26
+		mist.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+		mist.emission_box_extents = Vector3(0.55, 0.12, 0.4)
+		mist.direction = Vector3.UP
+		mist.spread = 35.0
+		mist.initial_velocity_min = 0.25
+		mist.initial_velocity_max = 0.8
+		mist.gravity = Vector3.ZERO
+		mist.position = Vector3(xr, foot_y + 0.3, 0.9)
+		root.add_child(mist)
+	if foot.is_empty():
+		# it lands on a floor: it spatters
+		var sp := _drops(int(clampf(10.0 * density, 5.0, 14.0)), 0.55)
+		sp.direction = Vector3.UP
+		sp.spread = 65.0
+		sp.initial_velocity_min = 0.9
+		sp.initial_velocity_max = 2.4
+		sp.position = Vector3(xr, foot_y + 0.06, 0.2)
+		root.add_child(sp)
+
+
+## Round water drops under the game's slow gravity (never a square speck).
+func _drops(amount: int, life: float) -> CPUParticles3D:
+	var p := _particles(Color("#D6EEF9"), 0.55, amount, life)
+	(p.material_override as StandardMaterial3D).albedo_texture = _dot()
+	p.gravity = Vector3(0, -7.0, 0)
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.3
+	return p
+
+
+static var _dot_tex: GradientTexture2D = null
+
+
+static func _dot() -> GradientTexture2D:
+	if _dot_tex == null:
+		var g := Gradient.new()
+		g.offsets = PackedFloat32Array([0.0, 0.82, 1.0])
+		g.colors = PackedColorArray([Color(1, 1, 1, 1), Color(1, 1, 1, 1), Color(1, 1, 1, 0)])
+		_dot_tex = GradientTexture2D.new()
+		_dot_tex.gradient = g
+		_dot_tex.fill = GradientTexture2D.FILL_RADIAL
+		_dot_tex.fill_from = Vector2(0.5, 0.5)
+		_dot_tex.fill_to = Vector2(1.0, 0.5)
+		_dot_tex.width = 32
+		_dot_tex.height = 32
+	return _dot_tex
+
+
+## THINGS SHED WATER: a wheel that turns over a body of water lifts it and drops it. Each
+## paddle carries a little emitter; it runs while that paddle is on its way up out of the
+## water, for the first couple of metres.
+func _find_sheds(a: Dictionary, root: Node3D) -> void:
+	for m: Dictionary in a.get("movers", []):
+		var mo: Dictionary = m.get("motion", {})
+		if str(mo.get("type", "")) != "spin" or not str(m.get("model", "")).contains("wheel"):
+			continue
+		var c := Peak.v2(m.at)
+		var r := 0.0
+		for sh: Dictionary in m.get("shapes", []):
+			for pt in sh.pts:
+				r = maxf(r, Vector2(float(pt[0]), float(pt[1])).length())
+		for body: Dictionary in water_bodies:
+			if str(body.area) != str(a.id) or c.x < float(body.x0) or c.x > float(body.x1):
+				continue
+			var surface := float(body.surface)
+			if c.y < surface or c.y - r > surface + 0.9:
+				continue
+			var ems: Array = []
+			for k in 6:
+				var e := _drops(7, 0.75)
+				e.local_coords = false
+				e.direction = Vector3.DOWN
+				e.spread = 25.0
+				e.initial_velocity_min = 0.1
+				e.initial_velocity_max = 0.7
+				e.emitting = false
+				root.add_child(e)
+				ems.append(e)
+			_sheds.append({"id": str(m.id), "c": c, "r": r, "surface": surface, "area": str(a.id), "em": ems})
+			break
+
+
+func _frame_sheds() -> void:
+	for sh: Dictionary in _sheds:
+		var on_area := bool(peak._area_active.get(sh.area, true))
+		var mv: Dictionary = peak.things.movers.get(sh.id, {})
+		var ems: Array = sh.em
+		if mv.is_empty() or not on_area:
+			for e: CPUParticles3D in ems:
+				e.emitting = false
+			continue
+		var turn := float((mv.mo as Dictionary).get("rpm", 0.0))
+		var c: Vector2 = sh.c
+		for k in ems.size():
+			var ang := float(mv.angle) + float(k) * TAU / ems.size()
+			var tip := c + Vector2(cos(ang), sin(ang)) * float(sh.r)
+			var rising := turn * cos(ang) > 0.0
+			var e: CPUParticles3D = ems[k]
+			e.position = Vector3(tip.x, tip.y, 0.3)
+			e.emitting = rising and tip.y < float(sh.surface) + 2.6
 
 
 ## A BOUNCE PAD YOU CAN SEE WORK (Parker 11-12: "add a bouncy lifesaver here", "these
@@ -800,7 +1177,7 @@ func burst(at: Vector2, kind: String, scale := 1.0, dir := Vector2.UP, z := 0.5)
 	var b: Array = BURSTS[kind]
 	var p := _particles(b[0], float(b[1]) * (0.75 + 0.25 * scale), int(round(float(b[2]) * scale)), float(b[3]))
 	if not bool(b[8]):
-		(p.material_override as StandardMaterial3D).albedo_texture = null
+		(p.material_override as StandardMaterial3D).albedo_texture = _dot() if kind == "drops" else null
 	p.one_shot = true
 	p.explosiveness = 0.92
 	p.preprocess = 0.0
@@ -876,31 +1253,7 @@ func _effect(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 	var kind := str(e.type)
 	var density := float(e.get("density", 1.0))
 	if kind == "waterfall":
-		var sheet := MeshInstance3D.new()
-		var bm := BoxMesh.new()
-		bm.size = Vector3(w, h, 0.5)
-		sheet.mesh = bm
-		sheet.material_override = _flat(Color("#BFE4F6"), 0.55)
-		sheet.position = mid
-		sheet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		root.add_child(sheet)
-		var p := _particles(Color("#FFFFFF"), 2.2, int(clampf(h * 1.2 * density, 10, 140)), clampf(h / 14.0, 0.6, 6.0))
-		(p.mesh as QuadMesh).size = Vector2(0.14, 1.6)
-		p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-		p.emission_box_extents = Vector3(w * 0.45, 0.2, 0.3)
-		p.direction = Vector3.DOWN
-		p.spread = 1.0
-		p.initial_velocity_min = 12.0
-		p.initial_velocity_max = 16.0
-		p.gravity = Vector3(0, -4, 0)
-		p.position = Vector3(mid.x, float(r[3]), mid.z + 0.3)
-		root.add_child(p)
-		peak.audio.emitter("waterfall_loop", Vector2(mid.x, float(r[1]) + minf(h * 0.3, 12.0)), 1.0, 40.0)
-		# Where it lands in a pool it churns it: Del Mar's spray and rings, for as long as
-		# the climber is near enough to see.
-		var foot := _water_row(Vector2(mid.x, float(r[1])))
-		if not foot.is_empty():
-			_churns.append([foot, float(r[0]), float(r[2]), 0.0, str(a.id)])
+		_fall_vis(a, e, root)
 		return
 	var cfg := {
 		"mist": [Color("#DCEFF8"), 5.0, 0.25, Vector3(0.2, 0.5, 0), 4.0, 0.35],

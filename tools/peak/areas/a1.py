@@ -116,7 +116,10 @@ A.water((-248.0, -33.0, -187.4, SUMP_Y), SUMP_Y, flow=(0.0, 0.0))
 # The falling water beats a climber down (2.2 g; a floating body's lift tops out at 2.2 g
 # too). It stops 6 m over the pool, so nobody who lands under it is held under.
 A.wind((FALL_X0, -22.0, FALL_X1, 90.0), (0.0, -6.0))
-A.effect("waterfall", (FALL_X0, SUMP_Y, FALL_X1, 90.0))
+# (It is the black waters' river, come over its lip. a2 draws it down to y 84, where it
+# is 1.68 m east of the slot's west side and a quarter of a metre thick; this is the
+# rest of it, on the same line.)
+A.effect("waterfall", (FALL_X0, SUMP_Y, FALL_X1, 84.0), x=FALL_X0 + 1.68, head=0.0, width=0.25, front=True)
 A.effect("mist", (-250.0, -30.0, -230.0, -17.0), density=0.8)
 A.effect("mist", (-240.0, 62.0, -230.5, 90.0), density=0.4)
 

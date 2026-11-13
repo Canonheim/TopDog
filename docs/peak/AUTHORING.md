@@ -174,6 +174,15 @@ hard hit from it knock a climber out.
 - `A.light(...)`: lanterns and torches inside (about one per 12 m of route).
 - `A.effect(kind, rect)`: waterfall, mist, drips, spores, snow, steam, embers, dust,
   rain, clouds.
+- **Water is drawn by the body, not by the rule.** Every `A.water` box is a rule (its own
+  current) and is never drawn. Rules that touch at one surface are drawn as ONE body.
+  So lay a still patch over a river, or a quick end beside it, freely.
+- **A waterfall's box is the shaft it falls in.** Put its top at the surface of the pool
+  it leaves and one side on that pool's end: the game finds the pool, turns its whole
+  depth over the lip and thins it as it falls. It lands on the box's bottom. Options:
+  `x=` places a fall no pool in this area feeds, `width=` its thickness then, `head=`
+  0..1 how white its top is, `front=True` draws it in front of the climb, `through=True`
+  says it carries on into the area below (no foot here), `density=` under 1 is thinner.
 - `A.statue(x, y, pose)`: the ones who tried. Where the design names one, place it.
   They are solid grip.
 

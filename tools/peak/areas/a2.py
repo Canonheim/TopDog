@@ -370,7 +370,10 @@ for x, y, r in ((-229, 94.4, 9), (-248, 93.2, 9), (-272, 94.6, 11), (-254.5, 101
                 (-431, 160.0, 10), (-438.5, 168.0, 10), (-447, 171.0, 11)):
     lamp(x, y, r)
 A.light(-300, 121.0, color="#DDF2EC", rng=14.0, energy=0.9, z=-2.0)  # the well's far daylight on the pool
-A.effect("waterfall", (-244, 84, -238, RIV_S))  # over the lip
+A.effect("waterfall", (-244, 84, -238, RIV_S), through=True)  # over the lip, and on down the mine's shaft (a1 draws the rest, from y 84)
+A.effect("waterfall", (-232.6, RS, -230.8, MS), density=0.6)  # the mill channel's drain, into the race (note 22)
+A.effect("waterfall", (-229.0, 90.0, -226.0, RS), density=0.5)  # the race's drain, onto the lip ledge
+A.effect("waterfall", (-320.5, 115.0, -318.6, 116.0))  # the flume spills a metre into the pool (El Charco del Pozo)
 A.effect("waterfall", (-288, RIV_S, -284.5, 115))  # the first cascade
 A.effect("waterfall", (-380.6, 116, -379, 136))  # the spill into the pipe hall
 A.effect("waterfall", (-392, 136, -389.5, 151))  # LA CASCADA CHICA
