@@ -369,24 +369,67 @@ A.challenge("1.10", "El Derrumbe", (-225.5, 57.4), 3, "B", moves=[
     ["reach", [-221.35, 70.9], [-222.1, 72.0]]])
 
 # ================================================================ 1.11 La Cortina
-# Fourteen rows of two holds, from the balcony to the top of the dry shaft. In every row
-# the left hold and the right are wet half a turn apart (wet 2.6 s, dry 3.4 s), and each
-# row runs 0.7 s ahead of the one under it (the wet comes down the wall): one hold of
-# every pair is always dry, and no hold stays dry for long.
+# Fourteen rows of two holds, from the balcony to the top of the dry shaft.
+# THE WET IS A DRIP YOU CAN WATCH (Parker 11-12, in order: "if these are going in and out
+# of the wall, give them an in and out animation" ... "actually we will have it be wet
+# drippy like it is, but make it so there is more of an indication of what is going on",
+# and "maybe like a slow moving water drip you can watch fall down and get them wet").
+# The holds never moved: the spray soaked each in turn and all that showed was a hold
+# going near-black on a dark wall. Now a fat drip runs slowly down each column, 1 m/s, one
+# every 7 m. A hold goes wet as the drip reaches it, stays wet 2 s, and is dry for 5
+# (it was wet 2.6, dry 3.4, the wet coming down at 1.8 m/s with nothing to see). The two
+# columns are half a turn apart, so one hold of every pair is always dry. Wet, a hold is a
+# shiny blue-grey and drips. FIRST-TRY NUMBERS: the speed, the gap, the 2 s.
+# And five holds never get wet (from "make some of them not go in and out and make them a
+# differnt color"): pale bone, one in every third row, swapping sides: the rests.
 ROW0_Y, ROW_DY, ROWS = 73.3, 1.25, 14
+DRIP_SPEED, DRIP_GAP, DRIP_WET = 1.0, 7.0, 2.0
+DRIP_TOP_Y, DRIP_FOOT_Y = 89.9, 72.4            # from the lip, where the fall's curtain spills, to under the bottom row
+ALWAYS_DRY = {1: 0, 4: 1, 7: 0, 10: 1, 13: 0}   # row -> which side (0 west, 1 east)
+
+
+def _col_x(y, side):
+    return -235.6 + 0.11 * (y - ROW0_Y) / ROW_DY + 1.3 * side
+
+
 CORTINA = []
+for side in (0, 1):
+    _top = (_col_x(DRIP_TOP_Y, side), DRIP_TOP_Y)
+    A.drips(_top, (_col_x(DRIP_FOOT_Y, side), DRIP_FOOT_Y), speed=DRIP_SPEED, gap=DRIP_GAP, phase=3.5 * side)
+    for r in range(ROWS):
+        y = ROW0_Y + ROW_DY * r
+        x = _col_x(y, side)
+        if ALWAYS_DRY.get(r) == side:
+            A.hold(x, y, r=0.26, kind="bone")
+        else:
+            A.hold(x, y, r=0.24, kind="rock", hold={
+                "type": "wet", "on": DRIP_WET, "off": DRIP_GAP / DRIP_SPEED - DRIP_WET, "look": "water",
+                "phase": Area.drip_phase(_top, (x, y), DRIP_SPEED, DRIP_GAP, 3.5 * side)})
 for r in range(ROWS):
     y = ROW0_Y + ROW_DY * r
-    xl = -235.6 + 0.11 * r
-    for x, ph in ((xl, 0.0), (xl + 1.3, 3.0)):
-        A.hold(x, y, r=0.24, kind="rock", hold={"type": "wet", "on": 2.6, "off": 3.4, "phase": round((0.7 * r + ph) % 6.0, 2)})
-    CORTINA.append((xl, xl + 1.3, y))
+    CORTINA.append((_col_x(y, 0), _col_x(y, 1), y))
 cortina_moves = [["reach", [-233.2, 72.0], [round(CORTINA[0][1], 2), CORTINA[0][2]]]]
 for r in range(ROWS - 1):  # the lint's line: up the right-hand holds (any zigzag is shorter than 1.9 too)
     cortina_moves.append(["reach", [round(CORTINA[r][1], 2), CORTINA[r][2]], [round(CORTINA[r + 1][1], 2), CORTINA[r + 1][2]]])
 cortina_moves.append(["reach", [round(CORTINA[-1][1], 2), CORTINA[-1][2]], [-232.0, 89.7]])  # the lip
 A.ledge(-232.0, -225.5, 89.7, "rock", t=0.5)  # the roof's own grip under A2's lip ledge (which tops it at y 90)
+# A ROPE FROM THE TOP, TO HALF WAY (Parker 11-12: "make a rope hanging about half way down
+# this challenge", and of a short rope in the middle or a long one from the lip: "b").
+# It hangs from an iron bracket under the lip, a hand east of the east column, 8 m long:
+# its tail is by rows 6 and 7. From there the upper half can be climbed on the rope, which
+# never gets wet, and the lip is a short step from its top.
+ROPE_X = -232.42
+A.box(ROPE_X + 0.2, 89.52, 0.5, 0.12, "iron")   # the bracket, out of the shaft's east wall
+A.rope("cuerda_cortina", (ROPE_X, 89.4), 8.0, kind="rope")
 A.challenge("1.11", "La Cortina", (-231.4, 72.0), 3, "A", moves=cortina_moves)
+# A LIFE RING AT THE FOOT OF THE WET SLAB (Parker 11-12: "add a bouncy lifesaver here that
+# lunches you back at least to the ledge on the right"). Whoever comes off the balcony or
+# the first rows lands on the awning, slides to its foot and went into the fall: the whole
+# mine. Del Mar's life ring is propped there now, facing up and east. It throws a body
+# the same way however it arrives: up 10 m and back onto the balcony.
+RING_THROW = (1.9, 8.6)   # m/s. FIRST TRY, set by dropping a climber on it (see the work log)
+A.bounce((-238.25, 63.3), (-236.85, 62.95), 8.8, look="ring", throw=RING_THROW, model="float_lifesaver", model_scale=1.45)
+A.solid([(-238.35, 62.0), (-237.75, 62.0), (-237.75, 62.3), (-238.2, 63.05), (-238.35, 63.05)], "wet")  # the block it is propped on
 
 # ================================================================ cameras (the smallest zone you are in wins)
 A.cam((-178.0, -19.0, -148.0, -6.0), 4.6)  # the gallery

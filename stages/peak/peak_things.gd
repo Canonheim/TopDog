@@ -1107,6 +1107,8 @@ func _tick_holds(delta: float) -> void:
 				var def: Dictionary = h.def
 				var on := float(def.get("on", 2.0))
 				var wet := fposmod(t + float(def.get("phase", 0.0)), on + float(def.get("off", 3.0))) < on
+				var showy: bool = def.has("look")  # (it drips, and says so)
+				var near_me: bool = showy and peak.player != null and peak.player_at().distance_to(_hold_at(h)) < 16.0
 				if wet != bool(h.wet):
 					h.wet = wet
 					if wet:
@@ -1115,13 +1117,31 @@ func _tick_holds(delta: float) -> void:
 					else:
 						body.remove_meta("no_weld")
 					peak.shine_for(str(h.area))
+					var cls := str(def.get("look", body.get_meta("slick_class", "mud")))
 					if (h.vis as Node).has_meta("fitted"):
-						PeakFit.set_wet(h.vis, str(body.get_meta("slick_class", "mud")) if wet else "")
+						PeakFit.set_wet(h.vis, cls if wet else "")
 					elif h.vis is GeometryInstance3D:
 						if wet:
-							(h.vis as GeometryInstance3D).material_override = Peak.slick_material(str(body.get_meta("slick_class", "mud")))
+							(h.vis as GeometryInstance3D).material_override = Peak.slick_material(cls)
 						else:
+							(h.vis as GeometryInstance3D).material_override = null
 							CelPass.paint(h.vis, h.col as Color)
+					if near_me:
+						# The drip lands on it (a splash of drops, a drip's sound); or the
+						# last drops fall as it dries, and its colour comes back over a moment.
+						peak.zones.burst(_hold_at(h), "drops", 1.0 if wet else 0.6)
+						if wet:
+							peak.audio.play("drip", _hold_at(h), -4.0)
+						else:
+							h["dry_at"] = t
+				if near_me and wet and t >= float(h.get("drop_at", 0.0)):
+					h["drop_at"] = t + 0.3
+					peak.zones.burst(_hold_at(h) + Vector2(randf_range(-0.15, 0.15), -0.2), "drops", 0.35, Vector2.DOWN)
+				if showy and h.has("dry_at"):
+					var f := clampf((t - float(h.dry_at)) / 0.45, 0.0, 1.0)
+					_hold_tint(h, Color(0.62, 0.8, 1.0).lerp(Color(1, 1, 1), f))
+					if f >= 1.0:
+						h.erase("dry_at")
 
 
 ## WHAT FALLS IN WATER SPLASHES (Parker 11-12: "the water should use the water shader and

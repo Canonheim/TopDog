@@ -432,12 +432,38 @@ class Area:
         self.zones.append({"type": "geyser", "at": _pt((x, y)), "w": _f(w), "height": _f(height), "speed": _f(speed),
                            "period": _f(period), "on": _f(on), "phase": _f(phase), "warn": _f(warn)})
 
-    def bounce(self, p0, p1, power, look="cap", min_in=0.6, gain=0.0, ko=False):
+    def bounce(self, p0, p1, power, look="cap", min_in=0.6, gain=0.0, ko=False, throw=None, model=None, model_scale=1.0):
         """A springy surface from p0 to p1 (a mushroom cap's top, a ring rope). It throws
         whatever hits it off along its normal (the LEFT of p0 -> p1) at `power` m/s, plus
-        `gain` x the speed it was hit with. Not solid by itself: lay it on a solid for a cap."""
-        self.zones.append({"type": "bounce", "a": _pt(p0), "b": _pt(p1), "power": _f(power), "look": look,
-                           "min_in": _f(min_in), "gain": _f(gain), "ko": bool(ko)})
+        `gain` x the speed it was hit with. Not solid by itself: lay it on a solid for a cap.
+        throw=(vx, vy): it sends you off at exactly this velocity instead, whatever you
+        arrived with (a pad that must put you somewhere: the life ring under La Cortina).
+        model: a kit model drawn lying along the line, its zero at the line's middle; it
+        squashes and springs when hit, as Del Mar's floats do. look "ring" boings like one."""
+        z = {"type": "bounce", "a": _pt(p0), "b": _pt(p1), "power": _f(power), "look": look,
+             "min_in": _f(min_in), "gain": _f(gain), "ko": bool(ko)}
+        if throw is not None:
+            z["throw"] = _pt(throw)
+        if model:
+            z["model"] = model
+            z["model_scale"] = _f(model_scale)
+        self.zones.append(z)
+        return z
+
+    def drips(self, top, bottom, speed=1.0, gap=7.0, phase=0.0):
+        """FAT DRIPS OF WATER that run slowly down the line from `top` to `bottom`, one every
+        `gap` metres, at `speed` m/s (Parker 11-12: "a slow moving water drip you can watch
+        fall down and get them wet"). They are the picture; the wetting is the holds' own
+        `wet` behaviour. `drip_phase(...)` gives a hold on the line the phase that makes it
+        go wet as a drip reaches it."""
+        self.zones.append({"type": "drips", "a": _pt(top), "b": _pt(bottom), "speed": _f(speed), "gap": _f(gap), "phase": _f(phase)})
+
+    @staticmethod
+    def drip_phase(top, at, speed=1.0, gap=7.0, phase=0.0):
+        """The `phase` of a `wet` hold at `at` on a drip line from `top`, so that it turns wet
+        the moment a drip of `drips(top, ..., speed, gap, phase)` reaches it. Give the hold
+        on + off = gap / speed."""
+        return round((phase - math.dist(top, at) / speed) % (gap / speed), 3)
 
     def puff(self, x, y, r, power, respawn=4.0):
         """A puffball: touch it and it bursts, throwing you straight away from its centre."""

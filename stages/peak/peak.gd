@@ -44,6 +44,12 @@ const SLICK_LOOKS := {
 	"mud": [SLICK, Color(0.42, 0.31, 0.2, 0.5), Color(0.95, 0.8, 0.6, 0.5), "#8A5E34", "#A87A48", Color(0.78, 0.63, 0.46, 0.5)],
 	"glass": [SLICK_GLASS, Color(0.34, 0.27, 0.62, 0.5), Color(0.85, 0.78, 1.0, 0.5), "#6A52C8", "", Color(0.58, 0.48, 0.98, 0.5)],
 	"ice": [SLICK_ICE, Color(0.27, 0.45, 0.62, 0.5), Color(0.78, 0.93, 1.0, 0.5), "#4E8FC4", "#8FC8E8", Color(0.48, 0.75, 0.98, 0.5)],
+	# A HOLD THE SPRAY HAS SOAKED (La Cortina; Parker 11-12: "we will have it be wet drippy
+	# like it is, but make it so there is more of an indication of what is going on"). A wet
+	# hold turned the mud's near-black: against a dark wall that read as a hold GONE. Wet
+	# stone is a shiny blue-grey: plainly still there, plainly wet. (A hold asks for it with
+	# "look": "water"; the rest of the mountain's wet holds are as they were.)
+	"water": [Color("#3F6A8C"), Color(0.5, 0.66, 0.8, 0.5), Color(0.85, 0.95, 1.0, 0.5), "#8FB8D8", "", Color(0.62, 0.82, 1.0, 0.5)],
 }
 static var _slick_mats := {}
 ## SHINY IN THE CAVES, SOFT IN THE SUN (Parker 11-12, of "metallic max shiney"): inside the

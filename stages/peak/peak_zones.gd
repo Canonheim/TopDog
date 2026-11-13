@@ -18,6 +18,7 @@ var puffs: Array = []
 var strikes: Array = []
 var darks: Array = []
 var finishes: Array = []
+var drip_lines: Array = []  # {def, area, nodes}: fat drips running down a line (La Cortina)
 var flash := 0.0  # lightning's light, 0..1, read by the look
 var _tags := {}  # tag -> Array of bodies
 var _bounce_wait := 0.0
@@ -54,7 +55,12 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 				row["warned"] = -1
 				geysers.append(row)
 			"bounce":
+				if z.has("model"):
+					_bounce_vis(a, z, root, row)
 				bounces.append(row)
+			"drips":
+				_drips_vis(z, root, row)
+				drip_lines.append(row)
 			"puff":
 				var ball: Node3D = LuchaKit.kit_model("puffball")
 				if ball == null:
@@ -385,6 +391,10 @@ func _tick_bounce(c: Climber) -> void:
 			continue
 		var out := float(z.power) + float(z.get("gain", 0.0)) * vin
 		var want := com_v - n * com_v.dot(n) + n * out
+		if z.has("throw"):
+			want = Peak.v2(z.throw)  # (a pad that puts you somewhere: the same throw however you arrive)
+			out = want.length()
+		row["squash_t"] = 0.0
 		c.release_all()
 		for l in c.limbs:
 			l.regrip = 0.25
@@ -392,7 +402,10 @@ func _tick_bounce(c: Climber) -> void:
 			body.linear_velocity += Vector3(want.x - com_v.x, want.y - com_v.y, 0)
 		_bounce_wait = BOUNCE_COOL
 		var look := str(z.get("look", "cap"))
-		peak.audio.play("bounce_rope" if look == "rope" else ("sizzle" if look == "lava" else "mushroom_boing"), com, 3.0, clampf(1.25 - out * 0.035, 0.7, 1.3))
+		if look == "ring":
+			Sound.play_at("floatie", Vector3(com.x + Peak.ORIGIN.x, com.y + Peak.ORIGIN.y, 0), 2.0)  # (Del Mar's own boing)
+		else:
+			peak.audio.play("bounce_rope" if look == "rope" else ("sizzle" if look == "lava" else "mushroom_boing"), com, 3.0, clampf(1.25 - out * 0.035, 0.7, 1.3))
 		if bool(z.get("ko", false)):
 			c.knock_out()
 			Sound.play_at("hurt", Vector3(c.centre_of_mass().x, c.centre_of_mass().y, 0), 0.0)
@@ -472,6 +485,8 @@ func _tick_strikes(c: Climber) -> void:
 # ================================================================ drawn
 
 func frame(_delta: float, _cam: Camera3D) -> void:
+	_frame_bounces(_delta)
+	_frame_drips()
 	var dark_want := dark_at(peak.player_at()) if peak.player != null else 0.0
 	_dark = lerpf(_dark, dark_want, 1.0 - exp(-_delta * DARK_EASE))
 	if absf(_dark - dark_want) < 0.002:
@@ -617,6 +632,113 @@ func _water_vis(a: Dictionary, z: Dictionary, root: Node3D, row: Dictionary = {}
 		n.add_child(p)
 	root.add_child(n)
 	return n
+
+
+## A BOUNCE PAD YOU CAN SEE WORK (Parker 11-12: "add a bouncy lifesaver here", "these
+## mushrooms need to have bounce animations"). A pad that names a model is drawn lying
+## along its line and squashes when it throws someone, by Del Mar's floats' own recipe:
+## flat in 0.07 s, then a spring that rings down (tall and thin, flat again, smaller each
+## time) over a second.
+const SQUASH_S := 1.1
+const SQUASH_DEEP := 0.42
+
+
+func _bounce_vis(_a: Dictionary, z: Dictionary, root: Node3D, row: Dictionary) -> void:
+	var n := Peak.kit(str(z.model))
+	if n == null:
+		return
+	var a := Peak.v2(z.a)
+	var b := Peak.v2(z.b)
+	var pivot := Node3D.new()
+	pivot.position = Vector3((a.x + b.x) * 0.5, (a.y + b.y) * 0.5, 0)
+	pivot.rotation.z = (b - a).angle()
+	n.scale = Vector3.ONE * float(z.get("model_scale", 1.0))
+	pivot.add_child(n)
+	root.add_child(pivot)
+	row["vis"] = pivot
+	row["squash_t"] = 9.0
+
+
+static func squash_curve(st: float) -> float:
+	if st < 0.07:
+		return st / 0.07
+	if st < SQUASH_S:
+		var u := st - 0.07
+		return exp(-u * 4.2) * cos(u * 15.0)
+	return 0.0
+
+
+func _frame_bounces(delta: float) -> void:
+	for row in bounces:
+		if not row.has("vis") or float(row.get("squash_t", 9.0)) > SQUASH_S + 0.1:
+			continue
+		row.squash_t = float(row.squash_t) + delta
+		var sq := squash_curve(float(row.squash_t))  # 1 = squashed flat, -1 = stretched tall
+		var wide := 1.0 + (0.28 if sq > 0.0 else 0.16) * sq
+		var tall := 1.0 - (SQUASH_DEEP if sq > 0.0 else 0.3) * sq
+		(row.vis as Node3D).scale = Vector3(wide, tall, wide)
+
+
+## FAT DRIPS RUNNING DOWN A LINE (La Cortina's two columns of holds; Parker 11-12: "maybe
+## like a slow moving water drip you can watch fall down and get them wet"). The drip is
+## the tell AND the cause: a hold on the line turns wet as a drip reaches it (its own
+## `wet` clock is set to this line's by the course: peaklib's drip_phase).
+func _drips_vis(z: Dictionary, root: Node3D, row: Dictionary) -> void:
+	var length := Peak.v2(z.a).distance_to(Peak.v2(z.b))
+	var count := int(ceil(length / maxf(1.0, float(z.gap)))) + 1
+	var nodes: Array = []
+	for i in count:
+		var drop := Node3D.new()
+		var ball := MeshInstance3D.new()
+		var sm := SphereMesh.new()
+		sm.radius = 0.17
+		sm.height = 0.34
+		ball.mesh = sm
+		ball.scale = Vector3(1.0, 1.45, 1.0)
+		ball.material_override = _flat(Color("#CFEFFF"), 0.92)
+		ball.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		drop.add_child(ball)
+		var shine := MeshInstance3D.new()
+		var hm := SphereMesh.new()
+		hm.radius = 0.055
+		hm.height = 0.11
+		shine.mesh = hm
+		shine.material_override = _flat(Color("#FFFFFF"), 1.0)
+		shine.position = Vector3(-0.05, 0.08, 0.14)
+		drop.add_child(shine)
+		var tail := MeshInstance3D.new()  # the wet it leaves behind it
+		var qm := QuadMesh.new()
+		qm.size = Vector2(0.1, 1.5)
+		tail.mesh = qm
+		tail.material_override = _flat(Color("#9FD0F0"), 0.45)
+		tail.position = Vector3(0, 0.95, -0.02)
+		drop.add_child(tail)
+		drop.visible = false
+		root.add_child(drop)
+		nodes.append(drop)
+	row["nodes"] = nodes
+
+
+func _frame_drips() -> void:
+	for row in drip_lines:
+		var on: bool = bool(peak._area_active.get(row.area, true)) and peak.player != null
+		var z: Dictionary = row.def
+		var a := Peak.v2(z.a)
+		var b := Peak.v2(z.b)
+		if on:
+			on = Geometry2D.get_closest_point_to_segment(peak.player_at(), a, b).distance_to(peak.player_at()) < 40.0
+		var length := a.distance_to(b)
+		var gap := maxf(1.0, float(z.gap))
+		var head := fposmod(float(z.speed) * (peak.clock + float(z.get("phase", 0.0))), gap)
+		var nodes: Array = row.nodes
+		for i in nodes.size():
+			var s := head + gap * i
+			var n: Node3D = nodes[i]
+			n.visible = on and s <= length
+			if n.visible:
+				var p := a.lerp(b, s / length)
+				n.position = Vector3(p.x, p.y, 0.42)
+				n.rotation.z = (b - a).angle() + PI * 0.5
 
 
 static var _puff_tex: GradientTexture2D

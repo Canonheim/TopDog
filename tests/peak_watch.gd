@@ -1122,6 +1122,171 @@ func _w_hot(a: Array) -> void:
 		l.regrip = 0.0
 
 
+## Note 13: La Cortina's wet holds and the drips that wet them.
+func _w_cortina(_a: Array) -> void:
+	pk.warp("1.11")
+	await secs(1.0)
+	look(Vector2(-234.2, 80.5), 9.5)
+	await secs(4.5)
+	await shot("13_cortina_whole")
+	# Every wet hold of the wall, watched for 15 s: how long wet, how long dry, how near a
+	# drip is when it turns wet, and whether a row ever has both its holds wet.
+	var wall: Array = []
+	for h: Dictionary in pk.things.holds:
+		if str(h.type) == "wet" and str(h.area) == "a1":
+			wall.append(h)
+	var lines: Array = []
+	for row in pk.zones.drip_lines:
+		if str(row.area) == "a1":
+			lines.append(row)
+	var was := {}
+	var wet_s := {}
+	var turns: Array = []
+	var both := 0
+	var samples := 0
+	var t0 := pk.clock
+	while pk.clock - t0 < 15.0:
+		await get_tree().physics_frame
+		samples += 1
+		var by_row := {}
+		for h: Dictionary in wall:
+			var at: Vector2 = pk.things._hold_at(h)
+			var id := "%0.2f,%0.2f" % [at.x, at.y]
+			var wet := bool(h.wet)
+			if wet:
+				wet_s[id] = float(wet_s.get(id, 0.0)) + 1.0 / Engine.physics_ticks_per_second
+				by_row[snappedf(at.y, 0.01)] = int(by_row.get(snappedf(at.y, 0.01), 0)) + 1
+			if was.has(id) and wet and not bool(was[id]):
+				var nearest := INF
+				for row in lines:
+					for n: Node3D in row.nodes:
+						if n.visible:
+							nearest = minf(nearest, Vector2(n.position.x, n.position.y).distance_to(at))
+				turns.append(nearest)
+			was[id] = wet
+		for y in by_row:
+			if int(by_row[y]) >= 2:
+				both += 1
+	var lo := INF
+	var hi := 0.0
+	for id in wet_s:
+		lo = minf(lo, float(wet_s[id]))
+		hi = maxf(hi, float(wet_s[id]))
+	var far := 0.0
+	for d: float in turns:
+		far = maxf(far, d)
+	print("WATCH cortina: %d wet holds, %d drip lines. Over 15 s each hold was wet %.1f to %.1f s (2 s in every 7 would be 4.0 to 6.0). %d times a hold turned wet; the nearest drip was then at most %.2f m from it. Moments a row had BOTH holds wet: %d of %d." % [
+		wall.size(), lines.size(), lo, hi, turns.size(), far, both, samples])
+	look(Vector2(-234.6, 76.0), 3.4)
+	await secs(0.6)
+	await shot("13_cortina_close_0")
+	await secs(1.3)
+	await shot("13_cortina_close_1")
+	await secs(1.3)
+	await shot("13_cortina_close_2")
+	# The rope (note 14): where its tail and its top are against the holds and the lip.
+	for r in pk.things.ropes:
+		if str(r.id) == "cuerda_cortina":
+			var top: RigidBody3D = r.segs[0]
+			var tail: RigidBody3D = r.segs[r.segs.size() - 1]
+			var tp := Vector2(tail.position.x, tail.position.y)
+			var best := INF
+			for h: Dictionary in pk.things.holds:
+				if str(h.area) == "a1":
+					best = minf(best, pk.things._hold_at(h).distance_to(tp))
+			print("WATCH rope: top at (%.2f, %.2f), tail at (%.2f, %.2f); the nearest of the wall's holds is %.2f m from the tail; the lip (-232.0, 89.7) is %.2f m from the top" % [
+				top.position.x, top.position.y, tp.x, tp.y, best, Vector2(top.position.x, top.position.y).distance_to(Vector2(-232.0, 89.7))])
+			# A climber hung on it half way up: does it hold, and can it take the lip from the top?
+			var c := me()
+			c.release_all()
+			for l in c.limbs:
+				l.regrip = 99.0
+			var mid: RigidBody3D = r.segs[r.segs.size() - 3]
+			put_limb(0, Vector2(mid.position.x, mid.position.y))
+			c.attach(0, mid)
+			look(Vector2(-233.6, 85.0), 6.0)
+			await secs(3.0)
+			print("WATCH rope: a climber hung from its lower end for 3 s: still on it %s, joints open %.3f m, the rope's tail now at (%.2f, %.2f)" % [
+				c.limbs[0].grab_other == mid, c.worst_joint_gap(), tail.position.x, tail.position.y])
+			await shot("14_rope_hanging")
+			for l in c.limbs:
+				l.regrip = 0.0
+	_free_cam = false
+
+
+## Note 15: the life ring at the foot of the wet slab. ring[:N] drops a climber N times
+## off the balcony and N/2 times from each of the first three rows of La Cortina, and
+## counts where each ends up.
+func _w_ring(a: Array) -> void:
+	var n := int(a[0]) if a.size() > 0 else 10
+	pk.warp("1.11")
+	await secs(1.0)
+	var c := me()
+	var starts := [["the balcony's edge", Vector2(-233.75, 72.25), n]]
+	for r in 3:
+		var y := 73.3 + 1.25 * r
+		starts.append(["row %d of La Cortina" % (r + 1), Vector2(-235.6 + 0.11 * r + 0.65, y - 0.9), maxi(1, n / 2)])
+	look(Vector2(-233.8, 68.0), 8.0)
+	var shot_taken := 0
+	for st: Array in starts:
+		var tally := {}
+		var times: Array = []
+		for k in int(st[2]):
+			stand((st[1] as Vector2) + Vector2(randf_range(-0.25, 0.25), 0.0))
+			for l in c.limbs:
+				l.regrip = 0.7  # (it has just come off: nothing catches for the first moment of the fall)
+			var t0 := pk.clock
+			var out := "still in the air after 12 s"
+			var bounced := -1.0
+			var held := 0.0
+			var apex := -INF
+			while pk.clock - t0 < 12.0:
+				await get_tree().physics_frame
+				var p := where()
+				if bounced < 0.0 and pk.zones._bounce_wait > 0.0:
+					bounced = pk.clock - t0
+					if shot_taken == 0:
+						shot_taken = 1
+						await shot("15_ring_squashed")
+				if bounced >= 0.0:
+					apex = maxf(apex, p.y)
+					if shot_taken == 1 and pk.clock - t0 - bounced > 1.6:
+						shot_taken = 2
+						await shot("15_ring_thrown")
+				if p.y < 52.0:
+					out = "LOST down the fall"
+					break
+				if c.touches_solid() and bounced >= 0.0:
+					held += 1.0 / Engine.physics_ticks_per_second
+					if held > 0.6:
+						if p.y > 71.6 and p.y < 74.2 and p.x > -233.6 and p.x < -229.4:
+							out = "on the balcony"
+						elif p.y > 71.6 and p.x >= -229.4:
+							out = "on the top drift, past the balcony"
+						elif p.y > 72.6:
+							out = "holding La Cortina"
+						else:
+							out = "holding something lower (%.1f, %.1f)" % [p.x, p.y]
+						times.append(pk.clock - t0 - bounced)
+						break
+				else:
+					held = 0.0
+			if bounced < 0.0 and out.begins_with("still"):
+				out = "never reached the ring: at (%.1f, %.1f) holding %s" % [where().x, where().y, holds()]
+			elif out.begins_with("still"):
+				out = "still loose after 12 s at (%.1f, %.1f)" % [where().x, where().y]
+			tally[out] = int(tally.get(out, 0)) + 1
+			if out.begins_with("on the") and shot_taken == 2:
+				shot_taken = 3
+				await shot("15_ring_landed")
+			c.release_all()
+		var avg := 0.0
+		for tt: float in times:
+			avg += tt / maxf(1.0, times.size())
+		print("WATCH ring, dropped from %s x%d: %s (bounce to holding on: %.1f s on average)" % [st[0], st[2], tally, avg])
+	_free_cam = false
+
+
 ## Note 4: what stands where the lift's two cables were.
 func _w_lift(_a: Array) -> void:
 	pk.warp("1.5")

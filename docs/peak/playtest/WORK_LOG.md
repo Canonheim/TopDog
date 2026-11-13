@@ -605,3 +605,83 @@ are `--watch=light:race`, `light:crystal`, `light2:race`, `light2:crystal`,
 - **First-try numbers:** every size and rate in `TELLS` and `_tick_tell`.
 - **Not checked:** "someone who has never been told the rule can say what happened
   after being dropped once". That is a test for a person.
+
+## Group D: La Cortina (notes 13, 14, 15)
+
+### Note 13: the wet holds, and the drip that wets them
+
+- **State:** done, watched in the game. The later text of the note was followed: the
+  holds stay wet in turn and do NOT slide in and out. The 7 wet holds of Las Aguas
+  Negras are untouched.
+- **What changed (`tools/peak/areas/a1.py`, the 1.11 block):**
+  - **A drip you can watch.** A fat drip of water runs down each of the two columns,
+    from the lip to under the bottom row, at 1 m a second, one every 7 m
+    (`DRIP_SPEED`, `DRIP_GAP`). `A.drips(...)` draws it; `Area.drip_phase(...)` sets
+    each hold's wet clock to it, so a hold turns wet exactly as a drip reaches it.
+  - **Dry for longer.** Wet 2 s, dry 5 s (was wet 2.6, dry 3.4). The two columns are
+    half a turn apart.
+  - **Wet looks wet, not gone.** A soaked hold is a shiny blue-grey (a fourth kind of
+    slick, "water", in `stages/peak/peak.gd`; a hold asks for it with
+    `"look": "water"`), throws a splash of drops when the drip lands, drips while it
+    is wet, and its colour comes back over half a second as it dries. A drip's sound
+    plays when a hold near you goes wet.
+  - **Five holds never get wet**, in pale bone: rows 2, 5, 8, 11 and 14, swapping
+    sides (west, east, west, east, west).
+- **Watched for 15 s, every wet hold of the wall (23):** each was wet between 5.0 and
+  6.3 s of the 15 (2 in every 7 is 4.3); 50 times a hold turned wet, and the nearest
+  drip was then at most 1 cm from it; a row had both its holds wet at 0 of 1,802
+  moments looked at.
+- **Pictures:** `13_cortina_before.jpg`, `13_cortina_whole.jpg` (the two columns with
+  their drips), `13_cortina_close_0.jpg`, `_1`, `_2` (the bottom rows, 1.3 s apart: a
+  drip passing).
+- **Carried-over asks, assumed kept as the note says:** dry for longer, and some
+  always-dry holds in another colour. Both are in.
+- **First-try numbers:** 1 m/s, 7 m, 2 s wet, which five rows.
+- **Not checked:** climbing it by play; the sound.
+
+### Note 14: a rope from the top, to half way
+
+- **State:** done, seen in the game. Settled reading "b": one long rope from the lip.
+- **What changed:** an iron bracket out of the dry shaft's east wall under the lip, and
+  an 8 m rope from it (`cuerda_cortina`), a hand east of the east column of holds.
+- **Measured in the game:** its top is at (-232.42, 89.15), 0.69 m from the lip's
+  corner; its tail at (-232.42, 81.65), by rows 7 and 8, and the nearest hold is
+  1.18 m from the tail (a reach is 1.9). A climber hung from its lower end for 3 s
+  stayed on it.
+- **Picture:** `14_rope_hanging.jpg`; it is the thin line right of the east column in
+  `13_cortina_whole.jpg`.
+- **Why the east side:** on the west the rope would hang 3.5 m from the lip, across
+  the shaft. Here its top is beside the lip.
+- **As the note says, this makes the upper half much easier.** Shorten `8.0` in the
+  rope's line to start it higher.
+- **Not checked:** climbing the rope and stepping off onto the lip by play. (Rope
+  physics is note 20.)
+
+### Note 15: the life ring at the foot of the wet slab
+
+- **State:** done, counted in the game.
+- **What changed:** Del Mar's life ring (`float_lifesaver`, the kit's own) is propped
+  on a block at the foot of the awning, facing up and east. It is a bounce pad that
+  throws a body at the same velocity however it arrives (`throw` on `A.bounce`, new):
+  1.9 m/s east and 8.6 up (`RING_THROW` in `a1.py`). It squashes and springs by Del
+  Mar's floats' own recipe when it throws someone, and boings with Del Mar's sound.
+  A bounce pad can now carry a model (`model=` on `A.bounce`).
+- **Counted (the probe drops a climber, limbs free to catch, and waits to see where
+  it holds on):**
+  - Off the balcony's edge, 10 times: 7 slid to the ring and all 7 landed on the
+    balcony; 3 caught the balcony's own edge as they went and never fell.
+  - From the first row of La Cortina, 5 times: 5 of 5 on the balcony.
+  - From the second row, 5: 2 reached the ring; 1 landed on the balcony and 1 ended
+    hanging from its edge; 3 caught a hold of the wall at once.
+  - From the third row, 5: all 5 caught a hold of the wall at once (the test starts
+    them beside the always-dry hold of that row).
+  - So of 14 that reached the ring, 13 landed on the balcony and 1 hung from its
+    edge. None was lost to the fall. In an earlier run of 10, one ring throw ended
+    holding a hold of La Cortina on the way up; that is a save, not a miss, but it
+    does happen.
+  - From the bounce to holding on again: 3.5 s on average.
+- **Pictures:** `15_slab_before.jpg`, `15_ring_squashed.jpg`, `15_ring_thrown.jpg`,
+  `15_ring_landed.jpg`.
+- **First-try number:** the throw.
+- **Not checked:** a fall from the upper rows, which lands harder and further out;
+  whether a body that slides off the slab's SIDE can miss the ring.
