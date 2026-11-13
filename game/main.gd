@@ -525,6 +525,19 @@ func _peak_start_over() -> void:
 	_start_peak()
 
 
+## THE PEAK'S CAMERA STAYS CLOSE (Parker 11-12: "the camera in general is wayyyy to backed
+## out and the character is too high up on it"). The course's 111 camera zones were written
+## to "show the drop": 101 of them ask for more than 11 m of view (up to 28) and 60 aim
+## more than a metre below the climber. One rule over all of them, here, instead of
+## re-authoring each: a zone may pull back only to PEAK_CAM_HALF_MAX and look below the
+## climber only by PEAK_CAM_DOWN_MAX. A zone cut down keeps its lean in proportion (a lean
+## of 10 m written for a 28 m view would put the climber off a view of 11). Standing in no
+## zone (half 4.2) and the step back while falling or flying are as they were.
+## FIRST-TRY NUMBERS, Parker's to change.
+const PEAK_CAM_HALF_MAX := 5.5  # metres above and below the middle: 11 m of view at most
+const PEAK_CAM_DOWN_MAX := 1.0  # metres the view may be aimed below the climber
+
+
 func _peak_camera(delta: float) -> void:
 	var peak: Peak = game.peak
 	line_bar.visible = false
@@ -533,6 +546,10 @@ func _peak_camera(delta: float) -> void:
 	var fr: Array = peak.cam_frame()
 	var half := float(fr[0])
 	var bias: Vector2 = fr[1]
+	if half > PEAK_CAM_HALF_MAX:
+		bias *= PEAK_CAM_HALF_MAX / half
+		half = PEAK_CAM_HALF_MAX
+	bias.y = maxf(bias.y, -PEAK_CAM_DOWN_MAX)
 	var com := peak.player.centre_of_mass()
 	var chest: RigidBody3D = peak.player.bodies.get("chest")
 	var v := Vector2(chest.linear_velocity.x, chest.linear_velocity.y) if chest != null else Vector2.ZERO
