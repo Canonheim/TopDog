@@ -1,4 +1,4 @@
-TOP DOG - playtest build 0.3.95
+TOP DOG - playtest build 0.3.96
 ==============================
 
 Climb the barrel, then the tower of everyone who went before you. Grab, fling,

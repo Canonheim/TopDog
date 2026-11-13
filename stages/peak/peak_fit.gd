@@ -267,7 +267,9 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 	# no thinner than 0.3 (the boards on their side beam), hung from the top it is stood on.
 	if lo <= 0.3 and w >= 1.0 and w > h and kind in ["plank", "rotten"] and _pick("fit_%s_cap" % mat) != "":
 		var seen := maxf(h, 0.3)
-		_caps(out, mat, r.c + ay * ((h - seen) * 0.5), ax, ay, r.ang, w, seen, zc, deep / 2.4, false)
+		# (the kit's thin planking, made 0.3 tall, where it has landed for this material)
+		var thin := _pick("fit_%s_cap_thin" % mat) != ""
+		_caps(out, mat, r.c + ay * ((h - seen) * 0.5), ax, ay, r.ang, w, seen, zc, deep / 2.4, false, "cap_thin" if thin else "cap", 0.3 if thin else 0.5)
 		return out
 	# ---- a bar: thin, along its long side
 	if lo <= 0.3:
@@ -325,7 +327,7 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 	return out
 
 
-func _caps(out: Array, mat: String, c: Vector2, ax: Vector2, _ay: Vector2, ang: float, w: float, h: float, zc: float, zs: float, ends: bool) -> void:
+func _caps(out: Array, mat: String, c: Vector2, ax: Vector2, _ay: Vector2, ang: float, w: float, h: float, zc: float, zs: float, ends: bool, module := "cap", made_h := 0.5) -> void:
 	var x0 := -w * 0.5
 	var x1 := w * 0.5
 	var end_file := _pick("fit_%s_cap_end" % mat)
@@ -343,7 +345,7 @@ func _caps(out: Array, mat: String, c: Vector2, ax: Vector2, _ay: Vector2, ang: 
 	var seg := run / n
 	for i in n:
 		var at := c + ax * (x0 + seg * (i + 0.5))
-		out.append([_pick("fit_%s_cap" % mat, i), _xf(at, ang, Vector3(seg / 2.0, h / 0.5, zs), zc)])
+		out.append([_pick("fit_%s_%s" % [mat, module], i), _xf(at, ang, Vector3(seg / 2.0, h / made_h, zs), zc)])
 
 
 ## A tile's place: at `at` in the play plane, turned `ang`, scaled. `about_face`: turned
@@ -429,7 +431,7 @@ static func _rect(pts: PackedVector2Array) -> Dictionary:
 static func _pick(base: String, salt := 0) -> String:
 	if not _variants.has(base):
 		var have: Array = []
-		for suffix in ["", "_a", "_b", "_c"]:
+		for suffix in ["", "_a", "_b", "_c", "_d"]:
 			if _mesh(base + suffix) != null:
 				have.append(base + suffix)
 		_variants[base] = have
