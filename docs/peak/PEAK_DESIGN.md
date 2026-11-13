@@ -209,6 +209,30 @@ own background card stack:
 | A10 | storm grey with white flashes | wet slate, flag colours | papel picado prayer lines snapping in the wind |
 | A11 | gold above the clouds | summit rock, marigold, sky | the old ring's ropes, the bell, the belt |
 
+**Far backgrounds are flat facade pieces (Parker, 2026-11-13).** What stands far behind a
+scene (far hills, a far town, a far range, the far wall of a cavern) is ONE flat cut-out card
+standing well back. It is not modelled terrain, and it is never an empty plane running to a
+ruled horizon. Parker, on the station's dry hills: "I like how you made the background back
+there a flat facade piece, that was good. You did a good job coloring it too to make it look
+nice", and then: "that is now the correct way to do far backgrounds".
+
+How to make one (the worked example is the kit's `stn_far_hills`: `Top Dog Kit\source\stn_b_ground.py`
+and `stn_far_hills_design.py`; it stands 95 m behind the climb, 160 m wide, 6 to 14 m tall):
+
+- **One card with a hand-cut outline,** in the kit's cardboard cut-out language: a thick card
+  whose cut edge shows kraft, a dark stripe, kraft, with braces behind.
+- **A painted face of flush colour regions on one plane.** Two or three rows of forms. The
+  back row is hazed toward the colour of the sky and the far mountains. The front row is in
+  the place's own colours, each form with a shade flank. A third colour runs in drifts along
+  the foot.
+- **A few bold silhouettes cut into the ridge** (cactus and scrub at the station; whatever
+  belongs to the place elsewhere), big enough that the ink line can't swallow them: a trunk
+  1 m across at 95 m.
+- **Mid-value colours.** The game's light lifts every lit face a long way; a pale card goes
+  to white.
+- **Far enough back that it barely slides** as the camera moves. In front of it: the ground
+  and the real props. Behind it: the sky and the far ranges.
+
 **Storytelling without words:**
 - **The ones who tried.** Frozen climbers are part of the course. One sits by a cold
   lantern in the mine with tally marks scratched beside him. A chain of three hang

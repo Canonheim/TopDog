@@ -486,7 +486,7 @@ RULES = [
     "Every danger shows where it comes from and warns before it acts (notes 12, 21, 23, 56).",
     "Every breakable thing wears the game's one breakable look: cracked already, with a corner gone (notes 16, 24, 31, 53, 64).",
     "The painted back wall never stops inside the frame, so there are no black holes (note 51). The insides of small pits can't be held (note 52).",
-    "One frog is hidden in every biome (note 60), in a little room you can walk into. A room you can enter is cut away at the front: floor, back wall and roof, no front wall.",
+    "One frog is hidden in every biome (note 60), in a little room you can walk into. A room you can enter is cut away at the front: floor, back wall and roof, no front wall.",    "Far backgrounds are flat facade pieces (Parker, 11-13): one cut-out card standing well back, painted in a few broad rows that haze toward the horizon, with a few bold silhouettes cut into its ridge. Never modelled terrain, and never an empty plane running to a ruled horizon. The station's dry hills are the worked example.",
 ]
 
 # ------------------------------------------------------------------ pages

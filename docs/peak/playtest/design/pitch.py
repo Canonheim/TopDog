@@ -313,7 +313,7 @@ def main():
                              '<div id="nosave" class="warnbox" hidden><b>This viewer cannot save your feedback.</b> Open this file in your own browser (Chrome, Edge or Firefox) so what you type is kept.</div>'
                              "<h2>How to use this</h2>" + ul(P.HOWTO) + "<h2>What you should know before you judge it</h2>" + ul(P.CAVEATS) +
                              '<h2>What is in it</h2><ol class="toc">%s</ol>' % "".join('<li><a href="#" data-go="biome %s">%s</a> (%d places)</li>' % (bid[1:], esc(Bm["name"]), len(ar)) for bid, Bm, ar in data)))
-    slides.append(text_slide("the rules", "The ten rules every slide follows", "Before the biomes",
+    slides.append(text_slide("the rules", "The rules every slide follows", "Before the biomes",
                              '<p class="hook">These hold on the whole mountain. The second one is yours, from 11-13. If you disagree with any of them, say so here and I will change every slide it touches.</p>',
                              "<ol>%s</ol>" % "".join("<li>%s</li>" % esc(r) for r in B.RULES)))
     for bid, Bm, areas in data:
