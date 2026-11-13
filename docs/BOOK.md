@@ -904,6 +904,32 @@ know and make sure to put instructions on that in our main MDs".
 - This is the same language as the cardboard sky and the modelled mountains of the plaza:
   the far layer is a painted card, the near layers carry the modelling.
 
+## Open ground is designed, never a flat plane (Parker, 2026-11-13)
+
+Said to the Second Director, of the Peak's station, and passed on to this book at his
+word. Of the first ground: "make the entire ground area look beter since right now it is
+a massive flat tan plane". Of the ground that replaced it: "your ground work was also very
+good, make sure that info on how you did it is written down".
+
+- **The rule.** Open ground is never one flat colour running to the horizon. It is one
+  painted slab, 2 cm thick, all flush colour regions on one plane and no height, that runs
+  off every edge of the screen at the close and the pulled-back camera.
+- **It is laid out as a real place, in bands from the camera back:** tufts and flat
+  stones; a worn road with a darker verge and ruts; a trodden yard with cart tracks;
+  paving where people built; patched open country with one wandering line; two or three
+  paler far bands. No more than about 4 m of one flat colour on screen. Real plants and
+  rocks stand on its darker patches. Then a far facade card on the horizon (the rule above).
+- **The worked example** is the kit's `stn_yard_floor` (`Top Dog Kit\source\build_stn_yard_floor.py`
+  and `stn_yard_floor_design.py`; `Top Dog Kit\docs\PARTS.md`, P-A) with the props of
+  `stn_b_ground.py`.
+- **A trap for every maker of foreground:** the camera sits at about the climber's chest
+  height, so anything standing in front of the play plane covers the climber up to its
+  own height wherever the climber stands behind it. Foreground there is under 0.3 m, or
+  stands where nobody stands behind it.
+- **The how-to**, with the traps met on the way, is in `Top Dog Kit\docs\HOW_WE_MAKE_KIT_PIECES.md`
+  (section 7, after the far facades), and for the Peak in `docs\peak\PEAK_DESIGN.md`
+  section 7 and `docs\peak\AUTHORING.md` under Looks on the `luchador-ui` branch.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
