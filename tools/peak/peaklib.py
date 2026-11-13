@@ -211,7 +211,7 @@ class Area:
         L = math.hypot(dx, dy)
         return self.box((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, L, t, kind, math.degrees(math.atan2(dy, dx)), **kw)
 
-    def ladder(self, x, ys, w=0.8, kind="iron", t=0.09, rail=0.07, rails=True, crooked=None):
+    def ladder(self, x, ys, w=0.8, kind="iron", t=0.09, rail=0.11, rails=True, crooked=None):
         """A BROKEN IRON LADDER (Parker 11-12: "make it an actual ladder you climb on but
         only the sideways rungs have collision"; then: "an actual broken rusted ish ladder
         with rungs missing and some at angles ... a metal ladder with rungs that stick
@@ -219,8 +219,10 @@ class Area:
         rung's TOP. Each rung is a thin bar you can hold and stand on, and wears the kit's
         bracket rung (fit_ladder_rung). Leave rungs out of `ys` for a broken stretch. The
         rails are drawn only (fit_ladder_rail), and only beside the rungs that are left:
-        where the rungs are gone the rails are gone too. crooked: {index of a rung in the
-        sorted ys: degrees}: rungs that sag at an angle (still solid: they hold)."""
+        where the rungs are gone the rails are gone too, and the first missing rung of
+        each gap hangs broken from one foot (fit_ladder_rung_bent: nothing holds it).
+        crooked: {index of a rung in the sorted ys: degrees}: rungs that sag at an angle
+        (still solid: they hold)."""
         ys = sorted(ys)
         crooked = crooked or {}
         for i, y in enumerate(ys):
@@ -236,8 +238,11 @@ class Area:
                 runs.append([b])
             else:
                 runs[-1].append(b)
-        for run in runs:
-            y0, y1 = run[0] - 0.4, run[-1] + 0.3
+        for run in runs[:-1]:
+            self.deco("fit_ladder_rung_bent", x, run[-1] + step - t / 2, z=0.0)
+        for ri, run in enumerate(runs):
+            # (under a gap the rails run on far enough to carry the broken rung's foot)
+            y0, y1 = run[0] - 0.4, run[-1] + (step + 0.32 if ri < len(runs) - 1 else 0.3)
             n = max(1, math.ceil((y1 - y0) / 2.3))
             seg = (y1 - y0) / n
             for rx in (x - w / 2, x + w / 2):

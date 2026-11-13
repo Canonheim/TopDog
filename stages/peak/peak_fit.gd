@@ -32,6 +32,11 @@ const NOMINAL := {
 	"pole": Vector3(0.4, 2.5, 0.4), "bar": Vector3(1.0, 0.12, 0.12), "hold": Vector3(0.5, 0.5, 0.6),
 }
 
+## The pieces a course names itself (`fit=`): the box each is made to, in the play plane
+## (the ladder's rung is its bar: the arms and feet stand outside it). One not listed
+## here is fitted by its mesh's own box.
+const NAMED := {"fit_ladder_rung": Vector2(0.94, 0.09), "fit_ladder_rail": Vector2(0.11, 2.0)}
+
 static var _meshes := {}  # file name -> Mesh (null: not landed)
 static var _variants := {}  # "fit_wood_cap" -> [file names that exist]
 static var _boxes := {}  # file name -> its mesh's box (the pieces fitted by their own size)
@@ -208,6 +213,9 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 		if r.is_empty() or _mesh(file) == null:
 			return []
 		var box: AABB = _boxes.get(file, AABB(Vector3(-0.5, -0.05, -0.1), Vector3(1.0, 0.1, 0.2)))
+		if NAMED.has(file):
+			var made: Vector2 = NAMED[file]
+			box = AABB(Vector3(-made.x * 0.5, -made.y * 0.5, 0), Vector3(made.x, made.y, 0))
 		var long_x := box.size.x >= box.size.y
 		var w: float = r.w
 		var h: float = r.h
@@ -254,6 +262,12 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 			return []
 		out.append([nf, _xf(r.c, r.ang, Vector3(w / 0.5, h / 0.5, clampf((w + h) * 0.5 / 0.5, 0.6, 1.4)), 0.0)])
 		return out
+	# ---- a board walk: a plank, however thin, is a run of the kit's planking. It is drawn
+	# no thinner than 0.3 (the boards on their side beam), hung from the top it is stood on.
+	if lo <= 0.3 and w >= 1.0 and w > h and kind in ["plank", "rotten"] and _pick("fit_%s_cap" % mat) != "":
+		var seen := maxf(h, 0.3)
+		_caps(out, mat, r.c + ay * ((h - seen) * 0.5), ax, ay, r.ang, w, seen, zc, deep / 2.4, false)
+		return out
 	# ---- a bar: thin, along its long side
 	if lo <= 0.3:
 		var bf := _pick("fit_%s_bar" % mat)
@@ -273,9 +287,13 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 			return []
 		var n := maxi(1, roundi(hi / 3.2))
 		var seg := hi / n
+		# (The first variant is the whole pole and stacks; the others have a broken top, and
+		# stand only where the top is in the open.)
+		var top_free := _open(r.c + ay * (hi * 0.5 + 0.25), Vector2.ZERO, 0.0)
 		for i in n:
 			var at: Vector2 = r.c + ay * (-hi * 0.5 + seg * (i + 0.5))
-			out.append([_pick("fit_%s_pole" % mat, i), _xf(at, r.ang, Vector3(lo / 0.4, seg / 2.5, lo / 0.4), zc if own_z else 0.0)])
+			var file := _pick("fit_%s_pole" % mat, _n * 3 + 1) if (i == n - 1 and top_free) else str((_variants["fit_%s_pole" % mat] as Array)[0])
+			out.append([file, _xf(at, r.ang, Vector3(lo / 0.4, seg / 2.5, lo / 0.4), zc if own_z else 0.0)])
 		return out
 	var zs := deep / 2.4
 	# ---- a deck: thin and lying: caps end to end (an end piece where it stops in the open)
