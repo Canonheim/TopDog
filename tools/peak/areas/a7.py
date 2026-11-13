@@ -377,10 +377,11 @@ A.challenge("7.10", "La Estación Baja", (-209.2, 672.0), 3, "B",
 A.cam((-240, 662, TW, 690), half_h=9.0, bias=(-2.0, -1.0))
 
 # ================================================================ the picture
-# Hard blue daylight after the dark. The valley and the town, tiny, low in the Balcon's frame.
-A.deco("town_far", -186.0, 571.0, z=-60.0, size=(40.0, 8.0, 1.0), tone="accent")
-A.card([(-262, 556), (-150, 556), (-150, 592), (-176, 604), (-205, 590), (-232, 600), (-262, 596)], z=-30.0, tone="back3")
-A.card([(-262, 556), (-150, 556), (-150, 578), (-185, 586), (-220, 576), (-262, 584)], z=-18.0, tone="back2")
+# Hard blue daylight after the dark. (TRIAL, Parker's far-facade rule, 11-13: the area's own
+# stand-in far view is out, so the Peak's real far layers show from the cliffs: the painted
+# valley with the town on it, the two painted ranges and the rows of cloud
+# (stages/peak/peak_backdrop.gd). It was a `town_far` at (-186, 571), z -60, and two flat
+# cards of far range, z -30 in "back3" and z -18 in "back2", from x -262 to -150.)
 A.effect("clouds", (-262, 560, -150, 610), density=0.3)
 ROCKC = "#B9AC90"  # rock a step behind the climbing plane
 A.card([(-211, 573), (-203, 573), (-203, 677), (-211, 677)], z=-1.5, tone=ROCKC)  # the tower: its windows are alcoves
