@@ -114,6 +114,7 @@
 <tr><td>51</td><td><a href="#n51">Weird black spots: places where the painted back wall stops</a></td><td><span class="chip c-plan">Likely cause found, plan; not sent to the thread</span></td></tr>
 <tr><td>52</td><td><a href="#n52">The insides of small pits should not be grabbable</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
 <tr><td>53</td><td><a href="#n53">El Templo, the altar: the whole beam breaks, and the cross spins four times as fast</a></td><td><span class="chip c-plan">Plan, one thing to check; not sent to the thread</span></td></tr>
+<tr><td>54</td><td><a href="#n54">An achievement for farting at the altar: "Pay Your Respects"</a></td><td><span class="chip c-plan">Plan (the game has no achievements yet); not sent to the thread</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes from 12 on wait here until Parker says to send them.</p>
 
@@ -1550,7 +1551,7 @@
   </figure>
   <h4>What is going on</h4>
   <p>The altar's chamber has no floor. A single stone beam, 9 m long, crosses it, and under the beam is the gallery 16 m down. Above the beam a stone cross 10 m across turns slowly: once every 37 seconds, so an arm comes past every 9 seconds. Its arms sweep half a metre over the middle of the beam and then brush up the east wall, which you climb next. The idea was to walk across behind an arm and follow it up the wall.</p>
-  <p>Two things make it tame today. The beam is plain solid stone, so you can stand on it as long as you like. And the cross is so slow that it can't actually knock you out: the game only knocks you out when an arm is moving at 2 m a second or more where it touches you, and the fastest point on these arms moves at under 1.</p>
+  <p>Two things make it tame today. The beam is plain solid stone, so you can stand on it as long as you like. And the cross is so slow that an arm sweeping into you does nothing: the game knocks you out when the arm is moving at 2 m a second or more where it touches you, and the fastest point on these arms moves at under 1. Today it only knocks you out if you yourself are moving fast when you meet it.</p>
   <h4>Plan</h4>
   <ul>
     <li><b>The whole beam breaks.</b> All 9 m of it, in sections of about 1.5 m. A section gives way a moment after you put weight on it and drops to the gallery in pieces, so the beam falls away behind you as you cross. It comes back a section at a time after its usual wait, so you can try again. It looks cracked and crumbling before you step on it, in the same breakable language as notes 16, 24 and 31.</li>
@@ -1559,6 +1560,33 @@
     <li><b>How the two fit.</b> The arms pass half a metre above the beam, so a climber who stays low can go under them, and a climber who stands up is hit. The beam breaking means you can't wait for a gap. So: cross low and keep moving.</li>
   </ul>
   <div class="ask"><b>One thing to check before the numbers are set:</b> this is the same question as note 24's catwalk. Each section of the beam has to hold long enough to get across it while staying low, with an arm passing over every 2.3 seconds. I don't know yet how fast a climber crosses a floor crouched. If the answer is "not fast enough", the challenge can't be done, and either the sections hold a little longer or they are a little shorter. The climb up the east wall after it also needs trying, since an arm now brushes that wall every 2.3 seconds where it was every 9.</div>
+</div>
+
+<div class="note" id="n54">
+  <div class="head"><span class="num">54</span><h3>An achievement for farting at the altar: "Pay Your Respects"</h3><span class="time">23:50</span></div>
+  <blockquote>"make an achievement at this alter where if you fart, you get an achievement called "pay your respects""</blockquote>
+  <p><span class="chip c-plan">Plan (the game has no achievements yet); not sent to the thread</span></p>
+  <figure>
+    <img src="shots/54_altar.jpg" alt="A small carved stone altar with a dog mask on its front and a green bowl on top, the climber beside it">
+    <figcaption>Parker's picture: the altar at the start of challenge 5.10.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <ul>
+    <li><b>The game has no achievements at all yet.</b> Nothing in the code records, shows or sends one. This would be the first.</li>
+    <li><b>Steam can't take it yet.</b> The game still runs on Steam's shared test app, which has no achievements of ours. Real Steam achievements need the game's own Steam app, with each one set up on Steam's side.</li>
+    <li><b>The fart is controller only.</b> It is on the right bumper. There is no key for it on the keyboard, so a keyboard player could never earn this.</li>
+    <li>The altar is a prop standing 1.2 m behind you at the west end of the beam. There is a second, smaller one higher up by the well (the sacrifice stone).</li>
+  </ul>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>The achievement:</b> "Pay Your Respects". Fart while your climber is at this altar, within about 2 m of it. Earned once, kept for good.</li>
+    <li><b>A small achievements system to carry it,</b> since there is none: a list the game keeps in your save, and a way to award one. Built so each achievement is one line, because more will follow.</li>
+    <li><b>The moment it pops:</b> a lucha-style ribbon drops in with the name and a short fanfare, in the game's own 3D look. That part is mine as the UI director. The altar's bowl could puff a little smoke in answer.</li>
+    <li><b>Steam, later:</b> when the game has its own Steam app, the same list is wired to Steam's achievements, and anything already earned is handed over the first time you start.</li>
+    <li><b>A fart key on the keyboard,</b> so everyone can earn it. F is free, if you like the joke.</li>
+    <li>A place to see what you have earned (a page on the title screen) can come with it or after.</li>
+  </ul>
+  <div class="ask"><b>Two small things for Parker:</b> should the second altar by the well count too, or only this one? And is F for the keyboard fart all right?</div>
 </div>
 
 </main>
