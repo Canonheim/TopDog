@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Peak: playtest notes, 11-12</title>
+<style>
+  :root {
+    --bg: #f6f1e7; --card: #fffdf8; --ink: #1f1a17; --soft: #6b625a; --line: #d9cfbf;
+    --red: #c8322b; --gold: #b7791f; --green: #2f7d4f; --blue: #2b6cb0; --quote: #f0e6d2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #171412; --card: #211d1a; --ink: #f1eadf; --soft: #a99f94; --line: #3a332d;
+            --red: #ef6b63; --gold: #e0a84a; --green: #6cc493; --blue: #7fb4ea; --quote: #2b2520; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 16px/1.55 "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 28px 22px 80px; }
+  h1 { font-size: 30px; margin: 0 0 4px; }
+  h2 { font-size: 21px; margin: 38px 0 10px; }
+  h3 { font-size: 18px; margin: 0; }
+  h4 { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--soft); margin: 18px 0 4px; }
+  p { margin: 6px 0; }
+  .sub { color: var(--soft); margin-bottom: 18px; }
+  code { background: var(--quote); padding: 1px 5px; border-radius: 4px; font-size: 14px; }
+  table { border-collapse: collapse; width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 13px; letter-spacing: .05em; text-transform: uppercase; color: var(--soft); }
+  tr:last-child td { border-bottom: 0; }
+  .note { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 16px 0; }
+  .head { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .num { font-weight: 700; color: var(--red); }
+  .time { color: var(--soft); font-size: 14px; margin-left: auto; }
+  blockquote { margin: 10px 0; padding: 10px 14px; background: var(--quote); border-left: 4px solid var(--gold); border-radius: 0 6px 6px 0; }
+  .chip { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+          padding: 2px 9px; border-radius: 99px; border: 1.5px solid currentColor; white-space: nowrap; }
+  .c-plan { color: var(--blue); } .c-parked { color: var(--green); } .c-ask { color: var(--red); }
+  figure { margin: 12px 0; }
+  figure img, figure svg { max-width: 100%; border: 1px solid var(--line); border-radius: 6px; display: block; }
+  figcaption { color: var(--soft); font-size: 14px; margin-top: 4px; }
+  ol, ul { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  .ask { border-left: 4px solid var(--red); padding: 6px 12px; margin: 10px 0; background: var(--quote); border-radius: 0 6px 6px 0; }
+  .box { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 18px; margin: 12px 0; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>The Peak: playtest notes</h1>
+<p class="sub">Parker and Dan playing the solo mode, Thursday 11-12, evening. Notes taken by the Second Director as they come in. Newest at the bottom. Pictures are Parker's, from the stream.</p>
+
+<div class="box">
+<p><b>The rule for tonight</b> (Parker, 21:53): <i>"dont make the fixes yet, we will have a ton of them to work on all at once, we are just making the HTML and taking notes."</i></p>
+<p>So this page is notes, causes and a plan. Nothing is being changed in the game.</p>
+<p><b>One thing to know:</b> before that message I had already written the small fixes for notes 1, 3, 4, 5, 8, 10 and parts of 6 and 9. They are parked in one commit on the branch <code>luchador-ui</code>. They are not merged, not in any build, and nobody has looked at them in the game. They passed the script check and the Peak's own test battery (0 fails). They are marked <span class="chip c-parked">Written, parked</span> below. Say the word and I throw them away, or they wait for the big pass.</p>
+</div>
+
+<h2>Where each note stands</h2>
+<table>
+<tr><th>#</th><th>Note</th><th>State</th></tr>
+<tr><td>1</td><td><a href="#n1">Breaking planks in the mine come back with a glitch</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
+<tr><td>2</td><td><a href="#n2">Water should use Del Mar's shader and splashes</a></td><td><span class="chip c-ask">Plan, one call for Parker</span></td></tr>
+<tr><td>3</td><td><a href="#n3">The mine's bucket: nothing sticks, collision is wrong</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
+<tr><td>4</td><td><a href="#n4">The two hanging lines in the mine look like ropes</a></td><td><span class="chip c-parked">First try written, parked, unseen</span></td></tr>
+<tr><td>5</td><td><a href="#n5">Wind streaks in the mine where there is no wind</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
+<tr><td>6</td><td><a href="#n6">The falling minecart is too slow; the track end has no collision</a></td><td><span class="chip c-plan">Cart: plan. Track end: written, parked</span></td></tr>
+<tr><td>7</td><td><a href="#n7">Camera far too pulled back, character too high</a></td><td><span class="chip c-plan">Plan</span></td></tr>
+<tr><td>8</td><td><a href="#n8">The dark plank by the big wheel should be part of the bridge</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
+<tr><td>9</td><td><a href="#n9">Cave-in rocks: one second more between them, and bounce away instead of vanishing</a></td><td><span class="chip c-plan">Bounce: plan. Gap: written, parked</span></td></tr>
+<tr><td>10</td><td><a href="#n10">Cave-in rocks: a slightly smaller hitbox</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
+</table>
+
+<h2>The plan so far</h2>
+<p>For the big pass after the session. Order is by how much each one hurts the play, then by size.</p>
+<ol>
+<li><b>Camera</b> (note 7). It touches every minute of the climb. One rule over the whole mountain instead of redoing 111 camera zones. Two numbers for Parker to agree. Small in code, needs before and after pictures.</li>
+<li><b>The small mine fixes</b> (notes 1, 3, 5, 8, 10, the track end of 6, the gap of 9). Written and parked. Left to do: look at each in the game and take a picture.</li>
+<li><b>Hanging lines</b> (note 4). A first try is parked (a timber head frame in place of the two cables). It needs a look in the game before anyone trusts it.</li>
+<li><b>Cave-in rocks leave by a broken board</b> (note 9). New small mechanic plus one prop. Medium.</li>
+<li><b>Falling cart becomes a real falling thing</b> (note 6). Medium to large: a moving piece has to hand itself over to physics with you possibly still holding it.</li>
+<li><b>Water</b> (note 2). Splashes first (small: Del Mar's drop in as they are), then the surface (medium to large: 14 pools seen from the side, and the frame rate to check). Needs Parker's colour call.</li>
+</ol>
+
+<h2>Calls waiting for Parker</h2>
+<ul>
+<li><b>Water colour</b> (note 2): Del Mar's bright blue in the caves, or the same shader tinted dark per cave? I'd tint it.</li>
+<li><b>Chains past the track end</b> (note 6): with the boards made solid, the first chain is 1 m from the boards' end, so it can be taken without riding the cart. Move the chains out the same 1.6 m so the ride stays the only way? I'd move them.</li>
+<li><b>Camera numbers</b> (note 7): widest view 11 m of height, looking at most 1 m below you, as a first try?</li>
+</ul>
+
+<h2>The notes</h2>
+
+<div class="note" id="n1">
+  <div class="head"><span class="num">1</span><h3>Breaking planks in the mine come back with a glitch</h3><span class="time">21:39</span></div>
+  <blockquote>"the crumbling path things in the mines respawn with weird graphical glitches."</blockquote>
+  <p><span class="chip c-parked">Written, parked</span></p>
+  <h4>What is going on</h4>
+  <p>These are the four rotten planks in the plank bridge of challenge 1.3, Los Tablones (the grey crumbly ones in the picture under note 4). A plank breaks 1.2 seconds after you hold it and comes back 8 seconds later.</p>
+  <p>When it comes back, the game grows it from tiny to full size over a third of a second, with a little overshoot. The mistake: it grows from the mine's zero point, not from the plank's own middle. The planks sit about 180 m from that point. So the returning plank starts about 9 m from the zero point, flies some 170 m across the mine to its place, shoots about 18 m past it, and settles back. On screen that is a stretched plank streaking through the frame.</p>
+  <p>I read this from the code (<code>stages/peak/peak_things.gd</code>, the respawn in <code>_tick_holds</code>). I have not watched it happen, so if what you saw looks different from "a plank streaking in from the side", tell me.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li>Grow the returning piece from its own middle. (Written, parked.)</li>
+    <li>The same code runs every breaking hold: icicles, snow bridges, the brittle rock at the summit (seven of them). All of them have this glitch today and all get the fix.</li>
+    <li>Still to do: a picture of a plank mid-return.</li>
+  </ul>
+</div>
+
+<div class="note" id="n2">
+  <div class="head"><span class="num">2</span><h3>Water should use Del Mar's shader and splashes</h3><span class="time">21:39</span></div>
+  <blockquote>"the water should use the water shader and splash effects we use in del mar"</blockquote>
+  <p><span class="chip c-ask">Plan, one call for Parker</span></p>
+  <figure>
+    <img src="../shots/2_3.jpg" alt="The Peak's water today: a flat blue box with a pale strip on top">
+    <figcaption>The Peak's water today (challenge 2.3, from last night's showcase pictures, not from tonight): a flat see-through blue box with a pale strip on top.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <ul>
+    <li>The Peak has 14 pools and rivers: the Sump in the mine and 13 in Las Aguas Negras. Each is a plain see-through box with a pale strip for the surface. Rivers also carry white flecks so you can read the current.</li>
+    <li>Falling in plays one splash sound and shows nothing.</li>
+    <li>Del Mar's sea has the foam-circle surface, foam rings where things stand in it, ripple rings, and the splash: a fan of pale blobs, two rings and the sound.</li>
+  </ul>
+  <h4>Plan</h4>
+  <ol>
+    <li><b>Splashes.</b> Del Mar's splash can be thrown at any point, so it drops in as it is. Going in gets the full splash, climbing out a small one, and anything else that lands in water (broken plank pieces, barrels, boulders, the cart of note 6) gets one sized to it.</li>
+    <li><b>Surface.</b> Del Mar's surface is made for a sea you look down on. The Peak's water is seen from the side, as a tank. So: the top of each pool wears Del Mar's surface (foam circles, ripple rings where you splash, foam where piles and rock stand in it), and the front becomes a clean tint with Del Mar's waterline. The river flecks stay, because the current has to be readable.</li>
+    <li><b>Check.</b> Pictures of the Sump, a river and a small pool, and the frame rate in Las Aguas Negras with all 13 on.</li>
+  </ol>
+  <div class="ask"><b>One call for Parker:</b> Del Mar's water is bright day blue. In the caves, should it be that same bright blue, or the same shader tinted dark to fit each cave (Las Aguas Negras means the black waters)? I'd tint it per area and keep the foam and splashes pale so they pop.</div>
+</div>
+
+<div class="note" id="n3">
+  <div class="head"><span class="num">3</span><h3>The mine's bucket: nothing sticks, collision is wrong</h3><span class="time">21:41</span></div>
+  <blockquote>"the bucket that goes up and down in the mines does not have stickyness for some reason and its collision is wrong. Fix it"</blockquote>
+  <p><span class="chip c-parked">Written, parked</span></p>
+  <figure>
+    <svg viewBox="0 0 560 300" role="img" aria-label="The bucket's collision sits half a metre above the drawn bucket">
+      <rect width="560" height="300" fill="#241d19"/>
+      <line x1="40" y1="200" x2="520" y2="200" stroke="#6b625a" stroke-dasharray="5 5"/>
+      <text x="44" y="194" fill="#a99f94" font-size="12" font-family="Segoe UI, sans-serif">the bucket's own zero line</text>
+      <polygon points="145,257 255,257 264,143 136,143" fill="#b5651d" stroke="#1a1310" stroke-width="3"/>
+      <path d="M132,150 Q200,70 268,150" fill="none" stroke="#7a2e22" stroke-width="5"/>
+      <g fill="rgba(80,200,255,0.30)" stroke="#59c8ff" stroke-width="2">
+        <rect x="134" y="187" width="132" height="13"/>
+        <rect x="134" y="68" width="13" height="132"/>
+        <rect x="253" y="68" width="13" height="132"/>
+      </g>
+      <text x="300" y="80" fill="#59c8ff" font-size="14" font-family="Segoe UI, sans-serif">blue: what you can touch and hold</text>
+      <text x="300" y="100" fill="#59c8ff" font-size="12" font-family="Segoe UI, sans-serif">floor at 0, walls up to 1.2 m</text>
+      <text x="300" y="232" fill="#e0a84a" font-size="14" font-family="Segoe UI, sans-serif">brown: the bucket you see</text>
+      <text x="300" y="252" fill="#e0a84a" font-size="12" font-family="Segoe UI, sans-serif">from 0.52 m below the line to 0.52 m above</text>
+    </svg>
+    <figcaption>Drawn from the two files' numbers, as the game is today: the bucket's collision (blue) against the bucket you see (brown).</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>The bucket's collision was authored with its floor at the bucket's zero line. The model was made with its zero line through its middle. Nobody lined them up, so the bucket you see hangs 0.52 m lower than the bucket you can touch.</p>
+  <ul>
+    <li><b>Nothing sticks:</b> the lower half of the drawn bucket has no collision at all, so a hand on it holds nothing. The bucket itself is set to grip (it is iron, like the counterweight).</li>
+    <li><b>Collision is wrong:</b> you stand on a floor that floats in the middle of the drawn bucket, and the walls carry on about 0.7 m above the drawn rim, unseen.</li>
+  </ul>
+  <h4>Plan</h4>
+  <ul>
+    <li>Lift the drawn bucket 0.52 m so its base sits on the collision's floor, and trim the collision's walls from 1.2 m to the drawn rim, 1.04 m. (Written, parked.)</li>
+    <li>The handle over the top stays drawn only. If it were solid it would close the bucket's mouth and you could not get in.</li>
+    <li>Still to do: watch a climber hold it and ride it, and a picture.</li>
+  </ul>
+  <h4>The same check, run over the whole mountain</h4>
+  <p>I compared every moving piece's collision box with its model's box (119 pieces). A box can't tell a deliberate difference from a mistake, so each of these needs a look in the game, but these are the ones that stand out:</p>
+  <ul>
+    <li><b>The bull wheel</b> on the cliffs: collision 7.9 m across, model 5.0 m across.</li>
+    <li><b>The gondolas</b> on the cableway (8 of them): the collision reaches up to 2.3 m further to one side than the cabin.</li>
+    <li><b>The kites</b> on the storm ridge (3): collision 1.2 m wide, model 2.5 m wide and much taller. May be meant (only the frame holds).</li>
+    <li><b>The temple's jaw:</b> the model hangs 0.9 m lower than its collision.</li>
+    <li><b>The vultures</b> (3): the model sits about half a metre higher than its collision.</li>
+    <li>Smaller ones, under half a metre: the crystal raft, the wall snails, the serpent's vertebrae.</li>
+  </ul>
+</div>
+
+<div class="note" id="n4">
+  <div class="head"><span class="num">4</span><h3>The two hanging lines in the mine look like ropes</h3><span class="time">21:42</span></div>
+  <blockquote>"in the mine area, remove these track things and replace them with something else. They look like the ropes you grab later."</blockquote>
+  <p><span class="chip c-parked">First try written, parked, unseen</span></p>
+  <figure>
+    <img src="shots/04_lift_cables.jpg" alt="Two thin dark red lines hang beside the real rope">
+    <figcaption>Parker's picture: the two dark red lines under the blue arrow. The climber is on the real rope, to their left. The grey pieces in the bridge are note 1's rotten planks.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>They are the bucket lift's two cables: one runs to the counterweight, one to the bucket (the bucket of note 3 is just above this frame). Each is a 16 m iron line, 8 cm thick, drawn half a metre behind you. They are scenery: they don't move and can't be held. The real rope is 4 m to their left and the same thinness, and the chains you grab later in the mine are drawn as the same thin dark red line. So they read as two more things to hold.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li>Take both cables out. Whatever replaces them must not be a thin hanging line, because in this mine a thin hanging line is always a rope or a chain.</li>
+    <li>First try (written, parked, and I have not seen it in the game): a timber head frame that the bucket and counterweight run in, three of the kit's scaffold pieces stacked, set 2.4 m back.</li>
+    <li>My doubt about it: orange timber is also the colour of things you hold. If the frame reads as a ladder, the next try is a plain dark iron mast, or nothing but the pulley.</li>
+    <li>Still to do: a picture for you to judge.</li>
+  </ul>
+</div>
+
+<div class="note" id="n5">
+  <div class="head"><span class="num">5</span><h3>Wind streaks in the mine where there is no wind</h3><span class="time">21:45</span></div>
+  <blockquote>"there is wind in the mine at this part that seams to do nothing"</blockquote>
+  <p><span class="chip c-parked">Written, parked</span></p>
+  <figure>
+    <img src="shots/05_wind_streaks.jpg" alt="Long white upright streaks all over the dark to the right of the climber">
+    <figcaption>Parker's picture: 36 m up, on the mud-vein wall under the cart ledge. The long white streaks are the stray wind.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>You are right that it does nothing: there is no wind there. The mine has one wind, the down-draught inside the waterfall, 40 m to the left of where you were. Its streaks are being drawn in the wrong place.</p>
+  <p>To make the streaks stand upright for an up-or-down wind, the code turns the whole streak-maker a quarter turn. That also turns the box the streaks are born in and the way they travel. The waterfall's draught is a tall thin column (6 m wide, 112 m tall). Turned on its side it becomes a band 112 m wide and 6 m tall, lying across the mine between 31 and 37 m up, with upright streaks sliding sideways through it. That band is what you climbed through.</p>
+  <p>The same mistake hits every up-or-down wind on the mountain: three updraughts in the mushroom garden and one in the chimney. Their streaks are also in the wrong place and moving the wrong way, which would make those updraughts hard to find. Sideways winds (the cliffs, the storm ridge, the glacier) are drawn correctly.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li>Stand the streak itself upright and leave the streak-maker alone. (Written, parked.)</li>
+    <li>Still to do: a picture of the waterfall column and of one updraught in the mushroom garden.</li>
+  </ul>
+</div>
+
+<div class="note" id="n6">
+  <div class="head"><span class="num">6</span><h3>The falling minecart is too slow; the track end has no collision</h3><span class="time">21:46</span></div>
+  <blockquote>"the mine cart that falls here falls too slow and should instead have physics a little after it falls. Also this spot right here should have collision on the boards going across the tracks"</blockquote>
+  <p><span class="chip c-plan">Cart: plan. Track end: written, parked</span></p>
+  <figure>
+    <img src="shots/06_cart_track_end.png" alt="The climber on the tip of the broken track, past the trestle">
+    <figcaption>Parker's picture: the tip of the broken track, past the trestle. The two lines hanging at the top left are the real chains.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p><b>The cart</b> (challenge 1.7, El Carrito Loco). It never really falls. It is slid along a drawn curve from the track end down to the Sump, 75 m of curve, at a top speed of 5 m/s. So the "fall" is a steady glide that takes about 15 seconds. A loose thing dropped from there reaches the water in 4 to 7 seconds, depending on how heavy we let it fall.</p>
+  <p><b>The track end.</b> The broken rail is drawn sticking out 1.6 m past the last piece of collision. The collision stops just past the trestle; the boards in the picture are drawn only. The author stopped it there on purpose, to keep the chains out of reach from the track (see the call below).</p>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>Track end:</b> stretch the collision to the end of the drawn boards. (Written, parked.) The cart's path already runs over them, so the ride is unchanged.</li>
+    <li><b>Cart:</b> keep it on its path while it is on the rails, so the ride and the leap for the chains stay as designed. About a cart's length past the track end, let go: the cart becomes a loose body with the speed it had, tips, drops under gravity, knocks about on the rock and lands in the Sump with a splash (note 2's splash). If you are still holding it, you go with it. It comes back to the top after its usual wait.</li>
+    <li>Speed on the rails: it creeps up to 5 m/s today. Worth trying 7 to 8 so the leap is a real decision. A feel number for you two.</li>
+    <li>The first cart (the ride in from the station) stays on its path. It has to deliver you.</li>
+  </ul>
+  <div class="ask"><b>One call for Parker:</b> with the boards solid, the first chain hangs 1 m from the boards' end at head height, so you can walk out and take it without the cart. Move both chains 1.6 m further out so the ride stays the only way? I'd move them.</div>
+</div>
+
+<div class="note" id="n7">
+  <div class="head"><span class="num">7</span><h3>Camera far too pulled back, character too high</h3><span class="time">21:46</span></div>
+  <blockquote>"the camera in general is wayyyy to backed out and the character is too high up on it"</blockquote>
+  <p><span class="chip c-plan">Plan</span></p>
+  <h4>What is going on</h4>
+  <p>The course sets the camera per challenge, in 111 zones. The area authors were told to "show the drop": pull back so the launch, the landing and the fall below are all in frame, and look down. They did, everywhere.</p>
+  <ul>
+    <li><b>Pulled back:</b> with no zone the camera shows 8.4 m of height, and the climber is about a fifth of the screen tall. The zones' middle value shows 18 m (climber a tenth of the screen), and the widest show 28 m (climber a sixteenth). 96 of the 111 zones are wider than 12 m.</li>
+    <li><b>Too high:</b> 68 of the 111 zones aim the camera below the climber, typically 2 to 4 m, at worst 9.5 m. That pushes you into the top third of the screen. The pictures under notes 4 and 5 are zones that show 16 to 18 m and look 3 to 4 m below you.</li>
+  </ul>
+  <h4>Plan</h4>
+  <ul>
+    <li>One rule in the camera code, over every zone at once: a zone may ask for a wider view only up to a cap, and may look below you only up to a cap. Redoing 111 zones by hand is not needed.</li>
+    <li>Starting numbers I'd try: the widest view 11 m of height (the climber about a sixth of the screen), looking at most 1 m below you. Standing still with no zone stays as it is (8.4 m).</li>
+    <li>The camera already steps back by itself when you fall or fly. That stays, so a long fall still shows where you are going.</li>
+    <li>Before and after pictures of the same three spots go here. The two numbers are yours to change.</li>
+  </ul>
+</div>
+
+<div class="note" id="n8">
+  <div class="head"><span class="num">8</span><h3>The dark plank by the big wheel should be part of the bridge</h3><span class="time">21:47</span></div>
+  <blockquote>"make this part just part of the larger bridge to the right"</blockquote>
+  <p><span class="chip c-parked">Written, parked</span></p>
+  <figure>
+    <img src="shots/08_dark_plank.png" alt="A short dark plank at the left end of the staging, circled in blue">
+    <figcaption>Parker's picture: the short dark plank at the waterfall end of the staging under the winding wheel.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>It is the staging under the winding wheel (challenge 1.9, La Polea Grande). The staging is two pieces: 3.8 m of ordinary planks, and at the waterfall end a separate 1.2 m plank that the spray soaks for 1.5 seconds in every 6. While soaked it is slick and can't be held. Because it is its own piece it is drawn as its own, darker plank, so it reads as a different thing stuck on the end.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li>Make the staging one 5 m run of planks, drawn as one bridge. (Written, parked.) The spray no longer soaks that end.</li>
+    <li>If you want the wet end back later, the right way is to keep one bridge and darken its end only while it is wet.</li>
+    <li>Still to do: a picture.</li>
+  </ul>
+</div>
+
+<div class="note" id="n9">
+  <div class="head"><span class="num">9</span><h3>Cave-in rocks: one second more between them, and bounce away instead of vanishing</h3><span class="time">21:49, 21:52</span></div>
+  <blockquote>"this part needs a longer delay between rocks and the rocks shouldnt despawn, they should bounce into the background off a little messed up board"</blockquote>
+  <blockquote>"like a one second more delay, not a hugely longer delay"</blockquote>
+  <p><span class="chip c-plan">Bounce: plan. Gap: written, parked</span></p>
+  <figure>
+    <img src="shots/09_cavein_rocks.jpg" alt="Two rocks coming down the fallen beam onto the gallery">
+    <figcaption>Parker's picture: 57 m up, the gallery at the foot of the cave-in, two rocks on the fallen beam.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>Challenge 1.10, El Derrumbe. Two sources drop rocks down the shaft, one every 4.0 seconds and one every 5.6. Together that is a rock about every 2.3 seconds, and now and then two within a second of each other. Each rock is simply removed 3 seconds after it appears, wherever it happens to be. The author did that on purpose so no rock would roll along the gallery, but it means they blink out on the ramp in front of you.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>Gap:</b> one second more on each source: every 5.0 and every 6.6 seconds. (Written, parked.) That is a rock about every 2.8 seconds on average.</li>
+    <li><b>No vanishing:</b> the rock keeps rolling down the fallen beam. At the beam's foot sits a short broken board, propped up at one end. A rock that hits it is thrown up and back, away from you into the dark behind the gallery, and is only cleaned up once it is out of sight. From the moment it leaves the board it can't hit you.</li>
+    <li>The same board can be set at the foot of any other rock fall on the mountain later.</li>
+    <li>Check: watch ten rocks in a row leave by the board, and none come to rest on the gallery.</li>
+  </ul>
+</div>
+
+<div class="note" id="n10">
+  <div class="head"><span class="num">10</span><h3>Cave-in rocks: a slightly smaller hitbox</h3><span class="time">21:50</span></div>
+  <blockquote>"make the hitbox on the boulder here a little smaller so it's slightly more forgiving"</blockquote>
+  <p><span class="chip c-parked">Written, parked</span></p>
+  <h4>What is going on</h4>
+  <p>A rock knocks you out when its middle comes within 0.74 m of the middle of your head, chest or hips while it is moving faster than 2.2 m/s. The rock itself is 0.42 m in radius, so the knock-out reaches 0.32 m past its surface.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li>For these rocks, bring that down from 0.74 m to 0.60 m, about a fifth smaller. (Written, parked.) The rock you see and bump into stays the same size; only the knock-out is smaller.</li>
+    <li>Other rock falls on the mountain keep their size unless you say so.</li>
+    <li>A feel number: 0.60 is my first guess at "a little".</li>
+  </ul>
+</div>
+
+</main>
+</body>
+</html>
