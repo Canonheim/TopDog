@@ -457,11 +457,15 @@ class Area:
             z["flash"] = flash
         self.zones.append(z)
 
-    def spawner(self, kind, at, period, vel=(0.0, 0.0), phase=0.0, r=0.45, life=8.0, warn=1.2, mass=30.0):
+    def spawner(self, kind, at, period, vel=(0.0, 0.0), phase=0.0, r=0.45, life=8.0, warn=1.2, mass=30.0, hit=None):
         """Things that fall or roll on a timer. kind: rock | icicle | boulder | slab.
-        A hit at speed knocks a climber out."""
-        self.spawners.append({"kind": kind, "at": _pt(at), "period": _f(period), "vel": _pt(vel), "phase": _f(phase),
-                              "r": _f(r), "life": _f(life), "warn": _f(warn), "mass": _f(mass)})
+        A hit at speed knocks a climber out. hit: how near its middle must come to your
+        head, chest or hips to knock you out (the game's own is r + 0.32)."""
+        s = {"kind": kind, "at": _pt(at), "period": _f(period), "vel": _pt(vel), "phase": _f(phase),
+             "r": _f(r), "life": _f(life), "warn": _f(warn), "mass": _f(mass)}
+        if hit is not None:
+            s["hit"] = _f(hit)
+        self.spawners.append(s)
 
     def finish(self, rect):
         self.zones.append({"type": "finish", "rect": self._rect(rect)})

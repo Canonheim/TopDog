@@ -470,7 +470,12 @@ func _wind_fx(_a: Dictionary, z: Dictionary, root: Node3D) -> CPUParticles3D:
 	if acc.length() < 0.1:
 		return null
 	var p := _particles(Color("#FFFFFF"), 0.7, int(clampf(w * h / 9.0, 8, 90)), 1.6)
-	(p.mesh as QuadMesh).size = Vector2(0.9, 0.04)
+	# The streak lies along the wind. (Turning the emitter to stand it up also turned the
+	# box it is born in and the way it flies: the mine's 6 x 112 m down-draught drew as a
+	# band 112 m wide across the cavern, its streaks sliding sideways. Parker 11-12:
+	# "there is wind in the mine at this part that seams to do nothing".)
+	var upright := absf(acc.y) > absf(acc.x)
+	(p.mesh as QuadMesh).size = Vector2(0.04, 0.9) if upright else Vector2(0.9, 0.04)
 	(p.material_override as StandardMaterial3D).billboard_mode = BaseMaterial3D.BILLBOARD_DISABLED
 	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	p.emission_box_extents = Vector3(w * 0.5, h * 0.5, Peak.HALF)
@@ -481,7 +486,6 @@ func _wind_fx(_a: Dictionary, z: Dictionary, root: Node3D) -> CPUParticles3D:
 	p.gravity = Vector3.ZERO
 	p.preprocess = 0.0
 	p.position = Vector3((float(r[0]) + float(r[2])) * 0.5, (float(r[1]) + float(r[3])) * 0.5, 0.6)
-	p.rotation.z = 0.0 if absf(acc.x) >= absf(acc.y) else PI * 0.5
 	root.add_child(p)
 	return p
 

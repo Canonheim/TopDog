@@ -202,13 +202,21 @@ for y in (7.1, 8.3, 9.5, 10.7, 11.9, 13.1, 14.3):
 A.beam((-200.4, 14.0), (-191.5, 14.0), 0.4, "wood")
 LIFT = {"type": "path", "pts": [[-190.2, 14.7], [-190.2, 26.7]], "speed": 1.6, "mode": "pingpong", "wait": 2.5}
 A.mover("cubo_peso", (-190.2, 14.7), [(box_pts(0.0, 0.6, 1.6, 1.2), "iron")], LIFT, model="counterweight")
-A.mover("cubo", (-187.7, 26.5),
-        [(box_pts(0.0, 0.06, 1.2, 0.12), "iron"), (box_pts(-0.54, 0.6, 0.12, 1.2), "iron"), (box_pts(0.54, 0.6, 0.12, 1.2), "iron")],
+# (Parker 11-12: "does not have stickyness for some reason and its collision is wrong".
+# The kit's bucket is 1.04 tall with its zero at its middle; this collision's zero is its
+# floor. So the model is lifted 0.52 onto the floor and the walls stop at its rim. The
+# bail over the top is drawn only: solid, it would shut the bucket's mouth.)
+_cubo = A.mover("cubo", (-187.7, 26.5),
+        [(box_pts(0.0, 0.06, 1.2, 0.12), "iron"), (box_pts(-0.54, 0.52, 0.12, 1.04), "iron"), (box_pts(0.54, 0.52, 0.12, 1.04), "iron")],
         {"type": "link", "to": "cubo_peso", "scale": -1.0}, model="ore_bucket")  # the bucket comes down as you go up
+_cubo["model_at"] = [0.0, 0.52]
 A.ledge(-199.8, -191.9, 26.2, "plank", t=0.3)  # the station deck. It stops 2.1 m short of the wall
 A.deco("pulley", -188.95, 31.4, z=-0.5, size=(0.8, 0.8, 0.3), tone="iron")
-A.deco("lift_cable", -190.2, 15.9, z=-0.5, size=(0.06, 15.7, 0.06), tone="iron")
-A.deco("lift_cable", -187.7, 15.7, z=-0.5, size=(0.06, 15.9, 0.06), tone="iron")
+# The lift's two cables are gone (Parker 11-12: "They look like the ropes you grab
+# later"): a thin hanging line in this mine is a rope or a chain, and those are held. The
+# bucket and the counterweight run in a timber head frame instead, set well back.
+for _y in (14.0, 20.0, 26.0):
+    A.deco("station_scaffold", -188.95, _y, z=-2.4, size=(4.1, 6.0, 2.2), tone="wood")
 A.deco("mine_beam", -199.7, 11.5, z=-0.8, rot=44.0, scale=1.55, size=(4.0, 0.35, 0.35), tone="wood")  # the arm's brace
 A.deco("mine_beam", -199.7, 23.8, z=-0.8, rot=41.5, scale=1.47, size=(4.0, 0.35, 0.35), tone="wood")  # the deck's brace
 A.challenge("1.5", "El Cubo", (-200.0, 6.0), 2, "B", moves=[
@@ -236,7 +244,11 @@ A.challenge("1.6", "Vetas de Lodo", (-198.0, 26.2), 2, "B", moves=[
 # trestle (x -211.6), and down through the fall into the Sump. Two chains hang 2.6 and
 # 4.2 m past the trestle's end (too far to reach from it), their tails at chest height
 # over the cart's road: put a hand up and take one as you go under.
-A.ledge(-211.6, -208.5, 40.0, "wood", t=0.4)  # the trestle's stub
+# The trestle's stub, out to the end of the drawn broken rail (Parker 11-12: "this spot
+# right here should have collision on the boards going across the tracks"; it stopped at
+# x -211.6, 1.6 m short of the drawn boards). NOTE: the first chain is now 1.0 m from the
+# boards' end, so it can be taken without the cart.
+A.ledge(-213.2, -208.5, 40.0, "wood", t=0.4)
 # 2.3 s from rolling to the trestle's end, at 4.5 m/s there. Past the end its road is the
 # arc of a thing thrown off, into the waterfall. (3.4 m of the top is left east of the cart to rest on.)
 TRACK = [(-206.5, 40.45), (-211.6, 40.45), (-214.6, 40.1), (-217.6, 39.05), (-220.6, 37.3), (-223.6, 34.87),
@@ -272,8 +284,9 @@ A.challenge("1.8", "Las Vigas", (-216.5, 50.5), 3, "A", moves=[
 # rim at the bottom: it carries you up the fall's side, over the top, and down to the porch
 # of the upper gallery on its east. Hold on too long and it takes you round again.
 WHEEL = (-234.2, 57.4)
-A.ledge(-237.2, -236.0, 52.45, "plank", t=0.3, hold={"type": "wet", "on": 1.5, "off": 4.5, "phase": 0.0})
-A.ledge(-236.0, -232.2, 52.45, "plank", t=0.3)
+# One staging (Parker 11-12: "make this part just part of the larger bridge to the
+# right"): its west 1.2 m was a plank of its own that the spray wet in turn, drawn dark.
+A.ledge(-237.2, -232.2, 52.45, "plank", t=0.3)
 _w = A.wheel("polea_grande", WHEEL, 3.0, -3.0, spokes=6, kind="wood", rim=0.18, model="winding_wheel")
 _w["model_scale"] = 6.0 / 3.2  # (the Carpenter's wheel is 3.2 across; this one is 6)
 A.ledge(-230.6, -229.6, 57.4, "plank", t=0.4)  # the porch, half a metre clear of the rim
@@ -300,8 +313,11 @@ for side, top, length in STUBS:
         A.solid([(-218.3, top - 0.3), (-218.3, top), (-218.5 - length, top), (-218.5 - length, top - 0.22)], "wood")
     else:
         A.solid([(-222.3, top - 0.3), (-222.1 + length, top - 0.22), (-222.1 + length, top), (-222.3, top)], "wood")
-A.spawner("rock", (-220.4, 76.3), 4.0, phase=0.0, r=0.42, life=3.0, warn=1.2)
-A.spawner("rock", (-220.2, 76.3), 5.6, phase=2.0, r=0.42, life=3.0, warn=1.2)
+# (Parker 11-12: "like a one second more delay": they were every 4.0 s and 5.6 s. And
+# "make the hitbox on the boulder here a little smaller": a knock-out was the rock's
+# middle within 0.74 m of your head, chest or hips; now 0.60.)
+A.spawner("rock", (-220.4, 76.3), 5.0, phase=0.0, r=0.42, life=3.0, warn=1.2, hit=0.6)
+A.spawner("rock", (-220.2, 76.3), 6.6, phase=2.0, r=0.42, life=3.0, warn=1.2, hit=0.6)
 A.effect("dust", (-222.1, 61.0, -218.5, 77.0), density=0.5)
 A.ledge(-230.0, -222.1, 72.0, "rock2", t=0.5)  # the top drift
 A.ledge(-233.2, -229.6, 72.0, "plank", t=0.35)  # its balcony into the throat

@@ -156,6 +156,11 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		vis.scale = Vector3.ONE * float(def.model_scale)
 	elif bool(def.get("model_flip", false)):
 		vis.scale.x = -1.0
+	if def.has("model") and def.has("model_at"):
+		# Where the model's own zero sits against the collision's (the ore bucket's is its
+		# middle; its collision's is its floor).
+		var off := Peak.v2(def.model_at)
+		vis.position = Vector3(off.x, off.y, 0)
 	(nodes[0] as Node3D).add_child(vis)
 	var mo: Dictionary = def.motion
 	var m := {"id": str(def.id), "def": def, "area": str(a.id), "home": home, "nodes": nodes, "vis": vis, "mo": mo, "type": str(mo.type),
@@ -853,8 +858,17 @@ func _tick_holds(delta: float) -> void:
 					body.collision_layer = int(h.layer)
 					var v: Node3D = h.vis
 					v.visible = true
-					v.scale = Vector3(0.05, 0.05, 1.0)
-					v.create_tween().tween_property(v, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+					# It grows back from its own middle. (Its drawn piece is laid out in the
+					# area's own metres, so a bare scale grew it from the area's zero point: a
+					# plank 180 m from there flew in across the mine and shot past its place.
+					# Parker 11-12: "respawn with weird graphical glitches".)
+					var mid := _hold_middle(body)
+					var grow := func(s: float) -> void:
+						if is_instance_valid(v):
+							v.scale = Vector3(s, s, 1.0)
+							v.position = Vector3(mid.x * (1.0 - s), mid.y * (1.0 - s), 0)
+					grow.call(0.05)
+					v.create_tween().tween_method(grow, 0.05, 1.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			"wet":
 				var def: Dictionary = h.def
 				var on := float(def.get("on", 2.0))
@@ -947,6 +961,23 @@ func _tick_debris() -> void:
 			rb.scale = Vector3.ONE * maxf(0.05, (DEBRIS_S - age) / 0.6)
 
 
+## The middle of a hold's drawn piece, in its body's own space: its outline's box if it
+## has one (a solid of the course), else its collision's (a mover's hold).
+func _hold_middle(body: Node3D) -> Vector2:
+	if body.has_meta("peak_pts"):
+		var pts: PackedVector2Array = body.get_meta("peak_pts")
+		if not pts.is_empty():
+			var lo := pts[0]
+			var hi := pts[0]
+			for p in pts:
+				lo = lo.min(p)
+				hi = hi.max(p)
+			return (lo + hi) * 0.5
+	if body.get_child_count() > 0:
+		return _body_centre(body)
+	return Vector2.ZERO
+
+
 func _body_centre(body: Node3D) -> Vector2:
 	var lo := Vector3(INF, INF, INF)
 	var hi := Vector3(-INF, -INF, -INF)
@@ -994,7 +1025,7 @@ func _tick_spawners(delta: float) -> void:
 				var fp := peak.local_of(Vector2(rb.global_position.x, rb.global_position.y))
 				for pname in ["head", "chest", "pelvis"]:
 					var b: RigidBody3D = c.bodies.get(pname)
-					if b != null and peak.local_of(Climber.pos2(b)).distance_to(fp) < float(def.get("r", 0.45)) + 0.32:
+					if b != null and peak.local_of(Climber.pos2(b)).distance_to(fp) < float(def.get("hit", float(def.get("r", 0.45)) + 0.32)):
 						_ko_wait = 2.5
 						c.knock_out()
 						peak.audio.play("rock_hit", fp, 3.0)
