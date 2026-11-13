@@ -47,7 +47,10 @@ A.mover("cart0", RIDE[0], cart_shapes,
 # (-7.95, 3.86), over the cart's east end, in reach from the cart and from the deck. Drawn
 # east 0.7 m at the handle it drops into its second notch and the cart goes. It comes back
 # to its first notch when the cart comes home.
-A.lever("palanca", (-7.6, 2.2), "cart0", length=1.7, rest=12.0, pull=-12.0, grip=0.4, z=-0.45)
+# It stands just in front of the near rail (z +0.65), so the whole shaft shows across the
+# cart's end and its chock shows under the cart's near wheel. The arm's notches are 11.9
+# degrees either side of upright.
+A.lever("palanca", (-7.6, 2.2), "cart0", length=1.7, rest=11.9, pull=-11.9, grip=0.4, z=0.65)
 # The rails (the Carpenter's rail_straight, 4 m a piece): their base 0.55 under the cart's road.
 import math
 for (x0, y0), (x1, y1) in zip([(-4.6, 2.65)] + RIDE[1:-1], RIDE[1:]):

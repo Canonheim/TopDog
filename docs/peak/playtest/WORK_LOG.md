@@ -1304,8 +1304,8 @@ buzz is still heard, the chirrs are the first thing to take out.
 
 ## Note 72: the station's lever starts the cart
 
-- **State:** done, watched in the game and in the battery. Drawn with stand-ins until
-  the Kit's two models land. Nothing played by a person.
+- **State:** done, watched in the game and in the battery, with the Kit's two models.
+  Nothing played by a person.
 - **Parker 11-13:** "make it so you have to pull the lever to start the cart, regardless
   of if you are in the cart. If you pull the lever it goes. It controls like the chair
   whaere you are hlding the activated limb".
@@ -1325,16 +1325,23 @@ buzz is still heard, the chirrs are the first thing to take out.
     with a quieter clunk, when the cart is home.
   - **The cart comes home by its old rule,** unchanged: 25 s after it stops, once the
     climber is 22 m from it (or 75 s after, if nobody is on it).
-  - It stands 0.45 m behind the climb and is never solid: nothing sticks to it.
+  - It stands 0.65 m in FRONT of the climb, just in front of the near rail (the
+    Director's change, 11-13: behind the cart it was half hidden), and is never solid:
+    nothing sticks to it.
+  - **The chock.** The base model carries the rod and the chock as its own object
+    (`stn_lever_rod`). As the lever is drawn over, the rod draws the chock 0.42 m east,
+    out from under the cart's near wheel; it goes back with the lever.
   - The old `brake_lever` deco is gone.
-- **Where it is:** pivot at (-7.6, 2.2) on the deck; the arm 1.7 m; at rest 12 degrees
-  west of upright (its top at (-7.95, 3.86)), pulled 12 degrees east ((-7.25, 3.86)).
+- **Where it is:** pivot at (-7.6, 2.2) on the deck; the arm 1.7 m; at rest 11.9 degrees
+  west of upright (its top at (-7.95, 3.86)), pulled 11.9 degrees east ((-7.25, 3.86)):
+  the notches the arm's model was made to.
   The brief's pulled height of 3.75 does not fit a 1.7 m arm turned about that pivot;
   the angles are what the game uses.
 - **The models:** `stn_lever_base` (origin at the pivot) and `stn_lever_arm` (straight
-  up from the pivot; the game turns it) are loaded by name. Neither is in
-  `kit/models/` yet, so a dark block and an iron bar with a red grip stand in. When
-  the models land they are used with no change here.
+  up from the pivot; the game turns it), synced from the Kit and imported
+  (`kit/models/`). If either is ever missing, a dark block and an iron bar with a red
+  grip stand in. A thicker arm, re-landed with the same origin and length, needs only
+  a sync and an import.
 - **Watched** (the probe's `lever` scene): 3 s standing in the cart, it did not move.
   The right hand, its button held, took the handle; drawn east it was thrown in 0.28 s
   and the cart rolled. The cart was home 42.8 s after the pull and the lever back in

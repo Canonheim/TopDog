@@ -522,6 +522,7 @@ const LEVER_TAKE := 0.3  # m: a held hand this near the grip takes it
 const LEVER_LOSE := 0.8  # m: further than this from the grip, it is let go of
 const LEVER_FOLLOW := 26.0  # 1/s: how closely it follows the hand
 const LEVER_SPRING := 12.0  # 1/s: how fast it springs back
+const LEVER_CHOCK_M := 0.42  # m: how far the rod draws the chock out, the lever fully over
 var levers: Array = []
 
 
@@ -538,6 +539,10 @@ func _build_lever(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	base_at.position = Vector3(at.x, at.y, z)
 	base_at.add_child(base)
 	root.add_child(base_at)
+	# THE ROD AND THE CHOCK (the Kit's base carries them as its own object): the rod runs
+	# from the lever to a chock under the cart's near wheel. Drawing the lever over draws
+	# the chock out from under the wheel, and it goes back with the lever.
+	var rod := base.find_child("stn_lever_rod", true, false) as Node3D
 	var turn := Node3D.new()  # the arm turns about the pivot
 	turn.position = Vector3(at.x, at.y, z)
 	var arm: Node3D = Peak.kit(str(def.get("arm", "")))
@@ -556,7 +561,7 @@ func _build_lever(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	turn.rotation.z = rest
 	levers.append({"id": str(def.id), "area": str(a.id), "at": at, "len": length, "grip": float(def.get("grip", 0.4)),
 		"rest": rest, "pull": deg_to_rad(float(def.get("pull", -12.0))), "ang": rest, "starts": str(def.get("starts", "")),
-		"limb": -1, "thrown": false, "turn": turn})
+		"limb": -1, "thrown": false, "turn": turn, "rod": rod, "rod_x": rod.position.x if rod != null else 0.0})
 
 
 ## Where a lever's handle is (the middle of its grip), in the course's metres.
@@ -610,6 +615,8 @@ func _tick_levers(delta: float) -> void:
 			if not m.is_empty():
 				m["pulled"] = true
 		(lv.turn as Node3D).rotation.z = float(lv.ang)
+		if lv.rod != null and not is_equal_approx(rest, pull):
+			(lv.rod as Node3D).position.x = float(lv.rod_x) + LEVER_CHOCK_M * clampf((rest - float(lv.ang)) / (rest - pull), 0.0, 1.0)
 
 
 ## A GRIP BREAKS BEFORE THE BODY DOES (Parker 11-12: "a certain amount of force should
