@@ -115,6 +115,7 @@
 <tr><td>52</td><td><a href="#n52">The insides of small pits should not be grabbable</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
 <tr><td>53</td><td><a href="#n53">El Templo, the altar: the whole beam breaks, and the cross spins four times as fast</a></td><td><span class="chip c-plan">Plan, one thing to check; not sent to the thread</span></td></tr>
 <tr><td>54</td><td><a href="#n54">An achievement for farting at the altar: "Pay Your Respects"</a></td><td><span class="chip c-plan">Plan (the game has no achievements yet); not sent to the thread</span></td></tr>
+<tr><td>55</td><td><a href="#n55">The area name banner: a 15 second cool-down before it can show again</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes from 12 on wait here until Parker says to send them.</p>
 
@@ -1587,6 +1588,22 @@
     <li>A place to see what you have earned (a page on the title screen) can come with it or after.</li>
   </ul>
   <div class="ask"><b>Two small things for Parker:</b> should the second altar by the well count too, or only this one? And is F for the keyboard fart all right?</div>
+</div>
+
+<div class="note" id="n55">
+  <div class="head"><span class="num">55</span><h3>The area name banner: a 15 second cool-down before it can show again</h3><span class="time">23:51</span></div>
+  <blockquote>"make it so once an area gives you it's name banner, there is a 15 second cool down before the banner can show again"</blockquote>
+  <p><span class="chip c-plan">Plan, not sent to the thread</span></p>
+  <h4>What is going on</h4>
+  <p>The banner is shown every time the game decides you have changed area, in either direction, with no memory of what it just showed. Areas meet at an invisible line. Hang about on that line, or get thrown back and forth across it, and the game flips between the two areas each time you cross, and the banner fires each time. Worse, the banners queue: if three are asked for while one is on screen, the other three play one after another when it is done. A long fall through several areas does the same.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>15 seconds of quiet.</b> Once a banner has shown, no banner can show again for 15 seconds, whatever lines you cross in that time.</li>
+    <li><b>Nothing queues.</b> Banners asked for during the quiet time are dropped, not saved up.</li>
+    <li><b>You still find out where you are.</b> When the 15 seconds end, if you have settled in a different area from the one last announced, its banner shows once then. So a real arrival is never missed, only delayed, and a fall through three areas gives you one banner for where you land.</li>
+    <li><b>Not while you are falling.</b> The banner waits until you have hold of something again, so it does not drop across the screen in the middle of a fall.</li>
+    <li>This is in the solo HUD, which is my code, and it is a small change.</li>
+  </ul>
 </div>
 
 </main>
