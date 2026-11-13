@@ -1522,6 +1522,42 @@ buzz is still heard, the chirrs are the first thing to take out.
 - **Frames:** `*_after2.jpg` in `docs/peak/playtest/far/`; each pairs with its `*_after.jpg`
   (the first banks and the code's ranges).
 
+### TRIAL: three areas without their own stand-in far views (three commits, each can go back alone)
+
+- **State:** in, for the Second Director to judge by frame. Lint and `--peak` clean after
+  each. Nothing played by a person.
+- **Why:** the areas' own flat "far" cards stood 14 to 60 m behind the climb and hid the
+  Peak's real far layers. The orange slabs at the cableway and the blue ones at El Balcon
+  were these, not the backdrop's ranges.
+- **El Teleferico** (`tools/peak/areas/a8.py`, commit `a6ef221`): out went the three cards of
+  far range (z -30, -22, -14), the `town_tiny` standing on the nearest, and the `sun_low`.
+  The "clouds" effect along the foot stays: it is mist in the void itself. Light and
+  palette untouched.
+  - **Seen:** the painted valley with the town on its patch, the painted ranges under the
+    area's gold sky, and the rows of cloud. **The rows fill the upper two fifths of the
+    picture at 8.4** (y 703: the camera looks up into all seven undersides), with gold sky
+    in one gap between them. The pylons, wheels, cars and pennants read against it.
+- **Los Riscos** (`tools/peak/areas/a7.py`, commit `13375fb`): out went the two cards of far
+  range (z -30 and z -18) and the area's second `town_far` (z -60). The "clouds" effect
+  stays. The cliff's own cards (tower, arch, fin, horn, needles, the west back at z -2.5)
+  are untouched.
+  - **Seen:** at 7.1 the ranges, the rows of cloud and the sun stand behind the balcony;
+    pulled back, the valley and town are under it. Flags, signs and holds read as before.
+- **La Cumbre** (`tools/peak/areas/a11.py`, commit `7ba244d`): out went the one pale sky card
+  (z -40). Nothing else.
+  - **Seen:** the summit stands over the real sea of cloud under a gold sky, with a
+    giant's tip standing out and the storm's deck dark at the foot.
+  - **There are two suns now.** The area's own pale disc behind the bell (a card at z -36,
+    22 m across) was drawn pale on the pale card; without the card it is a great white
+    disc, and the backdrop's yellow sun is in the same picture to its east
+    (`11_5_close_trial.jpg`, `11_4_close_trial.jpg`). One of them should go.
+  - No hold, ring or plank was lost against the new sky in the four starts shot.
+- **Each area's JSON** was regenerated from its file; the difference in each is only the
+  entries named (plus empty `levers` and `boards` lists the generator now writes).
+- **Frames:** `docs/peak/playtest/far/`: `8_*`, `7_*`, `11_*` and `10_9_*` as `*_trial.jpg`,
+  against the same views as `*_after2.jpg`. `7_10_*_trial_a8.jpg` is the low station with
+  only the cableway's cards out.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
