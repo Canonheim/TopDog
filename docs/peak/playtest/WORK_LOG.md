@@ -1478,6 +1478,50 @@ buzz is still heard, the chirrs are the first thing to take out.
   earlier `*_after_standin.jpg` are the code cards). The plaza's `before` frames show the
   window's "click to regain controls" line in a corner: the probe hides it now.
 
+### Round two: the banks with scalloped undersides, and the two far ranges as painted cards
+
+- **State:** done, by frame. Nothing played by a person.
+- **Synced and imported:** `peak_cloud_bank_a` and `_b` re-landed (179 m tall: 69 above the
+  line, 110 below, the underside scalloped), and `peak_far_range_near` and `_far` (7,400 m
+  wide, running 900 m below their foot line; crests to 400 m, and to 1,002 m at the far
+  card's giants).
+- **The ranges:** each card stands on the horizon line (y 215) at its `_range()` depth
+  (3,620 and 3,880 m), at its made size. `_range()` stays as the fall-back. The cards are
+  not squashed as the code's ranges were: the far card's giants need their height to stand
+  out of the sea of cloud (their tops are at y 1,217; the last bank's top is at 1,001).
+- **The banks, re-sized for the shorter body:** never under 0.55 now (it was 0.3 with the
+  230 m body), which gives 61 m of body on the five near rows, 78 and 110 on the two far
+  ones. Worked out row by row for a camera 35 to 85 m above the sea: from 75 m up (the
+  summit's top) every row covers the one behind with 9 m to spare; no row was added and no
+  spacing closed. Under the nearest row, low in the frame at the summit's foot, the storm's
+  deck is in front.
+- **The rows are staggered:** each row stands 5 to 9 m higher or lower than the last
+  (`BANK_STEP`), so the undersides of the five equal rows are at five heights and do not
+  fall into one line when the camera is level with them.
+- **What the frames show:**
+  - **From the cliffs** (`clear_580_close_after2.jpg`, `7_5_close_after2.jpg`): rows of
+    cloud with scalloped undersides and open sky between them and under them; the sun shows;
+    the painted ranges stand on the valley's hills, the far one snow-capped.
+  - **From the summit** (`clear_1000_close_after2.jpg`, `clear_967_pulled_back_after2.jpg`):
+    rows of white banks and clouds, nothing of the valley between them, a giant's tip
+    standing out. At 967 pulled back, one corner at the very foot of the frame shows a
+    sliver of valley past the end of the storm's deck (the open-air view is 290 m east of
+    the route; over the route the deck is under the frame's middle).
+  - **At the glacier and the storm ridge in play** (`9_9_pulled_back_after2.jpg`,
+    `10_1_pulled_back_after2.jpg`): the banks are a band of three or four stacked rows about
+    an eighth of the picture tall, with the ranges and the valley under it. Not a white-out.
+  - **In open air at glacier height** (`clear_832_close_after2.jpg`, no area in the way):
+    the upper two fifths of the picture IS white: the camera looks up into the undersides
+    of all seven rows. The game never has that view today, because the glacier's own ice
+    and the storm's own clouds fill that part of the screen.
+  - **Seen from underneath, the cards' thickness shows:** a kraft-brown line along the
+    scallops' points on the nearest rows, and small notches where two banks' undersides
+    meet at different heights (same frame). From above, the near banks' top edges show
+    kraft too. That is the cards' cut edge, as made.
+- **Checks:** lint and `--peak` clean.
+- **Frames:** `*_after2.jpg` in `docs/peak/playtest/far/`; each pairs with its `*_after.jpg`
+  (the first banks and the code's ranges).
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

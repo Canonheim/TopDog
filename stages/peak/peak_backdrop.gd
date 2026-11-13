@@ -19,8 +19,9 @@ extends Node3D
 ##     `peak_valley_panorama`): fields, river and road below its horizon line, its hills
 ##     above. The tiny town (the kit's `town_far`) stands just in front of it, under the
 ##     hills; `town_at()` is where, for the bell's fireworks;
-##   - two cardboard ranges behind it, their feet on that horizon line, the far one
-##     snow-capped, and a cardboard sun;
+##   - two painted ranges behind it (the kit's `peak_far_range_near` and `_far`), their
+##     feet on that horizon line, the far one snow-capped with a few giants, and a
+##     cardboard sun;
 ##   - the sea of cloud at y 932: seven rows of cut-out clouds, and behind each row a
 ##     continuous row of cloud banks (the kit's `peak_cloud_bank_a` and `_b`), so from the
 ##     summit it is rows of white banks with the far peaks standing out of them, and from
@@ -61,16 +62,23 @@ const TOWN_AT := Vector3(150.0, HORIZON_Y - 34.0, VALLEY_Z + 12.0)
 const TOWN_SCALE := 6.4
 ## A CLOUD BANK (the kit's `peak_cloud_bank_a` and `_b`): 1,000 m wide, its origin at the
 ## middle of its width at the height of the dips between its top scallops; the scallops
-## stand up to 70 m above that, the calm body hangs 230 m below.
+## stand up to 70 m above that, the body hangs 110 m below and ends in a scalloped
+## underside (a straight foot drew a ruled line across the sky from the cliffs).
 const BANK_W := 1000.0
 const BANK_UP := 70.0
-const BANK_DOWN := 230.0
+const BANK_DOWN := 110.0
 ## A row's banks are sized to its distance as its clouds are (the far row at the made
-## size), but never smaller than BANK_MIN: seen from the summit, 68 m above the sea, a
-## row's body must hang down past the top of the row in front of it, or the valley shows
-## between the rows (about 70 m of body, whatever the row).
+## size), but never smaller than BANK_MIN: seen from the summit, 35 to 75 m above the sea,
+## a row's body must hang down past the top of the row in front of it, or the valley shows
+## between the rows. At 0.55 (61 m of body) the rows as spaced cover each other with 9 m
+## to spare from 75 m up. (Under the nearest row, low at the summit's foot, the storm's
+## deck is in front.)
 const BANK_FAR := 3100.0
-const BANK_MIN := 0.3
+const BANK_MIN := 0.55
+## Each row stands a little higher or lower than the last (metres), so that from the
+## glacier and the storm ridge, where the camera is level with the bodies, the rows'
+## undersides do not fall into one line across the picture.
+const BANK_STEP := [0.0, 9.0, -7.0, 6.0, -9.0, 5.0, 0.0]
 ## The ranges were drawn standing on y 0: their heights are squashed by this and stood on
 ## the horizon line (the giants keep their own height: they must clear the sea of cloud).
 const RANGE_SQUASH := 0.8
@@ -205,9 +213,14 @@ func _build_outside() -> void:
 	# high and snow-capped, a lower one before it (low: from the cliffs the climber looks
 	# DOWN on them; only a few far giants stand as high as the summit, and those are the
 	# peaks that rise out of the sea of cloud)
+	# Each is the kit's painted card once it has landed (7,400 m wide, its origin at the
+	# middle of its foot, its crests 170 to 400 m and 400 to 700 m above that, running on
+	# 900 m below it behind the valley's card); until then, the code's cardboard range.
 	rng.seed = 7785
-	_range(-3620.0, 170.0, 400.0, 15, 0, HAZE_MID, HAZE_MID_SHADE, false, rng)
-	_range(-3880.0, 400.0, 700.0, 12, 4, HAZE_FAR, HAZE_FAR_SHADE, true, rng)
+	if not _range_card("peak_far_range_near", -3620.0):
+		_range(-3620.0, 170.0, 400.0, 15, 0, HAZE_MID, HAZE_MID_SHADE, false, rng)
+	if not _range_card("peak_far_range_far", -3880.0):
+		_range(-3880.0, 400.0, 700.0, 12, 4, HAZE_FAR, HAZE_FAR_SHADE, true, rng)
 	# ---- a cardboard sun, low over the far range
 	var sun_pts := PackedVector2Array()
 	for i in 24:
@@ -236,7 +249,7 @@ func _build_outside() -> void:
 		while bx < -250.0 + bank_half:
 			var bank := _bank(bi % 2 == 0)
 			bank.scale = Vector3.ONE * bank_k
-			bank.position = Vector3(bx + bank_w * 0.5, SEA_Y, bank_z)
+			bank.position = Vector3(bx + bank_w * 0.5, SEA_Y + float(BANK_STEP[row]), bank_z)
 			_sky.add_child(bank)
 			bx += bank_w
 			bi += 1
@@ -273,6 +286,17 @@ func _build_outside() -> void:
 			cloud.position = Vector3(-620.0 + float(i) / float(l[2]) * 760.0 + rng.randf_range(-30.0, 30.0), rng.randf_range(884.0, 944.0), lz)
 			_sky.add_child(cloud)
 			_clouds.append([cloud, rng.randf_range(1.2, 2.6), cw * 0.5, -700.0, 180.0])
+
+
+## A range's painted card stood on the horizon line at depth z, if the kit has it.
+func _range_card(model: String, z: float) -> bool:
+	var card := LuchaKit.kit_model(model)
+	if card == null:
+		return false
+	card.position = Vector3(0.0, HORIZON_Y, z)
+	_no_shadow(card)
+	_outside.add_child(card)
+	return true
 
 
 ## A cardboard range across the horizon at depth z: a zigzag of peaks and saddles, each
