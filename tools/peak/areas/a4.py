@@ -403,7 +403,8 @@ C_W = (C_MID[0] - _d[0] * 0.5, C_MID[1] - _d[1] * 0.5)
 C_E = (C_MID[0] + _d[0] * 0.5, C_MID[1] + _d[1] * 0.5)
 F_E = (C_E[0] + 1.9 * math.cos(math.radians(12.0)), C_E[1] - 1.9 * math.sin(math.radians(12.0)))
 F_W = (C_W[0] - 1.5 * math.cos(math.radians(40.0)), C_W[1] - 1.5 * math.sin(math.radians(40.0)))
-A.solid([F_W, (F_W[0] + 0.4, 364.3), (-294.0, 364.0), (F_E[0], 364.0), F_E, C_E, C_W], "cap")  # the great cap
+A.solid([F_W, (F_W[0] + 0.4, 364.3), (-294.0, 364.0), (F_E[0], 364.0), F_E, C_E, C_W], "cap", skin="shroom_great_cap")  # the great cap
+A.deco("shroom_great_cap", C_MID[0], C_MID[1], z=0.0, skin=True)  # (the Building Maker's, made to these seven points about C_MID)
 A.bounce(C_W, C_E, power_c)  # the middle: listed first, so a body over both it and a flank gets the true throw
 A.bounce(C_E, F_E, 5.0)  # the east flank
 A.bounce(F_W, C_W, 3.0)  # the west flank
