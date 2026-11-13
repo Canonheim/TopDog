@@ -1302,6 +1302,58 @@ buzz is still heard, the chirrs are the first thing to take out.
 - **Checked:** the loop's seam (the script's own test: passes); lint; `--peak`.
 - **Not checked:** by ear, any of it.
 
+## Note 72: the station's lever starts the cart
+
+- **State:** done, watched in the game and in the battery. Drawn with stand-ins until
+  the Kit's two models land. Nothing played by a person.
+- **Parker 11-13:** "make it so you have to pull the lever to start the cart, regardless
+  of if you are in the cart. If you pull the lever it goes. It controls like the chair
+  whaere you are hlding the activated limb".
+- **What changed:**
+  - **The cart no longer starts when boarded** (`tools/peak/areas/a0.py`: `cart0`'s
+    trigger is `"lever"`). Standing in it for any length of time does nothing.
+  - **A lever is a new kind of thing in the course** (`A.lever` in
+    `tools/peak/peaklib.py`; `_build_lever` and `_tick_levers` in
+    `stages/peak/peak_things.gd`). It is taken as the arena's chair is: by the limb
+    whose button is DOWN, when that hand or foot comes within 0.3 m of its grip (its top
+    0.4 m), and kept while the button is held. While held it follows the hand round its
+    pivot, between its two notches.
+  - **Drawn all the way** (0.7 m at its top) it drops into its second notch with
+    `lever_clunk` (a sound the game already had) and the cart goes, whether or not
+    anyone is in it. **Let go short of that** and it springs back.
+  - It stays in its second notch while the cart is away and goes back to its first,
+    with a quieter clunk, when the cart is home.
+  - **The cart comes home by its old rule,** unchanged: 25 s after it stops, once the
+    climber is 22 m from it (or 75 s after, if nobody is on it).
+  - It stands 0.45 m behind the climb and is never solid: nothing sticks to it.
+  - The old `brake_lever` deco is gone.
+- **Where it is:** pivot at (-7.6, 2.2) on the deck; the arm 1.7 m; at rest 12 degrees
+  west of upright (its top at (-7.95, 3.86)), pulled 12 degrees east ((-7.25, 3.86)).
+  The brief's pulled height of 3.75 does not fit a 1.7 m arm turned about that pivot;
+  the angles are what the game uses.
+- **The models:** `stn_lever_base` (origin at the pivot) and `stn_lever_arm` (straight
+  up from the pivot; the game turns it) are loaded by name. Neither is in
+  `kit/models/` yet, so a dark block and an iron bar with a red grip stand in. When
+  the models land they are used with no change here.
+- **Watched** (the probe's `lever` scene): 3 s standing in the cart, it did not move.
+  The right hand, its button held, took the handle; drawn east it was thrown in 0.28 s
+  and the cart rolled. The cart was home 42.8 s after the pull and the lever back in
+  its first notch. From the deck, with nobody in the cart, the left hand threw it in
+  0.8 s and the cart left without the climber.
+- **The battery** (`--peakride`, rewritten for this): in the cart and it stays; a held
+  hand takes the grip; half way and let go, it springs back; all the way, the cart
+  rolls; the ride to the buffer; the lever stays over while the cart is away; home
+  again, and the lever back. All pass.
+- **Pictures:** `72_lever_at_rest.jpg`, `72_lever_hand_on_it.jpg`,
+  `72_lever_half_way.jpg`, `72_lever_pulled.jpg`, `72_cart_going.jpg`,
+  `72_pulled_from_the_deck.jpg`.
+- **First-try numbers:** how near a hand must come (0.3 m), how far it may stray
+  before it is let go (0.8 m), how fast it springs back.
+- **Not checked:** by play. Nothing tells the player the lever is there or that the
+  cart now needs it; at rest most of it is behind the cart's east end, with the grip
+  showing above.
+- **Note 73's hop is not part of this.**
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

@@ -1785,3 +1785,70 @@ func _w_look(a: Array) -> void:
 	Players.fake.erase(1000)
 	await secs(0.3)
 	await shot("28_43_back_to_normal")
+
+
+## NOTE 72, THE STATION'S LEVER: at rest; standing in the cart (it must not start); a hand
+## on the handle; drawn over, and the cart going; and pulled from the deck with nobody in
+## the cart. lever (no arguments).
+func _w_lever(_a: Array) -> void:
+	const Drivers := preload("res://climber/drivers.gd")
+	pk.warp("0.1")
+	await secs(0.4)
+	var c := me()
+	var lv: Dictionary = pk.things.levers[0]
+	var cart: Dictionary = pk.things.movers["cart0"]
+	var rest: Vector2 = pk.things.lever_handle(lv)
+	var old_driver = c.driver
+	var d := Drivers.ScriptDriver.new()
+	stand(Vector2(-9.0, 2.76))
+	look(Vector2(-8.2, 3.6), 2.6)
+	await secs(3.0)
+	print("WATCH lever: at rest its handle is at %s. After 3 s standing in the cart: rolling %s, %.2f m along" % [rest, cart.run, float(cart.dist)])
+	await shot("72_lever_at_rest")
+	c.driver = d
+	var t0 := pk.clock
+	while pk.clock - t0 < 2.5 and int(lv.limb) != 1:
+		d.point_limb(1, true, pk.world_of(rest))
+		await ticks(1)
+	print("WATCH lever: the right hand, its button held, took the handle after %.2f s (limb %d)" % [pk.clock - t0, int(lv.limb)])
+	await shot("72_lever_hand_on_it")
+	t0 = pk.clock
+	var mid_shot := false
+	while pk.clock - t0 < 3.0 and not bool(lv.thrown):
+		d.point_limb(1, true, pk.world_of(rest + Vector2(1.0, 0.0)))
+		await ticks(1)
+		if not mid_shot and pk.things.lever_handle(lv).x - rest.x > 0.35:
+			mid_shot = true
+			await shot("72_lever_half_way")
+	print("WATCH lever: drawn over in %.2f s: thrown %s, the handle now at %s (%.2f m east); the cart rolling %s" % [pk.clock - t0, lv.thrown, pk.things.lever_handle(lv), pk.things.lever_handle(lv).x - rest.x, cart.run])
+	d.set_limb(1, false)
+	await secs(0.25)
+	await shot("72_lever_pulled")
+	await secs(0.9)
+	look(Vector2(-10.5, 3.6), 3.4)
+	await secs(0.05)
+	await shot("72_cart_going")
+	# from the deck, with nobody in the cart: put the cart home first (the game's own rule
+	# brings it back after 25 s with the climber away; the probe just waits it out far off)
+	c.driver = old_driver
+	stand(Vector2(40.0, 0.2))
+	var t1 := pk.clock
+	while pk.clock - t1 < 80.0 and (bool(cart.run) or float(cart.arrived) >= 0.0):
+		await secs(0.5)
+	await secs(0.3)
+	print("WATCH lever: the cart was home again %.1f s after the pull; the lever thrown %s, its handle %.2f m from rest" % [pk.clock - t0, lv.thrown, pk.things.lever_handle(lv).distance_to(rest)])
+	stand(Vector2(-7.0, 2.3))
+	look(Vector2(-8.2, 3.6), 2.6)
+	c.driver = d
+	d.clear()
+	await secs(1.0)
+	t0 = pk.clock
+	while pk.clock - t0 < 4.0 and not bool(lv.thrown):
+		var aim: Vector2 = rest if int(lv.limb) < 0 else rest + Vector2(1.0, 0.0)
+		d.point_limb(0, true, pk.world_of(aim))
+		await ticks(1)
+	d.set_limb(0, false)
+	await secs(0.6)
+	print("WATCH lever: from the deck, the left hand: thrown %s after %.2f s; the cart rolling %s with the climber at %s (not in it)" % [lv.thrown, pk.clock - t0, cart.run, where()])
+	await shot("72_pulled_from_the_deck")
+	c.driver = old_driver

@@ -95,6 +95,8 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 		_build_rope(a, r, root)
 	for s in a.get("spawners", []):
 		spawners.append({"def": s, "area": str(a.id), "root": root, "n": -1, "live": [], "warned": -1})
+	for l in a.get("levers", []):
+		_build_lever(a, l, root)
 	for b in a.get("boards", []):
 		_build_board(a, b, root)
 	for s in a.get("statues", []):
@@ -492,6 +494,7 @@ func tick(delta: float) -> void:
 		if m.active:
 			_tick_mover(m, delta)
 	_tick_rope_grabs()
+	_tick_levers(delta)
 	_tick_strain(delta)
 	_tick_holds(delta)
 	_tick_burns()
@@ -503,6 +506,110 @@ func tick(delta: float) -> void:
 
 func frame(delta: float) -> void:
 	_fly_thrown(delta)
+
+
+## A LEVER A HAND TAKES AND DRAWS OVER (playtest note 72, Parker 11-13: "make it so you
+## have to pull the lever to start the cart, regardless of if you are in the cart. If you
+## pull the lever it goes. It controls like the chair whaere you are hlding the activated
+## limb"). It is taken as the arena's chair is: by the limb whose button is DOWN, when that
+## hand or foot comes to its grip, and it is kept for as long as the button is held. While
+## it is held it follows the hand round its pivot, between its two notches. Drawn all the
+## way it drops into the second notch with a clunk and starts its mover, and stays there
+## until the mover is home again. Let go short of that and it springs back. It stands
+## behind the climb and is never solid: nothing sticks to it and nothing is stopped by it.
+## (Note 25's winch will want the same taking and keeping.)
+const LEVER_TAKE := 0.3  # m: a held hand this near the grip takes it
+const LEVER_LOSE := 0.8  # m: further than this from the grip, it is let go of
+const LEVER_FOLLOW := 26.0  # 1/s: how closely it follows the hand
+const LEVER_SPRING := 12.0  # 1/s: how fast it springs back
+var levers: Array = []
+
+
+func _build_lever(a: Dictionary, def: Dictionary, root: Node3D) -> void:
+	var at := Peak.v2(def.at)
+	var length := float(def.len)
+	var z := float(def.get("z", -0.45))
+	var base: Node3D = Peak.kit(str(def.get("base", "")))
+	if base == null:
+		# (a stand-in until the Kit's quadrant lands: a plain block where the pivot is)
+		base = LuchaKit.box(Vector3(0.6, 0.3, 0.22), Color("#3A3F4A"))
+		base.position.y = 0.15
+	var base_at := Node3D.new()
+	base_at.position = Vector3(at.x, at.y, z)
+	base_at.add_child(base)
+	root.add_child(base_at)
+	var turn := Node3D.new()  # the arm turns about the pivot
+	turn.position = Vector3(at.x, at.y, z)
+	var arm: Node3D = Peak.kit(str(def.get("arm", "")))
+	if arm == null:
+		# (a stand-in until the Kit's arm lands: an iron bar with a red grip on its top)
+		arm = Node3D.new()
+		var bar := LuchaKit.box(Vector3(0.09, length, 0.09), Color("#6A7078"))
+		bar.position.y = length * 0.5
+		arm.add_child(bar)
+		var grip := LuchaKit.box(Vector3(0.14, float(def.get("grip", 0.4)), 0.14), Color("#C8322E"))
+		grip.position.y = length - float(def.get("grip", 0.4)) * 0.5
+		arm.add_child(grip)
+	turn.add_child(arm)
+	root.add_child(turn)
+	var rest := deg_to_rad(float(def.get("rest", 12.0)))
+	turn.rotation.z = rest
+	levers.append({"id": str(def.id), "area": str(a.id), "at": at, "len": length, "grip": float(def.get("grip", 0.4)),
+		"rest": rest, "pull": deg_to_rad(float(def.get("pull", -12.0))), "ang": rest, "starts": str(def.get("starts", "")),
+		"limb": -1, "thrown": false, "turn": turn})
+
+
+## Where a lever's handle is (the middle of its grip), in the course's metres.
+func lever_handle(lv: Dictionary) -> Vector2:
+	var r := float(lv.len) - float(lv.grip) * 0.5
+	return (lv.at as Vector2) + Vector2(-sin(float(lv.ang)), cos(float(lv.ang))) * r
+
+
+func _tick_levers(delta: float) -> void:
+	var c := peak.player
+	for lv: Dictionary in levers:
+		if not bool(peak._area_active.get(lv.area, true)):
+			continue
+		var m: Dictionary = movers.get(lv.starts, {})
+		var rest := float(lv.rest)
+		var pull := float(lv.pull)
+		var held := -1
+		if c != null and c.state == Climber.State.LIVE and c.knockout_left <= 0.0:
+			held = c.active_limb()
+		var want := rest
+		if bool(lv.thrown):
+			# In its second notch until what it started is home again.
+			want = pull
+			lv.limb = -1
+			if m.is_empty() or (not bool(m.run) and float(m.arrived) < 0.0 and float(m.dist) <= 0.0 and not bool(m.get("pulled", false))):
+				lv.thrown = false
+				peak.audio.play("lever_clunk", lever_handle(lv), -5.0)
+		else:
+			var handle := lever_handle(lv)
+			if int(lv.limb) >= 0 and (held != int(lv.limb) or peak.local_of(c.limb_end(held)).distance_to(handle) > LEVER_LOSE):
+				lv.limb = -1  # the button came up, or the hand left it: it springs back
+			if int(lv.limb) < 0 and held >= 0:
+				# along the grip: its top `grip` metres
+				var dir := Vector2(-sin(float(lv.ang)), cos(float(lv.ang)))
+				var h := peak.local_of(c.limb_end(held))
+				var along := clampf((h - (lv.at as Vector2)).dot(dir), float(lv.len) - float(lv.grip), float(lv.len))
+				if h.distance_to((lv.at as Vector2) + dir * along) <= LEVER_TAKE:
+					lv.limb = held
+					Sound.play_at("grip", Vector3(c.limb_end(held).x, c.limb_end(held).y, 0), -2.0)
+			if int(lv.limb) >= 0:
+				var h2 := peak.local_of(c.limb_end(int(lv.limb))) - (lv.at as Vector2)
+				want = clampf(atan2(-h2.x, h2.y), minf(rest, pull), maxf(rest, pull))
+		var rate := LEVER_FOLLOW if int(lv.limb) >= 0 else LEVER_SPRING
+		lv.ang = lerp_angle(float(lv.ang), want, 1.0 - exp(-delta * rate))
+		if not bool(lv.thrown) and int(lv.limb) >= 0 and absf(float(lv.ang) - pull) < 0.025:
+			# all the way: into the second notch
+			lv.ang = pull
+			lv.thrown = true
+			lv.limb = -1
+			peak.audio.play("lever_clunk", lever_handle(lv), 0.0)
+			if not m.is_empty():
+				m["pulled"] = true
+		(lv.turn as Node3D).rotation.z = float(lv.ang)
 
 
 ## A GRIP BREAKS BEFORE THE BODY DOES (Parker 11-12: "a certain amount of force should
@@ -700,6 +807,9 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 						var go := false
 						if trig == "grab":
 							go = _player_limbs_on(m.nodes)
+						elif trig == "lever":
+							go = bool(m.get("pulled", false))  # (only its lever starts it: _tick_levers)
+							m["pulled"] = false
 						else:
 							m.board_t = float(m.board_t) + delta if _player_aboard(m) else 0.0
 							go = float(m.board_t) >= BOARD_S or (_player_limbs_on(m.nodes) and bool(mo.get("grab_starts", false)))

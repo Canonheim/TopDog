@@ -174,6 +174,9 @@ hard hit from it knock a climber out.
 - `A.light(...)`: lanterns and torches inside (about one per 12 m of route).
 - `A.effect(kind, rect)`: waterfall, mist, drips, spores, snow, steam, embers, dust,
   rain, clouds.
+- `A.lever(id, pivot, starts)`: a lever a hand takes and draws over, as the arena's chair
+  is taken: by the limb whose button is down. Drawn into its second notch it starts
+  the mover `starts`, whose motion must say `"trigger": "lever"`. Never solid.
 - **Water is drawn by the body, not by the rule.** Every `A.water` box is a rule (its own
   current) and is never drawn. Rules that touch at one surface are drawn as ONE body.
   So lay a still patch over a river, or a quick end beside it, freely.

@@ -4079,7 +4079,44 @@ func _run_peakride() -> void:
 		return
 	var c := _peak_climber(pk, -9.0, 2.8)
 	await psec(pk, 2.5)
-	t("peak ride: in the cart for a moment and it rolls", bool(cart.run), "boarded %.2f s" % float(cart.board_t))
+	t("peak ride: standing in the cart does not start it (Parker 11-13: only the lever does)", not bool(cart.run) and float(cart.dist) == 0.0)
+	# THE LEVER (note 72): the right hand, its button held, is put on the handle and takes
+	# it; drawn half way and let go, it springs back and nothing moves; drawn all the way,
+	# it drops into its second notch and the cart goes.
+	var lv: Dictionary = pk.things.levers[0] if pk.things.levers.size() > 0 else {}
+	if lv.is_empty():
+		t("peak ride: the station has its lever", false)
+		return
+	var d: Drivers.ScriptDriver = c.driver
+	var rest_handle: Vector2 = pk.things.lever_handle(lv)
+	var took := false
+	for i in int(2.0 * Engine.physics_ticks_per_second):
+		d.point_limb(1, true, pk.world_of(rest_handle))
+		await pticks(pk, 1)
+		if int(lv.limb) == 1:
+			took = true
+			break
+	t("peak ride: a held hand at the lever's grip takes it", took, "handle at %s, the hand at %s" % [rest_handle, pk.local_of(c.limb_end(1))])
+	for i in int(0.6 * Engine.physics_ticks_per_second):
+		d.point_limb(1, true, pk.world_of(rest_handle + Vector2(0.3, 0.0)))
+		await pticks(pk, 1)
+	var half: float = pk.things.lever_handle(lv).x - rest_handle.x
+	d.set_limb(1, false)
+	await psec(pk, 0.6)
+	t("peak ride: drawn half way and let go, it springs back and the cart stays", half > 0.12 and absf(pk.things.lever_handle(lv).x - rest_handle.x) < 0.03 and not bool(cart.run) and not bool(lv.thrown),
+		"drawn %.2f m, back to %.2f m off" % [half, pk.things.lever_handle(lv).x - rest_handle.x])
+	var pulled_at := -1.0
+	for i in int(3.0 * Engine.physics_ticks_per_second):
+		var aim: Vector2 = rest_handle if int(lv.limb) != 1 and not bool(lv.thrown) else rest_handle + Vector2(1.0, 0.0)
+		d.point_limb(1, true, pk.world_of(aim))
+		await pticks(pk, 1)
+		if bool(lv.thrown):
+			pulled_at = float(i) / Engine.physics_ticks_per_second
+			break
+	d.set_limb(1, false)
+	await pticks(pk, 3)
+	t("peak ride: drawn all the way it drops into its second notch and the cart rolls", pulled_at >= 0.0 and bool(cart.run),
+		"in %.2f s; the handle went %.2f m east" % [pulled_at, pk.things.lever_handle(lv).x - rest_handle.x])
 	var worst := 0.0
 	for i in int(24.0 * Engine.physics_ticks_per_second):
 		pk.tick(1.0 / Engine.physics_ticks_per_second)
@@ -4091,7 +4128,12 @@ func _run_peakride() -> void:
 	var at := pk.local_of(c.centre_of_mass())
 	t("peak ride: the cart reaches the buffer in the mine", float(cart.arrived) >= 0.0 and ((cart.home as Vector2) + (cart.offset as Vector2)).x < -147.0)
 	t("peak ride: the climber rode it all the way (never more than 2.5 m from it)", worst < 2.5 and at.x < -140.0, "worst %.2f m, now at %s" % [worst, at])
+	t("peak ride: the lever stays in its second notch while the cart is away", bool(lv.thrown))
+	# the cart home again (its own rule: 25 s after it stops, once the climber is 22 m from it)
 	c.remove()
+	await psec(pk, 26.5)
+	t("peak ride: the cart comes home and the lever goes back to its first notch", float(cart.dist) == 0.0 and not bool(lv.thrown) and absf(pk.things.lever_handle(lv).x - rest_handle.x) < 0.05,
+		"cart at %.1f m along, lever thrown %s" % [float(cart.dist), lv.thrown])
 	pk.leave()
 	await pticks(pk, 2)
 

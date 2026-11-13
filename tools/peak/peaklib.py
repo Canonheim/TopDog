@@ -181,6 +181,7 @@ class Area:
         self.zones, self.spawners, self.cards, self.decos = [], [], [], []
         self.lights, self.cams, self.fx, self.statues, self.challenges = [], [], [], [], []
         self.boards = []  # the boards rock falls leave by (see `board`)
+        self.levers = []  # levers a hand takes and draws over (see `lever`)
         self.openings = []  # [x0, y0, x1, y1]: where this area's shell is open on purpose
         self._ids = set()
         self.warnings = []
@@ -530,6 +531,20 @@ class Area:
             t += gap
         return out, round(t, 3)
 
+    def lever(self, lid, at, starts, length=1.7, rest=12.0, pull=-12.0, grip=0.4, z=-0.45,
+              base="stn_lever_base", arm="stn_lever_arm"):
+        """A LEVER A HAND TAKES AND DRAWS OVER (Parker 11-13: "make it so you have to pull the
+        lever to start the cart, regardless of if you are in the cart. If you pull the lever
+        it goes. It controls like the chair whaere you are hlding the activated limb").
+        `at` is its pivot (its foot). The arm is `length` long and stands `rest` degrees off
+        upright (counter-clockwise, so + leans west); drawn to `pull` degrees it drops into
+        its second notch and starts the mover `starts` (which must have motion trigger
+        "lever"). The hand takes its top `grip` metres. It is `z` behind the climb and is
+        never solid. `base` is the fixed part's model (its origin the pivot), `arm` the
+        arm's (modelled straight up from the pivot; the game turns it)."""
+        self.levers.append({"id": lid, "at": _pt(at), "starts": starts, "len": _f(length), "rest": _f(rest),
+                            "pull": _f(pull), "grip": _f(grip), "z": _f(z), "base": base, "arm": arm})
+
     def board(self, p0, p1, p2=None, throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=None, t=0.13, model="plank"):
         """A LITTLE MESSED UP BOARD at the foot of a rock fall (Parker 11-12: "the rocks
         shouldnt despawn, they should bounce into the background off a little messed up
@@ -639,7 +654,8 @@ class Area:
         return {"id": self.id, "name": self.name, "palette": self.palette, "region": list(self.region),
                 "entry": list(self.entry), "exit": list(self.exit), "openings": self.openings,
                 "solids": self.solids, "movers": self.movers, "ropes": self.ropes, "bodies": self.bodies,
-                "zones": self.zones, "spawners": self.spawners, "boards": self.boards, "cards": self.cards, "decos": self.decos,
+                "zones": self.zones, "spawners": self.spawners, "boards": self.boards, "levers": self.levers,
+                "cards": self.cards, "decos": self.decos,
                 "lights": self.lights, "cams": self.cams, "fx": self.fx, "statues": self.statues,
                 "challenges": self.challenges}
 

@@ -38,9 +38,16 @@ cart_shapes = [
     (box_pts(1.12, 0.35, 0.16, 0.9), "iron"),
 ]
 A.mover("cart0", RIDE[0], cart_shapes,
-        {"type": "path", "pts": [list(p) for p in RIDE], "speed": 9.0, "mode": "once", "trigger": "board",
+        {"type": "path", "pts": [list(p) for p in RIDE], "speed": 9.0, "mode": "once", "trigger": "lever",
          "reset": 25.0, "tilt": True, "accel": 3.0},
         model="minecart")
+# THE STATION'S LEVER (Parker 11-13, note 72: "make it so you have to pull the lever to start
+# the cart, regardless of if you are in the cart. If you pull the lever it goes"). Its foot
+# is on the deck just east of the cart; at rest it leans west with its handle at about
+# (-7.95, 3.86), over the cart's east end, in reach from the cart and from the deck. Drawn
+# east 0.7 m at the handle it drops into its second notch and the cart goes. It comes back
+# to its first notch when the cart comes home.
+A.lever("palanca", (-7.6, 2.2), "cart0", length=1.7, rest=12.0, pull=-12.0, grip=0.4, z=-0.45)
 # The rails (the Carpenter's rail_straight, 4 m a piece): their base 0.55 under the cart's road.
 import math
 for (x0, y0), (x1, y1) in zip([(-4.6, 2.65)] + RIDE[1:-1], RIDE[1:]):
@@ -77,7 +84,6 @@ A.dark((-152, -16, -40, 9), level=0.8)  # inside the mountain: the light goes
 A.card([(-152, -17), (-36, -17), (-36, 9), (-152, 9)], z=-3.0, tone="#33241A")  # the tunnel's back wall
 a0_station.dress(A)  # the yard wall, the station house, the posters, the frog, the bunting, the foreground
 A.deco("mine_frame", -36.0, 2.2, z=0.0, size=(0.6, 5.0, 2.6), tone="wood")  # the mouth's timber frame
-A.deco("brake_lever", -7.6, 2.2, z=-0.9, size=(0.15, 1.0, 0.15), tone="accent")
 for i, (x, y) in enumerate(RIDE[2:-1]):
     A.deco("lantern_mine", x, y + 3.6, z=-1.0, size=(0.3, 0.5, 0.3), tone="gold")
     A.light(x, y + 3.2, color="#FFB860", rng=10.0, energy=1.5, flicker=True)
