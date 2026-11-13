@@ -111,9 +111,15 @@ def dress(A):
         A.deco("sawn_end", x, DECK - 0.225, z=1.2, size=(0.2, 0.2, 0.05), tone="wood")
         x -= 2.0
 
-    # ------------------------------------------------------------ the foreground: sparse, at the frame's edges
-    A.deco("fence_post_bunting", 12.6, 0.0, z=1.9, size=(0.18, 1.4, 0.18), tone="wood2")
-    A.deco("agave_clump", 10.4, 0.0, z=2.6, size=(1.7, 1.3, 1.3), tone="back2")
-    A.deco("grass_tuft_dry", 2.4, 0.0, z=3.4, size=(0.7, 0.55, 0.4), tone="back2")
-    A.deco("grass_tuft_dry", -8.2, 0.0, z=4.2, size=(0.7, 0.55, 0.4), tone="back2")
-    A.deco("stone_cluster_a", -13.5, 0.0, z=3.8, size=(1.6, 0.6, 1.0), tone="back2")
+    # ------------------------------------------------------------ the foreground: sparse, and never over the climber
+    # The camera sits at about the climber's chest height, so anything standing in front of
+    # the road covers the climber up to its own height wherever the climber stands behind it.
+    # So in front of the road only things under 0.3 m, or tufts far enough forward (z 6 and
+    # more) that they sit below the feet. The tall pieces stand where nobody stands behind
+    # them: in front of the dock (the climber is up on the deck there) and past the east wall.
+    A.deco("agave_clump", -11.6, 0.0, z=3.0, size=(1.7, 1.3, 1.3), tone="back2")
+    A.deco("stone_cluster_a", -15.2, 0.0, z=3.6, size=(1.6, 0.6, 1.0), tone="back2")
+    A.deco("fence_post_bunting", 15.6, 0.0, z=1.9, size=(0.18, 1.4, 0.18), tone="wood2")
+    A.deco("grass_tuft_dry", 2.4, 0.0, z=6.4, size=(0.7, 0.55, 0.4), tone="back2")
+    A.deco("grass_tuft_dry", 9.2, 0.0, z=7.0, size=(0.7, 0.55, 0.4), tone="back2")
+    A.deco("grass_tuft_dry", -8.2, 0.0, z=6.6, size=(0.7, 0.55, 0.4), tone="back2")
