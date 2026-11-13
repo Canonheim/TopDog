@@ -93,6 +93,7 @@ CSS = r'''
   th { font-size:13px; letter-spacing:.05em; text-transform:uppercase; color:var(--soft); }
   .ask { border-left:4px solid var(--red); padding:8px 12px; margin:12px 0; background:var(--quote); border-radius:0 6px 6px 0; }
   .box { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:12px 18px; margin:12px 0; }
+  .tw { overflow-x:auto; } .tw table { min-width:520px; }
   figure { margin:12px 0; } figcaption { color:var(--soft); font-size:14px; margin-top:4px; }
   .sk { width:100%; height:auto; border:1px solid var(--line); border-radius:6px; display:block; background:#17120f; }
   .key { display:flex; flex-wrap:wrap; gap:6px 18px; font-size:14px; margin:6px 0 2px; }
@@ -490,6 +491,7 @@ RULES = [
 
 # ------------------------------------------------------------------ pages
 def page(title, body):
+    body = body.replace("<table>", '<div class="tw"><table>').replace("</table>", "</table></div>")
     return ('<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n'
             '<title>%s</title>\n<style>%s</style>\n</head>\n<body>\n<main>\n%s\n</main>\n</body>\n</html>\n' % (esc(title), CSS, body))
 
