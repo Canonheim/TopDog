@@ -105,15 +105,16 @@ _HUT = {
     "place": ("The east end of the forge floor, at the very bottom of the chimney. Every fall in the chimney ends on this floor, and the "
               "floor slopes this way, so this corner is where you pick yourself up. Today it is bare: one small anvil, one frozen climber "
               "sitting on nothing, a torch on the wall. After note 59 it is the smith's hut. The last smith built a lean-to against the "
-              "flue's east wall, out of the forge's own black stone and iron sheet, round his anvil and a small hearth. A climber in a "
-              "dog mask came in to have a ring mended, sat down to wait, and is still waiting. A frog has taken over the anvil. The hut "
+              "flue's east wall, out of the forge's own black stone and iron sheet, round his anvil and a small hearth. Only the frog "
+              "lives in it now, and it has taken over the anvil. The frozen climber in his dog mask stays where the course has him, and the "
+              "hut is built round him: he looks as if he came in to have a ring mended and sat down to wait. The hut "
               "is cut away at the front: floor, back wall and roof, no front wall, and you walk in along the floor. "
               "The light: this is the bottom of the journey. It is furnace red, low along the floor, from two banked furnace mouths in "
               "the back wall, with black shadow above. The hut's coals and its lamp are the one small warm spot in it."),
     "keep": [
         "The floor, its slope, and the slick east wall, exactly as they are.",
         "The frozen climber, sitting exactly where he sits today, facing the well.",
-        "The walk back west along the floor to the first challenge stays clear. Nothing in the hut can be stood on or held.",
+        "The walk back west along the floor to the first challenge stays clear. The hut is scenery, behind the play plane: nothing of it can be stood on or held.",
         "A falling climber is not caught by the hut: its roof is behind the play plane.",
     ],
     "background": [
@@ -125,7 +126,7 @@ _HUT = {
                   ["poly", [[-252.8, 482.0], [-249.2, 482.0], [-249.9, 483.1], [-252.1, 483.1]], {"style": "pale"}],
                   ["poly", [[-248.1, 482.2], [-244.5, 482.2], [-245.2, 483.3], [-247.4, 483.3]], {"style": "pale"}]]},
         {"name": "The hut's back wall", "z": [-2.6, -2.3], "style": "pale", "tag": [-240.4, 481.5],
-         "text": "Soot-black temple blocks, 4 m wide and 3 m tall, the same blocks as the forge wall. A rack of tongs hangs on it, and three wall rings on pegs, finished and half finished: the same rings you hold in Tiro de Chimenea, made here. They are black, not rust orange, and out of reach.",
+         "text": "Soot-black temple blocks, 4 m wide and 3 m tall, the same blocks as the forge wall. The hut is black stone and iron sheet, with no timber in it (Parker, 11-13). A rack of tongs hangs on it, and three wall rings on pegs, finished and half finished: the same rings you hold in Tiro de Chimenea, made here. They are black, not rust orange, and out of reach.",
          "draw": [["rect", -241.0, 478.97, -237.0, 482.0], ["rect", -240.8, 480.95, -239.4, 481.1, {"style": "solid"}],
                   ["rect", -240.6, 480.4, -240.5, 480.95, {"style": "solid"}], ["rect", -240.15, 480.4, -240.05, 480.95, {"style": "solid"}],
                   ["rect", -239.7, 480.4, -239.6, 480.95, {"style": "solid"}],
@@ -160,7 +161,7 @@ _HUT = {
     ],
     "play": [
         {"name": "The frozen climber's seat", "top": True, "z": [-0.3, 0.3], "style": "pale", "tag": [-238.6, 477.9],
-         "text": "He sits where he sits today, in his dog mask, facing the well. Today he sits on nothing. He gets an upturned iron bucket under him, as part of the statue and no wider than he is. He is the dog of note 59.",
+         "text": "He sits where the course has him, in his dog mask, facing the well. Today he sits on nothing. He gets an upturned iron bucket under him, 0.7 m wide and 0.42 m tall. It is in the play space, so it can be held and stood on like any sound iron, and its rim is rust orange. He does not live here: only the frog does (Parker, 11-13).",
          "draw": [["rect", -238.95, 479.08, -238.25, 479.5]]},
         {"name": "The swept floor", "z": [-1.2, 1.2], "style": "mark", "tag": [-241.8, 479.6],
          "text": "The forge's floor of temple slabs carries on into the hut. Inside it is swept paler, with a ring of scale and soot round the anvil. It is drawn onto the floor that is there: nothing is added to stand on.",
@@ -189,7 +190,7 @@ _HUT = {
         ["Lamp on a bracket", "0.8 m", "1", "Background", "kit: torch_wall"],
         ["Tongs rack; wall rings on pegs", "2 m; 0.5 m", "1; 3", "Background", "kit: tongs_rack, wall ring on a pin"],
         ["Quenching trough; coal heap", "1.5 m; 1.9 m", "1; 1", "Background", "kit: quenching trough, coal heap"],
-        ["Upturned bucket for a seat; bent ring on the anvil", "0.45 m; 0.5 m", "1; 1", "Play space (drawn on); background", "new, small"],
+        ["Upturned bucket for a seat; bent ring on the anvil", "0.7 m by 0.42 m; 0.5 m", "1; 1", "Play space; background", "new, small; the bucket is a course change"],
         ["Forge wall bay with a furnace mouth and a hood", "4 m by 5 m", "4 bays, 2 with mouths", "Background", "kit: forge wall bay, forge_hood_ribs"],
         ["Floor kerb", "0.9 m tall", "17 m", "Foreground", "kit: floor kerb (added below)"],
     ],
@@ -200,12 +201,13 @@ _HUT = {
         "Look straight up from here and the slit of sky is a pale thread, 100 m overhead.",
     ],
     "notes": [
-        "Note 59 (not built yet): the smith's hut at the anvil corner, with the dog and a frog. This is the corner in the note's picture.",
+        "Note 59 (not built yet): the smith's hut at the anvil corner. This is the corner in the note's picture.",
+        "Parker, 11-13: only the frog lives in the hut. There is no real dog. The frozen climber in his dog mask stays where the course has him.",
+        "Parker, 11-13: the hut is black stone and iron sheet, with no timber.",
+        "Parker, 11-13: no torches above the forge floor. The hut's lamp is the last one on the climb.",
         "Note 60: this is the chimney's frog.",
-    ],
-    "ask": [
-        "I have taken the dog of note 59 to be the frozen climber in his dog mask, who sits here today. Do you want a real dog in the hut as well?",
-        "The hut is black stone and iron sheet with no timber, because nothing else in the forge is timber. Agreed?",
+        "Course change, something you touch is added: an upturned iron bucket, 0.7 m wide and 0.42 m tall, on the floor under the frozen climber at x -238.6. It is in the play space, so it can be held and stood on.",
+        "Scenery moved out of the play space: the small anvil goes 0.6 m further back, and the east wall's torch comes down and back to be the hut's lamp. Neither is something you touch.",
     ],
 }
 
@@ -234,7 +236,7 @@ _PRIMER = {
          "draw": [["rect", -291.0, 487.2, -289.8, 488.0, {"style": "pale"}], ["rect", -291.0, 488.0, -289.2, 488.8, {"style": "pale"}],
                   ["circle", -290.0, 489.7, 0.75, {"style": "line"}], ["circle", -290.4, 486.4, 0.2, {"style": "light"}]]},
         {"name": "The great iron mask", "z": [-1.9, -1.3], "tag": [-284.2, 490.4],
-         "text": "An iron pug's face 8 m wide and 11 m tall, cast in plates and riveted, fixed to a pier of the back wall with its chin 5 m above the floor. It is the forge's own copy of the temple's great mask. It is redrawn so that what you hold belongs to it: the ring is in its nose, the chain hangs from the ring down over its mouth, and its tongue lolls out of the east corner of its mouth and flattens into the plate you land on. It is black iron, set back, and it can't be mistaken for a wall to climb.",
+         "text": "An iron pug's face 8 m wide and 11 m tall, cast in plates and riveted, fixed to a pier of the back wall with its chin 5 m above the floor. It is the forge's own copy of the temple's great mask. By Parker's leave to arrange things (11-13) it is remade taller, so that what you hold belongs to it: the ring is in its nose, the chain hangs from the ring down over its mouth, and its tongue lolls out of the east corner of its mouth and flattens into the plate you land on. It is black iron, set back, and it can't be mistaken for a wall to climb.",
          "draw": _MASK},
         {"name": "The breath pipe", "top": True, "z": [-2.4, -1.3], "tag": [-282.8, 482.0],
          "text": "A fat ribbed pipe comes up out of the floor behind the grate and goes into the mask's chin. The grate is the open end of the same steam, so when the vent blows the mask breathes out through its nostrils and its mouth as well. Wisps come from the nostrils first, then the blast.",
@@ -256,10 +258,10 @@ _PRIMER = {
          "text": "The ledge the censer drops you on is temple stone, soot-black on its face and worn pale on top, where it can be held. Its edge carries the temple's carved band one last time.",
          "draw": [["line", -295.4, 479.95, -291.0, 479.95]]},
         {"name": "The grate's rim", "top": True, "z": [-0.75, 0.75], "style": "pale", "tag": [-284.0, 480.1],
-         "text": "The kit's steam grate: square iron bars in a raised rim, rust orange where feet have worn it. Every vent on the climb wears this same grate, so after this one you know what a grate does.",
+         "text": "The kit's steam grate: square iron bars in a raised rim, rust orange where feet have worn it. Every vent on the climb wears this same grate, so after this one you know what a grate does. The rim is drawn onto the grate that is there: where you stand does not change.",
          "draw": [["rect", -283.1, 479.5, -279.9, 479.62]]},
         {"name": "The tongue's rolled tip", "z": [-0.6, 0.6], "style": "pale", "tag": [-275.7, 486.5],
-         "text": "The plate you land on is the mask's tongue: riveted iron, rust orange on top, curled under at its east tip. The curl points at the furnace, where the climb goes next.",
+         "text": "The plate you land on is the mask's tongue: riveted iron, rust orange on top, curled under at its east tip. The curl stays inside the ledge's own outline, and it points at the furnace, where the climb goes next.",
          "draw": [["circle", -276.4, 485.75, 0.26]]},
     ],
     "foreground": [
@@ -277,7 +279,7 @@ _PRIMER = {
     ],
     "pieces": [
         ["Forge wall bay, plain", "4 m by 5 m", "5 bays, 4 courses", "Background", "kit: forge wall bay"],
-        ["The great iron mask, remade taller, with a tongue root and a nose that takes the ring", "8 m wide, 11 m tall", "1", "Background", "kit: pug_mask_iron, remade"],
+        ["The great iron mask, remade taller, with a tongue root and a nose that takes the ring", "8 m wide, 11 m tall", "1", "Background", "kit: pug_mask_iron, remade taller (Parker, 11-13)"],
         ["Breath pipe", "0.6 m across, 4.8 m", "1", "Background", "kit: vent_pipe"],
         ["Strip of grating", "2.2 m wide, 1.2 m deep", "1", "Background", "kit: steam_grate"],
         ["Steam grate with a rim", "3 m", "1", "Play space", "kit: steam_grate"],
@@ -293,9 +295,9 @@ _PRIMER = {
     ],
     "notes": [
         "Note 63 (not built yet): this vent is about 10% stronger.",
-    ],
-    "ask": [
-        "The great iron mask is in the kit at 8 m by 9 m, and its nose and mouth do not line up with the ring and the ledge. May it be remade 11 m tall so that they do?",
+        "Parker, 11-13: the great iron mask is remade taller, 8 m by 11 m, so that its nose takes the ring and its mouth is over the iron ledge. Nothing you touch moves: the ring, the chain and the ledge stay where the course has them.",
+        "Scenery moved out of the play space: the mask, the small anvil, the tongs rack and the door's torch each reach into the play space today. All four now stand at least 1.3 m behind you.",
+        "Nothing you touch moves or is added.",
     ],
 }
 
@@ -388,6 +390,7 @@ _PIEDRA = {
     ],
     "notes": [
         "Note 56 (built): hot holds glow and warn, and the face is burnt black behind them. The design keeps all of it and gives it a cause.",
+        "Nothing you touch moves or is added. The furnace's face is 1.3 m behind you, and only the twelve holds stand out of it into the play space.",
     ],
 }
 
@@ -458,7 +461,7 @@ _GEMELOS = {
          "text": "The same grate as the first one, set in the charging step.",
          "draw": [["rect", -269.05, 496.05, -266.95, 496.16]]},
         {"name": "The slick plates", "z": [-1.2, 1.2], "style": "mark", "tag": [-258.2, 503.9],
-         "text": "Black greased iron, with runs of glassy slag frozen down them. They are the darkest and shiniest things in the frame, plainly not to be stood on.",
+         "text": "The two plates are in the play space and can't be held, because the challenge needs nothing to stand on at the second vent. So they are made plainly dark and wet: black greased iron, with runs of glassy slag frozen down them. They are the darkest and shiniest things in the frame.",
          "draw": [["line", -264.3, 501.05, -265.75, 502.3], ["line", -261.7, 501.05, -258.75, 503.5]]},
         {"name": "The loft's lip", "z": [-1.2, 1.2], "style": "mark", "tag": [-266.9, 511.0],
          "text": "The ledge that ends the challenge is the lip of the bellows loft: a temple slab, sooted on its face and worn pale on top.",
@@ -491,6 +494,9 @@ _GEMELOS = {
     ],
     "notes": [
         "Note 63 (not built yet): both vents are about 10% stronger.",
+        "Scenery moved out of the play space: the quench pipe is 2.2 m across and today its front is 0.3 m behind you. It moves back until its front is 1.3 m behind. The falling slag moves back to 3 m behind and becomes separate drops.",
+        "The two slick plates stay in the play space and can't be held. They are plainly dark and wet.",
+        "Nothing you touch moves or is added.",
     ],
 }
 
@@ -544,16 +550,16 @@ _FUELLE = {
         {"name": "The shore's brackets", "z": [-3.0, -1.3], "style": "pale", "tag": [-282.6, 523.5],
          "text": "The iron shore at the top is the front edge of the slag pan's tapping floor: a riveted iron gallery on brackets, which carries on behind you to the smelter of Escoria.",
          "draw": [["poly", [[-285.0, 524.6], [-283.6, 524.6], [-285.0, 523.2]]], ["poly", [[-282.0, 524.6], [-280.4, 524.6], [-280.4, 523.0]]]]},
-        {"name": "A miner's box of dynamite", "z": [-1.9, -1.4], "style": "pale", "tag": [-284.3, 520.6],
-         "text": "A small open box on the deck behind the rungs, with the mine's skull pug stencilled on it and three more red sticks showing. It tells you what the red rung is before you touch it, and how it got here. It is a question for you, below.",
-         "draw": [["rect", -284.7, 519.5, -283.9, 520.0]]},
+        {"name": "The open box of dynamite", "z": [-1.9, -1.4], "style": "pale", "tag": [-284.3, 520.6],
+         "text": "A small open box on the deck behind the rungs, with the mine's skull pug stencilled on it and three more red sticks showing. It tells you what the red rung is before you touch it, and how it got here. Parker, 11-13: yes to the box.",
+         "draw": [["rect", -284.6, 519.5, -284.0, 519.95]]},
         {"name": "The loft's lip, with the hoist and the stair door", "z": [-3.6, -1.3], "tag": [-264.4, 516.6],
          "text": "From Géiseres Gemelos: the ledge you start on is the lip of the loft, with the smiths' hoist on its east end and the grilled stair door in the wall behind it.",
          "draw": _JIB_L3 + _DOOR_L3},
     ],
     "play": [
         {"name": "Pleats on the three stepping bellows", "z": [-0.9, 0.9], "style": "mark", "tag": [-271.9, 512.0],
-         "text": "Each stepping bellows is a small box bellows: a timber top board with a pug's face on its edge, and leather pleats under it that open as it swells and close as it folds (note 57). Its base stays still on its brackets. Only the top board and the pleats move, and the top board's travel is exactly today's.",
+         "text": "Each stepping bellows is a small box bellows: a timber top board with a pug's face on its edge, and leather pleats under it that open as it swells and close as it folds (note 57). Its base stays still on its brackets. Only the top board and the pleats move, and the top board's travel is exactly today's. The pleated body is in the play space and can't be held, so it is plainly dark and wet: black greased leather, under a pale dry board that can.",
          "draw": _pleats},
         {"name": "The stick of dynamite", "z": [-0.4, 0.4], "style": "light", "tag": [-284.7, 523.4],
          "text": "Note 58. The second rung from the top is a stick of dynamite: a fat red stick with a fuse curling off its east end, lying in the two bent stubs of a rung that has snapped off. The pier behind it is scorched in a star from the last time.",
@@ -565,7 +571,7 @@ _FUELLE = {
         ["The gust", "The great bellows slamming shut", "The bellows itself, opening slowly and shutting fast, and the jet from its nozzle"],
         ["The deck you land on", "A fixed timber deck on the great bellows' iron frame", "The bellows working under it, its frame and strut, and the stone shelf it stands on"],
         ["The rungs", "Iron staples in a stone pier", "The pier, from the deck up to the shore"],
-        ["The dynamite rung", "A stick laid in the stubs of a snapped rung", "The scorched star on the pier, and the miner's box on the deck"],
+        ["The dynamite rung", "A stick laid in the stubs of a snapped rung", "The scorched star on the pier, and the open box of dynamite on the deck"],
         ["The iron shore", "The front edge of the slag pan's tapping floor", "Its brackets, and the gallery carrying on back"],
         ["The ledge you start on", "The lip of the loft", "The hoist and the stair door"],
     ],
@@ -581,7 +587,7 @@ _FUELLE = {
         ["Rung pier", "1.6 m wide, 5.1 m tall", "1", "Background", "new, from the forge wall bay's blocks"],
         ["Iron staple rung", "0.8 m", "3", "Play space", "shapes today; a model is new"],
         ["Dynamite stick with a fuse, in two bent rung stubs", "0.8 m long", "1", "Play space", "kit: dynamite stick"],
-        ["Miner's box of dynamite", "0.8 m by 0.5 m", "1", "Background", "new, if you say yes"],
+        ["Open box of dynamite", "0.6 m", "1", "Background", "kit: open box of dynamite"],
         ["Shore bracket", "1.5 m", "2", "Background", "new, small"],
         ["Wall jib; stair door", "as in Géiseres Gemelos", "1; 1", "Background", "kit: wall jib, stair door (added below)"],
     ],
@@ -594,9 +600,10 @@ _FUELLE = {
     "notes": [
         "Note 57 (not built yet): the great bellows moves like a bellows and shows what works it. The three stepping bellows open and close their pleats.",
         "Note 58 (not built yet): the second rung from the top is a stick of dynamite that lights and blows.",
-    ],
-    "ask": [
-        "A miner's open box of dynamite on the deck behind the rungs, to show what the red rung is and where it came from: yes or no?",
+        "Parker, 11-13: yes to the open box of dynamite behind the rungs. It is scenery, 1.4 m behind you.",
+        "Course change, from note 58: one rung becomes the dynamite stick, the same size and in the same place. Nothing else you touch moves.",
+        "Scenery moved out of the play space: the great bellows is 2.5 m deep and today its front stands in front of you. It moves back until its front is 1.3 m behind, under the fixed deck. Of the great bellows, only the deck's front edge and the jet are in the play space.",
+        "The pleated bodies of the three stepping bellows stay in the play space and can't be held. They are plainly dark and wet.",
     ],
 }
 
@@ -658,7 +665,7 @@ _ESCORIA = {
          "text": "Each raft is a thick iron plate with a turned-up edge and an eye at its west end, where the rake's handle hooks on. Its top is rust orange. Its sides are black and crusted where they sit in the slag.",
          "draw": [["circle", -279.7, 525.3, 0.18], ["circle", -274.1, 524.53, 0.18], ["circle", -268.1, 523.71, 0.18]]},
         {"name": "The two dead crusts", "z": [-0.6, 0.6], "style": "line", "tag": [-272.0, 522.4],
-         "text": "Black glassy teeth of slag that has spat up and frozen round the cradles' hangers. They shine, and nothing about them says stand here.",
+         "text": "Black glassy teeth of slag that has spat up and frozen round the cradles' hangers. They are in the play space and can't be held, so they are plainly dark and wet: they shine, and nothing about them says stand here.",
          "draw": [["circle", -275.0, 524.15, 0.62], ["circle", -269.0, 523.32, 0.62]]},
     ],
     "foreground": [],
@@ -689,7 +696,11 @@ _ESCORIA = {
         "Embers thick over the pan, a few of them close to the camera. The rakes' shadows move on the wall.",
         "A puff at the rake wheel's nozzle each time it kicks.",
     ],
-    "notes": [],
+    "notes": [
+        "Scenery moved out of the play space: the pan's hanging chains stand about 1 m behind you today, inside the play space. They become two pairs of heavy chains at the back of the pan, 2 to 3 m behind.",
+        "The slag and the two dead crusts stay in the play space and can't be held. Neither looks like a hold: the slag glows, and the crusts are black, glassy and shining.",
+        "Nothing you touch moves or is added.",
+    ],
 }
 
 # ------------------------------------------------------------------ 6.6 La Fragua
@@ -800,7 +811,11 @@ _FRAGUA = {
         "A puff of steam at each wheel's nozzle just before its hammer starts to rise.",
         "Each chain swings a little when its hammer lands.",
     ],
-    "notes": [],
+    "notes": [
+        "The hammers, the anvils' waists and the hood are in the play space and can't be held. They are plainly dark and wet: black greased iron on the hammers, a black glassy crust of slag on the waists, soot-wet plate on the hood. What can be held on them is rust orange: each hammer's lug, each chain and each anvil's face.",
+        "Scenery moved out of the play space: nothing here was in it. The bunting moves from 1.6 m behind to 4 m behind.",
+        "Nothing you touch moves or is added.",
+    ],
 }
 
 # ------------------------------------------------------------------ 6.7 Tiro de Chimenea
@@ -895,6 +910,8 @@ _TIRO = {
     ],
     "notes": [
         "Note 61 (not built yet): half as many rings. The design shows four, as the note plans, and marks the three that go.",
+        "Course change, from note 61: three rings go. Nothing else you touch moves or is added.",
+        "The baffle, the hood and the east wall are in the play space and can't be held. They are plainly dark and wet: black greased plate and soot-wet rock. The flap, the chain stubs and the grille's bars are scenery, at least 1.3 m behind you.",
     ],
 }
 
@@ -944,9 +961,8 @@ _ALIENTO = {
     ],
     "play": [
         {"name": "The two high grates, made plain", "z": [-0.75, 0.75], "style": "pale", "tag": [-248.6, 558.2],
-         "text": "Note 62. The second and third grates wear the same raised rim and red grille as the one in the ledge, on a black iron collar where the pipe's elbow comes up. Steam seeps from them between blasts. The second grate, which daylight does not reach, has a dull red glow in its bars from the steam below, so it is never a dark box in the dark.",
-         "draw": [["rect", -247.3, 557.2, -245.9, 557.32], ["rect", -249.1, 565.4, -247.7, 565.52],
-                  ["rect", -247.0, 556.5, -246.2, 556.8, {"style": "dark"}], ["rect", -248.8, 564.7, -248.0, 565.0, {"style": "dark"}]]},
+         "text": "Note 62. The second and third grates wear the same raised rim and red grille as the one in the ledge. Each sits on the end of the pipe's elbow, and the elbow stops just behind the play plane, so nothing new is put in the play space under a grate. Steam seeps from them between blasts. The second grate, which daylight does not reach, has a dull red glow in its bars from the steam below, so it is never a dark box in the dark.",
+         "draw": [["rect", -247.3, 557.2, -245.9, 557.32], ["rect", -249.1, 565.4, -247.7, 565.52]]},
         {"name": "The top ledge", "z": [-1.2, 1.2], "style": "mark", "tag": [-245.0, 571.6],
          "text": "The crack's doorstep: natural basalt, dry and pale, with daylight on it. The frozen climber of La Luz stands on it with one arm raised. From below he is the last thing on the skyline, with light on his hand.",
          "draw": [["line", -247.3, 572.45, -243.5, 572.45]]},
@@ -967,7 +983,7 @@ _ALIENTO = {
     "pieces": [
         ["Basalt wall: rough steps, heat cracks, in three tones from grey-brown to pale grey", "to suit", "23 m by 31 m", "Background", "kit: basalt wall"],
         ["Steam pipe: risers, level runs, elbows, clamps and a cap", "0.6 m across, 26 m in all", "1", "Background", "kit: vent_pipe"],
-        ["Steam grate with a rim, on a collar", "1.6 m; 1.2 m", "1; 2", "Play space", "kit: steam_grate (note 62)"],
+        ["Steam grate with a rim", "1.6 m; 1.2 m", "1; 2", "Play space", "kit: steam_grate (note 62)"],
         ["Wall ring on a pin", "0.5 m", "3", "Play space", "kit: wall ring on a pin"],
         ["Old chain stub on a wall pin", "0.6 m", "2", "Background", "kit: old chain stub"],
         ["Shaft of daylight", "2.5 m wide, 40 m long", "1", "Background", "there today as a painted card"],
@@ -981,6 +997,8 @@ _ALIENTO = {
     "notes": [
         "Note 62 (not built yet): the high grates sit on the pipe, seep steam and are lit, so they read as the next step.",
         "Note 63 (not built yet): all three vents are about 10% stronger.",
+        "Nothing you touch moves or is added. The pipe, its elbows and its clamps stay at least 1.2 m behind you. Only the grates and the rings come forward into the play space.",
+        "The pillar on the right is in the play space and can't be held. It is plainly dark and wet: black, soot-wet basalt.",
     ],
 }
 
@@ -1077,6 +1095,8 @@ _LUZ = {
     ],
     "notes": [
         "Note 64 (not built yet): the breakable stone is a proper cracked stone, breaks like stone, and comes back by a fresh block dropping from the roof.",
+        "Course change, from note 64: the chockstone becomes a cracked block of chalk of the same size and wedge shape. Nothing else you touch moves or is added.",
+        "The pillar, the walls of the gap and the rock under the sill are in the play space and can't be held. They are plainly dark and wet: black and glassy. Everything pale in the play space can be held.",
     ],
 }
 
