@@ -70,6 +70,7 @@
 <tr><td>8</td><td><a href="#n8">The dark plank by the big wheel should be part of the bridge</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
 <tr><td>9</td><td><a href="#n9">Cave-in rocks: one second more between them, and bounce away instead of vanishing</a></td><td><span class="chip c-plan">Bounce: plan. Gap: written, parked</span></td></tr>
 <tr><td>10</td><td><a href="#n10">Cave-in rocks: a slightly smaller hitbox</a></td><td><span class="chip c-parked">Written, parked</span></td></tr>
+<tr><td>11</td><td><a href="#n11">Cave-in rocks: an extra half second after the double fall</a></td><td><span class="chip c-plan">Plan, settled (replaces note 9's parked gap)</span></td></tr>
 </table>
 
 <h2>The plan so far</h2>
@@ -87,8 +88,7 @@
 <ul>
 <li><b>Water colour</b> (note 2): Del Mar's bright blue in the caves, or the same shader tinted dark per cave? I'd tint it.</li>
 <li><b>Chains past the track end</b> (note 6): with the boards made solid, the first chain is 1 m from the boards' end, so it can be taken without riding the cart. Move the chains out the same 1.6 m so the ride stays the only way? I'd move them.</li>
-<li><b>Camera numbers</b> (note 7): widest view 11 m of height, looking at most 1 m below you, as a first try?</li>
-</ul>
+<li><b>Camera numbers</b> (note 7): widest view 11 m of height, looking at most 1 m below you, as a first try?</li></ul>
 
 <h2>The notes</h2>
 
@@ -287,7 +287,7 @@
   <p>Challenge 1.10, El Derrumbe. Two sources drop rocks down the shaft, one every 4.0 seconds and one every 5.6. Together that is a rock about every 2.3 seconds, and now and then two within a second of each other. Each rock is simply removed 3 seconds after it appears, wherever it happens to be. The author did that on purpose so no rock would roll along the gallery, but it means they blink out on the ramp in front of you.</p>
   <h4>Plan</h4>
   <ul>
-    <li><b>Gap:</b> one second more on each source: every 5.0 and every 6.6 seconds. (Written, parked.) That is a rock about every 2.8 seconds on average.</li>
+    <li><b>Gap:</b> one second more on each source: every 5.0 and every 6.6 seconds. (Written, parked.) That is a rock about every 2.8 seconds on average. <b>Note 11 replaces this:</b> stretching the two timers moves the double fall around, so the gap has to be done as one written rhythm instead.</li>
     <li><b>No vanishing:</b> the rock keeps rolling down the fallen beam. At the beam's foot sits a short broken board, propped up at one end. A rock that hits it is thrown up and back, away from you into the dark behind the gallery, and is only cleaned up once it is out of sight. From the moment it leaves the board it can't hit you.</li>
     <li>The same board can be set at the foot of any other rock fall on the mountain later.</li>
     <li>Check: watch ten rocks in a row leave by the board, and none come to rest on the gallery.</li>
@@ -306,6 +306,25 @@
     <li>Other rock falls on the mountain keep their size unless you say so.</li>
     <li>A feel number: 0.60 is my first guess at "a little".</li>
   </ul>
+</div>
+
+<div class="note" id="n11">
+  <div class="head"><span class="num">11</span><h3>Cave-in rocks: an extra half second after the double fall</h3><span class="time">21:58</span></div>
+  <blockquote>"make it so after the double rock fall, there is an extra .5 seconds along with the extra one second we added"</blockquote>
+  <p><span class="chip c-plan">Plan (replaces note 9's parked gap)</span></p>
+  <h4>What is going on</h4>
+  <p>The "double" is not designed. It is what happens when the two timers (every 4.0 s and every 5.6 s) land almost together. Their pattern repeats every 28 seconds and holds 12 rocks. Twice in that loop two rocks fall 0.4 seconds apart: that is the double. Twice more they fall 1.2 seconds apart, a looser pair.</p>
+  <p>Today's gaps round the loop, in seconds: 3.6, <b>0.4</b>, 4.0, 1.2, 2.8, 2.8, 1.2, 4.0, <b>0.4</b>, 3.6, 2.0, 2.0.</p>
+  <p>Simply making both timers a second slower (what I parked under note 9) does not keep this pattern. It moves the doubles to different moments and makes the loop 5 and a half minutes long. So your request can't be done by changing the two timers.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li>Write the rhythm out as one looping list of gaps, so it is exactly what you ask for and the double stays a double.</li>
+    <li>How I read your two notes together: every gap gets one second more; the gap straight after a double gets one and a half; the 0.4 inside the double stays as it is.</li>
+    <li>That gives, in seconds: 4.6, <b>0.4</b>, 5.5, 2.2, 3.8, 3.8, 2.2, 5.0, <b>0.4</b>, 5.1, 3.0, 3.0. A 39-second loop, still 12 rocks.</li>
+    <li>The rocks keep falling from the same two spots, so they still come down the same two lines.</li>
+    <li>Small: the rock sources learn to follow a written list of gaps. When this is done, note 9's parked gap change is dropped.</li>
+  </ul>
+  <p><b>Settled (Parker, 22:00):</b> <i>"no just the 0.4 ones count as doubles"</i>. The looser pairs, 1.2 seconds apart, are ordinary gaps and get the one second only. The list above stands as written.</p>
 </div>
 
 </main>
