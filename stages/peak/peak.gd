@@ -32,13 +32,19 @@ const FACET := 0.3  # how far a rock face's facets stand out of its body
 const SLICK_GLASS := Color("#160C3E")
 const SLICK_ICE := Color("#0C2440")
 const SLICK_LOOKS := {
-	# colour, the sheen where light falls, the lit rim, the painted edge band, the drips ("" = none)
-	# (the sheen is kept a mid tone: at 0.72 a slick face in full sun went white)
-	"mud": [SLICK, Color(0.42, 0.31, 0.2, 0.5), Color(0.95, 0.8, 0.6, 0.5), "#8A5E34", "#A87A48"],
-	"glass": [SLICK_GLASS, Color(0.34, 0.27, 0.62, 0.5), Color(0.85, 0.78, 1.0, 0.5), "#6A52C8", ""],
-	"ice": [SLICK_ICE, Color(0.27, 0.45, 0.62, 0.5), Color(0.78, 0.93, 1.0, 0.5), "#4E8FC4", "#8FC8E8"],
+	# colour, the sheen in the sun, the lit rim, the painted edge band, the drips ("" = none),
+	# the sheen inside the mountain
+	"mud": [SLICK, Color(0.42, 0.31, 0.2, 0.5), Color(0.95, 0.8, 0.6, 0.5), "#8A5E34", "#A87A48", Color(0.78, 0.63, 0.46, 0.5)],
+	"glass": [SLICK_GLASS, Color(0.34, 0.27, 0.62, 0.5), Color(0.85, 0.78, 1.0, 0.5), "#6A52C8", "", Color(0.58, 0.48, 0.98, 0.5)],
+	"ice": [SLICK_ICE, Color(0.27, 0.45, 0.62, 0.5), Color(0.78, 0.93, 1.0, 0.5), "#4E8FC4", "#8FC8E8", Color(0.48, 0.75, 0.98, 0.5)],
 }
 static var _slick_mats := {}
+## SHINY IN THE CAVES, SOFT IN THE SUN (Parker 11-12, of "metallic max shiney"): inside the
+## mountain slick wears its full sheen; out on the cliffs and the ridge, where the same
+## sheen went white in full sun, a soft one. Set for each area as it is built; a change
+## made later (a hold going wet) sets it from the hold's own area first.
+static var shiny := true
+var _shiny_of := {}  # area id -> is its slick the shiny kind
 
 
 static func slick_class(kind: String) -> String:
@@ -52,7 +58,8 @@ static func slick_class(kind: String) -> String:
 ## `cls` may end in "+" or "-": a lighter or a darker shade of the same wet stuff (a slick
 ## rock face's facets).
 static func slick_material(cls := "mud") -> ShaderMaterial:
-	if not _slick_mats.has(cls):
+	var key := cls + ("!" if shiny else "")
+	if not _slick_mats.has(key):
 		var shade := 1.0
 		var base := cls
 		if cls.ends_with("+"):
@@ -68,11 +75,16 @@ static func slick_material(cls := "mud") -> ShaderMaterial:
 		m.set_shader_parameter("color", Color(minf(col.r * shade, 1.0), minf(col.g * shade, 1.0), minf(col.b * shade, 1.0)))
 		# A broad sheen where light falls, not white (in this shader a broad bright band
 		# whited out every flat face), and a lit rim on the edges.
-		m.set_shader_parameter("specular", look[1])
+		m.set_shader_parameter("specular", look[5] if shiny else look[1])
 		m.set_shader_parameter("fresnel", look[2])
-		m.resource_name = "SLICK_" + cls
-		_slick_mats[cls] = m
-	return _slick_mats[cls]
+		m.resource_name = "SLICK_" + key
+		_slick_mats[key] = m
+	return _slick_mats[key]
+
+
+## Before a slick look is asked for outside an area's building: whose area is it?
+func shine_for(area_id: String) -> void:
+	shiny = bool(_shiny_of.get(area_id, true))
 
 
 ## A KIT MODEL FOR THE PEAK, ITS SLICK PARTS WET. The makers paint what can't be held in
@@ -333,6 +345,8 @@ func _build_area(a: Dictionary) -> void:
 	add_child(root)
 	_roots[a.id] = root
 	_area_active[a.id] = true
+	shiny = float(palette_of(a).get("inside", 1.0)) >= 0.5
+	_shiny_of[str(a.id)] = shiny
 	# ---- the plain rock: one body of grip, one of slick, one drawn mesh
 	var grip := _static_body(1.0)
 	var slick := _static_body(0.02)

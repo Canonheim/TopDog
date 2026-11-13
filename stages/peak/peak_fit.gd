@@ -22,6 +22,7 @@ const MATERIAL := {
 	"crystal": "crystal", "glass": "crystal",
 	"snow": "snow", "snowbridge": "snow", "ice": "ice", "blackice": "ice", "icicle": "ice",
 	"bone": "bone", "root": "root", "gill": "gill", "cap": "shroom",
+	"hot": "hot", "hotpipe": "hotpipe", "gold": "gold",
 }
 ## Painted neutral by the makers and multiplied by the area's own colour.
 const TINTED := ["rock", "stone", "brick", "snow", "ice", "crystal"]
@@ -232,22 +233,29 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 		var su := sy if long_x else sx  # (its section keeps its shape: z goes with the thin side)
 		out.append([file, _xf(r.c, ang, Vector3(sx, sy, su), 0.0)])
 		return out
-	# ---- an icicle: a triangle hanging point down wears the kit's icicle (made 0.6 wide at
-	# its top and 1.5 long, its origin the middle of its top), turned and scaled to it
-	if kind == "icicle" and pts.size() == 3:
-		var icicle := _pick("fit_ice_icicle")
-		if icicle == "":
+	# ---- a spike: a triangle that comes to a point (an icicle, a stalagmite, a fang, a
+	# crystal's tip) wears the kit's spike: made 0.6 across its base and 1.5 long to its
+	# point, its origin the middle of the base; turned to the triangle's point and scaled
+	if pts.size() == 3:
+		var spike := _pick("fit_ice_icicle" if mat == "ice" else "fit_%s_spike" % mat, _n)
+		if spike == "":
 			return []
+		# (the base is the shortest side; the point is the corner across from it)
 		var tip := 0
+		var shortest := INF
 		for i in 3:
-			if pts[i].y < pts[tip].y:
+			var side := pts[(i + 1) % 3].distance_to(pts[(i + 2) % 3])
+			if side < shortest:
+				shortest = side
 				tip = i
 		var ta := pts[(tip + 1) % 3]
 		var tb := pts[(tip + 2) % 3]
-		var top := (ta + tb) * 0.5
-		var down := pts[tip] - top
-		var k := ta.distance_to(tb) / 0.6
-		out.append([icicle, _xf(top, down.angle() + PI * 0.5, Vector3(k, down.length() / 1.5, clampf(k, 0.6, 1.6)), 0.0)])
+		var base_mid := (ta + tb) * 0.5
+		var down := pts[tip] - base_mid
+		if down.length() < shortest * 0.9 or shortest > 1.7 or down.length() > 4.0:
+			return []  # (a flat wedge or one of the mountain's masses, not a spike)
+		var k := shortest / 0.6
+		out.append([spike, _xf(base_mid, down.angle() + PI * 0.5, Vector3(k, down.length() / 1.5, clampf(k, 0.6, 1.6)), 0.0)])
 		return out
 	# ---- a single hold: a small polygon of five sides or more, or a small nub
 	if r.is_empty():
@@ -282,7 +290,7 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 		return out
 	# ---- a board walk: a plank, however thin, is a run of the kit's planking. It is drawn
 	# no thinner than 0.3 (the boards on their side beam), hung from the top it is stood on.
-	if lo <= 0.3 and w >= 1.0 and w > h and kind in ["plank", "rotten"] and _pick("fit_%s_cap" % mat) != "":
+	if lo <= 0.3 and w >= 1.0 and w > h and _pick("fit_%s_cap" % mat) != "" and (kind in ["plank", "rotten"] or _pick("fit_%s_cap_thin" % mat) != ""):
 		var seen := maxf(h, 0.3)
 		# (the kit's thin planking, made 0.3 tall, where it has landed for this material)
 		var thin := _pick("fit_%s_cap_thin" % mat) != ""
@@ -444,10 +452,8 @@ static func _rect(pts: PackedVector2Array) -> Dictionary:
 	var l1 := e1.length()
 	if l0 < 0.01 or l1 < 0.01:
 		return {}
-	if absf(e0.dot(e1)) > 0.02 * l0 * l1:
-		return {}
-	if (pts[2] - pts[3]).distance_to(e0) > 0.03 or (pts[3] - pts[0]).distance_to(e1) > 0.03:
-		return {}
+	if absf(e0.dot(e1)) > 0.02 * l0 * l1 or (pts[2] - pts[3]).distance_to(e0) > 0.03 or (pts[3] - pts[0]).distance_to(e1) > 0.03:
+		return _near_rect(pts)
 	var ax := e0 / l0
 	var w := l0
 	var h := l1
@@ -459,6 +465,41 @@ static func _rect(pts: PackedVector2Array) -> Dictionary:
 		ax = -ax
 	var ay := Vector2(-ax.y, ax.x)
 	return {"c": (pts[0] + pts[1] + pts[2] + pts[3]) * 0.25, "ax": ax, "ay": ay, "w": w, "h": h, "ang": ax.angle()}
+
+
+## A four-sided piece that is nearly a box (a stub cut on the skew, a wedge-ended step):
+## the box along its longest side that holds it, when the piece fills most of that box.
+static func _near_rect(pts: PackedVector2Array) -> Dictionary:
+	var best := 0
+	var longest := 0.0
+	var area := 0.0
+	for i in 4:
+		var e := pts[(i + 1) % 4] - pts[i]
+		area += pts[i].cross(pts[(i + 1) % 4])
+		if e.length() > longest:
+			longest = e.length()
+			best = i
+	area = absf(area) * 0.5
+	var ax := (pts[(best + 1) % 4] - pts[best]).normalized()
+	if absf(ax.x) < absf(ax.y):
+		ax = Vector2(-ax.y, ax.x)  # (its long side stands: the box's level axis is across it)
+	if ax.x < 0.0:
+		ax = -ax
+	var ay := Vector2(-ax.y, ax.x)
+	var a0 := INF
+	var a1 := -INF
+	var b0 := INF
+	var b1 := -INF
+	for q in pts:
+		a0 = minf(a0, q.dot(ax))
+		a1 = maxf(a1, q.dot(ax))
+		b0 = minf(b0, q.dot(ay))
+		b1 = maxf(b1, q.dot(ay))
+	var w := a1 - a0
+	var h := b1 - b0
+	if w < 0.01 or h < 0.01 or area < 0.72 * w * h or maxf(w, h) > 3.2:
+		return {}
+	return {"c": ax * ((a0 + a1) * 0.5) + ay * ((b0 + b1) * 0.5), "ax": ax, "ay": ay, "w": w, "h": h, "ang": ax.angle()}
 
 
 # ================================================================ the kit's files

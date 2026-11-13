@@ -866,6 +866,7 @@ func _tick_holds(delta: float) -> void:
 						_release_from([body])
 					else:
 						body.remove_meta("no_weld")
+					peak.shine_for(str(h.area))
 					if (h.vis as Node).has_meta("fitted"):
 						PeakFit.set_wet(h.vis, str(body.get_meta("slick_class", "mud")) if wet else "")
 					elif h.vis is GeometryInstance3D:
