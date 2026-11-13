@@ -236,7 +236,7 @@ SUMP = {
         ["The falling water", "The foot of the great waterfall", "The white column going up out of the frame, and the mist at its foot"],
     ],
     "pieces": [
-        ["The frog's cave room: floor, back wall and roof, front cut away", "4.2 m by 2.7 m; doorway 1.2 m by 2.1 m", "1", "Background and play space", "kit: the frog's cave room (mine). Drawn bigger than the sheet's 3 m by 2.5 m"],
+        ["The frog's cave room: floor, back wall and roof, front cut away", "4.2 m by 2.7 m; doorway 1.2 m by 2.1 m", "1", "Background and play space", "kit: the frog's cave room (mine), at the width that works here"],
         ["The frog, on an upturned ore bucket", "frog 0.3 m; bucket 0.9 m", "1", "Background", "kit: the frog, ore bucket (mine)"],
         ["Stove with a kettle; shelf of lost boots and masks; towel on a peg", "stove 0.6 m; shelf 2.2 m", "1 of each", "Background", "new, this area only"],
         ["Lantern, lit", "0.4 m", "1", "Background", "kit: lantern_hang"],
@@ -261,9 +261,9 @@ SUMP = {
         "Note 4: the note's first idea of a towel on a line becomes a towel on a peg. A line would be one more thing that looks like a rope.",
         "Note 6 (done): the cart falls for real and sinks here.",
         "Note 5 (done): the wind streaks are inside the waterfall's column, where the wind is.",
-    ],
-    "ask": [
-        "The room is drawn 4.2 m wide. The sheet says 3 m and note 71 says about 5 m. Is 4.2 m right?",
+        "Parker, 11-13: the room is whatever width works. It stays 4.2 m wide, with a 1.2 m doorway.",
+        "Course change: a doorway is cut through the west wall at the water line, a rock doorstep 0.8 m wide is added in the water in front of it, and the cave's floor is 5.4 m of new ground to stand on. Nothing else you touch moves.",
+        "Nothing in this picture stands in the play space but the things you hold.",
     ],
 }
 
@@ -298,7 +298,7 @@ LA_GALERIA = {
                  "the posts are gone and the beams hang from the upper halves. Where four sets went down altogether, two stubs are left "
                  "under the roof. Today a post in hold-coloured timber hangs in the middle of the play space above each beam. It moves "
                  "back to the wall and goes grey.",
-         "draw": [_post(x, -12.6, -7.85) for x in (-155.4, -165.9)] + [_post(x, -10.42, -7.85) for x in (-156.7, -158.0, -164.6)] +
+         "draw": [_post(x, -12.6, -7.85) for x in (-152.12, -155.4, -165.9)] + [_post(x, -10.42, -7.85) for x in (-156.7, -158.0, -164.6)] +
                  [_post(x, -8.7, -7.85) for x in (-159.3, -163.2)]},
         {"name": "The slump and the cart", "z": [-3.0, -1.3], "tag": [-161.1, -13.6],
          "text": "The pit carries on back behind you as a tongue of black mud coming down out of the burst wall. In it, half sunk: an ore "
@@ -315,15 +315,11 @@ LA_GALERIA = {
          "text": "The mine's skull-pug diamond, nailed to the lining at the brink of the pit. It is the first one you meet. The kit has it.",
          "draw": [_p([(-154.0, -11.3), (-153.6, -10.9), (-153.2, -11.3), (-153.6, -11.7)])]},
         {"name": "Two lanterns", "z": [-1.5, -1.3], "style": "light", "tag": [-154.6, -8.3],
-         "text": "Where they hang today, one over each brink, but hung from the roof timber at the back wall and not in the play space. "
-                 "Between them the pit is the darkest part of the gallery.",
+         "text": "One over each brink, as today, but each on an iron bracket from the roof timber at the back wall. Today they hang "
+                 "inside the play space. Between them the pit is the darkest part of the gallery.",
          "draw": [_c(-154.0, -8.6, 0.17), _c(-166.3, -8.6, 0.17)]},
     ],
     "play": [
-        {"name": "The door's timber set (there today)", "z": [-1.3, 1.3], "style": "line", "tag": [-151.4, -9.2],
-         "text": "The last set of the cart tunnel and the first of the mine: a back post, a front post and a cap, and you walk between the "
-                 "posts. It stays. It is grey and wet, as the tunnel's sets have become by here.",
-         "draw": [_r(-152.3, -12.6, -151.95, -7.5)]},
         {"name": "The four sunk posts", "z": [-0.3, 0.3], "style": "pale", "tag": [-164.05, -11.75],
          "text": "Each post standing in the mud keeps the cut tongue on its head where a beam once sat, and is black with mud up to a tide "
                  "line. You can see they are the lower posts of the four missing sets, gone down 2 m with the floor.",
@@ -337,6 +333,12 @@ LA_GALERIA = {
          "draw": [_ln(-155.7, -13.2, -159.8, -17.1), _ln(-165.3, -13.2, -162.2, -17.1)]},
     ],
     "foreground": [
+        {"name": "The door set's front post (there today)", "z": [1.2, 1.55], "style": "line", "tag": [-151.3, -9.2],
+         "text": "The door's timber set is the last of the cart tunnel's and the first of the mine's. Its back post stands behind the "
+                 "play space, its front post in front of it, and its cap is under the roof, out of reach, so no part of it is where you "
+                 "can put a hand. It stays as it is, grey and wet. This is the one place in the gallery where something stands in front "
+                 "of you, for one step, at a doorway you only walk through.",
+         "draw": [_r(-152.3, -12.6, -151.95, -7.5)]},
         {"name": "A low lip of rubble", "z": [1.3, 2.0], "style": "dark", "tag": [-150.5, -17.2],
          "text": "Mud-caked rubble and a length of bent rail along the bottom of the frame, below the floor and below the pit. It stands in "
                  "front of rock only.",
@@ -352,7 +354,7 @@ LA_GALERIA = {
     ],
     "pieces": [
         ["Plank lining with its frame: whole, smashed", "1.3 m wide, 2.5 m tall", "22 whole, 4 smashed", "Background", "kit: lining panel (mine)"],
-        ["Back post: full height, upper half, stub", "0.35 m square; 4.75 m, 2.6 m, 0.85 m", "2, 3 and 2", "Background", "kit: timber set post (mine), cut"],
+        ["Back post: full height, upper half, stub", "0.35 m square; 4.75 m, 2.6 m, 0.85 m", "3, 3 and 2", "Background", "kit: timber set post (mine), cut"],
         ["Tie timber and roof timber along the wall", "0.35 m square, 2.6 m lengths", "9", "Background", "kit: mine_beam"],
         ["Iron strap where a beam meets its post", "0.3 m", "5", "Background", "kit: iron strap (mine, added by these pages)"],
         ["Tongue of mud coming out of the wall", "10 m wide, 4.5 m tall, 1.7 m deep", "1", "Background", "new, this area only"],
@@ -360,8 +362,8 @@ LA_GALERIA = {
         ["Broken rail, bent down", "2 m", "2", "Background", "kit: rail_broken"],
         ["Ore chute on wall brackets, with its dark hole", "1 m wide, 2.4 m long", "1", "Background", "kit: ore chute, dark hole (mine)"],
         ["Skull-pug warning sign", "1 m", "1", "Background", "kit: sign_pug_skull"],
-        ["Hanging lantern", "0.4 m", "2", "Background", "kit: lantern_hang"],
-        ["Door set: two posts and a cap", "0.6 m wide, 5 m tall, 2.6 m deep", "1", "Play space (there today)", "kit: mine_frame"],
+        ["Hanging lantern on an iron bracket", "0.4 m", "2", "Background", "kit: lantern_hang; iron strap (mine, added by these pages)"],
+        ["Door set: back post, front post and cap", "0.6 m wide, 5 m tall, 2.6 m deep", "1", "Background and foreground (there today)", "kit: mine_frame"],
         ["Cut tongue for a post's head; splintered end for a beam", "0.2 m; 0.3 m", "4 and 5", "Play space (drawn on)", "kit: splintered end (mine); the tongue is new"],
         ["Low lip of rubble with a bent rail", "20 m by 1 m, in two heaps", "1", "Foreground", "kit: rubble heap, rail_broken"],
     ],
@@ -372,7 +374,10 @@ LA_GALERIA = {
     ],
     "notes": [
         "Note 52: this pit already can't be climbed out of by its sides. They are slick mud. The design keeps every pale mark off them.",
-        "Note 40: nothing stands in front of the gallery but the low lip under the floor.",
+        "Note 40: the only things in front of the gallery are the door set's front post, which is there today, and the low lip under the floor.",
+        "In the play space today in hold colours, and moved out of it: the post that hangs above each of the five beams (to the back wall, grey, item 2), the ore cart in the pit (back into the mud, grey, item 3), the two lanterns (back onto brackets, item 6).",
+        "The rails by the door lie flat on the floor you walk on. They stay, as part of that floor.",
+        "Nothing you touch moves.",
     ],
 }
 
@@ -412,8 +417,9 @@ THE_CAMP = {
                  "marks on the wall. The last row stops part way along.",
          "draw": _TALLY},
         {"name": "The lantern that still burns", "z": [-1.5, -1.3], "style": "light", "tag": [-166.3, -8.0],
-         "text": "The miners' lantern above him is lit, as it is today. His own is not. The one pool of amber light at this end of the "
-                 "gallery falls on him and on the marks.",
+         "text": "The miners' lantern above him is lit, as it is today, but it hangs on an iron bracket from the roof timber at the back "
+                 "wall and not in the play space. His own is not lit. The one pool of amber light at this end of the gallery falls on "
+                 "him and on the marks.",
          "draw": [_c(-166.3, -8.6, 0.17)]},
         {"name": "The bunting", "z": [-1.5, -1.4], "style": "mark", "tag": [-174.0, -8.0],
          "text": "The miners' bunting from town, torn, strung high between the mouth and the shaft. Today it runs 8 m along the gallery and "
@@ -461,6 +467,9 @@ THE_CAMP = {
     "notes": [
         "Note 71: the mine's frog is in the cave at the Sump, not at this camp, which was the first idea.",
         "Note 4: the bunting is the only line in this picture, and it is kept away from the ladder.",
+        "In the play space today, and moved back out of it: his bedroll (onto the bench), his cold lantern, his rope coil and the tally marks (against the back wall), and the lit lantern above him (onto a bracket). The frozen climber himself stays where he is: he is a real thing in the play space.",
+        "The timber set at the gallery's mouth stays as it is. Its posts stand behind and in front of the play space, not in it.",
+        "Nothing you touch moves.",
     ],
 }
 
@@ -489,16 +498,18 @@ ESCALERA_ROTA = {
                  [_r(-170.6, -2.1, -169.0, -1.67, "dark"), _r(-171.0, 3.1, -169.8, 3.53, "dark")]},
         {"name": "Three rotted landings", "z": [-2.4, -1.3], "style": "pale", "tag": [-168.9, -5.3], "top": True,
          "text": "Behind each gap in the ladder: what is left of a timber landing, its east half still in place and its west half hanging "
-                 "down. Each length of ladder went from one landing to the next. The three gaps are the three landings.",
+                 "down. Each length of ladder went from one landing to the next. The three gaps are the three landings. On each one "
+                 "lies the bent iron rung that came out of the ladder there.",
          "draw": [_r(-169.8, y - 0.14, -168.0, y) for y in _LANDINGS] +
                  [_p([(-169.8, y), (-170.5, y - 0.5), (-170.42, y - 0.62), (-169.8, y - 0.14)]) for y in _LANDINGS]},
         {"name": "A lantern on the top landing", "z": [-1.9, -1.6], "style": "light", "tag": [-168.6, 0.3],
-         "text": "Today it hangs in the middle of the shaft. It stands on what is left of the top landing, so the longest gap is the best lit.",
+         "text": "Today it hangs in the middle of the shaft, in the play space, from nothing. It stands on what is left of the top landing, "
+                 "so the longest gap is the best lit.",
          "draw": [_c(-169.0, -0.27, 0.17)]},
         {"name": "The frame at the head of the shaft", "z": [-1.6, -1.3], "style": "pale", "tag": [-170.0, 9.2],
          "text": "Two posts and a cap at the back, 2.6 m tall, round the top of the shaft. You see it from the foot of the ladder, and it "
-                 "marks where the climb ends.",
-         "draw": [_post(-172.2, 6.0, 8.4), _post(-167.8, 5.95, 8.4), _r(-172.5, 8.4, -167.5, 8.75)]},
+                 "marks where the climb ends. The pickaxe that lies in the play space on the ledge today leans against its west post.",
+         "draw": [_post(-172.2, 6.0, 8.4), _post(-167.8, 5.95, 8.4), _r(-172.5, 8.4, -167.5, 8.75), _ln(-172.75, 6.0, -172.45, 6.9, "line")]},
         {"name": "A pug arrow sign", "z": [-1.4, -1.3], "style": "pale", "tag": [-174.9, 8.1],
          "text": "On the ledge at the head of the ladder, pointing west along the catwalk. The kit has it.",
          "draw": [_p([(-173.4, 7.0), (-174.2, 7.0), (-174.7, 7.3), (-174.2, 7.6), (-173.4, 7.6)]), _ln(-173.9, 6.0, -173.9, 7.0, "line")]},
@@ -510,8 +521,9 @@ ESCALERA_ROTA = {
     ],
     "play": [
         {"name": "Torn rail ends", "z": [-0.2, 0.2], "style": "mark", "tag": [-170.4, -8.6],
-         "text": "At each gap the ladder's two iron rails end in torn, rusted points, above and below, and one bent rung hangs by an end "
-                 "(it is there today, drawn only). The ladder is plainly one ladder with three pieces missing.",
+         "text": "At each gap the ladder's two iron rails end in torn, rusted points, above and below. The ladder is plainly one ladder "
+                 "with three pieces missing. Today a bent rung hangs in each gap, in the play space, and holds nothing. Those three "
+                 "go from the gaps and lie on the landings behind.",
          "draw": [_ln(-172.0, g0 + 0.2, -171.1, g0 + 0.2) for g0, g1 in _GAPS] + [_ln(-172.0, g1 - 0.2, -171.1, g1 - 0.2) for g0, g1 in _GAPS]},
         {"name": "Empty sockets", "z": [1.1, 1.2], "style": "pale", "tag": [-173.0, -4.9],
          "text": "In the rock beside the two upper gaps: the square socket the landing's beam sat in, empty. From below you can read where "
@@ -541,7 +553,8 @@ ESCALERA_ROTA = {
         ["Standing lantern", "0.4 m", "1", "Background", "kit: lantern_mine"],
         ["Timber frame for the shaft's head", "posts 0.35 m, 2.4 m tall; cap 5 m", "2 posts, 1 cap", "Background", "kit: timber set (mine)"],
         ["Pug arrow sign", "1 m", "1", "Background", "kit: sign_pug_arrow"],
-        ["Torn end for an iron ladder rail; bent rung", "0.2 m; 0.9 m", "12 ends, 3 rungs", "Play space (drawn on)", "the rung is in the kit: fit_ladder_rung_bent; the torn end is new"],
+        ["Bent iron rung, lying on a landing", "0.9 m", "3", "Background", "kit: fit_ladder_rung_bent"],
+        ["Torn end for an iron ladder rail", "0.2 m", "12", "Play space (drawn on)", "new"],
         ["Empty socket", "0.3 m", "2", "Play space (drawn on)", "kit: empty socket (mine)"],
         ["Front post, in broken lengths", "0.3 m wide, 1.9 to 4.8 m", "6 lengths", "Foreground", "kit: timber set post (mine), cut"],
     ],
@@ -551,6 +564,9 @@ ESCALERA_ROTA = {
     ],
     "notes": [
         "No note from the playtest was about this challenge. The ladder was remade before it, with real rails and missing rungs.",
+        "In the play space today and moved out of it: the lantern in mid shaft (to stand on the top landing), the pickaxe on the ledge (to lean on the frame's post), and the three bent rungs that hang in the gaps (to lie on the landings behind). A bent rung can't become a real hold: it would halve the gap it hangs in.",
+        "The ladder's two rails stay drawn and not held, which is how the ladder was asked for before the playtest. Only the rungs hold.",
+        "Nothing you touch moves.",
     ],
 }
 
@@ -607,8 +623,8 @@ LOS_TABLONES = {
          "draw": [_r(x - 0.15, -0.15, x + 0.15, 0.15) for x in (-178.6, -181.1, -183.6, -186.1)] +
                  [_r(x - 0.15, -0.15, x + 0.15, 0.15, "pale") for x in (-188.6, -191.1)] + [_r(-191.4, 0.15, -188.3, 0.32, "pale")]},
         {"name": "Two lanterns", "z": [-2.9, -2.7], "style": "light", "tag": [-175.5, 9.8],
-         "text": "On iron hooks in the wall, 3 m above the planks: one over the head of the ladder, one over the tunnel's cap. Where they "
-                 "hang today, but on the wall.",
+         "text": "On iron brackets in the wall, 3 m above the planks: one over the head of the ladder, one over the tunnel's cap. Today "
+                 "they hang inside the play space, from nothing.",
          "draw": [_c(-174.6, 9.2, 0.17), _c(-185.3, 9.3, 0.17)]},
         {"name": "The miners' bunting", "z": [-2.9, -2.8], "style": "mark", "tag": [-180.0, 10.6],
          "text": "Torn, strung along the wall high over the middle of the walk, where it is today. It is 4.5 m above the planks, well out of reach.",
@@ -648,6 +664,8 @@ LOS_TABLONES = {
     "notes": [
         "Note 1 (done): a broken board grows back in its own gap, not from the far side of the mine.",
         "Note 40: no foreground here. The walk hangs over open air from end to end and there is no rock to stand a post in front of.",
+        "In the play space today in hold colours, and moved out of it: the six slanting braces under the walk (replaced by the bearers and struts at the back, item 2), the two lanterns (back onto wall brackets, item 6), and the pickaxe on the east ledge (see Escalera Rota).",
+        "Nothing you touch moves.",
     ],
 }
 
@@ -687,8 +705,8 @@ LA_CUERDA = {
                  "It moves back and goes grey.",
          "draw": _LOWER_STATION},
         {"name": "Two lanterns", "z": [-2.9, -1.3], "style": "light", "tag": [-199.5, 8.5],
-         "text": "One on a hook in the wall over the pillar's shoulder, where it is today. One standing on the arm's back twin, moved down "
-                 "from where it hangs in the air today.",
+         "text": "One on an iron bracket in the wall over the pillar's shoulder. One standing on the arm's back twin. Today both hang "
+                 "inside the play space, from nothing.",
          "draw": [_c(-200.3, 9.4, 0.17), _c(-196.5, 14.42, 0.17)]},
         {"name": "A warning sign", "z": [-1.6, -1.3], "style": "pale", "tag": [-190.4, 8.3],
          "text": "The skull-pug diamond on a post at the back edge of the walk's broken end. The miners' own notice that the walk stops.",
@@ -732,6 +750,8 @@ LA_CUERDA = {
     ],
     "notes": [
         "Note 4: the rope must be the only thin hanging line in the picture. Nothing in this background hangs.",
+        "In the play space today and moved out of it: the arm's slanting brace, in hold-coloured timber (to the back, grey, item 3), and the two lanterns (item 4).",
+        "Nothing you touch moves.",
     ],
 }
 
@@ -740,15 +760,14 @@ EL_CUBO = {
     "id": "1.5", "slug": "1_5_el_cubo", "title": "El Cubo", "kind": "challenge",
     "window": [-204.0, 4.0, -184.0, 35.0], "screen": [-194.5, 20.5], "cut_y": 26.0, "climber": [-200.0, 6.0],
     "place": ("The bucket lift, built up the side of the pillar between the walk's level and the station 12 m above it. An ore bucket "
-              "hangs on one side of a pulley and an iron weight on the other. The miners made it work itself. A trough brings a trickle "
-              "of water from a seep in the wall and pours it into the bucket at the top. When the bucket is full it is heavier than the "
-              "weight, so it goes down and the weight comes up. At the bottom a peg knocks open a flap in the bucket's floor, the water "
-              "runs out, and the weight pulls the bucket back up. The seep has never stopped, so the lift has gone up and down by itself "
-              "for eighty years. You ride the weight."),
+              "hangs on one side of a pulley and an iron weight on the other, so that a full bucket going down hauled the weight up, "
+              "and the weight coming down hauled the empty bucket back. It is how the ore from the pillar's top got down to the plank "
+              "walk. It was left as it stood, empty and in balance, and it still goes: the weight one way, the bucket the other, with a "
+              "wait at each end. You ride the weight. The iron rungs up the pillar beside it were the lift men's ladder."),
     "keep": [
         "The iron rungs, the arm, and the station deck with its 2.1 m gap from the wall.",
         "The weight's road and its timing: 2.5 s at the foot, 7.5 s up, 2.5 s at the top. The bucket moves the other way.",
-        "No cables (note 4).",
+        "No cables (note 4), and nothing added to work the lift (Parker, 11-13).",
     ],
     "background": [
         {"name": "The cavern's wall", "z": [-3.6, -2.9], "tag": [-199.0, 19.0],
@@ -759,16 +778,9 @@ EL_CUBO = {
                  "the weight and the bucket run in front of. It is dark, flat and broad, with no rungs and no thin lines, so it does not "
                  "read as something to climb (note 4).",
          "draw": [_p(_GALLOWS), _p(_BOARDS + [(-186.9, 32.2), (-191.3, 32.2)])]},
-        {"name": "The trough", "z": [-2.9, -1.4], "style": "pale", "tag": [-185.6, 30.5],
-         "text": "A timber trough on two wall brackets, from a dark seep hole in the wall down to a lip over the bucket's top place. A "
-                 "thin run of water falls half a metre from the lip into the bucket while it waits there. This is what drives the lift.",
-         "draw": [_r(-184.6, 29.3, -184.0, 30.1, "dark"), _p([(-184.2, 29.6), (-184.2, 29.25), (-187.3, 28.15), (-187.3, 28.5)])]},
-        {"name": "The peg at the foot", "z": [-2.4, -1.3], "style": "pale", "tag": [-185.9, 13.9],
-         "text": "A stout timber peg bolted to the foot of the boards, just under where the bucket stops. It knocks the flap in the "
-                 "bucket's floor open, and the water falls away below for as long as the bucket waits.",
-         "draw": [_r(-187.0, 13.2, -186.55, 14.6)]},
         {"name": "The pulley", "z": [-2.4, -2.0], "style": "line", "tag": [-188.95, 30.4],
-         "text": "On the frame's arm, where it is today, but set back against the hoistway and grey. It turns one way, stops, and turns back.",
+         "text": "On the frame's arm, where it is today, but set back against the hoistway and grey. Today it hangs inside the play "
+                 "space. It turns one way, stops, and turns back.",
          "draw": [_c(-188.95, 31.4, 0.4)]},
         {"name": "The station's back half", "z": [-2.9, -1.3], "style": "pale", "tag": [-196.9, 28.6], "top": True,
          "text": "The deck you land on carries on back to the wall on two bearers, seen end-on under it, with a slanting brace from the "
@@ -782,7 +794,8 @@ EL_CUBO = {
                  "pieces as on La Cuerda del Minero's page.",
          "draw": _LOWER_STATION},
         {"name": "Two lanterns", "z": [-1.7, -1.3], "style": "light", "tag": [-195.4, 15.3],
-         "text": "One standing on the arm's twin, one standing on the top crate. Today both hang in the open air with nothing above them.",
+         "text": "One standing on the arm's twin, one standing on the top crate. Today both hang inside the play space, in the open "
+                 "air, with nothing above them.",
          "draw": [_c(-196.5, 14.42, 0.17), _c(-196.85, 28.02, 0.17)]},
     ],
     "play": [
@@ -791,8 +804,8 @@ EL_CUBO = {
                  "brightest thing on the lift.",
          "draw": [_r(-191.0, 14.7, -189.4, 15.9)]},
         {"name": "The bucket", "z": [-0.6, 0.6], "style": "line", "tag": [-187.7, 25.6],
-         "text": "It matches what you touch now (note 3). It gets a flap in its floor, a wet shine inside, and a drip from the flap as it "
-                 "climbs. Its handle over the top stays drawn only.",
+         "text": "It matches what you touch now (note 3): iron, rust orange, and you can hold it and stand in it. Its handle over the "
+                 "top stays drawn only, so that its mouth stays open.",
          "draw": [_r(-188.3, 26.5, -187.1, 27.54)]},
         {"name": "The deck's west end", "z": [-1.2, 1.2], "style": "mark", "tag": [-200.6, 26.9],
          "text": "The deck stops 2.1 m short of the pillar. Its end is drawn as a finished edge with a trimmer across it, not a break: the "
@@ -806,36 +819,33 @@ EL_CUBO = {
          "draw": [_r(-202.75, a, -202.45, b) for a, b in _PILLAR_POST]},
     ],
     "explains": [
-        ["The iron rungs", "The lift men's ladder up the pillar", "The front and back posts of the lift's frame, either side of them"],
+        ["The iron rungs", "The lift men's ladder up the pillar: iron staples hammered into the rock", "The front and back posts of the lift's frame, either side of them"],
         ["The arm", "The lower station's loading arm, out over the gap", "Its twin behind it, the brace and the cross timber"],
-        ["The weight", "The lift's counterweight. It rises when the bucket is full of water", "The hoistway boards behind it, and the pulley above"],
-        ["The bucket", "The lift's ore bucket, now filled by the trough and emptied by the peg", "The trough at the top, the peg at the foot"],
+        ["The weight", "The lift's counterweight", "The hoistway boards behind it, and the pulley above"],
+        ["The bucket", "The lift's ore bucket, empty", "The same boards and pulley, and the spare bucket on the station"],
         ["The station deck", "The upper station, where ore was loaded", "Its bearers and brace, the crates, the spare bucket"],
     ],
     "pieces": [
         ["Rock wall, hand-cut", "18 m by 31 m", "1", "Background", "the same piece as Los Tablones"],
         ["Hoistway: frame with an arm, and back boards", "7 m by 6.6 m; 4.4 m by 20 m", "1", "Background", "there today"],
-        ["Water trough on wall brackets, with its seep hole", "0.5 m wide, 3.3 m long", "1", "Background", "kit: water trough (mine, added by these pages); dark hole (mine)"],
-        ["Trip peg", "0.45 m by 1.4 m", "1", "Background", "kit: timber set post (mine), cut"],
         ["Pulley", "0.8 m", "1", "Background", "kit: pulley"],
         ["Walk bearer; slanting brace", "0.3 m square; 5.9 m", "2 and 1", "Background", "kit: walk bearer (mine, added by these pages); mine_beam"],
         ["Ore crate; ore bucket", "0.8 m; 0.9 m", "3 and 1", "Background", "kit: crate_ore; ore bucket (mine)"],
         ["Arm twin, brace and cross timber", "0.4 m thick", "1 of each", "Background", "the same pieces as La Cuerda del Minero"],
         ["Standing lantern", "0.4 m", "2", "Background", "kit: lantern_mine"],
-        ["Flap for the bucket's floor; lifting eye for the weight", "0.4 m", "1 and 1", "Play space (drawn on)", "kit: iron strap (mine, added by these pages)"],
+        ["Lifting eye for the weight", "0.4 m", "1", "Play space (drawn on)", "kit: iron strap (mine, added by these pages)"],
         ["Front post, in broken lengths", "0.3 m wide, 2.9 to 5.5 m", "4 lengths", "Foreground", "kit: timber set post (mine), cut"],
     ],
     "effects": [
-        "A thin run of water from the trough's lip into the bucket for the 2.5 s it waits at the top.",
-        "Water falling from the bucket's floor for the 2.5 s it waits at the foot.",
-        "The pulley creaks as the lift starts. The drips on the station deck stay as they are.",
+        "The pulley creaks as the lift starts.",
+        "The drips on the station deck stay as they are.",
     ],
     "notes": [
         "Note 3 (done): the bucket you see is the bucket you touch.",
         "Note 4 (third try in the game, not yet judged): the two cables are gone and the dark hoistway stands in their place. This design keeps it.",
-    ],
-    "ask": [
-        "The lift shown as worked by water, with a trickle filling the bucket at the top and running out at the foot: yes or no?",
+        "Parker, 11-13: the lift stays plain. The first design had a trough of water working it. That is taken out: no trough, no peg, no water.",
+        "In the play space today and moved out of it: the arm's brace and the deck's brace, both in hold-coloured timber (to the back, grey), the pulley (back against the hoistway), and the two lanterns (one to stand on the arm's twin, one on the top crate).",
+        "Nothing you touch moves.",
     ],
 }
 
@@ -878,8 +888,8 @@ VETAS_DE_LODO = {
                  "props wedged in it. They are level with the two wide ribs, so each long lunge has a dark slot behind its target.",
          "draw": _stope(-197.0, -192.0, 32.15) + _stope(-198.5, -193.5, 37.3)},
         {"name": "A lantern in the lower working", "z": [-3.4, -3.0], "style": "light", "tag": [-193.3, 35.5],
-         "text": "It lights the face from the side, so every rib throws a shadow under itself. Today a lantern hangs about a metre from "
-                 "the ribs, where it could be taken for a hold. That one goes.",
+         "text": "It lights the face from the side, so every rib throws a shadow under itself. Today a lantern hangs inside the play "
+                 "space about a metre from the ribs, from nothing, where it could be taken for a hold. That one goes.",
          "draw": [_c(-194.4, 34.75, 0.17)]},
         {"name": "The station below", "z": [-2.9, -1.3], "style": "dark", "tag": [-194.9, 28.8],
          "text": "El Cubo's station: the dark frame of the hoistway, and the crates on the back of the deck you start from.",
@@ -920,6 +930,8 @@ VETAS_DE_LODO = {
     "notes": [
         "Note 5 (done): the streaks of wind that crossed this wall are gone. The only wind in the mine is inside the waterfall.",
         "Note 40: no foreground here. You climb the edge of the rock with open air beside you.",
+        "In the play space today and moved out of it: the lantern beside the ribs. Its light comes from a lantern standing in the lower working instead (item 3).",
+        "Nothing you touch moves.",
     ],
 }
 
@@ -927,6 +939,9 @@ VETAS_DE_LODO = {
 _BEAMS = [(-218.3, -213.9, 50.5), (-222.8, -220.8, 52.0), (-227.3, -225.3, 50.8), (-231.8, -229.8, 52.3)]
 _HANGERS = [(-216.1, 50.5), (-221.8, 52.0), (-226.3, 50.8), (-230.8, 52.3)]
 _ROOF_GEAR = [_r(-232.0, 54.25, -213.5, 54.6, "pale")] + [_post(x, top, 55.0) for x, top in _HANGERS]
+_CHAIN_X, _GONE_CHAIN_X = -215.8, -214.2   # the one chain that stays, and the near one that goes (Parker, 11-13)
+_ONE_CHAIN = [_c(_CHAIN_X, 50.1, 0.2, "line"), _c(_CHAIN_X, 41.1, 0.16, "line")]
+_NEAR_CHAIN_GOES = [_ln(_GONE_CHAIN_X - 0.3, 46.0, _GONE_CHAIN_X + 0.3, 45.4, "mark"), _ln(_GONE_CHAIN_X - 0.3, 45.4, _GONE_CHAIN_X + 0.3, 46.0, "mark")]
 
 EL_CARRITO = {
     "id": "1.7", "slug": "1_7_el_carrito_loco", "title": "El Carrito Loco", "kind": "challenge",
@@ -934,11 +949,12 @@ EL_CARRITO = {
     "place": ("The top of El Diente was the mine's high road. Ore came down from the upper works to this track and was pushed east along "
               "it to the bucket lift. West of the pillar the track crossed 20 m of open cavern on a deck slung by chains from a long beam "
               "under the roof. That deck has fallen and taken the track with it. What is left is the cart on its siding, held by one "
-              "wooden chock, a stub of track on two slanting struts with boards nailed across its end, and the last two chains, hanging "
-              "where the deck used to be. The track points straight at the waterfall, and that is where the cart goes."),
+              "wooden chock, a stub of track on two slanting struts with boards nailed across its end, and one last chain, hanging "
+              "where the deck used to be, too far out to reach from the boards. The track points straight at the waterfall, and that "
+              "is where the cart goes. The chain is the only way off it."),
     "keep": [
         "The cart, its 0.7 s wait, its speed, and that it falls for real a cart's length past the boards (note 6).",
-        "The two chains, each where it hangs, and the first roof beam they hang from.",
+        "One chain (Parker, 11-13), hung from the first roof beam, out of reach of the boards.",
         "The 3.4 m of pillar top east of the cart, to rest on.",
     ],
     "background": [
@@ -949,38 +965,48 @@ EL_CARRITO = {
          "draw": _fall(31.0, 56.5)},
         {"name": "Two slanting struts", "z": [-1.7, -1.3], "style": "pale", "tag": [-212.2, 36.4],
          "text": "From the pillar's west face up to the underside of the track's stub: they are what holds it out over the drop. Today the "
-                 "kit's 6 m trestle leg is placed here, and by the course's numbers its feet are in the air. The struts take its place.",
+                 "kit's 6 m trestle leg is placed here, inside the play space, and by the course's numbers its feet are in the air. "
+                 "The struts take its place, at the back.",
          "draw": [_p([(-208.9, 35.0), (-208.9, 35.6), (-212.5, 39.6), (-213.1, 39.6)]), _p([(-208.9, 37.2), (-208.9, 37.75), (-210.5, 39.6), (-211.0, 39.6)])]},
         {"name": "The beam under the roof", "z": [-1.9, -1.2], "tag": [-223.9, 53.4],
-         "text": "What the chains hang from. The first of Las Vigas has a hanger post behind it, up to the roof, and behind that runs a "
+         "text": "What the chain hangs from. The first of Las Vigas has a hanger post behind it, up to the roof, and behind that runs a "
                  "second long beam that never broke. No chain hangs from the back beam: a hanging chain in the background would look like "
-                 "one to take. It has empty iron eyes where they were.",
+                 "one to take. It has empty iron eyes where the deck's other chains were.",
          "draw": _ROOF_GEAR},
         {"name": "A second cart, off the rails", "z": [-2.8, -1.6], "style": "line", "tag": [-204.2, 41.7],
          "text": "On the back of the pillar's top, tipped against the wall behind the siding, grey: a cart that never made its last run. "
                  "With it, the back rail of the track, which is whole.",
          "draw": [_p([(-205.0, 40.0), (-203.5, 40.0), (-203.3, 41.0), (-204.9, 41.2)]), _ln(-208.9, 40.12, -201.9, 40.12)]},
         {"name": "Two lamp posts", "z": [-1.6, -1.3], "tag": [-210.8, 44.5],
-         "text": "The two lanterns here hang in the open air today, 3.4 m over the track, from nothing. Each gets a thin timber post at "
-                 "the back of the track to hang from.",
+         "text": "The two lanterns here hang inside the play space today, 3.4 m over the track, from nothing. Each gets a thin timber "
+                 "post with an iron bracket at the back of the track to hang from.",
          "draw": [_post(-203.8, 40.0, 43.5, "pale", 0.2), _post(-210.8, 40.0, 43.5, "pale", 0.2), _c(-203.8, 43.7, 0.2, "light"), _c(-210.8, 43.7, 0.2, "light")]},
         {"name": "The warning sign", "z": [-1.4, -1.3], "style": "pale", "tag": [-201.8, 42.6],
-         "text": "The skull-pug diamond before the cart, where it is today.",
+         "text": "The skull-pug diamond before the cart. Today it stands just inside the play space. It moves back 0.4 m, to the "
+                 "back edge of the track.",
          "draw": [_p([(-203.05, 41.6), (-202.6, 42.05), (-202.15, 41.6), (-202.6, 41.15)]), _ln(-202.6, 40.0, -202.6, 41.15, "line")]},
     ],
     "play": [
+        {"name": "The one chain", "z": [-0.2, 0.2], "style": "line", "tag": [-217.0, 45.6],
+         "text": "Parker, 11-13: one chain, not two. It hangs 2.6 m past the end of the boards, where the far chain hangs today, which "
+                 "is 1.6 m further out than the near one. From the boards it is out of reach, so riding the cart is the only way to "
+                 "it. It is a real chain with links you can see, the kit's chain from higher up the mountain, in the rusty red the "
+                 "chains have now. It hangs from an iron eye bolted through the first beam, and its tail is at chest height over the "
+                 "cart's road. Catch it while the cart is falling and you keep the chain: the cart drops away under you.",
+         "draw": _ONE_CHAIN},
+        {"name": "The near chain goes", "z": [-0.2, 0.2], "style": "mark", "tag": [-213.0, 45.7],
+         "text": "The chain that hangs 1 m from the end of the boards today is taken away (crossed out here). With the boards solid it "
+                 "could be taken without riding the cart. An empty iron eye is left in the beam where it hung.",
+         "draw": _NEAR_CHAIN_GOES + [_c(_GONE_CHAIN_X, 50.1, 0.12, "line")]},
         {"name": "Boards across the track's end", "z": [-1.2, 1.2], "style": "line", "tag": [-213.9, 38.9],
          "text": "There today (note 6): the miners' own stop, three boards nailed across the last 1.6 m of rail, with the rails' ends bent "
-                 "down past them. A track that ends in the air always gets these.",
+                 "down past them. A track that ends in the air always gets these. The rails themselves lie flat on the track you walk "
+                 "on and stay as part of it.",
          "draw": [_r(-213.2, 40.0, -211.6, 40.25)]},
         {"name": "The chock", "z": [-0.6, 0.6], "style": "pale", "tag": [-208.4, 41.3],
-         "text": "A wooden wedge under the cart's west wheel, with a short pull chain lying on the sleepers. Your weight in the cart rocks "
-                 "it off the wedge. It is why the cart waits, and why it goes.",
+         "text": "A wooden wedge under the cart's west wheel. Your weight in the cart rocks it off the wedge. It is why the cart waits, "
+                 "and why it goes. It is drawn on the track and is too small to be a thing to hold.",
          "draw": [_p([(-208.15, 40.0), (-207.7, 40.0), (-207.7, 40.32)])]},
-        {"name": "The chains' iron eyes", "z": [-0.2, 0.2], "style": "line", "tag": [-212.9, 50.9],
-         "text": "Each chain hangs from an iron eye bolted through the first beam, with a rust streak under it. A chain always shows what "
-                 "it hangs from.",
-         "draw": [_c(-214.2, 50.1, 0.2), _c(-215.8, 50.1, 0.2)]},
     ],
     "foreground": [
         {"name": "A front strut's foot", "z": [1.2, 1.5], "tag": [-207.6, 34.5],
@@ -991,7 +1017,7 @@ EL_CARRITO = {
     "explains": [
         ["The cart", "An ore cart on the pillar's siding, held by one chock", "The second cart off the rails behind it, and the back rail"],
         ["The stub of track, and its boards", "The first 4 m of the crossing, with the miners' stop nailed across its end", "The two slanting struts that carry it from the pillar"],
-        ["The two chains", "The last two of the chains the track's deck hung from", "The beam they hang from, its hanger post, and the unbroken beam behind with its empty eyes"],
+        ["The one chain", "The last of the chains the track's deck hung from", "The beam it hangs from, its hanger post, and the unbroken beam behind with its empty eyes"],
         ["The way the cart goes", "Off the end, down, and through the waterfall to the Sump", "The waterfall, whole, straight ahead"],
     ],
     "pieces": [
@@ -1001,21 +1027,25 @@ EL_CARRITO = {
         ["Hanger post", "0.35 m square, 2.7 to 4.5 m", "4", "Background", "kit: mine_post"],
         ["Ore cart, tipped", "1.6 m", "1", "Background", "kit: minecart"],
         ["Rail, straight", "2 m lengths", "4", "Background", "kit: rail_straight"],
-        ["Lamp post with a hanging lantern", "post 0.2 m by 3.5 m", "2", "Background", "kit: mine_post, thin; lantern_hang"],
+        ["Lamp post with a bracket and a hanging lantern", "post 0.2 m by 3.5 m", "2", "Background", "kit: mine_post, thin; lantern_hang"],
         ["Skull-pug warning sign", "1 m", "1", "Background", "kit: sign_pug_skull"],
+        ["Chain, real links, rusty red", "9 m", "1", "Play space", "kit: chain, real links (mine)"],
+        ["Iron eye for a chain, with a rust streak", "0.3 m", "2: one in use, one empty", "Play space (drawn on)", "kit: iron eye (mine, added by these pages)"],
         ["Boards across the rails; bent rail ends", "1.6 m", "1", "Play space (there today)", "kit: rail_broken; the boards are in the game"],
-        ["Chock with a pull chain; iron eye for a chain", "0.45 m; 0.3 m", "1 and 2", "Play space (drawn on)", "new; kit: iron eye (mine, added by these pages)"],
+        ["Chock", "0.45 m", "1", "Play space (drawn on)", "new, this area only"],
         ["Front strut's foot, in two lengths", "0.3 m wide, 1.6 and 2.4 m", "1", "Foreground", "kit: mine_beam, cut"],
     ],
     "effects": [
         "The chock jumps out and skitters off the edge when the cart starts.",
-        "The chains sway a little and clink. Nothing else in the picture moves but the waterfall.",
+        "The chain sways a little and its links clink. Nothing else in the picture moves but the waterfall.",
         "A white burst in the waterfall where the cart goes through it.",
     ],
     "notes": [
         "Note 6 (done): the boards across the rails' end are solid to the end of the drawn rail, and the cart falls for real a cart's length past them.",
-        "Note 6, still open: with the boards solid, the first chain can be taken from the boards without riding the cart.",
-        "Note 4: only the two real chains hang in this picture.",
+        "Course change (note 6; Parker, 11-13): one chain, not two. The near chain, 1 m past the boards' end, is taken away. The one chain hangs where the far chain is today, 2.6 m past the boards' end, and is 9 m long as that one is. By the numbers that is past the reach from the boards. It has not been tried in the game.",
+        "Course change (note 6; Parker, 11-13): the chain becomes a real chain with links, in rusty red. A rider who catches it while the cart is falling keeps the chain, and the cart falls away.",
+        "In the play space today and moved out of it: the trestle leg (replaced by two struts at the back, item 2), the warning sign (back 0.4 m, item 6), the two lanterns (back onto lamp posts, item 5).",
+        "Note 4: the one real chain is the only thing that hangs in this picture.",
     ],
 }
 
@@ -1031,7 +1061,7 @@ LAS_VIGAS = {
               "swing under a piece, let go, land on the next. The waterfall is in front of you the whole way."),
     "keep": [
         "The four beams: where each hangs, how long it is, how high.",
-        "The two chains on the first, and the staging you land on at the end.",
+        "The one chain on the first beam (Parker, 11-13), and the staging you land on at the end.",
         "Nothing between you and the water.",
     ],
     "background": [
@@ -1048,7 +1078,8 @@ LAS_VIGAS = {
                  "middle of the play space on top of each beam. It moves to the back and goes grey, so the top of a beam is clear to land on.",
          "draw": [_post(x, top, 55.0) for x, top in _HANGERS]},
         {"name": "Two lanterns", "z": [-1.5, -1.3], "style": "light", "tag": [-227.2, 54.0],
-         "text": "On the hanger posts of the first and third pieces, where they hang today.",
+         "text": "On iron brackets on the hanger posts of the first and third pieces, at the back. Today they hang inside the play "
+                 "space, just over the beams.",
          "draw": [_c(-216.1, 53.2, 0.17), _c(-226.3, 53.6, 0.17)]},
         {"name": "Stalactites, kept off the route", "z": [-1.9, -1.5], "tag": [-211.6, 53.0],
          "text": "The roof's stalactites hang only east of the first beam. By the course's numbers a 6 m one is placed at the roof between "
@@ -1056,6 +1087,10 @@ LAS_VIGAS = {
          "draw": [_p([(-212.6, 55.0), (-211.4, 55.0), (-212.0, 52.0)]), _p([(-211.2, 55.0), (-210.4, 55.0), (-210.8, 53.4)])]},
     ],
     "play": [
+        {"name": "One chain", "z": [-0.2, 0.2], "style": "line", "tag": [-217.0, 45.6],
+         "text": "Parker, 11-13: one chain hangs from the first beam, not two. It is the one you arrive on from the cart: a real "
+                 "chain with links, rusty red, 9 m long. The near chain (crossed out here) is taken away.",
+         "draw": _ONE_CHAIN + _NEAR_CHAIN_GOES},
         {"name": "Splintered ends", "z": [-1.2, 1.2], "style": "mark", "tag": [-224.05, 50.0],
          "text": "Every end that faces a gap is splintered. The two outer ends are sawn square. So the four read as one beam, broken in "
                  "three places.",
@@ -1073,15 +1108,16 @@ LAS_VIGAS = {
     "explains": [
         ["The four beams", "Four pieces of one long beam that hung under the roof", "The back beam, whole, and a hanger post behind each piece"],
         ["The gaps", "Where the beam snapped when the deck fell", "The splintered ends, and the unbroken line of the back beam above"],
-        ["The two chains", "The last two of the chains the deck hung from", "The empty iron eyes along the back beam"],
+        ["The chain", "The last of the chains the deck hung from", "The empty iron eyes along the back beam"],
         ["The staging at the far end", "The landing under the winding wheel", "The wheel and its frame (see La Polea Grande)"],
     ],
     "pieces": [
         ["Waterfall: the sheet", "6 m wide, 20 m of it in the picture", "1", "Background", "kit: waterfall pieces (the water overhaul, note 22)"],
         ["Long beam under the roof, with iron eyes", "0.35 m square, 18.5 m", "1", "Background", "the same piece as El Carrito Loco"],
         ["Hanger post", "0.35 m square, 2.7 to 4.5 m", "4", "Background", "kit: mine_post"],
-        ["Hanging lantern", "0.4 m", "2", "Background", "kit: lantern_hang"],
+        ["Hanging lantern on an iron bracket", "0.4 m", "2", "Background", "kit: lantern_hang; iron strap (mine, added by these pages)"],
         ["Stalactite", "0.8 and 1.2 m across", "2", "Background", "kit: stalactite_a, stalactite_b"],
+        ["Chain, real links, rusty red", "9 m", "1", "Play space", "the same piece as El Carrito Loco's"],
         ["Splintered end for a beam", "0.4 m", "6", "Play space (drawn on)", "kit: splintered end (mine)"],
         ["Iron stirrup; bolt plate", "0.5 m; 0.7 m", "4 and 4", "Play space (drawn on)", "kit: iron stirrup (mine, added by these pages)"],
     ],
@@ -1091,7 +1127,9 @@ LAS_VIGAS = {
     ],
     "notes": [
         "No note from the playtest was about this challenge.",
-        "Note 4: the two chains on the first beam are the only things that hang here.",
+        "Course change (note 6; Parker, 11-13): one chain on the first beam, not two. It is the far one, and it becomes a real chain with links. See El Carrito Loco.",
+        "In the play space today in hold colours, and moved out of it: the post that stands on top of each of the four beams (to the back, grey, item 3), and the two lanterns over the beams (back onto brackets, item 4).",
+        "Note 4: the one chain on the first beam is the only thing that hangs here.",
         "Note 40: no foreground. There is no rock in this picture to stand anything in front of but the roof.",
     ],
 }
@@ -1143,7 +1181,8 @@ LA_POLEA = {
                  "crate that stands in the play space today, where it looks like a step, moves to the back wall.",
          "draw": _ED["The lower level's back wall"] + [_r(-228.65, 57.4, -227.55, 58.5, "pale")]},
         {"name": "A lantern at the gallery's mouth", "z": [-1.6, -1.3], "style": "light", "tag": [-228.4, 60.9],
-         "text": "Today it hangs just outside the wheel's rim, where you come down. It moves onto the back post of the mouth's timber set.",
+         "text": "Today it hangs inside the play space just outside the wheel's rim, where you come down. It moves onto an iron bracket "
+                 "on the back post of the mouth's timber set.",
          "draw": [_c(-229.35, 60.5, 0.17)]},
     ],
     "play": [
@@ -1161,8 +1200,9 @@ LA_POLEA = {
     ],
     "foreground": [
         {"name": "The mouth's front post", "z": [1.2, 1.5], "tag": [-229.0, 64.6],
-         "text": "In two lengths, one below the gallery's floor and one above its roof, both in front of rock. The length between them, "
-                 "which would stand in front of the doorway, is gone.",
+         "text": "The timber set at the gallery's mouth keeps its back post and its cap. Its front post is cut to two lengths, one below "
+                 "the gallery's floor and one above its roof, both in front of rock. The length between them is gone, because it would "
+                 "stand in front of the porch at the moment you land on it.",
          "draw": [_r(-229.9, 55.1, -229.6, 57.0), _r(-229.9, 62.3, -229.6, 66.8)]},
     ],
     "explains": [
@@ -1175,7 +1215,7 @@ LA_POLEA = {
     "pieces": [
         ["Waterfall: the sheet, and a wet shine on the rock beside it", "6 m wide", "1", "Background", "kit: waterfall pieces (the water overhaul, note 22)"],
         ["Water wheel with buckets", "5 m across", "1", "Background", "new, this area only. The works' kit has a wheel frame it could share"],
-        ["Water trough on wall brackets", "0.5 m wide, 5 m long", "1", "Background", "kit: water trough (mine, added by these pages)"],
+        ["Water trough on wall brackets", "0.5 m wide, 5 m long", "1", "Background", "new, this area only; cut from the ore chute"],
         ["Bearer, slanting strut, hanging post", "0.35 m square; 7.8 m, 4.5 m, 4.5 m", "2, 1 and 2", "Background", "kit: mine_beam, mine_post"],
         ["Roof post", "0.35 m square; 5 m and 7.9 m", "2", "Background", "kit: mine_post"],
         ["Gallery frames and boarded tunnel", "as El Derrumbe", "3 posts, 1 cap, 1 tunnel", "Background", "the same pieces as El Derrumbe"],
@@ -1192,11 +1232,15 @@ LA_POLEA = {
     "notes": [
         "Note 8 (done): the staging is one run of planks. The dark plank at its west end is gone.",
         "Note 15 (done): the life ring at the foot of the roof.",
+        "Parker, 11-13, kept the bucket lift plain, with no water working it. This wheel is still shown turned by the waterfall, because it stands in the fall's spray and a moving thing should show what drives it. If the wheel should be plain too, items 2 and 3 come out and nothing else changes.",
+        "In the play space today and moved out of it: the staging's slanting brace, in hold-coloured timber (it goes; the staging hangs on two posts at the back, item 4), the ore crate on the gallery floor (to the back wall, item 6), the lantern by the wheel's rim (onto a bracket, item 7).",
+        "Nothing you touch moves.",
     ],
 }
 
 # ------------------------------------------------------------------ 1.11 La Cortina
-def _peg(row, side):
+def _staple(row, side):
+    """Where each of La Cortina's 28 holds is in the course: 14 rows, west column (0) and east column (1)."""
     return (round(-235.6 + 0.11 * row + 1.3 * side, 2), round(73.3 + 1.25 * row, 2))
 
 
@@ -1204,7 +1248,7 @@ _DRY = [(1, 0), (4, 1), (7, 0), (10, 1), (13, 0)]
 
 
 def _drip_board(row, side):
-    x, y = _peg(row, side)
+    x, y = _staple(row, side)
     lo, hi = (0.4, 0.62) if side == 0 else (0.62, 0.4)   # it slants away from the other column
     return _p([(round(x - 0.42, 2), round(y + lo, 2)), (round(x + 0.42, 2), round(y + hi, 2)),
                (round(x + 0.42, 2), round(y + hi + 0.09, 2)), (round(x - 0.42, 2), round(y + lo + 0.09, 2))], "pale")
@@ -1213,43 +1257,46 @@ def _drip_board(row, side):
 LA_CORTINA = {
     "id": "1.11", "slug": "1_11_la_cortina", "title": "La Cortina", "kind": "challenge", "also": ["a2"],
     "window": [-249.0, 60.0, -221.0, 93.0], "screen": [-234.5, 80.5], "cut_y": 79.55, "climber": [-231.4, 72.0],
-    "place": ("The last climb in the mine: 17 m up the back wall of the throat, right beside the top of the waterfall, to the "
-              "dry shaft that goes up through the roof into the works above. The miners went up it on pegs. They drilled two rows of "
-              "holes in the rock, 1.3 m apart, drove a round timber peg into each, and climbed them like a ladder with no sides. The pegs "
-              "are still there, 14 pairs of them, and what you see of each is its round end. The spray wets them in turn, one slow drip "
-              "down each row. Five have a little board nailed over them to turn the water aside. Someone who came later hung a rope from "
-              "the lip, and someone carried a life ring all the way up here and left it at the foot of the slope below."),
+    "place": ("The last climb in the mine: 17 m up the back wall of the throat, right beside the top of the waterfall, to the dry "
+              "shaft that goes up through the roof into the works above. No timber lasts in this spray, so the miners went up it on "
+              "iron. They hammered staples into the wet rock, each a U of iron as wide as two hands, in two rows 1.3 m apart: a rung "
+              "for the left hand and a rung for the right, because one row in that wet was not enough to trust. They are the same "
+              "staples as the rungs up the pillar at El Cubo. All 28 are still there, rust orange, a few bent. The spray wets them "
+              "in turn, one slow drip down each row. Five were bound round with pale cord by somebody who came later, with a little "
+              "board nailed over each to turn the water aside, and those five stay dry. Somebody hung a rope from the lip, and "
+              "somebody carried a life ring all the way up here and left it at the foot of the slope below."),
     "keep": [
-        "All 28 holds where they are, the two slow drips, and the five holds that never get wet (note 13).",
+        "All 28 holds where they are, the two slow drips, dry for longer than wet, and the five holds that never get wet, in another colour (note 13; Parker, 11-13).",
         "The rope from the lip to half way down (note 14), and the life ring's throw back to the balcony (note 15).",
         "The balcony you start from and the lip you finish on.",
     ],
     "background": [
         {"name": "The throat's back wall", "z": [-1.7, -1.3], "tag": [-246.4, 80.0],
-         "text": "The wall the pegs are driven into: black rock, polished and running with water, straight behind you. The holds float in "
-                 "the dark today. With the wall drawn, they are plainly on something. Inside the dry shaft at the top it is lined with "
-                 "planks on three timber frames, the same as every shaft in the mine.",
+         "text": "The wall the staples are hammered into: black rock, polished and running with water, straight behind you. The holds "
+                 "float in the dark today. With the wall drawn, they are plainly in something. Inside the dry shaft at the top it is "
+                 "lined with planks on three timber frames, the same as every shaft in the mine.",
          "draw": [_r(-248.0, 60.0, -230.0, 86.0), _r(-236.0, 86.0, -232.0, 90.0)] + [_r(-236.0, y - 0.16, -232.0, y, "pale") for y in (86.3, 87.6, 88.9)]},
         {"name": "The top of the waterfall", "z": [-3.0, -1.2], "tag": [-241.0, 66.0], "top": True,
          "text": "You are level with its top now. It comes through a slot in the roof as one smooth dark sheet and turns white a few "
-                 "metres down. It is 2.5 m from the west row of pegs at the bottom and 4 m at the top, and the drips that wet the pegs are "
-                 "its spray.",
+                 "metres down. It is 2.5 m from the west row of staples at the bottom and 4 m at the top, and the drips that wet the "
+                 "staples are its spray.",
          "draw": _fall(60.0, 90.4)},
         {"name": "Drip boards", "z": [-1.3, -1.2], "tag": [-236.6, 82.6],
-         "text": "Over four of the five pegs that never get wet: a short board nailed to the wall at a slant, grey, 0.8 m long. The drip "
-                 "runs down to it, along it and off its low end. The fifth dry peg is the top one, inside the dry shaft. The boards are "
-                 "why those pegs stay dry, and you can see it happen.",
+         "text": "Over four of the five staples that never get wet: a short board nailed to the wall at a slant, grey, 0.8 m long. The "
+                 "drip runs down to it, along it and off its low end. The fifth dry staple is the top one, inside the dry shaft. The "
+                 "boards are why those staples stay dry, and you can see it happen.",
          "draw": [_drip_board(r, s) for r, s in _DRY[:4]]},
         {"name": "The top drift", "z": [-2.6, -1.4], "tag": [-225.2, 74.9],
-         "text": "Behind the balcony: the same timber frames and hand winch as on El Derrumbe's page.",
-         "draw": _ED["The upper level"]},
+         "text": "Behind the balcony: the same timber frames and hand winch as on El Derrumbe's page. The pug arrow sign in the drift "
+                 "stands just inside the play space today. It moves back 0.4 m, against the drift's back wall.",
+         "draw": _ED["The upper level"] + [_p([(-224.9, 73.2), (-224.3, 73.2), (-224.3, 73.9), (-224.6, 74.3), (-224.9, 73.9)], "pale"), _ln(-224.6, 72.0, -224.6, 73.2, "line")]},
         {"name": "An empty camp", "z": [-2.2, -1.4], "style": "pale", "tag": [-227.7, 73.1],
          "text": "Against the drift's back wall: a bedroll, a cold lantern and a pickaxe, and nobody. Whoever it was got this far, looked "
                  "at the last wall, and is not here. It is the second and last camp in the mine.",
          "draw": [_r(-228.5, 72.0, -227.0, 72.24), _c(-226.2, 72.2, 0.15, "line"), _ln(-228.75, 72.0, -228.6, 73.0, "line")]},
         {"name": "A lantern by the east wall", "z": [-1.6, -1.3], "style": "light", "tag": [-230.9, 78.6],
-         "text": "Today it hangs between the rope and the wall, like a third thing to take. It moves 0.8 m east onto a hook at the back, "
-                 "against the wall.",
+         "text": "Today it hangs inside the play space between the rope and the wall, from nothing, like a third thing to take. It moves "
+                 "0.8 m east and back, onto an iron bracket in the back wall.",
          "draw": [_c(-230.5, 79.6, 0.17)]},
         {"name": "The wheel's roof, from above", "z": [-2.5, -1.3], "tag": [-232.2, 62.4],
          "text": "Under the slope you slide down if you fall: the two posts that hold it up and the trough from the fall, as on La Polea "
@@ -1257,11 +1304,17 @@ LA_CORTINA = {
          "draw": [_post(-236.9, 60.0, 62.3), _post(-233.0, 60.0, 65.2), _FALL_TROUGH]},
     ],
     "play": [
-        {"name": "The pegs", "z": [-1.2, 0.3], "style": "line", "tag": [-237.0, 74.6],
-         "text": "Every hold is the round end of a timber peg, honey-coloured, with its rings showing, and with the drilled hole's rim "
-                 "round it. Wet, it is a shiny blue-grey and drips, as it does now. The five dry ones (ringed here) are paler, as they "
-                 "are now.",
-         "draw": [_c(_peg(r, s)[0], _peg(r, s)[1], 0.4) for r, s in _DRY]},
+        {"name": "The staples", "z": [-1.2, 0.3], "style": "line", "tag": [-237.0, 74.6],
+         "text": "Parker, 11-13: every hold is an iron staple, a rust-orange U of iron hammered into the rock, about 0.5 m wide and "
+                 "standing a hand's width out from the wall, in place of today's rock knob. A few are bent down at one end or pulled "
+                 "a little crooked. All of them still hold. Each has a rust streak on the rock under it. Wet, a staple is a shiny "
+                 "blue-grey and drips, as the holds do now, and it is dry for longer than it is wet.",
+         "draw": [_ln(round(_staple(r, s)[0] - 0.25, 2), _staple(r, s)[1], round(_staple(r, s)[0] + 0.25, 2), _staple(r, s)[1]) for r in range(14) for s in (0, 1)]},
+        {"name": "The five that stay dry", "z": [-1.2, 0.3], "style": "line", "tag": [-232.3, 77.6],
+         "text": "The same staples, bound round and round with pale cord, the way a tool's handle is bound. Cord is pale where iron "
+                 "is orange, so they keep the other colour they have today, and cord is a thing you hold. They are ringed here. "
+                 "They never get wet, and they are the rests.",
+         "draw": [_c(_staple(r, s)[0], _staple(r, s)[1], 0.42) for r, s in _DRY]},
         {"name": "The rope and its bracket", "z": [-0.2, 0.2], "style": "line", "tag": [-231.3, 84.6],
          "text": "There today (note 14): 8 m of rope from an iron bracket under the lip. The bracket gets a strap back to the shaft's "
                  "last timber frame, so you can see what the rope hangs from.",
@@ -1276,12 +1329,13 @@ LA_CORTINA = {
     ],
     "foreground": [
         {"name": "A front post on the east wall", "z": [1.2, 1.5], "tag": [-228.9, 83.4],
-         "text": "In four broken lengths, in front of the rock east of the throat. It is 2.5 m from the rope and never in front of the pegs.",
+         "text": "In four broken lengths, in front of the rock east of the throat. It is 2.5 m from the rope and never in front of the "
+                 "staples.",
          "draw": [_r(-229.9, 62.4, -229.6, 66.6), _r(-229.9, 68.8, -229.6, 71.4), _r(-229.9, 76.4, -229.6, 80.0), _r(-229.9, 81.6, -229.6, 85.4)]},
     ],
     "explains": [
-        ["The 28 holds", "Round timber pegs driven into the rock: the miners' way up beside the fall", "The wet back wall they are driven into, and the lined shaft they lead up into"],
-        ["The five holds that stay dry", "Four pegs with a board nailed over them, and one inside the dry shaft", "The drip boards"],
+        ["The 28 holds", "Iron staples the miners hammered into the wet rock: their way up beside the fall", "The wet back wall they are driven into, and the lined shaft they lead up into"],
+        ["The five holds that stay dry", "Staples bound with pale cord, four with a board nailed over them and one inside the dry shaft", "The drip boards"],
         ["The wet", "The waterfall's spray, running down each row as one slow drip", "The top of the waterfall, 2.5 to 4 m away"],
         ["The rope", "A later climber's rope, from the lip", "Its bracket, strapped to the shaft's last timber frame"],
         ["The balcony", "The end of the top drift's floor", "The drift, its winch, and the empty camp"],
@@ -1293,25 +1347,30 @@ LA_CORTINA = {
         ["Waterfall: the dark sheet at the slot, turning white", "6 m wide", "1", "Background", "kit: waterfall pieces (the water overhaul, note 22)"],
         ["Drip board", "0.85 m by 0.1 m", "4", "Background", "new, this area only"],
         ["Drift frames and hand winch", "as El Derrumbe", "2 posts, 1 cap, 1 winch", "Background", "the same pieces as El Derrumbe"],
+        ["Pug arrow sign", "1 m", "1", "Background", "kit: sign_pug_arrow"],
         ["Climber's camp, empty: bedroll, cold lantern, pickaxe", "small", "1 of each", "Background", "kit: climber's camp (mine)"],
-        ["Hanging lantern", "0.4 m", "1", "Background", "kit: lantern_hang"],
+        ["Hanging lantern on an iron bracket", "0.4 m", "1", "Background", "kit: lantern_hang; iron strap (mine, added by these pages)"],
         ["Roof post; water trough", "as La Polea Grande", "2 and 1", "Background", "the same pieces as La Polea Grande"],
-        ["Round peg end with its drilled rim", "0.5 m across", "28", "Play space (drawn on)", "new, this area only"],
+        ["Iron staple: straight, bent", "0.5 m wide, 0.1 m out from the wall", "23: about 18 straight, 5 bent", "Play space", "kit: iron staple (mine)"],
+        ["Iron staple bound with pale cord", "0.5 m wide", "5", "Play space", "kit: iron staple (mine), with a cord binding that is new"],
+        ["Rust streak under a staple", "0.6 m", "28", "Play space (drawn on)", "new, drawn on"],
         ["Strap for the rope's bracket", "0.5 m", "1", "Play space (drawn on)", "kit: iron strap (mine, added by these pages)"],
         ["Front post, in broken lengths", "0.3 m wide, 2.6 to 4.2 m", "4 lengths", "Foreground", "kit: timber set post (mine), cut"],
     ],
     "effects": [
         "The two slow drips, as built (note 13). At each drip board the drip runs along the board and falls off its low end.",
+        "A wet staple shines and drips from its two ends. A dry one is matte.",
         "Mist drifting east from the fall across the lower rows.",
         "The lit lantern is the last amber light. Above the lip the light is cold teal.",
     ],
     "notes": [
-        "Note 13 (done, first-try numbers): the wet is a slow drip you can watch, and five holds never get wet.",
+        "Note 13 (done, first-try numbers): the wet is a slow drip you can watch, and five holds never get wet. Parker, 11-13: dry for longer than wet, and the always-dry holds in another colour, both stay.",
+        "Course change (note 13; Parker, 11-13): each of the 28 holds becomes an iron staple, a U of iron about 0.5 m wide, in place of a rock knob. Each staple's middle is where its knob's middle is today, and the drips and their timing do not change. A bar 0.5 m wide is a little wider to catch than a knob, so the reaches should be tried again in the game.",
+        "The always-dry staples are bound with pale cord. That is this design's answer for their look. It keeps the pale colour they have now.",
         "Note 14 (done): the rope from the lip to half way down.",
         "Note 15 (done, first-try throw): the life ring at the foot of the wet slope.",
-    ],
-    "ask": [
-        "The holds drawn as the round ends of timber pegs, with a small board over the dry ones: yes or no? Today they are rock knobs.",
+        "In the play space today and moved out of it: the lantern between the rope and the wall (onto a bracket in the back wall, item 6), and the pug arrow sign in the drift (back 0.4 m, item 4).",
+        "The timber set at the drift's mouth stays as it is. Its posts stand behind and in front of the play space, not in it, at a doorway you only walk through.",
     ],
 }
 
@@ -1336,7 +1395,7 @@ THE_LIP = {
               "from where you stand."),
     "keep": [
         "The lip ledge, the dry shaft, the pier with its peaked top, and the slot the river falls through.",
-        "The last rows of La Cortina and the rope's bracket below the lip. The first pipe of El Borde above it.",
+        "The last rows of La Cortina's staples and the rope's bracket below the lip. The first pipe of El Borde above it.",
         "The river's level and its pull towards the edge.",
     ],
     "background": [
@@ -1362,7 +1421,7 @@ THE_LIP = {
          "draw": [_post(-235.75, 86.0, 89.55), _post(-232.25, 86.0, 89.55), _r(-236.0, 89.55, -232.0, 89.9),
                   _arch(-234.0, 89.9, 1.5, 1.95), _c(-234.0, 90.75, 0.3, "line")]},
         {"name": "Two lanterns", "z": [-1.6, -1.3], "style": "light", "tag": [-228.4, 94.2],
-         "text": "The mine's last, amber, on the west post of the timber set, lighting the shaft from inside. The works' first, greenish, "
+         "text": "The mine's last, amber, on an iron bracket on the west post of the timber set, lighting the shaft from inside. The works' first, greenish, "
                  "hung high over the ledge where the works have it today. Climbing out of the shaft you pass from one into the other.",
          "draw": [_c(-235.35, 88.3, 0.17), _c(-229.4, 94.7, 0.17)]},
     ],
@@ -1388,7 +1447,7 @@ THE_LIP = {
     ],
     "explains": [
         ["The lip ledge", "A stone coping the works laid along the top of the miners' rock ledge", "The brick wall of the river tunnel, in bays, behind it"],
-        ["The last pegs and the rope's bracket", "The end of the mine's way up", "The last timber set, with the first brick arch standing on it"],
+        ["The last staples and the rope's bracket", "The end of the mine's way up", "The last timber set, with the first brick arch standing on it"],
         ["The pier", "A brick pier that keeps the river out of the old shaft", "The brick sill the river slides over, just beyond it"],
         ["The slot and the falling water", "The river, going over the edge", "The sill and the bend of the water at the back"],
         ["The first pipe overhead", "The works' iron, coming down to the ledge", "It is designed on El Borde's page, in the black waters"],
@@ -1415,6 +1474,8 @@ THE_LIP = {
         "Note 14 (done): the rope's bracket under the lip.",
         "Note 22: the river's end is a bend of water over a sill, never a block.",
         "Note 17: nothing in the works' light pulses.",
+        "Parker, 11-13: La Cortina's holds are iron staples. The top three rows of them are inside the dry shaft in this picture.",
+        "Nothing you touch moves here. The coping and the brick courses are drawn onto the ledge that is there.",
     ],
 }
 
@@ -1505,6 +1566,8 @@ THE_LANDING = {
     ],
     "notes": [
         "No note from the playtest was about this place. It is here because every great fall ends with this walk.",
+        "The lantern over the landing stage hangs inside the play space today, from nothing. It moves back onto a lamp post behind the landing stage (item 6).",
+        "Nothing you touch moves.",
     ],
 }
 
@@ -1512,7 +1575,6 @@ THE_LANDING = {
 KIT_MORE = [
     ["Iron strap, stirrup, eye and plate", "0.2 to 0.7 m", "wherever timber hangs from timber, and wherever a chain or a rope is made fast", "Play space (drawn on), background", "new"],
     ["Walk bearer: a square timber in a wall socket, with a strut under it", "0.3 m square, 1.7 m long", "under every plank walk and deck that is fixed to a wall", "Background", "new"],
-    ["Water trough on wall brackets", "0.5 m wide, 3 to 5 m long", "carries water to a machine: the bucket lift, the winding wheel", "Background", "new, cut from the ore chute"],
 ]
 
 AREAS = [SUMP, THE_LANDING, LA_GALERIA, THE_CAMP, ESCALERA_ROTA, LOS_TABLONES, LA_CUERDA, EL_CUBO, VETAS_DE_LODO,
