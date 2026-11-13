@@ -142,7 +142,8 @@ func _update_guest_settings() -> void:
 	# settings are on the locked pickers now (the UI pass, 4b).
 	# NOT A SIGN OVER THE RING (Parker 11-12: "most of their screen was covered by the
 	# 'waiting for host to start' message. Make that at the top of the screen and not on
-	# 3d UI, just the colored text we use"): a line of words at the top (main's label).
+	# 3d UI, just the colored text we use"): a line of words (main's label; bottom left
+	# since 11-13).
 	var host_name := str((Net.members.get(1, {}) as Dictionary).get("name", "the host"))
 	set_status("")
 	main.set_lobby_wait("WAITING FOR %s TO START" % host_name.to_upper())

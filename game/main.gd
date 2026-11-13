@@ -63,7 +63,7 @@ var _glyphs_on := true
 var _glyphs_n := -1
 var _input_health: Label  # F2: what the input system knows right now (Players.health)
 var _focus_notice: Label  # OS window-focus loss only; not idle/disconnected input
-var _lobby_wait: Label  # the guest's "WAITING FOR ... TO START", top of the screen (Parker 11-12)
+var _lobby_wait: Label  # the guest's "WAITING FOR ... TO START", bottom left (Parker 11-12, 11-13)
 ## COUCH PLAYERS IN AN ONLINE LOBBY are parked with Play Together (Parker 11-10:
 ## "first lets only focus on the online multiplayer"). It was also a trap: a host on a
 ## pad pressing Space or Enter (the keyboard's Lock In, and the menus' accept) made a
@@ -1058,9 +1058,14 @@ func _build_ui() -> void:
 	_lobby_wait.add_theme_color_override("font_color", Color("#FFD23F"))
 	_lobby_wait.add_theme_color_override("font_outline_color", Color("#201008"))
 	_lobby_wait.add_theme_constant_override("outline_size", 12)
-	_lobby_wait.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_lobby_wait.set_anchors_preset(Control.PRESET_TOP_WIDE)
-	_lobby_wait.offset_top = 112.0  # (just under the LOBBY banner)
+	# BOTTOM LEFT (Parker 11-13: "move this waiting for note to the bottom left"): it was
+	# under the LOBBY banner, across the church.
+	_lobby_wait.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_lobby_wait.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+	_lobby_wait.grow_horizontal = Control.GROW_DIRECTION_END
+	_lobby_wait.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_lobby_wait.offset_left = 28.0
+	_lobby_wait.offset_bottom = -22.0
 	_lobby_wait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_lobby_wait.visible = false
 	root.add_child(_lobby_wait)
