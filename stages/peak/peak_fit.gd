@@ -20,7 +20,7 @@ const MATERIAL := {
 	"brick": "brick", "stone": "stone", "brittle": "stone",
 	"iron": "iron", "metal": "iron", "paint": "iron", "grease": "iron",
 	"crystal": "crystal", "glass": "crystal",
-	"snow": "snow", "snowbridge": "snow", "ice": "ice", "blackice": "ice",
+	"snow": "snow", "snowbridge": "snow", "ice": "ice", "blackice": "ice", "icicle": "ice",
 	"bone": "bone", "root": "root", "gill": "gill", "cap": "shroom",
 }
 ## Painted neutral by the makers and multiplied by the area's own colour.
@@ -231,6 +231,23 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 		var sy := h / maxf(box.size.y, 0.01)
 		var su := sy if long_x else sx  # (its section keeps its shape: z goes with the thin side)
 		out.append([file, _xf(r.c, ang, Vector3(sx, sy, su), 0.0)])
+		return out
+	# ---- an icicle: a triangle hanging point down wears the kit's icicle (made 0.6 wide at
+	# its top and 1.5 long, its origin the middle of its top), turned and scaled to it
+	if kind == "icicle" and pts.size() == 3:
+		var icicle := _pick("fit_ice_icicle")
+		if icicle == "":
+			return []
+		var tip := 0
+		for i in 3:
+			if pts[i].y < pts[tip].y:
+				tip = i
+		var ta := pts[(tip + 1) % 3]
+		var tb := pts[(tip + 2) % 3]
+		var top := (ta + tb) * 0.5
+		var down := pts[tip] - top
+		var k := ta.distance_to(tb) / 0.6
+		out.append([icicle, _xf(top, down.angle() + PI * 0.5, Vector3(k, down.length() / 1.5, clampf(k, 0.6, 1.6)), 0.0)])
 		return out
 	# ---- a single hold: a small polygon of five sides or more, or a small nub
 	if r.is_empty():
