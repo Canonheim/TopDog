@@ -9,6 +9,12 @@ extends RefCounted
 ## shapes in the house cel look, not a realistic range. They sit back by colour (no fog
 ## in the look): haze blues, the far ones paler.
 ##
+## FAR BACKGROUNDS ARE FLAT FACADE PIECES (Parker 11-13: "that is now the correct way to
+## do far backgrounds"; docs/peak/PEAK_DESIGN.md, section 7). Each foothill range is the
+## kit's painted card (`plaza_range_a` to `_d`, RANGE_CARDS) once it has landed, standing
+## where its massif stood and square to the camera; until then, the massif. The Peak of
+## DeGayo and Del Mar's own far hills are not part of that yet.
+##
 ## The plaza calls `PlazaMountains.build(parent, ground_y)` once from _build_plaza. It
 ## returns [node, standing y, how far it sinks] per mountain, the shape
 ## LuchaUI.mountains_down() wants (Parker's option B: they sink out of sight for Del
@@ -26,6 +32,10 @@ const RANGES := [
 	# a peak to the right of the church, so both sides of it are framed
 	[52.0, -232.0, 150.0, 40.0, 52.0, -0.1, 53, Color("#646B8C"), Color("#737DA7"), Color("#545A88"), 0.45],
 ]
+## Each range's painted card, in RANGES' order: a flat cut-out made at the range's own
+## width and height (200 x 46, 280 x 50, 240 x 38, 150 x 40 m), its origin at the middle
+## of its foot and its face at z 0. (A var so a probe can try other cards.)
+static var range_cards: Array = ["plaza_range_a", "plaza_range_b", "plaza_range_c", "plaza_range_d"]
 const SNOW := Color("#E8EDF6")
 const SNOW_SHADE := Color("#B4BFDA")
 const SNOW_LINE := 0.7  # snow on the top 30% of the peaks (each apex is a grid vertex, so the tops are pointed)
@@ -37,11 +47,24 @@ const ROWS := 7  # odd, so a middle row runs along the ridge
 ## Build the foothill ranges and the Peak under `parent`, standing on ground_y.
 static func build(parent: Node3D, ground_y: float) -> Array:
 	var out: Array = []
-	for r in RANGES:
+	for i in RANGES.size():
+		var r: Array = RANGES[i]
+		var at := Vector3(float(r[0]), ground_y - 0.6, float(r[1]))
+		# The painted card if it has landed: on the same spot and the same ground, facing
+		# the camera squarely (a flat card turned as the massif was would show its edge).
+		var card: Node3D = LuchaKit.kit_model(str(range_cards[i])) if i < range_cards.size() else null
+		if card != null:
+			card.name = "RangeCard"
+			card.position = at
+			for part: MeshInstance3D in card.find_children("*", "MeshInstance3D", true, false):
+				part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			parent.add_child(card)
+			out.append([card, at.y, float(r[3]) + 3.0])
+			continue
 		# No snow on the row: the snow line is the Peak's (its glacier's foot, 140 m up
 		# at this scale), far above these.
 		var mi := massif(float(r[2]), float(r[3]), float(r[4]), int(r[6]), r[7], r[8], r[9], false, float(r[10]))
-		mi.position = Vector3(float(r[0]), ground_y - 0.6, float(r[1]))
+		mi.position = at
 		mi.rotation.y = float(r[5])
 		parent.add_child(mi)
 		out.append([mi, mi.position.y, float(r[3]) + 3.0])

@@ -1852,3 +1852,25 @@ func _w_lever(_a: Array) -> void:
 	print("WATCH lever: from the deck, the left hand: thrown %s after %.2f s; the cart rolling %s with the climber at %s (not in it)" % [lv.thrown, pk.clock - t0, cart.run, where()])
 	await shot("72_pulled_from_the_deck")
 	c.driver = old_driver
+
+
+## THE FAR LAYERS (the far-facade rule, Parker 11-13): at each challenge's start, the game's
+## own camera, then the same spot pulled back to a view 48 m tall. far:TAG:7.1:7.5 ...
+## Pictures are <challenge>_close_<TAG> and <challenge>_pulled_back_<TAG>.
+func _w_far(a: Array) -> void:
+	var tag := str(a[0])
+	var first := true
+	for id: String in a.slice(1):
+		_free_cam = false
+		pk.warp(id)
+		await secs(6.5 if first else 3.5)  # (the area's banner clears)
+		first = false
+		var cam: Camera3D = main.cam
+		var at := Vector2(cam.position.x - Peak.ORIGIN.x, cam.position.y - Peak.ORIGIN.y)
+		var nm := id.replace(".", "_")
+		print("WATCH far %s: the camera at %s, %.1f m back" % [id, at, cam.position.z])
+		await shot(nm + "_close_" + tag)
+		look(at, 24.0)
+		await secs(0.5)
+		await shot(nm + "_pulled_back_" + tag)
+	_free_cam = false

@@ -1361,6 +1361,78 @@ buzz is still heard, the chirrs are the first thing to take out.
   showing above.
 - **Note 73's hop is not part of this.**
 
+## The far layers as flat facade cards (not a playtest note)
+
+- **State:** the game's side is in, drawn with plain code cards until the kit's models are
+  synced. Watched in the game by frame. Nothing played by a person.
+- **Parker 11-13:** "that is now the correct way to do far backgrounds" (flat painted cut-out
+  cards; `docs/peak/PEAK_DESIGN.md` section 7). Three far layers broke it: the valley's
+  floor, the sea of cloud's floor, and the plaza's modelled ranges.
+- **The valley** (`stages/peak/peak_backdrop.gd`): the flat floor of fields, the river and
+  road lying on it and the hill cards are gone. In their place ONE upright card stands
+  2,350 m back (`peak_valley_panorama`; a code card of the same measure until it lands): its
+  origin line, where the painted fields meet the feet of the painted hills, is at y 215
+  (`HORIZON_Y`). Measured in a frame from El Balcon (y 580): that line is half way between
+  the middle and the foot of the picture, so the valley is the bottom quarter.
+  - The two cardboard ranges stand on that line: their heights are squashed to 0.8 and lifted
+    215 m; the giants keep their own height (1,080 to 1,260 m). Their cards run on 900 m
+    below the line, hidden behind the valley's card: a card that much farther back shows its
+    foot HIGHER than the valley's line when seen from above, and sky would show under it.
+  - The tiny town (`town_far`) stands 12 m in front of the card, 150 m east of its middle,
+    34 m under the line, at 6.4x (it was 9x at 3.3 km: the same size on screen).
+    `town_at()` returns that spot. **Nothing in the game calls `town_at()`:** there are no
+    fireworks in the code yet, so there was nothing to check from the summit. For whoever
+    writes them: from the summit they must rise past about y 960 at the town's depth to
+    clear the banks in front of it.
+- **The sea of cloud:** the white floor is gone. Behind each of the seven rows of kit clouds
+  stands a continuous row of banks (`peak_cloud_bank_a` and `_b` by turns; code cards until
+  they land), their origin line at y 932.
+  - **Size:** a row's banks are scaled by its depth / 3,100 (the far row at the made size),
+    as the clouds are, but never under 0.3. The floor of 0.3 is needed: from the summit, 68 m
+    above the sea, a row's body must hang about 70 m to cover the gap down to the top of the
+    row in front. Scaled purely by depth, the near rows would hang 18 to 46 m and the valley
+    would show between them.
+  - Each row's banks stand just behind its farthest cloud (the last row at 3,600 m, in
+    front of both ranges), and its clouds are kept in front of them. The clouds drift as
+    before; the banks stand still.
+- **Each layer has its own seed now,** so a kit model landing in place of a stand-in does
+  not reshuffle the ranges or the clouds. The ranges and clouds are therefore not the same
+  shapes as before this change.
+- **The plaza's ranges** (`stages/plaza_mountains.gd`): each of the four is the kit's
+  painted card (`plaza_range_a` to `_d`) if it has landed, on the massif's own spot and
+  ground, square to the camera, and sinks for Del Mar by the same number. Otherwise the
+  massif, as before. The Peak's model and Del Mar's own hills are untouched. Tried with a
+  card that has landed (`stn_far_hills`, through the probe's new `--cards=`): it stands,
+  faces the camera and sinks.
+- **What the frames show** (`docs/peak/playtest/far/`, before and after pairs; the `clear_`
+  ones are from open air 290 m east of the route, where no area's own cards are in the way):
+  - **From the cliffs the sky is mostly gone.** The far banks are 300 m tall, so from y 580
+    the rows close into a striped ceiling from a little above the middle of the picture to
+    its top; open sky is one band between the far range and the first row. The sun and the
+    giants are behind the banks from there. Before, it was separate clouds on open sky.
+  - **From the summit** it is rows of white banks and clouds with nothing of the valley
+    between or under them, and a giant's snow tip standing out.
+  - **At the storm ridge** (y 933) the camera is inside the layer: the valley's hills and the
+    town show along the foot of the picture under the storm's clouds. It was so before too
+    (the old floor showed there).
+  - **In the game's own views the areas' own cards hide most of this:** the cableway's
+    orange mountains, the storm's wall and the summit's pale back card cover nearly all of
+    the far layers at 8.4, 10.5, 11.1 and 11.4. Only the cliffs see them widely.
+- **In the engine:** no trouble found. The valley's stand-in is colour regions 4 cm apart on
+  one plane: no ink between them and no flicker at 2.35 km (the ink asks for a step of
+  about a fifth of a pixel's width there, 12 cm at 4K). Banks side by side in one plane
+  show no joint. Every row's top and underside takes the ink, as cut-outs should.
+- **Not changed, and worth knowing:** the two cardboard ranges still have ink lines inside
+  them (their shade and snow cards stand 2 and 4 m proud of the body, as they always did).
+  The ranges are 7,400 m wide: on a 32:9 screen their ends would show (they did before).
+- **Checks:** lint; `--peak`; the party game's `--ring --bell --plazafloor --delmar --tower
+  --scramble`: all clean. The plaza and Del Mar by frame: unchanged, as no range card had
+  been synced when they were taken.
+- **Probes:** `tests/peak_watch.tscn` has a `far:TAG:7.1:7.5...` scene (each start, close and
+  pulled back). `tests/delmar_shot_probe.tscn` now keeps a small window off every screen
+  (the first run of it here opened a maximised window on Parker's screen for about 15 s),
+  and takes `--jpg` and `--cards=`.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

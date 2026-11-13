@@ -9,14 +9,22 @@ extends Node3D
 ## `origin` is the trailhead in the WORLD: the backdrop sets its own place to it
 ## (top-level), so `parent` can be any node, the Peak itself included.
 ##
-## OUTSIDE (the cliffs up, y 570 and over), all real depth, 1.3 to 3.9 km back, so it
-## slides by as a far land should and the climber rises toward the ranges' own height:
-##   - a valley floor of fields with a river and a road, the tiny town on it (the kit's
-##     `town_far` when it has landed; `town_at()` is where, for the bell's fireworks);
-##   - two cardboard ranges on the horizon, the far one snow-capped, and a cardboard sun;
-##   - the sea of cloud at y 932: cut-out clouds standing in a white floor that is only
-##     drawn from above, so from the cliffs it is a far ceiling of clouds and from the
-##     summit it is a sea with the far peaks standing out of it;
+## OUTSIDE (the cliffs up, y 570 and over), all real depth, 0.3 to 3.9 km back, so it
+## slides by as a far land should and the climber rises toward the ranges' own height.
+## FAR BACKGROUNDS ARE FLAT FACADE PIECES (Parker 11-13: "that is now the correct way to
+## do far backgrounds"; docs/peak/PEAK_DESIGN.md, section 7): every layer here is an
+## upright cut-out card. Nothing lies flat: there is no floor of fields and no floor of
+## cloud.
+##   - the valley, painted on ONE upright card 2.35 km back (the kit's
+##     `peak_valley_panorama`): fields, river and road below its horizon line, its hills
+##     above. The tiny town (the kit's `town_far`) stands just in front of it, under the
+##     hills; `town_at()` is where, for the bell's fireworks;
+##   - two cardboard ranges behind it, their feet on that horizon line, the far one
+##     snow-capped, and a cardboard sun;
+##   - the sea of cloud at y 932: seven rows of cut-out clouds, and behind each row a
+##     continuous row of cloud banks (the kit's `peak_cloud_bank_a` and `_b`), so from the
+##     summit it is rows of white banks with the far peaks standing out of them, and from
+##     the cliffs a far ceiling of cloud rows;
 ##   - the storm's deck, y 872 to 975: dark cut-out clouds close behind the ridge.
 ## The far land shows while the camera is above OUTSIDE_FROM, or out on the east face
 ## lower down (a fall down the bare slope), and sinks away toward the trailhead, where
@@ -29,15 +37,43 @@ extends Node3D
 ## mountain's own card (the course's `st` body card at z -9) and behind any full-room
 ## back card an area lays, so they only show where those are cut or left out.
 ##
-## Cheap: flat cards on the one atlas material, a few dozen kit clouds, and nothing per
-## frame but the clouds' drift and which groups show.
+## Cheap: flat cards on the one atlas material, a few dozen kit clouds and banks, and
+## nothing per frame but the clouds' drift and which groups show.
 
 const META := "res://stages/peak/course/_meta.json"
 const OUTSIDE_FROM := 430.0  # above this the camera may see out (the chimney's slit, then the cliffs)
-const FLOOR_Y := -10.0  # the valley floor
+## THE VALLEY'S CARD (the kit's `peak_valley_panorama`): 7,200 m wide, its origin at the
+## middle of its width on the line where its painted fields meet the feet of its painted
+## hills. The fields run 950 m DOWN from that line and the hills rise 110 m above it.
+const VALLEY_Z := -2350.0
+const VALLEY_W := 7200.0
+const VALLEY_DOWN := 950.0
+const VALLEY_UP := 110.0
+## The height of that line. From El Balcon (y 580) the painted valley is the bottom quarter
+## of the picture. It thins away as the climber rises: a strip along the foot of the
+## picture at the glacier, and hidden under the banks of cloud from the summit.
+const HORIZON_Y := 215.0
 const SEA_Y := 932.0  # the sea of cloud
-const TOWN_AT := Vector3(150.0, FLOOR_Y, -3300.0)  # the tiny town (local)
-const TOWN_SCALE := 9.0
+## The tiny town (local): on the card's calm patch, 150 m east of its middle, under the
+## hills and a few metres in front of the card. (It stood 3.3 km back at 9x: this is the
+## same size on screen.)
+const TOWN_AT := Vector3(150.0, HORIZON_Y - 34.0, VALLEY_Z + 12.0)
+const TOWN_SCALE := 6.4
+## A CLOUD BANK (the kit's `peak_cloud_bank_a` and `_b`): 1,000 m wide, its origin at the
+## middle of its width at the height of the dips between its top scallops; the scallops
+## stand up to 70 m above that, the calm body hangs 230 m below.
+const BANK_W := 1000.0
+const BANK_UP := 70.0
+const BANK_DOWN := 230.0
+## A row's banks are sized to its distance as its clouds are (the far row at the made
+## size), but never smaller than BANK_MIN: seen from the summit, 68 m above the sea, a
+## row's body must hang down past the top of the row in front of it, or the valley shows
+## between the rows (about 70 m of body, whatever the row).
+const BANK_FAR := 3100.0
+const BANK_MIN := 0.3
+## The ranges were drawn standing on y 0: their heights are squashed by this and stood on
+## the horizon line (the giants keep their own height: they must clear the sea of cloud).
+const RANGE_SQUASH := 0.8
 ## The mountain's east face from the summit down: [local x, local y] (tools/peak/areas/st.py).
 const EAST := [[-350, 1000], [-334, 962], [-307, 884], [-281, 784], [-251, 684], [-230, 578], [-177, 400],
 	[-150, 322], [-130, 260], [-90, 150], [-60, 60], [-34, 5.5], [-16, -40]]
@@ -51,10 +87,12 @@ const HAZE_MID := Color("#8A8FA0")
 const HAZE_MID_SHADE := Color("#787E92")
 const HILL := Color("#72866A")
 const HILL_SHADE := Color("#61745C")
+const HILL_FAR := Color("#7E8B85")  # the stand-in card's back row of hills, hazed
 const FIELDS := [Color("#8E9A76"), Color("#869270"), Color("#9A9E7A"), Color("#A49A7C"), Color("#7C8A6C")]
 const RIVER := Color("#86AEC2")
 const ROAD := Color("#B4A88C")
-const SEA := Color("#9AA0BA")  # (a floor facing the sun draws far brighter: this comes out a pale lavender, under the white clouds)
+const BANK := Color("#B4BBD0")  # the stand-in banks (a mid value: the light lifts it to a pale lavender white, under the kit's white clouds)
+const BANK_BODY := Color("#A6AEC6")
 const SUN := Color("#FFD75A")
 const STORM := [Color("#565D6A"), Color("#474E5A"), Color("#5C6470"), Color("#6B7482")]  # the wall, then nearer
 ## Each cavern: [area id, motif]. Regions and tones come from the course's meta.
@@ -69,8 +107,8 @@ const FALLBACK := {
 	"a6": [[-294, 476, -214, 588], "#7E3C2A", "#5C2A1E", "#3C1A12"],
 }
 
-var _outside: Node3D  # the far land: valley, town, ranges, sun
-var _sky: Node3D  # the sea of cloud and the storm's deck
+var _outside: Node3D  # the far land: the valley's card, town, ranges, sun
+var _sky: Node3D  # the sea of cloud (its clouds and banks) and the storm's deck
 var _caves: Array = []  # [node, Rect2 (the region, grown)]
 var _clouds: Array = []  # [node, speed m/s, half width, lo x, hi x]
 var _town: Node3D
@@ -118,7 +156,8 @@ func tick(delta: float, cam: Camera3D) -> void:
 
 
 ## Where the tiny town stands, in the world (the bell's fireworks go up from here; they
-## need to climb past the sea of cloud, y SEA_Y, to be seen from the summit).
+## need to climb past the sea of cloud's banks, about y SEA_Y + 40, to be seen from the
+## summit).
 func town_at() -> Vector3:
 	return position + TOWN_AT
 
@@ -141,72 +180,18 @@ func _build_outside() -> void:
 	_sky = Node3D.new()
 	_sky.name = "Sky"
 	add_child(_sky)
+	# (Each part draws from its own seed, so a kit model landing in place of a stand-in
+	# does not reshuffle the ranges or the clouds.)
 	var rng := RandomNumberGenerator.new()
-	rng.seed = 7784
-	# ---- the valley floor: fields as one flat sheet (the joints are colour only)
-	var sts: Array = []
-	for k in FIELDS.size():
-		var st := SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		st.set_normal(Vector3.UP)
-		sts.append(st)
-	var x0 := -3600.0
-	var z0 := -150.0
-	var cell := 130.0
-	var nx := 56
-	var nz := 29
-	var pts: Array = []
-	for j in nz + 1:
-		var row: Array = []
-		for i in nx + 1:
-			var edge := i == 0 or i == nx or j == 0 or j == nz
-			var jx := 0.0 if edge else rng.randf_range(-36.0, 36.0)
-			var jz := 0.0 if edge else rng.randf_range(-36.0, 36.0)
-			row.append(Vector3(x0 + i * cell + jx, FLOOR_Y, z0 - j * cell + jz))
-		pts.append(row)
-	for j in nz:
-		for i in nx:
-			var st: SurfaceTool = sts[rng.randi() % FIELDS.size()]
-			var a: Vector3 = pts[j][i]
-			var b: Vector3 = pts[j][i + 1]
-			var c: Vector3 = pts[j + 1][i + 1]
-			var d: Vector3 = pts[j + 1][i]
-			for v in [a, d, c, a, c, b]:  # seen from above
-				st.add_vertex(v)
-	var floor_mesh := ArrayMesh.new()
-	for k in FIELDS.size():
-		(sts[k] as SurfaceTool).commit(floor_mesh)
-		floor_mesh.surface_set_material(floor_mesh.get_surface_count() - 1, LuchaKit.mat(FIELDS[k]))
-	var floor_mi := MeshInstance3D.new()
-	floor_mi.name = "Valley"
-	floor_mi.mesh = floor_mesh
-	floor_mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	CelPass.unify(floor_mi)
-	_outside.add_child(floor_mi)
-	# ---- a river across it, and the road from the mountain's foot to the town
-	var river := PackedVector3Array()
-	for i in 15:
-		var t := float(i) / 14.0
-		river.append(Vector3(lerpf(-2900.0, 3100.0, t) + sin(t * 9.0) * 160.0, FLOOR_Y + 1.5, lerpf(-1500.0, -3850.0, t) + sin(t * 5.3 + 1.0) * 220.0))
-	_outside.add_child(_ribbon(river, 44.0, RIVER))
-	var road := PackedVector3Array()
-	for i in 9:
-		var t := float(i) / 8.0
-		road.append(Vector3(lerpf(-420.0, TOWN_AT.x, t) + sin(t * 6.0) * 90.0, FLOOR_Y + 2.5, lerpf(-1300.0, TOWN_AT.z + 40.0, t)))
-	_outside.add_child(_ribbon(road, 11.0, ROAD))
-	# ---- low green hills on the floor (under the line of sight to the town)
-	var hill_polys: Array = []
-	var hill_shade: Array = []
-	var hx := -3300.0
-	while hx < 3300.0:
-		var w := rng.randf_range(260.0, 520.0)
-		var h := rng.randf_range(55.0, 110.0)
-		if absf(hx + w * 0.5 - TOWN_AT.x) > 420.0:
-			hill_polys.append(_mound(hx, w, h, FLOOR_Y))
-			hill_shade.append(PackedVector2Array([Vector2(hx, FLOOR_Y), Vector2(hx + w * 0.42, FLOOR_Y + h), Vector2(hx + w * 0.3, FLOOR_Y)]))
-		hx += w * rng.randf_range(0.7, 1.5)
-	_outside.add_child(_cards(hill_polys, -2350.0, HILL))
-	_outside.add_child(_cards(hill_shade, -2348.0, HILL_SHADE))
+	# ---- the valley: ONE upright card, painted (Parker 11-13: far backgrounds are flat
+	# facade pieces). Its origin line stands at HORIZON_Y.
+	var valley := LuchaKit.kit_model("peak_valley_panorama")
+	if valley == null:
+		valley = _stand_in_valley()
+	valley.name = "Valley"
+	valley.position = Vector3(0.0, HORIZON_Y, VALLEY_Z)
+	_no_shadow(valley)
+	_outside.add_child(valley)
 	# ---- the tiny town
 	_town = LuchaKit.kit_model("town_far")
 	if _town == null:
@@ -214,10 +199,13 @@ func _build_outside() -> void:
 	_town.name = "TownFar"
 	_town.scale = Vector3.ONE * TOWN_SCALE
 	_town.position = TOWN_AT
+	_no_shadow(_town)
 	_outside.add_child(_town)
-	# ---- the ranges on the horizon: the far one high and snow-capped, a lower one before it
-	# (low: from the cliffs the climber looks DOWN on them; only a few far giants stand as
-	# high as the summit, and those are the peaks that rise out of the sea of cloud)
+	# ---- the ranges behind the valley's card, their feet on its horizon line: the far one
+	# high and snow-capped, a lower one before it (low: from the cliffs the climber looks
+	# DOWN on them; only a few far giants stand as high as the summit, and those are the
+	# peaks that rise out of the sea of cloud)
+	rng.seed = 7785
 	_range(-3620.0, 170.0, 400.0, 15, 0, HAZE_MID, HAZE_MID_SHADE, false, rng)
 	_range(-3880.0, 400.0, 700.0, 12, 4, HAZE_FAR, HAZE_FAR_SHADE, true, rng)
 	# ---- a cardboard sun, low over the far range
@@ -229,27 +217,30 @@ func _build_outside() -> void:
 	sun.position = Vector3(1500.0, 1560.0, 0.0)
 	sun.name = "Sun"
 	_outside.add_child(sun)
-	# ---- the sea of cloud: a white floor drawn only from above, and cut-out clouds
-	# standing in it, row behind row, each row sized to its distance
-	var sea := MeshInstance3D.new()
-	var sst := SurfaceTool.new()
-	sst.begin(Mesh.PRIMITIVE_TRIANGLES)
-	sst.set_normal(Vector3.UP)
-	var s0 := Vector3(-3600.0, SEA_Y, -150.0)
-	var s1 := Vector3(3600.0, SEA_Y, -150.0)
-	var s2 := Vector3(3600.0, SEA_Y, -3950.0)
-	var s3 := Vector3(-3600.0, SEA_Y, -3950.0)
-	for v in [s0, s3, s2, s0, s2, s1]:
-		sst.add_vertex(v)
-	sea.mesh = sst.commit()
-	sea.name = "CloudSea"
-	sea.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	CelPass.paint(sea, SEA)
-	_sky.add_child(sea)
+	# ---- the sea of cloud: cut-out clouds row behind row, each row sized to its distance,
+	# and behind each row a continuous row of cloud banks, a and b by turns, their origin
+	# line at SEA_Y. No floor: from above, each row's body hides what is under the next.
+	rng.seed = 7786
 	var which := 0
+	var row := 0
 	for depth in [240.0, 400.0, 640.0, 1000.0, 1500.0, 2200.0, 3100.0]:
 		var w: float = depth * 0.2
 		var half_span: float = depth * 0.62 + 320.0
+		# The banks stand just behind the row's farthest cloud (and in front of the ranges).
+		var bank_z: float = -minf(depth * 1.19, 3600.0)
+		var bank_k: float = maxf(BANK_MIN, depth / BANK_FAR)
+		var bank_w: float = BANK_W * bank_k
+		var bank_half: float = depth * 1.15 + 420.0  # (wider than the clouds' run: a screen up to 32:9, and the camera's own travel)
+		var bx: float = -250.0 - bank_half - rng.randf_range(0.0, bank_w)
+		var bi := row
+		while bx < -250.0 + bank_half:
+			var bank := _bank(bi % 2 == 0)
+			bank.scale = Vector3.ONE * bank_k
+			bank.position = Vector3(bx + bank_w * 0.5, SEA_Y, bank_z)
+			_sky.add_child(bank)
+			bx += bank_w
+			bi += 1
+		row += 1
 		var cx: float = -250.0 - half_span + rng.randf_range(0.0, w)
 		while cx < -250.0 + half_span:
 			var cw := w * rng.randf_range(0.8, 1.25)
@@ -259,7 +250,8 @@ func _build_outside() -> void:
 			var far: float = clampf((depth - 640.0) / 2460.0, 0.0, 1.0)
 			cloud.scale.y *= lerpf(1.0, 0.5, far)
 			cloud.scale.z *= 0.12  # a kit cloud this big would be 40 m thick: keep it a card
-			cloud.position = Vector3(cx, SEA_Y + cw * lerpf(0.2, 0.1, far), -depth + rng.randf_range(-0.17, 0.17) * depth)
+			var cz: float = maxf(-depth + rng.randf_range(-0.17, 0.17) * depth, bank_z + depth * 0.012)  # (in front of its row's banks)
+			cloud.position = Vector3(cx, SEA_Y + cw * lerpf(0.2, 0.1, far), cz)
 			_sky.add_child(cloud)
 			_clouds.append([cloud, depth * 0.004 * rng.randf_range(0.7, 1.3), cw * 0.5, -250.0 - half_span - cw, -250.0 + half_span + cw])
 			cx += cw * rng.randf_range(0.95, 1.5) * lerpf(1.0, 1.7, far)
@@ -288,7 +280,9 @@ func _build_outside() -> void:
 func _range(z: float, crest_lo: float, crest_hi: float, peaks: int, giant_every: int, col: Color, shade: Color, snow: bool, rng: RandomNumberGenerator) -> void:
 	var x0 := -3700.0
 	var x1 := 3700.0
-	var base := FLOOR_Y - 30.0
+	# The card runs on far below the horizon line, behind the valley's card: seen from
+	# above, a card this much farther back shows its foot higher than the valley's line.
+	var base := HORIZON_Y - 900.0
 	var line := PackedVector2Array()  # the ridge, left to right: saddle, peak, saddle, peak ...
 	var step := (x1 - x0) / peaks
 	line.append(Vector2(x0, crest_lo * 0.45))
@@ -300,6 +294,11 @@ func _range(z: float, crest_lo: float, crest_hi: float, peaks: int, giant_every:
 		line.append(Vector2(px, ph))
 		var sx := x0 + (float(i) + 1.0 + rng.randf_range(-0.12, 0.12)) * step if i < peaks - 1 else x1
 		line.append(Vector2(sx, minf(ph, crest_lo) * rng.randf_range(0.5, 0.72)))
+	# Stood on the horizon line (the heights above were drawn standing on y 0).
+	var snow_from := HORIZON_Y + 640.0 * RANGE_SQUASH
+	for i in line.size():
+		if line[i].y < 1000.0:
+			line[i].y = HORIZON_Y + line[i].y * RANGE_SQUASH
 	var body := PackedVector2Array([Vector2(x0, base)])
 	body.append_array(line)
 	body.append(Vector2(x1, base))
@@ -312,7 +311,7 @@ func _range(z: float, crest_lo: float, crest_hi: float, peaks: int, giant_every:
 		var top := line[i * 2 + 1]
 		var right := line[i * 2 + 2]
 		shades.append(PackedVector2Array([left, top, Vector2(top.x + (right.x - top.x) * rng.randf_range(0.1, 0.3), base), Vector2(left.x, base)]))
-		if snow and top.y > 640.0:
+		if snow and top.y > snow_from:
 			var k := 0.24
 			var a := top.lerp(left, k)
 			var b := top.lerp(right, k)
@@ -329,6 +328,167 @@ func _mound(x: float, w: float, h: float, y: float) -> PackedVector2Array:
 		var t := float(i) / 8.0
 		pts.append(Vector2(x + w * t, y + h * sin(t * PI) * (0.85 + 0.15 * sin(t * 7.0))))
 	return pts
+
+
+## THE VALLEY'S CARD until the kit's `peak_valley_panorama` lands, in that model's own
+## frame (origin at the middle of the horizon line, face at z 0): a patchwork of fields
+## whose rows thin toward the line, a river and a road across them, and two rows of low
+## hills above, the back row hazed. Flush colour regions on one plane: the layers are a
+## few centimetres apart, far too little for the ink to take as an edge at 2 km.
+func _stand_in_valley() -> Node3D:
+	var root := Node3D.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7784
+	var half := VALLEY_W * 0.5
+	var sts: Array = []
+	for k in FIELDS.size():
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		st.set_normal(Vector3(0, 0, 1))
+		sts.append(st)
+	var rows := 15
+	for j in rows:
+		var y0 := -VALLEY_DOWN * pow(1.0 - float(j) / rows, 1.7)
+		var y1 := -VALLEY_DOWN * pow(1.0 - float(j + 1) / rows, 1.7)
+		var cell := lerpf(340.0, 110.0, float(j) / (rows - 1))
+		var lean := rng.randf_range(-0.5, 0.5) * cell
+		var x := -half
+		var lo := x  # the cell's left edge along the row's foot, and along its top
+		var hi := x
+		while x < half:
+			var w := cell * rng.randf_range(0.6, 1.4)
+			var last := x + w >= half
+			var lo1 := half if last else x + w
+			var hi1 := half if last else minf(maxf(x + w + lean + rng.randf_range(-0.2, 0.2) * cell, hi + 1.0), half)
+			var st: SurfaceTool = sts[rng.randi() % FIELDS.size()]
+			for v in [Vector2(lo, y0), Vector2(hi, y1), Vector2(hi1, y1), Vector2(lo, y0), Vector2(hi1, y1), Vector2(lo1, y0)]:  # facing the camera
+				st.add_vertex(Vector3(v.x, v.y, 0.0))
+			lo = lo1
+			hi = hi1
+			x += w
+	var fields := ArrayMesh.new()
+	for k in FIELDS.size():
+		(sts[k] as SurfaceTool).commit(fields)
+		fields.surface_set_material(fields.get_surface_count() - 1, LuchaKit.mat(FIELDS[k]))
+	var fields_mi := MeshInstance3D.new()
+	fields_mi.mesh = fields
+	CelPass.unify(fields_mi)
+	root.add_child(fields_mi)
+	# the river, wide at the card's foot and a thread at the line; the road from the
+	# mountain's foot to the town
+	var river: Array = []
+	for i in 22:
+		var t := float(i) / 21.0
+		river.append([Vector2(lerpf(-2900.0, 3100.0, t) + sin(t * 9.0) * 160.0, lerpf(-640.0, -46.0, pow(t, 0.7)) + sin(t * 5.3 + 1.0) * 30.0 * (1.0 - t)), lerpf(64.0, 7.0, pow(t, 0.6))])
+	root.add_child(_cards(_strip(river), 0.04, RIVER))
+	var road: Array = []
+	for i in 12:
+		var t := float(i) / 11.0
+		road.append([Vector2(lerpf(-420.0, 150.0, t) + sin(t * 6.0) * 90.0 * (1.0 - t), lerpf(-VALLEY_DOWN, -40.0, pow(t, 0.55))), lerpf(30.0, 4.0, pow(t, 0.5))])
+	root.add_child(_cards(_strip(road), 0.08, ROAD))
+	# the hills on the line: a hazed row behind, then a nearer row with shade flanks,
+	# left open where the town stands
+	var far_hills: Array = []
+	var hx := -half
+	while hx < half:
+		var w := rng.randf_range(420.0, 760.0)
+		far_hills.append(_mound(hx, minf(w, half - hx), rng.randf_range(70.0, VALLEY_UP), 0.0))
+		hx += w * rng.randf_range(0.55, 0.8)
+	root.add_child(_cards(far_hills, 0.04, HILL_FAR))
+	var hills: Array = []
+	var shades: Array = []
+	hx = -half
+	while hx < half:
+		var w := minf(rng.randf_range(260.0, 520.0), half - hx)
+		var h := rng.randf_range(34.0, 78.0)
+		if absf(hx + w * 0.5 - 150.0) > 430.0 and w > 120.0:
+			hills.append(_mound(hx, w, h, 0.0))
+			shades.append(PackedVector2Array([Vector2(hx, 0.0), Vector2(hx + w * 0.42, h * 0.97), Vector2(hx + w * 0.3, 0.0)]))
+		hx += w * rng.randf_range(0.7, 1.4)
+	root.add_child(_cards(hills, 0.08, HILL))
+	root.add_child(_cards(shades, 0.12, HILL_SHADE))
+	return root
+
+
+## Quads along a painted line on a card: [[point, width there], ...] (the width is up
+## and down the card).
+static func _strip(line: Array) -> Array:
+	var out: Array = []
+	for i in line.size() - 1:
+		var a: Vector2 = line[i][0]
+		var b: Vector2 = line[i + 1][0]
+		var ha := Vector2(0.0, float(line[i][1]) * 0.5)
+		var hb := Vector2(0.0, float(line[i + 1][1]) * 0.5)
+		out.append(PackedVector2Array([a - ha, b - hb, b + hb, a + ha]))
+	return out
+
+
+## One cloud bank: the kit's model, or until it lands a plain card of its measure: top
+## scallops standing out of the origin line, a calm body hanging below, and both ends
+## cut square at the line so a row of them is one unbroken bank.
+func _bank(first: bool) -> Node3D:
+	var k := LuchaKit.kit_model("peak_cloud_bank_a" if first else "peak_cloud_bank_b")
+	if k != null:
+		_no_shadow(k)
+		return k
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 311 if first else 947
+	var half := BANK_W * 0.5
+	var foot := -BANK_DOWN * 0.86
+	var pts := PackedVector2Array()
+	# the top, left to right: round heads, a dip to the line between each
+	var x := -half
+	while x < half - 1.0:
+		var w := minf(rng.randf_range(110.0, 230.0), half - x)
+		if half - (x + w) < 90.0:
+			w = half - x
+		var h := BANK_UP * rng.randf_range(0.45, 1.0) * clampf(w / 170.0, 0.5, 1.0)
+		for i in 9:
+			var ang := PI - float(i) / 8.0 * PI
+			pts.append(Vector2(x + w * 0.5 + cos(ang) * w * 0.5, sin(ang) * h))
+		x += w
+	# the underside, right to left: shallow bellies
+	var under := PackedVector2Array()
+	x = half
+	while x > -half + 1.0:
+		var w := minf(rng.randf_range(140.0, 260.0), x + half)
+		if (x - w) + half < 110.0:
+			w = x + half
+		var sag := (BANK_DOWN + foot) * rng.randf_range(0.5, 1.0)
+		for i in 7:
+			var ang := float(i) / 6.0 * PI
+			under.append(Vector2(x - w * 0.5 + cos(ang) * w * 0.5, foot - sin(ang) * sag))
+		x -= w
+	pts.append_array(under)
+	var root := Node3D.new()
+	root.add_child(_cards([_clean(pts)], 0.0, BANK))
+	# the calm body: a darker band along the underside, flush
+	var band := PackedVector2Array()
+	for i in 13:
+		var t := float(i) / 12.0
+		band.append(Vector2(lerpf(-half, half, t), foot + 46.0 + sin(t * TAU * (2.0 if first else 3.0)) * 16.0))
+	band.append_array(under)
+	root.add_child(_cards([_clean(band)], 0.03, BANK_BODY))
+	return root
+
+
+## An outline without doubled points (where one round head ends and the next begins).
+static func _clean(pts: PackedVector2Array) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for p in pts:
+		if out.is_empty() or out[out.size() - 1].distance_to(p) > 0.01:
+			out.append(p)
+	if out.size() > 1 and out[0].distance_to(out[out.size() - 1]) <= 0.01:
+		out.remove_at(out.size() - 1)
+	return out
+
+
+## Nothing this far back casts a shadow.
+static func _no_shadow(n: Node) -> void:
+	for mi: MeshInstance3D in n.find_children("*", "MeshInstance3D", true, false):
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if n is MeshInstance3D:
+		(n as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 ## The tiny town until the kit's `town_far` lands: 40 m wide before scaling, cream and
@@ -510,36 +670,6 @@ static func _cards(polys: Array, z: float, col: Color) -> MeshInstance3D:
 				c = t
 			for v in [a, b, c]:
 				st.add_vertex(Vector3(v.x, v.y, z))
-	var mi := MeshInstance3D.new()
-	mi.mesh = st.commit()
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	CelPass.paint(mi, col)
-	return mi
-
-
-## A flat strip along `pts` on the ground, `width` wide, seen from above.
-static func _ribbon(pts: PackedVector3Array, width: float, col: Color) -> MeshInstance3D:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	st.set_normal(Vector3.UP)
-	var left := PackedVector3Array()
-	var right := PackedVector3Array()
-	for i in pts.size():
-		var dir := (pts[mini(i + 1, pts.size() - 1)] - pts[maxi(i - 1, 0)]).normalized()
-		var side := Vector3(-dir.z, 0.0, dir.x) * width * 0.5
-		left.append(pts[i] - side)
-		right.append(pts[i] + side)
-	for i in pts.size() - 1:
-		for tri in [[left[i], left[i + 1], right[i + 1]], [left[i], right[i + 1], right[i]]]:
-			var a: Vector3 = tri[0]
-			var b: Vector3 = tri[1]
-			var c: Vector3 = tri[2]
-			if (b - a).cross(c - a).y > 0.0:  # counter-clockwise from above: turn it
-				var t := b
-				b = c
-				c = t
-			for v in [a, b, c]:
-				st.add_vertex(v)
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

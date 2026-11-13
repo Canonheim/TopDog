@@ -5,6 +5,9 @@ extends Node
 ## -- --out=DIR (writes dm_<name>.png)  --mountains=new (the modelled PlazaMountains in
 ## place of whatever the plaza built, to review them before they're wired in)
 ## --plaza-only (stop after the plaza's cameras)  --flag (the Peak's summit flag shown)
+## --cards=a,b,c,d (kit models to stand as the four ranges' painted cards, with
+## --mountains=new: tries PlazaMountains' card path with models that have landed)
+## --jpg (writes JPEG)  The window is small and off every screen: main would maximise it.
 const PLAZA_CAMS := [
 	["title", Vector3(0.0, 2.13, 10.47), Vector3(0.0, 1.83, 0.0)],
 	["lobby", Vector3(-5.5, 5.85, 31.0), Vector3(-5.5, 4.85, 0.0)],
@@ -26,6 +29,15 @@ const CAMS := [
 ]
 
 
+var _jpg := false
+
+
+func _window() -> void:
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(Vector2i(1280, 720))
+	DisplayServer.window_set_position(Vector2i(4000, 3000))  # off every screen: it still draws
+
+
 func _ready() -> void:
 	var out := "user://dm_frames"
 	var new_mountains := false
@@ -40,10 +52,17 @@ func _ready() -> void:
 			plaza_only = true
 		elif a == "--flag":
 			flag = true
+		elif a == "--jpg":
+			_jpg = true
+		elif a.begins_with("--cards="):
+			PlazaMountains.range_cards = Array(a.get_slice("=", 1).split(","))
 	DirAccess.make_dir_recursive_absolute(out)
 	var main = load("res://game/main.tscn").instantiate()
 	get_tree().root.add_child.call_deferred(main)
-	await get_tree().create_timer(3.0).timeout
+	await get_tree().create_timer(0.5).timeout
+	_window()
+	await get_tree().create_timer(2.5).timeout
+	_window()
 	var lucha = main.lucha
 	if new_mountains:
 		for m in lucha._mountains:
@@ -54,6 +73,9 @@ func _ready() -> void:
 		for m in PlazaMountains.build(plaza, Stage.PLAZA_GROUND):
 			lucha._mountains.append(m)
 		lucha._mountains_t = 0.0
+		for m in lucha._mountains:
+			var n: Node3D = m[0]
+			print("MOUNTAIN %s at %s, yaw %.2f, sinks %.1f m" % [n.name, n.position, n.rotation.y, float(m[2])])
 	var cam := Camera3D.new()
 	cam.fov = 34.0
 	get_tree().root.add_child(cam)
@@ -89,5 +111,9 @@ func _shoot(cam: Camera3D, c: Array, out: String) -> void:
 	cam.make_current()
 	await get_tree().create_timer(0.4).timeout
 	await RenderingServer.frame_post_draw
-	get_viewport().get_texture().get_image().save_png(out + "/dm_" + str(c[0]) + ".png")
+	var img := get_viewport().get_texture().get_image()
+	if _jpg:
+		img.save_jpg(out + "/dm_" + str(c[0]) + ".jpg", 0.85)
+	else:
+		img.save_png(out + "/dm_" + str(c[0]) + ".png")
 	print("SHOT ", c[0])
