@@ -487,6 +487,7 @@ RULES = [
     "Every breakable thing wears the game's one breakable look: cracked already, with a corner gone (notes 16, 24, 31, 53, 64).",
     "The painted back wall never stops inside the frame, so there are no black holes (note 51). The insides of small pits can't be held (note 52).",
     "One frog is hidden in every biome (note 60), in a little room you can walk into. A room you can enter is cut away at the front: floor, back wall and roof, no front wall.",    "Far backgrounds are flat facade pieces (Parker, 11-13): one cut-out card standing well back, painted in a few broad rows that haze toward the horizon, with a few bold silhouettes cut into its ridge. Never modelled terrain, and never an empty plane running to a ruled horizon. The station's dry hills are the worked example.",
+    "Open ground is designed, never one flat colour (Parker, 11-13): one painted slab with no height that runs off every edge of the screen, laid out as a real place in bands from the camera back (tufts and stones, a worn road with ruts, a trodden yard, paving where people built, patched open country, paler far bands), with real plants and rocks standing on its darker patches. No more than about 4 m of one flat colour on screen. The station's ground is the worked example.",
 ]
 
 # ------------------------------------------------------------------ pages

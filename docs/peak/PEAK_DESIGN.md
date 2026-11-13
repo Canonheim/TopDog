@@ -233,6 +233,60 @@ and `stn_far_hills_design.py`; it stands 95 m behind the climb, 160 m wide, 6 to
 - **Far enough back that it barely slides** as the camera moves. In front of it: the ground
   and the real props. Behind it: the sky and the far ranges.
 
+**The ground is designed, not a flat plane (Parker, 2026-11-13).** Open ground is never one
+flat colour running to the horizon. Parker, of the station's first ground: "a massive flat tan
+plane". Of the ground that replaced it: "your ground work was also very good, make sure that
+info on how you did it is written down". This is how it was done; the worked example is the
+kit's `stn_yard_floor` (`Top Dog Kit\source\build_stn_yard_floor.py` and
+`stn_yard_floor_design.py`) with the props that stand on it (`stn_b_ground.py`).
+
+It is two things together: one painted slab, and things standing on it.
+
+**1. The slab: one flat model, all paint, no height.**
+- **One slab, 2 cm thick,** laid over whatever ground is there. Nothing on it has height, so
+  the climber walks through all of it. Every mark is a flush colour region on ONE plane, cut
+  in a design step (shapely), so no ink is drawn between its colours.
+- **It runs off every edge of the screen,** at the close camera and at the pulled-back one.
+  The first try was 52 m by 9 m and its front edge showed as a hard inked line across the
+  lower third of the screen. The one that worked is 96 m by 122 m: 32 m toward the camera and
+  90 m back. If any edge of the ground can come into frame, it is too small.
+- **No more than about 4 m of one flat colour anywhere on screen.** That was the brief's test.
+- **It is laid out as a real place, in bands from the camera back:**
+  - *Foreground* (in front of the road): a second rutted track, then flat stones and tufts
+    about every 4 m in rows, thinning toward the camera. Bold and sparse.
+  - *The road* (under the climb): a paler worn band about 5 m wide, a darker verge either
+    side, wheel ruts, worn patches along it.
+  - *The yard* (between the road and what is built behind): trodden earth, cart tracks that
+    go where carts went (from the gate to the dock's end), soft patches.
+  - *Paving where people built:* a cobbled street through the gate and down the alley, its
+    stones drawn bigger the further back they are, and a forecourt apron in front of the gate.
+  - *Open country:* a yellower ground, patches of two earth tones and two scrub olives, and
+    one wandering line to lead the eye away (a dry stream bed of pale sand between darker
+    banks). The darker olive patches are where bushes and cactus are then stood.
+  - *Far:* two or three long calm bands, each paler than the last, toward the horizon.
+- **Detail is sized by distance:** bold at 1 m = 80 pixels near the camera, broad shapes only
+  far away.
+- **Mid-value earth, a step darker and warmer than the pale plaza ground,** so the bone-white
+  climber reads against it.
+- **Its origin is a line that means something** (here the middle of the yard wall's foot), and
+  it did not move when the slab was made bigger, so nothing placed on it had to move.
+
+**2. What stands on it.** Real models on the darker patches, well behind the climb: two
+saguaros, prickly pear, yucca, rock clusters, dry grass tufts, a dead tree. A few, big, and
+mid-value. Thin plants (grass, the yucca's leaves) are flat cut-outs facing the camera: as
+separate blades each took its own ink line and the plant went black.
+
+**3. Then the horizon:** a flat facade card far behind (the rule above), so the ground ends
+against painted hills, not against the sky.
+
+**Two traps we hit:**
+- *The camera sits at about the climber's chest height.* So anything standing in FRONT of the
+  road covers the climber up to its own height, wherever the climber stands behind it. In
+  front of the road: only things under 0.3 m, or tufts 6 m and more toward the camera. Tall
+  foreground pieces go where nobody stands behind them (in front of a raised deck, past a wall).
+- *A deco's `size` must be the size its model is made at.* The game rescales a landed model
+  that is more than a quarter off the size the course gives it.
+
 **Storytelling without words:**
 - **The ones who tried.** Frozen climbers are part of the course. One sits by a cold
   lantern in the mine with tally marks scratched beside him. A chain of three hang
