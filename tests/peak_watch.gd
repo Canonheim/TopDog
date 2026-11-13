@@ -64,6 +64,8 @@ func _window() -> void:
 
 
 func _process(_delta: float) -> void:
+	if main != null and main.get("_focus_notice") != null:
+		(main.get("_focus_notice") as CanvasItem).visible = false  # (the window is off screen and unfocused on purpose)
 	if _free_cam and main != null:
 		var cam: Camera3D = main.cam
 		var dist := _cam_half / tan(deg_to_rad(cam.fov * 0.5))
@@ -166,3 +168,257 @@ func _w_cam(ids: Array) -> void:
 		var p := where()
 		print("WATCH cam %s: view %.1f m tall, climber %.2f m %s the middle" % [id, half * 2.0, absf(p.y + Peak.ORIGIN.y - cam.position.y), "above" if p.y + Peak.ORIGIN.y > cam.position.y else "below"])
 		await shot("cam_" + id.replace(".", "_"))
+
+
+# ---------------------------------------------------------------- more helpers
+
+## The hold with a behaviour whose outline's middle is nearest a point.
+func hold_near(at: Vector2, type: String) -> Dictionary:
+	var best := {}
+	var best_d := INF
+	for h: Dictionary in pk.things.holds:
+		if str(h.type) != type or not (h.body as Node).has_meta("peak_pts"):
+			continue
+		var d: float = pk.things._hold_middle(h.body).distance_to(at)
+		if d < best_d:
+			best_d = d
+			best = h
+	return best
+
+
+## Where a node's drawn meshes are, in the course's metres: [middle, size].
+func drawn_box(n: Node3D) -> Array:
+	var box := AABB()
+	var first := true
+	var list: Array = n.find_children("*", "MeshInstance3D", true, false)
+	if n is MeshInstance3D:
+		list.append(n)
+	for mi: MeshInstance3D in list:
+		if mi.mesh == null:
+			continue
+		var b := mi.global_transform * mi.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	var mid := box.get_center()
+	return [Vector2(mid.x - Peak.ORIGIN.x, mid.y - Peak.ORIGIN.y), Vector2(box.size.x, box.size.y)]
+
+
+## A mover's collision, outlined in a loud colour in front of everything (proof in a
+## picture that the drawn thing and the solid thing agree).
+func outline(m: Dictionary, col := Color(0.2, 1.0, 1.0)) -> Node3D:
+	var im := ImmediateMesh.new()
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = col
+	mat.no_depth_test = true
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	im.surface_begin(Mesh.PRIMITIVE_TRIANGLES, mat)
+	for sh in (m.def as Dictionary).shapes:
+		var pts: PackedVector2Array = pk._pts(sh.pts)
+		for i in pts.size():
+			var a := pts[i]
+			var b := pts[(i + 1) % pts.size()]
+			var n := (b - a).normalized().orthogonal() * 0.012
+			for p: Vector2 in [a - n, b - n, b + n, a - n, b + n, a + n]:
+				im.surface_add_vertex(Vector3(p.x, p.y, 0.0))  # (in the play plane: no parallax against the model)
+	im.surface_end()
+	var mi := MeshInstance3D.new()
+	mi.mesh = im
+	(m.nodes[0] as Node3D).add_child(mi)
+	return mi
+
+
+func mover_at(id: String) -> Vector2:
+	var m: Dictionary = pk.things.movers[id]
+	return (m.home as Vector2) + (m.offset as Vector2)
+
+
+## "drawn a..b across, c..d up" of a mover's model against the mover's own zero.
+func drawn_span(id: String) -> String:
+	var m: Dictionary = pk.things.movers[id]
+	var box := drawn_box(m.vis)
+	var mid: Vector2 = (box[0] as Vector2) - mover_at(id)
+	var half: Vector2 = (box[1] as Vector2) * 0.5
+	return "%.2f..%.2f across, %.2f..%.2f up" % [mid.x - half.x, mid.x + half.x, mid.y - half.y, mid.y + half.y]
+
+
+# ---------------------------------------------------------------- the playtest's scenes
+
+## Note 1: a rotten plank of 1.3 breaks and comes back. It must grow where it stands.
+func _w_plank(_a: Array) -> void:
+	stand(Vector2(-175.0, 6.0))
+	await secs(1.0)
+	var h := hold_near(Vector2(-178.9, 5.84), "crumble")
+	var mid: Vector2 = pk.things._hold_middle(h.body)
+	look(Vector2(-178.9, 5.6), 2.4)
+	await secs(0.5)
+	await shot("01_plank_whole")
+	h.break_at = pk.clock + 0.4  # (as if a hand had been on it)
+	await secs(0.3)
+	await shot("01_plank_shudder")
+	while float(h.back_at) < 0.0:
+		await get_tree().physics_frame
+	await secs(0.35)
+	await shot("01_plank_broken")
+	h.back_at = pk.clock + 0.8  # (not the whole 8 s)
+	var v: Node3D = h.vis
+	while not v.visible:
+		await get_tree().process_frame
+	var worst := 0.0
+	var t0 := Time.get_ticks_msec()
+	var n := 0
+	while Time.get_ticks_msec() - t0 < 600:
+		var box := drawn_box(v)
+		worst = maxf(worst, (box[0] as Vector2).distance_to(mid))
+		var el := Time.get_ticks_msec() - t0
+		if (n == 0 and el >= 40) or (n == 1 and el >= 110) or (n == 2 and el >= 200):
+			print("WATCH plank mid-return %d ms: scale %.2f, drawn middle %s (its place %s), drawn size %s" % [el, v.scale.x, box[0], mid, box[1]])
+			await shot("01_plank_return_%d" % n)
+			n += 1
+		else:
+			await get_tree().process_frame
+	print("WATCH plank: while it grew back its drawn middle was never more than %.3f m from its place" % worst)
+	await shot("01_plank_back")
+
+
+## Note 3: the ore bucket. Is the drawn bucket where the solid one is; do hands and feet
+## stick to it; does it carry a climber.
+func _w_bucket(_a: Array) -> void:
+	stand(Vector2(-198.0, 26.2))
+	await secs(1.0)
+	var m: Dictionary = pk.things.movers["cubo"]
+	var w: Dictionary = pk.things.movers["cubo_peso"]
+	var o1 := outline(m)
+	var o2 := outline(w, Color(1.0, 0.3, 1.0))
+	print("WATCH bucket: drawn %s; solid -0.60..0.60 across, 0.00..1.04 up" % drawn_span("cubo"))
+	print("WATCH counterweight: drawn %s; solid -0.80..0.80 across, 0.00..1.20 up" % drawn_span("cubo_peso"))
+	look(mover_at("cubo") + Vector2(-1.2, 0.4), 2.2)
+	await secs(0.3)
+	await shot("03_bucket_solid_outline")
+	o1.queue_free()
+	o2.queue_free()
+	# A hand laid on the outside of its wall, low down (the half that had no collision):
+	# the right hand on the west wall, so the body hangs outside the bucket.
+	var c := me()
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 99.0
+	c.limbs[1].regrip = 0.0
+	for i in 40:
+		put_limb(1, mover_at("cubo") + Vector2(-0.63, 0.3))
+		await get_tree().physics_frame
+		if c.limbs[1].grab_other != null:
+			break
+	print("WATCH bucket: a hand on the lower half of its wall holds: %s (limbs: %s)" % [c.limbs[1].grab_other == m.nodes[0], holds()])
+	for l in c.limbs:
+		l.regrip = 0.0
+	var y0 := where().y
+	var b0 := mover_at("cubo").y
+	look(mover_at("cubo") + Vector2(-0.8, -0.6), 3.0)
+	await secs(1.2)
+	await shot("03_bucket_hand_holds")
+	var t := 0.0
+	while t < 9.0 and absf(mover_at("cubo").y - b0) < 4.0:
+		await get_tree().physics_frame
+		t += 1.0 / Engine.physics_ticks_per_second
+		look(mover_at("cubo") + Vector2(-0.8, -0.6), 3.0)
+	print("WATCH bucket: hanging from it for %.1f s the bucket went %.2f m and the climber %.2f m; limbs: %s" % [t, mover_at("cubo").y - b0, where().y - y0, holds()])
+	await shot("03_bucket_hanging_ride")
+	# Standing in it.
+	c.release_all()
+	stand(mover_at("cubo") + Vector2(0.0, 0.14))
+	await secs(0.6)
+	y0 = where().y
+	b0 = mover_at("cubo").y
+	print("WATCH bucket: stood in it: %s" % holds())
+	look(mover_at("cubo") + Vector2(0.0, 0.8), 2.6)
+	await secs(0.2)
+	await shot("03_bucket_standing_in")
+	t = 0.0
+	while t < 9.0 and absf(mover_at("cubo").y - b0) < 4.0:
+		await get_tree().physics_frame
+		t += 1.0 / Engine.physics_ticks_per_second
+		look(mover_at("cubo") + Vector2(0.0, 0.8), 2.6)
+	print("WATCH bucket: standing in it for %.1f s the bucket went %.2f m and the climber %.2f m; limbs: %s; joints open %.3f m" % [t, mover_at("cubo").y - b0, where().y - y0, holds(), c.worst_joint_gap()])
+	await shot("03_bucket_riding_in")
+	_free_cam = false
+	await secs(1.5)
+	await shot("03_bucket_riding_game_camera")
+
+
+## Note 5: an up-or-down wind's streaks stay in its own box. wind:a1 or wind:a4
+func _w_wind(a: Array) -> void:
+	var area := str(a[0]) if a.size() > 0 else "a1"
+	var row: Dictionary = {}
+	for wrow: Dictionary in pk.zones.winds:
+		var acc := Peak.v2(wrow.def.accel)
+		if str(wrow.area) == area and absf(acc.y) > absf(acc.x) and row.is_empty():
+			row = wrow
+	if row.is_empty():
+		print("WATCH wind: none in ", area)
+		return
+	var r: Array = row.def.rect
+	if area == "a1":
+		pk.warp("1.9")
+		await secs(5.0)
+		look(Vector2(-236.0, 54.0), 11.0)
+	else:
+		pk.warp("4.3")
+		await secs(5.0)
+		look(Vector2((float(r[0]) + float(r[2])) * 0.5 + 2.0, (float(r[1]) + float(r[3])) * 0.5), 7.0)
+	var fx: CPUParticles3D = row.fx
+	print("WATCH wind %s: zone x %.1f..%.1f, y %.1f..%.1f, accel %s; its streaks are born in a box %.1f x %.1f m at (%.1f, %.1f), turned %.0f deg, flying %s" % [area,
+		float(r[0]), float(r[2]), float(r[1]), float(r[3]), row.def.accel, fx.emission_box_extents.x * 2.0, fx.emission_box_extents.y * 2.0,
+		fx.position.x, fx.position.y, rad_to_deg(fx.rotation.z), fx.direction])
+	await secs(2.5)
+	await shot("05_wind_" + area)
+	if area == "a1":
+		# Where Parker met the stray band: 36 m up on the banded wall, under the cart ledge.
+		pk.warp("1.7")
+		look(Vector2(-204.0, 34.5), 7.0)
+		await secs(2.5)
+		await shot("05_wind_a1_where_the_stray_band_was")
+
+
+## Note 8: the staging under the winding wheel is one run of planks.
+func _w_staging(_a: Array) -> void:
+	pk.warp("1.9")
+	await secs(6.0)
+	await shot("08_staging_game_camera")
+	look(Vector2(-234.7, 52.6), 2.6)
+	await secs(0.4)
+	await shot("08_staging_close")
+	# Its west end: held like the rest?
+	stand(Vector2(-236.6, 52.45))
+	await secs(1.2)
+	print("WATCH staging: stood on its west end (x -236.6): limbs %s, at %s" % [holds(), where()])
+	await shot("08_staging_west_end")
+
+
+## Note 6, the track end: the boards past the trestle are solid to their drawn end.
+func _w_trackend(_a: Array) -> void:
+	pk.warp("1.7")
+	await secs(6.0)
+	stand(Vector2(-212.7, 40.0))
+	await secs(1.5)
+	print("WATCH track end: stood at x -212.7 on the boards (they were air west of -211.6): limbs %s, at %s" % [holds(), where()])
+	look(Vector2(-211.5, 40.4), 2.6)
+	await secs(0.3)
+	await shot("06_track_end_close")
+	_free_cam = false
+	await secs(2.0)
+	await shot("06_track_end_game_camera")
+
+
+## Note 4: what stands where the lift's two cables were.
+func _w_lift(_a: Array) -> void:
+	pk.warp("1.5")
+	await secs(6.0)
+	await shot("04_lift_game_camera_1_5")
+	look(Vector2(-191.5, 22.5), 12.0)
+	await secs(0.4)
+	await shot("04_lift_whole")
+	_free_cam = false
+	stand(Vector2(-186.0, 6.0))
+	await secs(3.0)
+	await shot("04_lift_from_catwalk")

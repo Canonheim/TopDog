@@ -48,3 +48,90 @@ Godot_console.exe --path . --audio-driver Dummy res://tests/peak_watch.tscn -- -
   and where the climber sits in it.
 - **Not checked:** the camera in motion (a fall, a fling, the cart ride) by eye; the
   other 106 zones one by one.
+
+## Note 1: breaking planks come back with a glitch
+
+- **State:** fixed (the parked fix in `bc54ac8`), now seen in the game.
+- **What it is:** `_tick_holds` in `stages/peak/peak_things.gd`: a returning breaking
+  hold grows from its own middle.
+- **Pictures:** `01_plank_broken.jpg` (the second rotten plank of 1.3 gone),
+  `01_plank_return_0.jpg` (42 ms into its return, 0.42 of its size, in its own gap),
+  `01_plank_return_1.jpg` (113 ms, 0.86), `01_plank_back.jpg`.
+- **Checked:** the probe measured the plank's drawn middle on every frame of the
+  return: never more than 0.044 m from its place (before the fix it began about 170 m
+  away). The same code runs every breaking hold.
+- **Not checked:** an icicle, a snow bridge or the summit's brittle rock by eye (same
+  code path, not pictured).
+
+## Note 3: the mine's bucket
+
+- **State:** fixed (parked fix in `bc54ac8`), now seen in the game.
+- **Pictures:** `03_bucket_solid_outline.jpg` (the collision drawn in cyan over the
+  bucket: floor on its base, walls to its rim), `03_bucket_hand_holds.jpg` (a hand
+  holding the LOWER half of its wall, the half that had no collision, and riding down
+  with it), `03_bucket_riding_in.jpg` (standing in it, both feet stuck, riding).
+- **Checked:** drawn bucket 0.00 to 1.33 m up from its own zero (1.04 is the rim, the
+  rest is the bail), -0.64 to 0.63 across; solid 0.00 to 1.04 up, -0.60 to 0.60 across.
+  A hand laid on the lower wall stuck at once and stayed stuck over 4 m of travel.
+  Standing in it, both feet stuck and the climber rode 4 m with it, joints closed.
+  The counterweight (the thing you ride up) was measured too: model and collision
+  agree exactly (0.00 to 1.20 up, 0.80 each side).
+- **Not checked:** reaching the bucket by play from the counterweight or the deck
+  (the probe sets the climber on it).
+
+## Note 4: the two hanging lines in the mine
+
+- **State:** third try in the game. Parker's to judge from the picture.
+- **Try 1 (the Second Director's, parked): three stacked `station_scaffold` models.**
+  Thrown out. `04_lift_try1_scaffold_whole.jpg`: a bright orange cross-braced tower,
+  26 m tall, in the colour of every timber you hold in this mine. It reads as a
+  climbing frame, which is the note's own complaint moved sideways. It also stood on
+  nothing, over the 34 m gap.
+- **Try 2: a dark gallows frame alone (post, arm, gusset) on the station deck.**
+  Thrown out. `04_lift_try2_gallows_only_floating.jpg`: nothing reads as a rope, but
+  the bucket and the counterweight float alone in the dark with nothing behind them.
+- **Try 3 (in the game now): the hoistway painted on the cardboard behind the climb.**
+  `04_lift_try3_hoistway_whole.jpg`, `04_lift_try3_hoistway_from_catwalk.jpg`; it is
+  also behind the bucket in `03_bucket_riding_in.jpg`. Two flat cards in the back
+  wall's own grey (`HOIST_TONE` in `tools/peak/areas/a1.py`, one place to change it):
+  a gallows on the station deck holding the pulley, and hung from its arm the old
+  back boards, 4.4 m wide, that the bucket and counterweight run in front of, ragged
+  at the bottom. Why this one: in this mine bright orange in the play plane means
+  "hold me" and dark flat cardboard means "behind you". It is broad, so it is not a
+  line; it has no rungs or lattice, so it is not a ladder.
+- **My doubt:** it is quiet, a dark grey shape on a darker wall. If Parker wants the
+  lift's "track" to be seen more, lighten `HOIST_TONE` (it takes a "#RRGGBB").
+- **Checked:** pictures only. Nothing in it has collision (cards never do).
+
+## Note 5: wind streaks where there is no wind
+
+- **State:** fixed (parked fix in `bc54ac8`), now seen in the game.
+- **Pictures:** `05_wind_a1.jpg` (the waterfall: the streaks are inside the fall's
+  column and nowhere else; they are faint against the falling water),
+  `05_wind_a1_where_the_stray_band_was.jpg` (the banded wall under the cart ledge,
+  31 to 38 m up, where Parker met the band: no streaks),
+  `05_wind_a4.jpg` (the first updraught of 4.3 in the mushroom garden: upright
+  streaks rising inside the column over the climber).
+- **Checked:** the probe read both emitters: born in a box the zone's own size and
+  place (6.0 x 112.0 m at the fall; 4.6 x 7.7 m in a4), not turned, flying along the
+  wind.
+- **Seen, not part of this note:** an updraught gets few streaks (the 4.6 x 7.7 m one
+  has 8), so it is still easy to miss. Say if they should be denser.
+
+## Note 6, the track end: collision on the boards
+
+- **State:** the track end is fixed (parked fix in `bc54ac8`), seen in the game. The
+  cart itself is further down this log.
+- **Picture:** `06_track_end_close.jpg` (the climber held on the last boards, 1.1 m
+  past where the collision used to stop).
+- **Checked:** stood at x -212.7 (it was air west of -211.6): both feet stuck.
+- **Waiting for Parker (the Second Director's call, unchanged):** the first chain now
+  hangs 1.0 m from the boards' end. The chains were not moved.
+
+## Note 8: the dark plank by the big wheel
+
+- **State:** fixed (parked fix in `bc54ac8`), seen in the game.
+- **Pictures:** `08_staging_close.jpg` (one run of planks under the wheel),
+  `08_staging_west_end.jpg` (standing on what was the dark plank: held).
+- **Checked:** both feet stuck on the west end at x -236.6. The west end darkens a
+  little in the pictures: that is the lantern's light falling off, not another piece.

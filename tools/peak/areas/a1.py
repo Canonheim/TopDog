@@ -212,11 +212,23 @@ _cubo = A.mover("cubo", (-187.7, 26.5),
 _cubo["model_at"] = [0.0, 0.52]
 A.ledge(-199.8, -191.9, 26.2, "plank", t=0.3)  # the station deck. It stops 2.1 m short of the wall
 A.deco("pulley", -188.95, 31.4, z=-0.5, size=(0.8, 0.8, 0.3), tone="iron")
-# The lift's two cables are gone (Parker 11-12: "They look like the ropes you grab
-# later"): a thin hanging line in this mine is a rope or a chain, and those are held. The
-# bucket and the counterweight run in a timber head frame instead, set well back.
-for _y in (14.0, 20.0, 26.0):
-    A.deco("station_scaffold", -188.95, _y, z=-2.4, size=(4.1, 6.0, 2.2), tone="wood")
+# The lift's two cables are gone (Parker 11-12: "remove these track things and replace them
+# with something else. They look like the ropes you grab later"): a thin hanging line in
+# this mine is a rope or a chain, and those are held. The lift's "track" is now the
+# HOISTWAY, painted on the cardboard behind the climb in the back wall's own grey: a
+# gallows frame standing on the station deck (a post, an arm over the pulley, a solid
+# gusset in the corner) and, hung from the arm, the old back boards the bucket and the
+# counterweight run in front of, broken off ragged at the bottom. Dark, flat and broad is
+# this mine's word for "behind you, not for hands": no rungs, no lattice, no line.
+# (Thrown out: three stacked station_scaffold models, which in the game were a bright
+# orange cross-braced tower in the colour of every timber you hold, a climbing frame; and
+# the gallows alone, which left the bucket and the counterweight afloat in the dark.)
+HOIST_TONE = "back"
+A.card([(-193.3, 26.2), (-192.7, 26.2), (-192.7, 29.6), (-190.2, 32.2), (-186.3, 32.2), (-186.3, 32.8), (-193.3, 32.8)],
+       z=-2.4, tone=HOIST_TONE)
+A.card([(-191.3, 13.4), (-190.7, 13.4), (-190.7, 12.6), (-189.9, 12.6), (-189.9, 13.9), (-189.2, 13.9), (-189.2, 12.9),
+        (-188.3, 12.9), (-188.3, 13.6), (-187.6, 13.6), (-187.6, 12.4), (-186.9, 12.4), (-186.9, 32.2), (-191.3, 32.2)],
+       z=-2.6, tone=HOIST_TONE)
 A.deco("mine_beam", -199.7, 11.5, z=-0.8, rot=44.0, scale=1.55, size=(4.0, 0.35, 0.35), tone="wood")  # the arm's brace
 A.deco("mine_beam", -199.7, 23.8, z=-0.8, rot=41.5, scale=1.47, size=(4.0, 0.35, 0.35), tone="wood")  # the deck's brace
 A.challenge("1.5", "El Cubo", (-200.0, 6.0), 2, "B", moves=[
