@@ -71,6 +71,13 @@ for x, y, k in HOT:
     A.hold(x, y, 0.3 if k == "rock" else 0.22, k)
 A.ledge(-271.5, -266.8, 496.0, "rock", t=0.6)  # L2
 _route = [[-276.8, 487.6]] + [[x, y] for x, y, _ in HOT] + [[-271.5, 496.0]]
+# (Parker 11-12: "these have no indication of what is going on and no leading indicator".
+# Part of it was red knobs on a red wall. The furnace face is burnt black along the line
+# of the holds now, so the hot ones burn against dark; the game itself makes every hot
+# hold pulse, smoke and show its time running out.)
+from shapely.geometry import LineString as _LS
+_scorch = _LS([(x, y) for x, y, _ in HOT]).buffer(1.25, resolution=3).simplify(0.25)
+A.card([(round(px, 2), round(py, 2)) for px, py in list(_scorch.exterior.coords)[:-1]], z=-1.35, tone="#2B1512")
 A.challenge("6.2", "Piedra Caliente", (-277.4, 486.0), 3, "A",
             moves=[["reach", _route[i], _route[i + 1]] for i in range(len(_route) - 1)])
 A.cam((-279, 485, -269, 498), half_h=9.0, bias=(0.0, -3.0))

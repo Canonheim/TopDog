@@ -1065,6 +1065,63 @@ func _w_dark(_a: Array) -> void:
 	_free_cam = false
 
 
+## Notes 23 and 56: a hot hold's tells. hot:2.9 or hot:6.2. A hand is put on the first hot
+## hold and left there: pictures at rest, as the time runs out, as it lets go, and after.
+func _w_hot(a: Array) -> void:
+	var cid := str(a[0]) if a.size() > 0 else "2.9"
+	pk.warp(cid)
+	await secs(0.6)
+	var c := me()
+	var first := Vector2(-350.2, 121.2) if cid == "2.9" else Vector2(-276.2, 487.5)
+	var view := Vector2(-351.3, 122.3) if cid == "2.9" else Vector2(-274.6, 491.6)
+	var half := 3.0 if cid == "2.9" else 6.0
+	var h: Dictionary = {}
+	for hh: Dictionary in pk.things.holds:
+		if str(hh.type) == "timed" and pk.things._hold_at(hh).distance_to(first) < 0.3:
+			h = hh
+	if h.is_empty():
+		print("WATCH hot: no hot hold at ", first)
+		return
+	var tag := ("23" if cid == "2.9" else "56")
+	look(view, half)
+	await secs(3.0)
+	await shot(tag + "_hot_at_rest")
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 99.0
+	c.limbs[0].regrip = 0.0
+	for k in 60:  # (laid on it and left to stick by touch, as in play)
+		put_limb(0, first + Vector2(0.0, 0.2))
+		await get_tree().physics_frame
+		if c.limbs[0].grab_other != null:
+			break
+	var limit := float((h.def as Dictionary).t)
+	var t0 := pk.clock
+	var shots := 0
+	var let_go := -1.0
+	while pk.clock - t0 < limit + 1.6:
+		await get_tree().physics_frame
+		var el := pk.clock - t0
+		if let_go < 0.0 and c.limbs[0].grab_other == null:
+			let_go = el
+		var want := false
+		if shots == 0 and el > limit * 0.45:
+			want = true
+		elif shots == 1 and el > limit - 0.2:
+			want = true
+		elif shots == 2 and let_go >= 0.0 and el > let_go + 0.12:
+			want = true
+		elif shots == 3 and let_go >= 0.0 and el > let_go + 0.5:
+			want = true
+		if want:
+			print("WATCH hot %s: %.2f s on it: heat %.2f, tint %s, hand marks %d" % [cid, el, float(h.get("heat", 0.0)), h.get("tint", Color.WHITE), pk.things._burns.size()])
+			await shot(tag + "_hot_" + ["half_way", "last_moments", "lets_go", "hand_after"][shots])
+			shots += 1
+	print("WATCH hot %s: the hand was let go after %.2f s (the hold's time is %.1f s); it can hold again %.1f s later" % [cid, let_go, limit, float((h.def as Dictionary).get("rearm", 0.6))])
+	for l in c.limbs:
+		l.regrip = 0.0
+
+
 ## Note 4: what stands where the lift's two cables were.
 func _w_lift(_a: Array) -> void:
 	pk.warp("1.5")

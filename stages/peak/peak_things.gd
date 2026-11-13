@@ -460,6 +460,7 @@ func tick(delta: float) -> void:
 	_tick_rope_grabs()
 	_tick_strain(delta)
 	_tick_holds(delta)
+	_tick_burns()
 	_tick_debris()
 	_tick_spawners(delta)
 	_tick_wettings()
@@ -1018,14 +1019,36 @@ func _tick_holds(delta: float) -> void:
 					_grip_t[i] = float(_grip_t[i]) + delta
 					var limit := float(def.t)
 					var hot := limit < 1.8
+					var tell: Dictionary = _tell_of(h)
+					var used := float(_grip_t[i]) / maxf(limit, 0.05)
+					if not tell.is_empty():
+						# You watch the time run out: the hold heats (see the holds' own loop
+						# below) and the hand on it smokes, thicker and thicker.
+						h["heat"] = maxf(float(h.get("heat", 0.0)), used)
+						h["held_at"] = t
+						if t - float(_tell_t.get(i, -9.0)) > lerpf(0.2, 0.07, used):
+							_tell_t[i] = t
+							peak.zones.burst(at, str(tell.hand_puff), 0.35 + 0.9 * used)
+							if float(_grip_t[i]) > limit - 0.5:
+								peak.zones.burst(_hold_at(h), str(tell.spit), 0.6)
 					if not bool(_grip_warned[i]) and float(_grip_t[i]) > limit - 0.5:
 						_grip_warned[i] = true
 						peak.audio.play("sizzle" if hot else "ice_tick", at)
 					if float(_grip_t[i]) >= limit:
+						var end: RigidBody3D = c.bodies[l.def.end]
 						c.release(i)
 						l.regrip = float(def.get("rearm", 0.6))
 						_grip_on.erase(i)
 						peak.audio.play("steam_hiss" if hot else "ice_crack", at, -3.0)
+						if not tell.is_empty():
+							# It lets go with a bang you can't miss, flicks the hand off, and
+							# the hand shows why it won't take the next hold yet.
+							for kind in tell.go:
+								peak.zones.burst(at, str(kind), 1.5)
+							var away := (at - _hold_at(h))
+							away = away.normalized() if away.length() > 0.02 else Vector2.UP
+							end.apply_central_impulse(Vector3(away.x, away.y + 0.4, 0) * end.mass * 1.6)
+							_burn_hand(i, end, tell, float(def.get("rearm", 0.6)))
 				"crumble":
 					if float(h.break_at) < 0.0 and float(h.back_at) < 0.0:
 						h.break_at = t + float(def.t)
@@ -1078,6 +1101,8 @@ func _tick_holds(delta: float) -> void:
 							v.position = Vector3(mid.x * (1.0 - s), mid.y * (1.0 - s), 0)
 					grow.call(0.05)
 					v.create_tween().tween_method(grow, 0.05, 1.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			"timed":
+				_tick_tell(h, delta)
 			"wet":
 				var def: Dictionary = h.def
 				var on := float(def.get("on", 2.0))
@@ -1135,6 +1160,125 @@ func _wetting(n: Node3D, size: float) -> void:
 			peak.zones.splash_at(p, size)
 	elif _wet_things.has(id):
 		_wet_things.erase(id)
+
+
+## A HOLD THAT LETS GO OF YOU ON A TIMER SHOWS IT (Parker 11-12, of the hot pipe joints:
+## "what is the deal with this? There is no visual for what is going on", then "make it so
+## there is obvious effects and stuff for what is going on, we can use particle effects if
+## we need it"; and of the chimney's hot rock: "these have no indication of what is going
+## on and no leading indicator"). A hot hold was a still orange knob with a sizzle half a
+## second before your hand let go for no visible reason. One language for every such hold:
+##   at rest     it pulses in colour and breathes a wisp now and then: it LOOKS hot;
+##   held        it brightens toward white as the time runs out, the hand on it smokes
+##               thicker and thicker, and in the last half second it spits and shudders;
+##   it lets go  with a burst, the hand is flicked off, and the hand stays marked and
+##               smoking for as long as it can't hold anything.
+## No glowing materials (the house rule): heat is colour (the house shader's tint), steam
+## and sparks. `cold` is the same language for the ice holds of the cableway and the
+## glacier (frost, a crack, then it lets go): written, and NOT switched on, because Parker
+## has not played those areas yet (TELL_COLD).
+const TELLS := {
+	"hot": {"rest": [Color(1.1, 1.2, 1.15), Color(1.07, 2.0, 2.3)], "full": Color(1.1, 2.9, 7.0),
+		"wisp": "steam", "spit": "sparks", "hand_puff": "steam", "go": ["steam", "sparks", "sparks"], "after": "smoke",
+		"hand": Color(1.0, 0.22, 0.08)},
+	"cold": {"rest": [Color(1.0, 1.0, 1.0), Color(1.08, 1.12, 1.18)], "full": Color(1.5, 1.7, 1.9),
+		"wisp": "frost", "spit": "frost", "hand_puff": "frost", "go": ["frost", "glitter"], "after": "frost",
+		"hand": Color(0.6, 0.85, 1.0)},
+}
+const TELL_COLD := false
+const TELL_NEAR := 28.0  # a hold this far from the climber is not animated
+var _tell_t := {}  # limb index -> when it last smoked
+var _burns: Array = []  # [the mark on the hand, the limb's end, until, the tell, next puff]
+
+
+func _tell_of(h: Dictionary) -> Dictionary:
+	if str(h.type) != "timed":
+		return {}
+	if float((h.def as Dictionary).t) < 1.8:
+		return TELLS.hot
+	return TELLS.cold if TELL_COLD else {}
+
+
+## Where a hold is, in the course's metres.
+func _hold_at(h: Dictionary) -> Vector2:
+	var body: Node3D = h.body
+	if body.has_meta("peak_pts"):
+		return _hold_middle(body)
+	return peak.local_of(Vector2(body.global_position.x, body.global_position.y))
+
+
+func _hold_tint(h: Dictionary, c: Color) -> void:
+	var was: Color = h.get("tint", Color(1, 1, 1))
+	if absf(was.r - c.r) + absf(was.g - c.g) + absf(was.b - c.b) < 0.04:
+		return
+	h["tint"] = c
+	var v: Node = h.vis
+	var list: Array = v.get_children()
+	list.append(v)
+	for g in list:
+		if g is GeometryInstance3D:
+			(g as GeometryInstance3D).set_instance_shader_parameter(&"tint", c)
+
+
+func _tick_tell(h: Dictionary, delta: float) -> void:
+	var tell := _tell_of(h)
+	if tell.is_empty() or peak.player == null or not bool(peak._area_active.get(h.area, true)):
+		return
+	var at := _hold_at(h)
+	if peak.player_at().distance_to(at) > TELL_NEAR:
+		return
+	var t := peak.clock
+	var heat := float(h.get("heat", 0.0))
+	if t - float(h.get("held_at", -9.0)) > 0.05:
+		heat = maxf(0.0, heat - delta / 0.5)  # (let go of, it cools in half a second)
+		h["heat"] = heat
+	var rest: Array = tell.rest
+	var pulse := 0.5 + 0.5 * sin(t * 4.2 + at.x * 1.7 + at.y * 0.9)
+	_hold_tint(h, (rest[0] as Color).lerp(rest[1], pulse).lerp(tell.full, heat * heat))
+	var limit := float((h.def as Dictionary).t)
+	var v: Node3D = h.vis
+	if heat > 1.0 - 0.5 / maxf(limit, 0.6):
+		v.position = Vector3(randf_range(-0.03, 0.03), randf_range(-0.03, 0.03), 0)  # the last half second: it shudders
+		h["shook"] = true
+	elif bool(h.get("shook", false)):
+		v.position = Vector3.ZERO
+		h["shook"] = false
+	if t >= float(h.get("wisp_at", 0.0)):
+		h["wisp_at"] = t + randf_range(1.0, 2.4)
+		peak.zones.burst(at + Vector2(0, 0.15), str(tell.wisp), 0.5)
+		if randf() < 0.35:
+			peak.zones.burst(at, str(tell.spit), 0.3)
+
+
+## The hand that was let go: marked (red for a burn, pale blue for cold) and smoking for
+## as long as it can't hold anything.
+func _burn_hand(i: int, end: RigidBody3D, tell: Dictionary, seconds: float) -> void:
+	var mark := MeshInstance3D.new()
+	var ball := SphereMesh.new()
+	ball.radius = 0.15
+	ball.height = 0.3
+	mark.mesh = ball
+	var col: Color = tell.hand
+	mark.material_override = PeakZones._flat(col, 0.8)
+	mark.position.z = 0.25
+	mark.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	end.add_child(mark)
+	_burns.append([mark, end, peak.clock + seconds, tell, 0.0])
+
+
+func _tick_burns() -> void:
+	var t := peak.clock
+	for k in range(_burns.size() - 1, -1, -1):
+		var row: Array = _burns[k]
+		if not is_instance_valid(row[0]) or not is_instance_valid(row[1]) or t >= float(row[2]):
+			if is_instance_valid(row[0]):
+				(row[0] as Node).queue_free()
+			_burns.remove_at(k)
+			continue
+		if t >= float(row[4]):
+			row[4] = t + 0.09
+			var end: RigidBody3D = row[1]
+			peak.zones.burst(peak.local_of(Vector2(end.global_position.x, end.global_position.y)), str((row[3] as Dictionary).after), 0.5)
 
 
 ## IT CRUMBLES AWAY (Parker 11-12: "make the breaking floors crumble away instead of

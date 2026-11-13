@@ -567,3 +567,41 @@ are `--watch=light:race`, `light:crystal`, `light2:race`, `light2:crystal`,
   "before" of mine; Parker's own is `shots/45_too_dark.jpg`.
 - **Not checked:** a puffball bursting and its light going out, by eye (the code path
   is two lines beside the ball's own hide and show).
+
+## Group C: tells for holds that let go on a timer (notes 23 and 56)
+
+- **State:** done for the hot holds of both areas, seen in the game. The cold version
+  for the ice holds is written and switched off.
+- **One system, in `stages/peak/peak_things.gd`** (`TELLS`, `_tick_tell`, `_burn_hand`),
+  for every hold of the `timed` kind. It needs nothing from the area files, so all 20
+  hot holds (11 joints in 2.9, 9 nubs in 6.2) have it:
+  - **At rest it looks hot:** its colour pulses between its own orange and a bright
+    yellow, and it breathes a wisp of steam every second or two, sometimes a spark.
+  - **While you hold it you watch the time run out:** it brightens toward white, the
+    hand on it smokes thicker and faster, and in the last half second the hold
+    shudders and spits sparks (with the sizzle it already had).
+  - **When it lets go:** a burst of steam and two of sparks, the hand is flicked off,
+    and the hand wears a red mark and smokes for the 0.8 s it can't hold anything.
+  - No glowing materials: the heat is the house shader's own tint, driven per hold.
+    The particles are `PeakZones.burst`, one table of kinds for the whole mountain.
+- **The ice holds:** `TELLS.cold` (frost for steam, a pale blue mark for red) is there
+  and `TELL_COLD` is false. Areas 8 and 9 are untouched, as asked.
+- **The chimney's red on red (note 56):** the furnace face is burnt black along the
+  line of the holds (one card behind them, `tools/peak/areas/a6.py`), so the hot
+  holds burn against dark.
+- **Watched:** a hand laid on the first hot joint of 2.9 and left: let go at 1.51 s
+  (the joint's time is 1.5), heat 0.45 at 0.68 s and 0.87 at 1.30 s, the hand marked
+  afterwards. The first hot nub of 6.2: let go at 1.21 s (1.2).
+- **Pictures:** `23_hot_before.jpg`, `23_hot_at_rest.jpg`, `23_hot_half_way.jpg`,
+  `23_hot_last_moments.jpg`, `23_hot_lets_go.jpg`, `23_hot_hand_after.jpg`, and the
+  same six for `56_`.
+- **Not done, and why:**
+  - The cool joints of 2.9 were not recoloured: in the game the cool joint is already
+    a teal valve wheel, plainly unlike the orange ones (`23_hot_before.jpg`). The
+    three level pipes between are still red.
+  - The three cool nubs of 6.2 are still pale rock. With every hot one pulsing and
+    steaming they are the only calm things on the wall.
+  - The warning plate (a hand and a flame) needs a model: `MODEL_REQUESTS.md`.
+- **First-try numbers:** every size and rate in `TELLS` and `_tick_tell`.
+- **Not checked:** "someone who has never been told the rule can say what happened
+  after being dropped once". That is a test for a person.
