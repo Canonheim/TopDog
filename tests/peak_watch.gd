@@ -1732,3 +1732,56 @@ func _w_rope(_a: Array) -> void:
 	print("WATCH rope: let go at the bottom at %.1f m/s (%.1f east, %.1f up)" % [lv.length(), lv.x, lv.y])
 	await secs(0.7)
 	await shot("20_rope_let_go")
+
+
+## NOTES 28 AND 43, THE CAMERA'S OWN CONTROLS: a test pad's right stick looks around and
+## its left trigger zooms out, in the real camera. look:CHALLENGE (default 1.4).
+func _w_look(a: Array) -> void:
+	var id := str(a[0]) if a.size() > 0 else "1.4"
+	pk.warp(id)
+	_free_cam = false
+	await secs(2.5)
+	var pad := {"stick": Vector2.ZERO, "buttons": {}, "look": Vector2.ZERO}
+	Players.fake[1000] = pad
+	var cam := get_viewport().get_camera_3d()
+	var fr: Array = pk.cam_frame()
+	var home := cam.position
+	print("WATCH look at %s: the spot's own frame is %.1f m half-height, bias %s, drawn by its author: %s. The close camera stands %.1f m back (half-height %.2f m)" % [
+		id, float(fr[0]), fr[1], fr[2], home.z, home.z * tan(deg_to_rad(cam.fov * 0.5))])
+	await shot("28_43_normal")
+	# the zoom: held
+	pad.buttons["zoom"] = true
+	var t0 := Time.get_ticks_msec()
+	await secs(0.33)
+	print("WATCH look: zoom held 0.33 s: half-height %.2f m" % (cam.position.z * tan(deg_to_rad(cam.fov * 0.5))))
+	await secs(0.5)
+	print("WATCH look: zoom held 0.83 s: half-height %.2f m, the camera moved %s from the close view" % [cam.position.z * tan(deg_to_rad(cam.fov * 0.5)), Vector2(cam.position.x - home.x, cam.position.y - home.y)])
+	await shot("43_zoomed_out")
+	# the look, while zoomed
+	pad.look = Vector2(1, 0)
+	await secs(0.6)
+	await shot("28_43_zoomed_looking_east")
+	pad.look = Vector2.ZERO
+	pad.buttons["zoom"] = false
+	await secs(0.33)
+	print("WATCH look: zoom let go 0.33 s: half-height %.2f m" % (cam.position.z * tan(deg_to_rad(cam.fov * 0.5))))
+	await secs(0.6)
+	home = cam.position
+	# the look: each way
+	for row: Array in [["east", Vector2(1, 0)], ["west", Vector2(-1, 0)], ["down", Vector2(0, -1)], ["up", Vector2(0, 1)], ["half east", Vector2(0.6, 0)], ["a drifting stick", Vector2(0.15, 0.1)]]:
+		pad.look = row[1]
+		await secs(0.25)
+		var quarter := Vector2(cam.position.x - home.x, cam.position.y - home.y)
+		await secs(0.55)
+		var full := Vector2(cam.position.x - home.x, cam.position.y - home.y)
+		if str(row[0]) in ["east", "down"]:
+			await shot("28_looking_" + str(row[0]))
+		pad.look = Vector2.ZERO
+		await secs(0.25)
+		var back := Vector2(cam.position.x - home.x, cam.position.y - home.y)
+		await secs(0.5)
+		print("WATCH look %s: the view slid %.2f, %.2f m after 0.25 s and %.2f, %.2f m after 0.8 s; 0.25 s after letting go it was %.2f m from home; the climber is %s on screen at full look" % [
+			row[0], quarter.x, quarter.y, full.x, full.y, back.length(), "still"])
+	Players.fake.erase(1000)
+	await secs(0.3)
+	await shot("28_43_back_to_normal")

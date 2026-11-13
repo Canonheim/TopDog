@@ -10,8 +10,11 @@ extends Node
 ## back each frame. This also stays right when Top Dog has its own app ID.
 ##
 ## The layout (every controller type): X left hand, A right hand, Y left foot,
-## B right foot, Start lock in, Back pause, the LEFT stick steers (the right is unbound), d-pad and the left
-## stick move menus, A selects, B goes back.
+## B right foot, Start lock in, Back pause, the LEFT stick steers, d-pad and the left
+## stick move menus, A selects, B goes back. For the Peak's solo climb (11-13): the RIGHT
+## stick is "look" and the left trigger (its soft pull and its full pull both) is "zoom".
+## Those two were added without a pad under Steam to try them on: if they read nothing
+## there, the two groups 4 and 5 in _config are where to look (the rest is as it was).
 ##
 ## Each Steam controller shows up in Players as device STEAM_DEV_BASE + index, read
 ## by Players._action / Players.stick; the menus read menu_state(). Created by Net
@@ -19,7 +22,7 @@ extends Node
 
 const STEAM_DEV_BASE := 3000
 const ACTION_SET := "Game"
-const DIGITAL := ["fart", "arm_l", "arm_r", "leg_l", "leg_r", "lock", "pause", "menu_up", "menu_down", "menu_left", "menu_right", "menu_select", "menu_back"]
+const DIGITAL := ["fart", "arm_l", "arm_r", "leg_l", "leg_r", "lock", "pause", "menu_up", "menu_down", "menu_left", "menu_right", "menu_select", "menu_back", "zoom"]
 const DIR := "user://steam_input"
 
 var ok := false  # Steam Input initialised with our manifest
@@ -27,6 +30,7 @@ var manifest_accepted := false
 var set_handle := 0
 var digital_handles := {}  # action -> handle
 var steer_handle := 0
+var look_handle := 0  # the RIGHT stick: the Peak's look-around (11-13; not yet tried on a real pad under Steam)
 ## device id -> {"handle": int, "type": int, "buttons": {action: bool}, "stick": Vector2}
 var devices := {}
 var last_action := ""
@@ -96,6 +100,8 @@ func _process(delta: float) -> void:
 			set_handle = int(Steam.getActionSetHandle(ACTION_SET))
 		if steer_handle == 0:
 			steer_handle = int(Steam.getAnalogActionHandle("steer"))
+		if look_handle == 0:
+			look_handle = int(Steam.getAnalogActionHandle("look"))
 		for action in DIGITAL:
 			if digital_handles.get(action, 0) == 0:
 				digital_handles[action] = int(Steam.getDigitalActionHandle(action))
@@ -151,6 +157,9 @@ func _read(dev: int, d: Dictionary, now: int) -> void:
 	var steer_active := bool(ad.get("active", false))
 	feed_steer(d, steer_active, Vector2(float(ad.get("x", 0.0)), float(ad.get("y", 0.0))), now)  # Steam's joystick y is up, as ours
 	feed_flags(dev, d, limbs_active and steer_active, menu_active, now)
+	if look_handle != 0:
+		var ld: Dictionary = Steam.getAnalogActionData(handle, look_handle)
+		d["look"] = Vector2(float(ld.get("x", 0.0)), float(ld.get("y", 0.0))) if bool(ld.get("active", false)) else Vector2.ZERO
 	if (d.stick as Vector2).length() > Players.GLYPH_STICK and Players.last_device != dev:
 		_note(dev, "stick")
 
@@ -230,6 +239,12 @@ func stick(dev: int) -> Vector2:
 	return d.get("stick", Vector2.ZERO)
 
 
+## The right stick (the Peak's look-around), y-up.
+func look(dev: int) -> Vector2:
+	var d: Dictionary = devices.get(dev, {})
+	return d.get("look", Vector2.ZERO)
+
+
 ## For the menus: ui_* actions held on this Steam controller right now.
 func menu_state(dev: int) -> Dictionary:
 	var st := stick(dev)
@@ -280,14 +295,16 @@ func _manifest(configurations: String) -> String:
 	var buttons := ""
 	for a in DIGITAL:
 		buttons += '\t\t\t\t"%s"\t\t"#Action_%s"\n' % [a, a]
-	var loc := '\t\t\t"Set_Game"\t\t"Top Dog"\n\t\t\t"Action_steer"\t\t"Steer the held limb"\n'
+	var loc := '\t\t\t"Set_Game"\t\t"Top Dog"\n\t\t\t"Action_steer"\t\t"Steer the held limb"\n\t\t\t"Action_look"\t\t"Look around (the solo climb)"\n'
 	var names := {"fart": "Fart", "arm_l": "Left hand", "arm_r": "Right hand", "leg_l": "Left foot", "leg_r": "Right foot", "lock": "Lock in", "pause": "Pause",
-		"menu_up": "Menu up", "menu_down": "Menu down", "menu_left": "Menu left", "menu_right": "Menu right", "menu_select": "Menu select", "menu_back": "Menu back"}
+		"menu_up": "Menu up", "menu_down": "Menu down", "menu_left": "Menu left", "menu_right": "Menu right", "menu_select": "Menu select", "menu_back": "Menu back",
+		"zoom": "Zoom out (the solo climb)"}
 	for a in DIGITAL:
 		loc += '\t\t\t"Action_%s"\t\t"%s"\n' % [a, names[a]]
 	return '"Action Manifest"\n{\n\t"configurations"\n\t{\n' + configurations + '\t}\n' + \
 		'\t"actions"\n\t{\n\t\t"Game"\n\t\t{\n\t\t\t"title"\t\t"#Set_Game"\n' + \
-		'\t\t\t"StickPadGyro"\n\t\t\t{\n\t\t\t\t"steer"\n\t\t\t\t{\n\t\t\t\t\t"title"\t\t"#Action_steer"\n\t\t\t\t\t"input_mode"\t\t"joystick_move"\n\t\t\t\t}\n\t\t\t}\n' + \
+		'\t\t\t"StickPadGyro"\n\t\t\t{\n\t\t\t\t"steer"\n\t\t\t\t{\n\t\t\t\t\t"title"\t\t"#Action_steer"\n\t\t\t\t\t"input_mode"\t\t"joystick_move"\n\t\t\t\t}\n' + \
+		'\t\t\t\t"look"\n\t\t\t\t{\n\t\t\t\t\t"title"\t\t"#Action_look"\n\t\t\t\t\t"input_mode"\t\t"joystick_move"\n\t\t\t\t}\n\t\t\t}\n' + \
 		'\t\t\t"Button"\n\t\t\t{\n' + buttons + '\t\t\t}\n\t\t}\n\t}\n' + \
 		'\t"localization"\n\t{\n\t\t"english"\n\t\t{\n' + loc + '\t\t}\n\t}\n}\n'
 
@@ -324,6 +341,8 @@ func _config(controller_type: String) -> String:
 		'\t"localization"\n\t{\n\t\t"english"\n\t\t{\n\t\t\t"Set_Game"\t\t"Top Dog"\n\t\t}\n\t}\n' + \
 		_group(0, "four_buttons", diamond) + _group(1, "dpad", dpad) + \
 		_group(2, "joystick_move", "", "steer") + _group(3, "switches", switches) + \
+		_group(4, "joystick_move", "", "look") + _group(5, "trigger", _press("click", ["zoom"]) + _press("edge", ["zoom"])) + \
 		'\t"preset"\n\t{\n\t\t"id"\t\t"0"\n\t\t"name"\t\t"Game"\n\t\t"group_source_bindings"\n\t\t{\n' + \
 		'\t\t\t"0"\t\t"button_diamond active"\n\t\t\t"1"\t\t"dpad active"\n\t\t\t"2"\t\t"joystick active"\n\t\t\t"3"\t\t"switch active"\n' + \
+		'\t\t\t"4"\t\t"right_joystick active"\n\t\t\t"5"\t\t"left_trigger active"\n' + \
 		'\t\t}\n\t}\n\t"settings"\n\t{\n\t}\n}\n'

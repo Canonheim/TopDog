@@ -354,6 +354,20 @@ its heading once it lands.
   degrees and more: the balloon's ropes (10.8), the serac's rope (9.6), the prayer
   line (10.1). Whether that is the storm doing its job or too much is his call; the
   knob would be the winds, not the ropes.
+- **Notes 28 and 43: the pad under Steam was not tried.** When Steam is running the
+  game reads pads through Steam's own layer, from a layout the game writes. The right
+  stick and the left trigger were not in that layout. They are now, written blind:
+  there was no pad under Steam to try them on. If the right stick or the left trigger
+  does nothing in a Steam run, that is where to look (`core/steam_input.gd`, groups 4
+  and 5 in `_config`). With Steam off, and in the test, they work.
+- **Notes 28 and 43: not on the Controls board.** Look and zoom can be rebound in the
+  save file and follow the board's Reset, but the board itself has no rows for them:
+  it is the UI kit's poster, laid out for six rows with six badges. Two more rows and
+  two badges are a job for the UI creator.
+- **Note 28: how far the look goes.** The page said "about three quarters of a screen"
+  and also "your climber is still just in view on the opposite side". Those disagree:
+  three quarters of a screen puts the climber off it. Built to the second: 85% of the
+  way from the middle to the edge (`PEAK_LOOK_REACH`, `game/main.gd`).
 - **Note 20: climbing a rope is slower than it was, on purpose.** 3 m hand over hand
   takes about 5.6 s; it took 2 s, and that speed was the launch he complained of.
   `rope_pull` in the F1 panel sets it.
@@ -1148,11 +1162,82 @@ and a ribbon where there was a slab and up to 140 particles a fall.
 - **First-try numbers:** the streaks' strength (`streak`, 0.7) and the ripple's height
   (`wave_m`, 0.03) in the body shader; `FALL_G` 7.0, the pull the falls are drawn under.
 
+## Notes 28 and 43: the camera's own controls (solo climb only)
+
+- **State:** done; the pad half watched in the game through a test pad. The keyboard
+  half (Alt and the mouse, Shift) is built and was NOT exercised: a test cannot move
+  the real mouse. Nothing played by a person.
+- **Parker 11-12, note 28:** "make the right stick let you control the camera a bit line
+  in Hallow Knight where you can look around with it and it returns to normal when you
+  let go of it. Make it holding alt and useing the mouse on mouse and keyboard".
+- **Note 43:** "make holding L on controller zoom the camera out and make it holding
+  shift on keyboard and mouse"; which L: "left trigger".
+
+### What it does (`game/main.gd`, `_peak_camera`)
+
+- **Look around.** The right stick slides the view, further the harder it is pushed,
+  up to 85% of the way to the screen's edge, so the climber is still in view on the
+  far side. Let go and it glides back. A stick that drifts a little does nothing (the
+  left stick's own dead zone).
+- **On the keyboard, hold Alt** and move the mouse: the same slide, the same limits.
+  While Alt is down the mouse aims no limb (a limb being held keeps its pose), and it
+  stays that way until the view has glided back. The pointer is put back where it was
+  when Alt went down, so the limb is not thrown when aiming picks up again.
+- **Hold to zoom out:** the left trigger, counted as held from about half way
+  (`trigger_press`, 0.45, the number the other triggers use), or Shift. The camera
+  pulls back to the frame the spot's author drew for it, the one note 7 stopped the
+  close camera from using; where nobody drew one, to twice the view. Let go and it
+  comes back. The climber plays on as normal.
+- **Together:** zoomed out, the look still slides the view, in proportion.
+- **The follow camera is untouched.** It is kept in its own place and the look and the
+  zoom are laid over it, so neither is slowed by the follow's easing.
+- **Solo climb only:** this is the Peak's camera. The party modes do not run it.
+
+### Measured (the probe's `look` scene, at 1.4, a test pad)
+
+| | |
+|---|---|
+| The close view | 5.5 m half-height |
+| That spot's own frame | 9.0 m half-height, aimed 4 m down |
+| Zoom held 0.33 s | 8.97 m: there |
+| Zoom let go 0.33 s | 5.53 m: back |
+| Right stick full east | the view slides 7.5 m in 0.25 s, 8.3 m in all |
+| Full down | 4.2 m in 0.25 s, 4.7 m in all |
+| 0.25 s after letting go | 0.2 to 0.4 m from home |
+| Stick pushed 60% | 4.05 m: about half of the full look |
+| A drifting stick (15%) | nothing |
+
+### The inputs (`core/players.gd`, `core/steam_input.gd`)
+
+- Two new binds, held: `look` (Alt; a pad needs none, its right stick looks) and
+  `zoom` (Shift; the left trigger). They are in the same table as the limbs: saved,
+  swapped if a key is bound over, and put back by Reset. A save file from before
+  keeps its binds and gains these two at their defaults.
+- **Steam's layout** (the game writes its own): one new stick action on the right
+  stick, one new button on the left trigger (its soft pull and its full pull both).
+  See the call above: written without a pad under Steam to try it on.
+
+### What this closes
+
+- **Note 7's open call, the nine long jumps that land out of frame:** the close camera
+  stays strict everywhere. To see a landing, hold the left trigger (or Shift), or look
+  that way.
+
+- **Pictures:** `28_43_normal.jpg`, `43_zoomed_out.jpg`, `28_looking_east.jpg`,
+  `28_looking_down.jpg`, `28_43_zoomed_looking_east.jpg` (all at 1.4).
+- **Checked:** lint; `--peak`; `--input --devices --hotswap --inputreconnect
+  --personalcamera --feel`: all clean.
+- **First-try numbers:** the look's reach (0.85) and its two easings; the zoom's
+  easing; the mouse travel that is a full look (35% of the window's height).
+- **Not checked:** Alt and the mouse, and Shift, by hand; a real pad; a pad under
+  Steam; aiming a limb with the mouse while zoomed (the pointer's place on the wall
+  moves as the view widens, as it does whenever the camera moves).
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
 
-**In hand, in this order:** 28 and 43 (the camera controls), 35 (the garden's static).
+**In hand:** 35 (the garden's static).
 
 **Parked until Parker says** (his design job comes first):
 

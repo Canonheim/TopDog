@@ -536,6 +536,19 @@ func _peak_start_over() -> void:
 ## FIRST-TRY NUMBERS, Parker's to change.
 const PEAK_CAM_HALF_MAX := 5.5  # metres above and below the middle: 11 m of view at most
 const PEAK_CAM_DOWN_MAX := 1.0  # metres the view may be aimed below the climber
+const PEAK_ZOOM_RATE := 9.0  # 1/s: the zoom is there in about a third of a second
+const PEAK_LOOK_REACH := 0.85  # of the way from the middle of the screen to its edge
+const PEAK_LOOK_OUT := 9.0  # 1/s: easing out to where the stick points
+const PEAK_LOOK_BACK := 12.0  # 1/s: gliding back when it is let go (about a quarter second)
+const PEAK_LOOK_MOUSE := 0.35  # of the window's height: the mouse travel that is a full look
+var _peak_cam_base := Vector3.ZERO  # the follow camera, before the look and the zoom
+var _peak_zoom := 0.0  # 0..1, eased
+var _peak_pan := Vector2.ZERO  # -1..1 each way, eased
+var _peak_pan_mouse := Vector2.ZERO  # the mouse's share of it, while Alt is down
+var _peak_mouse_last := Vector2.ZERO
+var _peak_alt := false
+var _peak_alt_at := Vector2.ZERO  # where the pointer was when Alt went down
+var _peak_mouse_held := false  # the mouse is the camera's: it aims no limb
 
 
 func _peak_camera(delta: float) -> void:
@@ -558,16 +571,72 @@ func _peak_camera(delta: float) -> void:
 	var vs := get_viewport().get_visible_rect().size
 	var aspect := vs.x / maxf(1.0, vs.y)
 	half = maxf(half, 4.0 / maxf(aspect, 0.5) * 1.2)  # a narrow window still shows 4.8 m across
-	var dist := half / tan(deg_to_rad(cam.fov * 0.5))
+	var tan_half := tan(deg_to_rad(cam.fov * 0.5))
+	var dist := half / tan_half
 	var lead := Vector2(clampf(v.x * 0.3, -3.0, 3.0), clampf(v.y * 0.35, -half * 0.45, 2.0))
 	_cam_target = Vector3(com.x + bias.x + lead.x, com.y + bias.y + lead.y + half * 0.08, dist)
 	var rate := 3.2 + v.length() * 0.35
-	cam.position = Vector3(
-		lerpf(cam.position.x, _cam_target.x, 1.0 - exp(-delta * rate)),
-		lerpf(cam.position.y, _cam_target.y, 1.0 - exp(-delta * rate)),
-		lerpf(cam.position.z, _cam_target.z, 1.0 - exp(-delta * 2.0)))
-	if cam.position.distance_to(_cam_target) > 60.0:
-		cam.position = _cam_target  # (a warp, or the first frame)
+	# THE FOLLOW is what it was, kept in its own place (_peak_cam_base): the look-around and
+	# the zoom are laid over it, so neither is slowed by the follow's own easing.
+	if _peak_cam_base == Vector3.ZERO or _peak_cam_base.distance_to(_cam_target) > 60.0:
+		_peak_cam_base = _cam_target  # (a warp, or the first frame)
+	_peak_cam_base = Vector3(
+		lerpf(_peak_cam_base.x, _cam_target.x, 1.0 - exp(-delta * rate)),
+		lerpf(_peak_cam_base.y, _cam_target.y, 1.0 - exp(-delta * rate)),
+		lerpf(_peak_cam_base.z, _cam_target.z, 1.0 - exp(-delta * 2.0)))
+	# HOLD TO ZOOM OUT (Parker 11-12: "make holding L on controller zoom the camera out and
+	# make it holding shift on keyboard and mouse"; "left trigger"). Held, the camera pulls
+	# back over a third of a second to the frame this spot's author drew for it (the launch,
+	# the landing and the fall below: the frame the close camera no longer uses), or to
+	# twice the view where nobody drew one. Let go and it comes back.
+	var slot := 0
+	var drv = peak.player.driver
+	if drv != null and "slot" in drv:
+		slot = int(drv.slot)
+	var live := screen == "hud"
+	var zoom_want := 1.0 if live and Players.zoom_held(slot) else 0.0
+	_peak_zoom = lerpf(_peak_zoom, zoom_want, 1.0 - exp(-delta * PEAK_ZOOM_RATE))
+	if absf(_peak_zoom - zoom_want) < 0.002:
+		_peak_zoom = zoom_want
+	var wide_half := maxf(float(fr[0]), half) if bool(fr[2]) else half * 2.0
+	var wide_bias: Vector2 = fr[1]
+	var z := smoothstep(0.0, 1.0, _peak_zoom)
+	var half_now := lerpf(_peak_cam_base.z * tan_half, wide_half, z)
+	var shift := (wide_bias - bias) * z + Vector2(0.0, (wide_half - half) * 0.08 * z)
+	# LOOK AROUND (Parker 11-12: "make the right stick let you control the camera a bit ...
+	# it returns to normal when you let go of it. Make it holding alt and useing the mouse
+	# on mouse and keyboard"). The right stick slides the view, further the harder it is
+	# pushed, up to PEAK_LOOK_REACH of the way to the screen's edge, so the climber is
+	# still in view on the far side. With Alt held the mouse does the same, and aims no
+	# limb until the view is back (a held limb keeps its pose; the pointer is put back
+	# where it was when Alt went down, so the limb is not thrown when aiming resumes).
+	var want := Players.look_stick(slot) if live else Vector2.ZERO
+	var mouse := get_viewport().get_mouse_position()
+	var alt := live and Players.look_held(slot)
+	if alt:
+		if not _peak_alt:
+			_peak_alt = true
+			_peak_alt_at = mouse
+			_peak_pan_mouse = Vector2.ZERO
+		else:
+			_peak_pan_mouse += Vector2(mouse.x - _peak_mouse_last.x, _peak_mouse_last.y - mouse.y) / maxf(1.0, vs.y * PEAK_LOOK_MOUSE)
+			_peak_pan_mouse = Vector2(clampf(_peak_pan_mouse.x, -1.0, 1.0), clampf(_peak_pan_mouse.y, -1.0, 1.0))
+		want += _peak_pan_mouse
+	elif _peak_alt:
+		_peak_alt = false
+		_peak_pan_mouse = Vector2.ZERO
+		Input.warp_mouse(_peak_alt_at)
+		mouse = _peak_alt_at
+	_peak_mouse_last = mouse
+	want = Vector2(clampf(want.x, -1.0, 1.0), clampf(want.y, -1.0, 1.0))
+	var look_rate := PEAK_LOOK_BACK if want.length() < _peak_pan.length() else PEAK_LOOK_OUT
+	_peak_pan = _peak_pan.lerp(want, 1.0 - exp(-delta * look_rate))
+	if (_peak_pan - want).length() < 0.003:
+		_peak_pan = want
+	_peak_mouse_held = alt or (_peak_mouse_held and _peak_pan.length() > 0.02)
+	Players.mouse_aim_off = _peak_mouse_held
+	var look_off := Vector2(_peak_pan.x * half_now * aspect, _peak_pan.y * half_now) * PEAK_LOOK_REACH
+	cam.position = Vector3(_peak_cam_base.x + shift.x + look_off.x, _peak_cam_base.y + shift.y + look_off.y, half_now / tan_half)
 	cam.look_at(Vector3(cam.position.x, cam.position.y, 0.0), Vector3.UP)
 
 
@@ -628,6 +697,13 @@ func _tick_peak(delta: float) -> void:
 			if n != null:
 				n.visible = not away
 	if not on:
+		_peak_cam_base = Vector3.ZERO  # (the climb's camera starts afresh next time)
+		_peak_zoom = 0.0
+		_peak_pan = Vector2.ZERO
+		_peak_alt = false
+		if _peak_mouse_held:
+			_peak_mouse_held = false
+			Players.mouse_aim_off = false
 		if _peak_look_on:
 			_peak_look_on = false
 			_world_sky.sky_top_color = Color("#1E6BFF")

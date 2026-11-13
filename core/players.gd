@@ -61,6 +61,8 @@ const DEFAULT_KBM := {
 	"leg_r": [{"key": KEY_S}, {}],
 	"lock": [{"key": KEY_SPACE}, {"key": KEY_ENTER}],
 	"pause": [{"key": KEY_ESCAPE}, {}],
+	"look": [{"key": KEY_ALT}, {}],
+	"zoom": [{"key": KEY_SHIFT}, {}],
 }
 const DEFAULT_PAD := {
 	"arm_l": [{"pad": JOY_BUTTON_X}, {}],
@@ -70,7 +72,17 @@ const DEFAULT_PAD := {
 	"fart": [{"pad": JOY_BUTTON_RIGHT_SHOULDER}, {}],
 	"lock": [{"pad": JOY_BUTTON_START}, {}],
 	"pause": [{"pad": JOY_BUTTON_BACK}, {}],
+	"look": [{}, {}],  # (a pad looks with its right stick: look_stick)
+	"zoom": [{"axis": JOY_AXIS_TRIGGER_LEFT}, {}],
 }
+## THE CAMERA'S OWN TWO (the Peak's solo climb; Parker 11-12: "make the right stick let you
+## control the camera a bit ... Make it holding alt and useing the mouse on mouse and
+## keyboard", and "make holding L on controller zoom the camera out and make it holding
+## shift on keyboard and mouse"; the trigger, he settled: "left trigger"). Held, not
+## pressed. They are binds like the rest (saved, swapped, reset) but are not rows on the
+## Controls board yet: that board is the UI kit's, laid out for six.
+const CAMERA_ACTIONS := ["look", "zoom"]
+const CAMERA_ACTION_NAMES := ["Look around (hold, and move the mouse)", "Zoom out (hold)"]
 ## Saved binds from an older default layout are dropped when this changes.
 const BINDS_VERSION := 3
 const SAVE := "user://binds.cfg"
@@ -85,6 +97,9 @@ var fake := {}
 
 ## The device that spoke last: KBM or a pad id. FOR THE GLYPHS ONLY.
 var last_device := KBM
+## The mouse is the camera's for now (the Peak's look-around, Alt held, and until the view
+## has glided back): it aims no limb. A limb being held keeps its pose.
+var mouse_aim_off := false
 ## False while the game window has lost the focus (Steam hands the pad to its desktop
 ## layout then, and the keyboard goes to the other window): main shows a notice.
 var focused := true
@@ -546,6 +561,45 @@ func fart_held(s: int) -> bool:
 	return _action(_dev(s), "fart")
 
 
+## Hold to zoom the Peak's camera out: the left trigger past its press point (Feel
+## trigger_press, about half way, so a resting finger does not zoom), or Shift.
+func zoom_held(s: int) -> bool:
+	return _action(_dev(s), "zoom")
+
+
+## Hold to look around with the mouse (Alt). A pad needs no button: its right stick looks.
+func look_held(s: int) -> bool:
+	var dev := _dev(s)
+	return (dev == KBM or dev == ANY) and _action(KBM, "look")
+
+
+## The camera's look from a pad's RIGHT stick: y-up, the left stick's own dead zone taken
+## off (a stick that drifts a little does nothing) and the rest stretched back to 0..1.
+func look_stick(s: int) -> Vector2:
+	var dev := _dev(s)
+	var st := Vector2.ZERO
+	if dev == ANY:
+		for p in _all_pads():
+			var one := _right_stick(p)
+			if one.length() > st.length():
+				st = one
+	elif dev != KBM and dev != NO_DEVICE:
+		st = _right_stick(dev)
+	var dz := Feel.get_k("stick_deadzone")
+	if st.length() <= dz:
+		return Vector2.ZERO
+	return st.normalized() * minf(1.0, (st.length() - dz) / maxf(0.05, 1.0 - dz))
+
+
+func _right_stick(dev: int) -> Vector2:
+	if _is_steam_dev(dev):
+		var si = _si()
+		return si.look(dev) if si != null else Vector2.ZERO
+	if fake.has(dev):
+		return fake[dev].get("look", Vector2.ZERO)
+	return Vector2(raw_axis(dev, JOY_AXIS_RIGHT_X), -raw_axis(dev, JOY_AXIS_RIGHT_Y))
+
+
 func lock_pressed(s: int) -> bool:
 	s = _edge_slot(s)
 	var e: bool = _lock_edge.get(s, false)
@@ -616,7 +670,7 @@ func stick(dev: int) -> Vector2:
 
 
 func _mouse_aim():
-	if camera == null or not is_instance_valid(camera):
+	if camera == null or not is_instance_valid(camera) or mouse_aim_off:
 		return null
 	var vp := camera.get_viewport()
 	var mp := vp.get_mouse_position()
@@ -756,7 +810,7 @@ func _load() -> void:
 	for scheme in ["kbm", "pad"]:
 		var d = cf.get_value("binds", scheme, null)
 		if d is Dictionary:
-			for a in ACTIONS:
+			for a in ACTIONS + CAMERA_ACTIONS:
 				if d.has(a) and d[a] is Array and d[a].size() == 2:
 					binds[scheme][a] = d[a]
 

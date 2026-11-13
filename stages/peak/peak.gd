@@ -1126,7 +1126,7 @@ func inside_now() -> float:
 	return maxf(inside / maxf(total, 0.001), zones.darkness(player_at()))
 
 
-## The camera's frame at the climber: [half height, bias].
+## The camera's frame at the climber: [half height, bias, is it a zone an author drew].
 func cam_frame() -> Array:
 	var p := player_at()
 	var half := 4.2
@@ -1143,7 +1143,7 @@ func cam_frame() -> Array:
 					best_area = size
 					half = float(c.half_h)
 					bias = v2(c.bias)
-	return [half, bias]
+	return [half, bias, best_area < INF]
 
 
 # ---------------------------------------------------------------- the ending
