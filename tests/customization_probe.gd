@@ -128,7 +128,7 @@ func _ready() -> void:
 		check(effects == ["treats"], "Successful lock uses the locking climber's Treats preset")
 		check(main.cam.find_children("DogTreatBurst", "Node3D", false, false).size() > 0, "Lock emits Treats in game")
 		main.lucha.play_lock_effect("confetti")
-		check(main.cam.find_children("ConfettiBurst", "Node3D", false, false).size() > 0 and main.cam.find_children("*", "CPUParticles3D", true, false).size() > 0, "Original confetti remains available")
+		check(main.cam.find_children("ConfettiBurst", "Node3D", false, false).size() > 0 and main.cam.find_children("ConfettiBurst", "Node3D", false, false)[0].get_child_count() == 90, "Original confetti remains available")
 	main.show_screen("customize")
 	check(editor._climber_names() == ["1", "2"], "Selector uses numbers only")
 	editor._ask_delete()

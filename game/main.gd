@@ -62,7 +62,7 @@ var _readout_t := 0.0
 var _glyphs_on := true
 var _glyphs_n := -1
 var _input_health: Label  # F2: what the input system knows right now (Players.health)
-var _focus_notice: Label  # shown in a match while the window has lost the focus
+var _focus_notice: Label  # OS window-focus loss only; not idle/disconnected input
 ## COUCH PLAYERS IN AN ONLINE LOBBY are parked with Play Together (Parker 11-10:
 ## "first lets only focus on the online multiplayer"). It was also a trap: a host on a
 ## pad pressing Space or Enter (the keyboard's Lock In, and the menus' accept) made a
@@ -361,7 +361,7 @@ func _process(delta: float) -> void:
 		_input_health.text = "INPUT (F2 hides)   log: %s
 %s" % [ProjectSettings.globalize_path(Players.LOG_PATH), Players.health()]
 	if _focus_notice != null:
-		_focus_notice.visible = not Players.focused and screen in ["hud", "pause", "lobby"]
+		_focus_notice.visible = not Players.focused
 	if _build_tag != null:
 		_build_tag.visible = screen == "title"
 	_readout_t -= delta
@@ -1043,19 +1043,24 @@ func _build_ui() -> void:
 	_input_health.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_input_health.visible = false
 	root.add_child(_input_health)
-	# The window lost the focus mid-match: keys go to the other window and Steam hands
-	# the pad to its desktop layout. Nothing the game can read; say so, loudly.
+	# Focus notifications in Players drive this in every screen, including paused
+	# submenus. Idle controllers and leaving a button's hover never trigger it.
 	_focus_notice = Label.new()
-	_focus_notice.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
-	_focus_notice.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	_focus_notice.position.y = 150
-	_focus_notice.text = "CLICK THE GAME WINDOW
-it lost the focus, so your controls are off"
-	_focus_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_focus_notice.add_theme_font_size_override("font_size", 34)
-	_focus_notice.add_theme_color_override("font_color", Color("#FFC928"))
-	_focus_notice.add_theme_constant_override("outline_size", 12)
-	_focus_notice.add_theme_color_override("font_outline_color", Color(0.1, 0.07, 0.05))
+	_focus_notice.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	_focus_notice.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_focus_notice.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_focus_notice.offset_right = -24
+	_focus_notice.offset_bottom = -24
+	_focus_notice.text = "Click Game Window to regain controls."
+	_focus_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var focus_font := SystemFont.new()
+	focus_font.font_names = PackedStringArray(["Arial"])
+	focus_font.font_weight = 700
+	_focus_notice.add_theme_font_override("font", focus_font)
+	_focus_notice.add_theme_font_size_override("font_size", 26)
+	_focus_notice.add_theme_color_override("font_color", Color("#FF3232"))
+	_focus_notice.add_theme_constant_override("outline_size", 4)
+	_focus_notice.add_theme_color_override("font_outline_color", Color(0.1, 0.03, 0.03))
 	_focus_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_focus_notice.visible = false
 	root.add_child(_focus_notice)

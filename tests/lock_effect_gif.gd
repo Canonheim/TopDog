@@ -54,16 +54,13 @@ func _ready() -> void:
 			assert(not signatures.has(signature))
 			signatures[signature] = true
 			if effect == "confetti":
-				var count := 0
-				assert(root.get_child_count() == 28)
-				var band_shapes := {}
-				for particles in root.get_children():
-					count += particles.amount
-					assert(particles.amount in [2,3] and is_equal_approx(particles.lifetime, 2.2))
-					var key := str(particles.get_meta("coverage_lane")) + ":" + str(particles.get_meta("shape"))
-					assert(not band_shapes.has(key))
-					band_shapes[key] = true
-				assert(count == 70)
+				assert(root.get_child_count() == 90)
+				var quotas := [{}, {}, {}]
+				for piece in root.get_children():
+					var region: int = piece.get_meta("coverage_region")
+					var shape: int = piece.get_meta("shape")
+					quotas[region][shape] = quotas[region].get(shape,0)+1
+				assert(quotas[0] == quotas[1] and quotas[1] == quotas[2])
 			elif effect == "roses":
 				var petals := 0
 				var roses := 0

@@ -32,6 +32,8 @@ var column_x := MENU_COLUMN_X
 var top_y := MENU_TOP_Y
 var _open_t := 0.0
 var _hover := -1
+static var pointer_navigation := true
+static var pointer_inside := true
 ## THE TITLE'S PRESS ANY BUTTON (Parker 11-11): the logo big in the middle with the
 ## press line under it and no belts; on a press the logo shrinks to its corner and
 ## the belts fall in from the top of the screen. (lucha_ui owns the press.)
@@ -50,6 +52,8 @@ func _init(p_cam: Camera3D) -> void:
 
 
 func _ready() -> void:
+	get_window().mouse_entered.connect(func(): pointer_inside = true)
+	get_window().mouse_exited.connect(func(): pointer_inside = false)
 	# THE STAR MARKS THE FOCUS in every menu (Parker 11-11, on the UI creator's pass: the
 	# pug crest stood over the belt above and hid its words, a guest's BASE for good).
 	cursor = LuchaKit.cursor_star()
@@ -353,6 +357,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		if not event is InputEventMouseMotion:
 			get_viewport().set_input_as_handled()
 		return
+	if event is InputEventMouseMotion or event is InputEventMouseButton:
+		pointer_navigation = true
+	elif event.is_action_pressed("ui_down") or event.is_action_pressed("ui_up") or event.is_action_pressed("ui_left") or event.is_action_pressed("ui_right") or event.is_action_pressed("ui_accept"):
+		pointer_navigation = false
 	if event.is_action_pressed("ui_down"):
 		_move(1)
 	elif event.is_action_pressed("ui_up"):
@@ -445,6 +453,7 @@ func _next_live(from: int, dir: int) -> int:
 
 
 func _move(dir: int) -> void:
+	pointer_navigation = false
 	focus = _next_live(focus, dir)
 	Sound.play("ui_hover", -12.0)
 
@@ -582,10 +591,14 @@ func _process(delta: float) -> void:
 		var crest = (it.belt as Node3D).get_meta("crest") if (it.belt as Node3D).has_meta("crest") else null
 		if crest != null and is_instance_valid(crest):
 			(crest as Node3D).visible = i == _top_item()
-	# The star beside the focused belt; rows with their own focus rings keep those.
-	if cursor != null and _live(focus):
-		var fb := items[focus].belt as Node3D
-		cursor.visible = not fb.has_meta("focus_nodes")
+	# Recheck hover while menus animate, including a stationary pointer on a new screen.
+	# Keyboard/controller navigation keeps its focus cue until the mouse takes over.
+	if cursor != null:
+		_hover = _pick(get_viewport().get_mouse_position()) if pointer_navigation and pointer_inside and Players.focused else -1
+		if _hover >= 0:
+			focus = _hover
+		var show_star := _live(focus) and Players.focused and (not pointer_navigation or _hover == focus)
+		cursor.visible = show_star and not (items[focus].belt as Node3D).has_meta("focus_nodes") if _live(focus) else false
 	if cursor != null and cursor.visible and _live(focus) and _open_t > 0.3:
 		var home: Vector3 = items[focus].node.get_meta("home")
 		var bw: float = (items[focus].belt as Node3D).get_meta("width", BELT_W)
