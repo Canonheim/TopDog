@@ -96,6 +96,7 @@
 <tr><td>33</td><td><a href="#n33">La Gruta de Cristal: the flat ceiling crystals should be the same purple</a></td><td><span class="chip c-plan">Plan (part of the cave's restyle), not sent to the thread</span></td></tr>
 <tr><td>34</td><td><a href="#n34">La Gruta de Cristal: the spikes on the column's rings should pop in and out</a></td><td><span class="chip c-ask">Plan, one question; not sent to the thread</span></td></tr>
 <tr><td>35</td><td><a href="#n35">El Jardín de Hongos: a weird static noise</a></td><td><span class="chip c-plan">Likely cause found, not heard by me; not sent to the thread</span></td></tr>
+<tr><td>36</td><td><a href="#n36">El Jardín de Hongos: the mushrooms need bounce animations</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes from 12 on wait here until Parker says to send them.</p>
 
@@ -1096,6 +1097,27 @@
     <li><b>Rebuild the garden's bed without the fizz.</b> A soft damp garden: slow drips, the plops, a few insect chirrs, a low breath of air, and something gentle and tuned to the music's key, as the crystal cave has.</li>
     <li><b>Bring its level down</b> to sit with its neighbours.</li>
     <li>Dan is doing the audio pass. This may be his to replace with a real recording or his own bed. If so, the stopgap is simply to turn this one layer off until he does.</li>
+  </ul>
+</div>
+
+<div class="note" id="n36">
+  <div class="head"><span class="num">36</span><h3>El Jardín de Hongos: the mushrooms need bounce animations</h3><span class="time">23:18</span></div>
+  <blockquote>"these mushrooms need to have bounce animations"</blockquote>
+  <p><span class="chip c-plan">Plan, not sent to the thread</span></p>
+  <figure>
+    <img src="shots/36_mushroom_caps.jpg" alt="Orange and white checked mushroom caps on green stalks; a climber in the air beside one">
+    <figcaption>Parker's picture: the start of area 4. The orange checked caps are the bouncy ones. The white figure lying on a cap is one of the frozen climbers, part of the scenery.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>The garden has 13 bouncy caps. When you land on one the game changes your speed (it throws you off along the cap's facing, from 3 up to 9.5 m a second depending on the cap) and plays a boing. That is all. The cap itself is a fixed piece of scenery and does not move, so you are thrown by something that looks as stiff as rock.</p>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>Squash and spring.</b> When you hit a cap it flattens and spreads under you, then springs up taller than it started and wobbles back to rest over about half a second. The stalk dips and rocks with it. Del Mar's floats already do exactly this, so it is the same recipe.</li>
+    <li><b>Sized to the hit.</b> A hard landing on a strong cap squashes deep and throws a puff of spores from under the rim. A light touch on a weak cap gives a small dip.</li>
+    <li><b>Timed to the throw.</b> You leave the cap on the spring back up, not at the instant you touch it, so the squash is what throws you and not something that happens after you have gone. A delay of a few hundredths of a second is enough; more than that would make the caps feel late.</li>
+    <li><b>They look bouncy at rest too.</b> A slow breathing sway on every bouncy cap, so you can tell a cap that throws you from a flat ledge before you land on it.</li>
+    <li>For this each bouncy cap has to be its own moving piece. Today the caps are baked into the scenery with everything else.</li>
+    <li>Note 15's life ring under the balcony is the same kind of bounce pad and gets the same squash.</li>
   </ul>
 </div>
 
