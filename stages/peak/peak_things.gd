@@ -419,6 +419,8 @@ func set_area_active(area: String, on: bool) -> void:
 	for id in movers:
 		if movers[id].area == area:
 			movers[id].active = on
+			if movers[id].get("loose") != null:
+				(movers[id].loose as RigidBody3D).freeze = not on
 
 
 func sleep_all() -> void:
@@ -589,6 +591,9 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 	var mo: Dictionary = m.mo
 	var t := peak.clock
 	var jumped := false
+	if m.get("loose") != null:
+		_tick_loose(m)
+		return
 	match str(m.type):
 		"path":
 			var total: float = (m.cum as PackedFloat32Array)[(m.cum as PackedFloat32Array).size() - 1]
@@ -636,6 +641,9 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 						var acc := float(mo.get("accel", 0.0))
 						m.v = speed if acc <= 0.0 else minf(speed, float(m.v) + acc * delta)
 						m.dist = float(m.dist) + float(m.v) * delta
+						if mo.has("loose") and float(m.dist) >= float(mo.loose):
+							_let_loose(m)
+							return
 						if float(m.dist) >= total:
 							m.dist = total
 							m.run = false
@@ -721,6 +729,141 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 		node.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, 0))
 	if bool((m.def as Dictionary).get("ko", false)):
 		_mover_ko(m)
+
+
+## OFF THE END OF ITS ROAD A MOVER IS A LOOSE THING (Parker 11-12, of the cart that runs
+## off the broken trestle: it "falls too slow and should instead have physics a little
+## after it falls". It never fell: it was slid down a drawn curve to the Sump at 5 m/s,
+## fifteen seconds of glide). A path with `loose` in its motion is followed only that many
+## metres; there the mover becomes a rigid body with the speed and the lean it had, and
+## tips, falls and knocks about as the world decides. Hands and feet on it stay on it
+## (the welds are made again on the new body, which stands exactly where the old one
+## did). It goes home after its usual `reset`.
+func _let_loose(m: Dictionary) -> void:
+	var mo: Dictionary = m.mo
+	var def: Dictionary = m.def
+	var at: Array = _along(m, float(m.dist))
+	var pos: Vector2 = at[0]
+	var dir: Vector2 = at[1]
+	var rb := RigidBody3D.new()
+	rb.mass = float(mo.get("mass", 140.0))
+	rb.collision_layer = Climber.LAYER_WORLD
+	rb.collision_mask = Climber.LAYER_WORLD
+	rb.axis_lock_linear_z = true
+	rb.axis_lock_angular_x = true
+	rb.axis_lock_angular_y = true
+	rb.gravity_scale = float(mo.get("fall_g", LOOSE_G))
+	rb.linear_damp = 0.03
+	rb.angular_damp = 0.25
+	rb.can_sleep = false
+	rb.contact_monitor = true  # (is it lying on something: see _tick_loose)
+	rb.max_contacts_reported = 6
+	var pm := PhysicsMaterial.new()
+	pm.friction = 0.7
+	pm.bounce = 0.3
+	rb.physics_material_override = pm
+	var grips := false
+	for sh in def.shapes:
+		peak._add_shapes(rb, peak._pts(sh.pts), -Peak.HALF, Peak.HALF)
+		grips = grips or peak.kind_grips(str(sh.kind))
+	if not grips:
+		rb.set_meta("no_weld", true)
+	rb.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, 0))
+	var first: Node3D = m.nodes[0]
+	first.get_parent().add_child(rb)
+	rb.linear_velocity = Vector3(dir.x, dir.y, 0) * float(m.v)
+	rb.angular_velocity = Vector3(0, 0, float(mo.get("tip", 0.9)) * (1.0 if dir.x < 0.0 else -1.0))  # (nose down)
+	Climber.sync_server(rb)  # THE LATE TRANSFORM LAW: the welds below anchor where it is
+	(m.vis as Node3D).reparent(rb, false)
+	# It falls past ropes and chains, never onto them (a rope's pieces are solid to
+	# anything that looks for the world, and a hanging chain would catch a falling cart).
+	for r in ropes:
+		if r.area == m.area:
+			for seg: RigidBody3D in r.segs:
+				rb.add_collision_exception_with(seg)
+			if r.bob != null:
+				rb.add_collision_exception_with(r.bob)
+	var c := peak.player
+	if c != null:
+		for i in c.limbs.size():
+			if c.limbs[i].grab_other != null and m.nodes.has(c.limbs[i].grab_other):
+				c.release(i)
+				c.limbs[i].regrip = 0.0
+				c.attach(i, rb)
+	for node: AnimatableBody3D in m.nodes:
+		node.collision_layer = 0
+	m["loose"] = rb
+	m["loose_v"] = rb.linear_velocity
+	m["loose_bang"] = 0.0
+	m["loose_wet"] = false
+	m.run = false
+	m.arrived = peak.clock
+	m.speed = 0.0
+	if str(m.id).begins_with("cart"):
+		_cart_sound(m)  # (its roll on the rails stops)
+
+
+const LOOSE_G := 0.55  # a loose mover's gravity against the engine's (a faller's: 5.4 m/s2)
+
+
+func _tick_loose(m: Dictionary) -> void:
+	var rb: RigidBody3D = m.loose
+	var mo: Dictionary = m.mo
+	var t := peak.clock
+	var here := Vector2(rb.position.x, rb.position.y)
+	# It bangs on what it hits (a sudden change of speed), not more than twice a second.
+	var v := rb.linear_velocity
+	if (v - (m.loose_v as Vector3)).length() > 3.0 and t - float(m.loose_bang) > 0.5:
+		m.loose_bang = t
+		peak.audio.play("cart_crash" if str(m.id).begins_with("cart") else "gondola_clunk", here, clampf(-8.0 + (v - (m.loose_v as Vector3)).length(), -8.0, 3.0))
+	m.loose_v = v
+	# Water takes its speed and lets it sink (it is iron and oak).
+	var wet: bool = peak.zones.water_at(here) != null
+	if wet != bool(m.loose_wet):
+		m.loose_wet = wet
+		rb.linear_damp = 2.2 if wet else 0.03
+		rb.angular_damp = 2.0 if wet else 0.25
+		rb.gravity_scale = float(mo.get("fall_g", LOOSE_G)) * (0.45 if wet else 1.0)
+		if wet:
+			peak.zones.splash_at(here, 1.6, v.length())
+	# A FALLING CART IS HEAVIER THAN YOUR GRIP. Holding only the cart, you go with it.
+	# Holding something else as well (a hand found the chain as you went under it), you
+	# keep that and lose the cart: without this a 22 kg climber on a chain held 140 kg of
+	# cart up by the feet. Lying on the rock or in the water it pulls on nobody.
+	var held := _player_limbs_on([rb])
+	if held and not wet and rb.get_colliding_bodies().is_empty():
+		for l in peak.player.limbs:
+			if l.grab_other != null and l.grab_other != rb:
+				_release_from([rb])
+				held = false
+				break
+	# Home again, as a cart at the end of its road goes: once its wait is over and nobody
+	# is near it or on it (or the wait is long over and nobody is on it).
+	var away := peak.player == null or peak.player_at().distance_to(here) > 22.0
+	var reset := float(mo.get("reset", 10.0))
+	var since := t - float(m.arrived)
+	if (since > reset and away and not held) or (since > reset * 3.0 and not held) or here.y < -70.0:
+		_loose_home(m)
+
+
+func _loose_home(m: Dictionary) -> void:
+	var rb: RigidBody3D = m.loose
+	_release_from([rb])
+	(m.vis as Node3D).reparent(m.nodes[0], false)
+	rb.queue_free()
+	m.erase("loose")
+	m.dist = 0.0
+	m.v = 0.0
+	m.arrived = -1.0
+	m.board_t = 0.0
+	m.angle = 0.0
+	m.offset = Vector2.ZERO
+	m.prev = m.home
+	m.speed = 0.0
+	for node: AnimatableBody3D in m.nodes:
+		node.transform = Transform3D(Basis(), Vector3((m.home as Vector2).x, (m.home as Vector2).y, 0))
+		node.collision_layer = Climber.LAYER_WORLD
+		Climber.sync_server(node)
 
 
 ## A cart's own voice: the roll while it runs, a clack at every rail joint (4 m).

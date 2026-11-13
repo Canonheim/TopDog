@@ -105,7 +105,7 @@ and `ngon(...)` make them.
 | type | fields | what it does |
 |---|---|---|
 | `still` | | stays put (use it when a fixed thing needs an id, a tag or a hold behaviour) |
-| `path` | `pts` (absolute, the first equals `at`), `speed` m/s, `mode` loop / pingpong / wrap / once, `wait` s at each end, `phase` s, `trigger` grab / board / none, `reset` s, `tilt` bool | travels the line. `wrap` jumps from the end back to the start (barrels, birds). `once` waits for its trigger, goes, then goes home `reset` s later |
+| `path` | `pts` (absolute, the first equals `at`), `speed` m/s, `mode` loop / pingpong / wrap / once, `wait` s at each end, `phase` s, `trigger` grab / board / none, `reset` s, `tilt` bool | travels the line. `wrap` jumps from the end back to the start (barrels, birds). `once` waits for its trigger, goes, then goes home `reset` s later. With `loose` (metres along the line, and `mass` kg) a `once` mover runs off the end of its road for real: at that distance it becomes a loose rigid body with the speed and lean it had (the falling cart of 1.7); whoever holds it goes with it |
 | `spin` | `rpm` (+ is counter-clockwise), `phase` deg | turns about `at` |
 | `swing` | `amp` deg, `period` s, `phase` 0..1 | swings about `at` like a pendulum (shapes hang below it) |
 | `cycle` | `to` [dx, dy], `t_out`, `hold_out`, `t_in`, `hold_in`, `phase` s | slides out to `at + to` and back on a clock (pistons, gates, phantom blocks) |

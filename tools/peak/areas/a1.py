@@ -261,14 +261,21 @@ A.challenge("1.6", "Vetas de Lodo", (-198.0, 26.2), 2, "B", moves=[
 # x -211.6, 1.6 m short of the drawn boards). NOTE: the first chain is now 1.0 m from the
 # boards' end, so it can be taken without the cart.
 A.ledge(-213.2, -208.5, 40.0, "wood", t=0.4)
-# 2.3 s from rolling to the trestle's end, at 4.5 m/s there. Past the end its road is the
-# arc of a thing thrown off, into the waterfall. (3.4 m of the top is left east of the cart to rest on.)
-TRACK = [(-206.5, 40.45), (-211.6, 40.45), (-214.6, 40.1), (-217.6, 39.05), (-220.6, 37.3), (-223.6, 34.87),
-         (-227.6, 30.5), (-231.6, 24.95), (-235.6, 18.1), (-239.5, 8.0), (-241.5, -10.0), (-242.0, -31.0)]
+# 2.3 s from rolling to the trestle's end, at 4.5 m/s there. (3.4 m of the top is left east
+# of the cart to rest on.)
+# IT FALLS FOR REAL (Parker 11-12: "the mine cart that falls here falls too slow and should
+# instead have physics a little after it falls"). Its road used to be drawn all the way to
+# the Sump, 75 m of curve at 5 m/s: a 15 s glide. Now the road is only the rails and the
+# first dip off their end; a cart's length past the end of the boards (x -213.2) it is let
+# LOOSE: a 140 kg thing with the speed and the lean it had, that tips, falls at a rock's
+# gravity (about 5 s to the water), bangs on what it meets and sinks to the Sump's floor.
+# Hold on and you go with it. It is back on the rails 12 s later, once you are clear of it.
+TRACK = [(-206.5, 40.45), (-211.6, 40.45), (-214.6, 40.1), (-217.6, 39.05)]
+CART_LOOSE = 9.2  # metres along TRACK: x -215.6, 2.4 m past the boards' end
 A.mover("cart1", TRACK[0],
         [(box_pts(0.0, 0.0, 2.4, 0.2), "plank"), (box_pts(-1.12, 0.35, 0.16, 0.9), "iron"), (box_pts(1.12, 0.35, 0.16, 0.9), "iron")],
         {"type": "path", "pts": [list(p) for p in TRACK], "speed": 5.0, "mode": "once", "trigger": "board",
-         "reset": 12.0, "tilt": True, "accel": 2.0},
+         "reset": 12.0, "tilt": True, "accel": 2.0, "loose": CART_LOOSE, "mass": 140.0},
         model="minecart")
 A.deco("sign_pug_skull", -202.6, 40.0, z=-1.0, size=(1.0, 2.2, 0.1), tone="bone")  # the warning, before the cart
 for x in (-204.35, -207.85):

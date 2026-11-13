@@ -83,6 +83,22 @@ func in_water(c: Climber) -> bool:
 	return c != null and c.float_mode
 
 
+## The water zone a point is in (the last one laid wins, as for a climber), or null.
+func water_at(p: Vector2):
+	var zone = null
+	for row in waters:
+		var z: Dictionary = row.def
+		if Peak.rect_has(z.rect, p) and p.y < float(z.surface):
+			zone = z
+	return zone
+
+
+## Something went into (or came out of) water at `p`: `size` is about its width in
+## metres, `speed` how fast it was going.
+func splash_at(p: Vector2, _size: float, _speed: float) -> void:
+	Sound.play_at("splash", Vector3(p.x + Peak.ORIGIN.x, p.y + Peak.ORIGIN.y, 0), 0.0)
+
+
 func darkness(p: Vector2) -> float:
 	var d := 0.0
 	for row in darks:

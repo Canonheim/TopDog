@@ -178,3 +178,49 @@ Godot_console.exe --path . --audio-driver Dummy res://tests/peak_watch.tscn -- -
 - **Not checked:** a knock-out by a rock (nothing was changed there but the parked
   reach); the sound of the board (a thwack and a creak, chosen blind from the Peak's
   own sounds).
+
+## Note 6, the cart: it falls for real (challenge 1.7)
+
+- **State:** fixed and watched in the game, three ways. Feel numbers are first tries.
+- **What changed:** `cart1`'s road in `tools/peak/areas/a1.py` is now only the rails
+  and the first dip off their end (`TRACK`, four points). 9.2 m along it
+  (`CART_LOOSE`: x -215.6, a cart's length past the end of the boards) the mover is
+  let loose: `_let_loose` in `stages/peak/peak_things.gd` makes a 140 kg rigid body
+  where the cart stands, with the speed (4.7 m/s west, 1.7 down) and the lean it had,
+  and moves the drawn cart onto it. It falls at a rock's gravity (5.4 m/s2). Any
+  `once` path mover can do this with `"loose"` in its motion. `cart0`, the ride in
+  from the station, has no `loose` and is untouched. The two chains were not moved.
+- **Watched, empty** (the climber steps off as it starts): rolls 0.70 s after you
+  stand in it, is let loose 3.08 s later, tips nose down and tumbles, hits the Sump
+  5.3 s after that going 21.7 m/s (it took about 15 s before), sinks, and lies on the
+  Sump's floor at x -235, about 5 m east of the fall. 12.6 s after it was let loose
+  it is back on the rails, drawn and solid.
+- **Watched, ridden** (both feet stuck in it): the feet's welds are made again on
+  the loose body the moment it is let loose (THE LATE TRANSFORM LAW: the body is
+  pushed to the physics server first). The climber stayed on it all the way down,
+  tumbling with it; joints never opened more than 0.012 m; ended in the Sump on the
+  sunk cart, feet still stuck (lift them to float up).
+- **Watched, a hand on the chain** (the probe put a hand on the first chain's tail
+  as the cart went under it): the feet let go of the cart and the climber stayed on
+  the chain; the cart fell alone. **This is a new rule and Parker should know it:**
+  while the loose cart is in the air, a climber who also holds something else keeps
+  that and loses the cart. Without it a 22 kg climber on a chain held the 140 kg cart
+  up by the feet for good (seen in the first test run). Before today the opposite
+  happened: the cart was unstoppable and tore your hand off the chain.
+- **Other things it does:** bangs when it hits something hard (the cart's crash
+  sound, louder the harder); in water it slows, sinks and stops tumbling; it passes
+  through ropes and chains rather than hanging up on them.
+- **Pictures:** `06_cart_empty_0.jpg` (on the rails), `06_cart_empty_1.jpg` (0.35 s
+  after it was let loose, tipping off the end), `06_cart_empty_2.jpg` (tumbling),
+  `06_cart_empty_3.jpg` (sinking in the Sump), `06_cart_empty_4.jpg` (at rest),
+  `06_cart_empty_home_again.jpg`, `06_cart_ridden_2.jpg` (the rider going down with
+  it, the game's own camera), `06_cart_ridden_4.jpg` (rider and cart on the Sump's
+  floor).
+- **First-try numbers:** where it is let loose (9.2 m), its mass (140 kg), its
+  gravity (0.55 of the engine's, `LOOSE_G`), the nose-down turn it starts with
+  (0.9 rad/s), its bounce (0.3).
+- **Not done, on purpose:** the speed on the rails is still 5 m/s. The notes page
+  suggests trying 7 to 8; that is the Second Director's idea, not Parker's words, so
+  it waits for him.
+- **Not checked:** a real player catching the chain by play; the splash when it hits
+  the water is the old sound only until note 2 lands (below).

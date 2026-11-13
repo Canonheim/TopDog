@@ -491,6 +491,111 @@ func _w_rocks(a: Array) -> void:
 	await shot("09_board_stood_on")
 
 
+## Note 6: the cart of 1.7 runs off the trestle and is a loose thing from there.
+## Three times: empty (the climber steps off as it starts), ridden all the way down (feet
+## on it, hands kept to itself), and ridden with the hands free (one finds a chain).
+func _w_cart(_a: Array) -> void:
+	var m: Dictionary = pk.things.movers["cart1"]
+	for tag: String in ["empty", "ridden", "chain"]:
+		var ride := tag != "empty"
+		pk.warp("1.7")
+		await secs(1.0)
+		var w0 := pk.clock
+		while m.get("loose") != null and pk.clock - w0 < 45.0:
+			await get_tree().physics_frame  # (the last run's cart is still on its way home)
+		await secs(0.3)
+		stand(mover_at("cart1") + Vector2(0.0, 0.12))
+		if tag == "ridden":
+			me().limbs[0].regrip = 99.0
+			me().limbs[1].regrip = 99.0
+		look(Vector2(-210.5, 40.6), 4.2)
+		var t0 := pk.clock
+		while not bool(m.run) and pk.clock - t0 < 4.0:
+			await get_tree().physics_frame
+		var t_go := pk.clock
+		print("WATCH cart (%s): it rolled %.2f s after the climber stood in it; limbs %s" % [tag, t_go - t0, holds()])
+		if not ride:
+			stand(Vector2(-203.0, 40.0))  # (off it, back on the pillar's top)
+		var t_loose := -1.0
+		var t_wet := -1.0
+		var t_floor := -1.0
+		var v_loose := Vector3.ZERO
+		var at_loose := Vector2.ZERO
+		var shots := 0
+		var fastest := 0.0
+		var gap_worst := 0.0
+		var held_after := ""
+		while pk.clock - t_go < 16.0:
+			await get_tree().physics_frame
+			var rb: RigidBody3D = m.get("loose")
+			var here := mover_at("cart1")
+			if tag == "chain" and rb == null and here.x < -213.6 and not holds().contains("RigidBody3D"):
+				# The player's reach for the first chain, done for them: a hand on its tail.
+				for r in pk.things.ropes:
+					if str(r.id) == "cadena_a":
+						var seg: RigidBody3D = r.segs[r.segs.size() - 2]
+						me().release(0)
+						me().attach(0, seg)
+						print("WATCH cart (chain): a hand took the chain with the cart at x %.1f: limbs %s" % [here.x, holds()])
+			if rb != null:
+				here = Vector2(rb.position.x, rb.position.y)
+				if t_loose < 0.0:
+					t_loose = pk.clock
+					v_loose = rb.linear_velocity
+					at_loose = here
+					held_after = holds()
+				fastest = maxf(fastest, rb.linear_velocity.length())
+				if ride:
+					gap_worst = maxf(gap_worst, me().worst_joint_gap())
+				if t_wet < 0.0 and bool(m.loose_wet):
+					t_wet = pk.clock
+				if t_wet >= 0.0 and t_floor < 0.0 and rb.linear_velocity.length() < 0.6 and pk.clock - t_wet > 0.5:
+					t_floor = pk.clock
+					print("WATCH cart (%s): came to rest at (%.1f, %.1f), turned %.0f deg" % [tag, here.x, here.y, rad_to_deg(rb.rotation.z)])
+			elif t_loose >= 0.0:
+				break  # (home again)
+			if ride:
+				_free_cam = false
+			else:
+				look(here + Vector2(1.0, 0.3), 5.0 if t_loose < 0.0 else 7.0)
+			var el := pk.clock - t_go
+			var want := false
+			if shots == 0 and el > 1.2:
+				want = true
+			elif shots == 1 and t_loose >= 0.0 and pk.clock - t_loose > 0.35:
+				want = true
+			elif shots == 2 and t_loose >= 0.0 and pk.clock - t_loose > 1.6:
+				want = true
+			elif shots == 3 and t_wet >= 0.0 and pk.clock - t_wet > 0.25:
+				want = true
+			elif shots == 4 and t_floor >= 0.0 and pk.clock - t_floor > 0.3:
+				want = true
+			if want:
+				await shot("06_cart_%s_%d" % [tag, shots])
+				shots += 1
+			if t_floor >= 0.0 and shots >= 5 and ride:
+				break
+			if tag == "chain" and t_loose >= 0.0 and pk.clock - t_loose > 7.5:
+				break
+		print("WATCH cart (%s): let loose %.2f s after it rolled, at (%.1f, %.1f) going %s; hit the water %.2f s later; fastest %.1f m/s; at rest %.2f s after the water" % [
+			tag, t_loose - t_go, at_loose.x, at_loose.y, v_loose, t_wet - t_loose, fastest, t_floor - t_wet])
+		if ride:
+			print("WATCH cart (%s): limbs just after it was let loose: %s; limbs at the end: %s; joints opened %.3f m at most; climber at %s, in water %s" % [tag, held_after, holds(), gap_worst, where(), me().float_mode])
+			for l in me().limbs:
+				l.regrip = 0.0
+		else:
+			# The empty one: is it back on the rails after its wait?
+			var t1 := pk.clock
+			while m.get("loose") != null and pk.clock - t1 < 30.0:
+				await get_tree().physics_frame
+			await secs(0.3)
+			look(Vector2(-207.5, 40.6), 4.2)
+			await secs(0.3)
+			print("WATCH cart (empty): home again %.1f s after it was let loose: at %s, drawn %s, solid layer %d" % [pk.clock - t_loose, mover_at("cart1"), drawn_span("cart1"), (m.nodes[0] as CollisionObject3D).collision_layer])
+			await shot("06_cart_empty_home_again")
+	_free_cam = false
+
+
 ## Note 4: what stands where the lift's two cables were.
 func _w_lift(_a: Array) -> void:
 	pk.warp("1.5")
