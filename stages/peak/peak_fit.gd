@@ -340,7 +340,14 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 	for iy in ny:
 		for ix in nx:
 			var at: Vector2 = foot + ax * (-w * 0.5 + pw * (ix + 0.5)) + ay * (ph * (iy + 0.5))
-			out.append([_pick("fit_%s_panel" % mat, ix * 7 + iy * 13), _xf(at, r.ang, Vector3(pw / 2.0, ph / 2.0, zs), zc)])
+			var panel := _pick("fit_%s_panel" % mat, ix * 7 + iy * 13)
+			if mat == "wood":
+				# (the kit's two timber panels are different things: cribbing for the works of
+				# men, a stump's bark in the fungus garden)
+				var want := "fit_wood_panel_b" if str(area.get("palette", "")) == "fungus" else "fit_wood_panel_a"
+				if _mesh(want) != null:
+					panel = want
+			out.append([panel, _xf(at, r.ang, Vector3(pw / 2.0, ph / 2.0, zs), zc)])
 	return out
 
 
@@ -359,6 +366,8 @@ func _caps(out: Array, mat: String, c: Vector2, ax: Vector2, _ay: Vector2, ang: 
 			x0 += ew
 	var run := x1 - x0
 	var n := maxi(1, roundi(run / 2.0))
+	if mat == "shroom":
+		n = 1  # (a mushroom's cap is one thing, rim to rim: it is stretched, never repeated)
 	var seg := run / n
 	for i in n:
 		var at := c + ax * (x0 + seg * (i + 0.5))
