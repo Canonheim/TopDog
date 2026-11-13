@@ -10,7 +10,7 @@ BIOME = {
         "The river flows east and goes over the lip into the mine as the 113 m waterfall. Anything that goes in the water here is on its way to the Sump.",
     ],
     "built": [
-        "Brick, in slate-grey courses, with round arches. Every opening is a round arch: doors, culverts, the aqueduct's spans, the windows of the boiler house. Round arches belong to this biome and to no other.",
+        "Brick, in slate-grey courses, with round arches: doors, culverts, the aqueduct's spans, the windows of the boiler house.",
         "Buttresses and piers with a pale stone coping on top. The copings are what you stand on.",
         "Cast iron: pipes on wall brackets, with flanged joints and valve wheels; riveted plate; grated catwalks on brackets; chain. Sound iron is rust orange. Pipes and fittings that only carry water are green with verdigris.",
         "Every pipe goes from somewhere to somewhere: out of a boiler, along a wall, into a tank. No pipe just stops.",
@@ -25,7 +25,7 @@ BIOME = {
         ["It will break", "Rusty plate, brown and cracked, with a corner gone (note 16, note 24)."],
         ["It is hot", "A pipe joint that glows orange and shimmers, and flares before it lets go of you. The cool joints are teal valve wheels (note 23)."],
         ["It moves", "It is a machine, and you can see what drives it: a piston rod, a rack and a gear, a chain to a winch (note 19)."],
-        ["It is scenery", "Verdigris green pipe and dark blue-grey brick, far back. Green pipe is never a hold; orange pipe always is."],
+        ["It is scenery", "Pipe and dark blue-grey brick that stand behind the play space, mostly verdigris green. What tells you is where it stands, not its colour: any pipe that is in the play space can be held (Parker, 11-13)."],
         ["Water", "Black where it is deep, white where it falls or breaks. It pours off edges and it is never a cube (note 22)."],
     ],
     "layers": [
@@ -36,7 +36,7 @@ BIOME = {
     "kit": [
         ["Brick wall bay with a round arch: open, bricked up, barred", "4 m wide, 5 m tall", "the back wall of nearly every area", "Background", "in the kit: brick_arch (open); the other two new"],
         ["Brick pier and buttress with stone coping", "1.2 m wide, to suit", "under anything you stand on", "Play space, background", "new"],
-        ["Pipe run, verdigris: straight, elbow, tee, flanged joint", "0.3 and 0.5 m across", "scenery pipes, far back", "Background", "in the kit: pipe_verdigris"],
+        ["Pipe run, verdigris: straight, elbow, tee, flanged joint", "0.3 and 0.5 m across", "scenery pipes, kept behind the play space", "Background", "in the kit: pipe_verdigris"],
         ["Pipe run, rust orange, on wall brackets", "0.3 m across", "the pipes you hold; each carries on into the back wall", "Play space", "in the kit as shapes; brackets in the kit: iron_bracket"],
         ["Valve wheel", "0.6 m", "cool joints; scenery", "Play space, background", "in the kit: valve_wheel"],
         ["Hot joint: glowing flange", "0.5 m", "the hot holds", "Play space", "the game draws the glow today; a model is on the request list"],
@@ -48,7 +48,8 @@ BIOME = {
         ["Barrel cove: a brick culvert mouth", "2.5 m across", "where the barrels come out (note 21)", "Background", "new"],
         ["Water wheel frame", "to suit a 4 m wheel", "La Rueda", "Background", "in the kit: water_wheel_frame"],
         ["Flume pillar", "1 m wide", "Contracorriente", "Play space", "in the kit: flume_pillar"],
-        ["Winch lift: a cage with a hand winch on board", "2 m by 2.2 m", "the dam (note 25)", "Play space", "new"],
+        ["Winch lift: a cage with a hand winch on board, in a straight shaft", "2 m by 2.2 m", "the dam (note 25): it goes straight up, and always sinks when you stop winding", "Play space", "new"],
+        ["Lift shaft: brick, with guide rails", "2.6 m wide, the dam's height", "the dam's lift", "Background", "new"],
         ["Chain on a wall hanger", "to suit", "real chains you hold only", "Play space", "in the kit: hanger_chain"],
         ["Works lantern, greenish", "0.4 m", "few", "Background", "in the kit: lantern_hang, re-tinted"],
         ["Cast pug", "0.6 m", "on iron: valve wheels, gate frames, the boiler door", "Background", "in the kit: pug_stamp"],
@@ -72,11 +73,10 @@ BIOME = {
         "Note 22: the water is rebuilt: it pours, it is never a cube.",
         "Note 23: the hot joints glow and warn.",
         "Note 24: the catwalk before the dam is mostly breakable floor.",
-        "Note 25: the dam is one lift with its winch on board.",
+        "Note 25: the dam is one lift with its winch on board. Parker, 11-13: it goes straight up a shaft, and always sinks when you stop winding.",
+        "Note 21, Parker, 11-13: the barrels keep their two gaps that have to be swum.",
+        "Parker, 11-13: under the well, far back, one fallen thing from each place above where you cross it: a crystal point, a mushroom cap, a carved temple block.",
+        "Note 2, Parker, 11-13: the water stays tinted for each cave.",
         "Note 17: the pulsing light under the mill race. Nothing in this biome's light may pulse.",
-    ],
-    "ask": [
-        "Green pipe is scenery, orange pipe is a hold. Is that the right split, or should all pipe you can reach be holdable?",
-        "Round arches only here, and no round arch anywhere else on the mountain: agreed?",
     ],
 }

@@ -27,7 +27,7 @@ BIOME = {
         ["You can't", "Black wet mud and wet rock, glossy, with pale drips running down it."],
         ["It will break", "Grey rotten wood, already cracked, with a corner gone. It creaks and sheds dust before it goes."],
         ["It moves", "Iron and timber like the rest, but it always hangs from or runs on something you can see: a cable over a wheel, a chain, a rail."],
-        ["It is scenery", "The same timbering, but greyer, darker and cooler than the timber you climb, and never honey-coloured. Nothing thin hangs in it near the climb."],
+        ["It is scenery", "The same timbering, but greyer, darker and cooler than the timber you climb, never honey-coloured, and never inside the play space. Nothing thin hangs in it near the climb."],
         ["It will hurt you", "It comes out of a dark hole you can see, and dust falls from the hole first."],
     ],
     "layers": [
@@ -51,6 +51,8 @@ BIOME = {
         ["Rubble heap: small, big", "1.5 m; 5 m by 2.5 m", "foot of falls; the foreground's low lip", "Background, foreground", "in the kit: rubble_pile (small)"],
         ["Dark hole: for falling rock, for a cove", "2 m across", "wherever something comes out of the rock", "Background", "new (note 12)"],
         ["Lantern: standing, hanging", "0.4 m", "the light of every area", "Background", "in the kit: lantern_mine, lantern_hang"],
+        ["Iron staple: a rust-orange U of iron hammered into rock, straight or bent", "0.4 m wide", "the holds of La Cortina, in place of today's rock knobs", "Play space", "new"],
+        ["Chain, real links, rusty red", "to suit", "the one chain past the end of the cart track", "Play space", "in the kit higher up the mountain; re-coloured"],
         ["Skull-pug sign; pug arrow sign", "1 m", "danger; the way on", "Background", "in the kit: sign_pug_skull, sign_pug_arrow"],
         ["Miners' bunting", "3 to 6 m", "strung across galleries, high", "Background", "in the kit: papel_tatters"],
         ["Stalactites", "0.5 to 2 m", "roofs, never over a hold", "Background", "in the kit: stalactite_a, stalactite_b"],
@@ -61,7 +63,7 @@ BIOME = {
     "arrive": "On the cart, down the tunnel from the station. The tunnel's timber sets have gone from whitewashed to grey and wet by the time the buffer tips you out, and you have already seen the waterfall cavern once, through a gap, on the way down.",
     "leave": "Up beside the top of the waterfall to its lip. The fall turns out to be the works' river going over a brick weir: the last timber set of the mine stands against the first brick arch of the works, and the amber lantern light gives way to cold teal.",
     "motifs": [
-        "The waterfall is in the back of nearly every area, seen from a different height each time. It tells you how far up you are.",
+        "The waterfall is seen only where it really is: from the Sump, El Carrito Loco, Las Vigas, La Polea Grande, La Cortina and the lip. Everywhere else you hear it and see its cold light on the rock.",
         "The ones who tried: one frozen climber by a cold lantern, with tally marks.",
         "The town follows you up: the miners' bunting, torn.",
         "The pug: on the danger signs and the way signs, as a skull and as an arrow.",
@@ -71,13 +73,11 @@ BIOME = {
         "Note 4: nothing in the scenery may look like a rope. The lift's two hanging lines became a dark hoistway.",
         "Note 6: a track that ends in air gets boards across the rails, and the falling cart is a real falling thing.",
         "Notes 9 to 12: the falling rocks come out of a dark hole, and leave by a broken board.",
-        "Note 13: La Cortina's holds stay wet in turn, with a slow drip you can watch coming.",
+        "Note 13: La Cortina's holds stay wet in turn, with a slow drip you can watch coming. Parker, 11-13: the holds are iron staples, dry for longer, with a few always-dry ones in another colour.",
+        "Note 6, Parker, 11-13: one chain past the track's end, not several, moved out so the cart is the only way to it, and a real chain in rusty red. Catch it while riding the falling cart and you keep the chain.",
+        "Parker, 11-13: the bucket lift stays plain, with no water working it.",
         "Note 14: a rope hangs from the top of La Cortina to half way down. Note 15: a lifesaver at the foot of the wet slide.",
         "Note 40: pieces in front of the screen that hide the climber are gone. The foreground rule above comes from it.",
         "Note 71: the frog's cave at the west end of the Sump.",
-    ],
-    "ask": [
-        "Is the scenery rule right for the mine: background timber greyer and cooler, so honey-coloured wood always means you can hold it?",
-        "Should the waterfall really be in the back of nearly every area of the mine, or only where the route is close to it?",
     ],
 }

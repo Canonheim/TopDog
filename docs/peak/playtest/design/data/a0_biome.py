@@ -8,7 +8,7 @@ BIOME = {
         "tunnel mouth, and the Peak standing over all of it. The mine shut long ago. The station is kept up now by nobody in particular, "
         "for the luchadores who come to climb: somebody still hangs bunting, somebody still oils the cart's brake.",
         "It is the last place that looks like the town: plaster, tiles, paint and noon sun. From the tunnel mouth inward, everything is the mine's.",
-        "The ride is the way in: 115 m of track, a dip, a banked drop, a broken rail the cart jumps, one look at the waterfall cavern through a gap, and the buffer that tips you out.",
+        "The ride is the way in: 115 m of track, a dip, a banked drop, a broken rail the cart really hops (with dust off its wheels as it lands), one look at the waterfall cavern through a gap, and the buffer that tips you out.",
     ],
     "built": [
         "Town building: thick plastered walls in cream, terracotta roof tiles, painted woodwork, all in the plaza's own painted-cardboard look.",
@@ -21,7 +21,7 @@ BIOME = {
     "looks": [
         ["You can hold it", "Honey timber, crates, barrels, pale dry rock, the cart's wooden sides, rope."],
         ["You can't", "Almost nothing here: one streak of black mud in the tunnel, so the first slick thing you ever see is seen from a moving cart."],
-        ["It moves", "The cart. Red brake lever, red painted band. Red means: this does something."],
+        ["It moves", "The cart. You start it by pulling the red brake lever, whether you are in the cart or not: your hand takes the lever the way it takes a chair, for as long as you hold that limb's button. Red means: this does something."],
         ["It is scenery", "The town and the mountain: far, flat and sun-bleached. Near scenery (the station house, the fence) is plaster and tile, which nothing you climb is made of."],
     ],
     "layers": [
@@ -38,7 +38,7 @@ BIOME = {
         ["Tunnel mouth: whitewashed timber set with a painted pug", "3.2 m wide, 3.4 m tall", "the way in", "Background and foreground post", "in the kit: mine_frame; the paint is new"],
         ["Pug arrow sign", "1 m", "pointing at the tunnel", "Background", "in the kit: sign_pug_arrow"],
         ["Bunting, torn", "4 to 8 m", "from the station house to the tunnel mouth, high", "Background", "in the kit: papel_tatters"],
-        ["The board of the ones who tried", "1.6 m by 1.2 m", "on the station wall: rows of small painted masks, most crossed out", "Background", "new"],
+        ["Missing posters", "0.5 m by 0.7 m", "a few on the station wall and the tunnel mouth's post: each a luchador's masked face, made the way the lock-in effect's money is made, as pixel art built from small coloured squares of geometry", "Background", "new, in the style of ui3d/peso_bills.gd"],
         ["Fence post with a tail of bunting; agave clump", "post 1.4 m; agave 1 m", "the only foreground outside", "Foreground", "new"],
         ["The Peak, and the town, as far cut-outs", "the whole sky", "behind everything outside", "Background, far", "the plaza's cut-outs, reused"],
         ["Tunnel timber set: whitewashed, bare, grey and wet", "as the mine's", "the tunnel, one every 2.6 m", "Background, foreground", "in the kit: mine_post, mine_beam"],
@@ -53,15 +53,14 @@ BIOME = {
         "The Peak itself, seen whole for the only time until the ending.",
         "The town follows you up: the bunting starts here, torn.",
         "The pug: painted over the tunnel mouth, and on the arrow sign.",
-        "The ones who tried: the board of crossed-out masks on the station wall.",
+        "The ones who tried: a few Missing posters, each a masked luchador in pixel art, on the station wall.",
         "The frog: on the station house windowsill, in plain sight. It teaches you to look for the others.",
     ],
     "notes": [
-        "No note from the playtest was about the station itself.",
+        "Parker, 11-13: the station may be completely reworked. It gets a few Missing posters in the style of the lock-in money.",
+        "Parker, 11-13: pulling the lever starts the cart, whether you are in it or not, and the lever is held like the chair. This changes the play.",
+        "Parker, 11-13: the cart really hops a broken rail, and dust comes off its wheels when it lands. This changes the play.",
+        "Parker, 11-13: the 0.6 m step at the door into the mine stays, with a sill.",
         "Note 60: a frog in every biome. Here it is not hidden.",
-    ],
-    "ask": [
-        "The board of crossed-out masks on the station wall: do you want it? It is the first telling of 'the mountain is full of the ones who tried'.",
-        "Should the frog at the station sit in plain sight, to teach the player to look for the hidden ones?",
     ],
 }

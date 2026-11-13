@@ -478,7 +478,7 @@ def look(aid, win, path):
 
 RULES = [
     "What you can hold is dry, pale and matte. What you can't is dark, glossy and wet. This is the mountain's first law and no design breaks it.",
-    "Scenery must not look like either. Background pieces are greyer, darker and cooler than the things you climb, and never in a hold's own colour at full strength.",
+    "Where a thing stands tells you more than its colour (Parker, 11-13). If it is in the play space you can generally hold it. Scenery stays out of the play space, behind or in front, and is greyer, darker and cooler than the things you climb.",
     "Everything you touch is the near end of something real that carries on behind it, like a ladder and its rungs.",
     "Nothing thin hangs in the background near the climb: it reads as a rope (notes 4 and 18). A hanging thing is a real rope, or thick, or far back.",
     "The foreground is sparse: thin posts and low lips, in front of solid rock or below the lowest floor, never over the open space you climb through (note 40).",
