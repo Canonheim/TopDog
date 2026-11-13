@@ -98,6 +98,7 @@
 <tr><td>35</td><td><a href="#n35">El Jardín de Hongos: a weird static noise</a></td><td><span class="chip c-plan">Likely cause found, not heard by me; not sent to the thread</span></td></tr>
 <tr><td>36</td><td><a href="#n36">El Jardín de Hongos: the mushrooms need bounce animations</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
 <tr><td>37</td><td><a href="#n37">El Jardín de Hongos: bouncy caps should look like the spotted mushrooms; push the scenery ones back</a></td><td><span class="chip c-plan">Plan, needs kit work; not sent to the thread</span></td></tr>
+<tr><td>38</td><td><a href="#n38">El Jardín de Hongos: the "low gravity" is an updraught with nothing to show it</a></td><td><span class="chip c-plan">Cause found (partly note 5's bug), plan; not sent to the thread</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes from 12 on wait here until Parker says to send them.</p>
 
@@ -1143,6 +1144,32 @@
     <li><b>The scenery mushrooms go well back:</b> from about 2 m behind you to 6 to 10 m behind. They are then smaller on screen, slide more slowly as the camera moves, and take the darker, greener tint of the far layers. A couple could go further still, among the dark shapes at the back.</li>
     <li>With both done, near and bright means "play on it", far and dim means "scenery". Note 36's breathing sway on the bouncy ones adds to that.</li>
     <li><b>Kit work.</b> The check pattern is part of the garden's cap pieces, so this is a restyle of those pieces by the Building Maker, asked through the Top Dog session. Moving the scenery back is a change to ten lines in the area's file.</li>
+  </ul>
+</div>
+
+<div class="note" id="n38">
+  <div class="head"><span class="num">38</span><h3>El Jardín de Hongos: the "low gravity" is an updraught with nothing to show it</h3><span class="time">23:22</span></div>
+  <blockquote>"if this area has low gravity or something, there is no indication of it"</blockquote>
+  <p><span class="chip c-plan">Cause found (partly note 5's bug), plan; not sent to the thread</span></p>
+  <figure>
+    <img src="shots/38_garden_updraught.jpg" alt="A climber on a long dark slope in the green garden; thin white upright streaks scattered at the left">
+    <figcaption>Parker's picture: 279 m up, at the foot of challenge 4.3. The thin white streaks at the left are the updraught's streaks, in the wrong place.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>It is not low gravity. It is challenge 4.3, El Ascensor de Esporas: a column of rising air 4.6 m wide and 15 m tall, starting at 277 m. In its lower half it pushes up harder than gravity pulls down, so you float upward. In its upper half it is weaker, so you sink slowly, as if gravity were a quarter of normal. You are meant to step in, ride it up, and catch the vines at the top. Step out of the column and you fall normally.</p>
+  <p>Two reasons nothing shows it:</p>
+  <ul>
+    <li><b>Its streaks are in the wrong place.</b> This is the same bug as note 5. For a wind that blows up or down, the build you are playing turns the streak-maker on its side, so the streaks are scattered off to one side and slide sideways. Those are the white lines at the left of your picture. The thread has fixed that on the branch, and checked this very updraught, but the fix is not in tonight's build.</li>
+    <li><b>Even in the right place it is too faint.</b> A column this size gets only 8 thin white streaks. The design called it a spore updraught, but nothing about it says spores, and nothing marks where the column's edges are.</li>
+  </ul>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>A column you can see from across the screen.</b> A thick stream of orange spores rising through it, dense at the bottom and thinning toward the top where the lift weakens. Its edges show as a soft shaft, so you know where to step in and where you will drop out.</li>
+    <li><b>Something that makes it.</b> A ring of puffing mushrooms or a vent at its foot, visibly blowing the spores up. An updraught with a source reads as a thing; one without reads as a glitch.</li>
+    <li><b>It acts on what is in it.</b> Loose spores and bits swirl upward, and your climber's limbs drift up when you are inside.</li>
+    <li><b>Sound.</b> A soft rushing that fades in as you enter the column and out as you leave.</li>
+    <li><b>The stronger and weaker halves read differently:</b> the spores rise fast in the lower half and slow in the upper, so you can see where the lift gives out.</li>
+    <li>The garden has two more updraughts higher up (challenge 4.8), which come in gusts. They get the same look, plus a puff of warning before each gust. The chimney's updraught and the waterfall's draught in the mine use the same code and should be looked at with these.</li>
   </ul>
 </div>
 
