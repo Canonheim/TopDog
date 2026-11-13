@@ -1363,8 +1363,9 @@ buzz is still heard, the chirrs are the first thing to take out.
 
 ## The far layers as flat facade cards (not a playtest note)
 
-- **State:** the game's side is in, drawn with plain code cards until the kit's models are
-  synced. Watched in the game by frame. Nothing played by a person.
+- **State:** done, with the kit's thirteen models in (see "The kit's models in" below).
+  Watched in the game by frame. Nothing played by a person. What follows first is the
+  stand-in stage, as it was written.
 - **Parker 11-13:** "that is now the correct way to do far backgrounds" (flat painted cut-out
   cards; `docs/peak/PEAK_DESIGN.md` section 7). Three far layers broke it: the valley's
   floor, the sea of cloud's floor, and the plaza's modelled ranges.
@@ -1432,6 +1433,50 @@ buzz is still heard, the chirrs are the first thing to take out.
   pulled back). `tests/delmar_shot_probe.tscn` now keeps a small window off every screen
   (the first run of it here opened a maximised window on Parker's screen for about 15 s),
   and takes `--jpg` and `--cards=`.
+
+### The kit's models in, and two more layers (the plaza's Peak, Del Mar's far shore)
+
+- **Synced and imported** (`python tools/sync_kit.py`, one import), all thirteen measured
+  against what was asked: `peak_valley_panorama`, `peak_cloud_bank_a` and `_b`,
+  `plaza_range_a` to `_d`, `plaza_peak`, `plaza_peak_flag`, `delmar_far_hills`,
+  `delmar_far_isle_a` to `_c`. The code takes each by name; the code cards and modelled
+  pieces stay as fall-backs.
+- **The plaza's Peak** (`PlazaMountains.peak()`): the `plaza_peak` card stands where the
+  half cone stood, square to the camera, with `plaza_peak_flag` on its summit as its child.
+  `peak_flag()` and `peak_shown()` work as before; it is still the last entry of `build()`
+  and sinks 218 m for Del Mar (the card and flag are 191 m).
+  - **Nothing on the modelled Peak moved.** The cable cars, the storm and the bolt were
+    still pieces: no code animated them. So nothing is lost to the flat card.
+- **Del Mar's far shore** (`DelMarScenery._build_far_shore()`): the `delmar_far_hills` card
+  stands in place of the four rows of dunes and hills, at (32.1, ground - 0.4, -298): the
+  middle of the old run, on its ground, 2 m in front of the land's end so the whole strip
+  of scrub and palms (z -297 to -293) stays in front of it. The three isles' cards stand at
+  the isles' places. The beach, the rocky point, the sea stacks and the strip are untouched.
+  - **The shared random stream is kept:** the hills' and isles' draws are still made when
+    the cards stand in their places. A new battery, `--delmarfar`, builds the far shore both
+    ways and compares the stream's state after it: the same number. Frame against frame,
+    nothing in the start, wide and far views changed outside the band the hills are in.
+- **What the frames show with the real models:**
+  - **The banks' feet are ruled lines.** Each bank's body ends in a straight edge 230 m
+    under its line. From the summit nobody sees it. From the cliffs every row draws one
+    straight inked line across the whole sky, seven of them stacked
+    (`clear_780_pulled_back_after.jpg`, `clear_580_close_after.jpg`). My stand-ins had round
+    bellies there. This wants a cut underside on the models; code cannot hide it.
+  - No joint shows between banks side by side, and no ink between any card's colours.
+  - The valley's card: the town stands on its calm patch and the road meets it.
+  - The plaza: the four range cards stand where the massifs stood and do not cover the
+    fang or the cable; the Peak's head and flag are under the top of the title and lobby
+    frames.
+  - Del Mar: the hills' card comes down to the rocky point and nothing of it stands over
+    the bay. Its painted palms are dark shapes 10 to 20 m tall on the ridge, beside the
+    scene's own bright green palms in front: a matter of looks, for the Director.
+  - From the probe's aerial camera (not a play view) the hills' card reads as a flat fence
+    at the back of the sand.
+- **Checks:** lint; `--peak`; `--ring --bell --plazafloor --delmar --delmarfar --tower
+  --scramble`: all clean.
+- **Frames:** `docs/peak/playtest/far/`: `*_before.jpg` and `*_after.jpg` pair up (the
+  earlier `*_after_standin.jpg` are the code cards). The plaza's `before` frames show the
+  window's "click to regain controls" line in a corner: the probe hides it now.
 
 ## To do: every note of 12 to 57 not done yet
 

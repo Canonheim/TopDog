@@ -13,7 +13,8 @@ extends RefCounted
 ## do far backgrounds"; docs/peak/PEAK_DESIGN.md, section 7). Each foothill range is the
 ## kit's painted card (`plaza_range_a` to `_d`, RANGE_CARDS) once it has landed, standing
 ## where its massif stood and square to the camera; until then, the massif. The Peak of
-## DeGayo and Del Mar's own far hills are not part of that yet.
+## DeGayo is the kit's `plaza_peak` card with `plaza_peak_flag` on its summit once they
+## have landed (see `peak()`); until then, the modelled half cone.
 ##
 ## The plaza calls `PlazaMountains.build(parent, ground_y)` once from _build_plaza. It
 ## returns [node, standing y, how far it sinks] per mountain, the shape
@@ -56,8 +57,7 @@ static func build(parent: Node3D, ground_y: float) -> Array:
 		if card != null:
 			card.name = "RangeCard"
 			card.position = at
-			for part: MeshInstance3D in card.find_children("*", "MeshInstance3D", true, false):
-				part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			_no_shadow(card)
 			parent.add_child(card)
 			out.append([card, at.y, float(r[3]) + 3.0])
 			continue
@@ -269,10 +269,35 @@ static func _on_face(lx: float, ly: float, out := 1.0) -> Vector3:
 
 
 ## The Peak, origin on the ground under its summit.
+## FAR BACKGROUNDS ARE FLAT FACADE PIECES (Parker 11-13): once the kit's `plaza_peak` has
+## landed it IS the Peak: one painted cut-out card made at this file's own scale (1,000 m
+## of mountain is PEAK_H tall, twice as wide as true), its origin on the ground under the
+## summit and its face at z 0, so it stands where the half cone stood, square to the
+## camera. Its cable, cars, huts, storm, bolt and mine mouth are painted on it. Until it
+## lands, the half cone and its dress below. Either way the root is `_peak`, and the
+## summit flag is a CHILD of it (`_flag`, hidden until the player has summited), so both
+## sink for Del Mar and hide with `peak_shown(false)`.
 static func peak() -> Node3D:
 	var root := Node3D.new()
 	root.name = "PeakOfDeGayo"
 	_peak = root
+	var card := LuchaKit.kit_model("plaza_peak")
+	if card != null:
+		card.name = "Card"
+		_no_shadow(card)
+		root.add_child(card)
+		# The flag: the kit's (made already turned toward the sun) or the code's.
+		var flag := LuchaKit.kit_model("plaza_peak_flag")
+		if flag != null:
+			_no_shadow(flag)
+		else:
+			flag = _summit_flag()
+		flag.name = "SummitFlag"
+		flag.position = Vector3(0.0, PEAK_H, 1.0)  # on the summit, just proud of the card's face
+		flag.visible = false
+		root.add_child(flag)
+		_flag = flag
+		return root
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1000
 	var sts: Array = []  # rock lit, mid, shade; snow, snow shade; the fang's lit and shade
@@ -444,9 +469,18 @@ static func _peak_dress(root: Node3D) -> void:
 		(n as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# The flag: a pole on the summit and a swallowtail banner, hidden until the player
 	# has rung the bell.
-	var flag := Node3D.new()
+	var flag := _summit_flag()
 	flag.name = "SummitFlag"
 	flag.position = _pm(-350.0, 1000.0, 0.5)
+	flag.visible = false
+	root.add_child(flag)
+	_flag = flag
+
+
+## The summit flag built in code (origin at the foot of its pole): a pole and a
+## swallowtail banner with a gold star, flying toward the sun.
+static func _summit_flag() -> Node3D:
+	var flag := Node3D.new()
 	flag.add_child(_pbox(Vector3(0.6, 13.0, 0.6), TIMBER, Vector3(0, 6.0, 0)))
 	var cloth := _card(PackedVector2Array([Vector2(0, 0), Vector2(12.0, 0), Vector2(9.0, -3.0), Vector2(12.0, -6.0), Vector2(0, -6.0)]), FLAG_RED)
 	cloth.position = Vector3(0.3, 12.4, 0.0)
@@ -461,9 +495,15 @@ static func _peak_dress(root: Node3D) -> void:
 	for n in [cloth, badge]:
 		(n as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	flag.rotation.y = deg_to_rad(30.0)  # flying toward the sun, so its colours stay bright
-	flag.visible = false
-	root.add_child(flag)
-	_flag = flag
+	return flag
+
+
+## Far things cast no shadows here.
+static func _no_shadow(n: Node) -> void:
+	for mi: MeshInstance3D in n.find_children("*", "MeshInstance3D", true, false):
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if n is MeshInstance3D:
+		(n as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 ## A triangle's normal, turned toward the camera.

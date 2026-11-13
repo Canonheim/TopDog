@@ -26,6 +26,10 @@ const CAMS := [
 	["midpan", Vector3(51.0, 2.5, 11.8), Vector3(51.0, 2.2, 0.0)],
 	["beach", Vector3(76.0, 2.0, 12.0), Vector3(82.0, 0.0, -10.0)],
 	["aerial", Vector3(110.0, 70.0, 60.0), Vector3(120.0, 0.0, -90.0)],
+	# the far shore's hills straight on, and the three far isles (890 to 1,110 m out)
+	["far_shore", Vector3(114.0, 3.2, 25.8), Vector3(150.0, 9.0, -296.0), 16.0],
+	["far_shore_point", Vector3(114.0, 3.2, 25.8), Vector3(232.0, 6.0, -296.0), 9.0],
+	["isles", Vector3(640.0, 2.8, 13.1), Vector3(640.0, 9.0, -1000.0), 12.0],
 ]
 
 
@@ -110,6 +114,9 @@ func _shoot(cam: Camera3D, c: Array, out: String) -> void:
 	cam.look_at(c[2], Vector3.UP)
 	cam.make_current()
 	await get_tree().create_timer(0.4).timeout
+	for n in get_tree().root.get_children():
+		if n.get("_focus_notice") != null:
+			(n.get("_focus_notice") as CanvasItem).visible = false  # (the window is off screen and unfocused on purpose)
 	await RenderingServer.frame_post_draw
 	var img := get_viewport().get_texture().get_image()
 	if _jpg:

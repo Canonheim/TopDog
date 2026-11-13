@@ -2653,6 +2653,35 @@ func _run_delmar() -> void:
 	await frames(2)
 
 
+## DEL MAR'S FAR SHORE AS PAINTED CARDS (the far-facade remake, Parker 11-13). Every Del
+## Mar builder after the far shore draws from the one seeded stream, so with cards standing
+## in the hills' and isles' places the stream must leave the far shore exactly as it does
+## with the modelled ones, or every palm, dune, rock and cloud in Del Mar moves and no
+## other test notices.
+func _run_delmarfar() -> void:
+	var keep_hills: String = DelMarScenery.far_hills_card
+	var keep_isles: Array = DelMarScenery.far_isle_cards
+	var states: Array = []
+	var counts: Array = []
+	for cards in [false, true]:
+		# (a model that has landed stands in for the cards; a name with no model gives the modelled hills)
+		var nm := "stn_far_hills" if cards else "-"
+		DelMarScenery.far_hills_card = nm
+		DelMarScenery.far_isle_cards = [nm, nm, nm]
+		var sc := DelMarScenery.new()
+		world.add_child(sc)
+		sc._rng.seed = 2611
+		sc._build_far_shore()
+		states.append(sc._rng.state)
+		counts.append(sc.get_child(0).get_child_count())
+		sc.queue_free()
+		await frames(2)
+	DelMarScenery.far_hills_card = keep_hills
+	DelMarScenery.far_isle_cards = keep_isles
+	t("delmar far shore: the try really took the card path (the modelled hills are not built)", int(counts[1]) < int(counts[0]) - 20, "pieces: %d modelled, %d with cards" % [counts[0], counts[1]])
+	t("delmar far shore: with cards the random stream leaves the far shore as it does with the modelled hills", states[0] == states[1], "%d and %d" % [states[0], states[1]])
+
+
 ## THE LINE YOU CAN SEE (Parker 11-11: "there are times in both modes where my hand
 ## seems to be over the line but I cannot lock in"): a press a moment early still locks
 ## once over, a lock while Del Mar's rope glides is judged by the rope as drawn, and the

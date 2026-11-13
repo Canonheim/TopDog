@@ -410,9 +410,27 @@ func _build_ground() -> void:
 	add_child(water)
 
 
+## Where the far hills' painted card stands (the kit's `delmar_far_hills`: 404 m wide,
+## to 22 m tall, its origin at the middle of its foot): over the run the modelled hills
+## stand on (x -170 to the rocky point), on their ground, behind the strip of scrub and
+## palms along their foot. Its rows end one after another toward the spit and come down
+## to the point, so nothing of it stands over the bay.
+const FAR_HILLS_AT := Vector3(32.1, GROUND_Y - 0.4, FAR_SHORE_Z + 2.0)
+## The kit's cards: the hills', and the three far isles' in the order the isles are
+## built. (Vars so the battery can try the card path with models that have landed.)
+static var far_hills_card := "delmar_far_hills"
+static var far_isle_cards: Array = ["delmar_far_isle_a", "delmar_far_isle_b", "delmar_far_isle_c"]
+
+
 ## The far shore at z -300 (where the plaza's land ends, behind the lowered mountains):
-## a beach shelving into the sea along it, and overlapping low faceted hills just
-## inland, so the far side of the bay reads as a coast, not a cut.
+## a beach shelving into the sea along it, and hills just inland, so the far side of the
+## bay reads as a coast, not a cut.
+## FAR BACKGROUNDS ARE FLAT FACADE PIECES (Parker 11-13): the hills are ONE painted card
+## (`delmar_far_hills`) and each far isle is its own (`delmar_far_isle_a` to `_c`) once
+## they have landed; until then, the modelled hills and isles. The beach, the rocky point,
+## the sea stacks and the strip of scrub stay as they are either way.
+## THE SHARED RANDOM STREAM: every builder after this one draws from `_rng`, so the hills'
+## and isles' draws are made whether or not they are built: nothing else in Del Mar moves.
 func _build_far_shore() -> void:
 	var root := Node3D.new()
 	root.name = "FarShore"
@@ -444,6 +462,12 @@ func _build_far_shore() -> void:
 	mi.mesh = mesh
 	CelPass.unify(mi)  # its two tones as atlas UVs, on the one material
 	root.add_child(mi)
+	var hills_card := LuchaKit.kit_model(far_hills_card)
+	if hills_card != null:
+		hills_card.name = "FarHillsCard"
+		hills_card.position = FAR_HILLS_AT
+		_no_shadow(hills_card)
+		root.add_child(hills_card)
 	# The hills behind the far shore, in rows that step back by colour (no fog in the
 	# look): low sandy dunes, then faceted green hills, then paler blue-green ones, then a
 	# hazy blue ridge. Each green row is PlazaMountains' faceted massif (big planes in
@@ -462,15 +486,20 @@ func _build_far_shore() -> void:
 			if w < 12.0:
 				break
 			if rowi == 0:
-				var dn := _mound(Vector3(hx + w * 0.5, GROUND_Y, hz), Vector3(w, h, 12.0), DUNE, 9)
-				dn.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-				root.add_child(dn)
+				if hills_card == null:
+					var dn := _mound(Vector3(hx + w * 0.5, GROUND_Y, hz), Vector3(w, h, 12.0), DUNE, 9)
+					dn.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+					root.add_child(dn)
 			else:
-				var tones: Array = HILL_ROWS[rowi - 1]
-				var hill := PlazaMountains.massif(w, h, 22.0 + rowi * 6.0, _rng.randi(), tones[0], tones[1], tones[2])
-				hill.position = Vector3(hx + w * 0.5, GROUND_Y - 0.4, hz)
-				hill.rotation.y = _rng.randf_range(-0.12, 0.12)
-				root.add_child(hill)
+				# (the two draws are made even when the card stands in the hills' place)
+				var hill_seed := _rng.randi()
+				var hill_yaw := _rng.randf_range(-0.12, 0.12)
+				if hills_card == null:
+					var tones: Array = HILL_ROWS[rowi - 1]
+					var hill := PlazaMountains.massif(w, h, 22.0 + rowi * 6.0, hill_seed, tones[0], tones[1], tones[2])
+					hill.position = Vector3(hx + w * 0.5, GROUND_Y - 0.4, hz)
+					hill.rotation.y = hill_yaw
+					root.add_child(hill)
 			hx += w * _rng.randf_range(0.5, 0.72)
 	# The rocky point the hills end in, and two sea stacks off it (well clear of the
 	# play strip, 300 m out).
@@ -513,10 +542,23 @@ func _build_far_shore() -> void:
 		fx += _rng.randf_range(4.0, 9.0)
 	# Far islands on the horizon, pale and low, out past the bay to the right (beyond
 	# the plaza cameras' reach at their depth: x - half width > 31.4 + 0.5436 d).
-	for isle in [[580.0, -880.0, 70.0, 13.0], [705.0, -1100.0, 62.0, 18.0], [640.0, -1010.0, 30.0, 8.0]]:
-		var far := PlazaMountains.massif(float(isle[2]), float(isle[3]), float(isle[2]) * 0.4, _rng.randi(), HAZE_ISLE[0], HAZE_ISLE[1], HAZE_ISLE[2])
+	var isles := [[580.0, -880.0, 70.0, 13.0], [705.0, -1100.0, 62.0, 18.0], [640.0, -1010.0, 30.0, 8.0]]
+	for i in isles.size():
+		var isle: Array = isles[i]
+		var isle_seed := _rng.randi()  # (drawn even when the card stands in the isle's place)
+		var far: Node3D = LuchaKit.kit_model(str(far_isle_cards[i]))
+		if far != null:
+			_no_shadow(far)  # a painted card made at the isle's own size, origin at the middle of its foot
+		else:
+			far = PlazaMountains.massif(float(isle[2]), float(isle[3]), float(isle[2]) * 0.4, isle_seed, HAZE_ISLE[0], HAZE_ISLE[1], HAZE_ISLE[2])
 		far.position = Vector3(float(isle[0]), WATER_Y - 0.6, float(isle[1]))
 		root.add_child(far)
+
+
+## Far things cast no shadows here.
+static func _no_shadow(n: Node) -> void:
+	for mi: MeshInstance3D in n.find_children("*", "MeshInstance3D", true, false):
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
 ## The shore's dressing: a ridge of low dunes with beach grass behind the row, palms and
