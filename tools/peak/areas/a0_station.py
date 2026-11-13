@@ -27,6 +27,8 @@ def dress(A):
     # the town behind the wall: two real houses of the plaza, far enough back to be scenery
     A.deco("plaza_house_c", 3.6, 0.0, z=-13.0, size=(7.0, 8.5, 7.0), tone="back2")
     A.deco("plaza_house_a", 13.0, 0.0, z=-16.0, size=(8.0, 9.5, 7.0), tone="back2")
+    # and one closing the yard's east end, past the wall, for the pulled-back camera
+    A.deco("plaza_house_b", 20.5, 0.0, z=-7.5, size=(8.0, 9.0, 7.0), tone="back2")
     # the Missing posters on the wall (Parker 11-13): two fresh, one old
     A.deco("missing_poster_a", 4.55, 1.5, z=WALL_Z + 0.012, size=(0.5, 0.7, 0.02), tone="accent")
     A.deco("missing_poster_b", 5.2, 1.46, z=WALL_Z + 0.012, rot=-3.0, size=(0.5, 0.7, 0.02), tone="accent")
