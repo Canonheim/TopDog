@@ -1552,6 +1552,11 @@ buzz is still heard, the chirrs are the first thing to take out.
     disc, and the backdrop's yellow sun is in the same picture to its east
     (`11_5_close_trial.jpg`, `11_4_close_trial.jpg`). One of them should go.
   - No hold, ring or plank was lost against the new sky in the four starts shot.
+  - **Settled (the Second Director, 11-13): all three trials stand, and the pale disc is
+    out too,** so the backdrop's yellow sun is the only sun. The disc was a card, not a
+    light (the bell's own light is untouched). The bell rope, which 11.4's leap ends on,
+    used to hang in front of the disc: it now reads against the gold sky and the clouds by
+    its ink, no worse than before (`11_5_close_trial2.jpg`, `11_4_pulled_back_trial2.jpg`).
 - **Each area's JSON** was regenerated from its file; the difference in each is only the
   entries named (plus empty `levers` and `boards` lists the generator now writes).
 - **Frames:** `docs/peak/playtest/far/`: `8_*`, `7_*`, `11_*` and `10_9_*` as `*_trial.jpg`,

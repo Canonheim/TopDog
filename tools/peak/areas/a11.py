@@ -190,7 +190,9 @@ A.cam((-363, 989.5, -352.6, 1009), half_h=8.0, bias=(2.0, -1.5))
 # so the Peak's real sea of cloud and far peaks show behind the summit
 # (stages/peak/peak_backdrop.gd). It was one pale card, 130 m by 100 m, at z -40 in "#FFE7B0",
 # from (-420, 940) to (-290, 1040), with no edge.)
-A.card(ngon(-352.0, 1003.0, 11.0, 24), z=-36.0, tone="#FFF6D8", edge=False)  # the sun, behind the bell
+# (The area's own sun, a pale disc 22 m across behind the bell at (-352, 1003), z -36, in
+# "#FFF6D8", is out too: without the pale sky card it was a great white disc, and a second
+# sun beside the backdrop's yellow one, which is now the only sun.)
 A.card([(-420, 940), (-290, 940), (-290, 961), (-305, 964), (-322, 961.5), (-341, 965.5), (-360, 962), (-380, 966), (-400, 962.5), (-420, 965)],
        z=-22.0, tone="#FFF1D6")
 A.card([(-420, 940), (-290, 940), (-290, 958), (-312, 961.5), (-330, 958.5), (-352, 962.5), (-374, 959), (-396, 962), (-420, 958)],
