@@ -209,12 +209,13 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 	var r := _rect(pts)
 	# ---- a piece named by the course (a ladder's rung): fitted by its own size
 	if s.has("fit"):
-		var file := "fit_" + str(s.fit)
-		if r.is_empty() or _mesh(file) == null:
+		var named := "fit_" + str(s.fit)
+		var file := _pick(named, _n)  # (one of its variants: a ladder's rail is straight or kinked)
+		if r.is_empty() or file == "":
 			return []
 		var box: AABB = _boxes.get(file, AABB(Vector3(-0.5, -0.05, -0.1), Vector3(1.0, 0.1, 0.2)))
-		if NAMED.has(file):
-			var made: Vector2 = NAMED[file]
+		if NAMED.has(named):
+			var made: Vector2 = NAMED[named]
 			box = AABB(Vector3(-made.x * 0.5, -made.y * 0.5, 0), Vector3(made.x, made.y, 0))
 		var long_x := box.size.x >= box.size.y
 		var w: float = r.w
