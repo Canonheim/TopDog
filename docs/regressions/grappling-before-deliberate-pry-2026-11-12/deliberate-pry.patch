@@ -1,0 +1,378 @@
+diff --git a/climber/climber.gd b/climber/climber.gd
+index 13a688b..70aa0cc 100644
+--- a/climber/climber.gd
++++ b/climber/climber.gd
+@@ -70,6 +70,8 @@ enum State { LIVE, PUPPET, FROZEN }
+ signal froze(climber: Climber)
+ signal limb_selected(index: int, release_velocity: Vector3)
+ signal grab_lost(climber: Climber, limb: int)
++signal pry_requested(source_id: int, limb: int)
++var _pry_progress := {}
+ signal rope_bounced(at: Vector3, speed: float)
+ signal grab_made(climber: Climber, limb: int, other: Object)
+ signal release_contact(position: Vector3)
+@@ -483,7 +485,7 @@ func _build_limbs() -> void:
+ 			"grab_climber": null,  # its climber, if it is one
+ 			"grab_piece": "",
+ 			"end_offset": Vector3.ZERO, "contact_offset": Vector3.ZERO, "last_anchor": Vector3.ZERO,
+-			"contact_force": Vector3.ZERO, "strain_time": 0.0, "peeled_from": 0,
++			"contact_force": Vector3.ZERO, "pry_blocked": {},
+ 			"regrip": 0.0,
+ 			"end_joint": ("wrist" if ld.arm else "ankle") + (ld.id as String).substr((ld.id as String).length() - 2),
+ 			"grab_rel0": 0.0,  # the end's angle against its hold when it stuck (rad)
+@@ -717,6 +719,11 @@ func _physics_process(delta: float) -> void:
+ 	if removed or state != State.LIVE:
+ 		return
+ 	live_time += delta
++	for grip in limbs:
++		for target_id in grip.pry_blocked.keys():
++			grip.pry_blocked[target_id] -= delta / Engine.time_scale
++			if grip.pry_blocked[target_id] <= 0:
++				grip.pry_blocked.erase(target_id)
+ 	if sinking:
+ 		_tick_sink(delta)
+ 		return
+@@ -751,6 +758,7 @@ func _physics_process(delta: float) -> void:
+ 			body.gravity_scale = gravity
+ 		_gravity_scale = gravity
+ 	_tick_joints(attached, delta)
++	_tick_prying(delta)
+ 	# Opposed pulls have to persist through several physics ticks to peel a grip.
+ 	var load_ratio := _incoming_pull / maxf(1, total_mass * 9.8 * 2.0)
+ 	_pull_load = maxf(0, _pull_load + (load_ratio - 0.9) * delta)
+@@ -1238,10 +1246,8 @@ func _try_grab(i: int) -> void:
+ 	# a list read, not a shape query: every unheld limb checks every tick.
+ 	var hits := end.get_colliding_bodies()
+ 	if hits.is_empty():
+-		l.peeled_from = 0
+ 		return
+ 	# Prefer the arena and frozen stack when the same end touches both.
+-	var still_touching_peeled := false
+ 	var best: Object = null
+ 	var best_score := INF
+ 	for o in hits:
+@@ -1253,8 +1259,7 @@ func _try_grab(i: int) -> void:
+ 			if oc == null or oc == self or oc.removed:
+ 				continue  # (null: a ghost piece, its climber gone)
+ 			if oc.state != State.FROZEN:
+-				if oc.get_instance_id() == l.peeled_from:
+-					still_touching_peeled = true
++				if l.pry_blocked.has(oc.get_instance_id()):
+ 					continue
+ 				score += 1.0
+ 		if o is Node3D:
+@@ -1262,15 +1267,14 @@ func _try_grab(i: int) -> void:
+ 		if score < best_score:
+ 			best_score = score
+ 			best = o
+-	if not still_touching_peeled:
+ 		l.peeled_from = 0
+ 	if best != null:
+ 		attach(i, best)
+ 
+ 
+ ## A live contact has no angular weld. A damped spring transfers opposite forces
+-## at the two original contact points. A short overload allowance lets a catch
+-## or toss transfer momentum before the contact peels.
++## at the two original contact points. Passive load never peels this connection;
++## the defender must actively push the gripping limb to pry it loose.
+ func _tick_live_contact(i: int, dt: float) -> void:
+ 	var l: Dictionary = limbs[i]
+ 	var other: RigidBody3D = l.grab_other
+@@ -1290,24 +1294,75 @@ func _tick_live_contact(i: int, dt: float) -> void:
+ 	var hand_speed := end.linear_velocity + end.angular_velocity.cross(hand_lever)
+ 	var gap := point - (end.global_position + hand_lever)
+ 	var weight := total_mass * 9.8
+-	var stiffness := weight * 24.0
++	var stiffness := weight * (24.0 + 96.0 * smoothstep(0.20, 0.60, gap.length()))
+ 	var damping := 1.6 * sqrt(stiffness * end.mass)
+ 	var force := (gap * stiffness + (speed - hand_speed) * damping) / (1.0 + damping * dt / end.mass)
+-	var ratio := force.length() / (weight * 2.0)
+-	l.strain_time = maxf(0, float(l.strain_time) + dt * (ratio - 1.45))
+-	if l.strain_time > 0.055 or gap.length() > 0.60:
+-		l.peeled_from = rival.get_instance_id()
+-		release(i)
+-		l.regrip = 0.22
+-		return
+-	force = force.limit_length(weight * 3.0)
++	# Passive load never peels a live grip. A bounded implicit spring opposes
++	# full limb drive without releasing due to a transient stretch.
++	force = force.limit_length(weight * Feel.get_k("live_grip_force_cap"))
+ 	end.apply_force(force, hand_lever)
+ 	l.contact_force = -force
+ 	if rival.state == State.LIVE:
+ 		other.apply_force(-force, lever)
+ 		rival._incoming_pull = maxf(rival._incoming_pull, force.length() * (1.0 if touches_solid() else 0.2))
+ 
+-## Stick limb i's end to `other` (a PhysicsBody3D) right where it is.
++## Only deliberate pressure from the defender's active limb pries incoming grips.
++func _tick_prying(dt: float) -> void:
++	var loads := {}
++	if _active_limb >= 0 and driver != null and is_attached():
++		var aim = driver.aim(self, _active_limb)
++		if aim != null:
++			var active: Dictionary = limbs[_active_limb]
++			var end: RigidBody3D = bodies[active.def.end]
++			var command: Vector2 = ((_aim_target(_active_limb, aim) - pos2(end)) / (active.l1 + active.l2)).limit_length(1.0)
++			for name in [active.def.up, active.def.lo, active.def.end]:
++				var piece: RigidBody3D = bodies[name]
++				var physics := PhysicsServer3D.body_get_direct_state(piece.get_rid())
++				if physics == null:
++					continue
++				for j in physics.get_contact_count():
++					var other = physics.get_contact_collider_object(j)
++					var source := climber_of(other)
++					if source == null or source == self or source.removed or source.state == State.FROZEN:
++						continue
++					var hit_name := str(other.get_meta("piece", ""))
++					var normal := piece.global_basis * physics.get_contact_local_normal(j)
++					var pressure := maxf(0, -Vector3(command.x, command.y, 0).dot(normal))
++					for i in source.limbs.size():
++						var ld: Dictionary = source.limbs[i].def
++						if hit_name not in [ld.up, ld.lo, ld.end]:
++							continue
++						var key := Vector2i(source.climber_id, i)
++						var connected: bool = source.limbs[i].grab_climber == self if source.state == State.LIVE else remote_pulls.has(key)
++						if connected and pressure > 0.03:
++							loads[key] = {"source": source, "pressure": maxf(pressure, loads.get(key, {}).get("pressure", 0.0))}
++	_advance_pry(loads, dt / Engine.time_scale)
++
++func _advance_pry(loads: Dictionary, seconds: float) -> void:
++	for key in _pry_progress.keys():
++		if not loads.has(key):
++			_pry_progress[key] = maxf(0, _pry_progress[key] - seconds * Feel.get_k("pry_decay"))
++			if _pry_progress[key] <= 0:
++				_pry_progress.erase(key)
++	for key in loads:
++		var source: Climber = loads[key].source
++		_pry_progress[key] = _pry_progress.get(key, 0.0) + seconds * clampf(loads[key].pressure * 3.0, 0.0, 1.0)
++		if _pry_progress[key] >= Feel.get_k("pry_hold_seconds"):
++			_pry_progress.erase(key)
++			if source.state == State.PUPPET:
++				pry_requested.emit(source.climber_id, key.y)
++			else:
++				source.pry_release(key.y, self)
++
++func pry_release(i: int, defender: Climber) -> void:
++	if i < 0 or i >= limbs.size() or limbs[i].grab_climber != defender:
++		return
++	var l: Dictionary = limbs[i]
++	l.pry_blocked[defender.get_instance_id()] = Feel.get_k("pry_regrab_seconds")
++	release(i)
++	l.regrip = 0.0  # Other players and terrain remain immediately available.
++
++## Stick limb i's end to the other body right where it is.
+ func attach(i: int, other: Object) -> void:
+ 	if other == null or not is_instance_valid(other) or is_ghost(other):
+ 		return
+@@ -1318,6 +1373,9 @@ func attach(i: int, other: Object) -> void:
+ 	if climber_of(other) == self:
+ 		return
+ 	var l: Dictionary = limbs[i]
++	var blocked_target := climber_of(other)
++	if blocked_target != null and l.pry_blocked.has(blocked_target.get_instance_id()):
++		return
+ 	if l.grab_other != null:
+ 		release(i)
+ 	var end: RigidBody3D = bodies[l.def.end]
+@@ -1336,7 +1394,6 @@ func attach(i: int, other: Object) -> void:
+ 		l.contact_offset = ob.to_local(at)
+ 		l.last_anchor = at
+ 		l.contact_force = Vector3.ZERO
+-		l.strain_time = 0.0
+ 	else:
+ 		# A WELD, as the reference game's grabs are: a hinge on z locked at its current
+ 		# angle, so a stuck hand or foot can't turn on what it holds (a free pin let the
+diff --git a/data/feel.gd b/data/feel.gd
+index 83cfe2a..08b17c8 100644
+--- a/data/feel.gd
++++ b/data/feel.gd
+@@ -9,6 +9,10 @@ const PPM := 100.0  # 2D physics pixels per metre (the physics world is in px)
+ 
+ ## [value, min, max, help]. Order here is the dev panel's order.
+ const SPEC := {
++	"pry_hold_seconds": [0.65, 0.2, 2.0, "Seconds of sustained deliberate pushing to pry off an incoming player grip"],
++	"pry_decay": [0.5, 0.0, 2.0, "Hidden pry progress lost per second without pushing"],
++	"pry_regrab_seconds": [1.0, 1.0, 1.0, "Real seconds the pried limb cannot reattach to that player"],
++	"live_grip_force_cap": [8.0, 4.0, 12.0, "Live grip restoring-force cap in body weights; load never releases it"],
+ 	"body_scale": [0.9, 0.6, 1.3, "Climber size (1.0 = the knight's modelled 2.02 m)"],
+ 	"shoulder_flare": [0.05, 0.0, 0.3, "Wide shoulders: arms sit this far further out than the model (m, Golemheim's flare). Rebuilds on the next spawn"],
+ 	"shoulder_drop": [0.05, 0.0, 0.2, "Arms sit this much lower than the model (m). Rebuilds on the next spawn"],
+diff --git a/game/game.gd b/game/game.gd
+index 1fb42ae..7f01daa 100644
+--- a/game/game.gd
++++ b/game/game.gd
+@@ -568,6 +568,10 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
+ 				if randf() < DONKEY_CHANCE:
+ 					_rpc_donkey.rpc_id(1, cid, Sound.SFX["donkey"].pick_random()))
+ 		c.grab_lost.connect(_on_grab_lost)
++		c.pry_requested.connect(func(source_id: int, limb: int):
++			var source: Climber = climbers.get(source_id)
++			if source != null and source.owner_peer != me():
++				_rpc_pry_release.rpc_id(source.owner_peer, source_id, cid, limb))
+ 		c.rope_bounced.connect(func(at: Vector3, speed: float): _rpc_rope.rpc(cid, at, speed))
+ 		if chair != null and not is_host():
+ 			c.limb_selected.connect(func(i: int, velocity: Vector3): _rpc_chair_limb.rpc_id(1, cid, i, velocity))
+@@ -1542,6 +1546,16 @@ func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vecto
+ 	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
+ 	_pulls[cid][key] = {"piece": piece, "offset": offset, "force": force.limit_length(cap), "supported": supported, "directly_supported": directly_supported, "time": _now}
+ 
++@rpc("any_peer", "call_remote", "reliable")
++func _rpc_pry_release(source_id: int, defender_id: int, limb: int) -> void:
++	var source: Climber = climbers.get(source_id)
++	var defender: Climber = climbers.get(defender_id)
++	if source == null or defender == null or source.owner_peer != me() or defender.owner_peer != multiplayer.get_remote_sender_id():
++		return
++	if source.state != Climber.State.LIVE or defender.removed:
++		return
++	source.pry_release(limb, defender)
++
+ # ================================================================ leaving
+ 
+ func _on_peer_left(id: int) -> void:
+diff --git a/game/main.gd b/game/main.gd
+index 391823e..4e6e297 100644
+--- a/game/main.gd
++++ b/game/main.gd
+@@ -1526,7 +1526,7 @@ func _to_title(reason: String) -> void:
+ 
+ 
+ func _screen_controls() -> Control:
+-	var c := UiKit.panel_screen("Controls", "Hold a limb button and steer with the stick or mouse. Release to plant it. Plant a hand or foot on another player to climb or pull together. Hard tension breaks the contact. Hard hits can knock you out. Grab the floating chair with a held limb and release to drop it. Lock in above the line while touching the stage or stack.")
++	var c := UiKit.panel_screen("Controls", "Hold a limb button and steer with the stick or mouse. Release to plant it. Plant a hand or foot on another player to climb or pull together. Push an attached arm or leg with your active limb to pry its grip loose. Hard hits can knock you out. Grab the floating chair with a held limb and release to drop it. Lock in above the line while touching the stage or stack.")
+ 	var box: VBoxContainer = c.get_meta("box")
+ 	var grid := GridContainer.new()
+ 	grid.columns = 5
+diff --git a/tests/battery.gd b/tests/battery.gd
+index 19c9c3a..4790c0e 100644
+--- a/tests/battery.gd
++++ b/tests/battery.gd
+@@ -1855,7 +1855,7 @@ func _run_wrestling() -> void:
+ 		if attacker.limbs[0].grab_other == null:
+ 			break
+ 		attacker._tick_live_contact(0, 1.0 / 120)
+-	t("player contact: continued tension peels only the loaded live contact", attacker.limbs[0].grab_other == null and attacker.limbs[0].regrip > 0 and attacker.limbs[2].grab_other == floor_body)
++	t("player contact: continued tension preserves the live contact", attacker.limbs[0].grab_climber == c and attacker.limbs[2].grab_other == floor_body)
+ 	target.global_position = original
+ 	attacker.release_all()
+ 	c.attach(2,floor_body)
+@@ -4069,3 +4069,119 @@ func _run_peakride() -> void:
+ 	c.remove()
+ 	pk.leave()
+ 	await pticks(pk, 2)
++
++
++func _run_prying() -> void:
++	var a := spawn(Vector2.ZERO)
++	var b := spawn(Vector2(0.5, 0))
++	var third := spawn(Vector2(4, 0))
++	var floor_body := static_box(Vector2(0, -0.1), Vector2(10, 0.1))
++	for c in [a, b, third]:
++		c.set_physics_process(false)
++	a.attach(0, b.bodies.chest)
++	a.attach(1, b.bodies.chest)
++	var target: RigidBody3D = b.bodies.chest
++	var original := target.global_position
++	target.global_position += Vector3(1.5, 0, 0)
++	for tick in 240:
++		a._tick_live_contact(0, 1.0 / 120.0)
++	t("pry: extreme passive stretch never releases a player grip", a.limbs[0].grab_climber == b)
++	target.global_position = original
++	var key := Vector2i(a.climber_id, 0)
++	var loads := {key: {"source": a, "pressure": 1.0}}
++	b._advance_pry(loads, 0.2)
++	b._advance_pry({}, 0.5)
++	t("pry: abandoned pressure decays completely", not b._pry_progress.has(key))
++	b._advance_pry(loads, 0.2)
++	t("pry: short push does not break grip", a.limbs[0].grab_climber == b)
++	b._advance_pry(loads, 0.46)
++	t("pry: sustained push releases only the targeted limb", a.limbs[0].grab_other == null and a.limbs[1].grab_climber == b)
++	a.attach(0, b.bodies.head)
++	t("pry: cooldown blocks all pieces of the same defender", a.limbs[0].grab_other == null)
++	a.driver.set_limb(0, true)
++	a._select_active_limb()
++	a._tick_limb(0, 0.01)
++	a.driver.clear()
++	a._select_active_limb()
++	a._tick_limb(0, 0.01)
++	a.attach(0, b.bodies.chest)
++	t("pry: activation cannot bypass cooldown", a.limbs[0].grab_other == null)
++	a.attach(0, third.bodies.chest)
++	t("pry: other players remain immediately grabbable", a.limbs[0].grab_climber == third)
++	a.release(0)
++	a.attach(0, floor_body)
++	t("pry: terrain remains immediately grabbable", a.limbs[0].grab_other == floor_body)
++	a.release(0)
++	# Countdown uses real seconds even at the match's slower simulation pace.
++	for tick in 99:
++		a._physics_process(0.01 * Engine.time_scale)
++	a.attach(0, b.bodies.chest)
++	t("pry: same defender still blocked before one second", a.limbs[0].grab_other == null)
++	a._physics_process(0.02 * Engine.time_scale)
++	a.attach(0, b.bodies.chest)
++	t("pry: same defender available after one second", a.limbs[0].grab_climber == b)
++	# Real Jolt contact: defender pushes the gripping upper arm with its hand.
++	for c in [a, b, third]:
++		c.release_all()
++		for piece: RigidBody3D in c.bodies.values():
++			piece.freeze = true
++	a.attach(0, b.bodies.chest)
++	b.attach(2, floor_body)
++	b.driver.point_limb(1, true, Vector2.ZERO)
++	b._select_active_limb()
++	var hand: RigidBody3D = b.bodies.hand_r
++	var arm: RigidBody3D = a.bodies.arm_l_up
++	PhysicsServer3D.free_rid(b.joints.wrist_r.rid)
++	b.joints.erase("wrist_r")
++	hand.freeze = false
++	hand.gravity_scale = 0
++	var contact_at := arm.global_position + Vector3(0, 0.11, 0)
++	for tick in 12:
++		hand.global_position = contact_at
++		hand.linear_velocity = Vector3.DOWN
++		Climber.sync_server(hand)
++		await frames(1)
++	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y + 1))
++	b._tick_prying(0.1)
++	t("pry: real contact while pulling away does not count", b._pry_progress.is_empty())
++	b.driver.aims[1] = null
++	b._tick_prying(0.1)
++	t("pry: neutral active limb does not count", b._pry_progress.is_empty())
++	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y - 1))
++	b._tick_prying(0.1)
++	t("pry: real active-hand contact pushing into gripping arm counts", b._pry_progress.has(key), str(b._pry_progress))
++
++	# The online defender emits a release request; the owner's latch is authoritative.
++	b._pry_progress.clear()
++	var requests := []
++	b.pry_requested.connect(func(cid: int, limb: int): requests.append(Vector2i(cid, limb)))
++	a.state = Climber.State.PUPPET
++	b.remote_pulls[key] = {"supported": true}
++	b._advance_pry(loads, 0.7)
++	t("pry: remote grip routes the exact limb to its owner", requests == [key] and a.limbs[0].grab_climber == b)
++	a.state = Climber.State.LIVE
++	a.pry_release(0, third)
++	t("pry: stale or mismatched defender cannot release a grip", a.limbs[0].grab_climber == b)
++	a.pry_release(0, b)
++	t("pry: owner applies matching request and target cooldown", a.limbs[0].grab_other == null and a.limbs[0].pry_blocked.has(b.get_instance_id()))
++
++
++func _run_grapple_stability() -> void:
++	var floor_body := static_box(Vector2(0, -0.1), Vector2(20, 0.1))
++	var a := spawn(Vector2(0, 0.05))
++	var b := spawn(Vector2(1, 0.05))
++	a.attach(2, floor_body)
++	b.attach(0, a.bodies.chest)
++	b.driver.set_limb(1, true, Vector2.RIGHT)
++	var worst_gap := 0.0
++	var retained := true
++	for tick in 480:
++		await frames(1)
++		var grip: Dictionary = b.limbs[0]
++		if grip.grab_climber != a:
++			retained = false
++			break
++		var end: RigidBody3D = b.bodies[grip.def.end]
++		var target: RigidBody3D = grip.grab_other
++		worst_gap = maxf(worst_gap, target.to_global(grip.contact_offset).distance_to(end.to_global(grip.end_offset)))
++	t("pry stability: sustained full input retains a bounded live grip", retained and worst_gap < 0.6, "maximum contact gap %.3f m" % worst_gap)

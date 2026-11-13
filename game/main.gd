@@ -1583,7 +1583,7 @@ func _to_title(reason: String) -> void:
 
 
 func _screen_controls() -> Control:
-	var c := UiKit.panel_screen("Controls", "Hold a limb button and steer with the stick or mouse. Release to plant it. Plant a hand or foot on another player to climb or pull together. Hard tension breaks the contact. Hard hits can knock you out. Grab the floating chair with a held limb and release to drop it. Lock in above the line while touching the stage or stack.")
+	var c := UiKit.panel_screen("Controls", "Hold a limb button and steer with the stick or mouse. Release to plant it. Plant a hand or foot on another player to climb or pull together. Push an attached arm or leg with your active limb to pry its grip loose. Hard hits can knock you out. Grab the floating chair with a held limb and release to drop it. Lock in above the line while touching the stage or stack.")
 	var box: VBoxContainer = c.get_meta("box")
 	var grid := GridContainer.new()
 	grid.columns = 5

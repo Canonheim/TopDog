@@ -18,7 +18,12 @@ func _ready():
 		shape.shape.radius = .1
 		body.add_child(shape)
 		world.add_child(body)
-		body.position = Vector3(.68,0,0)
+		body.position = Vector3(Pickup.PICKUP_RADIUS+.13,0,0)
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		await get_tree().physics_frame
+		if item.taken or hits[0]!=0: failures+=1
+		body.position = Vector3(Pickup.PICKUP_RADIUS+.08,0,0)
 		await get_tree().physics_frame
 		await get_tree().physics_frame
 		await get_tree().physics_frame

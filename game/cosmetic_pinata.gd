@@ -1,6 +1,10 @@
 extends Area3D
 ## Preview-only collectible. No spawn policy or cosmetic rewards are assigned here.
 signal collected(body: Node3D)
+enum Rarity { WHITE, GREEN, BLUE, PURPLE, RED }
+@export_enum("White", "Green", "Blue", "Purple", "Red") var rarity: int = Rarity.WHITE
+const RarityStyle := preload("res://game/pinata_rarity.gd")
+const PICKUP_RADIUS := 0.4736 # Scaled body mesh: center to farthest branch tip, excluding tassels/rope.
 const PINATA := preload("res://kit/models/pinata.glb")
 const COLORS := [Color("ff365c"),Color("ffd533"),Color("22d9ce"),Color("a758ef"),Color("ff852e"),Color("70d94d")]
 var taken := false
@@ -15,8 +19,9 @@ func _ready() -> void:
 	collision_mask = Climber.LAYER_LIVE | Climber.LAYER_FROZEN | Climber.LAYER_PROP
 	monitorable = false
 	var shape := CollisionShape3D.new()
+	shape.name = "PickupSphere"
 	var sphere := SphereShape3D.new()
-	sphere.radius = .64
+	sphere.radius = PICKUP_RADIUS
 	shape.shape = sphere
 	add_child(shape)
 	visual = Node3D.new()
@@ -30,12 +35,15 @@ func _ready() -> void:
 	CelPass.celify(model)
 	for i in 2:
 		var star := MeshInstance3D.new()
-		star.mesh = _star(1.0 if i == 0 else .84)
+		star.mesh = _star(1.0)
 		star.position.z = -.55 if i == 0 else -.48
 		star.rotation.z = .28 if i == 0 else -.20
 		star.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		visual.add_child(star)
-		CelPass.paint(star,Color("ffc928") if i == 0 else Color("ff852e"))
+		if i == 0:
+			RarityStyle.decorate(star,clampi(rarity,0,4))
+		else:
+			CelPass.paint(star,Color("ff852e"))
 		stars.append(star)
 	_update_star_pulse()
 	body_entered.connect(_touch)
@@ -62,11 +70,11 @@ func _process(delta: float) -> void:
 	stars[1].rotation.z -= delta*.77
 
 func _update_star_pulse() -> void:
-	# Opposite phases; the gold star stays larger even at its smallest point.
+	# Closer base sizes, with a 30% overall reduction and opposite pulse phases.
 	# Separate depth planes keep the rotating meshes from intersecting.
 	var pulse := sin(pulse_time * TAU / 1.8)
-	stars[0].scale = Vector3.ONE * (1.10 + .12*pulse)
-	stars[1].scale = Vector3.ONE * (.83 - .12*pulse)
+	stars[0].scale = Vector3.ONE * .70 * (.96 + .05*pulse)
+	stars[1].scale = Vector3.ONE * .70 * (.84 - .05*pulse)
 
 
 func _touch(body: Node3D) -> void:

@@ -1855,7 +1855,7 @@ func _run_wrestling() -> void:
 		if attacker.limbs[0].grab_other == null:
 			break
 		attacker._tick_live_contact(0, 1.0 / 120)
-	t("player contact: continued tension peels only the loaded live contact", attacker.limbs[0].grab_other == null and attacker.limbs[0].regrip > 0 and attacker.limbs[2].grab_other == floor_body)
+	t("player contact: continued tension preserves the live contact", attacker.limbs[0].grab_climber == c and attacker.limbs[2].grab_other == floor_body)
 	target.global_position = original
 	attacker.release_all()
 	c.attach(2,floor_body)
@@ -4085,3 +4085,119 @@ func _run_peakride() -> void:
 	c.remove()
 	pk.leave()
 	await pticks(pk, 2)
+
+
+func _run_prying() -> void:
+	var a := spawn(Vector2.ZERO)
+	var b := spawn(Vector2(0.5, 0))
+	var third := spawn(Vector2(4, 0))
+	var floor_body := static_box(Vector2(0, -0.1), Vector2(10, 0.1))
+	for c in [a, b, third]:
+		c.set_physics_process(false)
+	a.attach(0, b.bodies.chest)
+	a.attach(1, b.bodies.chest)
+	var target: RigidBody3D = b.bodies.chest
+	var original := target.global_position
+	target.global_position += Vector3(1.5, 0, 0)
+	for tick in 240:
+		a._tick_live_contact(0, 1.0 / 120.0)
+	t("pry: extreme passive stretch never releases a player grip", a.limbs[0].grab_climber == b)
+	target.global_position = original
+	var key := Vector2i(a.climber_id, 0)
+	var loads := {key: {"source": a, "pressure": 1.0}}
+	b._advance_pry(loads, 0.2)
+	b._advance_pry({}, 0.5)
+	t("pry: abandoned pressure decays completely", not b._pry_progress.has(key))
+	b._advance_pry(loads, 0.2)
+	t("pry: short push does not break grip", a.limbs[0].grab_climber == b)
+	b._advance_pry(loads, 0.46)
+	t("pry: sustained push releases only the targeted limb", a.limbs[0].grab_other == null and a.limbs[1].grab_climber == b)
+	a.attach(0, b.bodies.head)
+	t("pry: cooldown blocks all pieces of the same defender", a.limbs[0].grab_other == null)
+	a.driver.set_limb(0, true)
+	a._select_active_limb()
+	a._tick_limb(0, 0.01)
+	a.driver.clear()
+	a._select_active_limb()
+	a._tick_limb(0, 0.01)
+	a.attach(0, b.bodies.chest)
+	t("pry: activation cannot bypass cooldown", a.limbs[0].grab_other == null)
+	a.attach(0, third.bodies.chest)
+	t("pry: other players remain immediately grabbable", a.limbs[0].grab_climber == third)
+	a.release(0)
+	a.attach(0, floor_body)
+	t("pry: terrain remains immediately grabbable", a.limbs[0].grab_other == floor_body)
+	a.release(0)
+	# Countdown uses real seconds even at the match's slower simulation pace.
+	for tick in 99:
+		a._physics_process(0.01 * Engine.time_scale)
+	a.attach(0, b.bodies.chest)
+	t("pry: same defender still blocked before one second", a.limbs[0].grab_other == null)
+	a._physics_process(0.02 * Engine.time_scale)
+	a.attach(0, b.bodies.chest)
+	t("pry: same defender available after one second", a.limbs[0].grab_climber == b)
+	# Real Jolt contact: defender pushes the gripping upper arm with its hand.
+	for c in [a, b, third]:
+		c.release_all()
+		for piece: RigidBody3D in c.bodies.values():
+			piece.freeze = true
+	a.attach(0, b.bodies.chest)
+	b.attach(2, floor_body)
+	b.driver.point_limb(1, true, Vector2.ZERO)
+	b._select_active_limb()
+	var hand: RigidBody3D = b.bodies.hand_r
+	var arm: RigidBody3D = a.bodies.arm_l_up
+	PhysicsServer3D.free_rid(b.joints.wrist_r.rid)
+	b.joints.erase("wrist_r")
+	hand.freeze = false
+	hand.gravity_scale = 0
+	var contact_at := arm.global_position + Vector3(0, 0.11, 0)
+	for tick in 12:
+		hand.global_position = contact_at
+		hand.linear_velocity = Vector3.DOWN
+		Climber.sync_server(hand)
+		await frames(1)
+	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y + 1))
+	b._tick_prying(0.1)
+	t("pry: real contact while pulling away does not count", b._pry_progress.is_empty())
+	b.driver.aims[1] = null
+	b._tick_prying(0.1)
+	t("pry: neutral active limb does not count", b._pry_progress.is_empty())
+	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y - 1))
+	b._tick_prying(0.1)
+	t("pry: real active-hand contact pushing into gripping arm counts", b._pry_progress.has(key), str(b._pry_progress))
+
+	# The online defender emits a release request; the owner's latch is authoritative.
+	b._pry_progress.clear()
+	var requests := []
+	b.pry_requested.connect(func(cid: int, limb: int): requests.append(Vector2i(cid, limb)))
+	a.state = Climber.State.PUPPET
+	b.remote_pulls[key] = {"supported": true}
+	b._advance_pry(loads, 0.7)
+	t("pry: remote grip routes the exact limb to its owner", requests == [key] and a.limbs[0].grab_climber == b)
+	a.state = Climber.State.LIVE
+	a.pry_release(0, third)
+	t("pry: stale or mismatched defender cannot release a grip", a.limbs[0].grab_climber == b)
+	a.pry_release(0, b)
+	t("pry: owner applies matching request and target cooldown", a.limbs[0].grab_other == null and a.limbs[0].pry_blocked.has(b.get_instance_id()))
+
+
+func _run_grapple_stability() -> void:
+	var floor_body := static_box(Vector2(0, -0.1), Vector2(20, 0.1))
+	var a := spawn(Vector2(0, 0.05))
+	var b := spawn(Vector2(1, 0.05))
+	a.attach(2, floor_body)
+	b.attach(0, a.bodies.chest)
+	b.driver.set_limb(1, true, Vector2.RIGHT)
+	var worst_gap := 0.0
+	var retained := true
+	for tick in 480:
+		await frames(1)
+		var grip: Dictionary = b.limbs[0]
+		if grip.grab_climber != a:
+			retained = false
+			break
+		var end: RigidBody3D = b.bodies[grip.def.end]
+		var target: RigidBody3D = grip.grab_other
+		worst_gap = maxf(worst_gap, target.to_global(grip.contact_offset).distance_to(end.to_global(grip.end_offset)))
+	t("pry stability: sustained full input retains a bounded live grip", retained and worst_gap < 0.6, "maximum contact gap %.3f m" % worst_gap)

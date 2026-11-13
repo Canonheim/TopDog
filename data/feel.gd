@@ -9,6 +9,10 @@ const PPM := 100.0  # 2D physics pixels per metre (the physics world is in px)
 
 ## [value, min, max, help]. Order here is the dev panel's order.
 const SPEC := {
+	"pry_hold_seconds": [0.65, 0.2, 2.0, "Seconds of sustained deliberate pushing to pry off an incoming player grip"],
+	"pry_decay": [0.5, 0.0, 2.0, "Hidden pry progress lost per second without pushing"],
+	"pry_regrab_seconds": [1.0, 1.0, 1.0, "Real seconds the pried limb cannot reattach to that player"],
+	"live_grip_force_cap": [8.0, 4.0, 12.0, "Live grip restoring-force cap in body weights; load never releases it"],
 	"body_scale": [0.9, 0.6, 1.3, "Climber size (1.0 = the knight's modelled 2.02 m)"],
 	"shoulder_flare": [0.05, 0.0, 0.3, "Wide shoulders: arms sit this far further out than the model (m, Golemheim's flare). Rebuilds on the next spawn"],
 	"shoulder_drop": [0.05, 0.0, 0.2, "Arms sit this much lower than the model (m). Rebuilds on the next spawn"],

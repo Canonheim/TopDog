@@ -568,6 +568,10 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 				if randf() < DONKEY_CHANCE:
 					_rpc_donkey.rpc_id(1, cid, Sound.SFX["donkey"].pick_random()))
 		c.grab_lost.connect(_on_grab_lost)
+		c.pry_requested.connect(func(source_id: int, limb: int):
+			var source: Climber = climbers.get(source_id)
+			if source != null and source.owner_peer != me():
+				_rpc_pry_release.rpc_id(source.owner_peer, source_id, cid, limb))
 		c.rope_bounced.connect(func(at: Vector3, speed: float): _rpc_rope.rpc(cid, at, speed))
 		if chair != null and not is_host():
 			c.limb_selected.connect(func(i: int, velocity: Vector3): _rpc_chair_limb.rpc_id(1, cid, i, velocity))
@@ -1540,6 +1544,16 @@ func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vecto
 		return
 	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
 	_pulls[cid][key] = {"piece": piece, "offset": offset, "force": force.limit_length(cap), "supported": supported, "directly_supported": directly_supported, "time": _now}
+
+@rpc("any_peer", "call_remote", "reliable")
+func _rpc_pry_release(source_id: int, defender_id: int, limb: int) -> void:
+	var source: Climber = climbers.get(source_id)
+	var defender: Climber = climbers.get(defender_id)
+	if source == null or defender == null or source.owner_peer != me() or defender.owner_peer != multiplayer.get_remote_sender_id():
+		return
+	if source.state != Climber.State.LIVE or defender.removed:
+		return
+	source.pry_release(limb, defender)
 
 # ================================================================ leaving
 
