@@ -1180,6 +1180,41 @@ func inside_now() -> float:
 
 
 ## The camera's frame at the climber: [half height, bias, is it a zone an author drew].
+## THE NINE LONG JUMPS (playtest note 7): the written flings whose landing is out of the
+## close camera's view from the launch (the view is 11 m tall, main.gd's
+## PEAK_CAM_HALF_MAX, and as wide as the screen). Near one of their launches, the HUD shows
+## a tool tip naming the zoom bind. Found from the course's own moves, once.
+var _long_jumps: Array = []  # [launch, landing]
+var _long_jumps_done := false
+## The six challenges the nine were counted in (WORK_LOG, the first batch: 3.5, 7.8, 9.6,
+## 10.6, 11.2, 11.4), so a fling elsewhere that happens to be long (5.5's) is not one.
+const LONG_JUMP_CHALLENGES := ["3.5", "7.8", "9.6", "10.6", "11.2", "11.4"]
+
+
+func long_jump_near(p: Vector2, r := 3.0, half_h := 5.5, aspect := 16.0 / 9.0) -> bool:
+	if not _long_jumps_done:
+		_long_jumps_done = true
+		for c in challenges:
+			if not LONG_JUMP_CHALLENGES.has(str(c.id)):
+				continue
+			for mv in c.get("moves", []):
+				if str(mv[0]) != "fling":
+					continue
+				var a := v2(mv[1])
+				var b := v2(mv[2])
+				if absf(b.y - a.y) > half_h * 0.9 or absf(b.x - a.x) > half_h * aspect * 0.9:
+					_long_jumps.append([a, b])
+	for lj in _long_jumps:
+		if (lj[0] as Vector2).distance_to(p) < r:
+			return true
+	return false
+
+
+func long_jump_count() -> int:
+	long_jump_near(Vector2.INF)
+	return _long_jumps.size()
+
+
 func cam_frame() -> Array:
 	var p := player_at()
 	var half := 4.2

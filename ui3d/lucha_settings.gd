@@ -65,6 +65,14 @@ var _drag := -1  # the fader stop being dragged with the mouse
 
 var _controls: Node3D
 var _cells := {}  # "action|scheme|index" -> {node, text, face}
+## THE SECOND PAGE (playtest note 28; Parker 11-13: "Add both rows and just add a Next page
+## button to the current UI screen, no need for a full rework"): the six limb rows are page
+## one, the two camera controls page two; NEXT PAGE turns between them.
+const CAMERA_ROWS := ["LOOK AROUND (HOLD)", "ZOOM OUT (HOLD)"]
+var _pages: Array = []  # [page node, its cell stops]
+var _common_stops: Array = []  # RESET, BACK, NEXT PAGE
+var _page := 0
+var _next: Dictionary = {}
 var _reset: Dictionary = {}
 var _monitor: Node3D
 var _monitor_text: Node3D
@@ -112,7 +120,7 @@ func on_screen(id: String) -> void:
 	_reset_armed = false
 	_drag = -1
 	if current == "controls":
-		_stops = _controls.get_meta("stops")
+		_show_page(0)
 		_refresh_cells()
 		_controls.visible = true
 		_controls.position.y = 4.0
@@ -164,26 +172,39 @@ func _build_controls() -> void:
 		tt.position = Vector3(0, 0, 0.09)
 		LuchaKit.center_digits(tt)
 		tab.add_child(tt)
-	# The rows: a badge label, then three keycaps.
+	# The rows: a badge label, then three keycaps. Page one the limbs, page two the camera.
+	_pages = []
+	for pg in 2:
+		var page := Node3D.new()
+		page.name = "Page%d" % (pg + 1)
+		page.visible = pg == 0
+		board.add_child(page)
+		_pages.append([page, []])
+	var rows: Array = []
 	for r in Players.ACTIONS.size():
-		var action: String = Players.ACTIONS[r]
-		var y: float = ROWS_Y[r]
+		rows.append([0, Players.ACTIONS[r], str(Players.ACTION_NAMES[r]).to_upper(), BADGES[r], ROWS_Y[r]])
+	for r in Players.CAMERA_ACTIONS.size():
+		rows.append([1, Players.CAMERA_ACTIONS[r], CAMERA_ROWS[r], "icon_eye", ROWS_Y[r]])
+	for row: Array in rows:
+		var page: Node3D = _pages[int(row[0])][0]
+		var action: String = row[1]
+		var y: float = row[4]
 		var label := _kit("bind_label", Vector3(2.7, 0.46, 0.04), LuchaKit.INK)
 		label.position = Vector3(LABEL_X, y, 0.07)
-		board.add_child(label)
-		var badge := _kit(BADGES[r], Vector3(0.4, 0.4, 0.05), LuchaKit.GOLD)
+		page.add_child(label)
+		var badge := _kit(str(row[3]), Vector3(0.4, 0.4, 0.05), LuchaKit.GOLD)
 		badge.position = Vector3(-1.05, 0, 0.05)
 		if action.ends_with("_r"):
 			badge.scale.x = -1.0  # the right hand and foot: the left's badge, mirrored
 		label.add_child(badge)
-		var lt := LuchaKit.fit_text(str(Players.ACTION_NAMES[r]).to_upper(), 1.8, 0.2, LuchaKit.CREAM, LuchaKit.INK)
+		var lt := LuchaKit.fit_text(str(row[2]), 1.8, 0.2, LuchaKit.CREAM, LuchaKit.INK)
 		lt.position = Vector3(0.235, 0, 0.07)
 		LuchaKit.center_digits(lt)
 		label.add_child(lt)
 		for c in 3:
 			var cell := _kit("bind_cell", Vector3(1.22, 0.43, 0.08), LuchaKit.CREAM)
 			cell.position = Vector3(CELLS_X[c], y, 0.08)
-			board.add_child(cell)
+			page.add_child(cell)
 			var focus := cell.find_child("cell_focus", true, false) as Node3D
 			if focus != null:
 				focus.visible = false
@@ -197,15 +218,22 @@ func _build_controls() -> void:
 			cell.add_child(back)
 			var key := "%s|%s|%d" % [action, CELL_SPECS[c][0], CELL_SPECS[c][1]]
 			_cells[key] = {"node": cell, "text": text, "shown": null}
-			stops.append(_stop(cell, Vector3(1.3, 0.5, 0.3), "cell", {"action": action, "scheme": CELL_SPECS[c][0], "index": CELL_SPECS[c][1], "focus": focus, "key": key}))
-	# RESET and BACK on the kit's small belts.
+			var cst := _stop(cell, Vector3(1.3, 0.5, 0.3), "cell", {"action": action, "scheme": CELL_SPECS[c][0], "index": CELL_SPECS[c][1], "focus": focus, "key": key})
+			stops.append(cst)
+			(_pages[int(row[0])][1] as Array).append(cst)
+	# RESET, BACK and NEXT PAGE on the kit's small belts.
+	_common_stops = []
 	var reset := _belt_small("RESET", Vector3(-3.1, -2.05, 0.08))
 	board.add_child(reset.node)
 	_reset = reset
-	stops.append(_stop(reset.node, Vector3(1.3, 0.5, 0.3), "reset", {"focus": reset.focus, "text": reset.text}))
+	_common_stops.append(_stop(reset.node, Vector3(1.3, 0.5, 0.3), "reset", {"focus": reset.focus, "text": reset.text}))
 	var back_b := _belt_small("BACK", Vector3(-0.4, -2.05, 0.08))
 	board.add_child(back_b.node)
-	stops.append(_stop(back_b.node, Vector3(1.3, 0.5, 0.3), "back", {"focus": back_b.focus, "text": back_b.text}))
+	_common_stops.append(_stop(back_b.node, Vector3(1.3, 0.5, 0.3), "back", {"focus": back_b.focus, "text": back_b.text}))
+	_next = _belt_small("NEXT PAGE", Vector3(1.85, -2.05, 0.08))
+	board.add_child(_next.node)
+	_common_stops.append(_stop(_next.node, Vector3(1.3, 0.5, 0.3), "page", {"focus": _next.focus, "text": _next.text}))
+	stops.append_array(_common_stops)
 	# HOW TO WRESTLE: the numbered move list.
 	var head := LuchaKit.poster_text("HOW TO WRESTLE", 0.3, LuchaKit.RED, LuchaKit.INK, 0.05)
 	head.position = Vector3(3.8, 1.66, 0.2)  # under the papel picado's points
@@ -236,7 +264,7 @@ func _build_controls() -> void:
 	if _bubble == null:
 		_bubble = LuchaKit.box(Vector3(1.88, 0.78, 0.03), LuchaKit.CREAM)
 	_bubble.scale = Vector3.ONE * 0.8
-	_bubble.position = Vector3(2.95, -2.05, 0.2)  # beside the TV, under the move list
+	_bubble.position = Vector3(3.4, -2.05, 0.2)  # beside the TV, under the move list (moved east for NEXT PAGE)
 	board.add_child(_bubble)
 	var tip := LuchaKit.poster_text("PAD SILENT? CLOSE STEAM,\nOR LAUNCH FROM STEAM", 0.13, LuchaKit.INK, LuchaKit.CREAM, 0.02)
 	tip.position = Vector3(0, 0.03, 0.06)
@@ -250,6 +278,15 @@ func _build_controls() -> void:
 	frame.add_child(hint)
 	LuchaUI.no_shadows(_controls)
 	_controls.set_meta("stops", stops)
+
+
+## Shows page `p` of the Controls board: its rows, and the stops that go with them.
+func _show_page(p: int) -> void:
+	_page = clampi(p, 0, _pages.size() - 1)
+	for k in _pages.size():
+		(_pages[k][0] as Node3D).visible = k == _page
+	_stops = (_pages[_page][1] as Array) + _common_stops
+	_relabel_belt(_next, "NEXT PAGE" if _page == 0 else "FIRST PAGE")
 
 
 func _refresh_cells() -> void:
@@ -638,6 +675,14 @@ func _activate(i: int) -> void:
 				Sound.play("lock", -6.0)
 		"back":
 			main._back()
+		"page":
+			_show_page(1 - _page)
+			for k in _stops.size():
+				if str(_stops[k].kind) == "page":
+					_focus = k
+			_set_pickable()
+			_show_focus()
+			Sound.play("ui_click", -6.0)
 		"knob":
 			_turn_knob(1)
 		"fader":

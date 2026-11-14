@@ -72,7 +72,7 @@ KINDS = {
     "hot": {"grip": True, "tone": "hot", "hold": {"type": "timed", "t": 1.2, "rearm": 0.8}},
     "hotpipe": {"grip": True, "tone": "hot", "hold": {"type": "timed", "t": 1.5, "rearm": 0.8}},
     "ice": {"grip": True, "tone": "ice", "hold": {"type": "timed", "t": 2.0, "rearm": 0.6}},
-    "icicle": {"grip": True, "tone": "ice", "hold": {"type": "crumble", "t": 0.7, "respawn": 9.0}},
+    "icicle": {"grip": True, "tone": "ice", "hold": {"type": "crumble", "t": 1.5, "respawn": 9.0}},  # (note 85: 0.7 s was too short; 1.5 a first try)
     "rotten": {"grip": True, "tone": "weak", "hold": {"type": "crumble", "t": 1.2, "respawn": 8.0}},
     "brittle": {"grip": True, "tone": "weak", "hold": {"type": "crumble", "t": 0.8, "respawn": 8.0}},
     "snowbridge": {"grip": True, "tone": "snow", "hold": {"type": "crumble", "t": 1.0, "respawn": 10.0}},

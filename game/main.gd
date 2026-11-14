@@ -551,6 +551,22 @@ var _peak_alt_at := Vector2.ZERO  # where the pointer was when Alt went down
 var _peak_mouse_held := false  # the mouse is the camera's: it aims no limb
 
 
+## Where the climber is, in the course's metres (for the long jumps' tool tip).
+func alt_at(peak: Peak) -> Vector2:
+	return peak.player_at()
+
+
+## The zoom bind of a player's slot, as the Controls board names it: the pad's when they
+## play on a pad, the keyboard's otherwise.
+func _zoom_bind_name(slot: int) -> String:
+	var dev := Players._dev(slot)
+	var scheme := "kbm" if dev == Players.KBM or dev == Players.ANY else "pad"
+	for b in Players.binds[scheme].get("zoom", []):
+		if not (b as Dictionary).is_empty():
+			return Players.bind_label(b)
+	return "the zoom button"
+
+
 func _peak_camera(delta: float) -> void:
 	var peak: Peak = game.peak
 	line_bar.visible = false
@@ -745,6 +761,11 @@ func _tick_peak(delta: float) -> void:
 		_peak_hud.set("holding", peak.player == null or not is_instance_valid(peak.player) or peak.player.is_attached())
 		_peak_hud.call("set_altitude", alt, peak.best_m)
 		_peak_hud.call("set_paused", screen == "pause", peak.time_s, peak.falls, peak.best_m)
+		# Note 7: at the nine long jumps, the tool tip names the player's own zoom bind.
+		if peak.player != null and screen == "hud" and peak.long_jump_near(alt_at(peak)):
+			_peak_hud.call("show_tip", "Hold %s to widen the camera" % _zoom_bind_name(peak.player.local_slot))
+		else:
+			_peak_hud.call("hide_tip")
 	else:
 		_peak_label.text = "%d m" % int(round(alt))
 		if screen == "pause":

@@ -1658,6 +1658,43 @@ in. Nothing played by a person.
 - **Stand-ins waiting for models:** the ice lip of 9.8, the slab mouth (a dark disc), the
   gondola rails, the ring ropes' bands and cushions, the bull wheel's re-made model.
 
+## The fix run of 11-13, group 2: small numbers and the HUD
+
+- **Note 55:** the area banner's quiet time is 40 s (`area_quiet_s` in `ui3d/peak_hud.gd`).
+  Not watched for the full 40 s.
+- **Note 7, the long jumps' tool tip:** standing within 3 m of the launch of one of the nine
+  long jumps, a paper card slides in at the bottom right: "Hold [bind] to widen the
+  camera", naming the player's own zoom bind (the keyboard's when they play on keys, the
+  pad's on a pad: "Shift" and "LT" by default). It slides out when they move off. No
+  automatic widening. The nine are found from the course's own flings, in the six
+  challenges they were counted in (3.5, 7.8, 9.6, 10.6, 11.2, 11.4), whose landing lies
+  outside the close view from the launch (`Peak.long_jump_near`): 10.6 three, 3.5 two,
+  11.2, 11.4, 7.8, 9.6. Seen at 7.8 and 11.4 (`7_tool_tip_at_*`), and not at 11.1.
+  - **Note:** the HUD's code builds the card; main.gd decides when. Not seen on a pad or
+    under Steam Input (the pad's bind name is the Controls board's own, "LT").
+  - First guess: the 3 m from the launch.
+- **Note 28, the Controls board's Next page:** a NEXT PAGE belt beside BACK turns to a
+  second page with the two camera controls' rows (LOOK AROUND (HOLD), ZOOM OUT (HOLD)),
+  each with its three keycaps, rebindable like the others; on page two the belt reads
+  FIRST PAGE. The pad-check bubble moved 0.45 m east to make room. The camera rows' badge
+  is a plain gold block: the kit has no eye or camera icon (a model request).
+  (`28_controls_page_1_*`, `28_controls_page_2_*`). Rebinding a camera row was not tried.
+- **Note 85:** the big icicles of 9.2 hold 1.5 s (the `icicle` kind's crumble time, was 0.7;
+  only 9.2 uses the kind). A first try.
+- **Note 63:** every vent x 1.1: the first 5.01 to 5.51 m/s, the twins 5.0 to 5.5 and 4.0 to
+  4.4, the three stacked 4.54 to 4.99. Landings not tried again.
+- **Note 61:** the updraught shaft's seven rings are four: on the wall the ring under the
+  gust band (541.6) and the ring over it (547.3), across the head the first and the last
+  (2.5 m apart). The worry in the note (no time to cross the band with the middle ring
+  gone) does not hold by the shaft's own numbers: from a standstill on the 541.6 ring the
+  climber is in the band from 1.8 s to 3.3 s, so letting go anywhere from 1.8 s before the
+  gust ends to 0.2 s after clears it within the 3.5 s lull. Not tried with a climber. The
+  route's legs are recorded as `drift` moves (the check read a 2.7 m drift as a reach).
+  (`61_shaft_rings_*`)
+- **Note 49:** the four gears turn at 5 rpm (a turn in 12 s). The reaches between gears
+  at the new speed were not measured again by play.
+- **Checks:** lint; `--peak`; `--peakrules`; `--input`; `--settings`. All clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

@@ -2142,3 +2142,33 @@ func _w_slabtrack(_a: Array) -> void:
 	print("WATCH slabtrack: near %s, at %s, def %s" % [pk.player_at().distance_to(Peak.v2(sp.def.at)), sp.def.at, sp.def.kind])
 	for l in log:
 		print("WATCH slab ", l)
+
+
+## NOTE 7: the tool tip at the long jumps. NOTE 28: the Controls board's pages. g2hud:TAG
+func _w_g2hud(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	var n: int = pk.long_jump_count() if pk.has_method("long_jump_count") else -1
+	print("WATCH g2hud %s: long jumps found: %d" % [tag, n])
+	for spot in [["11.4", Vector2(-335.7, 996.3)], ["7.8", Vector2(-184.7, 659.6)]]:
+		var id: String = spot[0]
+		pk.warp(id)
+		await secs(6.5)
+		stand(spot[1] + Vector2(0, -1.0))
+		_free_cam = false
+		await secs(0.8)
+		await shot("7_tool_tip_at_%s_%s" % [id.replace(".", "_"), tag])
+	pk.warp("11.1")
+	await secs(1.5)
+	await shot("7_no_tool_tip_at_11_1_" + tag)
+	main.show_screen("controls")
+	await secs(1.0)
+	await shot("28_controls_page_1_" + tag)
+	var st = main.lucha.settings
+	if st.has_method("_show_page"):
+		for k in st._stops.size():
+			if str(st._stops[k].kind) == "page":
+				st._activate(k)
+				break
+		await secs(0.6)
+		await shot("28_controls_page_2_" + tag)
+	main.show_screen("hud")

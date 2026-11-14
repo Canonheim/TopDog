@@ -53,7 +53,9 @@ def ring(x, y, r=0.25):
 # (speed = sqrt(2 x 2.79 x 4.5) = 5.01): 8 m in all, to the chain that hangs from the mask's
 # nose ring and the mask's tongue (L1, top 486) beside it.
 A.ledge(-283.0, -280.0, 479.5, "iron", t=0.5)  # the grate
-A.geyser(-281.5, 479.5, 2.0, 3.5, 5.01, period=5.0, on=2.0, phase=0.0, warn=1.2)
+# (Note 63, Parker 11-13: "Make all the vents only about 10% stronger than they currently are":
+# every vent's speed x 1.1 here and below; the columns and the timing are unchanged.)
+A.geyser(-281.5, 479.5, 2.0, 3.5, 5.51, period=5.0, on=2.0, phase=0.0, warn=1.2)
 ring(-281.5, 491.6, 0.3)  # the nose ring
 A.rope("c61", (-281.5, 491.3), 4.6, kind="chain")  # hangs to y 486.7, in the column's top
 A.ledge(-280.3, -276.4, 486.0, "iron", t=0.5)  # L1, the tongue
@@ -96,11 +98,11 @@ A.cam((-279, 485, -269, 498), half_h=9.0, bias=(0.0, -3.0))
 #   its column). Let go later than about 1 s into A's blast and it dies under you: you
 #   come down short of the funnel's west plate, to the floor.
 A.ledge(-269.0, -267.0, 496.05, "iron", t=0.3)  # A's grate, set in L2
-A.geyser(-268.0, 496.0, 2.0, 4.0, 5.0, period=7.0, on=1.5, phase=0.0, warn=1.0)
+A.geyser(-268.0, 496.0, 2.0, 4.0, 5.5, period=7.0, on=1.5, phase=0.0, warn=1.0)
 A.wind((-269.2, 500.0, -264.2, 508.0), (1.0, 0.0), look="steam")
 A.beam((-264.2, 500.8), (-265.7, 502.06), 0.5, "grease")  # B's funnel, west plate (40 degrees)
 A.beam((-261.8, 500.8), (-258.8, 503.3), 0.5, "grease")  # east plate
-A.geyser(-263.0, 499.0, 2.4, 9.0, 4.0, period=7.0, on=3.2, phase=3.5, warn=1.0)
+A.geyser(-263.0, 499.0, 2.4, 9.0, 4.4, period=7.0, on=3.2, phase=3.5, warn=1.0)
 ring(-262.1, 514.75, 0.28)  # the hook the chain hangs from (it hangs off the slag pan above)
 A.rope("c63", (-262.1, 514.5), 7.0, kind="chain")  # to y 507.5
 A.ledge(-267.6, -263.5, 512.0, "rock", t=0.6)  # L3
@@ -206,15 +208,21 @@ A.solid([(-241.5, 540.0), (-241.0, 540.0), (-241.0, 543.4), (-241.5, 542.9)], "w
 A.solid([(-241.5, 546.0), (-241.0, 546.0), (-241.0, 548.4), (-241.5, 548.4)], "wet")  # baffle, over it
 A.wind((-241.0, 536.0, -236.0, 548.6), (0.0, 3.6), look="steam")
 A.wind((-241.5, 542.9, -236.0, 546.1), (-6.0, 0.0), gust={"on": 1.5, "off": 3.5, "phase": 0.0, "warn": 0.9})
-E_RINGS = [(-236.3, 538.6), (-236.3, 541.6), (-236.3, 544.3), (-236.3, 547.3)]
-T_RINGS = [(-237.6, 548.2), (-238.9, 548.8), (-240.1, 549.3)]
+# (Note 61, Parker 11-13: "this place needs less rings. 50%". Seven become four: on the wall the
+# ring under the band and the ring over it; across the head the first and the last. With the
+# ring in the band gone, the drift from 541.6 through the band (542.9 .. 546.1) takes 1.8 to
+# 3.3 s from a standstill: let go up to 1.8 s before the gust ends and you are through
+# within the 3.5 s lull. On the ring over the band at 3.75 s.)
+E_RINGS = [(-236.3, 541.6), (-236.3, 547.3)]
+T_RINGS = [(-237.6, 548.2), (-240.1, 549.3)]
 for x, y in E_RINGS + T_RINGS:
     ring(x, y)
 A.ledge(-245.8, -241.0, 549.0, "rock", t=0.6)  # L7
-_r = [E_RINGS[3]] + T_RINGS + [(-241.0, 549.0)]
+_r = [E_RINGS[0], E_RINGS[1]] + T_RINGS + [(-241.0, 549.0)]
 A.challenge("6.7", "Tiro de Chimenea", (-241.9, 535.6), 3, "A",
-            moves=[["reach", [-237.0, 537.6], [-236.3, 538.6]]] +
-                  [["reach", list(_r[i]), list(_r[i + 1])] for i in range(4)])
+            moves=[["drift", [-237.0, 537.6], list(_r[0])], ["drift", list(_r[0]), list(_r[1])],
+                   ["reach", list(_r[1]), list(_r[2])], ["drift", list(_r[2]), list(_r[3])],
+                   ["reach", list(_r[3]), list(_r[4])]])  # (a drift: carried by the draught, not an arm's reach)
 A.cam((-246, 534, -234, 552), half_h=8.5, bias=(-1.5, 0.0))
 
 # ---------------------------------------------------------------- 6.8 El Ultimo Aliento
@@ -228,13 +236,13 @@ A.cam((-246, 534, -234, 552), half_h=8.5, bias=(-1.5, 0.0))
 #   6.7, grate 3 by 8.0, the last ring and L8 at 10.7. Miss a blast and the next is 6 s away,
 #   standing on 1.2 m of iron over the hood.
 A.ledge(-245.6, -244.0, 549.05, "iron", t=0.3)  # vent 1's grate, set in L7
-A.geyser(-244.8, 549.0, 1.6, 4.5, 4.54, period=6.0, on=2.0, phase=0.0, warn=1.0)
+A.geyser(-244.8, 549.0, 1.6, 4.5, 4.99, period=6.0, on=2.0, phase=0.0, warn=1.0)
 ring(-245.25, 557.9)
 A.ledge(-247.2, -246.0, 557.2, "iron", t=0.4)  # grate 2
-A.geyser(-246.6, 557.2, 1.4, 4.5, 4.54, period=6.0, on=1.6, phase=2.0, warn=0.9)
+A.geyser(-246.6, 557.2, 1.4, 4.5, 4.99, period=6.0, on=1.6, phase=2.0, warn=0.9)
 ring(-247.05, 566.1)
 A.ledge(-249.0, -247.8, 565.4, "iron", t=0.4)  # grate 3
-A.geyser(-248.4, 565.4, 1.4, 4.5, 4.54, period=6.0, on=1.35, phase=4.0, warn=0.8)
+A.geyser(-248.4, 565.4, 1.4, 4.5, 4.99, period=6.0, on=1.35, phase=4.0, warn=0.8)
 ring(-247.95, 573.5)
 A.ledge(-247.4, -243.4, 572.5, "rock", t=0.6)  # L8, the crack's doorstep
 A.challenge("6.8", "El Último Aliento", (-242.2, 549.0), 5, "A",

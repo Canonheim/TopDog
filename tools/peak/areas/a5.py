@@ -221,8 +221,10 @@ def gear(gid, cx, cy, rpm, phase):
     A.mover(gid, (cx, cy), shapes, {"type": "spin", "rpm": rpm, "phase": phase}, model="temple_gear")
 
 
-GEARS = [("gear1", -364.6, 416.4, 2.5, 0.0), ("gear2", -368.56, 420.36, -2.5, 15.0),
-         ("gear3", -364.6, 424.32, 2.5, 0.0), ("gear4", -368.56, 428.28, -2.5, 15.0)]
+# (Note 49, Parker 11-13: "Make them knock you out if you get crunched by them and also move 2x
+# as fast": 5 rpm, a turn in 12 s. The crunch is the mountain's rule, peak_things.gd.)
+GEARS = [("gear1", -364.6, 416.4, 5.0, 0.0), ("gear2", -368.56, 420.36, -5.0, 15.0),
+         ("gear3", -364.6, 424.32, 5.0, 0.0), ("gear4", -368.56, 428.28, -5.0, 15.0)]
 for g in GEARS:
     gear(*g)
 A.challenge("5.4", "Engranajes", (-360.9, 412.0), 3, "B", moves=[

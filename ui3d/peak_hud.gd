@@ -205,7 +205,7 @@ var _area_wait: Array = []  # [name, number]
 ## the quiet ends, if that is not the area last announced, its banner shows once. And never
 ## in the middle of a fall: it waits until you have hold of something (`holding`, set by
 ## main every frame).
-var area_quiet_s := 15.0
+var area_quiet_s := 40.0  # (Parker 11-13, the second playtest: "make that 40 seconds")
 var holding := true
 var _area_said := ""  # the area last announced
 var _area_said_t := -1.0e9  # ...and when (the HUD's own clock)
@@ -469,6 +469,7 @@ func fell_line(metres: float) -> String:
 
 func _process(delta: float) -> void:
 	_t += delta
+	_tip_in = move_toward(_tip_in, 1.0 if _tip_text != "" else 0.0, delta * 3.5)
 	_place()
 	if not _area_wait.is_empty() and str(_area_wait[0]) == _area_said:
 		_area_wait = []  # (back in the area already announced: nothing to say)
@@ -515,6 +516,45 @@ func _process(delta: float) -> void:
 		_pennant.rotation.z = sin(_t * 3.1) * 0.06
 
 
+## A TOOL TIP AT THE BOTTOM RIGHT (playtest note 7; Parker 11-13: "Make it so when you come
+## to these 9 areas, a tool tip shows in the bottom right saying "Hold [key bind] to widen
+## the camera""). A paper card that slides in from the right edge while `text` is set, and
+## back out when it is cleared. main.gd says when (peak.long_jump_near) and names the bind.
+const TIP_W := 3.6
+const TIP_H := 0.5
+var _tip: Node3D
+var _tip_words: Node3D
+var _tip_text := ""
+var _tip_in := 0.0
+
+
+func show_tip(text: String) -> void:
+	if text == _tip_text:
+		return
+	_tip_text = text
+	if text == "":
+		return
+	if _tip == null:
+		_tip = Node3D.new()
+		_tip.name = "ToolTip"
+		_near.add_child(_tip)
+		_tip.add_child(_box(Vector3(TIP_W + 0.1, TIP_H + 0.1, 0.03), KRAFT, Vector3(0, 0, -0.01)))
+		_tip.add_child(_box(Vector3(TIP_W, TIP_H, 0.03), PAPER, Vector3(0, 0, 0.01)))
+		_tip_words = Node3D.new()
+		_tip_words.position = Vector3(0, 0, 0.035)
+		_tip.add_child(_tip_words)
+	for ch in _tip_words.get_children():
+		ch.queue_free()
+	var w := LuchaKit.fit_words(text, TIP_W * 0.9, TIP_H * 0.5, LuchaKit.INK, PAPER)
+	LuchaKit.center_digits(w)
+	_tip_words.add_child(w)
+	LuchaUI.no_shadows(_tip)
+
+
+func hide_tip() -> void:
+	_tip_text = ""
+
+
 ## Where everything sits this frame: 1.25 m from the lens at the HUD's on-screen size,
 ## anchored to the screen's edges (the virtual ones in a narrow window).
 func _place() -> void:
@@ -531,6 +571,9 @@ func _place() -> void:
 	_area.position = Vector3(0, hh - 0.72 + _area_off, 0.2)
 	_pause.position = Vector3(hw - 0.45 - 1.95 + (1.0 - _pause_in) * 5.2, 0.35, 0.1)
 	_summit.position = Vector3(0, 0.25 + _summit_off, 0.3)
+	if _tip != null:
+		_tip.position = Vector3(hw - TIP_W * 0.5 - 0.3 + (1.0 - _tip_in) * (TIP_W + 0.6), -hh + 0.62, 0.15)
+		_tip.visible = _tip_in > 0.01
 
 
 # ================================================================ the altimeter
