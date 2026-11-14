@@ -119,6 +119,8 @@ const WET_AS := {"geode_wheel": "glass", "crystal_ring_3": "glass", "crystal_rin
 
 static func kit(model: String) -> Node3D:
 	var n := LuchaKit.kit_model(model)
+	if n == null and model.ends_with("_jade"):
+		n = LuchaKit.kit_model(model.trim_suffix("_jade"))  # (a jade-band re-make not landed yet: the original shows)
 	if n != null:
 		var mud_as := str(WET_AS.get(model, "mud"))
 		if n is MeshInstance3D:
@@ -429,7 +431,7 @@ func _build_area(a: Dictionary) -> void:
 				# the skin deco nearest it is moved into it (_wear_skins), so whatever this hold
 				# does to its piece (it shakes, breaks, comes back) its model does.
 				piece = Node3D.new()
-				_skin_pieces.append([piece, str(s.skin), _centre(pts)])
+				_skin_pieces.append([piece, str(s.skin), _centre(pts), pts, kind, vz0, vz1, a])
 			elif piece == null:
 				mi = MeshInstance3D.new()
 				var one := PeakMesh.new()
@@ -577,6 +579,14 @@ func _wear_skins(root: Node3D) -> void:
 		if best != null:
 			taken[best] = true
 			best.reparent(piece, true)
+		else:
+			# no deco of its skin near it: it draws its own shape, as it did before (never invisible)
+			var mi := MeshInstance3D.new()
+			var one := PeakMesh.new()
+			one.prism(row[3], float(row[5]), float(row[6]), Vector2.ZERO, Vector2.ZERO)
+			mi.mesh = one.commit()
+			CelPass.paint(mi, kind_color(row[7], str(row[4])))
+			piece.add_child(mi)
 	_skin_pieces.clear()
 
 

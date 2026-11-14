@@ -21,80 +21,79 @@ Clock notes (what this file assumes of the engine; AUTHORING.md's table):
 import math, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from peaklib import Area, box_pts, ngon
+import a5_dress  # the temple's scenery (the modelling run's): decos only
 
 A = Area("a5", "temple")
 GOLD = "#FFC060"
 
 
 def torch(x, y, rng=10.0, energy=1.6):
-    A.deco("torch_wall", x, y, z=-0.9, size=(0.4, 1.2, 0.4), tone="gold")
+    # (its torch is a5_dress's now, out of the play space; the light it gives stays where it is: page 5.1)
     A.light(x, y + 0.6, color=GOLD, rng=rng, energy=energy, flicker=True)
-
-
-def mask(x, y, w, h, z=-2.0, tone="accent"):
-    """A carved luchador-dog mask of the First Top Dog (scenery)."""
-    A.deco("pug_mask", x, y, z=z, size=(w, h, 0.4), tone=tone)
 
 
 # ================================================================ the shell
 # The AIR's outline. Edge i runs pts[i] -> pts[i+1].
-SHELL = [(-309, 366), (-342, 366), (-372, 385.5), (-372, 411), (-374.5, 414.5), (-374.5, 434),
-         (-366, 434), (-366, 466.5), (-341, 466.5), (-341, 473), (-323.5, 473), (-323.5, 484),
-         (-309, 484), (-309, 479), (-309, 382)]
+# (Note 60, page 5.0: the frog's room, 2.8 m deep and 2.8 m tall, cut into the west wall at the
+# exit ledge, its floor level with the ledge (y 455): the outline is a5_dress's SHELL_ROOM, the
+# same with the room's eight points. Only its floor can be stood on.)
+SHELL = a5_dress.SHELL_ROOM
 A.cave(SHELL, {0: "stone",   # the entry floor: every great fall inside the temple ends here
-               12: None,     # the exit door, onto the well's mouth
-               14: None},    # the entry door, onto the well
-       default="wet", thick=3.0)
+               7: "stone",   # the frog's room's floor
+               20: None,     # the exit door, onto the well's mouth
+               22: None},    # the entry door, onto the well
+       default="wet", thick=3.0, skins=a5_dress.SHELL_SKINS_ROOM)
 A.opening(-309, 362, -305, 382)   # ENTRY, from the Pozo (a4's mushroom throws you at it)
 A.opening(-309, 474, -305, 488)   # EXIT, the well's mouth
 
 # ---- the entry door: sill, beam, the two banner chains a4's throw is caught on
-A.solid([(-309.1, 362), (-304, 362), (-304, 366), (-309.1, 366)], "stone")      # the grip sill, top y 366
-A.solid([(-310, 379.7), (-300.9, 379.7), (-300.9, 380.3), (-310, 380.3)], "stone")  # the banner beam, out into the well (2.6 m longer: both chains hang from it; page 4.10)
-A.solid([(-310, 380.3), (-309, 380.3), (-309, 384.2), (-310, 384.2)], "stone")  # its corbel, up into the hood
+A.solid([(-309.1, 362), (-304, 362), (-304, 366), (-309.1, 366)], "stone", skin="templo_door_sill")      # the grip sill, top y 366
+A.solid([(-310, 379.7), (-300.9, 379.7), (-300.9, 380.3), (-310, 380.3)], "stone", skin="templo_banner_beam")  # the banner beam, out into the well (2.6 m longer: both chains hang from it; page 4.10)
+A.solid([(-310, 380.3), (-309, 380.3), (-309, 384.2), (-310, 384.2)], "stone", skin="templo_banner_beam")  # its corbel, up into the hood
 A.rope("banner_chain_1", (-303.0, 380.0), 12.0, kind="chain")
 A.rope("banner_chain_2", (-301.5, 380.0), 12.0, kind="chain")
 A.deco("temple_banner", -303.0, 374.0, z=-1.3, size=(1.1, 11.0, 0.05), tone="accent")  # (just behind the play space: page 4.10)
 A.deco("temple_banner", -301.5, 374.0, z=-1.5, size=(1.1, 11.0, 0.05), tone="gold")
 # The hood over the door: keeps what comes down the drain from bouncing out into the well.
-A.solid([(-313, 384), (-309, 384), (-309, 414), (-313, 408)], "wet")
+A.solid([(-313, 384), (-309, 384), (-309, 414), (-313, 408)], "wet", skin="templo_hood")
 # ---- the exit door: lintel (to the structure's wall at y 488) and the sill block
-A.solid([(-309.1, 484), (-306, 484), (-306, 488.2), (-309.1, 488.2)], "wet")
-A.solid([(-309.1, 474), (-306, 474), (-306, 479.3), (-309.1, 479.3)], "wet")
+A.solid([(-309.1, 484), (-306, 484), (-306, 488.2), (-309.1, 488.2)], "wet", skin="templo_exit_door")
+A.solid([(-309.1, 474), (-306, 474), (-306, 479.3), (-309.1, 479.3)], "wet", skin="templo_exit_door")
 
 # ================================================================ the great masses
 # The great hall's floor: a slick ramp (32 degrees) that is also the lower hall's roof.
 # Its foot stops 5 m short of the hood: that gap is THE DRAIN, 38 m straight down to the
 # entry floor. Every miss in 5.5 and 5.6 goes this way (cost A).
 RAMP0, RAMP1 = (-353.0, 429.0), (-318.0, 407.2)
-A.solid([(-357.2, 429.0), RAMP0, RAMP1, (-318, 404.0), (-357.2, 425.8)], "wet")
+A.solid([(-357.2, 429.0), RAMP0, RAMP1, (-318, 404.0), (-357.2, 425.8)], "wet", skin="templo_hall_ramp")
 
 
 def ramp_y(x):
     return RAMP0[1] + (x - RAMP0[0]) * (RAMP1[1] - RAMP0[1]) / (RAMP1[0] - RAMP0[0])
 
 
-A.solid([(-366.5, 400), (-357.2, 400), (-357.2, 429.0), (-360.2, 429.0), (-360.2, 411.2), (-366.5, 411.2)], "wet")  # the pier + the gear room's east wall
-A.ledge(-368.2, -360.2, 412.0, "stone", t=0.9)    # R3: the pier's top and its cornice (the shaft's last step)
-A.ledge(-365.0, -353.0, 430.0, "stone", t=1.0)    # the hall's west balcony
+A.solid([(-366.5, 400), (-357.2, 400), (-357.2, 429.0), (-360.2, 429.0), (-360.2, 411.2), (-366.5, 411.2)], "wet", skin="templo_pier")  # the pier + the gear room's east wall
+A.ledge(-368.2, -360.2, 412.0, "stone", t=0.9, skin="templo_pier_cornice")    # R3: the pier's top and its cornice (the shaft's last step)
+A.ledge(-365.0, -353.0, 430.0, "stone", t=1.0, skin="templo_balcony")    # the hall's west balcony
 # The hall's roof / the gallery's floor, with two light slots you step over (a look down at the champions).
-for x0, x1 in ((-352.0, -338.0), (-336.6, -328.0), (-326.6, -312.8)):
-    A.solid([(x0, 450.0), (x1, 450.0), (x1, 452.5), (x0, 452.5)], "wet")
-    A.ledge(x0, x1, 453.0, "stone", t=0.5)
+for (x0, x1), _gs in zip(((-352.0, -338.0), (-336.6, -328.0), (-326.6, -312.8)), "abc"):
+    A.solid([(x0, 450.0), (x1, 450.0), (x1, 452.5), (x0, 452.5)], "wet", skin="templo_gallery_floor_" + _gs)
+    A.ledge(x0, x1, 453.0, "stone", t=0.5, skin="templo_gallery_floor_" + _gs)
 # THE SLOTS' INSIDES CAN'T BE HELD (Parker 11-12: "make the insides of little pitfalls like
 # this not grabbable so pits are actually an issue"). The floor is holdable stone on every
 # face, its ends included, so a climber who dropped into a slot stuck to its sides and
 # climbed out. Each side is lined slick from the slot's foot to 7 cm under the lip: the
 # floor's top, right up to the edge, still saves a hand that catches it.
-for x, d in ((-338.0, 1), (-336.6, -1), (-328.0, 1), (-326.6, -1)):
-    A.solid([(x, 450.0), (x + 0.08 * d, 450.0), (x + 0.08 * d, 452.93), (x, 452.93)], "wet")
+for x, d, _gs in ((-338.0, 1, "a"), (-336.6, -1, "b"), (-328.0, 1, "b"), (-326.6, -1, "c")):
+    A.solid([(x, 450.0), (x + 0.08 * d, 450.0), (x + 0.08 * d, 452.93), (x, 452.93)], "wet", skin="templo_gallery_floor_" + _gs)
 # The upper works' spine: the serpent's head ledge, the phantom ramp, the altar's threshold.
-A.solid([(-344, 457.5), (-323.5, 457.5), (-323.5, 467.7), (-331.5, 467.7), (-340, 461.7), (-340, 461.1), (-344, 461.1)], "wet")
-A.ledge(-344.0, -340.0, 461.7, "stone", t=0.6)    # HL: the serpent's head
-A.ledge(-331.5, -323.5, 468.9, "stone", t=1.2)    # TL: the altar's threshold
+A.solid([(-344, 457.5), (-323.5, 457.5), (-323.5, 467.7), (-331.5, 467.7), (-340, 461.7), (-340, 461.1), (-344, 461.1)], "wet",
+        skin="templo_stair_ramp")
+A.ledge(-344.0, -340.0, 461.7, "stone", t=0.6, skin="templo_head_ledge")    # HL: the serpent's head
+A.ledge(-331.5, -323.5, 468.9, "stone", t=1.2, skin="templo_threshold")    # TL: the altar's threshold
 # The altar's east wall, the exit ledge and the well sill (top y 480).
-A.solid([(-312.5, 457), (-309, 457), (-309, 479.3), (-312.5, 479.3)], "wet")
-A.ledge(-312.5, -305.6, 480.0, "stone", t=0.8)
+A.solid([(-312.5, 457), (-309, 457), (-309, 479.3), (-312.5, 479.3)], "wet", skin="templo_peg_wall")
+A.ledge(-312.5, -305.6, 480.0, "stone", t=0.8, skin="templo_sill")
 
 # ================================================================ 5.1 La Puerta
 # Six giant steps, 2.5 m each, carried by the back wall. Each is a slab 1 m thick: climb the
@@ -109,10 +108,10 @@ for k in range(1, 6):
         at = (x1 - 1.5, top - 0.5)
         A.mover("step%d" % k, at, [(box_pts(0, 0, 3.0, 1.0), "stone")],
                 {"type": "path", "pts": [list(at), [at[0] - 2.6, at[1]]], "speed": 1.3, "mode": "once",
-                 "trigger": "board", "reset": 4.0}, model="temple_step")
+                 "trigger": "board", "reset": 4.0}, model="temple_step_jade")
     else:
-        A.ledge(x1 - 3.0, x1, top, "stone", t=1.0)
-A.ledge(-354.0, -347.0, 381.0, "stone", t=1.0)    # the sixth step and the landing before the mask
+        A.ledge(x1 - 3.0, x1, top, "stone", t=1.0, skin="templo_tier_true" if k in (1, 3) else None)
+A.ledge(-354.0, -347.0, 381.0, "stone", t=1.0, skin="templo_landing")    # the sixth step and the landing before the mask
 # (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 m51 = []
 for k in range(0, 6):
@@ -133,21 +132,21 @@ for dx in (-1.9, 1.9):
     jaw_shapes.append((box_pts(dx, 0.6, 0.5, 0.4), "bone"))       # the two lower fangs
 jaw_shapes.append((box_pts(0, -0.85, 4.4, 0.9), "stone"))            # its chin (the model's, drawn 0.9 m under the lip)
 _jaw = A.mover("jaw", JAW, jaw_shapes, {"type": "cycle", "to": [0, 4.5], "t_out": 3.0, "hold_out": 1.4,
-                                        "t_in": 2.2, "hold_in": 2.4, "phase": 0.0}, model="mask_jaw")
+                                        "t_in": 2.2, "hold_in": 2.4, "phase": 0.0}, model="mask_jaw_jade")
 # (Parker 11-12, riding it: "you should not be behind this part". The jaw's model reaches
 # a metre toward the camera, in front of whoever stands on it. Set back, its front lip is
 # at the climber's own depth and no nearer.)
 _jaw["model_at"] = [0.0, 0.0, -0.6]
-A.solid([(-359.7, 388.6), (-356.7, 388.6), (-356.7, 389.3), (-359.7, 389.3)], "stone")   # the upper lip
+A.solid([(-359.7, 388.6), (-356.7, 388.6), (-356.7, 389.3), (-359.7, 389.3)], "stone", skin="templo_mask_lip")   # the upper lip
 for tx in (-359.3, -358.2, -357.1):
-    A.solid([(tx - 0.25, 388.65), (tx, 387.6), (tx + 0.25, 388.65)], "bone")              # the upper teeth
-A.hold(-358.9, 391.1, 0.25, "stone")    # nostrils
-A.hold(-357.5, 391.1, 0.25, "stone")
-A.hold(-356.1, 392.3, 0.25, "stone")    # cheekbones
-A.hold(-360.3, 392.3, 0.25, "stone")
-A.ledge(-355.4, -353.0, 393.6, "stone", t=0.5)    # the right eye's rim
-A.ledge(-363.4, -361.0, 393.6, "stone", t=0.5)    # the left eye's rim
-A.ledge(-366.5, -354.2, 396.4, "stone", t=1.2)    # the brow, and the walk west to the pistons
+    A.solid([(tx - 0.25, 388.65), (tx, 387.6), (tx + 0.25, 388.65)], "bone", skin="templo_mask_tooth")              # the upper teeth
+A.hold(-358.9, 391.1, 0.25, "stone", skin="templo_mask_ring")    # nostrils
+A.hold(-357.5, 391.1, 0.25, "stone", skin="templo_mask_ring")
+A.hold(-356.1, 392.3, 0.25, "stone", skin="templo_mask_stud")    # cheekbones
+A.hold(-360.3, 392.3, 0.25, "stone", skin="templo_mask_stud")
+A.ledge(-355.4, -353.0, 393.6, "stone", t=0.5, skin="templo_mask_lid")    # the right eye's rim
+A.ledge(-363.4, -361.0, 393.6, "stone", t=0.5, skin="templo_mask_lid")    # the left eye's rim
+A.ledge(-366.5, -354.2, 396.4, "stone", t=1.2, skin="templo_mask_brow")    # the brow, and the walk west to the pistons
 A.challenge("5.2", "La Máscara", (-349.5, 381.0), 3, "B", moves=[
     ["reach", [-354.0, 381.0], [-355.8, 381.0]],       # landing to jaw (it waits low 2.4 s)
     ["reach", [-357.1, 387.6], [-356.7, 389.3]],       # tooth to lip
@@ -166,7 +165,7 @@ A.challenge("5.2", "La Máscara", (-349.5, 381.0), 3, "B", moves=[
 # plunger and the brow catch the lucky (S).
 PL = (-367.65, 394.4)
 A.mover("plunger", PL, [(box_pts(0, 0, 2.3, 4.0), "stone")],
-        {"type": "cycle", "to": [0, 3.6], "t_out": 2.4, "hold_out": 2.5, "t_in": 2.4, "hold_in": 2.7, "phase": 0.0}, model="temple_plunger")
+        {"type": "cycle", "to": [0, 3.6], "t_out": 2.4, "hold_out": 2.5, "t_in": 2.4, "hold_in": 2.7, "phase": 0.0}, model="temple_plunger_jade")
 PIST = []   # (id, wall, top y, phase)
 for i in range(9):
     PIST.append(("piston%d" % (i + 1), "W" if i % 2 == 0 else "E", 401.2 + 1.2 * i, (1.9 + 2.0 * i) % 10.0))
@@ -180,7 +179,7 @@ for i in range(9):
 # A hand on a piston going in is let go at the wall's face (the game's rule for any sliding
 # piece), and the socket grinds and puffs dust half a second before it starts back.
 SOCK = 0.33
-A.solid([(-377.3, 399.6), (-374.9, 399.6), (-374.9, 411.4), (-377.3, 411.4)], "wet")  # rock behind the west sockets
+A.solid([(-377.3, 399.6), (-374.9, 399.6), (-374.9, 411.4), (-377.3, 411.4)], "wet", skin="templo_shaft_wall_west")  # rock behind the west sockets
 for pid, wall, top, ph in PIST:
     if wall == "W":
         at, to = (-373.7 - SOCK, top - 0.45), [3.2 + SOCK, 0]
@@ -190,7 +189,7 @@ for pid, wall, top, ph in PIST:
         face, into = -366.5, 1.0
     _p = A.mover(pid, at, [(box_pts(0, 0, 3.4, 0.9), "stone")],
                  {"type": "cycle", "to": to, "t_out": 1.0, "hold_out": 4.0, "t_in": 1.0, "hold_in": 4.0, "phase": ph},
-                 model="temple_piston")  # (the same from both ends: no flip for the east pier's)
+                 model="temple_piston_jade")  # (the same from both ends: no flip for the east pier's)
     _p["socket"] = [face, top - 0.45]
     # The socket you can see: a carved frame on the wall's cut face and the dark of the
     # channel in it. (In front of the plane, but over the wall's own rock and nothing else.)
@@ -218,7 +217,7 @@ def gear(gid, cx, cy, rpm, phase):
     for k in range(12):
         a = k * 30.0
         shapes.append((box_pts(math.cos(math.radians(a)) * 2.65, math.sin(math.radians(a)) * 2.65, 0.9, 0.55, a), "stone"))
-    A.mover(gid, (cx, cy), shapes, {"type": "spin", "rpm": rpm, "phase": phase}, model="temple_gear")
+    A.mover(gid, (cx, cy), shapes, {"type": "spin", "rpm": rpm, "phase": phase}, model="temple_gear_jade")
 
 
 # (Note 49, Parker 11-13: "Make them knock you out if you get crunched by them and also move 2x
@@ -243,35 +242,38 @@ A.challenge("5.4", "Engranajes", (-360.9, 412.0), 3, "B", moves=[
 # the ramp, slides to its foot and falls 38 m down the drain to the entry floor (A).
 
 
-def champion(sx, fy, plinth=True):
-    # Every solid of the statue names the skin "statue_champion_reach": a model made to
-    # exactly these shapes (origin between the feet at (sx, fy), the west arm the catch,
-    # the east fist the launch). Until it lands the shapes are drawn as carved stone.
-    # (The first models, statue_champion_a/b/c, were made to another pose: their flat
-    # climbing shapes stood in front of them. Parker 11-12: "fix the statues".)
-    SK = "statue_champion_reach"
+def champion(sx, fy, plinth=True, stump=False):
+    # Every solid of the statue names its skin (a5_dress places it): "templo_champion_broken" for
+    # the first and third, "templo_champion_handless" for the second. Until it lands the shapes
+    # are drawn as carved stone.
+    # (Parker 11-13, page 5.5: the forearm drawn between each east elbow and its hand comes off
+    # all three. The second loses the outer 1.6 m of its WEST arm: a 1.2 m stump, and its stone
+    # hand 1 m across gripping the belt, with no arm behind it. The stump's length is the one number.)
+    SK = "templo_champion_handless" if stump else "templo_champion_broken"
     if plinth:
-        A.box(sx, fy - 0.6, 2.6, 1.2, "stone")
+        A.box(sx, fy - 0.6, 2.6, 1.2, "stone", skin="templo_plinth")
     A.box(sx, fy + 2.9, 1.8, 5.8, "stone", skin=SK)                       # legs and trunk
     A.box(sx, fy + 5.8, 2.4, 0.8, "stone", skin=SK)                       # shoulders
     A.solid(ngon(sx, fy + 7.0, 0.95, 8, rot=22.5), "stone", skin=SK)      # the masked head
-    A.beam((sx - 1.0, fy + 5.9), (sx - 3.2, fy + 7.6), 0.6, "stone", skin=SK)   # the west arm: the catch
+    if stump:
+        A.beam((sx - 1.0, fy + 5.9), (sx - 1.95, fy + 6.63), 0.6, "stone", skin=SK)   # the west arm's stump, 1.2 m
+    else:
+        A.beam((sx - 1.0, fy + 5.9), (sx - 3.2, fy + 7.6), 0.6, "stone", skin=SK)   # the west arm: the catch
     A.solid(ngon(sx - 3.4, fy + 7.75, 0.5, 8), "stone", skin=SK)
     A.beam((sx + 1.0, fy + 5.9), (sx + 2.6, fy + 7.0), 0.5, "stone", skin=SK)   # the east upper arm, to the elbow
     fist = (sx + 4.02, fy + 8.19)
     A.solid(ngon(fist[0], fist[1], 0.45, 8), "gold", skin=SK)             # the fist: the launch hold
-    A.solid([(sx + 2.5, fy + 6.75), (sx + 2.7, fy + 7.25), (fist[0] + 0.1, fist[1] + 0.3), (fist[0] + 0.3, fist[1] - 0.2)],
-            "stone", ghost=True, skin=SK)                                 # the forearm: drawn, not held
-    A.deco(SK, sx, fy, z=0.0, skin=True)
     return fist
 
 
 F1 = champion(-360.0, 430.0, plinth=False)    # on the balcony
-F2 = champion(-347.0, 431.0)
+F2 = champion(-347.0, 431.0, stump=True)
 F3 = champion(-331.5, 433.0)
 A.challenge("5.5", "El Salón de los Campeones", (-363.5, 430.0), 4, "A", moves=[
     ["reach", [-357.4, 437.0], list(F1)],
-    ["fling", list(F1), [-349.0, 437.7], "F2"],            # 7.0 m across, level
+    ["fling", list(F1), [-350.4, 438.75], "F2"],           # to the second's stone hand (to be tried)
+    ["reach", [-350.4, 438.75], [-348.95, 437.63]],        # the hand to the stump's end, 1.83 m (to be tried)
+    ["reach", [-348.95, 437.63], [-348.2, 437.2]],         # onto the shoulders
     ["reach", [-344.4, 438.0], list(F2)],
     ["fling", list(F2), [-333.5, 439.7], "F3"]])           # 9.5 m across, 0.5 up
 A.cam((-366, 404, -309, 450), half_h=13.0, bias=(3.0, -3.0))
@@ -281,16 +283,13 @@ A.cam((-366, 404, -309, 450), half_h=13.0, bias=(3.0, -3.0))
 # side, with periods 4, 5 and 6 s so they drift in and out of step. Their chains (rods)
 # hold: climb one and reach for the next bob when the two swing together. Under them is
 # the ramp's foot and the drain (A).
-A.pendulum("censer1", (-324.5, 449.8), 9.6, 9.6, 4.0, phase=0.0, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer_l96")
-A.pendulum("censer2", (-320.0, 449.8), 7.8, 11.8, 5.0, phase=0.3, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer_l78")
-A.pendulum("censer3", (-315.5, 449.8), 6.0, 15.5, 6.0, phase=0.6, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer_l60")
-A.ledge(-312.8, -309.0, 443.6, "stone", t=0.9)               # EB: the east balcony
+# (Note 50, page 5.6: one censer, the middle one. The first and the third are gone.)
+A.pendulum("censer2", (-320.0, 449.8), 7.8, 11.8, 5.0, phase=0.3, bob=(0.9, 0.8), kind="gold", rod_kind="iron", model="censer_l78_jade")
+A.ledge(-312.8, -309.0, 443.6, "stone", t=0.9, skin="templo_keeper_balcony")               # EB: the east balcony
 A.challenge("5.6", "Incensarios", (-331.5, 440.9), 4, "A", moves=[
     ["reach", [-328.9, 440.0], list(F3)],
-    ["fling", list(F3), [-326.1, 440.7], "F1"],            # drop onto censer 1 at its west end
-    ["reach", [-323.3, 442.5], [-322.05, 442.2]],          # censer 1's chain to censer 2's bob
-    ["reach", [-318.9, 444.2], [-317.55, 444.0]],          # censer 2's chain to censer 3's bob
-    ["reach", [-313.45, 444.2], [-312.8, 443.6]]])         # censer 3 to the balcony
+    ["fling", list(F3), [-322.05, 442.2], "F3"],           # F3's fist to censer 2 at its west end: 7.3 m to a moving chain (to be tried)
+    ["fling", [-318.0, 442.2], [-312.8, 443.6], "F2"]])    # censer 2 at its east end to the balcony (to be tried)
 
 # ================================================================ the chain and the gallery (the breath)
 # From the east balcony a chain hangs in the 3.8 m shaft beside the well wall. Climb it
@@ -304,12 +303,11 @@ A.rope("gallery_chain", (-311.0, 457.0), 12.4, kind="chain")
 # while slab B rises 3 m. Fling from A's west lip, low, to B, high; B then sinks back at
 # 0.35 m/s, and the exit ledge can only be reached from it while it is still up.
 A.mover("cw_a", (-354.8, 454.2), [(box_pts(0, 0, 2.4, 0.8), "stone")],
-        {"type": "sink", "to": [0, -3.0], "speed": 1.0, "back": 0.35}, model="temple_slab")
+        {"type": "sink", "to": [0, -3.0], "speed": 1.0, "back": 0.35}, model="temple_slab_jade")
 A.mover("cw_b", (-360.75, 451.2), [(box_pts(0, 0, 2.5, 0.8), "stone")],
-        {"type": "link", "to": "cw_a", "scale": -1.0}, model="temple_slab")
-A.ledge(-366.0, -362.3, 455.0, "stone", t=0.8)               # XL: the exit ledge
-A.deco("counterweight_chain", -354.8, 461.0, z=-0.6, size=(0.15, 12.0, 0.15), tone="iron")
-A.deco("counterweight_chain", -360.75, 459.5, z=-0.6, size=(0.15, 14.0, 0.15), tone="iron")
+        {"type": "link", "to": "cw_a", "scale": -1.0}, model="temple_slab_jade")
+A.ledge(-366.0, -362.3, 455.0, "stone", t=0.8, skin="templo_exit_ledge")               # XL: the exit ledge
+# (the two counterweight chains in the play space are gone: page 5.7; the pans hang from the dress's hangers)
 A.challenge("5.7", "El Contrapeso", (-350.5, 453.0), 3, "B", moves=[
     ["reach", [-352.0, 453.0], [-353.6, 453.8]],           # gallery edge to slab A (at rest)
     ["fling", [-356.0, 451.6], [-360.4, 454.6], "F3"],     # A sunk to B risen: 4.4 across, 3.0 up
@@ -322,14 +320,14 @@ A.cam((-366, 428, -350, 458), half_h=13.0, bias=(0.0, -6.0))
 # before, so a wave runs along it. Three slick fangs hang from the roof: under a fang
 # there is room only when the vertebra below is in its trough. Below is the 5.7 shaft
 # and the gallery (7 m): back to the counterweight (B).
-A.ledge(-366.0, -364.0, 460.2, "stone", t=0.6)               # SL: the tail ledge
+A.ledge(-366.0, -364.0, 460.2, "stone", t=0.6, skin="templo_tail_ledge")               # SL: the tail ledge
 A.rope("serpent_tail", (-363.5, 459.9), 4.5, kind="chain")
 SERP = [-362.0 + 2.0 * i for i in range(9)]
 for i, cx in enumerate(SERP):
     A.mover("vertebra%d" % (i + 1), (cx, 459.6), [(box_pts(0, 0, 1.9, 1.2), "stone")],
-            {"type": "cycle", "to": [0, 3.0], "t_out": 2.0, "hold_out": 0.0, "t_in": 2.0, "hold_in": 0.0, "phase": 0.5 * i}, model="serpent_segment")
+            {"type": "cycle", "to": [0, 3.0], "t_out": 2.0, "hold_out": 0.0, "t_in": 2.0, "hold_in": 0.0, "phase": 0.5 * i}, model="serpent_segment_jade")
 for fx in (-360.0, -354.0, -348.0):
-    A.solid([(fx - 0.8, 466.6), (fx + 0.8, 466.6), (fx, 463.5)], "wet")   # a fang
+    A.solid([(fx - 0.8, 466.6), (fx + 0.8, 466.6), (fx, 463.5)], "wet", skin="templo_fang")   # a fang
 A.challenge("5.8", "La Serpiente", (-365.0, 460.2), 3, "B", moves=[
     ["reach", [-364.0, 460.2], [-362.95, 460.2]],
     ["reach", [-345.05, 461.7], [-344.0, 461.7]]])
@@ -350,7 +348,7 @@ for k in range(1, 6):
     top = 461.7 + 1.2 * k
     A.mover("phantom%d" % k, (left + 1.1 + 1.9, top - 0.6), [(box_pts(0, 0, 2.2, 1.2), "stone")],
             {"type": "cycle", "to": [-1.9, 0], "t_out": 0.3, "hold_out": 3.45, "t_in": 0.3, "hold_in": 0.95,
-             "phase": (COUNT * (k - 1)) % 5.0}, model="temple_block")
+             "phase": (COUNT * (k - 1)) % 5.0}, model="temple_block_jade")
 m59 = [["reach", [-340.0, 461.7], [-340.0, 462.9]]]
 for k in range(1, 5):
     xk = -340.0 + 1.7 * k
@@ -358,7 +356,7 @@ for k in range(1, 5):
 m59.append(["reach", [-331.8, 467.7], [-331.5, 468.9]])
 A.challenge("5.9", "Bloques Fantasma", (-342.0, 461.7), 4, "B", moves=m59)
 A.cam((-344, 452, -323.5, 473), half_h=8.5, bias=(0.0, -2.0))
-A.deco("drum_temple", -342.5, 462.6, z=-1.2, size=(1.6, 1.8, 1.6), tone="accent")
+# (the drum is a5_dress's, out of the play space)
 
 # ================================================================ 5.10 El Altar
 # The altar's chamber has no floor: a stone beam crosses it, and under that is the
@@ -381,13 +379,17 @@ A.deco("drum_temple", -342.5, 462.6, z=-1.2, size=(1.6, 1.8, 1.6), tone="accent"
 BEAM_T = 3.5
 _bx = [-323.5 + (9.1 / 6.0) * k for k in range(7)]
 for k in range(6):
-    A.ledge(_bx[k], _bx[k + 1], 468.9, "brittle", t=0.5, hold={"type": "crumble", "t": BEAM_T, "respawn": 8.0})
-A.wheel("altar_cross", (-318.0, 474.4), 5.0, 6.4, spokes=4, kind="stone", spoke_t=0.5, hub=0.9, phase=45.0, ko=True, model="altar_cross")
+    A.ledge(_bx[k], _bx[k + 1], 468.9, "brittle", t=0.5, hold={"type": "crumble", "t": BEAM_T, "respawn": 8.0},
+            skin="templo_bridge_slab")
+    # (its look: pale stone cracked right through, a corner gone; worn as the piece's own, so it breaks with it)
+    A.deco("templo_bridge_slab", round((_bx[k] + _bx[k + 1]) / 2, 3), 468.65, z=0.0, size=(1.52, 0.5, 2.4), tone="stone", skin=True)
+A.wheel("altar_cross", (-318.0, 474.4), 5.0, 6.4, spokes=4, kind="stone", spoke_t=0.5, hub=0.9, phase=45.0, ko=True, model="altar_cross_jade")
 WALL_X = -312.72
 for y in (469.4, 470.8, 472.2):
-    A.hold(WALL_X, y, 0.25, "stone")
+    A.hold(WALL_X, y, 0.25, "stone", skin="templo_peg")
 for y in (473.6, 474.9, 476.2, 477.5, 478.8):
-    A.hold(WALL_X, y, 0.22, "brittle")
+    A.hold(WALL_X, y, 0.22, "brittle", skin="templo_peg_cracked")
+    A.deco("templo_peg_cracked", WALL_X, y, z=0.0, size=(0.38, 0.44, 2.4), tone="stone", skin=True)
 for py in (478.7, 476.55, 474.4):           # pelvis heights: hands at +1.3, ankles at -0.85
     A.statue(-312.85, py, "hang")
 m510 = [["reach", [-314.4, 468.9], [WALL_X, 469.4]]]
@@ -424,7 +426,7 @@ def great_censer(cid, px, period, phase):
     shapes = [(box_pts(0, -L / 2, 0.14, L), "iron"),            # the chain
               (box_pts(0, -L, 1.4, 1.0), "gold"),               # the bowl
               (box_pts(0, -L - 1.25, 0.25, 1.5), "iron")]       # the tassel
-    A.mover(cid, (px, 493.0), shapes, {"type": "swing", "amp": 12.8, "period": period, "phase": phase}, model="censer")
+    A.mover(cid, (px, 493.0), shapes, {"type": "swing", "amp": 12.8, "period": period, "phase": phase}, model="censer_jade")
 
 
 great_censer("sacrifice1", -303.0, 5.0, 0.0)
@@ -438,38 +440,17 @@ A.cam((-312, 356, -296, 384), half_h=11.0, bias=(2.0, -3.0))   # the arrival: th
 
 # ================================================================ the picture
 # ---- cards: the back of the room, the far pyramid, the great mask's face, the pillars
-A.card([(-378, 360), (-305, 360), (-305, 490), (-378, 490)], z=-6.0, tone="back2")
-A.card([(-376, 366), (-330, 366), (-336, 384), (-344, 384), (-350, 402), (-358, 402), (-364, 420), (-376, 420)], z=-12.0, tone="back3")
-A.card([(-366, 430), (-312, 404), (-312, 450), (-366, 450)], z=-10.0, tone="back3")          # the great hall's far wall
-# (The mask's face and ears were jade cards here; mask_first_dog is the mask now and they fought it.)
-A.card([(-335, 366), (-354, 381), (-354, 373.8), (-342, 366)], z=-2.0, tone="back")          # the wall that carries the stairs
-for sx, fy in ((-347.0, 431.0), (-331.5, 433.0)):                                              # the champions' pillars
-    A.card([(sx - 1.0, fy - 1.2), (sx + 1.0, fy - 1.2), (sx + 1.0, ramp_y(sx + 1.0) - 1.0), (sx - 1.0, ramp_y(sx - 1.0) - 1.0)], z=-2.0, tone="back")
-A.card([(-345, 398), (-330, 398), (-328, 404), (-343, 407)], z=-3.0, tone="back3")           # a broken arch (it stood in FRONT, z 3: a faller from the mask or the shaft crossed behind it. Nothing stands in front of where a climber can be: Parker 11-12)
-for x in (-349.0, -335.0, -320.0):                                                             # the gallery's colonnade, behind
-    A.card([(x - 0.6, 453), (x + 0.6, 453), (x + 0.6, 457.5), (x - 0.6, 457.5)], z=-2.5, tone="back")
+# (The room's back, the far pyramid, the great hall's far wall, the stairs' wall, the champions'
+# pillars, the broken arch and the colonnade are gone: a5_dress's hall walls, platform,
+# pilasters and columns take their places. The pistons' sockets, above, stay.)
 # ---- the First Top Dog, everywhere
 # (Parker 11-12: "you should not be behind this part". The mask is modelled 10 m tall and
 # 2 m deep and is drawn at 21 m, so it is 4.2 m deep: at z -1.2 its face stood 0.9 m in
 # FRONT of the climb and the climber was inside the stone. At z -2.9 its face is 0.8 m
 # behind you. Its holds are separate pieces in the play plane and stay where they were.)
-A.deco("mask_first_dog", -358.15, 380.2, z=-2.9, size=(16.0, 21.0, 2.0), tone="accent")     # 5.2: the mask itself
-mask(-321.0, 376.0, 6.0, 6.5, z=-3.0)        # over the entry floor, watching the door
-mask(-318.5, 428.0, 5.0, 5.5, z=-4.0)        # in the hall, over the drain
-mask(-339.0, 444.0, 4.0, 4.4, z=-4.0)
-mask(-333.0, 455.3, 2.6, 2.8, z=-3.0)        # the gallery
-mask(-357.5, 463.0, 3.0, 3.3, z=-3.5)        # over the serpent
-mask(-318.0, 474.4, 3.2, 3.5, z=-3.0)        # the altar's boss, behind the cross
-mask(-300.0, 489.5, 3.4, 3.7, z=-3.0)        # the well room's keystone
-A.deco("serpent_head", -342.2, 461.7, z=-0.9, size=(2.5, 2.0, 1.5), tone="accent")
-A.deco("altar", -327.5, 468.9, z=-1.2, size=(3.0, 1.5, 1.5), tone="stone")
-A.deco("altar", -310.5, 480.0, z=-1.2, size=(2.2, 1.1, 1.5), tone="stone")                   # the sacrifice stone, by the well
-# ---- banners: the town's papel picado, grown solemn
-for x, y in ((-316.0, 381.0), (-326.0, 381.0), (-340.0, 446.5), (-323.0, 446.5), (-352.0, 446.5), (-346.5, 457.0),
-             (-329.0, 457.0), (-321.0, 482.5), (-315.0, 482.5), (-306.5, 492.0), (-293.5, 492.0)):
-    A.deco("temple_banner", x, y, z=-1.4, size=(1.5, 5.0, 0.05), tone="accent")
-A.deco("papel_string", -320.0, 371.5, z=-1.8, size=(8.0, 1.0, 0.05), tone="accent")
-A.deco("papel_string", -300.0, 492.6, z=-1.8, size=(10.0, 1.0, 0.05), tone="accent")
+# (The great mask, the seven pug masks, the serpent's head, both altars, the eleven banners and
+# the two strings of paper are a5_dress's now, out of the play space: the mask set 0.5 m further
+# back, the altars in their niches, five banners high on far walls.)
 # ---- torches: about one per 12 m of route, and one wherever a drop wants showing
 for x, y in ((-311.5, 369.3), (-322.0, 369.3), (-338.0, 373.5), (-350.5, 384.0),      # the door, the stairs
              (-360.0, 399.2), (-369.3, 398.5), (-369.3, 406.5),                        # the brow, the shaft
@@ -482,9 +463,10 @@ for x, y in ((-311.5, 369.3), (-322.0, 369.3), (-338.0, 373.5), (-350.5, 384.0),
     torch(x, y)
 A.light(-362.2, 394.6, color="#7CF0C8", rng=5.0, energy=1.4, flicker=False)             # the mask's jade eyes
 A.light(-354.2, 394.6, color="#7CF0C8", rng=5.0, energy=1.4, flicker=False)
-A.light(-318.0, 474.4, color="#FF9040", rng=9.0, energy=1.3, flicker=True)              # the altar's fire
-for x, y in ((-324.5, 440.2), (-320.0, 442.0), (-315.5, 443.8), (-303.0, 483.2), (-297.1, 483.2)):
-    A.light(x, y, color="#FF7A30", rng=6.0, energy=1.2, flicker=True)                   # the censers' coals
+# (the altar's fire sits in the altar's bowl now, and the sacrifice stone's bowl burns too: placed
+# with the dress below)
+for x, y in ((-320.0, 442.0), (-303.0, 483.2), (-297.1, 483.2)):
+    A.light(x, y, color="#FF7A30", rng=6.0, energy=1.2, flicker=True)                   # the censers' coals (one censer in the hall now: note 50)
 A.light(-300.0, 476.0, color="#FFB050", rng=14.0, energy=1.0, z=2.5, flicker=True)     # the well's throat, lit: see the drop
 A.light(-302.0, 372.0, color="#FFB050", rng=12.0, energy=1.0, z=2.5, flicker=True)     # the arrival
 # ---- air
@@ -501,6 +483,16 @@ A.cam((-374.5, 396, -366.5, 412), half_h=6.5)                # the pistons
 A.cam((-374.5, 412, -360, 434), half_h=7.5)                  # the gears
 A.cam((-352, 452, -312.8, 457.5), half_h=5.0)                # the gallery
 A.cam((-312.8, 443, -309, 457), half_h=7.0, bias=(-2.0, 0.0))  # the chain
+
+# ================================================================ the dress (the modelling run's)
+a5_dress.dress(A)
+for x, y in a5_dress.ALTAR_LIGHTS:  # the altar's bowl and the sacrifice stone's bowl
+    A.light(x, y, color="#FF9040", rng=5.0, energy=1.0, flicker=True)
+for x, y in a5_dress.FROG_LAMPS:  # the frog's two small lamps
+    A.light(x, y, color="#FFB860", rng=3.0, energy=0.6, flicker=True)
+# (a5_dress item 8: the two pan hangers ride their pans)
+A.follow("templo_pan_hanger", (-354.8, 454.6), "cw_a", "ride")
+A.follow("templo_pan_hanger", (-360.75, 451.6), "cw_b", "ride")
 
 # The engine's `cycle` clock reads t + phase (a phase ADVANCES a mover). This file was
 # written with phase meaning "starts p seconds late", so turn each one round here.

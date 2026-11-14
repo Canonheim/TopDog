@@ -2270,6 +2270,42 @@ in. Nothing played by a person.
   is not in the list).
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: a5's dress file wired in (the temple)
+
+- 1, the call (before the phase loop). 2, lights: every torch light stays where it is; the
+  altar's fire moves into the altar's bowl and the sacrifice stone's bowl burns too; the
+  censers' coals of the gone censers out; the frog's two lamps. 3 and 4: torch()'s deco, the
+  seven pug masks, the great mask, the serpent's head, both altars, the eleven banners, both
+  strings, the two counterweight chains, the drum and every card but the pistons' sockets out
+  (the dress places what the pages keep). Kept: the two banners on the chains.
+- 5, skins: the shell (with the frog's room: `SHELL_ROOM`, `SHELL_SKINS_ROOM`) and about forty
+  solids by the list. Only one temple model has landed so far.
+- 6: **a, one censer** (note 50): censers 1 and 3 and their coals are gone; 5.6's moves are F3's
+  fist to censer 2 (a 7.3 m fling to a moving chain) and censer 2 to the balcony (both to be
+  tried). **b, the champions** (note 75): the ghost forearms are gone from all three; the second's
+  west arm is a 1.2 m stump to (-348.95, 437.63), its stone hand where it was; 5.5's moves run
+  F1's fist to that hand, the hand to the stump's end (1.83 m) and onto the shoulders (to be
+  tried). The champions name their new skins (broken, handless). **c, the frog's room** (note
+  60): cut into the west wall at the exit ledge, its floor level with it (stone; only the
+  floor holds).
+- 7a: the well's west wall beside the temple (st, x -310 .. -306, y 382 .. 474) is gone from
+  st.py: it reached 1 m into the temple's air and lay on the temple's own east slab, which is
+  that wall now.
+- 8: the moving stone names the jade re-makes (`temple_step_jade`, `mask_jaw_jade`,
+  `temple_plunger_jade`, `temple_piston_jade`, `temple_gear_jade`, `temple_slab_jade`,
+  `serpent_segment_jade`, `temple_block_jade`, `altar_cross_jade`, `censer_l78_jade`,
+  `censer_jade`). **New in the game:** a `_jade` model not landed yet falls back to its stem
+  without `_jade` (peak.gd `kit`), so the originals show till then. The bridge's six pieces wear
+  `templo_bridge_slab` and the five cracked pegs `templo_peg_cracked` (placed here at their
+  centres; they break with their pieces). The two pan hangers ride their pans (`follow`).
+  **Also new:** a held solid whose skin has landed but has no deco of it near draws its own
+  shape (it would have been invisible).
+- Checked (the designer's question): only the two altars are named `altar` anywhere on the
+  mountain, so Pay Your Respects counts nothing else.
+- Not done: 9, the effects; the beam, the gullet's counterweight and the drum's mallet still.
+- (`75_champions_before.jpg` / `_after`, `60_temple_frog_room_before.jpg` / `_after`)
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

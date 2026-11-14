@@ -2906,3 +2906,18 @@ func _w_g4fx(a: Array) -> void:
 	look(Vector2(-256.0, 360.0), 5.0)
 	await secs(0.5)
 	await shot("4_8_bridge_" + tag)
+
+
+## a5: the champions (the forearms gone, the second's stump), the one censer, the frog's room. g5:TAG
+func _w_g5(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("5.5")
+	await secs(2.0)
+	look(Vector2(-342.0, 438.0), 9.0)
+	await secs(0.4)
+	await shot("75_champions_" + tag)
+	pk.warp("5.7")
+	await secs(2.0)
+	look(Vector2(-364.0, 456.0), 4.5)
+	await secs(0.4)
+	await shot("60_temple_frog_room_" + tag)

@@ -58,6 +58,11 @@ for x0, x1, spans in (
         # (beside the mushroom garden, y 280 .. 364, the east wall stood 1 m into the garden's hall,
         # x -291 .. -290: it stops at the garden's own wall line there. a4_dress 7a.)
         xe = -291.0 if (x0, y0) == (-294.0, 280) else x1
+        # (beside the temple, y 382 .. 474, the west wall reached 1 m into the temple's air and lay
+        # on the temple's own east slab: two faces in one place. The temple's slab is that wall
+        # now (its skin templo_east_wall). a5_dress 7a.)
+        if (x0, y0) == (-310.0, 382):
+            continue
         A.solid([(x0, y0), (xe, y0), (xe, y1), (x0, y1)], "wet")
 A.solid([(-310, 494), (-290, 494), (-290, 498), (-310, 498)], "wet")  # the cap over the well room
 A.card([(-312, 170), (-288, 170), (-288, 500), (-312, 500)], z=-5.0, tone="#0B0A10")
