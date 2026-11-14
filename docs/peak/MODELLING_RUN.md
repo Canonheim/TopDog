@@ -72,10 +72,10 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 
 | Biome | Sheet and pages | Dress file | Models | In-game frames |
 |---|---|---|---|---|
-| 0 La Estación | done; 0.1-0.2 built | `a0_station.py`; `a0_dress.py` (the ride, the join): written, waiting for the fix thread to wire it | A: all 15 landed in the kit; B 10 and C 21 in progress | station: yes; the ride: waiting |
-| 1 La Mina Vieja | done; cart room redone (note 103) | `a1_dress.py`: written (486 placements), not yet wired | 108 new (`models/a1_models.md`): A 37 in progress, B 23 and C 48 queued | |
-| 2 Las Aguas Negras | done | `a2_dress.py`: written (296 placements), not yet wired | 117 new (`models/a2_models.md`): A 66, B 7, C 44, all queued | |
-| 3 La Gruta de Cristal | done | | | |
+| 0 La Estación | done; 0.1-0.2 built | `a0_station.py`; `a0_dress.py` WIRED (df43021) | A 15 landed; B 10 and C 21 in progress | yes: `docs/peak/frames/a0_ride_*` (the gap's far cavern hidden by something: with the fix thread) |
+| 1 La Mina Vieja | done; cart room redone (note 103) | `a1_dress.py` WIRED (4c1c86f), cart room built | A 37 landed (walls too dark in the game: being redone); B 23, C 48 in progress | yes: `docs/peak/frames/a1_mine_*` |
+| 2 Las Aguas Negras | done | `a2_dress.py` WIRED (5de53c7) | A: 33 skins + 17 walls landed; B 13 + leftovers, C 44 queued | yes: `docs/peak/frames/a2_aguas_*` |
+| 3 La Gruta de Cristal | done | `a3_dress.py` written (245 placements), not wired | 105 new: A 61, B 44, queued | |
 | 4 El Jardín de Hongos | done | | | |
 | 5 El Templo | done | | | |
 | 6 La Chimenea | done | | | |
