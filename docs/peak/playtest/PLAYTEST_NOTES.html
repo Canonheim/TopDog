@@ -186,6 +186,7 @@
 <tr><td>123</td><td><a href="#n123">Build 0.3.104, the crystal cave over El Espejo: the bright crystal cluster looks grabbable; put it plainly on the back wall, a little darker</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>124</td><td><a href="#n124">Build 0.3.104, Candelabros (3.3): the crystal chandelier looks bad</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>125</td><td><a href="#n125">Build 0.3.104: on a controller the widen-camera tip should name the controller's bind, not Shift</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>126</td><td><a href="#n126">Build 0.3.104, Agujas (3.5): the needles look like little houses; each should be one crystal</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -4069,6 +4070,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>The tip at the long jumps (note 7) asks `_zoom_bind_name` (game/main.gd) for the player's zoom bind. It picks the keyboard's bind whenever the player's slot is set to the keyboard OR to 'any device', and the solo climb plays on 'any device' (keyboard and pads both drive it), so it always says Shift, even when you are playing on a pad.</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Name the bind of the device you are actually using: in 'any device', whichever was used last (a pad's stick or button flips it to the pad's bind, the left trigger shown as the pad's own name for it; the keyboard or mouse flips it back to Shift), and update the tip live if you switch. Check the Controls board's Next page (note 28) names it the same way. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n126">
+  <div class="head"><span class="num">126</span><h3>Build 0.3.104, Agujas (3.5): the needles look like little houses; each should be one crystal</h3><span class="time">11-14 11:20</span></div>
+  <blockquote>"this looks bad, again it should be one crystal, not a weird house shaped thing"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/126_agujas_house.png" alt="Parker's shot, build 0.3.104: the first needle of Agujas, a square block with a pale pyramid roof on a slab, the climber lying by it.">
+    <figcaption>Parker's shot, build 0.3.104: the first needle of Agujas, a square block with a pale pyramid roof on a slab, the climber lying by it.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 3, 3.5 Agujas: the needles you climb (`gruta_needle_first`, `gruta_needle` x2, `gruta_needle_last`, at x -414.1, -407.1, -398.1, -387.1). Each is built in the course from separate solids, a straight-sided block with a triangle on top (and two thin strips on its sides on the first and last), and the skins were made to that outline, so each reads as a box with a roof: a house.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Re-make every needle as ONE crystal, like the real 3D crystals the cave now has (and like note 121's spikes): a six-sided shaft that tapers into a sharp faceted point, grown from the slab at a slight lean, lilac and indigo with a pale face, matte. Its solid re-cut to that one outline (a long slim six-sided shape, the point blunt as a solid by the blunt-tip rule) so it is still the same height and reach for the climb. Held until Parker says go.</p>
 </div>
 
 </main>
