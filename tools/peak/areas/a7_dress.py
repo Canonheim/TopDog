@@ -737,7 +737,7 @@ def dress(A):
     # (note 77; page 8.1): the kit's cable_station_low RE-MADE as a board house 12 m wide (x -250 ..
     # -238), 6.0 m at its back wall and 4.9 m at its front under the roof's slope, board walls in the
     # greyed red below bare grey boards, dark windows and door, NO CREAM.
-    A.deco("cable_station_low", -244.0, DECK, z=-4.0, size=(12.0, 6.0, 3.12), tone="#9A5A4C")
+    A.deco("cable_station_low_tele", -244.0, DECK, z=-4.0, size=(12.0, 6.0, 3.12), tone="#9A5A4C")
     # The deck's planks carried back to its door: honey planks 0.3 m wide, two rows of nail heads,
     # sawn square and nailed.
     back("riscos_deck_back", -250.0, -236.0, 687.5, DECK, -1.25, HOUSE_FRONT, tone=WOOD)
