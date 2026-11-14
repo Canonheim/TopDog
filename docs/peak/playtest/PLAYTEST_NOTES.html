@@ -197,6 +197,8 @@
 <tr><td>134</td><td><a href="#n134">Build 0.3.104, the mushroom garden: the curved branch and the square block at its foot should be one connected branch, from the background into the play space</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>135</td><td><a href="#n135">Build 0.3.104, the garden's terrace west of the giant mushroom: nothing of interest; add a sleeping frog on a log in the background and a snail moving back and forth</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>136</td><td><a href="#n136">Not the Peak (the VS modes, the Top Dog session's): the lock-in confetti should stay where the character locked in, in world space</a></td><td><span class="chip c-ask">Handed to the Top Dog session (VS modes are its own); on its list</span></td></tr>
+<tr><td>137</td><td><a href="#n137">Build 0.3.104, Puente de Micelio (4.8): the rope bridge should just be a rope</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>138</td><td><a href="#n138">Build 0.3.104, every rope: only the activated hand can take it, and once you have it you stay locked on while the button is held, still in control, like the chair and the winch</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -4267,6 +4269,30 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>The VS modes' lock-in effects (`ui3d/confetti_effect.gd` via `lucha_ui.confetti()`, laid out in screen thirds; likely the rose petals and peso bills too) burst in screen space, so they move with the camera.</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Anchor each burst in the world at the climber who locked in, so it stays put as the camera moves, keeping docs/LOCK_IN_EFFECTS.md's rules. The Top Dog session owns the VS modes and has the note.</p>
+</div>
+
+<div class="note" id="n137">
+  <div class="head"><span class="num">137</span><h3>Build 0.3.104, Puente de Micelio (4.8): the rope bridge should just be a rope</h3><span class="time">11-14 12:15</span></div>
+  <blockquote>"this rope bridge area should jsut be a rope"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/137_puente_rope.png" alt="Parker's shot, build 0.3.104: the climber hanging at the east end of 4.8's bridge, a pale cord running west across the green gust; the log ledge (L7) behind.">
+    <figcaption>Parker's shot, build 0.3.104: the climber hanging at the east end of 4.8's bridge, a pale cord running west across the green gust; the log ledge (L7) behind.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 4, 4.8 (a4.py line 326): a 14 m bridge from L7 to the root shelf L8, built as a rope with 15 planks on two mycelium cords (`plank_model` `jardin_bridge_tread`, `cords`), sagging about 2 m, with two out-of-step gusts over it.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Make it a single rope (no planks, no cords): the same ends and about the same sag, taken hand over hand under the gusts, drawn as a thick white mycelium rope. The gusts stay as they are to start with (they were tuned for standing on boards, so a first try on a rope may want them softer: a first guess for Parker). With note 138's new rope rule. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n138">
+  <div class="head"><span class="num">138</span><h3>Build 0.3.104, every rope: only the activated hand can take it, and once you have it you stay locked on while the button is held, still in control, like the chair and the winch</h3><span class="time">11-14 12:15</span></div>
+  <blockquote>"Also I want to change how to ropes work, I want it to be that ONLY the activated hand can interact with it. once you hit it, you are still locked on to it like you would be with the winch or lever, and can control yourself, but like the chair and stuff, you lock to it with an activated hand"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <h4>Where, and what is going on</h4>
+  <p>Mountain-wide: every rope in the climb (stages/peak/peak_things.gd, `_tick_rope_grabs`). Today any FREE hand or foot that comes within reach of a rope takes hold of it by itself, 'as it would stick to anything it touched', whether or not its button is held, so a dangling foot or the wrong hand can catch a rope you meant to pass, and you can't swing past one. Bridges with planks are stood on and are not caught this way.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>One rule for ropes, the chair's rule: only the limb whose button is held (the activated hand) can take a rope; it closes on the rope the moment it touches it, and stays on it, sliding nowhere, for as long as the button is held; let go of the button and it lets go. While on, you steer the rest of the body as always (swing, reach with the other limbs). Feet and un-activated hands pass through ropes. Checked on every rope on the mountain (the mine's chain, the spring's rope, the ring ropes are bounces not ropes, the balloon's rope, the bell rope, the chandeliers' threads), since some were tuned for the old free grab. Held until Parker says go.</p>
 </div>
 
 </main>
