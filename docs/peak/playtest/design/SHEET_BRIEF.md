@@ -80,9 +80,19 @@ How a wall or a mass is made:
   triangles ... just the painted lines look lovely").** Nothing painted tapers to a point:
   no rain streak that narrows down the face, no stain shaped like a wedge, no hold band
   that thins away across the wall. Lines and bands only.
-- **A few big breaks are real shape,** and only those get ink: one overhang with a painted
-  shadow under it, one deep recess or opened joint, one ledge with something on it, one
-  leaning slab or fallen block. They sit inside the game's frame, not below it.
+- **A few big breaks are real shape,** and only those get ink: an overhang with a painted
+  shadow under it, a ledge with something on it, a leaning slab or fallen block. They sit
+  inside the game's frame, not below it. **No dark slot or recess cut into a face**
+  (Parker, of the example's opened joint: "Get rid of this part too so it all looks painted
+  like that").
+- **Little outcrops, with plants.** Parker: "I also love the little foreground out
+  croppings, feel free to put little plants like the painted plants in the foreground of
+  the Station had." So a wall keeps a few small outcrops standing out of it, and they carry
+  life: plants made for that biome, each one flat painted card (its parts flush colours on
+  one plane, so only its outline is inked), in the style of the station's foreground
+  plants. Of those plants he said: "you will want to make new ones for various biomes, but
+  that is the style I mean. You don't have to re use the old one." Each biome's sheet says
+  what grows on its walls.
 - **The outline is designed.** Away from the holds and the tops you stand on, the edge may
   move up to 0.8 m: it leans, tapers, is notched where a piece has gone, and has no long
   ruled level or upright edge. The holds, the standing tops and the faces of any gap you
