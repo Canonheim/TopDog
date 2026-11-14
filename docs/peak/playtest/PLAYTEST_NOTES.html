@@ -251,7 +251,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
 <a href="#n40">40</a>, <a href="#n92">92</a>: the storm ridge's six clouds look bad: out, and painted cloud behind the towers in the area's design;
 <a href="#n52">52</a>: eight more pits found and not changed;
 <a href="#n53">53</a>: the altar's east wall has not been tried with the faster cross;
-<a href="#n55">55</a>: my own HUD test has not been run on the banner's cool-down;
+<a href="#n55">55</a>: the banner's quiet time goes from 15 to 40 seconds (decided 11-13); and my own HUD test has not been run on it;
 <a href="#n22">22</a>: the water: "Still not water"; a new method is proposed and waits for his word</td></tr>
 <tr><td><b>The design job</b></td><td><a href="#design">Area and background design</a>: only the test diorama exists; biome sheets, the joins and every area are still to do</td></tr>
 </table>
@@ -2225,6 +2225,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
     <img src="after/55_banner_after_quiet.jpg" alt="After: the banner showing once the quiet time has passed.">
     <figcaption>After: the banner showing once the quiet time has passed.</figcaption>
   </figure>
+  <p><b>Settled (Parker, 11-13 22:02, the second playtest):</b> "ok the cool down on the name of things banner popping up, make that 40 seconds". So the quiet time goes from 15 seconds to 40. It is one number (<code>area_quiet_s</code> in <code>ui3d/peak_hud.gd</code>); everything else about the rule stays: nothing is saved up, where you have settled is announced once when the quiet ends, and never in the middle of a fall. To know: the build he played tonight is main, which has no quiet time at all yet (the 15 seconds are on the <code>luchador-ui</code> branch), so what he saw was a banner at every crossing. Not changed now; held with every other fix.</p>
 </div>
 
 <div class="note" id="n56">
