@@ -293,16 +293,24 @@ A.deco("crystal_shell_clear", -443.4, 176.0, z=0.4, size=(2.4, 3.6, 1.6), tone="
 # 0.7 m long, 0.41 tall at the horn. His back is frosted crystal (grip): climb on and he carries you.
 # What a walker does (the turn, the legs, the throw, one throw a meeting): peak_things.gd, _tick_walker.
 # All numbers first guesses for Parker to tune: speed, wait (each end), v / up (the throw), cool.
-BEETLE_W, BEETLE_E = -441.2, -415.0
-A.mover("beetle", (BEETLE_W, 176.0),
-        [([(-0.31, 0.04), (0.31, 0.04), (0.33, 0.14), (0.2, 0.31), (-0.2, 0.31), (-0.33, 0.14)], "crystal")],
-        {"type": "path", "pts": [[BEETLE_W, 176.0], [BEETLE_E, 176.0]], "speed": 1.2, "mode": "pingpong",
-         "wait": 1.2, "ease": False, "phase": 0.0},
-        model="gruta_rhino_beetle")
-A.movers[-1]["walker"] = {
+BEETLE_WALK = {
     "legs": "gruta_rhino_beetle_leg", "hips": [[0.13, 0.105, 0.075], [0.0, 0.105, 0.085], [-0.14, 0.105, 0.075]],
     "stride": 0.24, "swing": 0.35, "splay": 0.9, "lift": 0.018, "bob": 0.008, "turn": 0.7,
     "front": 0.33, "reach": 0.08, "v": 3.0, "up": 1.8, "cool": 1.2}
+
+
+def beetle(mid, x_w, x_e, y, speed=1.2, wait=1.2, phase=0.0, **walk):
+    """A crystal rhino beetle walking the floor (top y) between x_w and x_e: the turn points of his middle."""
+    A.mover(mid, (x_w, y),
+            [([(-0.31, 0.04), (0.31, 0.04), (0.33, 0.14), (0.2, 0.31), (-0.2, 0.31), (-0.33, 0.14)], "crystal")],
+            {"type": "path", "pts": [[x_w, y], [x_e, y]], "speed": speed, "mode": "pingpong",
+             "wait": wait, "ease": False, "phase": phase},
+            model="gruta_rhino_beetle")
+    A.movers[-1]["walker"] = dict(BEETLE_WALK, **walk)
+
+
+BEETLE_W, BEETLE_E = -441.2, -415.0
+beetle("beetle", BEETLE_W, BEETLE_E, 176.0)
 
 # ---------------------------------------------------------------- 3.3 Candelabros
 # Three chandeliers on chains, 6 m apart, each hung 3.2 m higher than the last, over the
@@ -454,6 +462,36 @@ A.solid([(-324.3, 248.4), (-312.5, 248.4), (-312.5, 249.25), (-324.3, 249.25)], 
 A.ledge(-324.3, -312.5, 249.4, "crystal", t=0.3, skin="gruta_shelf_r8")
 for hx, hy in ((-310.0, 243.2), (-311.6, 244.3), (-310.0, 245.5), (-311.6, 246.7), (-311.7, 248.2)):
     A.hold(hx, hy, r=0.22, kind="crystal", skin="gruta_nub")  # the chimney: a breath
+
+# ---------------------------------------------------------------- the beetle's trough (note 130)
+# Parker, 11-14, on the landing after 3.8: "Add a small indent here and have another beetle
+# walking back and forth". The landing's floor drops 0.5 m just east of 3.8's frosted lip and
+# stays low to 0.8 m short of the chimney, where it comes back up: the chimney's first nub
+# (243.2) stays in reach from the floor under it (241.5), as before. Both sides slope (34 and
+# 32 degrees), rough rock: you walk down into it and out of it, never climb. Cut out of the
+# cave's landing slab (edge 5 of AIR) after the cave is laid, as the frog's room is, so no edge
+# of AIR is renumbered (the dress's SHELL_SKINS go by edge number).
+TROUGH_Y = 241.0
+TROUGH = [(-320.3, 241.5), (-319.55, TROUGH_Y), (-312.95, TROUGH_Y), (-312.15, 241.5)]
+
+
+def _cut_trough():
+    i = [k for k, s in enumerate(A.solids) if s.get("skin") == "gruta_landing" and s["kind"] == "rock"
+         and abs(min(p[1] for p in s["pts"]) - 238.5) < 0.01 and abs(max(p[1] for p in s["pts"]) - 241.5) < 0.01]
+    assert len(i) == 1, i
+    s = A.solids.pop(i[0])
+    x0, x1 = min(p[0] for p in s["pts"]), max(p[0] for p in s["pts"])
+    for pts in ([(x0, 238.5), (x1, 238.5), (x1, TROUGH_Y), (x0, TROUGH_Y)],             # under the trough
+                [(x0, TROUGH_Y), TROUGH[1], TROUGH[0], (x0, 241.5)],                     # west of it, its west slope
+                [TROUGH[2], (x1, TROUGH_Y), (x1, 241.5), TROUGH[3]]):                    # its east slope, the chimney's foot
+        A.solid(pts, "rock", skin="gruta_landing")
+
+
+_cut_trough()
+# (his horn turns 0.45 m short of each slope's foot.) His trough is short enough that you are
+# always in his beat: after a throw he is a ghost for at least 4 s, not 1.2, so a throw never
+# bats you straight back the other way when he turns; 4 s is time to walk out up a slope.
+beetle("beetle2", -319.1, -313.4, TROUGH_Y, phase=1.7, cool=4.0)
 
 # ---------------------------------------------------------------- 3.9 La Columna
 # (Notes 74 and 34. Parker 11-13, of the side-on diagram: "Yes, build that"; and "harder": a
