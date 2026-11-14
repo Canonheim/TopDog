@@ -75,7 +75,7 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 | 0 La Estación | done; 0.1-0.2 built | `a0_station.py`; `a0_dress.py` WIRED (df43021) | all 46 landed and synced (A 15, B 10, C 21) | yes: `docs/peak/frames/a0_ride_*`; the gap's far cavern fixed (625c171) |
 | 1 La Mina Vieja | done; cart room redone (note 103) | `a1_dress.py` WIRED (4c1c86f), cart room built | all 94 landed and synced (A 30, B 24, C 40) | yes: `docs/peak/frames/a1_mine_*` (taken before the walls were redone) |
 | 2 Las Aguas Negras | done | `a2_dress.py` WIRED (5de53c7) | all 102 landed and synced (A 56, B 7, C 39) | yes: `docs/peak/frames/a2_aguas_*` |
-| 3 La Gruta de Cristal | done | `a3_dress.py` WIRED (63d1254) | B 28 landed; A 14 of 45 (the rest, crystals included, with a maker agent) | |
+| 3 La Gruta de Cristal | done | `a3_dress.py` WIRED (63d1254) | all landed and synced (A 45 incl. the real 3D crystals, B 28) | yes: `docs/peak/frames/a3_gruta_*` (st's grey-tan body card shows through behind the giants and the column: with the fix thread) |
 | 4 El Jardín de Hongos | done | `a4_dress.py` WIRED (08a6185) | B 44 and C 1 landed; A 32 with thread B | |
 | 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | B 11 and C 12 landed; A 65 with the wall maker (moved off threads B and C 11-14); 11 `_jade` re-makes with C | |
 | 6 La Chimenea | done | `a6_dress.py` WIRED (8788f09) | 86 new: A 37, B 9, C 40, queued | |
