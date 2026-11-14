@@ -72,9 +72,9 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 
 | Biome | Sheet and pages | Dress file | Models | In-game frames |
 |---|---|---|---|---|
-| 0 La Estación | done; 0.1-0.2 built | `a0_station.py` (0.1-0.2); `a0_dress.py` (the ride, the join): written, not yet called | station set landed; 46 new on the list (`models/a0_models.md`): A 15, B 10, C 21, all sent | station: yes |
-| 1 La Mina Vieja | done; cart room redone (note 103) | `a1_dress.py` being written | the cart room's incline with thread C | |
-| 2 Las Aguas Negras | done | | | |
+| 0 La Estación | done; 0.1-0.2 built | `a0_station.py`; `a0_dress.py` (the ride, the join): written, waiting for the fix thread to wire it | A: all 15 landed in the kit; B 10 and C 21 in progress | station: yes; the ride: waiting |
+| 1 La Mina Vieja | done; cart room redone (note 103) | `a1_dress.py`: written (486 placements), not yet wired | 108 new (`models/a1_models.md`): A 37 in progress, B 23 and C 48 queued | |
+| 2 Las Aguas Negras | done | `a2_dress.py`: written (296 placements), not yet wired | 117 new (`models/a2_models.md`): A 66, B 7, C 44, all queued | |
 | 3 La Gruta de Cristal | done | | | |
 | 4 El Jardín de Hongos | done | | | |
 | 5 El Templo | done | | | |
@@ -88,3 +88,5 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 Mountain-wide small pieces (wave 0, no placement needed): frogs, signs, tea things
 (thread B, in progress); iron rings, staples, pegs, the summit's ring ropes (thread C: all
 thirteen landed in the kit, not yet synced into the game).
+
+**Pace (night of 11-13):** the makers are the bottleneck. Biomes 0 to 2 need about 270 new models; more dress files are held until the first game frames are flowing and the makers' queues shorten.
