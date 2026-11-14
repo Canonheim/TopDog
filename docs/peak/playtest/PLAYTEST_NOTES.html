@@ -179,6 +179,7 @@
 <tr><td>116</td><td><a href="#n116">Build 0.3.104, the black waters' keepers' stair (the cascade's wall): looks super unfinished</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>117</td><td><a href="#n117">Build 0.3.104, the winch in the lift cage (and the levers): the hand should stick to it while you hold the button</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>118</td><td><a href="#n118">Build 0.3.104, the lift cage: it has a roof you collide with; remove it</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>119</td><td><a href="#n119">Build 0.3.104, the crystal cave's floor at Primer Destello (3.1): horrendous z-fighting</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3967,6 +3968,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 2, the lift cage (`jaula`, x -438.7, rides 14.8 m up its shaft by the winch). Its solid is two pieces: the plank floor (2.0 x 0.2 m) and an iron bar across the top, 2.0 m wide and 0.12 m thick, 2.14 m over the floor. That top bar is the roof you hit: it stops a climber getting in from above or standing up tall inside, and it bangs into you from below as the cage rises.</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Take the top bar out of the cage's solid (the floor stays), so the cage is open above; the drawn frame stays as it is. Check a climber riding the cage to the top isn't then caught between the floor and the shaft's head (the crunch rule should knock out, not trap). Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n119">
+  <div class="head"><span class="num">119</span><h3>Build 0.3.104, the crystal cave's floor at Primer Destello (3.1): horrendous z-fighting</h3><span class="time">11-14 10:45</span></div>
+  <blockquote>"horrendous z fighting here"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/119_gruta_floor_zfight.png" alt="Parker's shot, build 0.3.104, 177 m: the cave's floor at the start of 3.1. The arrow: a pale wedge flickering on the floor's top, in front of the slanted crystal shafts.">
+    <figcaption>Parker's shot, build 0.3.104, 177 m: the cave's floor at the start of 3.1. The arrow: a pale wedge flickering on the floor's top, in front of the slanted crystal shafts.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 3, the cave floor at 3.1 (y 176, about x -416 .. -410). Three skins meet in that floor's top plane here: `gruta_floor` (the floor, to x -410.28), `gruta_rampa` (the slanting crystal ramp's skin, which also owns a sliver of floor from x -410.32, so the two overlap by 4 cm in the same plane), and `gruta_wall_point` (a glass point whose foot is sunk 0.22 m into the floor top, at x -413.75 .. -411.46). Each was landed alone with no z-fighting, by the kit's own check; but that check looks inside one model, never at two models placed side by side in the game, so where two skins share a plane nobody looked.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Here: trim the ramp's skin to stop where the floor's starts (no shared strip), and lift the wall point's foot to sit on the floor rather than in it. And it goes into note 109's z-fight sweep, which must look at every PAIR of placed pieces in the game (skins, decos and plain solids), not one model at a time. Held until Parker says go.</p>
 </div>
 
 </main>
