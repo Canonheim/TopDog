@@ -77,11 +77,11 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 | 2 Las Aguas Negras | done | `a2_dress.py` WIRED (5de53c7) | all 102 landed and synced (A 56, B 7, C 39) | yes: `docs/peak/frames/a2_aguas_*` |
 | 3 La Gruta de Cristal | done | `a3_dress.py` WIRED (63d1254) | B 28 landed; A 14 of 45 (the rest, crystals included, with a maker agent) | |
 | 4 El Jardín de Hongos | done | `a4_dress.py` WIRED (08a6185) | B 44 and C 1 landed; A 32 with thread B | |
-| 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | B 11 and C 12 landed; A 65 split between threads B and C, and 11 `_jade` re-makes with C | |
+| 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | B 11 and C 12 landed; A 65 with the wall maker (moved off threads B and C 11-14); 11 `_jade` re-makes with C | |
 | 6 La Chimenea | done | `a6_dress.py` WIRED (8788f09) | 86 new: A 37, B 9, C 40, queued | |
 | 7 Los Riscos del Viento | done | `a7_dress.py` WIRED (8451f10) | 79 new: A 42 (maker agent, after the crystal cave), B 17, C 28; re-makes `bull_wheel` at 7.6 m, a flying vulture; the walls example becomes the tower top (cut at 658) | |
-| 8 El Teleférico | done; revised (real roofs, hangers held) | being written | | |
-| 9 El Glaciar | done; revised (three wall arrow signs) | | | |
+| 8 El Teleférico | done; revised (real roofs, hangers held) | `a8_dress.py` written (bf11281), sent to the fix thread to wire | 71 new: A 19 (wall maker), B 6, C 46; seven re-makes (gondola, dead gondola, chair as a bench, zip trolley, counterweight, low station, haul cable) with C | |
+| 9 El Glaciar | done; revised (three wall arrow signs) | being written | | |
 | 10 La Cresta de la Tormenta | done | | | |
 | 11 La Cumbre | done; revised (the secret the right way round; the ring) | | ring ropes landed (thread C) | |
 
