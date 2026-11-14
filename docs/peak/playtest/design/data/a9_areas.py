@@ -71,6 +71,16 @@ def _tusk(x, y_top, y_tip):
     return _p([(x - 0.3, y_top), (x + 0.3, y_top), (x, y_tip)], "mark")
 
 
+def _arrow(cx, cy, ang, length=1.6, tall=0.7):
+    """An arrow sign that sticks out of the back wall: its shadow on the ice, then the board. ang: 0 points east, 90 points up."""
+    a = math.radians(ang)
+    ca, sa = math.cos(a), math.sin(a)
+    h, q, n = length / 2, tall / 4, length / 2 - 0.55
+    shape = [(-h, -q), (n, -q), (n, -tall / 2), (h, 0.0), (n, tall / 2), (n, q), (-h, q)]
+    pts = [(cx + x * ca - y * sa, cy + x * sa + y * ca) for x, y in shape]
+    return [_p([(x + 0.14, y - 0.14) for x, y in pts], "dark"), _p(pts, "pale")]
+
+
 # ------------------------------------------------------------------ the lower crack, shared by 9.1, 9.2 and 9.3
 # The fifteen holds of Hielo Azul, from the course. Numbers 2, 6 and 11 are the three stones.
 _H91 = [(-308.16, 787.51), (-309.20, 788.83), (-310.87, 789.00), (-311.90, 790.32), (-313.58, 790.48), (-314.61, 791.81),
@@ -93,10 +103,14 @@ def _dirt_layers(x_lo, x_hi):
     return out
 
 
-_DOOR = [_p([(-305.5, 804.0), (-305.5, 809.5), (-310.4, 809.5), (-312.8, 806.6), (-310.0, 804.0)], "pale"),
+_DOOR = [_p([(-305.5, 804.0), (-305.5, 809.5), (-312.0, 809.5), (-312.6, 804.0)], "pale"),
          _r(-305.5, 804.0, -303.0, 808.5, "pale")]
-_LIT_GAP = [_p([(-319.0, 802.6), (-317.8, 802.6), (-317.3, 809.5), (-319.5, 809.5)], "pale")]
+_LIT_GAP = [_p([(-319.0, 802.6), (-317.8, 802.6), (-317.6, 809.5), (-318.8, 809.5)], "pale")]
 _SIGN = [_ln(-330.3, 798.5, -330.3, 799.9, "line"), _p([(-330.8, 799.9), (-329.9, 799.9), (-329.4, 800.25), (-329.9, 800.6), (-330.8, 800.6)], "pale")]
+# The three arrow signs that stick out of the far wall, one at each turn of the zigzag (Parker's answer on the camera).
+_SIGN_START = _arrow(-307.2, 789.9, 151.0)      # at the foot of the seam, pointing up it to the west
+_SIGN_ROW = _arrow(-323.2, 799.0, 0.0)          # under the row of big icicles, pointing east
+_SIGN_GAP = _arrow(-318.4, 801.0, 90.0)         # under the shelf's broken end, pointing up through the lit gap
 _BLOCKS = [_p([(-317.7, 786.0), (-317.3, 787.5), (-315.4, 787.9), (-314.6, 786.0)], "line"),
            _p([(-314.2, 786.0), (-313.9, 786.9), (-312.6, 786.7), (-312.4, 786.0)], "line")]
 _FELL = _deep(-312.5, 798.6, 160.0)
@@ -200,12 +214,12 @@ UNDER_THE_LIP = {
     ],
     "pieces": [
         ["Station house, half under the ice", "14 m wide, 6 m tall", "1", "Background", "the cableway's kit: station house; the ice on its roof and in its window is new, this join only"],
-        ["Back wall bay", "4 m wide, 5 m tall", "7", "Background", "kit: back wall bay; the scooped dishes are a second painting of it"],
+        ["Back wall of the alcove and the tunnel: one painted piece", "26.5 m wide, 5 m tall", "1", "Background", "kit: back wall; the scooped dishes are painted on it"],
         ["Icicle fringe", "12 m by 1.2 m", "1", "Background", "kit: icicle fringe (icicle_row)"],
         ["Route cane with a paper flag", "3 m", "1", "Background", "kit: route cane (streamer_pole)"],
         ["Candle lantern on a hook", "0.5 m", "1", "Background", "kit: candle lantern (lantern_hang)"],
         ["Pennant line, frozen stiff", "6 m", "1", "Background", "the cableway's kit: pennant_line, with ice on it"],
-        ["Paler wall bay", "4 m wide, 5 m tall", "1", "Background", "kit: paler wall bay (added below)"],
+        ["Paler paint where the lower crack begins", "3.5 m wide, 5 m tall", "1", "Background", "kit: paler wall paint (added below)"],
         ["Firm snow cap, with boot prints", "21 m long, 0.7 m thick", "1", "Play space", "kit: firm snow cap"],
         ["Snow fringe for the lip", "11 m long, 0.5 m wide", "1", "Foreground", "there today, moved 0.5 m in"],
     ],
@@ -229,7 +243,8 @@ HIELO_AZUL = {
     "window": [-333.5, 783.5, -302.0, 811.8], "cut_y": 794.9, "climber": [-306.6, 786.0],
     "place": ("The lower crack is one tall slot in the ice: 25.5 m wide and 23.5 m high, under a dark roof. You come into it at the foot "
               "of its east side, and the way out is a lit door at the top of the same side, 18 m straight above you. The slot is climbed "
-              "as one zigzag: west up the far wall, then back east along the top. This page is the first leg. A seam of old blue ice "
+              "as one zigzag: west up the far wall, then back east along the top. The camera stays close, so you see one leg at a time, and "
+              "at each turn an arrow sign sticks out of the far wall and points the way on. This page is the first leg. A seam of old blue ice "
               "crosses the wall from the floor by the tunnel to a snow ledge in the west corner, 19.5 m along and 10.7 m up. It is a crack "
               "that healed, and it is harder than the ice round it, so it stands proud of the wall in knuckles. The glacier's own layers "
               "cross it on a gentler slant, and three of those layers carry stones. Where a layer of stones meets the seam there is a "
@@ -242,25 +257,26 @@ HIELO_AZUL = {
     ],
     "background": [
         {"name": "The crack's far wall", "z": [-3.0, -2.4], "tag": [-313.5, 807.2], "top": True,
-         "text": "Mid blue and dull, 2.4 m behind you, in bands that tilt ten degrees down to the east. It fills the frame from the floor "
+         "text": "The glacier's body carried on behind: one painted piece in three big slanted planes, mid blue and dull, 2.4 m behind "
+                 "you. Its bands are long wavy painted lines that tilt ten degrees down to the east. It fills the frame from the floor "
                  "to the roof. Its closed corners are the deepest blue: the top west corner over the shelf, and the foot of the west wall.",
          "draw": _wall(-331.0, 786.0, -305.5, 809.5)},
         {"name": "The blue seam", "z": [-2.5, -2.4], "tag": [-312.3, 788.7],
-         "text": "A band of pale old ice half a metre wide, flush in the far wall, on the same line as the holds. Each knuckle is the "
-                 "near end of a tooth of this seam, and the seam is what you read the route from. At the corner it turns and climbs "
-                 "straight up to the underside of the shelf. Today a pale card 3 m wide lies here and looks like a ramp. It goes (note 84).",
+         "text": "A band of pale old ice painted on the far wall, half a metre wide all along, on the same line as the holds. Each "
+                 "knuckle is the near end of a block of this seam, and the seam is what you read the route from. At the corner it turns "
+                 "and climbs straight up to the underside of the shelf. Today a pale card 3 m wide lies here and looks like a ramp. It goes (note 84).",
          "draw": _SEAM},
         {"name": "Three layers of stones", "z": [-2.5, -2.4], "tag": [-319.8, 791.3],
-         "text": "Grey-brown stones riding in three of the wall's bands. Each line of stones runs through one of the three stones you "
-                 "hold. So before you start you can see where the seam will let you stop: where a line of stones crosses it.",
+         "text": "Grey-brown stones painted in three of the wall's bands. Each line of stones runs through one of the three stones you "
+                 "hold. So as you climb you can see ahead where the seam will let you stop: where a line of stones crosses it.",
          "draw": _dirt_layers(-331.0, -305.5)},
         {"name": "The door, lit", "z": [-3.0, -2.4], "tag": [-308.4, 807.2], "top": True,
-         "text": "The palest thing in the slot, high on the east side: the door of the ice cave, with frost round its edge and the wall "
-                 "round it two steps paler than anywhere else. You see it from the floor the moment you step out of the tunnel. A "
-                 "lantern burns just inside it.",
+         "text": "The palest thing in the slot, high on the east side: the door of the ice cave, with frost round its edge and a broad "
+                 "block of the wall round it painted two steps paler than anywhere else. It is 18 m above the floor, so with the close "
+                 "camera you do not see it from down here. It comes into view from the shelf's top. A lantern burns just inside it.",
          "draw": _DOOR + [_c(-303.6, 807.7, 0.2, "light")]},
         {"name": "The light down the gap", "z": [-3.0, -2.4], "tag": [-318.4, 807.4],
-         "text": "A paler stripe on the far wall, straight above the shelf's broken end. It is the same light as the door's, coming along "
+         "text": "A paler band on the far wall, straight above the shelf's broken end, the same width all the way up. It is the same light as the door's, coming along "
                  "the top of the slot and down past the end of the shelf. It marks the one place where you can get up past the shelf.",
          "draw": _LIT_GAP},
         {"name": "The shelf's other half", "z": [-2.3, -1.3], "tag": [-315.4, 788.6], "top": True,
@@ -268,8 +284,9 @@ HIELO_AZUL = {
                  "the piece of the shelf that broke off, and they are why the shelf reads as a thing with an end.",
          "draw": _BLOCKS},
         {"name": "Two blue ribs", "z": [-2.4, -2.0], "style": "pale", "tag": [-329.6, 791.0],
-         "text": "Leaning slabs of bluer ice in the far wall. Today two stand right behind the line of holds and look like part of it. "
-                 "They move: one to the foot of the west wall under the corner ledge, one to the east wall under the door.",
+         "text": "Leaning bands of bluer ice painted in the far wall, each the same width from foot to top. Today two stand right "
+                 "behind the line of holds and look like part of it. They move: one to the foot of the west wall under the corner "
+                 "ledge, one to the east wall under the door.",
          "draw": [_p([(-330.6, 786.0), (-329.2, 786.0), (-328.7, 797.6), (-330.1, 797.6)]),
                   _p([(-308.2, 793.2), (-306.9, 793.2), (-306.3, 802.4), (-307.6, 802.4)])]},
         {"name": "One who fell", "z": [-2.6, -2.4], "tag": [-313.8, 799.4],
@@ -277,8 +294,18 @@ HIELO_AZUL = {
                  "the middle snow bridge, 5 m from any hold. Today he stands 1.5 m from the line of holds.",
          "draw": _FELL},
         {"name": "The pug arrow sign", "z": [-1.6, -1.3], "tag": [-331.7, 800.3],
-         "text": "On a post at the back of the corner ledge, pointing east (note 85). It is the only sign on the glacier. You see it from the floor.",
+         "text": "On a post at the back of the corner ledge, pointing east (note 85). You see it as you come up the last of the seam.",
          "draw": _SIGN},
+        {"name": "The arrow sign at the foot of the seam", "z": [-2.4, -1.4], "tag": [-306.2, 791.3],
+         "text": "A flat painted board cut to an arrow, 1.6 m long, with the pug on it. Two canes driven into the far wall hold it 1 m "
+                 "out from the ice, so it throws a shadow on the wall. It is 1.7 m inside the tunnel's mouth, its foot is 1.5 m above the "
+                 "first knuckle, and it points up the seam to the west. It is on screen the moment you step out of the tunnel.",
+         "draw": _SIGN_START},
+        {"name": "The two arrow signs higher up", "z": [-2.4, -1.4], "tag": [-323.2, 798.0],
+         "text": "The same sign twice more, one at each turn. One is under the row of big icicles, 4.3 m east of the corner ledge at "
+                 "chest height, pointing east: you see it from the ledge without the camera moving. One is straight under the shelf's "
+                 "broken end, pointing up through the lit gap. They belong to the next page.",
+         "draw": _SIGN_ROW + _SIGN_GAP},
     ],
     "play": [
         {"name": "Knuckles and stones", "z": [-0.4, 0.4], "style": "mark", "tag": [-317.6, 790.9],
@@ -297,20 +324,21 @@ HIELO_AZUL = {
     "explains": [
         ["The twelve knuckles", "The teeth of a seam of old hard ice: a crack that healed", "The seam itself, half a metre wide in the far wall, on the same line"],
         ["The three stones", "Stones the glacier carries, where a layer of them meets the seam", "The line of stones in the far wall that each one belongs to"],
-        ["The corner ledge", "Snow lying on the seam where it turns upward", "The seam going on up the corner to the shelf, and the arrow sign"],
+        ["The corner ledge", "Snow lying on the seam where it turns upward", "The seam going on up the corner to the shelf, the arrow sign on its post, and the arrow sign on the far wall to the east"],
         ["The snow floor", "The crack's floor, where everything that falls in here ends up", "The shelf's other half, lying in blocks"],
         ["The falling icicles", "Melt water dripping through the shelf", "The dark wet cracks they hang from, and the splinters under each"],
     ],
     "pieces": [
-        ["Back wall bay", "4 m wide, 5 m tall", "30", "Background", "kit: back wall bay"],
-        ["Paler wall bay", "4 m wide, 5 m tall", "3", "Background", "kit: paler wall bay (added below)"],
-        ["Blue ice seam", "0.5 m wide; 22 m and 4 m", "2 lengths", "Background", "kit: blue ice seam"],
+        ["Back wall of the lower crack: one painted piece", "25.5 m wide, 23.5 m tall", "1", "Background", "kit: back wall"],
+        ["Paler paint on the back wall: round the door, and up the gap", "7 m by 5.5 m; 1.2 m by 7 m", "2", "Background", "kit: paler wall paint (added below)"],
+        ["Blue ice seam", "0.5 m wide; 22 m and 4 m", "2 lengths", "Background", "kit: blue ice seam, painted on the back wall"],
         ["Blue ice knuckle", "0.66 m by 0.34 m", "12", "Play space", "kit: blue ice seam and its holds"],
-        ["Stone in the ice", "0.5 m", "3 held, 24 in the wall", "Play space and background", "kit: stone in the ice"],
-        ["Blue rib", "1.4 m wide; 11.6 m and 9.2 m tall", "2", "Background", "kit: blue rib"],
+        ["Stone in the ice", "0.5 m", "3 held; the 24 in the wall are paint", "Play space and background", "kit: stone in the ice"],
+        ["Blue rib", "1.4 m wide; 11.6 m and 9.2 m tall", "2", "Background", "kit: blue rib, painted on the back wall"],
         ["Fallen block of ice", "3 m and 1.8 m", "2", "Background", "kit: what they carried (ice_block), at two sizes"],
         ["Frozen climber deep in the ice", "0.9 m by 1.9 m", "1", "Background", "kit: frozen climber deep in the ice"],
         ["Pug arrow sign on a post", "1 m by 2.2 m", "1", "Background", "kit: pug arrow sign"],
+        ["Arrow sign that sticks out of the back wall", "board 1.6 m by 0.7 m, 1 m out from the wall", "1 here; 2 more on the next page", "Background", "kit: arrow sign that sticks out of the back wall"],
         ["Frost rim for the door; candle lantern", "door 2.5 m by 4.5 m; lantern 0.5 m", "1 and 1", "Background", "kit: frost rim (added below); candle lantern"],
         ["Firm snow cap, with boot prints", "25.5 m floor; 3.5 m ledge", "2", "Play space", "kit: firm snow cap"],
         ["Splinters under a falling icicle", "1 m", "4", "Play space (drawn on)", "kit: falling icicle, its crack and its splinters"],
@@ -321,15 +349,14 @@ HIELO_AZUL = {
         "Snow sifting down from the bridges, 18 m up, all the time.",
     ],
     "notes": [
-        "Note 86: this room is redone. It is as hard as it was. What changes is that the whole zigzag can be read from the floor: the seam, the corner, the shelf's broken end with light coming down past it, the bridges, the door.",
+        "Note 86: this room is redone, and the redesign is approved. It is as hard as it was. What changes is that every turn of the zigzag says where to go next: the seam, the corner, the shelf's broken end with light coming down past it, the bridges, the door.",
+        "The camera: it is not pulled back for this room. It stays close, as Parker answered, so the door is not on screen from the floor. In its place an arrow sign sticks out of the far wall at each turn, behind the climb. There are three, because the close camera shows one leg at a time: at the foot of the seam (x -307.2, 789.9 m up, pointing up the seam to the west), under the row of big icicles (x -323.2, 799.0 m up, pointing east), and under the shelf's broken end (x -318.4, 801.0 m up, pointing straight up). The pug arrow sign on its post on the corner ledge stays as well.",
+        "Walls: the far wall is one painted piece made for this room, with no panel that repeats. Its bands, the seam, the ribs, the stones and the paler places are all paint on it, as lines and bands, and none of them narrows to a point.",
         "Course change on this leg: none to anything you hold. All fifteen holds, the corner ledge and the floor are where they are.",
         "Scenery that moves: the pale card behind the holds (3 m wide, from the floor to the corner) goes, and a seam 0.5 m wide takes its place (note 84). The two ribs at x -316.5 and x -311.2 move to x -330.6 and x -308.2. The frozen climber in the wall moves from (-318.5, 795.0) to (-312.5, 798.6).",
-        "Scenery that is new: the two fallen blocks on the floor, 1.3 m and more behind you; the arrow sign on the corner ledge (note 85); the paler wall round the door.",
+        "Scenery that is new: the two fallen blocks on the floor, 1.3 m and more behind you; the arrow sign on the corner ledge (note 85); the three arrow signs on the far wall; the paler wall round the door.",
         "Note 86: the falling icicles grow before they fall and shatter where they land. Their four places over this line do not move.",
         "Nothing stands in front of this room.",
-    ],
-    "ask": [
-        "The whole lower crack on one screen. To see the door from the floor the camera has to pull back to about 24 m tall for all three challenges, which makes the climber half the size he is on the close camera. Yes, or keep the close camera?",
     ],
 }
 
@@ -352,11 +379,11 @@ CARAMBANOS = {
     ],
     "background": [
         {"name": "The crack's far wall", "z": [-3.0, -2.4], "tag": [-320.5, 797.6], "top": True,
-         "text": "The same banded wall. Above the shelf, in the closed west corner, it is the deepest blue in the room: nothing is up there.",
+         "text": "The same painted wall, in the same piece. Above the shelf, in the closed west corner, it is the deepest blue in the room: nothing is up there.",
          "draw": _wall(-331.0, 794.5, -313.0, 809.5)},
         {"name": "The seam, turning the corner", "z": [-2.5, -2.4], "tag": [-328.4, 801.45],
          "text": "The pale seam from Hielo Azul comes up to the corner ledge and climbs straight on to the underside of the shelf, beside "
-                 "the first big icicle. It is flush in the far wall. It shows that the icicles are the next piece of the same line.",
+                 "the first big icicle. It is painted on the far wall, the same width all the way. It shows that the icicles are the next piece of the same line.",
          "draw": _SEAM},
         {"name": "The scar, and the stones in it", "z": [-2.5, -2.4], "tag": [-315.6, 801.3],
          "text": "East of the shelf's end the far wall has a pale scar at the shelf's height, as long as the piece that fell, with stones "
@@ -364,7 +391,7 @@ CARAMBANOS = {
                  "of this one layer.",
          "draw": [_ln(-319.0, 802.6, -313.0, 802.6, "mark"), _c(-317.0, 802.25, 0.22, "pale"), _c(-315.5, 802.05, 0.26, "pale"), _c(-313.9, 802.3, 0.2, "pale")]},
         {"name": "The light down the gap", "z": [-3.0, -2.4], "tag": [-318.4, 807.0], "top": True,
-         "text": "A paler stripe on the far wall above the shelf's broken end, 1.2 m wide, with frost on the broken edge. Everything "
+         "text": "A paler band on the far wall above the shelf's broken end, 1.2 m wide all the way up, with frost on the broken edge. Everything "
                  "else over your head is dark. This is the answer to the question the room used to leave open: you do not go through "
                  "the shelf, you go round its end, here.",
          "draw": _LIT_GAP},
@@ -372,16 +399,28 @@ CARAMBANOS = {
          "text": "On a post at the back of the corner ledge, 2.2 m tall, pointing east along the row of big icicles (note 85). It is the "
                  "kit's sign, turned round.",
          "draw": _SIGN},
+        {"name": "The arrow sign under the row", "z": [-2.4, -1.4], "tag": [-323.2, 798.1], "top": True,
+         "text": "A flat painted board cut to an arrow, 1.6 m long and 0.7 m tall, with the pug on it. Two canes driven into the far "
+                 "wall hold it 1 m out from the ice, so it throws a shadow on the wall. It is 4.3 m east of the corner ledge, at chest "
+                 "height, and it points east. Standing on the ledge you see it without the camera moving. It is 0.6 m below the "
+                 "tips of the row and 2.1 m above the seam's holds, so no hold is in front of it.",
+         "draw": _SIGN_ROW},
+        {"name": "The arrow sign under the gap", "z": [-2.4, -1.4], "tag": [-317.4, 800.5],
+         "text": "The same sign, turned to point straight up. It is on the far wall right under the shelf's broken end, 1.3 m below "
+                 "the stone on the nose, in line with the lit gap. From the last big icicle you see the arrow, the stone and the "
+                 "light above them in one line. It answers the old question: up here, round the end, and not through the shelf.",
+         "draw": _SIGN_GAP},
     ],
     "play": [
         {"name": "The five that hold", "z": [-0.3, 0.3], "style": "pale", "tag": [-323.4, 803.2],
          "text": "Each big icicle is thick, ringed, pale blue and matte, with a white frost collar where it joins the shelf, and the seam "
-                 "runs from collar to collar along the shelf's underside. They hang in a row in the play space, and nothing else here does.",
+                 "runs from collar to collar along the shelf's underside. They hang in a row in the play space, and nothing else here does. "
+                 "Each is drawn to a sharp point, and as a solid it ends blunt.",
          "draw": [_c(x, 802.5, 0.36) for x in _ICI] + [_ln(-327.3, 802.6, -319.6, 802.6, "line")]},
         {"name": "The four that fall", "z": [-0.3, 0.3], "style": "dark", "tag": [-329.4, 801.7],
          "text": "Each hangs from a dark wet crack in the shelf, 0.8 m long, with no collar. It is smooth, clear and sharp, and darker "
                  "than the ones that hold. You watch it grow from a nub to full length, then it shivers, ticks and drops (note 86). "
-                 "A fifth crack is over the corner ledge.",
+                 "It looks sharp, and as a solid it ends blunt. A fifth crack is over the corner ledge.",
          "draw": [_r(round(x - 0.4, 2), 802.6, round(x + 0.4, 2), 802.78) for x in _DRIP + [-329.4]]},
         {"name": "The broken end and its stone", "z": [-1.2, 1.2], "style": "line", "tag": [-320.0, 803.3],
          "text": "The shelf's east end is a rough broken face, frosted white, with a grey stone standing out of it at 803.1 m. The stone "
@@ -401,17 +440,18 @@ CARAMBANOS = {
         ["The stone tooth and the stone on the nose", "Stones from the shelf's own layer", "The scar on the far wall where the shelf's other half was, with the same stones in it"],
         ["The icicles that fall", "This year's melt water, dripping through cracks in the shelf", "The dark wet crack each one grows from"],
         ["The shelf (it cannot be held)", "A plate of hard ice left sticking out when the softer ice under it fell away", "Its broken end, the light coming down past it, and its other half on the floor"],
-        ["The corner ledge", "Where the seam turns from the wall to the shelf", "The arrow sign"],
+        ["The corner ledge", "Where the seam turns from the wall to the shelf", "The arrow sign on its post, and the arrow sign on the far wall under the row"],
     ],
     "pieces": [
-        ["Back wall bay", "4 m wide, 5 m tall", "14", "Background", "kit: back wall bay"],
-        ["Paler wall bay, cut to a stripe", "1.2 m wide, 7 m tall", "1", "Background", "kit: paler wall bay (added below)"],
+        ["Back wall of the lower crack: the same piece as on Hielo Azul's page", "25.5 m wide, 23.5 m tall", "1", "Background", "kit: back wall"],
+        ["Paler paint up the gap: one band", "1.2 m wide, 7 m tall", "1", "Background", "kit: paler wall paint (added below)"],
         ["Blue ice seam", "0.5 m wide; 4 m up the corner, 8 m under the shelf", "2 lengths", "Background and play space (drawn on)", "kit: blue ice seam"],
         ["Holding icicle: ringed, with a frost collar", "0.6 m across, 1.1 to 2.6 m long", "5", "Play space", "kit: holding icicle"],
         ["Falling icicle in its growing stages; its roof crack", "0.6 m across full grown; crack 0.8 m", "6", "Play space", "kit: falling icicle"],
-        ["Stone in the ice", "0.5 m", "2 held, 3 in the scar", "Play space and background", "kit: stone in the ice"],
+        ["Stone in the ice", "0.5 m", "2 held; the 3 in the scar are paint", "Play space and background", "kit: stone in the ice"],
         ["Broken end for the shelf, frosted", "1.4 m tall", "1", "Play space (drawn on)", "new, this room only"],
         ["Pug arrow sign on a post", "1 m by 2.2 m", "1", "Background", "kit: pug arrow sign"],
+        ["Arrow sign that sticks out of the back wall", "board 1.6 m by 0.7 m, 1 m out from the wall", "2", "Background", "kit: arrow sign that sticks out of the back wall"],
         ["Ice in pieces: an icicle's", "pieces 0.2 m", "as they fall", "Play space", "kit: ice in pieces"],
     ],
     "effects": [
@@ -422,6 +462,8 @@ CARAMBANOS = {
     "notes": [
         "Note 85: the big icicles hold longer than today's 0.7 seconds. The note's first try is 1.5 seconds, to be set by play. They look different from the ones that fall: thick, ringed and collared against smooth, clear and hanging from a wet crack.",
         "Note 85: the arrow sign on the corner ledge, pointing east.",
+        "Parker's answer on the camera: it stays close here, and an arrow sign sticks out of the far wall to say which way to go. This leg has two. One is under the row, at x -323.2 and 799.0 m up, pointing east, where you see it from the corner ledge. One is under the shelf's broken end, at x -318.4 and 801.0 m up, pointing up through the lit gap. Both stand 1.4 m and more behind the climb.",
+        "Note 90: the hand that got caught was on a sharp icicle. The point went between the hand and the forearm and held it there. So every point in this room is drawn sharp and ends blunt as a solid: the five that hold, every one that falls, and the stone tooth. The solid stops short of the drawn tip, in a flat end about 0.2 m across, too wide to go into that gap. The width is to be set by play. Nothing about where they hang or how long they are changes.",
         "Note 86: the icicles that fall are seen growing first, and shatter where they land.",
         "Note 86, the redesign. Course change on this leg: the shelf, its five icicles, the stone tooth and the stone on its nose do not move. What changes at the nose is above it. Today the first snow bridge piece lies over the nose stone, 0.23 m above it, so the way up onto the shelf goes through the end of a bridge. The bridges move east and leave 1.2 m of open air there (see Puente de Nieve).",
         "The seam under the shelf and the frost collars are drawn on things that are there. Nothing new can be held.",
@@ -447,12 +489,13 @@ PUENTE_DE_NIEVE = {
     ],
     "background": [
         {"name": "The crack's far wall", "z": [-3.0, -2.4], "tag": [-316.4, 800.2], "top": True,
-         "text": "The same banded wall, running on past the door into the cave. Along it at 804 m, behind the bridges, is a thin white "
+         "text": "The same painted wall, running on past the door into the cave. Along it at 804 m, behind the bridges, is a thin white "
                  "frost line where the old lid met the wall. It is a mark and not a ledge: flush, and no wider than a hand.",
          "draw": _wall(-322.0, 797.5, -300.0, 812.5)},
         {"name": "The door, lit", "z": [-3.0, -2.4], "tag": [-307.0, 807.4], "top": True,
          "text": "A doorway 4.5 m tall and 2.5 m deep through the slot's east wall, with white frost round its edge. The far wall "
-                 "round it is two steps paler than anywhere else in the slot, and the paler wall reaches 7 m back along the bridges.",
+                 "round it is painted two steps paler than anywhere else in the slot, and the paler block reaches 7 m back along the "
+                 "bridges. So it is on screen from the shelf's top, before the door is.",
          "draw": _DOOR},
         {"name": "The lantern inside the door", "z": [-1.6, -1.4], "style": "light", "tag": [-300.7, 808.6],
          "text": "A candle lantern on a hook, on the cave's side of the door, beside the first of the ones who tried. From the bridges "
@@ -463,8 +506,13 @@ PUENTE_DE_NIEVE = {
                  "raised. He belongs to La Cueva de Hielo. He is drawn here because he is what you are walking toward.",
          "draw": [_back(-302.4, 806.9)]},
         {"name": "The light down the gap", "z": [-3.0, -2.4], "tag": [-318.4, 807.4],
-         "text": "The paler stripe above the shelf's broken end. From up here it is the gap you just climbed through, and the first step of this leg is across it.",
+         "text": "The paler band above the shelf's broken end. From up here it is the gap you just climbed through, and the first step of this leg is across it.",
          "draw": _LIT_GAP},
+        {"name": "The arrow sign under the gap", "z": [-2.4, -1.4], "tag": [-319.3, 800.3],
+         "text": "On the far wall under the shelf's broken end: the arrow sign that pointed you up through the gap. It belongs to "
+                 "Carámbanos. No sign is needed up here: the paler wall and the lantern's light are to the east, and the boot "
+                 "prints on the shelf's top go east.",
+         "draw": _SIGN_GAP},
         {"name": "One who fell", "z": [-2.6, -2.4], "tag": [-313.8, 799.4],
          "text": "Deep in the far wall under the middle bridge, head down: one of the ones who tried, a flat blue shape. He says what "
                  "the bridges do before you step on one.",
@@ -475,7 +523,7 @@ PUENTE_DE_NIEVE = {
          "text": "Nine pieces of snow lid, each 1.1 m long and 0.45 m thick, in three bridges, with the two wedged stones between them. "
                  "The yellow shapes are where they go. The black strip blanks out where they are today. Each bridge sags 0.15 m in the "
                  "middle, is thinner than firm snow, and has open air under it. The stones are grey-brown and dry, each wedged from the "
-                 "far wall to the near one, with a dark drip mark down the far wall under it.",
+                 "far wall to the near one.",
          "draw": _NEW_BRIDGES},
         {"name": "The breakable look", "z": [-0.5, 0.5], "style": "mark", "tag": [-316.7, 802.6],
          "text": "Every piece is cracked across and has a corner gone: the mountain's one look for a thing that will break. Snow sifts "
@@ -493,14 +541,14 @@ PUENTE_DE_NIEVE = {
     "foreground": [],
     "explains": [
         ["The nine bridge pieces", "What is left of the snow lid that once roofed this crack", "The frost line along the far wall at the same height, where the lid met it"],
-        ["The two wedged stones", "Stones out of the shelf's layer, jammed between the crack's two walls", "The scar they came from, and the drip mark under each"],
+        ["The two wedged stones", "Stones out of the shelf's layer, jammed between the crack's two walls", "The scar they came from, on the far wall behind them"],
         ["The shelf's top, where you start", "A piece of the lid that has ice under it", "The broken end, and the light coming down the gap"],
         ["The door's sill", "The same snow, on the ice cave's floor", "The lit doorway, the lantern, and the first frozen climber"],
         ["The air under you", "The whole depth of the crack", "One who fell, deep in the wall below the middle bridge"],
     ],
     "pieces": [
-        ["Back wall bay", "4 m wide, 5 m tall", "14", "Background", "kit: back wall bay"],
-        ["Paler wall bay", "4 m wide, 5 m tall", "3", "Background", "kit: paler wall bay (added below)"],
+        ["Back wall of the lower crack: the same piece as on Hielo Azul's page", "25.5 m wide, 23.5 m tall", "1", "Background", "kit: back wall"],
+        ["Paler paint on the back wall: round the door, and up the gap", "7 m by 5.5 m; 1.2 m by 7 m", "2", "Background", "kit: paler wall paint (added below)"],
         ["Frost rim for the door", "2.5 m by 4.5 m", "1", "Background", "kit: frost rim (added below)"],
         ["Snow bridge piece, cracked, a corner gone", "1.1 m long, 0.45 m thick", "9", "Play space", "kit: snow bridge piece, cut 0.15 m shorter"],
         ["Wedged stone", "1.2 m", "2", "Play space, running back to the far wall", "kit: wedged stone"],
@@ -519,6 +567,7 @@ PUENTE_DE_NIEVE = {
         "Is it as hard: the crumbling snow is 1.2 m shorter in all, and there is one new step of 1.2 m over open air to start it. The two rests are as wide as they were.",
         "The lantern that hangs dead on the door's lintel today, inside the play space, is lit and moves to a hook 1.4 m back on the cave's side of the door.",
         "Note 86: the icicle that falls onto the shelf's top grows first and shatters. Its place does not move.",
+        "The redesign is approved, and the camera stays as it is. The arrow sign drawn here is the one under the gap, from Carámbanos's page.",
     ],
 }
 
@@ -608,10 +657,10 @@ LA_CUEVA = {
         ["The cave's floor", "Snow drifted down from the window, 26 m up", "The fallen block, the glove, and at the east end the frog's snow hole"],
     ],
     "pieces": [
-        ["Back wall bay", "4 m wide, 5 m tall", "34", "Background", "kit: back wall bay"],
-        ["Paler wall bay", "4 m wide, 5 m tall", "1", "Background", "kit: paler wall bay (added below)"],
-        ["Fluted bay for the chimney", "3.5 m wide, 5 m tall", "4, the upper 2 paler", "Background", "new, this area only: the back wall bay with upright grooves"],
-        ["Frozen climber you can hold: hanging, clinging, falling, reaching", "1.8 m; each grip 0.35 m", "6", "Play space", "kit: frozen climber you can hold"],
+        ["Back wall of the ice cave; back wall of the balcony and the chimney: one painted piece each", "21 m by 30 m; 28 m by 20 m", "1 and 1", "Background", "kit: back wall"],
+        ["Paler paint at the balcony's lip", "3.5 m wide, 4 m tall", "1", "Background", "kit: paler wall paint (added below)"],
+        ["Fluting for the chimney: upright grooves painted on the back wall, paler in the upper half", "3.5 m wide, 20 m tall", "1", "Background", "new, this area only: paint on the back wall"],
+        ["Frozen climber you can hold: hanging, clinging, falling, reaching", "1.8 m; each grip 0.35 m", "6", "Play space", "kit: frozen climber you can hold. He is the game's climber model, posed and coloured. Nothing is modelled for him now"],
         ["Ice at a frozen climber's back", "1.7 m wide, 3 m tall, 1.2 m deep", "6", "Background", "kit: ice at a frozen climber's back (added below)"],
         ["Candle lantern on a hook", "0.5 m", "2", "Background", "kit: candle lantern (lantern_hang)"],
         ["Blue ice knuckle; stone in the ice", "0.6 m by 0.34 m; 0.5 m", "4 and 1", "Play space", "kit: blue ice seam and its holds; stone in the ice"],
@@ -708,7 +757,7 @@ SNOW_HOLE = {
         ["The frog's snow hole: bank, round hollow, step", "bank 5.3 m by 2.7 m; hollow 3 m by 2 m", "1", "Background, cut away at the front", "kit: the frog's snow hole"],
         ["The frog, wrapped in a blanket", "0.3 m", "1", "Background", "kit: the frog"],
         ["Bedroll; kettle on a spirit stove; candle lantern on an axe; a string of paper flags", "bedroll 1 m; kettle 0.3 m; lantern 0.5 m; flags 1.5 m", "1 of each", "Background", "kit: camp_bedroll, lantern_hang, ice_axe; the kettle and stove are the cliffs' tea things; the flags are papel_tatters cut short"],
-        ["Back wall bay", "4 m wide, 5 m tall", "12", "Background", "kit: back wall bay"],
+        ["Back wall of the ice cave: the same piece as on La Cueva de Hielo's page", "21 m by 30 m", "1", "Background", "kit: back wall"],
         ["Firm snow cap, with boot prints and landing dents", "21 m long, 0.6 m thick", "1", "Play space", "kit: firm snow cap; the dents are new paint on it"],
         ["Fallen block; frozen glove", "2 m; 0.25 m", "1 and 1", "Background", "kit: what they carried"],
         ["Frozen climber deep in the ice", "0.9 m by 1.9 m", "1", "Background", "kit: frozen climber deep in the ice"],
@@ -788,7 +837,7 @@ EL_SERAC = {
                  "is it the tower again (note 88).",
          "draw": [_r(-324.7, 832.0, -322.8, 832.6), _r(-324.7, 832.0, -322.8, 835.5)]},
         {"name": "Bent layers under the foot", "z": [1.1, 1.2], "style": "mark", "tag": [-324.9, 829.6],
-         "text": "Drawn on the face of the block the tower stands on: the ice's bands, bent upward into a peak under the tower's foot. "
+         "text": "Painted on the face of the block the tower stands on: the ice's bands, as lines bent upward into a hump under the tower's foot. "
                  "It is the push that raises the next one, shown where you can see it. A white crack runs along the foot itself.",
          "draw": [_ln(-326.9, 829.4, -323.8, 831.6), _ln(-322.9, 830.2, -323.8, 831.6), _ln(-326.9, 827.9, -323.8, 830.1), _ln(-322.9, 828.7, -323.8, 830.1)]},
         {"name": "The pillar's snow", "z": [-0.5, 0.5], "style": "mark", "tag": [-311.7, 835.5],
@@ -810,9 +859,9 @@ EL_SERAC = {
         ["The tower of ice: standing, with its snow side and cap", "1.9 m by 7.1 m; snow side 0.6 m", "1", "Play space", "kit: the tower of ice (serac)"],
         ["The tower growing; its stump", "to 7.1 m; stump 0.6 m", "1 and 1", "Play space", "kit: the tower of ice, the growing one and the stump"],
         ["Ice in pieces: the tower's", "pieces 0.3 to 1 m", "about 12", "Play space; a jam of 8 more in the background", "kit: ice in pieces"],
-        ["Blue rib, as a slab of the wall", "1.9 m and 1.5 m wide, 10 to 17 m tall", "3", "Background", "kit: blue rib"],
-        ["Back wall bay", "4 m wide, 5 m tall", "22", "Background", "kit: back wall bay"],
-        ["Paler wall bay", "4 m wide, 5 m tall", "2", "Background", "kit: paler wall bay (added below)"],
+        ["Blue rib, as a slab of the wall", "1.9 m and 1.5 m wide, 10 to 17 m tall", "3", "Background", "kit: blue rib. The tower's twin is real shape, 0.8 m proud. The two that lean are paint"],
+        ["Back wall of the upper level and the pit: one painted piece", "24.5 m wide, 27 m tall", "1", "Background", "kit: back wall"],
+        ["Paler paint behind the pillar", "8 m wide, 7.5 m tall", "1", "Background", "kit: paler wall paint (added below)"],
         ["Stone in the ice, for the tower's top corner", "0.45 m", "1", "Play space", "kit: stone in the ice"],
         ["Ice axe; frozen rope coil", "0.7 m; 0.6 m", "1 and 1", "Background", "kit: what they carried"],
         ["Bent layers; the crack at the foot", "paint, 4 m wide", "1", "Play space (drawn on)", "new, this area only"],
@@ -933,11 +982,11 @@ TOBOGAN = {
         ["The air under the flight", "The whole height of the ice cave", "Two of the ones who tried in the wall, and the frog's light on the floor"],
     ],
     "pieces": [
-        ["Back wall bay", "4 m wide, 5 m tall", "40", "Background", "kit: back wall bay"],
-        ["Paler wall bay", "4 m wide, 5 m tall", "4", "Background", "kit: paler wall bay (added below)"],
+        ["Back wall of the ice cave: the same piece as on La Cueva de Hielo's page. Back wall behind the slide: one painted piece", "21 m by 30 m; 9 m by 14 m", "1 and 1", "Background", "kit: back wall"],
+        ["Paler paint toward the window", "8 m wide, 16 m tall", "1", "Background", "kit: paler wall paint (added below)"],
         ["Frost rim for the window", "4.5 m by 4.5 m", "1", "Background", "kit: frost rim (added below)"],
         ["The town's torn paper; candle lantern", "3 m; 0.5 m", "1 and 1", "Background", "kit: papel_tatters; candle lantern"],
-        ["Scoured grooves", "paint, two lines 12 m long", "1", "Background", "new, this area only: painted on the back wall bays"],
+        ["Scoured grooves", "paint, two lines 12 m long", "1", "Background", "new, this area only: painted on the back wall"],
         ["Blue rib", "2.2 m and 1.2 m wide, 30.7 m tall", "2", "Background", "kit: blue rib"],
         ["Frozen climber deep in the ice", "0.9 m by 1.9 m", "2", "Background", "kit: frozen climber deep in the ice"],
         ["Kicker: a flake of ice wedged in a crack", "face 1.8 m long", "1", "Play space", "kit: kicker"],
@@ -1004,7 +1053,8 @@ VENTISCA = {
                  "the town's paper streaming out of it.",
          "draw": [_r(-291.0, 826.5, -281.0, 834.7)]},
         {"name": "The flank of the tongue", "z": [-3.0, -1.5], "tag": [-280.0, 847.6], "top": True,
-         "text": "The glacier's own side, 1.5 to 3 m behind the climb: dark ice in flat planes, reaching 2 to 3 m further east than "
+         "text": "The glacier's own side, 1.5 to 3 m behind the climb: its body carried on behind, as dark ice in three big slanted "
+                 "planes with its bands painted on as thin lines, and an uneven edge. It reaches 2 to 3 m further east than "
                  "the wall you are on. It has two small snow shelves, each sloping and no wider than 1.5 m. It is why the wall is "
                  "not a blade standing in the air, and it is dark, so the pale holds show in front of it. One of its bands carries stones, at the height of the one stone you hold. The niche's back is the same ice.",
          "draw": _FLANK},
@@ -1020,8 +1070,9 @@ VENTISCA = {
     ],
     "play": [
         {"name": "The tusk", "z": [-0.3, 0.3], "tag": [-279.6, 832.6],
-         "text": "The first hold outside: a blunt hanging point of blue ice 3 m long, frosted, with no rings and no collar. It is "
-                 "blue ice and not an icicle. It lets go after two seconds like any blue ice, and it never snaps off.",
+         "text": "The first hold outside: a stout hanging point of blue ice 3 m long, frosted, with no rings and no collar. It is "
+                 "blue ice and not an icicle. It lets go after two seconds like any blue ice, and it never snaps off. Its tip is "
+                 "drawn sharp, and as a solid it ends blunt (note 90).",
          "draw": [_tusk(-280.6, 834.66, 831.6)]},
         {"name": "The one stone", "z": [-0.3, 0.3], "style": "mark", "tag": [-283.5, 840.8],
          "text": "The third hold up the wall is a grey stone, ringed here. It is the only place on this climb where you can wait "
@@ -1050,7 +1101,7 @@ VENTISCA = {
     ],
     "pieces": [
         ["The glacier's far side: one painted card", "90 m wide, 100 m tall, 45 m back", "1", "Background, far", "kit: the glacier's far side"],
-        ["Flank piece: dark ice in flat planes, with one small sloping snow shelf", "3 m wide, 5 m tall", "4", "Background", "new, this area only; the sheet's layers ask for it"],
+        ["The flank of the tongue: the glacier's body carried on behind, in three slanted planes, painted, with two small sloping snow shelves", "4.5 m wide, 24 m tall", "1", "Background", "kit: back wall, as it stands outside"],
         ["Route cane with a paper flag", "3 m", "3", "Background", "kit: route cane (streamer_pole)"],
         ["The town's torn paper; candle lantern", "3 m; 0.5 m", "1 and 1", "Background", "kit: papel_tatters; candle lantern"],
         ["Blue ice tusk", "0.6 m across, 3 m long", "1", "Play space", "kit: blue ice tusk"],
@@ -1069,6 +1120,7 @@ VENTISCA = {
     "notes": [
         "Note 89: wind is drawn loudly. Wavy lines across the whole reach of the wind, and flags: three canes, the town's paper, snow off every edge.",
         "Note 84: every hold here but the stone is blue ice, and the button mark shivers on the limb that holds it.",
+        "Note 90: the tusk is drawn sharp and ends blunt as a solid, like every point of ice a hand can meet. The same goes for the tusk at each niche's mouth on the pages that follow.",
         "The snow strip on the brow stands in front of the three plates today. It moves 0.4 m down, to sit in front of ice only (notes 87 and 92, and the sheet's rule).",
         "In the play space today, and moved out of it: the town's paper over the window (0.6 m back).",
         "Nothing you touch moves.",
@@ -1121,7 +1173,7 @@ LA_AVALANCHA = {
          "draw": [_p(_OUT_CARD)]},
         {"name": "The ridge's rock, across the gap", "z": [-4.0, -2.4], "tag": [-293.6, 870.3], "top": True,
          "text": "Behind the open part of the chute: the mountain itself, 2.4 m back. Dark wet slate in long leaning slabs, dull "
-                 "blue-grey, with rain marks. It is the first rock since the cableway, and it is the storm ridge's own piece. "
+                 "blue-grey. It is the first rock since the cableway, and it is the storm ridge's own piece. "
                  "Today a flat grey card stands here.",
          "draw": [_p(_GAP)]},
         {"name": "The ice behind the roofed chute and the niches", "z": [-3.0, -2.4], "tag": [-284.6, 862.6],
@@ -1137,7 +1189,7 @@ LA_AVALANCHA = {
         {"name": "The hollow the slabs are thrown into", "z": [-5.4, -2.4], "tag": [-290.4, 870.5], "top": True,
          "text": "A hollow 4 m wide and 3 m deep in the back wall, beside the foot of the rope, where a slab of the slate has fallen "
                  "out (note 91). Each snow slab is thrown up into it and bursts there. A heap of broken snow lies in its floor, "
-                 "and a white fan of burst marks covers its back.",
+                 "and its back is white with burst snow.",
          "draw": _HOLLOW},
         {"name": "A cane in each niche", "z": [-1.8, -1.5], "tag": [-286.3, 847.6],
          "text": "At the back of the niche under the chute's mouth and of the niche in the stem: a cane with a paper flag. In the "
@@ -1166,7 +1218,7 @@ LA_AVALANCHA = {
                  "hand can stay. The stones' backs keep their glaze, and the plates on them are still blue ice.",
          "draw": [_c(round(_REST1[0], 2), round(_REST1[1], 2), 0.5), _c(round(_REST2[0], 2), round(_REST2[1], 2), 0.5)]},
         {"name": "The tusk under the mouth", "z": [-0.3, 0.3], "tag": [-281.1, 848.1],
-         "text": "The first hold out of the niche: a blunt hanging point of blue ice, the same piece as at the window.",
+         "text": "The first hold out of the niche: a stout hanging point of blue ice, the same piece as at the window.",
          "draw": [_tusk(-282.1, 850.1, 847.7)]},
         {"name": "The old rope", "z": [-0.2, 0.2], "style": "mark", "tag": [-285.4, 861.6],
          "text": "Hemp, frozen stiff, tied to a horn of grey stone at the stem's corner. Its frayed end hangs 1.7 m above the "
@@ -1184,7 +1236,7 @@ LA_AVALANCHA = {
     ],
     "pieces": [
         ["The ridge's flank: leaning slate slabs, dull blue-grey", "sections 12 m wide, 12 m tall", "2", "Background", "the storm ridge's kit: the ridge's flank"],
-        ["Back wall bay, dark, with stones", "4 m wide, 5 m tall", "6", "Background", "kit: back wall bay"],
+        ["Back wall behind the roofed chute and the two niches: painted, dark, with painted stones", "12 m by 16 m; 3 m by 4 m; 3 m by 4 m", "3", "Background", "kit: back wall"],
         ["Slab hole, with a snow lip", "1.4 m across, 2 m deep", "1", "Background, cut into the wall", "kit: slab hole (note 93)"],
         ["The hollow the slabs are kicked into, with its heap", "4 m wide, 3 m back", "1", "Background", "kit: the hollow (note 91)"],
         ["Snow slab", "1 m", "one at a time", "Play space", "kit: snow slab"],
@@ -1207,12 +1259,9 @@ LA_AVALANCHA = {
         "Note 93: the slabs come out of a hole in the wall at the top of the chute, and each is seen in the hole before it comes.",
         "Note 91: a kicker at the rope's foot throws each slab into the background, into a hollow where it bursts. No slab reaches the climb below.",
         "Course change, as those two notes ask: one new slick flake on the chute's floor, from x -290.8 to x -289.05, 2.4 m uphill of where the rope hangs and above the last hold. The slabs start at the wall, 1.3 m west of where they start today.",
-        "Note 91: the two long stones shelter you from nothing now, so they are plain rests. They do not move and are not made bigger.",
+        "Note 91: the two long stones shelter you from nothing now, so they are plain rests. They do not move and are not made bigger. They stay as they are today: bare rock only under their downhill ends, so the climb between them stays on cold ice.",
         "The name: the avalanche is still here to see and hear. It comes down the open chute in view, bursts beside the rope, and its dust comes down over the climb.",
         "Note 84: the button mark shivers on a limb that holds blue ice. It does not on the stones or the rope.",
-    ],
-    "ask": [
-        "The two long stones: bare rock only under their downhill ends, as today, so the climb between them stays on cold ice. Or bare on their backs too, which is easier? This design keeps them as today.",
     ],
 }
 
@@ -1264,7 +1313,7 @@ CORNISA = {
     ],
     "play": [
         {"name": "The tusk at the niche's mouth", "z": [-0.3, 0.3], "tag": [-287.9, 870.2],
-         "text": "A blunt hanging point of blue ice 2.4 m long: the way from the niche's floor up to the roof. The same piece as at the window.",
+         "text": "A stout hanging point of blue ice 2.4 m long: the way from the niche's floor up to the roof. The same piece as at the window.",
          "draw": [_tusk(-286.9, 871.85, 869.5)]},
         {"name": "The five nubs", "z": [-0.3, 0.3], "style": "mark", "tag": [-289.35, 870.5],
          "text": "Pale blue ice, frosted, half a metre across, each standing 0.3 m down out of the roof at the foot of its seam. "
@@ -1290,7 +1339,7 @@ CORNISA = {
     ],
     "pieces": [
         ["The ridge's flank: leaning slate slabs, dull blue-grey", "sections 12 m wide, 12 m tall", "2", "Background", "the storm ridge's kit: the ridge's flank"],
-        ["Back wall bay, dark", "4 m wide, 5 m tall", "4", "Background", "kit: back wall bay"],
+        ["Back wall behind the roofed chute and the two niches: painted, dark", "the same three pieces as on La Avalancha's page", "3", "Background", "kit: back wall"],
         ["Blue ice seam, seen through the cornice", "0.5 m wide, 1.2 to 3.6 m tall", "5", "Background", "kit: blue ice seam"],
         ["Blue ice nub", "0.5 m", "6", "Play space", "kit: blue ice seam and its holds"],
         ["Blue ice tusk", "0.5 m across, 2.4 m long", "1", "Play space", "kit: blue ice tusk"],
@@ -1375,7 +1424,7 @@ EL_RIMAYE = {
                  "gap, lit grey to its floor, so you see what a miss costs before you let go.",
          "draw": [_ln(-297.17, 882.57, -299.0, 885.3), _ln(-299.0, 885.3, -300.9, 886.9), _ln(-300.9, 886.9, -302.6, 887.0), _ln(-302.6, 887.0, -304.2, 886.0)]},
         {"name": "The tusk and two nubs", "z": [-0.3, 0.3], "tag": [-297.0, 876.2],
-         "text": "A blunt tusk of blue ice at the niche's mouth, 2.4 m long, and two nubs on the face above it. The last blue ice on the mountain.",
+         "text": "A stout tusk of blue ice at the niche's mouth, 2.4 m long, and two nubs on the face above it. The last blue ice on the mountain.",
          "draw": [_tusk(-295.75, 877.35, 874.95), _c(-296.2, 878.6, 0.4, "mark"), _c(-296.2, 879.9, 0.4, "mark")]},
         {"name": "The glazed nose of the ledge", "z": [-1.2, 1.2], "style": "line", "tag": [-302.3, 888.0],
          "text": "The first metre of the ledge is a lump of clear ice over rock: dark and glossy with a white glint, the mountain's "
@@ -1391,13 +1440,13 @@ EL_RIMAYE = {
         ["The ledge you land on (the storm ridge's)", "The foot of the ridge", "Its prayer pole, and in that ridge's design the keeper's cabin"],
     ],
     "pieces": [
-        ["Frozen climber you can hold: reaching, leaned 45 degrees", "1.8 m; each grip 0.35 m", "1", "Play space", "kit: frozen climber you can hold"],
+        ["Frozen climber you can hold: reaching, leaned 45 degrees", "1.8 m; each grip 0.35 m", "1", "Play space", "kit: frozen climber you can hold. He is the game's climber model, posed and coloured. Nothing is modelled for him now"],
         ["Ice at a frozen climber's back, as a leaning horn", "1.5 m wide, 2.2 m tall, 1.2 m deep", "1", "Background", "kit: ice at a frozen climber's back (added below)"],
         ["Route cane with a paper flag; candle lantern", "3 m; 0.5 m", "2 canes, 1 lantern", "Background", "kit: route cane; candle lantern"],
         ["Blue ice tusk; nub", "0.5 m across, 2.4 m long; 0.46 m", "1 and 2", "Play space", "kit: blue ice tusk; blue ice seam and its holds"],
         ["The ridge's flank: leaning slate slabs", "sections 12 m wide, 12 m tall", "2", "Background", "the storm ridge's kit: the ridge's flank"],
         ["Slab hole, with a snow lip", "1.4 m across", "1", "Background, cut into the wall", "kit: slab hole (note 93)"],
-        ["Back wall bay, dark", "4 m wide, 5 m tall", "1", "Background", "kit: back wall bay"],
+        ["Back wall behind the second niche: painted, dark", "3 m by 4 m", "1", "Background", "kit: back wall"],
         ["Clear ice over the ledge's nose", "1.2 m", "1", "Play space", "kit: glacier body; the course builds it today"],
         ["Prayer pole; the keeper's cabin", "4 m; 4.3 m wide", "1 and 1", "Background", "the storm ridge's kit: prayer_pole, the keeper's cabin"],
     ],
@@ -1421,8 +1470,8 @@ AREAS = [UNDER_THE_LIP, HIELO_AZUL, CARAMBANOS, PUENTE_DE_NIEVE, LA_CUEVA, SNOW_
 
 # ------------------------------------------------------------------ pieces these areas add to the biome's kit
 KIT_MORE = [
-    ["Paler wall bay: the back wall bay painted two steps paler, for where daylight comes through", "4 m wide, 5 m tall",
-     "round every way out: the door of the ice cave, the gap at the shelf's broken end, the balcony's lip, the chimney, the window", "Background", "new, a second painting of the back wall bay"],
+    ["Paler wall paint: a block or a band of the back wall painted two steps paler, for where daylight comes through. It has square or leaning ends and never a pointed one", "to suit: from a band 1.2 m wide to a block 8 m wide",
+     "round every way out: the door of the ice cave, the gap at the shelf's broken end, the balcony's lip, the chimney, the window", "Background", "new, paint on the back wall"],
     ["Frost rim: a band of white frost round a way out", "0.3 m wide, cut to suit",
      "the door of the ice cave and the window in the skin", "Background", "new"],
     ["Ice at a frozen climber's back: a slab of dull mid-blue ice that runs back to the far wall", "1.7 m wide, 3 m tall, 1.2 m deep",
