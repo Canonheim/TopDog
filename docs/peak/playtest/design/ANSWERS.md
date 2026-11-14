@@ -142,3 +142,39 @@ His exact words where he typed them; "Picked" where he chose an option.
 - **16. Hand the branch to Top Dog to merge?** Picked: "After today's fixes" (the valley and the calmer clouds first, then hand it over in one go).
 
 Still needing his eye or ears in the game, not asked: the ropes' four calls (note 20), the mill-race light (17), the garden's sound (35), the camera numbers (7), the camera controls on a pad under Steam (28, 43).
+
+# Third round, 2026-11-13 (late night, before he went to bed): what is needed for the overnight plan
+
+Asked one by one. His exact words where he typed them; "Picked" where he chose an option.
+
+- **1. What may start overnight without waiting for him?** Picked: "Docs, models and fixes" (the design docs, then the modelling run with the maker threads, and the fix thread on the decided play changes, each on the branch with before and after pictures).
+- **2. Walls and masses: wait for his eye on the worked example, or go?**
+  "It's currently done and I judge it as looking pretty darn good. If you can improve it, great, but I like the painted look"
+  - So the painted look is approved: a wall's face is paint, with a few big real breaks. It goes into every sheet.
+- **3. Biomes 0 to 6, with the pitch deck only part read:** Picked: "Build them as designed" (his answers, both playtests' notes and the cart-room rework folded in; any more deck feedback is applied when it arrives, even if a piece is already made).
+- **4. The cart room (note 103): how do the rings reach the beams of Las Vigas?**
+  "The last beam on the right has no purple on it, you fling to that one since it's bottom lets you grab it"
+  - So the first beam (the eastmost) keeps an underside you can hold; the other three do not.
+- **5. The bull wheel (note 76):** Picked: "Draw it at 7.6 m".
+- **6. Every hanger on the cableway as scenery, the gondolas' too?** Picked: "Only the chairs' poles". Gondola hangers stay solid and holdable, and are drawn so. Pylon 1's perch needs no rung.
+- **7. The cableway's station buildings (note 77):** Picked: "Make the roof real" (the roof over the deck is solid and can be held and stood on).
+- **8. The cableway's look rules:** picked all three: "Cream band marks a hold", "Wind engines drive it", "Chairs become benches".
+- **9. The glacier's look rules:** picked all three ("Warm / pale blue / dark blue", "Frozen climbers frost grey", "The way out is palest"), and:
+  "Si we are getting a new climber model very soon, just a heads up"
+  - So nothing bespoke is modelled for the frozen climbers or for the ending's climber until the new climber model is here.
+- **10. The lower crevasse redesign (same three legs, the shelf broken off short, the lit gap and door):** Picked: "Yes, that". **The camera there:**
+  "Keep the close camera as normal but add a background arrow sign sticking out the wall or ceiling indicating which way to go"
+- **11. The summit's story (the First Top Dog fought only on the summit; the temple's people forged the belt and carried a ring up):**
+  "Yes this is all correct but the summit currently does not look like the ruin of a ring, it can be reworked a but to look like one"
+- **12. The summit's smaller calls:** picked all three: "Breaking steps are rime frost", "A frog shows the rope move", "The bell is solid".
+- **13. The secret west of the peak (note 102): what opens the breakable wall?**
+  "the only way to get over there is to get past the belt, the breakable wall is supposed to lead back to where the teahouse is planned, to the right. To the left, the new area, is where going left off the summit by the belt sends you and is the little cozy reward for climbing the summit, along with the celebratory drop all the way down on the slide"
+  **Is the slide the only way out?**
+  "you can slide or climb to the breakable wall that leads to the teahouse chute"
+  - So I had it backwards. You reach the hot spring by going LEFT off the summit, past the belt. It is the reward for the summit. From the spring there are two ways on: the water slide (the celebratory drop all the way down), or a climb to the breakable wall, behind which the chute (today's slick tunnel under the dome) takes you back east to the tea shop's ledge.
+- **14. Between two moving things (note 83):** Picked: "More limbs first" (then the higher one). **A crunch (notes 49, 78):** Picked: "Head or body only".
+- **15. The wrists (note 90): what was the hand holding?**
+  "It was the sharp icicles. I think a hand was on one side of the point, and getting a little caught, like the hand was on one side and the forearm on the other since the icicle was sharp enough to go into the wrist crevasse"
+  - So it is not the wrist's stop: a sharp point wedges into the gap between the hand and the forearm. The fix is in what a sharp tip is as a solid (a blunt end), or in the gap. **The summit's cloud:** Picked: "Good now".
+
+Not asked; I take the designers' own answers unless he objects: on the cliffs, the town built the trail and the cableway, one frozen climber sits on the Balcón, flag poles stand behind the climb, a wind sock on the porch of 7.8, the tea cave is open at the front, the scaffold's legs come down behind Los Burros as struts. On the cableway: the frog is the last passenger in a parked gondola, no wavy wind lines where no wind pushes, no icicles on the high station, the zip line is a plain catch and ride. On the glacier: the frog's snow hole, the new serac grows bare and gets its snow last, canes with paper flags, the avalanche chute's two stones as today. On the storm ridge: lightning steel is pale blue-grey and the headwall's rust-orange rungs are never struck, rain leans with each wind band, a painted row of far towers, wind on the cabin's porch, torn paper ends behind Gendarmes, the balloon's neck solid, a broken rung swings back up. On the summit: ropes red, cream and jade, the tea frog hangs the paper and lays the marigolds, no wind on the tea shop's doorstep, a tall staff behind the bell frame for the paper.
