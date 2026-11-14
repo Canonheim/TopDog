@@ -169,6 +169,7 @@
 <tr><td>106</td><td><a href="#n106">Build 0.3.104, the mine's counterweight shaft: the east wall is just a black blob</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>107</td><td><a href="#n107">Build 0.3.104: the frozen climber's tally marks look terrible: redo them</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>108</td><td><a href="#n108">Build 0.3.104, El Derrumbe (1.10): the rocks still pop in down in the shaft; spawn them up in the chimney, hidden behind a foreground piece</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>109</td><td><a href="#n109">Build 0.3.104, the mine's frog cave: tons of z-fighting; look for z-fighting everywhere and fix it</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3819,6 +3820,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 1, 1.10 El Derrumbe. Both rock sources sit at y 76.3 (x -220.4 and -220.2), in the play plane, just under the foot of the chimney that was carved for them (x -221.3 .. -219.3, y 76.9 to 81.2). The chimney's mouth (`mine_chimney_mouth`, the torn planks and snapped timbers) is drawn BEHIND the play plane (z -1.9), so it hides nothing: each rock appears out of nothing in front of it.</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Move both sources up inside the chimney, near its top (about y 80.5), and put a foreground piece in front of the chimney's mouth (z in front of +1.25, over the chimney only, where no climber can ever be behind it: the shaft's top is out of reach), for instance a hanging broken board or a snapped timber across the mouth, so each rock is born out of sight and drops into view. The rocks then fall about 4 m further, arriving about 0.4 s later than now; the written rhythm (Parker's timings) shifts as a whole and keeps its gaps, and the warning shake moves with it. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n109">
+  <div class="head"><span class="num">109</span><h3>Build 0.3.104, the mine's frog cave: tons of z-fighting; look for z-fighting everywhere and fix it</h3><span class="time">11-14 09:45</span></div>
+  <blockquote>"tons of z fighting here, make sure to look for z fighting and fix it"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/109_frog_cave_z_fighting.png" alt="Parker's shot, build 0.3.104: the mine's frog cave off the Sump (the frog on its upturned bucket, the stove, the shelf). The arrow: the floor's top, flickering dark and orange.">
+    <figcaption>Parker's shot, build 0.3.104: the mine's frog cave off the Sump (the frog on its upturned bucket, the stove, the shelf). The arrow: the floor's top, flickering dark and orange.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 1, the frog's cave (page 1.0), floor at y -27.5. Three things have their top in exactly that plane: the throat's west wall skin `mine_throat_west` (orange, x -252 .. -248), the cave's own room `mine_frog_cave` (its floor at -27.5 behind the play space), and two plain course solids that were cut for the cave's floor and have NO skin (x -253.4 .. -248 and -248 .. -247.2, y -28.3 .. -27.5), which the game draws as plain dark rock boxes. A solid with no skin draws its own box, so that dark box and the orange skin fight in the same plane. The same kind of thing is likely wherever the fix thread cut new solids into a biome after its skins were made (doorways, the tea cave, the cart room).</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>1) Here: give the two cut solids the throat's skin (or none drawn), and drop the cave room's floor a hair below the play floor. 2) Everywhere: a z-fight sweep of the whole mountain, by script over every area: any unskinned solid whose top or face lies in the same plane as a skin or deco face it overlaps; any two decos/skins with coplanar overlapping faces; then a frame of each hit to confirm, and one list for Parker before fixing. Held until Parker says go.</p>
 </div>
 
 </main>
