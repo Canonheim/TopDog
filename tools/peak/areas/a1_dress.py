@@ -369,6 +369,7 @@ def dress(A):
     # of it. His bedroll on the bench; one miner's lamp left on a peg, cold.
     A.deco("mine_waiting_room", -169.025, GAL_Y, z=-2.25, size=(2.15, 2.1, 1.2), tone="back2")
     A.deco("camp_bedroll", -169.15, -12.1, z=-2.1, size=(1.6, 0.25, 0.6), tone="wood2")
+    A.deco("mina_tool_rack", -171.95, GAL_Y, z=-2.0, size=(1.80, 1.87, 0.49), tone="back")  # (quality run, E10) between the camp's posts
     hang(-169.5, -10.85, -2.5, lit=False)
     # His things against the wall beside him, back off the floor you walk on.
     A.deco("cold_lantern", -166.2, GAL_Y, z=-1.39, size=(0.28, 0.48, 0.28), tone="iron")
@@ -470,8 +471,13 @@ def dress(A):
     drawn("mine_socket_stump", -198.05, 5.2, (0.3, 0.3, 0.08), tone="back3")
 
     # ============================================================ 1.5 El Cubo
-    # The pulley set back against the hoistway, grey (the hoistway itself is a1.py's two cards).
+    # The pulley set back against the hoistway, grey.
     A.deco("pulley", -188.95, 31.4, z=-2.2, size=(0.8, 0.8, 0.2), tone="back")
+    # THE HEADFRAME (quality run, E6: reviewer 8.5 PASS, 11-14): the lift's gallows, guide rails and back-stay to
+    # El Diente in one piece, in place of a1.py's two hoistway cards. Origin: its main post's foot on the deck.
+    A.deco("mina_hoist_headframe", -193.0, 26.2, z=-2.05, size=(16.27, 24.92, 1.23), tone="back")
+    # The miners' tool rack (quality run, E10: 8.5 PASS) on the shoulder landing; origin: its back face's foot.
+    A.deco("mina_tool_rack", -199.4, 6.0, z=-1.9, size=(1.80, 1.87, 0.49), tone="back")
     # The station's back half: the deck carried on to the wall on two bearers, the brace from
     # the pillar, three ore crates and a spare bucket on its side.
     A.deco("mine_deck_back", -195.85, DECK_Y - 0.3, z=-2.075, size=(7.9, 0.3, 1.65), tone="back")
@@ -578,6 +584,7 @@ def dress(A):
     # The water wheel on the same axle, 1.5 m behind the wheel you ride, running with water
     # (the kit's water wheel at 5 m: FOR THE AREA FILE item 9, to make it turn).
     A.deco("water_wheel", -234.2, 57.4, z=-2.1, scale=0.625, size=(8.0, 8.0, 1.6), tone="back")  # origin: the hub
+    A.deco("mina_tool_rack", -227.4, 57.4, z=-2.0, size=(1.80, 1.87, 0.49), tone="back")  # (quality run, E10) the upper gallery
     # The trough from the edge of the fall to just past the water wheel's top (cut from the ore chute).
     A.deco("mine_water_trough", -236.1, 61.23, z=-2.0, rot=-8.0, size=(5.0, 0.5, 0.5), tone="back")
     # The frame: a bearer out of the rock under the axle on its slanting strut, the staging
