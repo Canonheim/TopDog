@@ -74,8 +74,12 @@ How a wall or a mass is made:
 
 - **The face is paint.** A few large planes. The material's layers (beds of chalk, courses
   of brick, bands in ice, the grain of a rock) are flush colour regions on those planes, in
-  three or four tones, long and uneven, with rain streaks or stains painted down across
-  them. No ink inside a face, and no step of shape for each layer.
+  three or four tones: long, uneven, wavy lines and bands that run the length of the face.
+  No ink inside a face, and no step of shape for each layer.
+- **No random triangles (Parker, on the worked example: "it does not need these random
+  triangles ... just the painted lines look lovely").** Nothing painted tapers to a point:
+  no rain streak that narrows down the face, no stain shaped like a wedge, no hold band
+  that thins away across the wall. Lines and bands only.
 - **A few big breaks are real shape,** and only those get ink: one overhang with a painted
   shadow under it, one deep recess or opened joint, one ledge with something on it, one
   leaning slab or fallen block. They sit inside the game's frame, not below it.
@@ -83,8 +87,9 @@ How a wall or a mass is made:
   move up to 0.8 m: it leans, tapers, is notched where a piece has gone, and has no long
   ruled level or upright edge. The holds, the standing tops and the faces of any gap you
   climb stay exactly where the course has them.
-- **Holds belong to the wall.** A hold is a bed, a course or a band of the same wall, painted
-  running on across its face, and standing proud only where it is held.
+- **Holds belong to the wall.** A hold is a bed, a course or a band of the same wall, in
+  the hold's own pale colour, standing proud where it is held. It is a plain block or band
+  with square ends: it does not trail off across the face as a wedge.
 - **The body carries on behind:** in place of a flat card, the mass's own body 1.5 to 3 m
   back as one big form in two or three slanted planes, duller and cooler, its layers painted
   as thin lines that carry on from the wall's, with an uneven skyline.
