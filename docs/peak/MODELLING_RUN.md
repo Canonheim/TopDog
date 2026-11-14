@@ -84,13 +84,15 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 | 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | all landed and synced (A 87, B 11, C 12) | yes: `docs/peak/frames/a5_templo_*` (back pieces darker and cooler: `a5_templo_*_darker.jpg`) |
 | 6 La Chimenea | done | `a6_dress.py` WIRED (8788f09) | all landed and synced (A 37, B 9, C 40) | yes: `docs/peak/frames/a6_forja_*` |
 | 7 Los Riscos del Viento | done | `a7_dress.py` WIRED (8451f10) | all landed and synced (A 35 + the tower top, B 16, C 23; faces re-landed matte after the polished finish striped them); the 7.6 m wheel; the tower top cut at 658 | yes: `docs/peak/frames/a7_riscos_*` |
-| 8 El Teleférico | done; revised (real roofs, hangers held) | `a8_dress.py` WIRED (faa373e) | all landed and synced (A 13, B 6, C 46, and the seven re-makes as `_tele` stems) | yes: `docs/peak/frames/a8_tele_*` (the sky shows now; the fang's polished rock reads flat black: being re-made matte) |
+| 8 El Teleférico | done; revised (real roofs, hangers held) | `a8_dress.py` WIRED (faa373e) | all landed and synced (A 13, B 6, C 46, and the seven re-makes as `_tele` stems) | yes: `docs/peak/frames/a8_tele_*` (the sky shows; the fang re-landed matte, painted like the cliffs) |
 | 9 El Glaciar | done; revised (three wall arrow signs) | `a9_dress.py` WIRED (9b64b15) | all landed and synced (A 54, B 6, C 8) | yes: `docs/peak/frames/a9_glaciar_*` |
 | 10 La Cresta de la Tormenta | done | `a10_dress.py` WIRED (fefc451) | all landed and synced (A 40, B 5, C 25) | yes: `docs/peak/frames/a10_tormenta_*` (re-landed matte: `a10_tormenta_*_matte.jpg`) |
-| 11 La Cumbre | done; revised (the secret the right way round; the ring) | `a11_dress.py` WIRED (2848c76) | ring ropes landed (thread C); B 11 and C 14 landed; A 32 with thread C | |
+| 11 La Cumbre | done; revised (the secret the right way round; the ring) | `a11_dress.py` WIRED (2848c76) | all landed and synced (A 32, B 11, C 14; the ring ropes) | yes: `docs/peak/frames/a11_cumbre_*` |
 
 Mountain-wide small pieces (wave 0, no placement needed): frogs, signs, tea things
 (thread B, in progress); iron rings, staples, pegs, the summit's ring ropes (thread C: all
 thirteen landed in the kit, not yet synced into the game).
+
+**11-14, 07:00: every biome fully modelled, wired and framed.** Owed only: Parker's eyes, the effects list in WORK_LOG.md, and the small props still polished (thread C's P-C19 list).
 
 **Pace (night of 11-13):** the makers are the bottleneck. Biomes 0 to 2 are fully modelled (242 models). Thread A stopped on 11-14 (its handover note is in the side-session notes folder); its walls and masses for biomes 3 to 6 went to a maker agent and to threads B and C, who finished their own rows for biomes 0 to 5. The unwired effects the fix thread could not build yet are listed in its `WORK_LOG.md`.
