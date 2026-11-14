@@ -185,6 +185,7 @@
 <tr><td>122</td><td><a href="#n122">Build 0.3.104, El Espejo (3.2): the crystal nubs are pretty good, but set them at slight angles, not straight out</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>123</td><td><a href="#n123">Build 0.3.104, the crystal cave over El Espejo: the bright crystal cluster looks grabbable; put it plainly on the back wall, a little darker</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>124</td><td><a href="#n124">Build 0.3.104, Candelabros (3.3): the crystal chandelier looks bad</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>125</td><td><a href="#n125">Build 0.3.104: on a controller the widen-camera tip should name the controller's bind, not Shift</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -4058,6 +4059,16 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Re-make the chandelier as a real crystal chandelier that matches its solid: a crown of thick six-sided crystals round a solid core, the size and shape of the 1.4 x 1.2 bob (so what you see is what you grab), points hanging down in tiers, lilac and indigo with pale faces (not all white), hung from a knuckled crystal thread (`gruta_thread_knuckle`, if the rope can take a segment model, as page 3.3 asked). Matte. Held until Parker says go.</p>
   <p><b>And (Parker, 11-14 11:12):</b> "and the collisoin does not match the actual geometry". Confirmed by the numbers: the solid you swing on is a 1.4 x 1.2 m block, the drawing a 1.2 x 1.5 m burst of thin blades from its TOP, so the solid sticks out where nothing is drawn and the drawn points stick out where nothing is solid. The re-make must be the solid's shape exactly (or the solid re-cut to the new model's outline), checked in a frame with the solid drawn over it.</p>
+</div>
+
+<div class="note" id="n125">
+  <div class="head"><span class="num">125</span><h3>Build 0.3.104: on a controller the widen-camera tip should name the controller's bind, not Shift</h3><span class="time">11-14 11:15</span></div>
+  <blockquote>"when using a controller it should say hold [controller keybind] not shift to widen camera angle"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <h4>Where, and what is going on</h4>
+  <p>The tip at the long jumps (note 7) asks `_zoom_bind_name` (game/main.gd) for the player's zoom bind. It picks the keyboard's bind whenever the player's slot is set to the keyboard OR to 'any device', and the solo climb plays on 'any device' (keyboard and pads both drive it), so it always says Shift, even when you are playing on a pad.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Name the bind of the device you are actually using: in 'any device', whichever was used last (a pad's stick or button flips it to the pad's bind, the left trigger shown as the pad's own name for it; the keyboard or mouse flips it back to Shift), and update the tip live if you switch. Check the Controls board's Next page (note 28) names it the same way. Held until Parker says go.</p>
 </div>
 
 </main>
