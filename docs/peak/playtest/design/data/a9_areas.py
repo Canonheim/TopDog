@@ -166,7 +166,8 @@ UNDER_THE_LIP = {
         {"name": "The icicle fringe", "z": [-1.8, -1.3], "style": "pale", "tag": [-277.6, 789.2],
          "text": "A row of small icicles under the lip, 12 m long, hanging thickest over the deck's two western patches of ice: the ice on "
                  "the planks is what dripped from them. None of them falls and none can be reached. Today the row hangs inside the play "
-                 "space. It moves 1.3 m back.",
+                 "space. It moves 1.3 m back, and where the station's roof is real (the cableway's page 8.11, Parker 11-13: \"Make "
+                 "the roof real\") it hangs from the roof's eave, behind the roof's held front edge, not in front of it.",
          "draw": _FRINGE},
         {"name": "The tunnel's back wall", "z": [-3.0, -2.4], "tag": [-296.0, 789.7], "top": True,
          "text": "Banded ice, scooped by the old water into shallow dishes a metre across, with stones standing out of the bands. "

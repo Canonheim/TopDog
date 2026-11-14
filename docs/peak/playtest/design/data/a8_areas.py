@@ -90,9 +90,24 @@ def _belt(x0, y0, x1, y1, crossed=False, w=0.3):
     return [_ln(x0 - w, y0, x1 - w, y1, "line"), _ln(x0 + w, y0, x1 + w, y1, "line")]
 
 
-def _hanger(g):
-    """A car's hanger arm: from the cable down to the back of the roof, with its carriage on the cable."""
-    return [_ln(g[0], g[1], g[0], g[1] - 1.43, "line"), _r(g[0] - 0.3, g[1] - 0.08, g[0] + 0.3, g[1] + 0.18, "pale")]
+def _pole(g):
+    """A car's hanger: the upright pole on the middle of its roof, 1.5 m tall and 0.12 m thick. It is solid, and it is held."""
+    return [_r(g[0] - 0.06, g[1] - 1.43, g[0] + 0.06, g[1])]
+
+
+def _carriage(g):
+    """The carriage on the cable that a hanger's head cranks back to. Scenery, 2 m back."""
+    return [_r(g[0] - 0.3, g[1] - 0.08, g[0] + 0.3, g[1] + 0.18, "pale")]
+
+
+def _roof_back(x0, x1, deck):
+    """A station roof's back half, behind the play space: it rises from 4.8 m over the deck to its ridge at 6.3 m."""
+    return [_r(x0, deck + 4.8, x1, deck + 6.3), _ln(x0, deck + 6.3, x1, deck + 6.3, "line")]
+
+
+def _roof_play(x0, x1, deck):
+    """A station roof where it crosses the play space: top 4.8 m over the deck, 0.3 m thick."""
+    return [_r(x0, deck + 4.5, x1, deck + 4.8)]
 
 
 def _ends(g, step, rack):
@@ -190,7 +205,9 @@ _PYLON1 = _tower(-229.9, -226.9, 680.0, 708.0)
 _L2W = _tower(-217.9, -214.9, 680.0, 708.0)
 _L2E = _tower(-211.9, -208.9, 680.0, 712.0) + [_r(-212.6, 712.0, -206.9, 712.3)]
 _LINK = _girder(-229.9, -214.9, 708.0, 709.0)
-_RUNG = [_ln(-228.0, 701.2, -227.2, 701.2), _ln(-228.0, 701.2, -228.0, 701.7), _ln(-227.2, 701.2, -227.2, 701.7)]
+# A car of line 1 at the top of its east rise, drawn dashed: its roof, and its hanger, whose top stops 1.06 m under the perch.
+_CAR_UP = [_ln(-229.7, 699.21, -227.1, 699.21, "mark"), _ln(-229.7, 699.21, -229.7, 697.0, "mark"), _ln(-227.1, 699.21, -227.1, 697.0, "mark"),
+           _ln(-229.7, 697.0, -227.1, 697.0, "mark"), _r(-228.46, 699.21, -228.34, 700.64, "pale")]
 _FROG_CAR = [_r(-229.7, 702.0, -227.1, 704.2, "pale"), _r(-229.8, 704.1, -227.0, 704.3), _ln(-228.4, 704.3, -228.4, 705.5, "line"),
              _r(-231.4, 705.5, -226.4, 705.7), _r(-226.6, 705.1, -226.3, 706.0)]
 
@@ -210,19 +227,23 @@ ABORDAR = {
         "A car passes the gangway every six seconds. Its step comes down to 1.0 m above the gangway's east lip and leaves east at once. It is in reach for about one second of every six.",
         "The gangway: 3.3 m of planks, 0.7 m above the deck, with one rail post. A miss leaves you standing on the deck.",
         "The loop and both cars exactly as the course has them: 6 m across, a lap of 12 seconds, the cars at opposite corners.",
-        "Pylon 1's perch, 2.4 m of iron at 702.0 m, over the loop's east end.",
+        "Pylon 1's perch, 2.4 m of iron at 702.0 m, over the loop's east end, reached as today from the top of a car's hanger.",
+        "Nothing new comes into reach of the deck or the gangway: the station's roof is 3.8 m over the gangway, and 0.5 m above a hand raised from the top of its rail post.",
     ],
     "background": [
         {"name": "The far line's first tower", "z": [-20.5, -20.0], "style": "mark", "tag": [-238.5, 699.0],
          "text": "20 m back, a flat cut-out hazed toward the sky: the first tower of the cableway's second line, rising behind the station house, with a slack cable going out east. That line is dead. Nothing else of ours stands between you and the far view.",
          "draw": _far(_W81)},
         {"name": "The express lines' middle tower", "z": [-2.8, -2.5], "tag": [-244.0, 700.0],
-         "text": "It stands on the station and goes up out of the frame: the first sight of the lines you will ride at the top. Today it is a card 1.6 m back. It goes to 2.5 m.",
-         "draw": _tower(-245.5, -242.5, 692.0, 716.0)},
+         "text": "It rises from behind the station's ridge and goes up out of the frame: the first sight of the lines you will ride at the top. Today it is a card 1.6 m back. It goes to 2.5 m.",
+         "draw": _tower(-245.5, -242.5, 694.3, 716.0)},
         {"name": "The low station's house, east end", "z": [-5.5, -2.5], "style": "pale", "tag": [-243.6, 690.4],
-         "text": "The cliffs' join designs the station. What matters here is where it stands: 2.5 m back, with its striped roof over the house and not over the deck, and with the pug sign, the cold lantern and the ticket booth on its wall (note 77). Nothing of it comes within reach.",
-         "draw": [_r(-247.0, 688.0, -236.2, 692.4), _p([(-247.0, 692.4), (-235.7, 692.4), (-236.6, 694.0), (-247.0, 694.0)], "solid"),
-                  _r(-241.5, 689.6, -240.1, 691.0, "dark"), _r(-238.6, 688.0, -237.5, 690.3, "dark"), _r(-246.6, 690.6, -244.6, 691.8, "line")]},
+         "text": "The cliffs' join designs the station. What matters here is where the house stands: 2.5 m back, 12 m wide, under the station's roof, with the pug sign, the cold lantern and the ticket booth on its wall. Its boards are the greyed red below bare grey boards, with no cream, because nothing of it comes within reach.",
+         "draw": [_r(-247.0, 688.0, -238.0, 692.5),
+                  _r(-241.5, 689.6, -240.1, 691.0, "dark"), _r(-239.6, 688.0, -238.5, 690.3, "dark"), _r(-246.6, 690.6, -244.6, 691.8, "line")]},
+        {"name": "The roof's back half and its ridge", "z": [-5.5, -1.2], "tag": [-243.6, 693.6],
+         "text": "Behind the play space the same striped tin rises on to its ridge over the house's back wall, 6.3 m above the deck. It is the far end of the roof you can stand on, and it is out of reach: anything behind the play plane is.",
+         "draw": _roof_back(-247.0, -237.6, 688.0)},
         {"name": "The station's end frame and line 1's bull wheel", "z": [-2.8, -2.0], "tag": [-232.2, 696.3], "top": True,
          "text": "A lattice frame on the station's east end, 2.5 m back, rising from the scaffold below. On it, 2 m back, is the greyed bull wheel that line 1's cable is driven by: 4.4 m across, no cream on it. Today that wheel stands 1.1 m back, inside the play space. It moves 5.0 m east and 2.9 m down to sit inside the loop, and back to 2 m.",
          "draw": _tower(-235.9, -232.9, 680.0, 703.5) + [_r(-236.3, 703.5, -232.5, 703.8)] + _wheel(-232.2, 696.3, 2.2)},
@@ -235,9 +256,9 @@ ABORDAR = {
         {"name": "Line 1's cable and its guide wheels", "z": [-2.15, -2.0], "style": "line", "tag": [-231.4, 700.4],
          "text": "One loop of black greased cable, 0.15 m thick, 2 m behind you, with a greyed guide wheel 1 m across at each corner. The whole road of both cars is on screen, so a car that comes is seen coming. Today the loop is two thin wires 0.5 m back, inside the play space.",
          "draw": _loop(D_LO, E_LO, E_HI, D_HI)},
-        {"name": "The cars' hanger arms", "z": [-2.1, -1.2], "style": "line", "tag": [-233.6, 698.4],
-         "text": "Each car hangs by one arm that comes down from a carriage on the cable and cranks forward to the back of its roof. The arm is scenery: greyed, behind you, and no longer solid.",
-         "draw": _hanger(E_LO) + _hanger(D_HI)},
+        {"name": "The cars' carriages", "z": [-2.1, -1.2], "style": "pale", "tag": [-235.6, 699.8],
+         "text": "Each car's hanger cranks back at its head to a carriage on the cable, 2 m behind you. The head and the carriage are scenery, greyed. The hanger under them is held.",
+         "draw": _carriage(E_LO) + _carriage(D_HI)},
         {"name": "Pylon 1", "z": [-2.8, -2.5], "tag": [-228.4, 689.0],
          "text": "The first tower: two legs 3 m apart and zigzag braces, rising from below the frame. Today it is a card 1.2 m back, at the edge of the play space. It goes to 2.5 m. Behind its perch stands the frog's parked gondola, which has its own page.",
          "draw": _PYLON1 + _FROG_CAR},
@@ -252,46 +273,54 @@ ABORDAR = {
         {"name": "Warning stripes on the deck's end", "z": [-1.2, 1.2], "tag": [-236.35, 687.2],
          "text": "East of the gangway the deck runs on for 0.7 m at 688.0 m. A car's step comes down to 1.65 m above that, which is less than your height. So the deck's end wears the slanted yellow and black stripes (note 78): stand on the gangway, not down here.",
          "draw": [_r(-236.7, 687.5, -236.0, 688.0)]},
-        {"name": "The rung under pylon 1's perch", "z": [-0.3, 0.3], "style": "line", "tag": [-226.5, 701.2],
-         "text": "The perch is reached today by climbing a car's hanger. With every hanger now scenery, one iron rung hangs under the perch's east end: 0.8 m long, on two straps, 0.5 m under the grating, at 701.2 m. From a car's roof at the top of its rise it is 2.0 m up: stand tall with a hand up. A body fits between the roof and the rung, so it is not a pinch.",
-         "draw": _RUNG},
+        {"name": "The cars' hangers", "z": [-0.1, 0.1], "style": "solid", "tag": [-227.6, 699.6],
+         "text": "Each car hangs from an upright pole on the middle of its roof: 1.5 m tall, 0.12 m thick, solid and held, as in the course today. It is drawn as a hold: the cableway's red with a cream band round its top 0.5 m, where a hand takes it. It is the way up to pylon 1's perch: at the top of the car's rise the hanger's top stops 1.06 m under the grating.",
+         "draw": _pole(E_LO) + _pole(D_HI)},
+        {"name": "The station's roof", "z": [-1.2, 1.2], "style": "solid", "tag": [-240.4, 692.65],
+         "text": "Real (note 77): striped red and cream tin on timber boards, 0.3 m thick, from x -251.0 to -237.6, its top 4.8 m above the deck. It can be held and stood on, and a cream band runs along its edges. You get onto it only from a car: as a car comes down past the roof's east end, its step passes 1.0 m out from the edge, and you step off west onto the tin. From up there the same step can be taken again on the next car, higher and earlier than from the gangway. It leads nowhere else: the nearest thing above it, a car on the high leg, is 4.9 m up. A fall from it lands on the deck.",
+         "draw": _roof_play(-251.0, -237.6, 688.0)},
     ],
     "foreground": [],
     "explains": [
         ["The gangway and its rail post", "The station's boarding stage, raised so a car's step stops 1 m above its lip", "The station house 2.5 m back, and the end frame the cars come down in front of"],
-        ["A car's step", "The boarding step, on the end of the car that faces the station", "The car's hanger arm, the loop of cable, the bull wheel and the wind engine that turns it"],
-        ["A car's roof, floor and low end walls", "A gondola, open toward you", "Its hanger arm and the cable, 2 m back"],
+        ["A car's step", "The boarding step, on the end of the car that faces the station", "The car's hanger and carriage, the loop of cable, the bull wheel and the wind engine that turns it"],
+        ["A car's roof, floor and low end walls", "A gondola, open toward you", "Its carriage and the cable, 2 m back"],
+        ["A car's hanger", "The pole the car hangs from, and the greaser's way up to the perch", "Its cranked head and carriage on the cable, 2 m back"],
         ["A car's rack", "The freight rack: the town's crates went up on it", "The loop's guide wheels on pylon 1, where the car turns back"],
-        ["The perch and its rung", "The greaser's landing on pylon 1, and his step up from a car's roof", "Pylon 1's tower and the parked gondola"],
+        ["The perch", "The greaser's landing on pylon 1", "Pylon 1's tower and the parked gondola"],
+        ["The station's roof", "The roof over the boarding stage", "Its back half and ridge over the house, and the middle tower rising behind it"],
         ["The deck's striped end", "The platform's edge, marked the way the cliffs' warning sign is", "The end frame, with a car coming down in front of it"],
     ],
     "pieces": [
-        ["Gondola with its step, rack and cranked hanger arm", "2.6 m wide, 2.2 m tall; step 0.9 m; rack 2.4 m", "2", "Play space; the arm behind", "kit: gondola"],
+        ["Gondola with its step, rack and held hanger", "2.6 m wide, 2.2 m tall; step 0.9 m; rack 2.4 m; hanger 1.5 m", "2", "Play space; the hanger's head and carriage behind", "kit: gondola"],
+        ["Station roof: striped tin on timber, red and cream", "13.4 m long; 0.3 m thick; top 4.8 m above the deck", "1", "Play space; its back half behind", "kit: station roof"],
         ["Lattice bays: the station's end frame, pylon 1, the middle tower", "3 m wide, bays 4 m tall", "3 towers", "Background", "kit: lattice tower"],
         ["Bull wheel, greyed", "4.4 m across", "1", "Background", "kit: bull wheel, as scenery"],
         ["Guide wheel, greyed", "1 m across", "4", "Background", "kit: guide wheel (added)"],
         ["Wind engine with its belt", "5 m across; belt 10 m", "1", "Background", "kit: wind engine"],
         ["Cable: line 1's loop; the haul cable", "0.15 m thick; 24 m; 25 m", "2", "Background", "kit: cable"],
         ["Iron grating perch with one rail post", "2.4 m; post 1 m", "1", "Play space", "kit: tower fittings"],
-        ["Iron rung on two straps", "0.8 m; straps 0.5 m", "1", "Play space", "kit: iron rung (added)"],
         ["Pennant line; streamer pole", "7 m; 3 m", "1 each", "Background", "kit: pennant line, streamer pole"],
-        ["Station house, pug sign, ticket booth, cold lantern", "house 14 m wide, 6 m tall", "1", "Background", "kit: station house (placed by the cliffs' join)"],
+        ["Station house, pug sign, ticket booth, cold lantern", "house 12 m wide, 6 m tall", "1", "Background", "kit: station house, re-made without its roof (placed by the cliffs' join)"],
         ["Warning stripes", "paint, 0.7 m", "1", "Play space (drawn on)", "kit: warning stripes"],
         ["Far tower and slack cable", "tower 4 m wide", "1", "Background, 20 m back", "kit: the far line"],
     ],
     "effects": [
         "The bull wheel, the four guide wheels and the wind engine turn at the cars' own pace, all the time.",
-        "Gold dust in the low sun, and the car's long shadow sliding over the station wall as it comes down.",
-        "A creak from the step as it takes your weight.",
+        "Gold dust in the low sun, and the car's long shadow sliding over the station's roof as it comes down.",
+        "A creak from the step as it takes your weight. A dull boom from the tin under your boots on the roof.",
     ],
     "notes": [
         "Note 77: every car's step (0.9 m) and rack (2.4 m) are drawn. Neither moves: they are where the course has them.",
-        "Note 77: the station house stands 2.5 m back. Today it is 1.2 m back and 3 m deep, so its front half is in the play space. The peaked roof card that hangs 1 m back over the deck, 18.5 m wide, goes. The pug sign moves from 1.0 m back onto the house's wall, the ticket booth from 1.4 m back to against it, and the lit lantern beside the sign goes cold.",
-        "The sheet's call from note 80: the two cars' hanger arms, 1.5 m tall and 0.12 m thick, stop being solid and go behind. One iron rung is added under the east end of pylon 1's perch, 0.8 m long at 701.2 m. That is the one new thing to hold in this area.",
+        "Note 77, settled: the roof is made real. A new solid roof of tin on timber, 0.3 m thick, from x -251.0 to -237.6 (13.4 m), its top at 692.8 m: 4.8 m above the deck and 4.1 m above the gangway. It can be held and stood on. It takes the place of the peaked roof card (18.5 m wide, 1 m back, 695.4 to 701.0 m) and of the roof on the station model, which both go.",
+        "How the roof is reached, and why it needs no guard: only from a car's step as the car comes down past the roof's east end, 1.0 m out from it. From the deck and the gangway it is out of reach, by 0.5 m even from the top of the rail post. From the roof you can take the next car's step higher and earlier, ride it down, and go out east the way challenge 8.1 already sends you. Nothing else is within 4.9 m of it. So it skips nothing, and 8.1 is as hard as it was. It is not tarred.",
+        "Note 77: the station house stands 2.5 m back, 12 m wide, under the roof's back half. Today it is 1.2 m back and 3 m deep, so its front half is in the play space. The pug sign moves from 1.0 m back onto the house's wall, the ticket booth from 1.4 m back to against it, and the lit lantern beside the sign goes cold.",
+        "Note 80, settled: the two cars' hangers, 1.5 m tall and 0.12 m thick, stay solid and held, as in the course today. They are drawn as holds, with a cream band round their top 0.5 m. Pylon 1's perch is reached as today, from the top of a car's hanger. The iron rung an earlier pass of this page hung under the perch is taken out. Nothing is added to hold.",
+        "Note 78, settled: a crunch knocks you out only when the head or the body is pinned. The roof's east end and a passing car are never closer than 1.0 m, so the roof makes no pinch.",
         "Note 78: one pinch is kept and striped: the deck's last 0.7 m, east of the gangway, under a car's step.",
         "Note 76: what is drawn is what is touched. The scenery bull wheel is greyed, has no cream and stands 2 m back, so it is not taken for the cliffs' wheel that you ride.",
         "Scenery that moves out of the play space: line 1's two wires (0.5 m back) become one cable loop 2 m back. Of its two bull wheels (1.1 m back), one moves to the end frame as said above and the one on pylon 1 becomes two guide wheels. Pylon 1's tower card goes from 1.2 m back to 2.5 m. The 6 m pennant line inside the loop (0.6 m back) goes up to 704 m and back to 2 m.",
-        "Also in this frame, from the cliffs' file: a pennant line 26 m long that hangs 1 m back at head height, from the deck out past pylon 1. It goes up onto the station house's eave and back with the house.",
+        "Also in this frame, from the cliffs' file: a pennant line 26 m long that hangs 1 m back at head height, from the deck out past pylon 1. It goes back with the house, along its wall under the roof, 2.5 m back.",
         "Note 89: the pennants and the streamer point east and the engine turns. No wavy wind lines here, because this wind does not push.",
     ],
 }
@@ -312,12 +341,13 @@ FROG = {
         "The perch: 2.4 m of iron grating at 702.0 m, with one rail post. It is the only still thing between the low station and pylon 2.",
         "Challenge 8.2 starts from here.",
         "A car's roof comes up to 2.5 m under the perch every six seconds and goes away west. Nothing here stops the cars.",
+        "The way up, as today: the top of a car's hanger, which stops at 700.64 m, 1.06 m under the perch's grating.",
     ],
     "background": [
         {"name": "A stopped chair on the far line", "z": [-20.5, -20.0], "style": "mark", "tag": [-232.2, 710.6],
          "text": "20 m back and hazed: the dead second line's slack cable, with one chair hanging on it where it stopped.",
          "draw": _far(_W80)},
-        {"name": "Pylon 1's head", "z": [-2.8, -2.5], "tag": [-228.4, 697.6],
+        {"name": "Pylon 1's head", "z": [-2.8, -2.5], "tag": [-228.4, 695.9],
          "text": "The top of the first tower, 2.5 m back: two legs, zigzag braces, and a pug plate at every joint. An oil can and a rag sit on the plate beside the upper guide wheel.",
          "draw": _tower(-229.9, -226.9, 692.0, 708.0) + [_r(-227.4, 700.9, -227.1, 701.3, "pale")]},
         {"name": "The siding", "z": [-1.9, -1.7], "tag": [-231.0, 705.6],
@@ -345,9 +375,9 @@ FROG = {
          "draw": [_c(-228.95, 702.78, 0.17), _r(-228.6, 702.6, -228.25, 702.9, "solid")]},
     ],
     "play": [
-        {"name": "The rung", "z": [-0.3, 0.3], "style": "line", "tag": [-226.5, 701.2],
-         "text": "One iron rung under the perch's east end: 0.8 m long, on two straps, at 701.2 m. It is the way up from a car's roof now that the cars' hanger arms are scenery. It is new, and it is the only thing added to hold.",
-         "draw": _RUNG},
+        {"name": "The hanger you come up by", "z": [-0.6, 0.6], "style": "pale", "tag": [-226.3, 699.8],
+         "text": "A car of line 1 at the top of its rise, drawn dashed. Its hanger is held: 1.5 m of the cableway's red with a cream band round its top 0.5 m, so the place a hand goes shows from below. Its top stops 1.06 m under the grating. Climb it and the perch is one reach above you. This is the way up today, and it stays. Nothing is added.",
+         "draw": _CAR_UP},
         {"name": "The perch's grating", "z": [-1.2, 1.2], "style": "mark", "tag": [-230.3, 701.85],
          "text": "Open iron grating, rust orange and dry, with the one rail post on its west end. Through it you see the cars come up under your boots.",
          "draw": [_r(-229.6, 701.7, -227.2, 702.0), _r(-229.56, 702.0, -229.44, 703.0)]},
@@ -356,7 +386,7 @@ FROG = {
     "explains": [
         ["The perch", "The greaser's landing, and the platform of the siding", "The parked car, level with it, and the siding rail above"],
         ["The rail post", "The landing's one rail post", "The tower's west leg behind it"],
-        ["The rung", "The greaser's step up from a car's roof", "Its two straps go up to the perch's frame, and the tower stands behind"],
+        ["A car's hanger", "The pole the car hangs from: the greaser's way up from a car's roof", "Its cranked head and carriage on the cable, 2 m back, and the guide wheel the car turns back on"],
     ],
     "pieces": [
         ["Gondola, parked: no step, no rack, a bench inside", "2.6 m wide, 2.2 m tall", "1", "Background, open at the front", "kit: gondola"],
@@ -364,7 +394,7 @@ FROG = {
         ["The frog, with a ticket; small suitcase; timetable card", "frog 0.3 m; suitcase 0.35 m", "1 each", "Background", "kit: the frog; the suitcase and card are new, this area only"],
         ["Siding rail with a buffer and two hangers", "5 m", "1", "Background", "new, this area only"],
         ["Lattice tower head; guide wheels", "3 m wide; wheels 1 m", "1; 2", "Background", "kit: lattice tower, guide wheel (added)"],
-        ["Iron grating perch with one rail post; iron rung", "2.4 m; rung 0.8 m", "1 each", "Play space", "kit: tower fittings, iron rung (added)"],
+        ["Iron grating perch with one rail post", "2.4 m; post 1 m", "1", "Play space", "kit: tower fittings"],
         ["Link girder with pennants; streamer pole", "girder 15 m; pole 3 m", "1 each", "Background", "kit: link girder (added), pennant line, streamer pole"],
         ["Oil can and rag", "0.4 m", "1", "Background", "kit: oil can"],
     ],
@@ -375,7 +405,8 @@ FROG = {
     ],
     "notes": [
         "Note 60: a frog in every biome. Here it is the last passenger, in a parked gondola behind pylon 1's perch, as the sheet places it.",
-        "The sheet's call from note 80: the perch gets one iron rung under its east end, because the hanger arm that was climbed to reach it is now scenery.",
+        "Note 80, settled: the gondolas' hangers stay solid and held. The perch is reached as it is today, from the top of a car's hanger at 700.64 m, 1.06 m under the grating. The iron rung an earlier pass put under the perch's east end (0.8 m at 701.2 m) is taken out. Nothing in this area's course changes.",
+        "The frog as the last passenger, in a parked gondola off the route, stands: Parker took this design's answer.",
         "Pylon 1's tower card goes from 1.2 m back to 2.5 m, and the bull wheel that stands 1.1 m back behind the perch today becomes two guide wheels 2 m back.",
     ],
 }
@@ -412,9 +443,9 @@ DE_GONDOLA = {
         {"name": "The link girder and its shaft", "z": [-2.9, -2.3], "tag": [-222.4, 708.5],
          "text": "A lattice girder between the tops of pylon 1 and line 2's west tower: 15 m long at 708 m, 3.9 m above the highest hand. A shaft runs along it. A belt brings the turn up from line 1, and a crossed belt takes it down to line 2's bull wheel. The crossed belt is why line 2 turns the other way. The one shaft is why the two loops can never drift apart.",
          "draw": _LINK + _belt(-227.9, 700.9, -227.6, 708.0, w=0.15) + _belt(-216.3, 708.0, -214.2, 697.72, crossed=True, w=0.35)},
-        {"name": "The cars' hanger arms", "z": [-2.1, -1.2], "style": "line", "tag": [-209.6, 701.0],
-         "text": "One arm for each car, down from a carriage on the cable to the back of the roof. Scenery: greyed, behind you, no longer solid.",
-         "draw": _hanger(E_LO) + _hanger(D_HI) + _hanger(W_LO) + _hanger(E2_HI)},
+        {"name": "The cars' carriages", "z": [-2.1, -1.2], "style": "pale", "tag": [-209.0, 703.4],
+         "text": "One carriage on the cable for each car, 2 m behind you, with the hanger's cranked head coming back to it. Scenery, greyed. The hanger under it is held.",
+         "draw": _carriage(E_LO) + _carriage(D_HI) + _carriage(W_LO) + _carriage(E2_HI)},
         {"name": "The fallen change landing", "z": [-2.8, -2.5], "tag": [-225.6, 692.6],
          "text": "Two broken bracket arms, one on each tower at 694 m, each 1.7 m long and torn off short. They held the landing where passengers changed lines. They are 2.5 m back and greyed, and they mark the height and the width of the jump. Nothing hangs from them.",
          "draw": [_p([(-226.9, 693.9), (-225.2, 693.9), (-225.0, 693.6), (-226.9, 692.3)]), _p([(-217.9, 693.9), (-219.6, 693.9), (-219.8, 693.6), (-217.9, 692.3)])]},
@@ -429,20 +460,21 @@ DE_GONDOLA = {
         {"name": "Rack and step, drawn", "z": [-0.5, 0.5], "style": "pale", "tag": [-221.6, 690.2],
          "text": "The two things this jump is made of are solid today and not drawn (note 77): line 1's rack, 2.4 m, and line 2's step, 0.9 m. Both are modelled at those lengths with a cream band, and each ends in a cream knuckle, so the two tips show level across the gap the whole way up.",
          "draw": _ends(E_LO, 0.9, 2.4) + _ends(D_HI, 0.9, 2.4) + _ends(W_LO, 0.9, 2.4) + _ends(E2_HI, 0.9, 2.4)},
-        {"name": "The rung under the perch", "z": [-0.3, 0.3], "style": "line", "tag": [-226.4, 701.2],
-         "text": "One iron rung, 0.8 m long, under the perch's east end at 701.2 m: the way onto the perch from a car's roof, now that the hanger arms are scenery.",
-         "draw": _RUNG},
+        {"name": "The four hangers, held", "z": [-0.1, 0.1], "style": "solid", "tag": [-212.0, 700.6],
+         "text": "Each car hangs from an upright pole on the middle of its roof, 1.5 m tall and 0.12 m thick: solid and held, as today, in the cableway's red with a cream band round its top 0.5 m. Line 1's hanger is how you get to the perch where this challenge starts: its top stops 1.06 m under the grating. No rung is added.",
+         "draw": _pole(E_LO) + _pole(D_HI) + _pole(W_LO) + _pole(E2_HI)},
     ],
     "foreground": [],
     "explains": [
-        ["Line 1's rack, which you leave from", "The freight rack on a car of the station's loop", "Its hanger arm, its cable, and the shaft on the girder above"],
+        ["Line 1's rack, which you leave from", "The freight rack on a car of the station's loop", "Its carriage, its cable, and the shaft on the girder above"],
         ["Line 2's step, which you catch", "The boarding step on a car of the second loop", "Its cable round line 2's bull wheel, and the crossed belt that turns it the other way"],
         ["The 6.1 m between them", "Where the change landing hung", "Its two broken brackets, one on each tower, at the height of the jump"],
         ["The two cars rising together", "Two loops turned by one shaft", "The link girder between the tower tops"],
         ["Pylon 1's perch", "The greaser's landing", "Pylon 1 and the frog's parked gondola"],
+        ["A car's hanger", "The pole the car hangs from, and the way up to the perch", "Its cranked head and carriage on the cable, 2 m back"],
     ],
     "pieces": [
-        ["Gondola with its step, rack and cranked hanger arm", "2.6 m wide, 2.2 m tall; step 0.9 m; rack 2.4 m", "4", "Play space; the arm behind", "kit: gondola"],
+        ["Gondola with its step, rack and held hanger", "2.6 m wide, 2.2 m tall; step 0.9 m; rack 2.4 m; hanger 1.5 m", "4", "Play space; the hanger's head and carriage behind", "kit: gondola"],
         ["Lattice tower", "3 m wide, bays 4 m tall", "3", "Background", "kit: lattice tower"],
         ["Link girder with its shaft, one belt and one crossed belt", "15 m long, 1 m deep", "1", "Background", "kit: link girder (added)"],
         ["Bull wheel, greyed", "4.4 m across", "2", "Background", "kit: bull wheel, as scenery"],
@@ -459,9 +491,9 @@ DE_GONDOLA = {
     ],
     "notes": [
         "Note 77: the rack and the step are drawn, on all four cars. Neither moves.",
-        "The sheet's call from note 80: the four cars' hanger arms, 1.5 m tall and 0.12 m thick, stop being solid and go behind.",
-        "Note 83: when you hold line 1's rack and line 2's step at once, you keep the one more of your limbs are on, or the higher. A rule of play. Nothing is drawn for it.",
-        "Note 78: no pinch is kept here. One place to check when the crunch rule is built: inside each loop, the rack of the car going down and the step of the car going up pass 0.1 m apart.",
+        "Note 80, settled: the four cars' hangers, 1.5 m tall and 0.12 m thick, stay solid and held, as today, and are drawn with a cream band round their top 0.5 m. The perch is reached from a line 1 car's hanger, as today. The iron rung an earlier pass put under the perch (0.8 m at 701.2 m) is taken out. Nothing in this area's course changes for it.",
+        "Note 83, settled: when you hold line 1's rack and line 2's step at once, you keep the one more of your limbs are on, and then the higher. A rule of play. Nothing is drawn for it.",
+        "Note 78: no pinch is kept here. One place to check when the crunch rule is built: inside each loop, the rack of the car going down and the step of the car going up pass 0.1 m apart. A crunch knocks you out only when the head or the body is pinned, and a hand caught there slips free.",
         "Scenery that moves out of the play space: line 2's wires (0.5 m back) become one cable loop 2 m back. Line 2's west bull wheel (1.1 m back) moves 2.2 m east and 3.4 m down to sit inside the loop, 2 m back. Its east bull wheel becomes two guide wheels. The 6 m pennant line inside line 2's loop (0.6 m back) goes up under the girder. The three tower cards go from 1.2 m back to 2.5 m. Pylon 1's top goes from 706 m to 708 m to carry the girder, and line 2's east tower from 708 m to 712 m to carry the snapped cable's arm.",
         "Note 89: pennants, streamer and wind sock point east. No wavy wind lines, because this wind does not push.",
     ],
@@ -511,9 +543,9 @@ EL_CABLE = {
          "text": "The east end of line 2's loop, 2 m behind you: the cable comes in along the top, turns down over a greyed guide wheel 1 m across, and goes back west along the bottom over another. You see the car come along the top toward you before it turns down.",
          "draw": [_ln(-214.0, 701.2, E2_HI[0], E2_HI[1]), _ln(E2_HI[0], E2_HI[1], E2_LO[0], E2_LO[1]), _ln(E2_LO[0], E2_LO[1], -214.0, 695.36),
                   _c(E2_HI[0], E2_HI[1], 0.5), _c(E2_LO[0], E2_LO[1], 0.5)]},
-        {"name": "The car's hanger arm", "z": [-2.1, -1.2], "style": "line", "tag": [-209.5, 701.2],
-         "text": "Scenery: greyed, behind you, no longer solid.",
-         "draw": _hanger(E2_HI)},
+        {"name": "The car's carriage", "z": [-2.1, -1.2], "style": "pale", "tag": [-209.0, 703.2],
+         "text": "On the cable 2 m back, with the hanger's cranked head coming back to it. Scenery, greyed. The hanger under it is held, as today.",
+         "draw": _carriage(E2_HI)},
         {"name": "The snapped end on line 2's tower", "z": [-2.15, -2.0], "style": "line", "tag": [-206.0, 710.4],
          "text": "3 m of black cable, 0.15 m thick, hanging from the tower's arm with its strands frayed open and blown a little east. Its lowest point is 6 m above a hand held up from the car's roof.",
          "draw": _SNAP1},
@@ -531,6 +563,9 @@ EL_CABLE = {
         {"name": "The rack you jump from", "z": [-0.5, 0.5], "style": "pale", "tag": [-206.2, 697.4],
          "text": "The freight rack on line 2's car: 2.4 m of rust-orange iron with a cream band and a cream knuckle on its tip, drawn at the length it is (note 77). Its tip is the last thing under your hands for 10.7 m.",
          "draw": _ends(E2_HI, 0.9, 2.4)},
+        {"name": "The car's hanger", "z": [-0.1, 0.1], "style": "solid", "tag": [-211.2, 700.4],
+         "text": "1.5 m of the cableway's red on the middle of the roof, with a cream band round its top 0.5 m. It is solid and held, as in the course today (note 80, settled).",
+         "draw": _pole(E2_HI)},
         {"name": "The landing's west end", "z": [-1.2, 1.2], "style": "pale", "tag": [-196.6, 702.2],
          "text": "Open iron grating, rust orange and dry. Its west end is the whole target, so its lip is rolled and worn bright: the palest thing on the pylon, and it shows from the car. Nothing is added to stand on or to hold.",
          "draw": [_r(-196.0, 702.7, -194.6, 703.0)]},
@@ -540,13 +575,14 @@ EL_CABLE = {
     ],
     "foreground": [],
     "explains": [
-        ["The rack you leave from", "The freight rack of line 2's car", "Its hanger arm, the loop of cable and the guide wheels on line 2's east tower"],
+        ["The rack you leave from", "The freight rack of line 2's car", "Its carriage, the loop of cable and the guide wheels on line 2's east tower"],
+        ["The car's hanger", "The pole the car hangs from", "Its cranked head and carriage on the cable, 2 m back"],
         ["The 10.7 m of air", "Where the long span's cable ran", "A snapped end on each tower, and the empty arm on pylon 2"],
         ["The landing", "Pylon 2's landing, where cars off the long span set down", "The tower's lattice, the oil can, and the wind sock on the arm above"],
         ["The two slick legs", "The pylon's own near legs", "Its far legs and braces, 2.5 m back"],
     ],
     "pieces": [
-        ["Gondola with its step, rack and cranked hanger arm", "2.6 m wide, 2.2 m tall; rack 2.4 m", "1 here", "Play space; the arm behind", "kit: gondola"],
+        ["Gondola with its step, rack and held hanger", "2.6 m wide, 2.2 m tall; rack 2.4 m", "1 here", "Play space; the hanger's head and carriage behind", "kit: gondola"],
         ["Snapped cable end, frayed", "3 m long, 0.15 m thick", "2", "Background", "kit: snapped cable end"],
         ["Lattice tower: line 2's east tower with its arm; pylon 2 behind its legs", "3 m wide, bays 4 m tall; arms 5.5 m", "2", "Background", "kit: lattice tower and crossarm"],
         ["Guide wheel, greyed", "1 m across", "2", "Background", "kit: guide wheel (added)"],
@@ -568,6 +604,7 @@ EL_CABLE = {
         "The challenge's start mark stands on the clamp plate today. With the plate gone it needs a new place when this is built. Pylon 1's perch is the nearest still thing.",
         "Its difficulty is 4 today. It is now one long jump from a moving car, and is to be rated again.",
         "Scenery that moves out of the play space: line 2's east bull wheel (1.1 m back) becomes two guide wheels 2 m back. The 10 m pennant line along the cable (0.6 m back) and the wire that ran on from the loop's top corner to the cable's foot (0.5 m back) go with the cable. The two tower cards go from 1.2 m back to 2.5 m. The oil can on the landing goes from 0.7 m back to 1.3 m.",
+        "Note 80, settled: the car's hanger, 1.5 m tall and 0.12 m thick, stays solid and held, as today, and is drawn with a cream band. Nothing in the jump changes for it.",
     ],
 }
 
@@ -597,7 +634,7 @@ EL_PILON = {
          "text": "Each wheel's axle runs back to a bracket on the tower. On the tower's centre line at 713 m sits a short shaft with a pulley, and the wind engine's belt comes straight down the inside of the tower to it. From the shaft one belt goes down to the lower wheel and a crossed belt to the upper one, which is why they turn opposite ways. Every belt runs inside the tower's width, over the lattice, so none hangs in open air beside a hold.",
          "draw": _BELTS + _belt(-192.5, 713.4, -192.5, 724.0, w=0.12)},
         {"name": "The chair shed", "z": [-2.6, -1.9], "style": "pale", "tag": [-192.2, 716.3],
-         "text": "Under the tarred roof, 2.5 m back: a board wall, red below cream, with a bench against it, a cold lantern, the peeling pug crest on the gable, and the hand winch that wound the chair line. The crest and the lantern are 0.9 and 0.8 m back today, inside the play space, and the lantern is lit. Both go to the wall, and the lantern goes cold.",
+         "text": "Under the tarred roof, 2.5 m back: a board wall in the greyed red below bare grey boards, with no cream on it, and a bench against it, a cold lantern, the peeling pug crest on the gable, and the hand winch that wound the chair line. The crest and the lantern are 0.9 and 0.8 m back today, inside the play space, and the lantern is lit. Both go to the wall, and the lantern goes cold.",
          "draw": _SHED},
         {"name": "The long span's arm and its snapped end", "z": [-2.6, -2.0], "tag": [-197.2, 716.3], "top": True,
          "text": "A crossarm out to the west at 715 m, 2.5 m back, with 3 m of frayed cable hanging from its tip and a wind sock on it. It is what is left of challenge 8.3's cable, and it is 4 m and more from any hand.",
@@ -695,7 +732,7 @@ SILLAS = {
          "text": "A plank bench with a cream front edge, no back and no arms, modelled at exactly 1.2 m by 0.25 m. The seat is all of the chair that you can touch.",
          "draw": [_r(px - 0.6, py - 3.33, px + 0.6, py - 3.08) for px, py in CHAIRS]},
         {"name": "The rib and the foot ledge", "z": [-1.2, 1.2], "style": "mark", "tag": [-172.6, 705.0],
-         "text": "White chalk, dry and matte, on the fang's dark rock: a rib 3.4 m tall that the fourth chair swings to, and a ledge 1.3 m wide under it. They are the only pale things on this side of the fang below the knobs.",
+         "text": "White chalk, dry and matte, on the fang's dark rock: a rib 3.4 m tall that the fourth chair swings to, and a ledge 1.3 m wide under it. They are the only white things on this side of the fang below its chalk holds.",
          "draw": [_r(-174.75, 703.1, -173.45, 706.7), _r(-174.95, 702.3, -173.4, 703.0)]},
     ],
     "foreground": [],
@@ -730,17 +767,51 @@ SILLAS = {
 # ------------------------------------------------------------------ 8.6 El Colmillo
 _W86 = [-184.0, 697.0, -150.0, 733.0]
 
+_FANG_E = [(-158.0, 684.0), (-159.0, 698.0), (-161.5, 712.0), (-164.4, 725.0)]      # the fang's east side in the course
+
+
+def _fang_east(y):
+    for (xa, ya), (xb, yb) in zip(_FANG_E, _FANG_E[1:]):
+        if y <= yb:
+            return xa + (xb - xa) * (y - ya) / (yb - ya)
+    return _FANG_E[-1][0]
+
+
+def _bed(x0, y0, wob=0.14):
+    """One of the rock's beds as a painted line: from a hold east across the face to the east side, long, a little wavy, falling 0.1 m in 2 m."""
+    out, x, y, i = [], x0, y0, 0
+    xe = _fang_east(y0) - 0.9
+    while x < xe - 0.2:
+        xn = min(x + 2.0, xe)
+        yn = y0 - 0.05 * (xn - x0) + (wob if i % 2 == 0 else -wob)
+        out.append(_ln(x, y, xn, yn))
+        x, y, i = xn, yn, i + 1
+    return out
+
+
+_BEDS = []
+for _i, (_bx, _by) in enumerate(_KNOBS):
+    if _i < 6 or _i % 2 == 0:                             # through every hold on the overhang, every other hold on the slab
+        _BEDS += _bed(_bx + 0.2, _by)
+_BEDS += _bed(-172.0, 700.1) + _bed(-172.6, 704.9 - 0.3)  # two more beds under the overhang's holds
+# The east side's designed outline: it leans out and back by up to 0.8 m off today's edge and is notched once at 705.6 to 707.3 m,
+# 0.9 m deep, where a block has gone. Today's edge at those heights: -158.9, -159.6, -160.4, -160.7, -161.2, -162.1, -162.8, -163.7, -164.3.
+_FANG_OUTLINE = [(-158.5, 697.0), (-159.2, 701.5), (-159.7, 705.4), (-160.6, 705.6), (-160.6, 707.3), (-161.6, 710.4), (-161.5, 714.6),
+                 (-163.3, 718.0), (-163.2, 721.8), (-164.3, 724.4)]
+assert all(abs(x - _fang_east(y)) <= 0.8 for x, y in _FANG_OUTLINE)
+
 EL_COLMILLO = {
     "id": "8.6", "slug": "8_6_el_colmillo", "title": "El Colmillo", "kind": "challenge",
     "window": _W86, "cut_y": 725.2, "climber": [-174.3, 702.9],
     "place": ("El Colmillo is a fang of the cliffs' own rock standing by itself in the open air, 14 m across at this height, dark and "
-              "polished by rain. The cableway never built on it. It only tied itself to it: the chair line is anchored in its west "
-              "side and the zip line to its top. The linesmen who kept those anchors went up it the way you do, on the white chalk "
-              "knobs that stick out of the dark rock: up the overhang, round the nose at 715 m, and up the slab to the iron plate on "
-              "top. From the foot ledge to the plate it is 22 m, with no place to stand on the way."),
+              "polished by rain and wind. It is chalk in level beds, like the cliffs below: where a bed ends at the face it stands out "
+              "white and dry, and everywhere else the face is dark brown and glossy. The cableway never built on it. It only tied "
+              "itself to it: the chair line is anchored in its west side and the zip line to its top. The linesmen who kept those "
+              "anchors went up it the way you do, on the white ends of its beds: up the overhang, round the nose at 715 m, and up the "
+              "slab to the iron plate on top. From the foot ledge to the plate it is 22 m, with no place to stand on the way."),
     "keep": [
-        "The rock's outline: the overhang, the nose at (-176, 715), the slab, the top.",
-        "The thirteen knobs, each where it is, about 1.8 m apart, and the rock slick everywhere else.",
+        "The rock's outline on the climb: the overhang, the nose at (-176, 715), the slab, the top. The east side, which holds nothing, may lean by up to 0.8 m.",
+        "The thirteen chalk holds, each where it is, about 1.8 m apart, and the rock slick everywhere else.",
         "The foot ledge and the rib at the bottom. The anchor plate and the post on top.",
     ],
     "background": [
@@ -748,7 +819,7 @@ EL_COLMILLO = {
          "text": "20 m back and hazed, in the open air east of the fang: the third tower of the dead second line, with its slack cable and one stopped car high up on the west.",
          "draw": _far(_W86)},
         {"name": "The fang's far horn", "z": [-4.0, -1.5], "tag": [-159.6, 716.0], "top": True,
-         "text": "The fang is thicker than the slice of it you climb. Its far horn stands 1.5 to 4 m back: the same dark rock, a step duller and greyer, rising 2 to 3 m above the slab and up to 2 m wider on the east. It never shows west of the overhang, so the overhang keeps a clean edge against the sky. It is why the fang reads as a rock and not as a card.",
+         "text": "The fang's own body, carrying on behind the slice of it you climb: one big form in two or three slanted planes, 1.5 to 4 m back, the same rock a step duller, greyer and cooler. Its beds are painted on it as thin wavy lines that carry on from the face's, and its skyline is uneven, rising 2 to 3 m above the slab and up to 2 m wider on the east. It never shows west of the overhang, so the overhang keeps a clean edge against the sky. It is why the fang reads as a rock and not as a card.",
          "draw": [_p(_HORN)]},
         {"name": "The chair line's anchor", "z": [-2.3, -1.3], "tag": [-177.6, 706.4],
          "text": "On the fang's west side, 2 m back: the iron arm and guide wheel where the chair line's cable is made fast, with the fourth chair's pole hanging from the cable beside it.",
@@ -761,28 +832,31 @@ EL_COLMILLO = {
          "draw": [_ln(-164.25, 728.1, -166.2, 728.1), _ln(-166.2, 728.1, -184.0, 724.71), _r(-166.5, 728.0, -165.9, 728.3, "pale")]},
     ],
     "play": [
-        {"name": "The chalk knobs", "z": [-0.3, 0.3], "style": "line", "tag": [-177.6, 711.0],
-         "text": "Thirteen white chalk knobs, each 0.4 m across and modelled at the size of its grip, standing 0.1 m out of the dark rock. White and matte against black and glossy: they are the only holds on the fang, and nothing else on it is pale. Four up the overhang, one on the nose, one over it, seven up the slab.",
-         "draw": [_c(x, y, 0.36) for x, y in _KNOBS]},
+        {"name": "The chalk holds", "z": [-0.3, 0.3], "style": "solid", "tag": [-177.6, 711.0],
+         "text": "Thirteen white chalk blocks, each 0.4 m across and modelled at the size of its grip, standing 0.1 m proud of the face. Each is a plain block with square ends: the end of one of the rock's beds, where the bed meets the face. White and matte against dark and glossy, they are the only holds on the fang, and nothing else on it is white. Four up the overhang, one on the nose, one over it, seven up the slab.",
+         "draw": [_r(x - 0.2, y - 0.2, x + 0.2, y + 0.2) for x, y in _KNOBS]},
         {"name": "The foot ledge and the rib", "z": [-1.2, 1.2], "style": "mark", "tag": [-176.4, 703.6],
-         "text": "White chalk: the ledge is the lip of a level bed of chalk that runs through the fang, and the rib is the same bed's broken edge, turned up. The fourth chair sets you down here.",
+         "text": "White chalk, as plain bands with square ends: the ledge is the lip of one bed, standing out 1.3 m, and the rib is the same bed's broken end, turned up. The ledge is the face's one real shelf. The fourth chair sets you down here.",
          "draw": [_r(-174.95, 702.3, -173.4, 703.0), _r(-174.75, 703.1, -173.45, 706.7)]},
-        {"name": "Rain lines on the dark rock", "z": [1.15, 1.2], "style": "mark", "tag": [-168.4, 712.0],
-         "text": "The rock is rain-polished and glossy, with thin white drip lines running down the overhang and the east side. No ledge, no crack and no pale patch that is not a knob.",
-         "draw": [_ln(-173.8, 712.5, -173.0, 707.4), _ln(-171.6, 716.0, -170.4, 708.0), _ln(-168.6, 719.0, -167.4, 708.5), _ln(-164.8, 720.0, -163.4, 706.0), _ln(-162.6, 712.0, -161.6, 700.0)]},
+        {"name": "The beds, painted", "z": [1.1, 1.2], "style": "mark", "tag": [-166.2, 712.6],
+         "text": "The face is a few large slanted planes of dark brown, and the rock's beds are paint on them: long, a little wavy lines and bands in three or four browns, near level, running from each hold east across the whole face. Each hold is where its bed ends at the face, so the holds and the beds read as one rock. There is no ink inside the face, no step of shape for a bed, and nothing painted narrows to a point: no rain streaks and no stains.",
+         "draw": _BEDS},
+        {"name": "The east side's outline, and its three breaks", "z": [-1.2, 1.2], "style": "mark", "tag": [-158.6, 716.0],
+         "text": "Away from the holds the outline is designed. The east side leans out and back by up to 0.8 m and is notched once, at 706 m, where a block has broken away. The fang's only real shapes are the overhang, with its own shadow painted a band darker under the nose, the foot ledge, and that notch. Nothing is cut into the face.",
+         "draw": [_ln(_FANG_OUTLINE[i][0], _FANG_OUTLINE[i][1], _FANG_OUTLINE[i + 1][0], _FANG_OUTLINE[i + 1][1]) for i in range(len(_FANG_OUTLINE) - 1)]},
         {"name": "The anchor plate and the post", "z": [-0.4, 0.4], "style": "mark", "tag": [-167.9, 726.4],
          "text": "An iron plate 2.6 m long on the fang's top, and the zip line's post, 2.7 m tall, at its east end. Rust-orange iron, dry: both are held.",
          "draw": [_r(-166.6, 725.0, -164.0, 725.4), _r(-164.4, 725.4, -164.1, 728.1)]},
     ],
     "foreground": [],
     "explains": [
-        ["The thirteen knobs", "Lumps of chalk in the dark rock, the linesmen's way up", "The fang's far horn, and at each end of the climb an anchor they went up to keep"],
+        ["The thirteen chalk holds", "The white ends of the rock's beds, the linesmen's way up", "The same beds painted on across the face, the fang's far horn, and at each end of the climb an anchor they went up to keep"],
         ["The foot ledge and the rib", "The lip of a chalk bed, where the chair line set down", "The cable's anchor arm 2 m back, 5 m above the ledge"],
         ["The plate and the post", "The zip line's anchor", "The back stay down to the horn, the linesman's box, the line going out west"],
     ],
     "pieces": [
-        ["Chalk knob", "0.4 m across", "13", "Play space", "kit: El Colmillo (the knob model)"],
-        ["The fang's rock: overhang, nose, slab", "14 m across, 41 m of it in the course", "1", "Play space", "kit: El Colmillo"],
+        ["Chalk hold: a plain white block with square ends", "0.4 m across, 0.1 m proud", "13", "Play space", "kit: El Colmillo (its hold block)"],
+        ["The fang's rock, painted: overhang, nose, slab and east side as one piece, the beds painted as lines and bands, three real breaks, a designed outline", "14 m across, 41 m of it in the course", "1", "Play space", "kit: El Colmillo"],
         ["The fang's far horn", "20 m wide, 31 m tall in this frame, 2.5 m deep", "1", "Background", "kit: the fang's far horn (added)"],
         ["Anchor plate; anchor post with a back stay", "plate 2.6 m; post 2.7 m; stay 4.5 m", "1 each", "Play space; the stay behind", "kit: the zip line's two ends; the stay is new"],
         ["Anchor arm with a guide wheel and a pug plate", "1.6 m; wheel 1 m", "1", "Background", "kit: crossarm, cut short; guide wheel (added)"],
@@ -791,13 +865,15 @@ EL_COLMILLO = {
     ],
     "effects": [
         "The fang's top catches the last sun: the plate and the post are in gold light while the overhang is in blue shadow. The course has this light today.",
-        "A little chalk dust from a knob as a hand takes it.",
+        "A little chalk dust from a hold as a hand takes it.",
     ],
     "notes": [
         "No playtest note changes this challenge. It plays exactly as the course has it.",
-        "Notes 76 and 77, the rule they made: each knob is modelled at the size of its grip, 0.4 m, so nothing can be held that is not drawn.",
+        "The walls rule (Parker, 11-13: the painted look, with lines and bands only): the fang is one painted piece made for its place, in place of the course's plain rock. Its beds are long wavy lines and bands. The rain drip lines an earlier pass drew down the face are taken out: nothing painted tapers to a point. The holds are plain blocks with square ends.",
+        "What the rule changes in the course: nothing you hold or stand on moves. The east side, which carries no hold, may lean out or back by up to 0.8 m, and is notched once, 0.9 m deep and 1.7 m tall, from 705.6 to 707.3 m. Its four corners today, (-158, 684), (-159, 698), (-161.5, 712), (-164.4, 725), become the uneven line drawn.",
+        "Notes 76 and 77, the rule they made: each chalk hold is modelled at the size of its grip, 0.4 m, so nothing can be held that is not drawn.",
         "Scenery that moves out of the play space: the chair line's wire, which ends on the fang 0.5 m back, becomes a cable 2 m back on an anchor arm.",
-        "This is the plainest area of the biome: one rock, its knobs and two anchors. The sheet asks for nothing more on the fang.",
+        "This is the plainest area of the biome: one rock, its holds and two anchors. The sheet asks for nothing more on the fang.",
     ],
 }
 
@@ -891,13 +967,10 @@ TIROLESA = {
     ],
     "notes": [
         "Note 82: the zip line goes all the way. The trolley's road is 7.0 m longer and ends at (-193.0, 723.0), against a sprung buffer over the middle of the deck. There is no timed let-go: you ride, it slows, you stand.",
-        "Note 82: what is left as the challenge is the catch, the ride and stepping off. Its difficulty is 4 today and comes down. It is to be rated again.",
+        "Note 82, settled: the challenge is a plain catch and ride, and stepping off. Parker took this design's answer, so nothing is added on the way in. Its difficulty is 4 today and comes down. It is to be rated again.",
         "To measure when it is built: that your boots clear the deck's east lip. With the bar at 722.7 m there, a hanging body has about 0.5 m to spare.",
         "Note 77, the rule: only the bar and the stem are solid, and both are drawn. The trolley's body stops being solid.",
         "Scenery that moves out of the play space: the zip wire (0.5 m back) becomes a cable 2 m back. The 16 m pennant line along it (0.6 m back) goes, because a trolley runs there. The lit lantern over the deck (0.8 m back) goes cold and the toolbox (0.7 m back) goes to 1.3 m.",
-    ],
-    "ask": [
-        "With the timed let-go gone, Tirolesa is a catch and a ride. Is that enough, or should the ride ask one thing of you on the way in, such as lifting your legs over a rail on the deck's east end? This design has the plain ride.",
     ],
 }
 
@@ -968,7 +1041,7 @@ CONTRAPESOS = {
         ["Pylon 3's head", "The head of the third tower", "Pylon 3, the pug crest, and the one who tried"],
     ],
     "pieces": [
-        ["Counterweight: a cream block with red bands, the pug, a lifting eye; its arm", "1.6 m wide, 1.2 m tall; eye 0.5 m", "4", "Play space; the arm behind", "kit: counterweight"],
+        ["Counterweight: a cream block with red bands, the pug, a lifting eye; its arm", "1.6 m wide, 1.2 m tall; eye 0.5 m", "4", "Play space; the hanger's head and carriage behind", "kit: counterweight"],
         ["Lattice frame; pylon 3", "3 m and 2.6 m wide, bays 4 m tall", "1 each", "Background", "kit: lattice tower"],
         ["Long girder with its shaft", "23 m long, 1.2 m deep", "1", "Background", "kit: link girder (added)"],
         ["Top wheel, greyed", "3.2 m across", "1", "Background", "kit: counterweight (the top wheel)"],
@@ -1019,15 +1092,15 @@ LA_GONDOLA_ROTA = {
         {"name": "The long girder: the shuttle's rail", "z": [-2.9, -2.0], "tag": [-214.0, 756.6], "top": True,
          "text": "A lattice girder 2.5 m back at 754.6 m, 23 m long, from the express tower across pylon 3 to the counterweight frame. The shuttle ran on a rail under it, between a buffer at each end. A shaft inside it carries the wind engine's turn to a winding drum on the express tower. A 7.2 m length of it, over the dead car, is a solid iron beam in the play space today. That is 5.5 m above the head and out of reach, so nothing changes in the play when it goes back with the rest.",
          "draw": _girder(-218.7, -198.0, 754.6, 755.8) + [_r(-202.6, 754.1, -202.3, 754.6), _r(-218.6, 754.1, -218.3, 754.6), _c(-220.2, 755.2, 0.9, "line")]},
-        {"name": "The arm that held, and the arm that broke", "z": [-2.1, -1.2], "style": "line", "tag": [-212.3, 753.4],
-         "text": "Both of the car's arms went up to carriages on the rail. The east one still holds: it is scenery now, greyed and behind you. The west carriage is still on the rail, with a sheared stub of arm 0.7 m long under it.",
-         "draw": [_ln(-208.6, 754.2, -207.93, 752.86), _r(-208.9, 754.25, -208.3, 754.55, "pale"), _r(-211.5, 754.25, -210.9, 754.55, "pale"), _ln(-211.2, 754.25, -211.3, 753.55)]},
+        {"name": "The two carriages, and the arm that broke", "z": [-2.1, -1.2], "style": "line", "tag": [-212.3, 753.4],
+         "text": "Both of the car's arms went up to carriages on the rail. The east arm still holds, and it is held: it is part of the car, in the play space. Only its cranked head and its carriage are scenery. The west carriage is still on the rail, with a sheared stub of arm 0.7 m long under it, greyed and out of reach.",
+         "draw": [_r(-208.9, 754.25, -208.3, 754.55, "pale"), _r(-211.5, 754.25, -210.9, 754.55, "pale"), _ln(-211.2, 754.25, -211.3, 753.55)]},
         {"name": "The car's back door", "z": [-1.4, -1.2], "style": "pale", "tag": [-208.2, 751.0],
          "text": "On the car's back wall, 1.2 m behind you: a door with the peeling pug crest, hanging open by its top hinge. It is the back of the car, seen through the open side, and it is never in your way.",
          "draw": [_p([(-208.75, 750.15), (-207.95, 750.55), (-208.55, 751.95), (-209.35, 751.55)])]},
-        {"name": "Express lines 1 to 3, and the car's arm", "z": [-2.15, -1.2], "style": "line", "tag": [-224.0, 757.6],
-         "text": "Three of the four express cables, 2 m behind you, going up west out of the frame from the tower's arms. The first express car hangs from the lowest by its arm, which is scenery.",
-         "draw": [_ln(-217.5, g[1] - 0.47, -226.0, g[1] + 7.5 * EX_SLOPE) for g in EX_E[:3]] + _hanger(EX_E[0])},
+        {"name": "Express lines 1 to 3, and the car's carriage", "z": [-2.15, -1.2], "style": "line", "tag": [-224.0, 757.6],
+         "text": "Three of the four express cables, 2 m behind you, going up west out of the frame from the tower's arms. The first express car's carriage rides the lowest. Its hanger, under the carriage, is held.",
+         "draw": [_ln(-217.5, g[1] - 0.47, -226.0, g[1] + 7.5 * EX_SLOPE) for g in EX_E[:3]] + _carriage(EX_E[0])},
         {"name": "The one who tried", "z": [-1.7, -1.3], "style": "pale", "tag": [-201.2, 750.4],
          "text": "A frozen climber sitting at the back of the head, with his back to the tower, looking at the dead gondola. He is the only one on the cableway.",
          "draw": _FROZEN},
@@ -1037,33 +1110,33 @@ LA_GONDOLA_ROTA = {
     ],
     "play": [
         {"name": "The dead car, every solid part drawn", "z": [-0.6, 0.6], "style": "pale", "tag": [-211.6, 748.4],
-         "text": "It is the same car as the ones that run, and the model shows every part you can touch at its true size: the roof in two pieces with the hatch between, the floor, the two low end walls, and the rack on its west end, 1.6 m long, which is solid today and not drawn (note 77). Cream bands on the roof's edges, the hatch's rim, the floor's edge and the rack.",
-         "draw": [_p(_DEAD_RACK)]},
-        {"name": "No longer solid: the car's arm and the crossarm", "z": [-0.1, 0.1], "style": "mark", "tag": [-206.2, 753.6],
-         "text": "The car's one arm, 1.5 m long and 0.12 m thick, and the crossarm it hangs from, an iron beam 7.2 m long at 754.6 m. Both are solid today. Both become scenery. Nothing in the route uses either.",
-         "draw": [_ln(-208.6, 754.2, -207.93, 752.86), _ln(-209.2, 754.6, -202.0, 754.6)]},
+         "text": "It is the same car as the ones that run, and the model shows every part you can touch at its true size: the roof in two pieces with the hatch between, the floor, the two low end walls, the one arm it hangs by, 1.5 m long and 0.12 m thick, and the rack on its west end, 1.6 m long, which is solid today and not drawn (note 77). Cream bands on the roof's edges, the hatch's rim, the floor's edge, the rack and the arm's top 0.5 m. The arm is held, as today.",
+         "draw": [_p(_DEAD_RACK), _p([(-208.66, 754.17), (-208.54, 754.23), (-207.87, 752.89), (-207.99, 752.83)], "solid")]},
+        {"name": "No longer solid: the crossarm", "z": [-0.1, 0.1], "style": "mark", "tag": [-204.4, 753.6],
+         "text": "The crossarm the car hangs from, an iron beam 7.2 m long at 754.6 m, is solid today. It is the tower's, and towers are never held, so it becomes scenery. Nothing in the route uses it. It is 5.5 m above the head, and only a hand at the very top of the car's arm comes near it.",
+         "draw": [_ln(-209.2, 754.6, -202.0, 754.6)]},
         {"name": "Warning stripes on the head's west end", "z": [-1.2, 1.2], "tag": [-206.3, 749.5],
          "text": "The car's east corner hangs 1.4 m from the rail post, and a hard swing brings it in over the head's edge. So the post and the last 0.6 m of the head wear the slanted yellow and black stripes (note 78).",
          "draw": [_r(-205.6, 748.6, -205.0, 749.0), _r(-205.52, 749.0, -205.38, 750.2)]},
         {"name": "The express car's rack and step", "z": [-0.5, 0.5], "style": "pale", "tag": [-215.4, 747.6],
-         "text": "The rack you jump to, 2.4 m, and the short step on the car's far end, 0.6 m: both drawn at the length they are, with a cream band (note 77).",
-         "draw": _ends(EX_E[0], 0.6, 2.4)},
+         "text": "The rack you jump to, 2.4 m, and the short step on the car's far end, 0.6 m: both drawn at the length they are, with a cream band (note 77). The car's hanger, 1.5 m, is held, and drawn the same way.",
+         "draw": _ends(EX_E[0], 0.6, 2.4) + _pole(EX_E[0])},
     ],
     "foreground": [],
     "explains": [
         ["The head and its rail post", "Pylon 3's head: the shuttle's east platform", "Pylon 3, the buffer on the girder's rail, the one who tried"],
-        ["The dead car", "The shuttle's car", "The rail under the long girder, the arm that holds, the stub of the one that broke"],
+        ["The dead car and its arm", "The shuttle's car, hanging by the one arm that held", "The arm's carriage on the rail under the long girder, and the stub of the arm that broke"],
         ["The window, the hatch, the rack", "A gondola's window, the linesmen's roof hatch, its freight rack", "The back door hanging open behind them"],
         ["The express car's rack", "Express line 1's car at its east stop", "The express tower, its arm and guide wheel, the cable going up west"],
         ["The grate", "The express tower's landing", "The express tower it is bolted to"],
     ],
     "pieces": [
-        ["Dead gondola with its rack, back door and one arm", "2.6 m wide, 2.2 m tall; rack 1.6 m", "1", "Play space; the arm and door behind", "kit: dead gondola"],
+        ["Dead gondola with its rack, back door and one held arm", "2.6 m wide, 2.2 m tall; rack 1.6 m; arm 1.5 m", "1", "Play space; the door, the arm's head and carriage behind", "kit: dead gondola"],
         ["Long girder with its rail, two buffers, a shaft and a winding drum", "23 m long; drum 1.8 m across", "1", "Background", "kit: link girder (added); the drum is new"],
         ["Rail carriage; sheared arm stub", "0.6 m; 0.7 m", "2; 1", "Background", "kit: gondola (its hanger)"],
         ["Lattice tower: pylon 3; the express tower with four arms", "2.6 m and 3 m wide, bays 4 m tall; arms 1.8 m", "1 each", "Background", "kit: lattice tower and crossarm"],
         ["Guide wheel, greyed", "1 m across", "4", "Background", "kit: guide wheel (added)"],
-        ["Gondola with its step, rack and cranked hanger arm", "2.6 m wide, 2.2 m tall; step 0.6 m; rack 2.4 m", "1 here", "Play space; the arm behind", "kit: gondola"],
+        ["Gondola with its step, rack and held hanger", "2.6 m wide, 2.2 m tall; step 0.6 m; rack 2.4 m", "1 here", "Play space; the hanger's head and carriage behind", "kit: gondola"],
         ["Iron grate; plank head with one rail post", "1.6 m; 4.1 m", "1 each", "Play space", "kit: tower fittings"],
         ["Frozen climber, sitting", "1.2 m tall", "1", "Background", "kit: frozen climber"],
         ["Wind engine; streamer pole", "5 m across; 3 m", "1 each", "Background", "kit: wind engine, streamer pole"],
@@ -1076,9 +1149,9 @@ LA_GONDOLA_ROTA = {
     ],
     "notes": [
         "Note 77: the dead car's rack, 1.6 m, is drawn. So are the express car's rack and step.",
-        "The sheet's call from note 80: the dead car's arm (1.5 m long, 0.12 m thick) and the crossarm above it (7.2 m long, 0.25 m thick, at 754.6 m) stop being solid and go behind. Nothing in the route uses either.",
+        "Note 80, settled: the dead car's arm (1.5 m long, 0.12 m thick) stays solid and held, as today, and is drawn with a cream band round its top. The express car's hanger stays held too. Only the crossarm above the dead car (7.2 m long, 0.25 m thick, at 754.6 m) stops being solid and goes back to 2.5 m: it is the tower's, and towers are never held. Nothing in the route uses it.",
         "Note 78: one pinch is kept and striped: the head's west end and its rail post, where the car's east corner can swing in.",
-        "To check when the crunch rule is built: a climber standing on the grate has 2 cm of headroom under the express car's step when it stops. The route asks you to stand there and reach up, so it is not striped.",
+        "To check first when the crunch rule is built: a climber standing on the grate has 2 cm of headroom under the express car's step when it stops. A crunch knocks you out only when the head or the body is pinned, and this is a head. The route asks you to stand there and reach up, so it is not striped, but if a standing head can be caught, the grate goes down 0.2 m.",
         "Scenery that moves out of the play space: pylon 3's card goes from 1.2 m back to 2.5 m. The express lines' wires (0.5 m back) become cables 2 m back and end on the new express tower. The lantern under the head goes cold.",
     ],
 }
@@ -1102,7 +1175,7 @@ VIA_RAPIDA = {
               "height, so both cars' whole roads are in sight. This sketch is 52 m wide for the same reason."),
     "keep": [
         "Four lines, 5.1 m one over the next, each 47.5 m across and 22.5 m up. One car on each at 6 m a second, waiting 1.5 seconds at each end. Lines 1 and 3 start at the east end, lines 2 and 4 at the west.",
-        "The transfer: the step on the upper car, 0.6 m long, clears the lower car's cable by 0.43 m. Standing on the lower roof your head is just under it and your raised hand is 0.2 m over it.",
+        "The transfer: the step on the upper car, 0.6 m long, clears the lower car's cable by 0.43 m. Standing on the lower roof your head is just under it and your raised hand is 0.2 m over it. The course's second way stays: up the lower car's hanger and onto the upper car's floor behind the step, 0.25 m higher.",
         "Three transfers, in the middle of the span, then the ride on line 4 to its west end.",
         "The grate at 746.5 m, where the challenge starts.",
     ],
@@ -1119,9 +1192,9 @@ VIA_RAPIDA = {
         {"name": "The express tower", "z": [-2.8, -2.0], "tag": [-220.2, 770.0],
          "text": "At the lines' east end, 2.5 m back: a lattice tower with the grate on its side, an arm, a buffer and a greyed guide wheel for each line, and the winding drum on the end of the long girder that the wind engine on pylon 3 turns. It is new. Today nothing holds the cables' east ends.",
          "draw": _EXTOWER + _girder(-218.7, -216.0, 754.6, 755.8) + [_c(-220.2, 755.2, 0.9, "line")]},
-        {"name": "The cars' hanger arms", "z": [-2.1, -1.2], "style": "line", "tag": [-264.6, 779.0],
-         "text": "One arm for each car, from its carriage on the cable down to the back of its roof. Scenery: greyed, behind you, and no longer solid. On the roof you stand in front of it.",
-         "draw": _hanger(EX_E[0]) + _hanger(EX_W[1]) + _hanger(EX_E[2]) + _hanger(EX_W[3])},
+        {"name": "The cars' carriages", "z": [-2.1, -1.2], "style": "pale", "tag": [-264.6, 780.4],
+         "text": "One carriage on the cable for each car, 2 m behind you, with the hanger's cranked head coming back to it. Scenery, greyed. The clack you hear as a car crosses the middle tower is the carriage on its saddle wheel.",
+         "draw": _carriage(EX_E[0]) + _carriage(EX_W[1]) + _carriage(EX_E[2]) + _carriage(EX_W[3])},
         {"name": "One line of pennants, above the top cable", "z": [-2.1, -2.0], "tag": [-240.0, 784.4],
          "text": "Today two lines of pennants, each 40 m long, hang 0.6 m back, inside the play space. The lower one runs between lines 2 and 3, exactly where a hand goes up for a step. It goes. The upper one already runs 4.5 m above the top cable, where no hand comes. It stays there and goes back to 2 m. It streams east, down the lines.",
          "draw": _pennants(-259.75, 791.9, -223.75, 774.5, every=2.5)},
@@ -1133,20 +1206,23 @@ VIA_RAPIDA = {
         {"name": "The roof you stand on", "z": [-0.6, 0.6], "style": "pale", "tag": [-218.5, 749.6],
          "text": "A car's flat roof, 2.6 m long, with a cream band along both long edges. Stand tall on it with a hand up.",
          "draw": [_r(g[0] - 1.3, g[1] - 1.6, g[0] + 1.3, g[1] - 1.4) for g in (EX_E[0], EX_W[1], EX_E[2], EX_W[3])]},
+        {"name": "The hangers", "z": [-0.1, 0.1], "style": "solid", "tag": [-265.2, 778.9],
+         "text": "An upright pole on the middle of each car's roof, 1.5 m tall and 0.12 m thick, held, as in the course today. It is the cableway's red with a cream band round its top 0.5 m. It is something to steady yourself on while you stand tall on the roof, and the second way to transfer: up it, and onto the floor of the car above as it passes, 0.25 m higher than the step.",
+         "draw": _pole(EX_E[0]) + _pole(EX_W[1]) + _pole(EX_E[2]) + _pole(EX_W[3])},
         {"name": "The grate", "z": [-1.2, 1.2], "style": "mark", "tag": [-222.2, 746.4],
          "text": "Open iron grating, 1.6 m, on the express tower's side, under the place where the first car's step stops.",
          "draw": [_r(-221.0, 746.25, -219.4, 746.5)]},
     ],
     "foreground": [],
     "explains": [
-        ["The roof you stand on", "A gondola's roof", "Its hanger arm and its cable, 2 m back"],
+        ["The roof you stand on, and its hanger", "A gondola's roof, and the pole it hangs from", "The hanger's carriage and its cable, 2 m back"],
         ["The step that takes you", "The boarding step of the car on the next line up", "That line's cable, 5.1 m above yours"],
         ["The place where they pass", "The middle of every span", "The middle tower, right behind it, with an arm for each cable"],
         ["The grate", "The express tower's landing", "The express tower, and the winding drum on the girder's end"],
         ["The fourth car's ride", "The top line's car going home", "Its cable going up into the high station, under the one line of pennants"],
     ],
     "pieces": [
-        ["Gondola with its step, rack and cranked hanger arm", "2.6 m wide, 2.2 m tall; step 0.6 m; rack 2.4 m", "4", "Play space; the arm behind", "kit: gondola"],
+        ["Gondola with its step, rack and held hanger", "2.6 m wide, 2.2 m tall; step 0.6 m; rack 2.4 m; hanger 1.5 m", "4", "Play space; the hanger's head and carriage behind", "kit: gondola"],
         ["Cable", "0.15 m thick, 53 m in this frame", "4", "Background", "kit: cable"],
         ["Lattice tower: the middle tower, with four arms and saddle wheels", "3 m wide, bays 4 m tall; arms 4.6 m", "1", "Background", "kit: lattice tower and crossarm"],
         ["Lattice tower: the express tower, with four arms and buffers", "3 m wide; arms 1.8 m", "1", "Background", "kit: lattice tower and crossarm"],
@@ -1163,8 +1239,8 @@ VIA_RAPIDA = {
     ],
     "notes": [
         "Note 77: the step (0.6 m) and the rack (2.4 m) are drawn on all four express cars. Neither moves.",
-        "The sheet's call from note 80: the four cars' hanger arms, 1.5 m tall and 0.12 m thick, stop being solid and go behind. The course allows a second way to transfer, up the lower car's hanger to the upper car's floor. That way goes with the hangers. The step is the transfer.",
-        "Note 83: when you hold your own car and the step of the car above at once, you keep the one more of your limbs are on, or the higher. The higher is the car you want.",
+        "Note 80, settled: the four cars' hangers, 1.5 m tall and 0.12 m thick, stay solid and held, as today, and are drawn with a cream band round their top 0.5 m. So the course's second way to transfer stays: up the lower car's hanger to the upper car's floor. Nothing in this area's course changes for it.",
+        "Note 83, settled: when you hold your own car and the step of the car above at once, you keep the one more of your limbs are on, and then the higher. The higher is the car you want.",
         "Note 78: no pinch is kept. A car passing over a roof clears a standing head by 0.06 m, which is the challenge itself, and a hit at that speed already knocks you out.",
         "Scenery that moves out of the play space: the four wires (0.5 m back) become cables 2 m back. Of the two 40 m pennant lines (0.6 m back), the lower one, between lines 2 and 3, goes. The upper one stays 4.5 m above the top cable and goes back to 2 m. The middle tower's card goes from 1.6 m back to 2.5 m. The express tower is added, 2.5 m back.",
         "Note 89: the pennants stream east. No wavy wind lines, because this wind does not push.",
@@ -1180,9 +1256,9 @@ LA_ESTACION_ALTA = {
     "id": "8.11", "slug": "8_11_la_estacion_alta", "title": "La Estación Alta", "kind": "challenge", "also": ["a9"],
     "window": _W811, "screen": [-275.0, 788.5], "cut_y": 786.0, "climber": [-268.8, 786.0],
     "place": ("The high station, at 786 m: the top of the cableway and the last made floor on the mountain. It is the same station as "
-              "the one below, a board house under a striped tin roof, with the pug's sign, a ticket window and a deck of honey "
-              "planks 14 m long. Then one winter the glacier came down over it. The ice lies on its roof and has buried its west "
-              "half. It has filled the docks under the deck, where the two lower express lines came in, and it has put out a tongue "
+              "the one below: a board house standing back under a striped tin roof that comes forward over a deck of honey planks "
+              "14 m long, with the pug's sign and a ticket window. Then one winter the glacier came down over it. The ice lies on "
+              "nearly all of its roof and has buried the house's west half. It has filled the docks under the deck, where the two lower express lines came in, and it has put out a tongue "
               "across the deck itself. The wind engine on its roof is frozen still and white with frost. The fourth express car "
               "still stops at the deck's east end for a second and a half. You step off onto ice: the first ice on the climb, which "
               "holds you for two seconds and then lets go."),
@@ -1191,6 +1267,7 @@ LA_ESTACION_ALTA = {
         "Ice holds for 2 seconds, lets go, and takes you again 0.6 seconds later.",
         "The fourth car stops for 1.5 seconds with the tip of its step at the deck's east edge, 0.15 m above it.",
         "Black ice under the deck's east end and up its east edge, so the deck is only taken from above, off the car.",
+        "Nothing new comes within reach of the deck: the station's roof is 4.5 m above it.",
     ],
     "background": [
         {"name": "The swallowed docks", "z": [-6.0, -1.3], "style": "dark", "tag": [-272.4, 782.6],
@@ -1200,23 +1277,26 @@ LA_ESTACION_ALTA = {
         {"name": "The deck's brackets", "z": [-2.8, -2.5], "style": "line", "tag": [-277.0, 779.4],
          "text": "Two lattice brackets from under the deck back to the face, half sunk in the ice. The deck's strut is a card 0.7 m back today, inside the play space. It goes to 2.5 m.",
          "draw": [_ln(-270.4, 785.3, -279.4, 777.8), _ln(-274.9, 785.3, -279.9, 781.1)]},
-        {"name": "The station house, half buried", "z": [-5.5, -2.5], "style": "pale", "tag": [-270.0, 788.0],
-         "text": "The same house as at the low station, 14 m wide and 6 m tall, standing 2.5 m back, with no roof and no post over the deck (note 77). Board walls, red below cream. Dark windows, the pug sign on the wall, a cold lantern by the ticket window. Snow is drifted against its west half up to the eaves, and the glacier's lip lies on its roof. Today its peaked roof is a card 1 m back, in the play space and inside the glacier's lip. It goes.",
-         "draw": [_r(-282.0, 786.0, -268.3, 790.4), _p([(-282.6, 790.4), (-267.7, 790.4), (-268.6, 792.0), (-282.6, 792.0)], "solid"),
+        {"name": "The station house, half buried", "z": [-5.5, -2.5], "style": "pale", "tag": [-272.4, 787.4],
+         "text": "The same house as at the low station, 12 m wide, standing 2.5 m back under the station's roof. Board walls in the greyed red below bare grey boards, with no cream. Dark windows, the pug sign on the wall, a cold lantern by the ticket window. Snow is drifted against its west half up to the roof.",
+         "draw": [_r(-282.0, 786.0, -270.0, 790.5),
                   _r(-275.6, 787.2, -274.4, 788.4, "dark"), _r(-278.4, 788.7, -276.2, 789.9, "solid"), _c(-273.9, 788.6, 0.15, "solid"),
-                  _p([(-282.0, 786.0), (-282.0, 789.8), (-279.6, 789.0), (-277.4, 787.4), (-275.8, 786.4), (-274.6, 786.0)], "solid")]},
+                  _p([(-282.0, 786.0), (-282.0, 790.5), (-280.2, 790.5), (-279.6, 789.0), (-277.4, 787.4), (-275.8, 786.4), (-274.6, 786.0)], "solid")]},
+        {"name": "The roof's back half, under the glacier", "z": [-5.5, -1.2], "tag": [-277.0, 791.6],
+         "text": "Behind the play space the same striped tin rises on to its ridge over the house's back wall, 6.3 m above the deck. The glacier's lip lies on it everywhere but its east end, where 3.5 m of it still shows.",
+         "draw": _roof_back(-281.4, -268.0, 786.0)},
         {"name": "The express cables coming in", "z": [-2.15, -2.0], "style": "line", "tag": [-262.4, 783.6],
-         "text": "The four cables, 2 m behind you. The upper pair comes in over the deck to the bull wheel on the front of the house. The lower pair goes under the deck into the ice.",
-         "draw": [_ln(-259.0, 786.58, -271.0, 792.27), _ln(-259.0, 781.48, -272.0, 787.64), _ln(-259.0, 776.38, -270.2, 781.69), _ln(-271.07, 777.0, -273.0, 777.9)]},
-        {"name": "The upper pair's bull wheel", "z": [-2.3, -2.0], "style": "line", "tag": [-271.5, 789.95], "top": True,
-         "text": "Lines 3 and 4 are one loop of cable, and it turns back here over a greyed bull wheel 4.4 m across on the front of the house, at its east end, 2 m back. It still turns, one way and then the other, as the cars come and go, and a little frost falls from it each time.",
-         "draw": [_c(-271.5, 789.95, 2.2, "solid")] + _wheel(-271.5, 789.95, 2.2)},
-        {"name": "The frozen wind engine", "z": [-3.4, -3.0], "tag": [-266.4, 797.6],
-         "text": "On the roof's east end, 3 m back: the same cup wheel as on the towers below, stopped, white with frost, with snow in its cups. It is the only engine on the cableway that does not turn.",
-         "draw": _engine(-269.5, 796.0, 792.0)},
-        {"name": "The car's hanger arm", "z": [-2.1, -1.2], "style": "line", "tag": [-265.0, 789.2],
-         "text": "Scenery: greyed, behind you, no longer solid.",
-         "draw": _hanger(EX_W[3])},
+         "text": "The four cables, 2 m behind you. The upper pair comes in over the deck and bends down under the roof's edge onto the bull wheel on the front of the house. The lower pair goes under the deck into the ice.",
+         "draw": [_ln(-259.0, 786.58, -266.0, 789.9), _ln(-266.0, 789.9, -269.0, 790.4), _ln(-259.0, 781.48, -269.0, 786.0), _ln(-259.0, 776.38, -270.2, 781.69), _ln(-271.07, 777.0, -273.0, 777.9)]},
+        {"name": "The upper pair's bull wheel", "z": [-2.3, -2.0], "style": "line", "tag": [-269.0, 788.2], "top": True,
+         "text": "Lines 3 and 4 are one loop of cable, and it turns back here over a greyed bull wheel 4.4 m across on the front of the house, at its east end, 2 m back and under the roof. It still turns, one way and then the other, as the cars come and go, and a little frost falls from it each time.",
+         "draw": [_c(-269.0, 788.2, 2.2, "solid")] + _wheel(-269.0, 788.2, 2.2)},
+        {"name": "The frozen wind engine", "z": [-3.4, -3.0], "tag": [-266.4, 797.9],
+         "text": "On the roof's east end, 3 m back, where the ice has not reached: the same cup wheel as on the towers below, stopped, white with frost, with snow in its cups. It is the only engine on the cableway that does not turn.",
+         "draw": _engine(-269.5, 796.3, 792.3)},
+        {"name": "The car's carriage", "z": [-2.1, -1.2], "style": "pale", "tag": [-265.0, 790.8],
+         "text": "On the cable 2 m back, with the hanger's cranked head coming back to it. Scenery, greyed. The hanger under it is held.",
+         "draw": _carriage(EX_W[3])},
         {"name": "The last pennants, frozen stiff", "z": [-2.1, -2.0], "tag": [-264.0, 794.2],
          "text": "A last line of pennants, 10 m long, from the end of the express lines' pennants to the frozen engine's mast. It is white with frost and does not move. It still points east.",
          "draw": _pennants(-259.75, 791.9, -269.5, 794.6)},
@@ -1231,13 +1311,22 @@ LA_ESTACION_ALTA = {
         {"name": "The fourth car's step", "z": [-0.5, 0.5], "style": "pale", "tag": [-267.6, 784.9],
          "text": "0.6 m of iron with a cream band, drawn at the length it is (note 77). It stops 0.15 m above the deck's east edge.",
          "draw": _ends(EX_W[3], 0.6, 2.4)},
+        {"name": "The fourth car's hanger", "z": [-0.1, 0.1], "style": "solid", "tag": [-264.6, 789.0],
+         "text": "1.5 m of the cableway's red on the middle of the car's roof, with a cream band round its top 0.5 m: solid and held, as today. It is what you steady yourself on to reach the station's roof.",
+         "draw": _pole(EX_W[3])},
+        {"name": "The station's roof", "z": [-1.2, 1.2], "style": "solid", "tag": [-273.6, 790.65],
+         "text": "Real (note 77): striped red and cream tin on timber, 0.3 m thick, from x -281.4 to -268.0, its top 4.8 m above the deck. West of x -271.5 the glacier's lip lies right on it, so that length is sealed under ice and cannot be reached. East of the lip 3.5 m of it is open. You reach it from the car: as the car stops, take its hanger, stand tall at the west end of its roof and reach up and west. The eave's corner is 0.7 m west and 2.0 m up, the same reach as a transfer on the express lines, and the car waits 1.5 seconds. From the deck it is out of reach.",
+         "draw": _roof_play(-281.4, -268.0, 786.0)},
+        {"name": "The glacier's toe on the roof", "z": [-1.2, 1.2], "style": "dark", "tag": [-270.6, 791.3],
+         "text": "Black ice, glossy, 1.9 m long, from the lip's foot at x -271.5 to x -269.6: meltwater off the lip, frozen again on the tin. It cannot be held, the way pylon 2's tarred roof cannot. So the roof you can stand on is its last 1.6 m, from x -269.6 to -268.0, which lies over the deck's first sheet of ice. This is the guard that keeps the roof from carrying you past that ice.",
+         "draw": [_r(-271.5, 790.8, -269.6, 790.95)]},
         {"name": "A frozen glove", "z": [-0.6, 0.6], "style": "line", "tag": [-279.0, 787.0],
          "text": "On the ice near the deck's west end: one glove, frozen to the planks. Somebody held on here for two seconds. It is 0.6 m back today and stays there.",
          "draw": [_c(-279.0, 786.14, 0.16)]},
     ],
     "foreground": [
         {"name": "One platform post", "z": [1.3, 1.6], "tag": [-281.4, 794.0],
-         "text": "A square station post in the cableway's red, 0.3 m wide, in front of the deck's west end, where the planks meet the rock. It matches the scaffold post in front of the low deck's west end. It covers a strip 0.3 m wide, at a place where nothing has to be read.",
+         "text": "A square station post in the cableway's red, 0.3 m wide, in front of the deck's west end, where the planks meet the rock. It carries the west corner of the roof's eave, and it matches the scaffold post in front of the low deck's west end. It covers a strip 0.3 m wide, at a place where nothing has to be read.",
          "draw": [_r(-281.55, 779.0, -281.25, 790.6)]},
         {"name": "A lip of drifted snow", "z": [1.2, 1.7], "style": "pale", "tag": [-284.0, 786.6], "top": True,
          "text": "Along the deck's front edge, under 0.3 m tall, so it hides no more than the soles of your boots. It stops 3.5 m short of the east end, where you come off the car.",
@@ -1245,6 +1334,9 @@ LA_ESTACION_ALTA = {
     ],
     "explains": [
         ["The car's step, which you leave", "The boarding step of the top line's car, at its west stop", "Its cable going in over the deck to the bull wheel on the front of the house"],
+        ["The car's hanger", "The pole the car hangs from", "Its cranked head and carriage on the cable, 2 m back"],
+        ["The roof's open east end", "The station's roof, where the glacier has not reached it", "The roof's back half under the ice, and the frozen wind engine on it"],
+        ["The black glaze on the roof", "Meltwater off the glacier's lip, frozen on the tin", "The lip itself, black ice running up west from the roof"],
         ["The three sheets of ice", "The glacier's tongue, lying across the station's deck", "The glacier's lip on the station's roof, and the docks under the deck full of the same ice"],
         ["The three dry patches", "The station's own planks, where the ice has not reached", "The house's wall, its ticket window and its sign"],
         ["The black edge and underside", "The near edge of the ice that fills the lower docks", "The mass of blue-black ice under the deck, with two cables running into it"],
@@ -1253,8 +1345,10 @@ LA_ESTACION_ALTA = {
     "pieces": [
         ["Iced deck: planks with three sheets of ice", "14 m", "1", "Play space", "kit: iced deck"],
         ["Frozen glove", "0.3 m", "1", "Play space", "kit: iced deck (glove_frozen)"],
-        ["Gondola with its step, rack and cranked hanger arm", "2.6 m wide, 2.2 m tall; step 0.6 m", "1 here", "Play space; the arm behind", "kit: gondola"],
-        ["Station house, half buried, with pug sign and cold lantern", "14 m wide, 6 m tall; snow drift 8 m", "1", "Background", "kit: station house (the snow is new)"],
+        ["Gondola with its step, rack and held hanger", "2.6 m wide, 2.2 m tall; step 0.6 m; hanger 1.5 m", "1 here", "Play space; the hanger's head and carriage behind", "kit: gondola"],
+        ["Station roof: striped tin on timber, red and cream", "13.4 m long; 0.3 m thick; top 4.8 m above the deck", "1", "Play space; its back half behind", "kit: station roof"],
+        ["Black ice glaze on the roof", "1.9 m long, 0.15 m thick", "1", "Play space", "new, this area only: the glacier's black ice"],
+        ["Station house, half buried, with pug sign and cold lantern", "12 m wide, 6 m tall; snow drift 8 m", "1", "Background", "kit: station house, re-made without its roof (the snow is new)"],
         ["Wind engine, frozen: white with frost, snow in its cups", "5 m across", "1", "Background", "kit: wind engine"],
         ["Bull wheel, greyed and frosted", "4.4 m across", "1", "Background", "kit: bull wheel, as scenery"],
         ["Ice in the lower docks, with two frost-rimmed holes", "13 m wide, 8 m tall", "1", "Background", "new, this area only: made the way the glacier's body is"],
@@ -1270,11 +1364,14 @@ LA_ESTACION_ALTA = {
         "Frost falls from the bull wheel each time it turns back.",
     ],
     "notes": [
-        "Note 77: the station house stands 2.5 m back with no roof over the deck. Its peaked roof card, 19 m wide and 1 m back, goes. The pug sign moves from 1.0 m back onto the house's wall. The car's step is drawn.",
-        "The sheet: no icicles on the cableway. The 12 m row of icicles that hangs 0.9 m back over the deck goes. The lit lantern goes cold.",
+        "Note 77, settled: the roof is made real. A new solid roof of tin on timber, 0.3 m thick, from x -281.4 to -268.0 (13.4 m), its top at 790.8 m, 4.8 m above the deck. West of x -271.5 its top meets the underside of the glacier's lip (the next biome's black ice, at 790.8 m from x -284.5 to -271.5), so only its east 3.5 m is open. It takes the place of the peaked roof card (19 m wide, 1 m back, 791.9 to 797.5 m), which goes.",
+        "The guard, and why: dropped from the roof's west end onto the deck, a player would land past the first sheet of ice, on the first dry patch at x -272.6 to -271.0, and skip 3 m of the challenge. So a glaze of black ice, 1.9 m long and 0.15 m thick, lies on the roof from x -271.5 to -269.6, and cannot be held. The roof you can stand on is its last 1.6 m, from x -269.6 to -268.0. A drop from there lands on the first sheet of ice, still 1.4 m from the dry patch, after a harder reach and a 2.4 m fall. So 8.11 is about as hard as it was.",
+        "How the roof is reached: from the fourth car's roof as the car stops, 1.5 seconds. The eave's corner is 0.7 m west of the car's roof and 2.0 m above it, a hand raised from beside the hanger. From the deck it is 4.5 m up, out of reach. What it gives: a dry place to stand for good, over the first ice, and a look along the deck. What it risks: nothing worse than the deck below. It leads nowhere else: the glacier's lip above and west of it is black ice.",
+        "Note 77: the station house stands 2.5 m back, 12 m wide, under the roof's back half. The pug sign moves from 1.0 m back onto the house's wall. The car's step is drawn. The bull wheel moves 2.5 m east and 1.75 m down, to (-269.0, 788.2), so it stands under the roof, and the frozen engine's mast stands on the roof's open east end.",
+        "No icicles on the high station: the 12 m row of icicles that hangs 0.9 m back over the deck goes. Parker took this design's answer. The lit lantern goes cold.",
         "The deck's strut card goes from 0.7 m back to 2.5 m, as two lattice brackets.",
-        "The sheet's call from note 80: the car's hanger arm stops being solid and goes behind.",
-        "The glacier's lip over the deck's west end, its own fringe of icicles and the passage west are the next biome's, and are designed on its pages. This page stops where the planks meet the rock.",
+        "Note 80, settled: the car's hanger, 1.5 m tall and 0.12 m thick, stays solid and held, as today, and is drawn with a cream band.",
+        "The glacier's lip over the deck's west end, its own fringe of icicles and the passage west are the next biome's, and are designed on its pages. This page stops where the planks meet the rock. One thing for the glacier's page: its fringe of icicles, 12 m long at 790.9 m and 0.4 m back, hangs where this roof now is. It has to hang from the roof's eave, at 790.5 m, or go.",
         "Note 89: nothing blows you here. The frozen pennants point east.",
     ],
 }
@@ -1283,9 +1380,8 @@ LA_ESTACION_ALTA = {
 KIT_MORE = [
     ["Guide wheel, as scenery: greyed, no cream", "1 m across", "where a cable only bends: the four corners of each loop, under the chair shed's eave, on the fang, on the express tower's arms", "Background, 2 m back", "new"],
     ["Link girder: a lattice bay laid level, with a shaft along it and a belt down at each end", "1 m deep; 15 m and 23 m long", "between pylon 1 and line 2's west tower, where its crossed belt is why the two loops turn opposite ways and in step; and from the express tower across pylon 3 to the counterweight frame, where it is also the dead gondola's rail", "Background, 2.5 m back", "new, from the tower's bay"],
-    ["Iron rung on two straps", "0.8 m long; straps 0.5 m", "under the east end of pylon 1's perch: the way up from a car's roof, now that hanger arms are scenery", "Play space", "new"],
     ["Chair shed: a board wall with a bench and a hand winch", "4.4 m wide, 2.8 m tall", "behind pylon 2's head, under the tarred roof: where the chair line was boarded and wound", "Background, 2.5 m back", "new, from the station house's boards"],
-    ["The fang's far horn: dark rock, a step duller than the fang", "20 m wide, 2.5 m deep", "behind El Colmillo's slab and east side, never west of the overhang", "Background, 1.5 to 4 m back", "new"],
+    ["The fang's far horn: the fang's body carrying on behind, dark rock a step duller and cooler, its beds painted as thin wavy lines that carry on from the face's, an uneven skyline", "20 m wide, 2.5 m deep", "behind El Colmillo's slab and east side, never west of the overhang", "Background, 1.5 to 4 m back", "new"],
 ]
 
 AREAS = [ABORDAR, FROG, DE_GONDOLA, EL_CABLE, EL_PILON, SILLAS, EL_COLMILLO, TIROLESA, CONTRAPESOS, LA_GONDOLA_ROTA, VIA_RAPIDA, LA_ESTACION_ALTA]
