@@ -12,7 +12,9 @@ BIOME = {
         "At the bottom, the temple's own stonework, soot-black: the same blocks and stepped arches as across the well, with the carving worn nearly away.",
         "Then iron. Black riveted plate, thick chain, grates of square bar, round rings on wall pins, pipes with rib bands. All heavy and plain: this iron was made here, by hand. Sound iron you can hold is rust orange where hands and weather have worn it; the rest is black.",
         "The big machines stand on stone footings with a pug's face in iron on each: the bellows, the hammers, the slag pans.",
-        "Above the forge, basalt: grey-brown rock in rough blocky steps, split by heat. The higher you go the paler and drier it gets.",
+        "Above the forge, basalt: grey-brown rock in a few big leaning planes, split by heat. The higher you go the paler and drier it gets.",
+        "Walls and masses are painted, not built of blocks (Parker, 11-13). Every wall of the hall and the flue, and the body of the floor, is a few big planes. Low down, the courses of the soot-black blocks are flat colour on them, in three or four near-black tones, and the soot lies in long uneven bands, darkest at the floor. Above, the basalt's grain and its heat cracks are painted as long wavy lines that run the length of the face. Nothing painted narrows to a point.",
+        "Only a few big breaks are real shape: a furnace mouth, one fallen block, one leaning slab of basalt, one deep split with a painted shadow in it, the overhang of the forge hood. Behind each wall the same rock carries on, duller and cooler. Never a repeated square panel, and never a course or a bed of rock built as its own block.",
         "No brick, no timber except tool handles and the bellows' boards, no crystal, nothing green.",
     ],
     "light": "The light is the story of the biome. At the bottom it is furnace red from below, with black shadows above. It climbs through "
@@ -24,6 +26,7 @@ BIOME = {
         ["It will break", "Cracked already, with a corner gone (note 64). One rung is a stick of dynamite, and looks like one (note 58)."],
         ["It blows", "A grate in the floor, or a nozzle. Steam wisps and a gurgle first, then the blast."],
         ["It moves", "It hangs on chain from a wheel you can see, or it is driven by a rod from a crank."],
+        ["It can crush you", "Where a moving piece of stone or iron closes on something solid to less than a body's width, being caught there knocks you out. That is only when your head or your body is pinned: a trapped hand or foot slips free (notes 49 and 78; Parker: 'Head or body only')."],
         ["It is scenery", "Black iron and black stone, far back, lit red from below. Never rust orange."],
     ],
     "layers": [
@@ -32,7 +35,8 @@ BIOME = {
         ["Foreground", "A length of heavy chain's last links at a top corner, an anvil's horn or a quenching trough's rim at the bottom edge. Heat shimmer and sparks close to the camera. Nothing in front of a vent."],
     ],
     "kit": [
-        ["Forge wall bay: soot-black temple blocks with a furnace mouth", "4 m wide, 5 m tall", "the back wall, low down", "Background", "new, from the temple's wall bay"],
+        ["Forge and flue mass, painted: soot-black blocks low down and basalt above, in a few big planes. Courses, soot bands and heat cracks are painted on as long lines and bands. One or two real breaks: a fallen block, a leaning slab, a deep split", "to suit, each piece made for its place", "the hall's walls and roof, the floor's body, the forge hood's slab, the walls of the flue and of the crack", "Play space and round it", "new"],
+        ["Forge wall, painted: soot-black temple blocks as painted courses on two or three big planes, with real furnace mouths", "to suit, one piece made for the hall", "the back wall, low down, 1.5 to 3 m behind the masses you climb", "Background", "new, made the way the temple's hall wall is made"],
         ["Forge hood with ribs", "4 m", "over each furnace mouth", "Background", "in the kit: forge_hood_ribs"],
         ["Steam grate", "2 m", "every vent you ride", "Play space", "in the kit: steam_grate"],
         ["Vent pipe with rib bands; nozzle", "0.6 m across", "what feeds a grate; the bellows' nozzle", "Background, play space", "in the kit: vent_pipe"],
@@ -46,7 +50,7 @@ BIOME = {
         ["Hot rock face; hot iron plate", "to suit", "every hot hold", "Play space", "the game draws the glow today (note 56)"],
         ["Dynamite stick with a fuse", "0.5 m", "one rung (note 58)", "Play space", "new"],
         ["Cracked chockstone", "1.2 m", "La Luz (note 64)", "Play space", "new"],
-        ["Basalt wall: rough steps, heat cracks", "to suit", "the flue above the forge", "Background", "new"],
+        ["Basalt body: the flue's rock carried on behind, as one big form in two or three slanted planes, duller and cooler, its grain and heat cracks painted as thin lines", "to suit, one piece made for the flue", "the flue above the forge, 1.5 to 3 m behind the walls you climb, in place of today's flat cards", "Background", "new"],
         ["Old chain stub on a wall pin", "0.6 m, short and thick", "the bare flue's only dressing", "Background", "new"],
         ["Torch in a bracket", "0.8 m", "the forge floor only", "Background", "in the kit: torch_wall"],
         ["The smith's hut: black stone and iron sheet, no timber", "4 m wide, 3 m tall", "the anvil corner (note 59)", "Background, cut away at the front", "new"],

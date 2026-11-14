@@ -14,6 +14,8 @@ BIOME = {
         "A second kind, for scenery only (Parker, 11-13): tall and thin, with a small pale blue-green cap like a bell, growing in stands. It makes the far forest. It never grows in the play space, and nothing orange grows in the scenery, so an orange cap always means bounce.",
         "Shelf fungus grows out of walls in steps, like brackets. Roots and vines hang like ropes. Mycelium, white and stringy, ties things together like netting.",
         "Rock is rounded and mossy, never cut. Slime is black and runs down in sheets.",
+        "Walls and masses are painted, not built of blocks (Parker, 11-13). The room's walls and roof, the bed of the slime ramp and the slime island are damp earth and root-bound rock in a few big planes with soft, leaning edges. The layers of dark earth and paler rock, the roots, the moss and the seep stains are flat colour on those planes, in three or four tones: long wavy lines and bands that run the length of the face. Nothing painted narrows to a point.",
+        "Only a few big breaks are real shape: a thick root standing out of a wall, a ledge with shelf fungus on it, one hollow under an overhang with a painted shadow, one fallen boulder. Behind each wall and mass its own body carries on, darker and duller. Never a repeated square panel, and never a layer of earth or rock built as its own block.",
         "The only made thing is the frog's hut: a door and a round window cut into a fat stalk, a cap for its roof, a lantern made of a spore pod.",
     ],
     "light": "A green glow from moss and from spore lanterns, with the orange of the caps as the one warm colour. The glow comes from "
@@ -44,6 +46,8 @@ BIOME = {
         ["Puffball", "1.2 m", "Los Ojos", "Play space", "new as a model"],
         ["Spore pod; spore lantern", "0.5 m", "light, and the source of every updraught", "Background", "in the kit: spore_pod, spore_lantern"],
         ["Glow moss patch", "1 to 3 m", "light on rock", "Background", "in the kit: glow_moss"],
+        ["Garden wall or mass, painted: damp earth and root-bound rock in a few big planes. Its layers, roots, moss and seep stains are painted on as long wavy lines and bands. One or two thick roots or ledges are real", "to suit, each piece made for its place", "the room's walls and roof, the bodies of its floors, the bed of the slime ramp, the slime island with its snail wall and its terrace", "Play space and round it", "new"],
+        ["Garden body: the same earth and rock carried on behind, as one big form in two or three slanted planes, darker, duller and cooler, never pale, with its layers and roots painted as thin lines", "to suit", "1.5 to 3 m behind every wall and mass, in place of today's flat back card", "Background", "new"],
         ["Mossy boulder; mossy stalactite", "1 to 4 m", "rock, roofs", "Background", "stalactites in the kit; boulders new"],
         ["Slime sheet with drips", "to suit", "every slick wall", "Play space", "the game draws it today"],
         ["The frog's hut", "3 m wide, 3.5 m tall", "one walk-in room (note 41). Its roof is solid: you can land on it", "Background, cut away at the front; the roof is in the play space", "new"],

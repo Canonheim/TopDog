@@ -10,6 +10,8 @@ BIOME = {
     ],
     "built": [
         "Big blocks of pale stone, fitted without mortar, joints tight. Walls step back as they rise, in a sloped base with a flat band above it. Doorways and passages are stepped arches: two sides stepping in to a flat lintel.",
+        "Walls and masses are painted, not built of blocks (Parker, 11-13). Every wall, pier and ramp, and the body of every floor, is dressed stone in a few big planes. The courses of blocks and the carved band are flat colour on those planes, in three or four tones: long bands, a little uneven, with the joints as thin lines. Nothing painted narrows to a point. The carved band is cut deep and real only where it is held.",
+        "Only a few big breaks are real shape: a stepped arch or a slot, a flight of steps, one fallen block, one deep carving, one cornice with a painted shadow under it. Behind each mass the hall's wall carries its courses on as thin lines, browner and darker. Never a repeated square panel, and never a course built as its own block.",
         "A carved band runs along every wall at the same heights: pug faces, belts and bones. It never shows how a challenge is done (Parker, 11-13). Where you can hold the wall, the carving is deep and pale. Where you can't, the stone is polished black with soot and damp.",
         "Jade green is the temple's accent: inlaid eyes, a stripe on a banner, a band round anything that moves.",
         "Gold caps the things that matter: the mask's teeth, the altar, the censers' lids.",
@@ -25,6 +27,7 @@ BIOME = {
         ["It moves", "It wears a jade band, it sits in a slot or on an axle you can see, and it shakes before it goes."],
         ["It is scenery", "The same stonework, further back, browner and darker, its carving shallow. Statues in the scenery have their arms down; statues you climb have an arm raised."],
         ["It will hurt you", "It is edged in dark bronze: the cross's arms, the pistons' faces, the hammers of the gears."],
+        ["It can crush you", "Where a moving piece closes on something solid to less than a body's width, as in the mesh of the gears, being caught there knocks you out. That is only when your head or your body is pinned: a trapped hand or foot slips free (notes 49 and 78; Parker: 'Head or body only')."],
     ],
     "layers": [
         ["Background", "Near: the wall the machine is set in, with its slots, axle cheeks and chain bosses, and the carved band. Far: the hall going back, with columns, banners, torches as points of light, and more carved pugs."],
@@ -32,10 +35,11 @@ BIOME = {
         ["Foreground", "A column's base or a low stone balustrade at the bottom edge of the frame, in front of solid floor. Never a banner or a chain in front of the climb."],
     ],
     "kit": [
-        ["Wall bay: sloped base, flat band, carved frieze", "4 m wide, 5 m tall", "the back wall of every hall", "Background", "new"],
+        ["Temple mass, painted: dressed stone in a few big planes, its courses painted on as long bands. Pale where it is held, polished black where it is not. One or two real breaks: a fallen block, a step, a deep carving", "to suit, each piece made for its place", "the walls, floors' bodies and roofs of every hall, the great hall's ramp, the pier, the gallery's floor, the spine of the upper works, the altar's east wall", "Play space and round it", "new"],
+        ["Hall wall, painted: sloped base, flat band, the courses and the carved band painted on two or three big planes, browner and darker than the stone you climb", "to suit, one piece made for each hall", "the back wall of every hall, 1.5 to 3 m behind the masses you climb, carrying their courses on as thin lines", "Background", "new"],
         ["Stepped arch doorway: open, dark, with a banner", "3 m wide, 4.5 m tall", "the way a hall goes on behind you", "Background", "new"],
         ["Column: square, carved, with a pug capital", "1.2 m square, 6 to 10 m", "halls", "Background; base only in the foreground", "new"],
-        ["Carved frieze strip: pugs, belts, bones", "0.8 m tall", "every wall, at the same heights", "Background, play space", "new"],
+        ["Carved band: pugs, belts, bones. Painted on the wall as one long band; cut deep and real only where it is held", "0.8 m tall", "every wall, at the same heights", "Background, play space", "new"],
         ["Pug mask plaque, stone", "1.5 m", "walls; over doors", "Background", "in the kit: pug_mask"],
         ["The great mask", "three storeys", "La Máscara (note 47)", "Play space", "in the kit: mask_first_dog; its holds are on the request list"],
         ["Champion statue: arm raised (climbed), arms down (scenery), and broken-armed", "5 m", "El Salón de los Campeones. Parker, 11-13: the arm on the far side has broken off, and only its hand sticks out of the background; the second statue has both arms broken, so it has only two hands to hold", "Play space, background", "in the kit: statue_champion_reach; arms-down and broken ones new"],
