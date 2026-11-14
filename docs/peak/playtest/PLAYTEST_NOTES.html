@@ -344,6 +344,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
 <p class="sub">The first test page is kept as it was: <a href="design/1_10_el_derrumbe.html">design/1_10_el_derrumbe.html</a>.</p>
 
 <h2>The notes</h2>
+<p class="sub"><b>Which build:</b> both playtests (11-12, and notes 76 on, 11-13) were played on Dan's build, the same one throughout (Parker, 11-13: "we are on dans build which is the same one we started all play testing on"). Nothing fixed since the first night is in what they saw, so a note from the second playtest can be about something already changed on the branch; where that is so, the note says it.</p>
 
 <div class="note" id="n1">
   <div class="head"><span class="num">1</span><h3>Breaking planks in the mine come back with a glitch</h3><span class="time">21:39</span></div>
@@ -2225,7 +2226,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
     <img src="after/55_banner_after_quiet.jpg" alt="After: the banner showing once the quiet time has passed.">
     <figcaption>After: the banner showing once the quiet time has passed.</figcaption>
   </figure>
-  <p><b>Settled (Parker, 11-13 22:02, the second playtest):</b> "ok the cool down on the name of things banner popping up, make that 40 seconds". So the quiet time goes from 15 seconds to 40. It is one number (<code>area_quiet_s</code> in <code>ui3d/peak_hud.gd</code>); everything else about the rule stays: nothing is saved up, where you have settled is announced once when the quiet ends, and never in the middle of a fall. To know: the build he played tonight is main, which has no quiet time at all yet (the 15 seconds are on the <code>luchador-ui</code> branch), so what he saw was a banner at every crossing. Not changed now; held with every other fix.</p>
+  <p><b>Settled (Parker, 11-13 22:02, the second playtest):</b> "ok the cool down on the name of things banner popping up, make that 40 seconds". So the quiet time goes from 15 seconds to 40. It is one number (<code>area_quiet_s</code> in <code>ui3d/peak_hud.gd</code>); everything else about the rule stays: nothing is saved up, where you have settled is announced once when the quiet ends, and never in the middle of a fall. To know: the second playtest is on Dan's build, the same build all the playtesting started on (Parker, 11-13: "we are on dans build which is the same one we started all play testing on"). It is older than every fix, so it has no quiet time at all, and what he saw was a banner at every crossing. Not changed now; held with every other fix.</p>
 </div>
 
 <div class="note" id="n56">
@@ -2978,7 +2979,7 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <ul>
     <li><b>What you are supposed to do:</b> climb the dead. Two climbers frozen into the ice by the door are the way up to the balcony 8 m above, and four more are the way up the chimney beyond it. Each one gives three holds: his boots, his belt and his mitten.</li>
     <li><b>Why you could not tell:</b> each frozen climber was built with a sheet of pale blue ice standing <b>in front</b> of him, 1.5 m nearer the camera than you. By the door two sheets stack into the slab in the picture, 1.6 m wide and 6 m tall. It hides the frozen climbers, so you never see what the holds are, and it hides your own climber while you are on them.</li>
-    <li><b>Already changed, but not in the build you are playing.</b> This is the same fault as note 40 ("these pieces in front of the screen... most of them I think need to be romoved"). The fix thread moved every one of these sheets to the frozen climbers' backs. That work is on the <code>luchador-ui</code> branch, which has not been merged into main yet, and you are playing main.</li>
+    <li><b>Already changed, but not in the build you are playing.</b> This is the same fault as note 40 ("these pieces in front of the screen... most of them I think need to be romoved"). The fix thread moved every one of these sheets to the frozen climbers' backs. That work is on the <code>luchador-ui</code> branch. You are playing Dan's build, the same one all the playtesting started on, which is older than every fix.</li>
   </ul>
   <figure>
     <img src="after/40_moved_a9_ice_at_his_back.jpg" alt="The ice chimney with frozen climbers in plain view, each with a pale sheet of ice behind him">
