@@ -429,7 +429,7 @@ def dress(A):
     # The small anvil (the kit's, re-made on a stone footing with the iron pug: item 8), 0.6 m further
     # back than today; a wall ring lying bent open on it; the frog on its heel in a leather apron with
     # a tiny hammer (the chimney's frog, note 60: only the frog lives here).
-    A.deco("anvil", -240.0, 479.02, z=-1.6, size=(1.2, 0.9, 0.6), tone=IRON)
+    A.deco("anvil_forja", -240.0, 479.02, z=-1.6, size=(1.2, 0.9, 0.6), tone=IRON)
     A.deco("forja_ring_bent", -240.2, 479.92, z=-1.6, size=(0.5, 0.15, 0.5), tone=IRON)
     A.deco("forja_frog_smith", -239.75, 479.92, z=-1.6, size=(0.3, 0.3, 0.3), tone="accent")
     # The lamp: the east wall's torch comes down under the roof onto the back wall (the last torch).
@@ -467,7 +467,7 @@ def dress(A):
     grate(-281.5, 479.5, 3.0)       # the grate you stand on (skin)
     # The work place by the door: the small anvil (back from -1.0), the tongs rack down from 3 m up
     # the west wall to where a smith could reach it, the stone trough.
-    A.deco("anvil", -286.5, round(floor_y(-286.5), 2), z=-1.6, size=(1.2, 0.9, 0.6), tone=IRON)
+    A.deco("anvil_forja", -286.5, round(floor_y(-286.5), 2), z=-1.6, size=(1.2, 0.9, 0.6), tone=IRON)
     A.deco("forja_tongs_rack", -288.7, 481.2, z=round(WALL_FACE + 0.15, 3), size=(2.0, 1.0, 0.3), tone=IRON)
     A.deco("forja_quench_trough", -288.75, round(floor_y(-288.75), 2), z=-1.9, size=(1.6, 0.6, 0.7), tone=SOOT)
 
@@ -586,7 +586,7 @@ def dress(A):
     # The three great anvils (skins: the kit's, re-made: item 8): their bright faces, their glassy
     # waists. The three lifting wheels on the towers' axles, paddles and one peg (origin the hub).
     for X, Y in zip(_HX, _HY):
-        A.deco("anvil_great", round(X - 0.25, 2), round(Y - 1.6, 2), z=0.0, size=(2.55, 1.6, 1.2), tone=IRON, skin=True)
+        A.deco("anvil_great_forja", round(X - 0.25, 2), round(Y - 1.6, 2), z=0.0, size=(2.55, 1.6, 1.2), tone=IRON, skin=True)
         A.deco("forja_lift_wheel", X, round(Y + 3.7, 2), z=-1.5, size=(4.6, 4.6, 0.3), tone=IRON)
     # The forge's great hood (skin: soot-wet riveted plate), its iron ribs underneath (the kit's, where
     # its maker put it), and the steam pipe up under it with a drop nozzle toward each wheel, on
