@@ -170,6 +170,7 @@
 <tr><td>107</td><td><a href="#n107">Build 0.3.104: the frozen climber's tally marks look terrible: redo them</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>108</td><td><a href="#n108">Build 0.3.104, El Derrumbe (1.10): the rocks still pop in down in the shaft; spawn them up in the chimney, hidden behind a foreground piece</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>109</td><td><a href="#n109">Build 0.3.104, the mine's frog cave: tons of z-fighting; look for z-fighting everywhere and fix it</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>110</td><td><a href="#n110">Build 0.3.104: holding L does not zoom the camera out in some places; it must work everywhere</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3834,6 +3835,16 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 1, the frog's cave (page 1.0), floor at y -27.5. Three things have their top in exactly that plane: the throat's west wall skin `mine_throat_west` (orange, x -252 .. -248), the cave's own room `mine_frog_cave` (its floor at -27.5 behind the play space), and two plain course solids that were cut for the cave's floor and have NO skin (x -253.4 .. -248 and -248 .. -247.2, y -28.3 .. -27.5), which the game draws as plain dark rock boxes. A solid with no skin draws its own box, so that dark box and the orange skin fight in the same plane. The same kind of thing is likely wherever the fix thread cut new solids into a biome after its skins were made (doorways, the tea cave, the cart room).</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>1) Here: give the two cut solids the throat's skin (or none drawn), and drop the cave room's floor a hair below the play floor. 2) Everywhere: a z-fight sweep of the whole mountain, by script over every area: any unskinned solid whose top or face lies in the same plane as a skin or deco face it overlaps; any two decos/skins with coplanar overlapping faces; then a frame of each hit to confirm, and one list for Parker before fixing. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n110">
+  <div class="head"><span class="num">110</span><h3>Build 0.3.104: holding L does not zoom the camera out in some places; it must work everywhere</h3><span class="time">11-14 09:50</span></div>
+  <blockquote>"holding L is not zooming my camera out, that should not be locked to certain places"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <h4>Where, and what is going on</h4>
+  <p>The zoom (the left trigger, L, on a pad; Shift on keyboard) is read everywhere in the solo climb (game/main.gd, the Peak camera), with no place switched off. But how far it pulls back comes from the camera zone you stand in: held, the view goes to that zone's drawn frame, or to twice the close view where no zone is drawn. The code takes the LARGER of the drawn frame and the close view, so wherever a zone's drawn frame is no bigger than the close view (tight rooms and caves, and every zone drawn at about the close camera's size), holding L widens by nothing at all. That is why it seems locked to certain places. (The pad's trigger must also be pulled past about half way, the trigger_press feel number, so a resting finger does not zoom; worth checking that too.)</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Make the zoom always pull well back: at least twice the close view everywhere, or the zone's drawn frame where that is wider still. One line in the camera code plus a check in a tight room (the frog cave, El Derrumbe) and an open one. Held until Parker says go.</p>
 </div>
 
 </main>
