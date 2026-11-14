@@ -187,6 +187,7 @@
 <tr><td>124</td><td><a href="#n124">Build 0.3.104, Candelabros (3.3): the crystal chandelier looks bad</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>125</td><td><a href="#n125">Build 0.3.104: on a controller the widen-camera tip should name the controller's bind, not Shift</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>126</td><td><a href="#n126">Build 0.3.104, Agujas (3.5): the needles look like little houses; each should be one crystal</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>127</td><td><a href="#n127">Build 0.3.104, El Prisma (3.6): the breaking crystals leave a thing behind, should grow back out of the wall, and should be crystals jutting from the wall, not big flat plates</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -4085,6 +4086,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 3, 3.5 Agujas: the needles you climb (`gruta_needle_first`, `gruta_needle` x2, `gruta_needle_last`, at x -414.1, -407.1, -398.1, -387.1). Each is built in the course from separate solids, a straight-sided block with a triangle on top (and two thin strips on its sides on the first and last), and the skins were made to that outline, so each reads as a box with a roof: a house.</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Re-make every needle as ONE crystal, like the real 3D crystals the cave now has (and like note 121's spikes): a six-sided shaft that tapers into a sharp faceted point, grown from the slab at a slight lean, lilac and indigo with a pale face, matte. Its solid re-cut to that one outline (a long slim six-sided shape, the point blunt as a solid by the blunt-tip rule) so it is still the same height and reach for the climb. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n127">
+  <div class="head"><span class="num">127</span><h3>Build 0.3.104, El Prisma (3.6): the breaking crystals leave a thing behind, should grow back out of the wall, and should be crystals jutting from the wall, not big flat plates</h3><span class="time">11-14 11:25</span></div>
+  <blockquote>"when these crystals shatter, they should not leave behind a thing. When they come back, they should grow out of the wall. They should also not be these big flat things, they should be crystals jutting from the wall"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/127_prisma_leaves.png" alt="Parker's shot, build 0.3.104: El Prisma's diagonal of breaking crystal shelves (pale flat plates). The arrow: a dark flat slab left on the wall where one has shattered.">
+    <figcaption>Parker's shot, build 0.3.104: El Prisma's diagonal of breaking crystal shelves (pale flat plates). The arrow: a dark flat slab left on the wall where one has shattered.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 3, 3.6: eight crazed crystal shelves you climb, each gone 1.3 s after you take it and back after a while (a3.py lines 342-358; kind 'crazed', skin `gruta_crazed_plate`, a flat pale plate with a corner gone). Behind each, a3_dress.py line 501 places `gruta_leaf_stump` (a dark stub 1.0 x 0.3 m at z -1.45) as the plate's root; it stays when the plate breaks, so a dark flat thing is left behind. When the plate comes back it simply reappears.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>1) Nothing left behind: take the stumps out. 2) Each shelf re-made as a crystal jutting out of the wall (a short, thick six-sided crystal growing out of the slope at a slant toward you, its top facet the part you stand on), still crazed with white cracks so it reads as one that breaks; its solid re-cut to that shape at the same height and reach. 3) It shatters into falling shards that vanish, and comes back by growing out of the wall over about a second (like the glacier's serac), touchable only at full size. Held until Parker says go.</p>
 </div>
 
 </main>
