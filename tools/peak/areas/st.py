@@ -121,14 +121,25 @@ body = EAST + WEST + [(-700, -40), (-34, -40)]
 # the far cavern, a0_dress's dsc_cavern_far at z -16, shows through): this card stood in front
 # of it. It is cut away behind the gap; a card has no holes, so the body is drawn as two
 # pieces either side of x -128 (their faces meet flush).
-def _body_with_window(window=(-134.0, -13.0, -122.5, -4.0), split=-128.0):
+# AND THE CRYSTAL CAVE'S SPAN (the Director, 11-14: through the gaps behind the giants at 3.1, behind
+# La Columna and at 3.10's west edge it showed as flat grey-tan, in front of the cave's own far wall,
+# a3_dress's gruta_far_wall at z -10.25, x -466 .. -300, y 168 .. 284): cut away there too. Each
+# window has a split through it, so no piece has a hole.
+BODY_WINDOWS = [((-134.0, -13.0, -122.5, -4.0), -128.0), ((-466.0, 168.0, -300.0, 284.0), -383.0)]
+
+
+def _body_with_window():
     from shapely.geometry import Polygon, box
-    whole = Polygon(body).buffer(0).difference(box(*window))
+    whole = Polygon(body).buffer(0)
+    for w, _ in BODY_WINDOWS:
+        whole = whole.difference(box(*w))
     x0, y0, x1, y1 = whole.bounds
-    for half in (box(x0 - 1, y0 - 1, split, y1 + 1), box(split, y0 - 1, x1 + 1, y1 + 1)):
-        part = whole.intersection(half)
+    xs = [x0 - 1] + sorted(sp for _, sp in BODY_WINDOWS) + [x1 + 1]
+    for xa, xb in zip(xs, xs[1:]):
+        part = whole.intersection(box(xa, y0 - 1, xb, y1 + 1))
         for g in getattr(part, "geoms", [part]):
             if g.geom_type == "Polygon" and g.area > 1.0:
+                assert not g.interiors, "a body piece with a hole"
                 A.card([(round(x, 3), round(y, 3)) for x, y in list(g.exterior.coords)[:-1]], z=-9.0, tone="#8C8273", edge=True)
 
 

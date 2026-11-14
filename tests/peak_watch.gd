@@ -3062,3 +3062,18 @@ func _w_g7(a: Array) -> void:
 	look(Vector2(-242.5, 642.5), 3.5)
 	await shot("68_tea_cave_" + tag)
 	print("WATCH g7 %s: pushed west from the upper pocket, the climber is at %s (the room x -245.4 .. -240.34)" % [tag, where()])
+
+
+## a3: the cave behind 3.1's giants and behind La Columna (no grey-tan mountain card through the gaps). g3cave:TAG
+func _w_g3cave(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("3.1")
+	await secs(2.0)
+	look(Vector2(-428.0, 186.0), 9.0)
+	await secs(0.5)
+	await shot("a3_gruta_3_1_" + tag)
+	pk.warp("3.9")
+	await secs(2.0)
+	look(Vector2(-326.0, 258.0), 10.0)
+	await secs(0.5)
+	await shot("a3_gruta_3_9_" + tag)

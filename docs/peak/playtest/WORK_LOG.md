@@ -2468,6 +2468,16 @@ in. Nothing played by a person.
   engine, the pennants and socks moving. Pylon 3 behind 8.3's fling (7j) is for the frames to judge.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the mountain's body card out of the crystal cave
+
+- st.py's body card (z -9, flat grey-tan behind the whole mountain) stood in front of the cave's
+  own far wall (a3_dress's `gruta_far_wall`, z -10.25) and showed through the gaps behind the
+  giants, behind La Columna and at 3.10's west edge (the Director). It is cut away over the far
+  wall's span (x -466 .. -300, y 168 .. 284), as it was behind 0.3c's gap: the body is now three
+  cards, split through each window so none has a hole. (`a3_gruta_3_9_before.jpg` / `_after`:
+  the grey-tan strips either side of the column are the cave's violet now; `a3_gruta_3_1_after.jpg`.)
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
