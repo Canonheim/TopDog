@@ -884,8 +884,9 @@ VETAS_DE_LODO = {
                  "slant as on the pillar. They are faint lines, greyer than the rock, so that none of them reads as a ledge.",
          "draw": [_r(-201.9, 23.0, -190.0, 44.0)] + [_ln(-201.9, t, -190.0, round(t + 11.9 * _RISE, 2), "mark") for t in _RIBS]},
         {"name": "Two old workings", "z": [-4.6, -2.9], "tag": [-195.9, 36.6],
-         "text": "Where the miners followed the two richest seams into the wall: a dark slot 1.1 m high along each, with short timber "
-                 "props wedged in it. They are level with the two wide ribs, so each long lunge has a dark slot behind its target.",
+         "text": "Where the miners followed the two richest seams into the wall: each seam is painted as a darker band 1.1 m wide on "
+                 "the wall, with short timber props standing in front of it. Painted, not cut in (the walls rule: no dark recess in a "
+                 "face). They are level with the two wide ribs, so each long lunge has a band behind its target.",
          "draw": _stope(-197.0, -192.0, 32.15) + _stope(-198.5, -193.5, 37.3)},
         {"name": "A lantern in the lower working", "z": [-3.4, -3.0], "style": "light", "tag": [-193.3, 35.5],
          "text": "It lights the face from the side, so every rib throws a shadow under itself. Today a lantern hangs inside the play "
@@ -935,74 +936,173 @@ VETAS_DE_LODO = {
     ],
 }
 
-# ------------------------------------------------------------------ 1.7 El Carrito Loco and 1.8 Las Vigas: shared shapes
+# ------------------------------------------------------------------ 1.7 El Carrito Loco and 1.8 Las Vigas: shared shapes (note 103)
+import math as _math
+
 _BEAMS = [(-218.3, -213.9, 50.5), (-222.8, -220.8, 52.0), (-227.3, -225.3, 50.8), (-231.8, -229.8, 52.3)]
 _HANGERS = [(-216.1, 50.5), (-221.8, 52.0), (-226.3, 50.8), (-230.8, 52.3)]
 _ROOF_GEAR = [_r(-232.0, 54.25, -213.5, 54.6, "pale")] + [_post(x, top, 55.0) for x, top in _HANGERS]
-_CHAIN_X, _GONE_CHAIN_X = -215.8, -214.2   # the one chain that stays, and the near one that goes (Parker, 11-13)
-_ONE_CHAIN = [_c(_CHAIN_X, 50.1, 0.2, "line"), _c(_CHAIN_X, 41.1, 0.16, "line")]
-_NEAR_CHAIN_GOES = [_ln(_GONE_CHAIN_X - 0.3, 46.0, _GONE_CHAIN_X + 0.3, 45.4, "mark"), _ln(_GONE_CHAIN_X - 0.3, 45.4, _GONE_CHAIN_X + 0.3, 46.0, "mark")]
+_RINGS = [(-230.6, 44.2), (-226.2, 46.2), (-221.8, 48.2)]   # the chain's ring, then two more, rising east
+_CHAIN_TAIL = 35.2                                          # the chain is 9 m long
+_BEAM_GRIP = (-218.1, 50.1)                                 # under the first beam's west end
+_OLD_CHAINS = (-214.2, -215.8)                              # the two chains on the first beam today: both go
+_LIP = (-223.0, 29.45)
+
+
+def _road():
+    """The rail of the cart's new road, from the end of the level stub to the lip of the rise."""
+    pts = [(-213.2, 40.0)]
+    for i in range(1, 9):        # over the crest: 2.2 m radius, round to 72 degrees down
+        a = _math.radians(72.0 * i / 8)
+        pts.append((-213.2 - 2.2 * _math.sin(a), 37.8 + 2.2 * _math.cos(a)))
+    for i in range(0, 14):       # round the dip: 2.5 m radius, lowest at (-220.51, 28.0), from 72 degrees down to 45 up
+        a = _math.radians(-72.0 + 117.0 * i / 13)
+        pts.append((-220.51 - 2.5 * _math.sin(a), 30.5 - 2.5 * _math.cos(a)))
+    pts.append(_LIP)
+    return [(round(x, 2), round(y, 2)) for x, y in pts]
+
+
+def _road_band(pts, thick=0.4):
+    """The road as a ribbon: the rail line, and the underside of its stringers."""
+    under = []
+    for i, (x, y) in enumerate(pts):
+        ax, ay = pts[max(i - 1, 0)]
+        bx, by = pts[min(i + 1, len(pts) - 1)]
+        d = _math.hypot(bx - ax, by - ay)
+        under.append((round(x - thick * (by - ay) / d, 2), round(y + thick * (bx - ax) / d, 2)))
+    return _p(pts + under[::-1])
+
+
+def _flight(x_end=-238.0, n=14):
+    """The cart's flight off the lip: its floor leaves (-222.68, 29.77) at 10 m a second, 45 degrees up, and falls at 5.4 m/s2."""
+    out, t_end = [], (-222.68 - x_end) / 7.07
+    pts = [(round(-222.68 - 7.07 * t_end * i / n, 2), round(29.77 + 7.07 * (t_end * i / n) - 2.7 * (t_end * i / n) ** 2, 2)) for i in range(n + 1)]
+    for a, b in zip(pts, pts[1:]):
+        out.append(_ln(a[0], a[1], b[0], b[1], "mark"))
+    return out
+
+
+_ROAD = _road()
+_RIB = [(-234.6, 40.2), (-231.6, 40.6), (-228.6, 42.6), (-225.4, 43.5), (-222.2, 45.4), (-218.8, 46.2), (-216.2, 48.2), (-214.8, 50.6),
+        (-215.6, 52.6), (-218.6, 53.4), (-221.6, 52.2), (-224.6, 50.0), (-227.4, 49.2), (-230.4, 47.2), (-233.2, 46.6), (-234.9, 44.0)]
+_BENCH = [(-229.4, 23.5), (-228.6, 25.0), (-226.8, 25.9), (-223.0, 26.1), (-219.2, 25.8), (-215.6, 26.3), (-212.4, 25.9),
+          (-208.9, 26.4), (-208.9, 23.5)]
+_RING_SHAPES = [_c(x, y, 0.25, "line") for x, y in _RINGS] + [_c(x, y, 0.07, "solid") for x, y in _RINGS]
+_FLINGS = [_ln(a[0], a[1], b[0], b[1], "mark") for a, b in zip(_RINGS + [_BEAM_GRIP], (_RINGS + [_BEAM_GRIP])[1:])]
+
+
+def _chain(y_low):
+    return [_ln(_RINGS[0][0], _RINGS[0][1] - 0.25, _RINGS[0][0], y_low, "line")]
+
+
+def _crossed_out(y):
+    out = []
+    for x in _OLD_CHAINS:
+        out += [_ln(x - 0.45, y + 0.45, x + 0.45, y - 0.45, "line"), _ln(x - 0.45, y - 0.45, x + 0.45, y + 0.45, "line")]
+    return out
+
 
 EL_CARRITO = {
     "id": "1.7", "slug": "1_7_el_carrito_loco", "title": "El Carrito Loco", "kind": "challenge",
-    "window": [-246.0, 31.0, -201.0, 56.5], "screen": [-211.0, 43.5], "cut_y": 40.2, "climber": [-203.6, 40.0],
-    "place": ("The top of El Diente was the mine's high road. Ore came down from the upper works to this track and was pushed east along "
-              "it to the bucket lift. West of the pillar the track crossed 20 m of open cavern on a deck slung by chains from a long beam "
-              "under the roof. That deck has fallen and taken the track with it. What is left is the cart on its siding, held by one "
-              "wooden chock, a stub of track on two slanting struts with boards nailed across its end, and one last chain, hanging "
-              "where the deck used to be, too far out to reach from the boards. The track points straight at the waterfall, and that "
-              "is where the cart goes. The chain is the only way off it."),
+    "window": [-246.0, 23.5, -201.0, 56.5], "screen": [-211.0, 43.5], "cut_y": 40.2, "climber": [-203.6, 40.0],
+    "place": ("The top of El Diente was the mine's high road. Ore came down from the upper works to this track, and at the pillar's "
+              "west edge it went down the incline: a cart road on timber that tips over the edge, drops 12 m beside the pillar, runs "
+              "through a dip and climbs a short rise to a landing by the cavern's wall. The rise was there to slow a loaded cart. A haul "
+              "chain drew the empty cart back up. It ran down from the roof beams through three iron rings on pins in a rib of the wall. "
+              "The landing has fallen and taken the top of the rise with it, so the rise now ends in the air, aimed at the waterfall. "
+              "The haul chain broke under the roof, and its last 9 m hangs from the lowest ring, out where the landing was. The cart "
+              "still stands on its siding, held by one wooden chock. Step in and it goes over the edge far faster than any cart was "
+              "meant to, and the rise throws it. The chain is the only way off."),
     "keep": [
-        "The cart, its 0.7 s wait, its speed, and that it falls for real a cart's length past the boards (note 6).",
-        "One chain (Parker, 11-13), hung from the first roof beam, out of reach of the boards.",
-        "The 3.4 m of pillar top east of the cart, to rest on.",
+        "The cart on the pillar's top, its chock, its 0.7 s wait, and the 3.4 m of pillar top east of it to rest on.",
+        "The cart's road (note 103): over the edge, 12 m down, through the dip, and off the rise, far faster than today.",
+        "One chain, on an iron ring in the wall, caught out of the air. Riding the cart is the only way to it.",
+        "Three rings in all, rising east to the first beam of Las Vigas.",
+        "The cart falls for real once it leaves the rise, and a rider who catches the chain keeps the chain (note 6).",
     ],
     "background": [
-        {"name": "The waterfall", "z": [-3.0, -1.2], "tag": [-241.0, 44.0], "top": True,
-         "text": "For the first time you see it side-on and whole: a white column 30 m to the west, from the roof down past the bottom of "
-                 "the picture. The track is aimed at its middle. The sheet itself comes forward through the play space, and the cart "
-                 "falls through it.",
-         "draw": _fall(31.0, 56.5)},
-        {"name": "Two slanting struts", "z": [-1.7, -1.3], "style": "pale", "tag": [-212.2, 36.4],
-         "text": "From the pillar's west face up to the underside of the track's stub: they are what holds it out over the drop. Today the "
-                 "kit's 6 m trestle leg is placed here, inside the play space, and by the course's numbers its feet are in the air. "
+        {"name": "The waterfall", "z": [-3.0, -1.2], "tag": [-241.0, 47.0], "top": True,
+         "text": "You see it side-on and whole for the first time: a white column from the roof down past the bottom of the picture. "
+                 "The rise is aimed at its middle. The sheet itself comes forward through the play space. The cart flies into it, "
+                 "and so does a rider who misses the chain.",
+         "draw": _fall(23.5, 56.5)},
+        {"name": "The chain rib", "z": [-3.4, -1.6], "tag": [-232.9, 42.6], "top": True,
+         "text": "A rib of the cavern's back wall that comes forward to 1.6 m behind you and slants up from the fall's side towards the "
+                 "roof. The three rings are driven into it. It is painted rock, made as one piece for this place. Its beds are long "
+                 "wavy bands of flat colour in three grey-violets, slanting the way the rib slants, and one band of ore runs along it "
+                 "under the rings. There is no ink inside its face. Two breaks are real shape: an overhang along its lower edge with a "
+                 "painted shadow under it, and one small outcrop below the middle ring with a clump of flat painted ferns on it, kept green by the spray. It stands 0.3 m out of the rib, still behind the play space. There is no dark pocket in its face. Its outline leans and is notched. Behind it the "
+                 "back wall carries on, 3 m back and duller.",
+         "draw": [_p(_RIB)]},
+        {"name": "The bench under the incline", "z": [-3.4, -1.3], "tag": [-212.6, 24.6],
+         "text": "A bench of the same back wall, 14 m under the track. The incline's timber stands on it. It is painted the same way as "
+                 "the rib, darker and wetter, with an uneven top. It is all behind you: where you are, there is only air down to the Sump.",
+         "draw": [_p(_BENCH)]},
+        {"name": "The incline's timber", "z": [-2.8, -1.3], "style": "pale", "tag": [-215.3, 30.2], "top": True,
+         "text": "Three timber posts stand on the bench, at the back. Each carries a cap that comes forward under the rails, so the road "
+                 "you ride is the near end of its own frame. A brace and a tie hold the posts together. The front posts are gone. West "
+                 "of the lip, two post stumps on the bench show where the landing stood.",
+         "draw": [_post(-216.7, 25.9, 33.7), _post(-220.5, 25.7, 27.6), _post(-222.7, 25.9, 28.85),
+                  _r(-220.5, 26.9, -216.7, 27.15), _ln(-220.4, 27.2, -216.8, 31.8, "line"),
+                  _post(-225.6, 25.9, 27.3), _post(-227.4, 25.5, 26.7)]},
+        {"name": "Three slanting struts", "z": [-1.7, -1.3], "style": "pale", "tag": [-212.3, 37.1],
+         "text": "From the pillar's west face: two up to the stub of level track, and one long one up to the head of the drop. Today "
+                 "the kit's 6 m trestle leg is placed here, inside the play space, and by the course's numbers its feet are in the air. "
                  "The struts take its place, at the back.",
-         "draw": [_p([(-208.9, 35.0), (-208.9, 35.6), (-212.5, 39.6), (-213.1, 39.6)]), _p([(-208.9, 37.2), (-208.9, 37.75), (-210.5, 39.6), (-211.0, 39.6)])]},
-        {"name": "The beam under the roof", "z": [-1.9, -1.2], "tag": [-223.9, 53.4],
-         "text": "What the chain hangs from. The first of Las Vigas has a hanger post behind it, up to the roof, and behind that runs a "
-                 "second long beam that never broke. No chain hangs from the back beam: a hanging chain in the background would look like "
-                 "one to take. It has empty iron eyes where the deck's other chains were.",
+         "draw": [_p([(-208.9, 35.0), (-208.9, 35.6), (-212.5, 39.6), (-213.1, 39.6)]), _p([(-208.9, 37.2), (-208.9, 37.75), (-210.5, 39.6), (-211.0, 39.6)]),
+                  _p([(-208.9, 31.3), (-208.9, 31.9), (-214.9, 37.45), (-215.3, 37.1)])]},
+        {"name": "The beam under the roof", "z": [-1.9, -1.2], "tag": [-223.9, 53.9],
+         "text": "The back beam of Las Vigas and its four hanger posts. The haul chain ran along it on its way down to the rings. "
+                 "Nothing hangs from it now, and nothing hangs from the first beam in front of it.",
          "draw": _ROOF_GEAR},
         {"name": "A second cart, off the rails", "z": [-2.8, -1.6], "style": "line", "tag": [-204.2, 41.7],
          "text": "On the back of the pillar's top, tipped against the wall behind the siding, grey: a cart that never made its last run. "
                  "With it, the back rail of the track, which is whole.",
          "draw": [_p([(-205.0, 40.0), (-203.5, 40.0), (-203.3, 41.0), (-204.9, 41.2)]), _ln(-208.9, 40.12, -201.9, 40.12)]},
-        {"name": "Two lamp posts", "z": [-1.6, -1.3], "tag": [-210.8, 44.5],
-         "text": "The two lanterns here hang inside the play space today, 3.4 m over the track, from nothing. Each gets a thin timber "
-                 "post with an iron bracket at the back of the track to hang from.",
-         "draw": [_post(-203.8, 40.0, 43.5, "pale", 0.2), _post(-210.8, 40.0, 43.5, "pale", 0.2), _c(-203.8, 43.7, 0.2, "light"), _c(-210.8, 43.7, 0.2, "light")]},
+        {"name": "Four lanterns", "z": [-1.6, -1.3], "tag": [-210.8, 44.5],
+         "text": "The two lanterns over the track hang inside the play space today, 3.4 m up, from nothing. Each gets a thin timber post "
+                 "with an iron bracket at the back of the track. Two more are new. One hangs under the cap at the lip, so you can see "
+                 "where the road ends. One is on a bracket on the rib above the chain's ring, so the chain is lit.",
+         "draw": [_post(-203.8, 40.0, 43.5, "pale", 0.2), _post(-210.8, 40.0, 43.5, "pale", 0.2), _c(-203.8, 43.7, 0.2, "light"), _c(-210.8, 43.7, 0.2, "light"),
+                  _c(-223.2, 28.5, 0.2, "light"), _c(-228.6, 46.9, 0.2, "light")]},
         {"name": "The warning sign", "z": [-1.4, -1.3], "style": "pale", "tag": [-201.8, 42.6],
          "text": "The skull-pug diamond before the cart. Today it stands just inside the play space. It moves back 0.4 m, to the "
                  "back edge of the track.",
          "draw": [_p([(-203.05, 41.6), (-202.6, 42.05), (-202.15, 41.6), (-202.6, 41.15)]), _ln(-202.6, 40.0, -202.6, 41.15, "line")]},
     ],
     "play": [
-        {"name": "The one chain", "z": [-0.2, 0.2], "style": "line", "tag": [-217.0, 45.6],
-         "text": "Parker, 11-13: one chain, not two. It hangs 2.6 m past the end of the boards, where the far chain hangs today, which "
-                 "is 1.6 m further out than the near one. From the boards it is out of reach, so riding the cart is the only way to "
-                 "it. It is a real chain with links you can see, the kit's chain from higher up the mountain, in the rusty red the "
-                 "chains have now. It hangs from an iron eye bolted through the first beam, and its tail is at chest height over the "
-                 "cart's road. Catch it while the cart is falling and you keep the chain: the cart drops away under you.",
-         "draw": _ONE_CHAIN},
-        {"name": "The near chain goes", "z": [-0.2, 0.2], "style": "mark", "tag": [-213.0, 45.7],
-         "text": "The chain that hangs 1 m from the end of the boards today is taken away (crossed out here). With the boards solid it "
-                 "could be taken without riding the cart. An empty iron eye is left in the beam where it hung.",
-         "draw": _NEAR_CHAIN_GOES + [_c(_GONE_CHAIN_X, 50.1, 0.12, "line")]},
-        {"name": "Boards across the track's end", "z": [-1.2, 1.2], "style": "line", "tag": [-213.9, 38.9],
-         "text": "There today (note 6): the miners' own stop, three boards nailed across the last 1.6 m of rail, with the rails' ends bent "
-                 "down past them. A track that ends in the air always gets these. The rails themselves lie flat on the track you walk "
-                 "on and stay as part of it.",
-         "draw": [_r(-213.2, 40.0, -211.6, 40.25)]},
+        {"name": "The cart's new road", "z": [-0.6, 0.6], "tag": [-217.5, 35.0], "top": True,
+         "text": "Note 103. The rails no longer stop at the end of the stub. They bend over its edge, drop 9 m at 72 degrees, sweep "
+                 "through a dip 12 m under the track, and climb 1.5 m to a lip that points up and west at 45 degrees. The road is rails "
+                 "on two timber stringers with sleepers. It is honey-coloured timber and you can hold it, like the stub. The cart "
+                 "reaches 12 m a second in the dip. Today it never passes 5.",
+         "draw": [_road_band(_ROAD)]},
+        {"name": "The broken stop at the lip", "z": [-0.6, 0.6], "style": "line", "tag": [-224.4, 28.7],
+         "text": "A track that ends in the air gets boards nailed across its rails (note 6). The boards that were across the end of "
+                 "the stub move here, to the track's new end. They are snapped through in the middle, a cart's width, with a stump left "
+                 "either side and the rails' ends bent up past them. Carts have been through here before yours.",
+         "draw": [_ln(-223.25, 29.2, -222.85, 29.95), _ln(-222.95, 29.5, -223.45, 30.0)]},
+        {"name": "The throw", "z": [-0.6, 0.6], "style": "mark", "tag": [-227.0, 31.6],
+         "text": "Dashed here: the cart's flight. It leaves the lip at 10 m a second with you standing in it. A little over a second "
+                 "later it passes the chain, near the top of its arc, with the chain's tail at your chest. Put a hand up and take it. "
+                 "The cart flies on into the waterfall and falls to the Sump.",
+         "draw": _flight()},
+        {"name": "The chain on the lowest ring", "z": [-1.2, 0.2], "style": "line", "tag": [-232.0, 38.6], "top": True,
+         "text": "One chain, 9 m long: a real chain with links you can see, the kit's chain from higher up the mountain, in rusty red. "
+                 "It hangs from an iron ring on a pin, 7.4 m east of the waterfall. Its tail hangs 0.9 m above the cart's floor where "
+                 "the cart passes, which is how high today's chains hang over the cart. Catch it and you keep the chain: the cart "
+                 "drops away under you. Then climb it to its ring.",
+         "draw": _chain(_CHAIN_TAIL) + [_c(_RINGS[0][0], _CHAIN_TAIL, 0.16, "line")] + _RING_SHAPES[:1] + _RING_SHAPES[3:4]},
+        {"name": "Two more rings", "z": [-1.2, 0.2], "style": "line", "tag": [-224.2, 48.7], "top": True,
+         "text": "Each is a rust-orange iron ring 0.5 m across on an iron pin as thick as a wrist. The pin is driven into the rib and "
+                 "comes forward 1.6 m, so the ring hangs in the middle of the play space, as the forge's wall rings do. The three "
+                 "rings rise east, 4.4 m apart and 2 m higher each time. From the last one you fling up to the underside of the first "
+                 "beam of Las Vigas (dashed).",
+         "draw": _RING_SHAPES[1:3] + _RING_SHAPES[4:] + _FLINGS},
+        {"name": "The two old chains go", "z": [-0.2, 0.2], "style": "line", "tag": [-217.4, 44.9],
+         "text": "Replaced by note 103. Both chains that hang from the first roof beam today are taken away (crossed out here). "
+                 "Nothing hangs from that beam.",
+         "draw": _crossed_out(45.0)},
         {"name": "The chock", "z": [-0.6, 0.6], "style": "pale", "tag": [-208.4, 41.3],
          "text": "A wooden wedge under the cart's west wheel. Your weight in the cart rocks it off the wedge. It is why the cart waits, "
                  "and why it goes. It is drawn on the track and is too small to be a thing to hold.",
@@ -1016,35 +1116,53 @@ EL_CARRITO = {
     ],
     "explains": [
         ["The cart", "An ore cart on the pillar's siding, held by one chock", "The second cart off the rails behind it, and the back rail"],
-        ["The stub of track, and its boards", "The first 4 m of the crossing, with the miners' stop nailed across its end", "The two slanting struts that carry it from the pillar"],
-        ["The one chain", "The last of the chains the track's deck hung from", "The beam it hangs from, its hanger post, and the unbroken beam behind with its empty eyes"],
-        ["The way the cart goes", "Off the end, down, and through the waterfall to the Sump", "The waterfall, whole, straight ahead"],
+        ["The road down", "The incline: rails on stringers, over the edge, down the drop, through the dip and up the rise", "The three posts on the bench with their caps under the rails, and the struts from the pillar"],
+        ["The lip", "The broken end of the rise, where the landing fell away", "The post stumps of the landing on the bench, and the snapped boards across the rails"],
+        ["The chain", "The last 9 m of the incline's haul chain", "The ring it hangs from, on its pin in the rib"],
+        ["The three rings", "The haul chain's guide rings, each on a pin driven into rock", "The rib of the back wall, and the beam under the roof that the chain came down from"],
+        ["The way the cart goes", "Off the lip, through the waterfall, and down to the Sump", "The waterfall, whole, straight ahead"],
     ],
     "pieces": [
         ["Waterfall: the sheet, seen side-on", "6 m wide, the full height of the picture", "1", "Background", "kit: waterfall pieces (the water overhaul, note 22)"],
-        ["Slanting strut", "0.35 m square; 5.4 m and 2.9 m", "2", "Background", "kit: mine_beam"],
-        ["Long beam under the roof, with iron eyes", "0.35 m square, 18.5 m", "1", "Background", "kit: mine_beam; iron eye (mine, added by these pages)"],
+        ["The chain rib: painted rock, one piece", "23 m long, about 5 m thick, slanting", "1", "Background", "kit: rock wall or mass, painted (mine)"],
+        ["The bench: painted rock, one piece", "21 m long, 3 m of its height in the picture", "1", "Background", "kit: rock wall or mass, painted (mine)"],
+        ["Incline post with a cap that comes forward", "0.35 m square; 7.8 m, 1.9 m and 3 m tall", "3", "Background", "kit: cart incline, its bent (mine)"],
+        ["Brace and tie between the posts; post stump", "0.35 m square; 5.8 m and 3.8 m; stumps 1.3 m", "1, 1 and 2", "Background", "kit: mine_beam, mine_post, cut"],
+        ["Slanting strut", "0.35 m square; 5.4 m, 2.9 m and 8.3 m", "3", "Background", "kit: mine_beam"],
+        ["Long beam under the roof", "0.35 m square, 18.5 m", "1", "Background", "the same piece as Las Vigas's"],
         ["Hanger post", "0.35 m square, 2.7 to 4.5 m", "4", "Background", "kit: mine_post"],
         ["Ore cart, tipped", "1.6 m", "1", "Background", "kit: minecart"],
         ["Rail, straight", "2 m lengths", "4", "Background", "kit: rail_straight"],
         ["Lamp post with a bracket and a hanging lantern", "post 0.2 m by 3.5 m", "2", "Background", "kit: mine_post, thin; lantern_hang"],
+        ["Hanging lantern on an iron bracket", "0.4 m", "2", "Background", "kit: lantern_hang; iron strap (mine)"],
         ["Skull-pug warning sign", "1 m", "1", "Background", "kit: sign_pug_skull"],
+        ["Cart road: rails on two stringers with sleepers, made to its curve", "0.9 m gauge; 18 m: the crest, 9 m of drop, the dip, the lip", "1", "Play space", "kit: cart incline (mine)"],
+        ["Broken stop: two snapped boards and bent rail ends", "1.2 m", "1", "Play space (drawn on)", "kit: rail_broken, and the boards that are in the game"],
         ["Chain, real links, rusty red", "9 m", "1", "Play space", "kit: chain, real links (mine)"],
-        ["Iron eye for a chain, with a rust streak", "0.3 m", "2: one in use, one empty", "Play space (drawn on)", "kit: iron eye (mine, added by these pages)"],
-        ["Boards across the rails; bent rail ends", "1.6 m", "1", "Play space (there today)", "kit: rail_broken; the boards are in the game"],
+        ["Wall ring on a pin", "ring 0.5 m across; pin 1.6 m", "3", "Play space", "kit: wall ring on a pin (mine)"],
         ["Chock", "0.45 m", "1", "Play space (drawn on)", "new, this area only"],
         ["Front strut's foot, in two lengths", "0.3 m wide, 1.6 and 2.4 m", "1", "Foreground", "kit: mine_beam, cut"],
     ],
     "effects": [
         "The chock jumps out and skitters off the edge when the cart starts.",
+        "The wheels shriek down the drop and throw sparks through the dip.",
         "The chain sways a little and its links clink. Nothing else in the picture moves but the waterfall.",
         "A white burst in the waterfall where the cart goes through it.",
     ],
     "notes": [
-        "Note 6 (done): the boards across the rails' end are solid to the end of the drawn rail, and the cart falls for real a cart's length past them.",
-        "Course change (note 6; Parker, 11-13): one chain, not two. The near chain, 1 m past the boards' end, is taken away. The one chain hangs where the far chain is today, 2.6 m past the boards' end, and is 9 m long as that one is. By the numbers that is past the reach from the boards. It has not been tried in the game.",
-        "Course change (note 6; Parker, 11-13): the chain becomes a real chain with links, in rusty red. A rider who catches it while the cart is falling keeps the chain, and the cart falls away.",
-        "In the play space today and moved out of it: the trestle leg (replaced by two struts at the back, item 2), the warning sign (back 0.4 m, item 6), the two lanterns (back onto lamp posts, item 5).",
+        "Note 103 is this page. It replaces the one chain hung from the first roof beam (the chain part of note 6, and Parker's answer of 11-13, morning). Nothing below has been tried in the game.",
+        "Course change, the chains: both chains on the first beam go. Today they hang from its underside at 50.1 m: one at x -214.2, 8.6 m long, and one at x -215.8, 9.0 m long.",
+        "Course change, the road: the rail stays level at 40.0 m to x -213.2, the end of the stub. Then it goes over a crest of 2.2 m radius, down a straight drop at 72 degrees from (-215.3, 38.5) to (-218.1, 29.7), round a dip of 2.5 m radius whose lowest point is (-220.5, 28.0), and up at 45 degrees to the lip at (-223.0, 29.45). That is 18 m of new road. The cart's own line runs 0.45 m above the rail, as today. Today's line ends at (-217.6, 39.05).",
+        "Course change, the road is solid: 0.4 m of timber under the rail from x -213.2 to the lip, to hold and to stand on. The stub's own deck stays solid to x -213.2 (note 6, done).",
+        "Course change, the speed: 5 m a second over the crest, as today. 12 m a second in the dip. 10 m a second off the lip. Today the top speed is 5. The cart needs a speed for each stretch of its road, where today it has one.",
+        "Course change, the fall: the cart is let loose at the lip, where today it is let loose 2.4 m past the boards. It falls as it does today (note 6, done).",
+        "Course change, the chain: one chain, 9.0 m long, from a ring at (-230.6, 44.2). Its tail is at 35.2 m. Parker's drawing has the ring about 6 m east of the waterfall. It is 7.4 m east here, so that the three flings up from it stay inside what the mine asks.",
+        "Course change, the rings: three iron rings 0.5 m across, at (-230.6, 44.2), (-226.2, 46.2) and (-221.8, 48.2). Ring to ring is 4.4 m across and 2.0 m up, a fling of 4.4 m a second. The last ring to the underside of the first beam at (-218.1, 50.1) is 3.7 m across and 1.9 m up, a fling of 4.1 m a second, the same as the first fling of Las Vigas. The limit for these flings is 4.8.",
+        "The throw, by the numbers: the cart's floor leaves the lip at (-222.7, 29.8). It crosses the chain's line 7.9 m further west, 1.1 seconds later, at 34.3 m. The top of its arc is 34.4 m. So the chain's tail is 0.9 m above the floor. Each 1 m a second more or less at the lip moves that height by about 0.7 m, so the chain's length has to be set together with the speed.",
+        "The cart is the only way to the chain: from the lip, the chain's tail is 7.6 m across and 5.75 m up. That is a fling of 6.5 m a second, over the limit.",
+        "Course change, the camera: the cart's camera today covers x -220 to -200. It has to pull back to show the dip, the lip and the chain before the cart goes: x -234 to -200, y 26 to 50.",
+        "Course change, light: two lanterns are new, at the lip and above the chain's ring (item 8).",
+        "In the play space today and moved out of it: the trestle leg (replaced by the struts at the back, item 5), the warning sign (back 0.4 m, item 9), the two lanterns over the track (back onto lamp posts, item 8).",
         "Note 4: the one real chain is the only thing that hangs in this picture.",
     ],
 }
@@ -1054,14 +1172,17 @@ LAS_VIGAS = {
     "id": "1.8", "slug": "1_8_las_vigas", "title": "Las Vigas", "kind": "challenge",
     "window": [-246.0, 40.0, -210.0, 60.0], "screen": [-222.5, 50.0], "cut_y": 51.9, "climber": [-216.5, 50.5],
     "place": ("Under the flat roof of the cavern, 78 m above the water, the miners hung one long beam on four posts bolted into the roof. "
-              "It ran from above the track's end to the landing under the winding wheel, and the deck of the track's long crossing hung "
-              "from it on chains. When the deck fell, its weight snapped the beam in three places. The four pieces are still there, each "
-              "on its own post, each sagging to a different height, with 2.5 m of air between one splintered end and the next. A second "
-              "beam at the back never broke, and shows the line the first one had. You go along what is left the only way there is: "
-              "swing under a piece, let go, land on the next. The waterfall is in front of you the whole way."),
+              "It ran from above the incline to the landing under the winding wheel, and the incline's haul chain ran along it. When "
+              "the incline's landing fell, the chain went tight and snapped the beam in three places. The four pieces are still there, "
+              "each on its own post, each sagging to a different height, with 2.5 m of air between one splintered end and the next. A "
+              "second beam at the back never broke, and shows the line the first one had. You come to the first piece from below, off "
+              "the last of the three rings, and take it by its underside. The spray of the fall has turned the undersides of the other "
+              "three black and slick. From there on you hold tops and ends only: swing from an end, let go, land on the next top. The "
+              "waterfall is in front of you the whole way."),
     "keep": [
         "The four beams: where each hangs, how long it is, how high.",
-        "The one chain on the first beam (Parker, 11-13), and the staging you land on at the end.",
+        "The first beam can be held from underneath. The other three can be held by their tops and ends only (note 103).",
+        "The three rings that lead up to the first beam, and the staging you land on at the end.",
         "Nothing between you and the water.",
     ],
     "background": [
@@ -1069,11 +1190,16 @@ LAS_VIGAS = {
          "text": "Straight ahead, 6 m past the last beam, and you fling towards it three times. From here it is a sheet 6 m wide, white, "
                  "with the winding wheel turning slowly in its spray at the top left. It lights the beams from in front.",
          "draw": _fall(40.0, 60.0)},
-        {"name": "The back beam", "z": [-1.9, -1.5], "tag": [-219.4, 53.6], "top": True,
+        {"name": "The chain rib", "z": [-3.4, -1.6], "tag": [-232.9, 42.6],
+         "text": "The same piece as on El Carrito Loco's page: a rib of the cavern's back wall, 1.6 m behind you, slanting up from "
+                 "the fall's side to just under the beams. It is painted rock: long wavy beds of flat colour, a few big real breaks, "
+                 "a leaning notched outline. The three rings are driven into it.",
+         "draw": [_p(_RIB)]},
+        {"name": "The back beam", "z": [-1.9, -1.5], "tag": [-219.4, 53.9], "top": True,
          "text": "The twin of the beam you are crossing, close under the roof and all in one piece, 18.5 m long. It shows what the four "
-                 "pieces were. Along it are the empty iron eyes the other chains hung from. No chain hangs from any of them.",
+                 "pieces were. Along it are three iron rollers that the haul chain ran over. Nothing hangs from them.",
          "draw": [_r(-232.0, 54.25, -213.5, 54.6, "pale")] + [_c(x, 54.12, 0.13, "line") for x in (-219.6, -224.0, -228.4)]},
-        {"name": "Four hanger posts", "z": [-1.55, -1.2], "tag": [-222.6, 53.6],
+        {"name": "Four hanger posts", "z": [-1.55, -1.2], "tag": [-222.6, 53.5],
          "text": "One behind the middle of each piece, from the piece up to the roof. Today a post in hold-coloured timber stands in the "
                  "middle of the play space on top of each beam. It moves to the back and goes grey, so the top of a beam is clear to land on.",
          "draw": [_post(x, top, 55.0) for x, top in _HANGERS]},
@@ -1087,18 +1213,28 @@ LAS_VIGAS = {
          "draw": [_p([(-212.6, 55.0), (-211.4, 55.0), (-212.0, 52.0)]), _p([(-211.2, 55.0), (-210.4, 55.0), (-210.8, 53.4)])]},
     ],
     "play": [
-        {"name": "One chain", "z": [-0.2, 0.2], "style": "line", "tag": [-217.0, 45.6],
-         "text": "Parker, 11-13: one chain hangs from the first beam, not two. It is the one you arrive on from the cart: a real "
-                 "chain with links, rusty red, 9 m long. The near chain (crossed out here) is taken away.",
-         "draw": _ONE_CHAIN + _NEAR_CHAIN_GOES},
+        {"name": "The three rings", "z": [-1.2, 0.2], "style": "line", "tag": [-224.3, 45.9], "top": True,
+         "text": "Note 103. Three rust-orange iron rings 0.5 m across, each on an iron pin driven into the rib behind, rise east under "
+                 "the beams. The chain you caught off the cart hangs from the lowest. Climb it, then fling ring to ring, and from the "
+                 "last ring up to the underside of the first beam at its west end (dashed).",
+         "draw": _RING_SHAPES + _chain(40.0) + _FLINGS},
+        {"name": "Black undersides", "z": [-1.2, 1.2], "style": "dark", "tag": [-226.3, 49.5], "top": True,
+         "text": "Note 103. The undersides of the second, third and fourth beams are black and glossy with wet from the fall's spray: "
+                 "the mine's look for a thing you can't hold. Their tops and their ends stay dry and honey-coloured. The first beam is "
+                 "out of the spray and dry all round. Parker's drawing marks the underside of the staging the same way.",
+         "draw": [_r(x0, round(top - 0.58, 2), x1, round(top - 0.4, 2)) for x0, x1, top in _BEAMS[1:]] + [_r(-237.2, 51.97, -232.2, 52.15)]},
+        {"name": "The two old chains go", "z": [-0.2, 0.2], "style": "line", "tag": [-217.4, 45.9],
+         "text": "Replaced by note 103. Both chains that hang from the first beam today are taken away (crossed out here). "
+                 "Nothing hangs from the first beam.",
+         "draw": _crossed_out(46.0)},
         {"name": "Splintered ends", "z": [-1.2, 1.2], "style": "mark", "tag": [-224.05, 50.0],
          "text": "Every end that faces a gap is splintered. The two outer ends are sawn square. So the four read as one beam, broken in "
-                 "three places.",
+                 "three places. On the second and third pieces the splintered west end is the hold you swing from.",
          "draw": [_ln(-218.3, 49.9, -218.3, 50.7), _ln(-220.8, 51.4, -220.8, 52.2), _ln(-222.8, 51.4, -222.8, 52.2),
                   _ln(-225.3, 50.2, -225.3, 51.0), _ln(-227.3, 50.2, -227.3, 51.0), _ln(-229.8, 51.7, -229.8, 52.5)]},
-        {"name": "Iron stirrups", "z": [-1.2, 1.2], "style": "line", "tag": [-217.2, 49.4],
+        {"name": "Iron stirrups", "z": [-1.2, 1.2], "style": "line", "tag": [-214.7, 49.3],
          "text": "A rust-orange iron stirrup round each piece where its hanger post takes it. It is what the piece hangs in, and it is the "
-                 "one spot on each beam that looks strong.",
+                 "one spot on each beam that looks strong. Under the three wet pieces the strap is as black as the timber.",
          "draw": [_r(round(x - 0.25, 2), round(top - 0.45, 2), round(x + 0.25, 2), round(top + 0.05, 2)) for x, top in _HANGERS]},
         {"name": "Bolt plates in the roof", "z": [-1.2, 1.2], "style": "pale", "tag": [-228.6, 55.9],
          "text": "Drawn on the roof above each post: an iron plate with four bolt heads.",
@@ -1107,30 +1243,40 @@ LAS_VIGAS = {
     "foreground": [],
     "explains": [
         ["The four beams", "Four pieces of one long beam that hung under the roof", "The back beam, whole, and a hanger post behind each piece"],
-        ["The gaps", "Where the beam snapped when the deck fell", "The splintered ends, and the unbroken line of the back beam above"],
-        ["The chain", "The last of the chains the deck hung from", "The empty iron eyes along the back beam"],
+        ["The gaps", "Where the beam snapped when the haul chain went tight", "The splintered ends, and the unbroken line of the back beam above"],
+        ["The three rings", "The haul chain's guide rings, each on a pin driven into rock", "The rib of the back wall they are driven into, and the rollers on the back beam"],
+        ["The first beam's underside", "The one piece the spray does not reach: dry timber all round", "The last ring below it, and the rib"],
+        ["The black undersides", "Timber kept wet by the spray of the fall", "The waterfall, 6 m past the last beam"],
         ["The staging at the far end", "The landing under the winding wheel", "The wheel and its frame (see La Polea Grande)"],
     ],
     "pieces": [
         ["Waterfall: the sheet", "6 m wide, 20 m of it in the picture", "1", "Background", "kit: waterfall pieces (the water overhaul, note 22)"],
-        ["Long beam under the roof, with iron eyes", "0.35 m square, 18.5 m", "1", "Background", "the same piece as El Carrito Loco"],
+        ["The chain rib: painted rock, one piece", "23 m long, about 5 m thick, slanting", "1", "Background", "the same piece as El Carrito Loco's"],
+        ["Long beam under the roof, with three iron rollers", "0.35 m square, 18.5 m", "1", "Background", "kit: mine_beam; pulley, laid flat"],
         ["Hanger post", "0.35 m square, 2.7 to 4.5 m", "4", "Background", "kit: mine_post"],
-        ["Hanging lantern on an iron bracket", "0.4 m", "2", "Background", "kit: lantern_hang; iron strap (mine, added by these pages)"],
+        ["Hanging lantern on an iron bracket", "0.4 m", "2", "Background", "kit: lantern_hang; iron strap (mine)"],
         ["Stalactite", "0.8 and 1.2 m across", "2", "Background", "kit: stalactite_a, stalactite_b"],
+        ["Wall ring on a pin", "ring 0.5 m across; pin 1.6 m", "3", "Play space", "the same pieces as El Carrito Loco's"],
         ["Chain, real links, rusty red", "9 m", "1", "Play space", "the same piece as El Carrito Loco's"],
+        ["Black wet underside for a beam", "2 m long, 0.35 m wide", "3, and one 5 m long for the staging", "Play space (drawn on)", "new, drawn on: the mine's wet look"],
         ["Splintered end for a beam", "0.4 m", "6", "Play space (drawn on)", "kit: splintered end (mine)"],
-        ["Iron stirrup; bolt plate", "0.5 m; 0.7 m", "4 and 4", "Play space (drawn on)", "kit: iron stirrup (mine, added by these pages)"],
+        ["Iron stirrup; bolt plate", "0.5 m; 0.7 m", "4 and 4", "Play space (drawn on)", "kit: iron stirrup (mine)"],
     ],
     "effects": [
         "A piece dips and creaks on its post when you land on it. It does not break.",
-        "Spray drifting in from the waterfall across the last gap.",
+        "Spray drifting in from the waterfall across the last gap, and a slow drip off the three wet undersides.",
     ],
     "notes": [
-        "No note from the playtest was about this challenge.",
-        "Course change (note 6; Parker, 11-13): one chain on the first beam, not two. It is the far one, and it becomes a real chain with links. See El Carrito Loco.",
-        "In the play space today in hold colours, and moved out of it: the post that stands on top of each of the four beams (to the back, grey, item 3), and the two lanterns over the beams (back onto brackets, item 4).",
-        "Note 4: the one chain on the first beam is the only thing that hangs here.",
-        "Note 40: no foreground. There is no rock in this picture to stand anything in front of but the roof.",
+        "Note 103 changes how you come to this challenge and how you cross it. It replaces the one chain on the first beam (the chain part of note 6, and Parker's answer of 11-13, morning). Nothing below has been tried in the game.",
+        "Course change, the chains: both chains on the first beam go. Today they hang from its underside at 50.1 m: one at x -214.2, 8.6 m long, and one at x -215.8, 9.0 m long.",
+        "Course change, the rings: three iron rings 0.5 m across at (-230.6, 44.2), (-226.2, 46.2) and (-221.8, 48.2), with one chain 9.0 m long on the first. Ring to ring is 4.4 m across and 2.0 m up, a fling of 4.4 m a second. The last ring to the underside of the first beam at (-218.1, 50.1) is 3.7 m across and 1.9 m up, a fling of 4.1 m a second. The limit is 4.8. See El Carrito Loco.",
+        "Course change, the undersides: the lowest 0.1 m of the second, third and fourth beams becomes slick for the whole 2.0 m of each. Their tops and their end faces stay as they are. The first beam does not change.",
+        "The staging: Parker's drawing has the same purple mark under the staging at the far end (x -237.2 to -232.2). His words name the beams only. This page takes the drawing: the staging's underside is slick too. Its own page, La Polea Grande, is not redone here.",
+        "Course change, the flings: the first is as today, from under the first beam's west end to the second beam's top. The second and third can no longer start from under a beam. They start from a beam's west end: from (-222.8, 51.8) to the third beam's top at (-226.3, 50.8), 3.5 m across and 1.0 m down, and from (-227.3, 50.6) to the fourth beam's top at (-230.8, 52.3), 3.5 m across and 1.7 m up, a fling of 4.0 m a second.",
+        "The start of Las Vigas stays on top of the first beam. You arrive hanging under its west end, and can pull up round the end to rest.",
+        "In the play space today in hold colours, and moved out of it: the post that stands on top of each of the four beams (to the back, grey, item 4), and the two lanterns over the beams (back onto brackets, item 5).",
+        "Note 4: nothing hangs from the beams now. The one chain hangs lower down, from the first ring.",
+        "Note 40: no foreground. There is no rock in front of this picture to stand anything against.",
     ],
 }
 
@@ -1307,7 +1453,7 @@ LA_CORTINA = {
         {"name": "The staples", "z": [-1.2, 0.3], "style": "line", "tag": [-237.0, 74.6],
          "text": "Parker, 11-13: every hold is an iron staple, a rust-orange U of iron hammered into the rock, about 0.5 m wide and "
                  "standing a hand's width out from the wall, in place of today's rock knob. A few are bent down at one end or pulled "
-                 "a little crooked. All of them still hold. Each has a rust streak on the rock under it. Wet, a staple is a shiny "
+                 "a little crooked. All of them still hold. Each has a small square rust stain on the rock round its feet. Wet, a staple is a shiny "
                  "blue-grey and drips, as the holds do now, and it is dry for longer than it is wet.",
          "draw": [_ln(round(_staple(r, s)[0] - 0.25, 2), _staple(r, s)[1], round(_staple(r, s)[0] + 0.25, 2), _staple(r, s)[1]) for r in range(14) for s in (0, 1)]},
         {"name": "The five that stay dry", "z": [-1.2, 0.3], "style": "line", "tag": [-232.3, 77.6],
@@ -1353,7 +1499,7 @@ LA_CORTINA = {
         ["Roof post; water trough", "as La Polea Grande", "2 and 1", "Background", "the same pieces as La Polea Grande"],
         ["Iron staple: straight, bent", "0.5 m wide, 0.1 m out from the wall", "23: about 18 straight, 5 bent", "Play space", "kit: iron staple (mine)"],
         ["Iron staple bound with pale cord", "0.5 m wide", "5", "Play space", "kit: iron staple (mine), with a cord binding that is new"],
-        ["Rust streak under a staple", "0.6 m", "28", "Play space (drawn on)", "new, drawn on"],
+        ["Rust stain round a staple's feet: a small square patch, painted", "0.6 m", "28", "Play space (drawn on)", "new, drawn on"],
         ["Strap for the rope's bracket", "0.5 m", "1", "Play space (drawn on)", "kit: iron strap (mine, added by these pages)"],
         ["Front post, in broken lengths", "0.3 m wide, 2.6 to 4.2 m", "4 lengths", "Foreground", "kit: timber set post (mine), cut"],
     ],
