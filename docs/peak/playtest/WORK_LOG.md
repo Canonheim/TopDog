@@ -1791,6 +1791,31 @@ in. Nothing played by a person.
     have earned, and the lucha ribbon the note asks for (the UI director's).
 - **Checks:** lint; `--peak`; `--peakride`; `--input --devices --settings`. All clean.
 
+## The fix run of 11-13, group 3: the chimney (a6: notes 58, 62)
+
+- **Note 58, the dynamite rung.** The second rung from the top of 6.4's four (y 523.1) is a
+  hold of the new type `dynamite`: a red stick with paper bands and a fuse (a plain
+  stand-in), the same size and place, held like a rung. Touched, its fuse lights (a sizzle,
+  a spark running along it, the stick shaking) and burns 1 s whether you let go or not.
+  Then it blows: smoke, dust and sparks, the lightning's flash, a bang and a jolt of the
+  camera. If any part of the climber is within 1.3 m it is knocked out; within 2.6 m the
+  whole climber is thrown away from the stick through its middle (7 m/s at the stick,
+  less further off). The stick is gone and back 10 s later. `blasts` counts them.
+  - Watched (`g3boom`, `g3boom2`): the fuse and the blast as above; with the chest 0.5 m
+    from the stick: knocked out and thrown (2.9 m/s at the chest a tick after); the stick
+    gone, and back 10 s later.
+  - **Found on the way:** thrown part by part, the parts on either side of the stick
+    cancelled each other out (1 m/s); the climber is now thrown as one.
+  - Not checked: where the blast can send a climber (the bellows' top board is under
+    it); a real hand on the stick (the probe's weld would not hold the hand on it).
+  - First guesses: the 1 s fuse, the 1.3 m and 2.6 m, 7 m/s.
+  - `58_dynamite_lit.jpg`, `58_dynamite_blows.jpg`, `58_after_the_blast.jpg`.
+- **Note 62, the high red block.** It is vent 2's grate and can be held. Every vent now seeps
+  a little steam between its blasts, so a grate reads as a vent, and a lantern hangs right
+  over grates 2 and 3. The fat steam pipes the note asks for are the dress's.
+  (`62_the_grates_lit.jpg`)
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

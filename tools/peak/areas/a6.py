@@ -121,8 +121,14 @@ for i, (bx, by) in enumerate(((-270.0, 512.8), (-273.4, 514.8), (-276.8, 516.8))
              "phase": 1.4 * i}, model="bellows")
 A.wind((-284.0, 513.0, -268.0, 520.5), (4.0, 0.0), gust={"on": 1.4, "off": 2.6, "phase": 0.0, "warn": 0.8}, look="steam")
 A.ledge(-288.0, -279.2, 519.5, "plank", t=0.6)  # L4, the great bellows' top board
-for y in (520.9, 522.0, 523.1, 524.2):
+for y in (520.9, 522.0, 524.2):
     A.beam((-286.4, y), (-285.6, y), 0.22, "iron")  # rungs up to the slag pan's shore
+# THE DYNAMITE RUNG (note 58, Parker 11-13: "make the second one from the top a stick of dynamite and
+# explode if you hold it, it's fuse lights and it fuckin blows up"). Where the third rung was, the
+# same size, held like one: touch it and its fuse burns for 1 s (letting go doesn't save the
+# stick), then it blows, throwing and knocking out whoever is near, and a fresh stick is there
+# 10 s later. The clean way is a lunge past it, 2.2 m, rung to rung. (A plain red stand-in.)
+A.beam((-286.4, 523.1), (-285.6, 523.1), 0.22, "iron", hold={"type": "dynamite", "fuse": 1.0, "respawn": 10.0})
 A.ledge(-285.0, -280.3, 525.2, "iron", t=0.6)  # the shore
 A.challenge("6.4", "El Fuelle", (-266.2, 512.0), 3, "A",
             moves=[["reach", [-267.6, 512.0], [-268.9, 512.8]], ["reach", [-271.1, 514.6], [-272.3, 514.8]],
@@ -321,6 +327,11 @@ for x, y, col, e, r in ((-289.0, 484.0, "#FFB060", 1.6, 10.0), (-281.5, 489.0, "
                         (-241.0, 579.0, "#DCEBFF", 2.2, 12.0), (-235.0, 583.0, "#FFFFFF", 2.6, 12.0), (-262.0, 480.5, "#FF7A30", 1.3, 12.0),
                         (-246.0, 481.5, "#FF7A30", 1.2, 11.0)):
     A.light(x, y, color=col, rng=r, energy=e, flicker=y < 560)
+# (Note 62: the high red blocks are vents 2 and 3's grates, and can be held: a lantern right
+# over each, so the next step is the brightest thing above you. Their steam pipes are the
+# dress's.)
+for x, y in ((-246.6, 558.4), (-248.4, 566.6)):
+    A.light(x, y, color="#FFE0B0", rng=5.0, energy=1.8)
 A.effect("embers", (-291, 478, -236, 532), density=0.5)
 A.effect("embers", (-281, 522, -262, 530), density=1.5)
 A.effect("steam", (-283, 479.5, -280, 488))

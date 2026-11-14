@@ -2285,3 +2285,81 @@ func _w_g3fart(_a: Array) -> void:
 	Input.parse_input_event(up)
 	await secs(0.3)
 	print("WATCH g3fart: earned before %s, after %s; slot %d" % [had, (pk.achievements as Dictionary).has("pay_your_respects"), me().local_slot])
+
+
+## NOTE 58: the dynamite rung. NOTE 62: the vents' grates. g3boom
+func _w_g3boom(_a: Array) -> void:
+	pk.warp("6.4")
+	await secs(6.5)
+	var h: Dictionary = {}
+	for x in pk.things.holds:
+		if str(x.type) == "dynamite":
+			h = x
+	if h.is_empty():
+		print("WATCH g3boom: no dynamite")
+		return
+	var c := me()
+	var mid: Vector2 = pk.things._hold_at(h)
+	put_limb(1, mid)
+	await ticks(2)  # (THE LATE TRANSFORM LAW: the server has the moved hand before it is welded)
+	put_limb(1, mid)
+	await ticks(1)
+	c.attach(1, h.body)
+	look(mid + Vector2(0, -0.6), 3.0)
+	await secs(0.15)
+	await shot("58_dynamite_lit")
+	var before_blast := "hand %.2f m from the stick, guard %.2f, state %s" % [pk.local_of(c.limb_end(1)).distance_to(mid), float(c.get("_impact_guard")), c.state]
+	var ko := false
+	var t0 := pk.clock
+	var shot_done := false
+	while pk.clock - t0 < 1.2:
+		ko = ko or c.knockout_left > 0.0
+		if not shot_done and pk.things.blasts > 0:
+			shot_done = true
+			await ticks(2)
+			await shot("58_dynamite_blows")
+		await ticks(1)
+	print("WATCH g3boom: before the blast: ", before_blast)
+	await secs(1.2)
+	look(Vector2(-284.0, 521.0), 4.0)
+	await shot("58_after_the_blast")
+	var gone := (h.body as CollisionObject3D).collision_layer == 0
+	await secs(9.5)
+	var back := (h.body as CollisionObject3D).collision_layer != 0
+	print("WATCH g3boom: blasts %d, knocked out %s, the climber at %s, the stick gone %s, back 10 s later %s" % [pk.things.blasts, ko, where(), gone, back])
+	pk.warp("6.8")
+	await secs(1.0)
+	look(Vector2(-246.0, 560.0), 7.0)
+	await secs(2.0)
+	await shot("62_the_grates_lit")
+
+
+## NOTE 58 again: the blast's own rule, with the chest put 0.5 m from the stick and the fuse lit by hand. g3boom2
+func _w_g3boom2(_a: Array) -> void:
+	pk.warp("6.4")
+	await secs(6.5)
+	var h: Dictionary = {}
+	for x in pk.things.holds:
+		if str(x.type) == "dynamite":
+			h = x
+	var c := me()
+	var mid: Vector2 = pk.things._hold_at(h)
+	var p := c.pose()
+	var ch := pk.local_of(Climber.pos2(c.bodies["chest"]))
+	var shift := mid + Vector2(0.5, 0.0) - ch
+	for k in range(0, p.size(), 3):
+		p[k] += shift.x
+		p[k + 1] += shift.y
+	c.apply_pose(p)
+	still()
+	h["lit_at"] = pk.clock - 0.95  # (0.05 s of fuse left: the climber has no time to fall away)
+	look(mid + Vector2(0.3, -0.5), 3.0)
+	var ko := false
+	var t0 := pk.clock
+	var start_v := 0.0
+	while pk.clock - t0 < 1.4:
+		ko = ko or c.knockout_left > 0.0
+		await ticks(1)
+		if pk.things.blasts > 0 and start_v == 0.0:
+			start_v = Vector2((c.bodies["chest"] as RigidBody3D).linear_velocity.x, (c.bodies["chest"] as RigidBody3D).linear_velocity.y).length()
+	print("WATCH g3boom2: blasts %d, knocked out %s, the chest thrown at %.1f m/s" % [pk.things.blasts, ko, start_v])

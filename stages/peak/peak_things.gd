@@ -710,6 +710,99 @@ func _tick_winches() -> void:
 		(m.w_arm as Node3D).rotation.z = float(m.w_ang)
 
 
+## THE DYNAMITE RUNG (playtest note 58; Parker 11-13: "make the second one from the top a
+## stick of dynamite and explode if you hold it, it's fuse lights and it fuckin blows up").
+## A hold of type "dynamite": touched, its fuse burns `fuse` s (a spark running along it, the
+## stick shaking), and letting go does not stop it. Then it blows: smoke, flying sparks and
+## dust, a flash, a bang and a jolt of the camera; everything of the climber within
+## BLAST_R is thrown away from it, and the climber is knocked out if any part of it is within
+## BLAST_KO (holding it, certainly). The stick is gone, and a fresh one is there `respawn` s
+## later. A plain red stand-in (a stick, a fuse) until its model lands.
+const BLAST_R := 2.6
+const BLAST_KO := 1.3
+const BLAST_V := 7.0  # m/s at the middle, falling to 0 at BLAST_R
+
+
+func _build_dynamite(h: Dictionary) -> void:
+	var body: Node3D = h.body
+	var mid := _hold_middle(body)
+	var stick := Node3D.new()
+	stick.position = Vector3(mid.x, mid.y, 0.0)
+	stick.add_child(LuchaKit.cyl(0.13, 0.82, Color("#C8322E"), Vector3.ZERO, Vector3.RIGHT))
+	for e in [-0.25, 0.25]:
+		stick.add_child(LuchaKit.cyl(0.135, 0.06, Color("#2E2A2C"), Vector3(e, 0, 0), Vector3.RIGHT))  # its paper bands
+	var fuse := LuchaKit.box(Vector3(0.3, 0.03, 0.03), Color("#3A2E26"), Vector3(0.52, 0.08, 0.0))
+	fuse.rotation.z = 0.6
+	stick.add_child(fuse)
+	body.add_child(stick)
+	(h.vis as Node3D).visible = false
+	h["stick"] = stick
+	h["mid"] = mid
+
+
+func _tick_dynamite(h: Dictionary, t: float) -> void:
+	if not h.has("stick"):
+		_build_dynamite(h)
+	var body: CollisionObject3D = h.body
+	var stick: Node3D = h.stick
+	var mid: Vector2 = h.mid
+	var def: Dictionary = h.def
+	var lit := float(h.get("lit_at", -1.0))
+	if float(h.get("back_at", -1.0)) >= 0.0:
+		if t >= float(h.back_at):
+			h.back_at = -1.0
+			body.collision_layer = int(h.layer)
+			stick.visible = true
+			stick.scale = Vector3.ONE * 0.05
+			stick.create_tween().tween_property(stick, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		return
+	if lit < 0.0:
+		return
+	var fuse := float(def.get("fuse", 1.0))
+	var f := clampf((t - lit) / maxf(fuse, 0.05), 0.0, 1.0)
+	stick.position = Vector3(mid.x + randf_range(-1.0, 1.0) * 0.04 * f, mid.y + randf_range(-1.0, 1.0) * 0.04 * f, 0.0)
+	if t >= float(h.get("spark_at", 0.0)):
+		h["spark_at"] = t + 0.05
+		peak.zones.burst(mid + Vector2(0.62 - 0.4 * f, 0.22 - 0.12 * f), "sparks", 0.35)
+	if f < 1.0:
+		return
+	# it blows
+	h["lit_at"] = -1.0
+	h["back_at"] = t + float(def.get("respawn", 10.0))
+	_release_from([body])
+	body.collision_layer = 0
+	stick.visible = false
+	stick.position = Vector3(mid.x, mid.y, 0.0)
+	for k in ["smoke", "dust", "sparks", "sparks"]:
+		peak.zones.burst(mid, k, 2.6)
+	peak.zones.flash = maxf(peak.zones.flash, 0.7)
+	peak.cam_kick = 0.6
+	peak.audio.play("rock_crumble", mid, 6.0, 0.7)
+	peak.audio.play("cart_crash", mid, 6.0, 0.6)
+	var c := peak.player
+	if c == null or c.state != Climber.State.LIVE:
+		return
+	var nearest := INF
+	for b: RigidBody3D in c.bodies.values():
+		nearest = minf(nearest, peak.local_of(Climber.pos2(b)).distance_to(mid))
+	# The whole climber is thrown one way, away from the stick through its middle (thrown
+	# part by part, the parts either side of the stick cancelled each other out).
+	if nearest < BLAST_R:
+		var com := peak.local_of(c.centre_of_mass())
+		var away := (com - mid).normalized() if com.distance_to(mid) > 0.05 else Vector2.UP
+		var push := Vector3(away.x, away.y + 0.35, 0.0).normalized() * BLAST_V * (1.0 - nearest / BLAST_R)
+		for b: RigidBody3D in c.bodies.values():
+			b.linear_velocity += push
+	if nearest < BLAST_KO and c.knockout_left <= 0.0:
+		_ko_wait = 2.5
+		c.knock_out()
+		peak.audio.play("knock_out_bonk", mid, 3.0)
+	blasts += 1
+
+
+var blasts := 0  # (for the probes: how many sticks have blown)
+
+
 ## A GRIP BREAKS BEFORE THE BODY DOES (Parker 11-12: "a certain amount of force should
 ## break your welds ... if I grip a moving thing, it pulls me and stretches me across the
 ## map instead of me losing my grip on something"). When the climber's joints are pulled
@@ -1836,6 +1929,10 @@ func _tick_holds(delta: float) -> void:
 							peak.audio.play("plank_creak", at, 0.0, 0.7)
 						else:
 							peak.audio.play("plank_creak" if str(h.area) in ["a0", "a1", "a7"] else ("crystal_chime" if str(h.area) == "a3" else "ice_tick"), at)
+				"dynamite":
+					if fresh and float(h.get("lit_at", -1.0)) < 0.0 and float(h.get("back_at", -1.0)) < 0.0:
+						h["lit_at"] = t  # its fuse lights (note 58)
+						peak.audio.play("sizzle", at, 2.0)
 				"kick":
 					if fresh:
 						var v := Peak.v2(def.v)
@@ -1900,6 +1997,8 @@ func _tick_holds(delta: float) -> void:
 					v.create_tween().tween_method(grow, 0.05, 1.0, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 			"timed":
 				_tick_tell(h, delta)
+			"dynamite":
+				_tick_dynamite(h, t)
 			"wet":
 				var def: Dictionary = h.def
 				var on := float(def.get("on", 2.0))

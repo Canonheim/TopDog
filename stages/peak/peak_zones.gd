@@ -645,6 +645,12 @@ func frame(_delta: float, _cam: Camera3D) -> void:
 		var fx: CPUParticles3D = row.get("fx")
 		if fx != null:
 			fx.emitting = _geyser_on(row.def) and bool(peak._area_active.get(row.area, true))
+		# Between blasts a vent seeps a little steam (note 62: a grate looks like a vent).
+		if not _geyser_on(row.def) and bool(peak._area_active.get(row.area, true)) and peak.clock >= float(row.get("seep_at", 0.0)):
+			row["seep_at"] = peak.clock + randf_range(0.35, 0.7)
+			var at := Peak.v2(row.def.at)
+			if peak.player != null and peak.player_at().distance_to(at) < 30.0:
+				burst(at + Vector2(randf_range(-0.3, 0.3) * float(row.def.w), 0.15), "steam", 0.3)
 
 
 static func _flat(c: Color, alpha: float) -> StandardMaterial3D:
