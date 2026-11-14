@@ -148,16 +148,22 @@ A.cam((-328.2, 984.0, -319, 1001), half_h=9.0, bias=(-1.0, 2.0))
 # ================================================================ 11.4 El Ultimo Salto
 # The west horn's top: grip, 2.6 m, with the old ring's corner post at its west end (the
 # backstop for the last rope's throw, and the turnbuckle a luchador climbs before the leap).
-# Beyond the post: a rotten plank, an iron ring, and 20 m of air to the bell rope.
+# Beyond the post: an iron ring, and 20 m of air to the bell rope.
+# (Note 99, Parker 11-13: "get rid of this breaking platform, and move the piton slightly higher
+# up so it is level with the top of the wood peg, but not closer to it". The rotten plank is
+# gone; the ring is 1.9 m higher, level with the post's top (998.2), and still 3.7 m west of
+# the post. You climb the post as a luchador climbs the turnbuckle and jump from its top to
+# the ring across 3.7 m of air, then make the last leap from 1.9 m higher than before.)
 A.ledge(-332.2, -329.6, WTOP, "rock", t=0.5)
-A.box(-332.0, WTOP + 1.5, 0.4, 3.0, "wood")  # the corner post
-A.ledge(-334.4, -332.2, WTOP, "rotten", t=0.25, hold=STEP)  # the last plank of the old apron
-L4 = (-335.7, 996.3)
+A.box(-332.0, WTOP + 1.5, 0.4, 3.0, "wood")  # the corner post, top WTOP + 3.0
+L4 = (-335.7, WTOP + 3.0)
 A.hold(L4[0], L4[1], r=0.26, kind="iron")
 ROPE_X = -355.7
 A.challenge("11.4", "El Último Salto", (-330.4, WTOP), 5, "X", moves=[
-    ["reach", [-334.4, WTOP], list(L4)],
-    ["fling", list(L4), [ROPE_X, 995.5], "F4"],  # 20.0 across, 0.8 down: 7.3 m/s
+    ["reach", [-331.8, WTOP], [-332.0, round(WTOP + 1.6, 2)]],
+    ["reach", [-332.0, round(WTOP + 1.6, 2)], [-332.0, WTOP + 3.0]],
+    ["fling", [-332.0, WTOP + 3.0], list(L4), "F2"],  # 3.7 across, level
+    ["fling", list(L4), [ROPE_X, 995.5], "F4"],  # 20.0 across, 2.7 down
 ])
 A.cam((-352.5, 989.5, -328.3, 1004.5), half_h=14.0, bias=(-8.0, -3.0))
 
@@ -169,8 +175,12 @@ A.box(POST_X, 1003.1, 0.5, 6.6, "wood")  # the post, footed in the apex, top 100
 A.beam((-361.6, 1005.5), (-354.8, 1005.5), t=0.4, kind="wood")  # the beam
 A.beam((POST_X, 1002.4), (-357.6, 1005.3), t=0.25, kind="wood")  # the brace
 A.box(ROPE_X, 1003.75, 0.18, 3.1, "iron")  # the yoke the bell hangs on: rope top to beam
-A.rope("bell_rope", (ROPE_X, 1002.2), 10.0, kind="rope", seg=0.5,
-       bob={"w": 0.5, "h": 0.3, "mass": 3.0, "kind": "wood"})  # the toll handle on its end
+bell_rope = A.rope("bell_rope", (ROPE_X, 1002.2), 10.0, kind="rope", seg=0.5,
+                   bob={"w": 0.5, "h": 0.3, "mass": 3.0, "kind": "wood"})  # the toll handle on its end
+# (Note 100, Parker 11-13: "make it so you can actually ring the bell when you are dangling on
+# the rope", "like the dangle part needs to move not be static". The rope names its bell: the
+# game swings the bell and a clapper with the rope, and tolls it; see peak_things.gd.)
+bell_rope["bell"] = "summit_bell"
 # The last of the ones who tried: he sits on a perch in the cliff, 4 m under the bell, looking up.
 A.solid([(-359.1, 997.9), (-357.0, 998.35), (-357.0, 998.7), (-359.1, 998.7)], "rock")
 A.statue(-358.4, 999.0, pose="sit")

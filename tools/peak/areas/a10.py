@@ -244,7 +244,7 @@ for x, y in NUBE[1:]:
     A.hold(x, y, r=0.28)
 A.challenge("10.7", "La Nube", (-326.2, 944.4), 4, "X",
             moves=[["reach", list(NUBE[i]), list(NUBE[i + 1])] for i in range(len(NUBE) - 1)]
-            + [["reach", [-322.9, 951.6], [-321.8, 951.0]]])
+            + [["reach", [-322.9, 951.6], [-321.5, 951.0]]])
 A.cam((-330, 946.4, -318, 953.2), half_h=6.0, bias=(2.0, 1.0))
 
 # ================================================================ 10.8 El Globo (D4, X)
@@ -257,9 +257,10 @@ A.cam((-330, 946.4, -318, 953.2), half_h=6.0, bias=(2.0, 1.0))
 # caught by these ropes every time (tests/peak_drop).
 A.mover("globo", (-321.5, 961.0), [(box_pts(0, 0.3, 1.6, 0.6), "wood"), (ngon(0, 3.9, 2.1, 10, sy=1.15), "wet")],
         {"type": "path", "pts": [[-321.5, 961.0], [-321.5, 963.0]], "speed": 0.5, "mode": "pingpong", "wait": 0.6}, model="weather_balloon")
-A.rope("globo_a", (-321.8, 961.0), 12.0, kind="rope", anchor="globo")
-A.rope("globo_b", (-321.2, 961.0), 12.0, kind="rope", anchor="globo")
-A.challenge("10.8", "El Globo", (-322.9, 951.9), 4, "X", moves=[["fling", [-321.8, 957.5], [-330.4, 955.5], "F2"]])
+# (Note 96, Parker 11-13: "make the weather balloon only have one rope". Two free ropes side by
+# side swung apart under your hands; now one, the same 12 m, from the middle of the basket.)
+A.rope("globo_rope", (-321.5, 961.0), 12.0, kind="rope", anchor="globo")
+A.challenge("10.8", "El Globo", (-322.9, 951.9), 4, "X", moves=[["fling", [-321.5, 957.5], [-330.4, 955.5], "F2"]])
 A.cam((-328.4, 953.2, -316, 962), half_h=8.0, bias=(-3.0, -1.0))
 
 # ================================================================ 10.9 Escalera al Cielo (D4, X)
@@ -301,13 +302,9 @@ A.card([(F(884) + 2, 880), (-362, 880), (-362, 966), (F(962) - 3, 966), (F(962) 
 for x0, x1, yt, yb in ((-296.9, -295.5, 889.0, 880.0), (-306.5, -304.5, 903.0, 893.0), (-311.8, -307.7, 910.0, 898.0),
                        (-291.4, -284.6, 925.0, 906.0), (-299.4, -297.2, 940.5, 926.0), (-313.0, -310.8, 939.0, 924.0)):
     A.card([(x0, yt), (x1, yt), (x1 + 1.6, yb), (x0 - 2.4, yb)], z=-2.5, tone="back3")
-# Cloud across every tower's foot, in front.
-cloud(-301.0, -291.0, 886.5, h=3.6)
-cloud(-309.5, -301.5, 900.4, h=3.0)
-cloud(-315.0, -304.5, 906.2, h=3.4)
-cloud(-295.0, -281.0, 921.0, h=4.4)
-cloud(-303.0, -293.5, 938.2, h=3.0)
-cloud(-317.0, -307.0, 936.6, h=3.2)
+# (Note 92, Parker 11-13: "storm clouds do look bad". The six flat grey cards that stood in
+# front of every tower's foot are gone: nothing stands in front of where a climber can be.
+# Cloud painted as cloud, behind the towers' feet, is the area's design.)
 # La Nube: the cloud itself, and the rib its stones stand on (a shadow you see in the flash).
 A.card([(-327.0, 944.6), (-324.8, 946.0), (-322.0, 950.6), (-321.6, 952.6), (-324.4, 951.6), (-326.8, 948.0)], z=-1.2, tone="back3")
 A.card([(-330, 946.0), (-325, 944.8), (-318.5, 946.4), (-316.5, 950.0), (-318.5, 953.4), (-325, 954.0), (-330, 952.4)], z=-2.0, tone="#2B303A", edge=False)

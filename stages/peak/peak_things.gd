@@ -395,7 +395,8 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		PhysicsServer3D.joint_make_pin(j, prev.get_rid(), prev_local, bob.get_rid(), Vector3(0, h * 0.5, 0))
 		joints.append(j)
 	ropes.append({"id": str(def.id), "segs": segs, "bob": bob, "joints": joints, "area": str(a.id), "kind": kind, "creak": 0.0,
-		"planks": planks, "seg_len": seg_len, "top": top, "reach": length + 2.0})
+		"planks": planks, "seg_len": seg_len, "top": top, "reach": length + 2.0,
+		"bell": str(def.get("bell", "")), "root": root})
 
 
 ## One of the ones who tried: a climber built, posed by joint turns from the T-pose, and frozen.
@@ -512,6 +513,7 @@ func tick(delta: float) -> void:
 		if m.active:
 			_tick_mover(m, delta)
 	_tick_rope_grabs()
+	_tick_bells(delta)
 	_tick_levers(delta)
 	_tick_winches()
 	_tick_strain(delta)
@@ -1087,6 +1089,140 @@ func _tick_rope_grabs() -> void:
 		if best != null:
 			c.attach(i, best)
 			peak.audio.play("rope_creak", peak.local_of(p), -4.0)
+
+
+## THE BELL RINGS (playtest note 100; Parker 11-13: "make it so you can actually ring the bell
+## when you are dangling on the rope", "like the dangle part needs to move not be static").
+## A rope whose def names a `bell` deco swings that bell on its hanging point, and a clapper
+## (a plain stand-in rod and ball until the bell's model has one) under it. The bell follows
+## the rope's swing at BELL_FOLLOW of its angle on a soft spring, so it lags and rocks to
+## rest; the clapper follows the rope itself on a quicker one, and where it meets the bell's
+## side (BELL_GAP apart) it strikes and the bell tolls, louder the harder. A climber's weight
+## coming onto the rope tips the bell and tolls it at once, loudest for a fast catch (the
+## last leap's). The three tolls at the belt stay the finish (peak_audio.gd).
+const BELL_FOLLOW := 0.7
+const BELL_MOST := 0.5  # rad the bell is led to at most (29 degrees)
+const BELL_STOP := 0.6  # rad it can ever tip (34 degrees: its yoke stops it)
+const BELL_K := 10.0  # the bell's spring (1/s2) and its damping (1/s)
+const BELL_DAMP := 3.0
+const CLAP_K := 45.0
+const CLAP_DAMP := 4.0
+const BELL_GAP := 0.1  # rad between clapper and bell where the clapper meets its side
+const TOLL_HIT := 0.5  # rad/s of meeting below which the clapper only touches
+## A 10 m rope swings slowly (7 s a swing at the climber's gravity), too slowly for the
+## clapper to lag on its own: at each turn of a swing at least SWING_TOLL each side, the
+## clapper is thrown on the way it was going, and strikes.
+const SWING_TOLL := 0.09  # rad (5 degrees)
+
+
+func _tick_bells(delta: float) -> void:
+	for r in ropes:
+		if str(r.get("bell", "")) == "" or not bool(peak._area_active.get(r.area, true)):
+			continue
+		if not r.has("bell_node") or not is_instance_valid(r.bell_node):
+			_find_bell(r)
+			if r.bell_node == null:
+				continue
+		var bell: Node3D = r.bell_node
+		var clap: Node3D = r.clapper
+		var end: RigidBody3D = r.bob if r.bob != null else (r.segs as Array).back()
+		var v := peak.local_of(Climber.pos2(end)) - (r.top as Vector2)
+		var swing := atan2(v.x, -v.y) if v.length() > 0.3 else 0.0
+		var b_ang := float(r.b_ang)
+		var c_ang := float(r.c_ang)
+		var b_w := float(r.b_w)
+		var c_w := float(r.c_w)
+		# a climber's weight coming onto the rope
+		var nodes: Array = (r.segs as Array) + ([r.bob] if r.bob != null else [])
+		var on := _player_limbs_on(nodes)
+		if on and not bool(r.was_on):
+			var hit := 0.0  # (the climber's fastest part, m/s: a leap's catch is fast)
+			for pb: RigidBody3D in peak.player.bodies.values():
+				hit = maxf(hit, pb.linear_velocity.length())
+			var push := signf(v.x) if absf(v.x) > 0.05 else (1.0 if end.linear_velocity.x >= 0.0 else -1.0)
+			b_w += push * clampf(0.6 + hit * 0.15, 0.6, 1.6)
+			c_w += push * clampf(1.5 + hit * 0.4, 1.5, 4.0)
+			_toll(r, clampf(-4.0 + hit * 1.5, -4.0, 4.0))
+		r.was_on = on
+		# the turn of a swing throws the clapper on
+		var sw_v := (swing - float(r.prev_swing)) / maxf(delta, 0.001)
+		r.prev_swing = swing
+		if absf(sw_v) > 0.02:
+			var dir := signf(sw_v)
+			if dir != float(r.sw_dir):
+				var amp := absf(swing - float(r.extreme)) * 0.5
+				if float(r.sw_dir) != 0.0 and amp > SWING_TOLL:
+					c_w += float(r.sw_dir) * clampf(2.0 + amp * 8.0, 2.0, 6.0)
+				r.extreme = swing
+				r.sw_dir = dir
+		b_w += (BELL_K * (clampf(swing * BELL_FOLLOW, -BELL_MOST, BELL_MOST) - b_ang) - BELL_DAMP * b_w) * delta
+		b_ang += b_w * delta
+		if absf(b_ang) > BELL_STOP:
+			b_ang = BELL_STOP * signf(b_ang)
+			b_w = 0.0
+		c_w += (CLAP_K * (clampf(swing, -0.9, 0.9) - c_ang) - CLAP_DAMP * c_w) * delta
+		c_ang += c_w * delta
+		var rel := c_ang - b_ang
+		if absf(rel) > BELL_GAP:
+			var meet := (c_w - b_w) * signf(rel)
+			c_ang = b_ang + BELL_GAP * signf(rel)
+			if meet > 0.0:
+				if meet > TOLL_HIT and peak.clock >= float(r.next_toll):
+					_toll(r, clampf(-14.0 + meet * 5.0, -14.0, 0.0))
+				b_w += meet * 0.15 * signf(rel)
+				c_w = b_w - meet * 0.35 * signf(rel)
+		r.b_ang = b_ang
+		r.c_ang = c_ang
+		r.b_w = b_w
+		r.c_w = c_w
+		bell.rotation.z = b_ang
+		clap.rotation.z = c_ang
+
+
+func _toll(r: Dictionary, db: float) -> void:
+	r.next_toll = peak.clock + 0.35
+	r.tolls = int(r.get("tolls", 0)) + 1
+	var at := peak.local_of(Climber.pos2(r.bell_node))
+	peak.audio.play("summit_bell", at, db)
+	bell_tolls += 1
+
+
+var bell_tolls := 0  # (for the probes: how many times a rope has rung its bell)
+
+
+func _find_bell(r: Dictionary) -> void:
+	r["bell_node"] = null
+	var root: Node3D = r.root
+	if not is_instance_valid(root):
+		return
+	var bell: Node3D = null
+	for n in root.get_children():
+		if n is Node3D and str((n as Node).get_meta("deco", "")) == str(r.bell):
+			bell = n
+			break
+	if bell == null:
+		return
+	# The clapper: hung from the bell's hanging point, down to a hand's breadth under its lip.
+	var box := Peak._model_box(bell)
+	var drop := maxf(0.6, (box.size.y if box.size.y > 0.05 else 1.2) * bell.scale.y)
+	var clap := Node3D.new()
+	clap.name = "clapper"
+	clap.position = bell.position
+	var iron := Color("#3A3532")
+	clap.add_child(LuchaKit.cyl(0.05, drop, iron, Vector3(0, -drop * 0.5, 0.0)))
+	clap.add_child(LuchaKit.ball(0.17, iron, Vector3(0, -drop - 0.1, 0.0)))
+	bell.get_parent().add_child(clap)
+	r["bell_node"] = bell
+	r["clapper"] = clap
+	r["b_ang"] = 0.0
+	r["c_ang"] = 0.0
+	r["b_w"] = 0.0
+	r["c_w"] = 0.0
+	r["was_on"] = false
+	r["next_toll"] = 0.0
+	r["prev_swing"] = 0.0
+	r["sw_dir"] = 0.0
+	r["extreme"] = 0.0
 
 
 func _player_limbs_on(nodes: Array) -> bool:

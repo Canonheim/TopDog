@@ -1863,6 +1863,52 @@ in. Nothing played by a person.
 - Notes 86, 88, 91, 93 of the glacier were group 1's.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-13, group 3: the storm ridge and the summit (a10: notes 92, 96; a11: notes 99, 100)
+
+- **Note 92, the storm clouds.** The six flat grey cloud cards in front of the towers' feet
+  are gone (a10.py). Nothing stands in front of the climb there now; the top of the glacier
+  no longer ends blind. Cloud painted as cloud, behind the towers, is the area's design and
+  not built. (`92_storm_ridge_foot_before.jpg` / `_after`, `92_storm_ridge_towers_before.jpg` / `_after`)
+- **Note 96, the balloon's one rope.** `globo_rope`: one rope, 12 m, from the middle of the
+  basket (x -321.5) where there were two 0.6 m apart. 10.7's last reach and 10.8's fling
+  start move 0.3 m east onto it.
+  - Measured: the note's worry was that the ridge's wind carries a light rope far out. On
+    the branch the wind does not act on ropes at all (peak_zones.gd pushes climbers, not rope
+    pieces), so no weight was added. Over 10 s at the balloon the one rope's foot did not
+    stray sideways (0.00 m); the two ropes before strayed 2.1 m (the warp's hand took one).
+  - Not checked: a climb up it and the pumped swing and fling west from the one rope.
+  - (`96_globo_rope_before.jpg` / `_after`)
+- **Note 99, El Último Salto.** The rotten plank is gone. The iron ring is 1.9 m higher, at
+  998.2 (WTOP + 3.0, the corner post's top), and still 3.7 m west of the post (x -335.7).
+  11.4's moves now: climb the post (two reaches), jump 3.7 m level to the ring (F2), then
+  the last leap, 20.0 m across and 2.7 m down (F4). The battery's move checks pass.
+  - Not checked: the jump from the post's top to the ring, the last leap from the higher
+    ring, and where a miss of the first jump lands.
+  - (`99_post_and_ring_before.jpg` / `_after`)
+- **Note 100, the bell rope rings the bell.** A rope may name a `bell` deco (a11.py:
+  `bell_rope["bell"] = "summit_bell"`; decos now carry their model's name as meta `deco`).
+  peak_things.gd `_tick_bells`: the bell swings on its hanging point, led by the rope's swing
+  (0.7 of its angle, at most 29 degrees, never past 34: its yoke), on a soft spring so it
+  lags and rocks to rest. A clapper hangs under it (a plain iron rod and ball until the
+  bell's model has one), showing under the lip. Each time the swing turns, if it swung at
+  least 5 degrees each side, the clapper is thrown on and strikes: the bell tolls, louder
+  the harder. A climber's weight coming onto the rope tips the bell and tolls it at once,
+  loudest for a fast catch (up to +4 dB; the last leap's). The three tolls at the belt
+  stay the finish.
+  - Watched (`g3bell`): the catch tolled (the warp's own grab and a re-grab, 2 tolls); in
+    12 s of pumping (four 2 m/s shoves in time with the swing) 3 tolls; the bell tipped
+    14 degrees; let go, it rocked to rest in 3.3 s.
+  - **Found on the way:** a 10 m rope at the climber's gravity swings once in about 7 s,
+    too slowly for a clapper on a spring to lag and strike on its own (0 tolls in 12 s), so
+    the turn of each swing throws it.
+  - Not checked: a real catch from the last leap (the probe hand is put on the rope); how
+    loud the catch is against the finish tolls; whether the town answers the first toll
+    (note 100's open call; not built).
+  - First guesses: follow 0.7, 29 and 34 degrees, the springs (bell 10/s2 damped 3/s,
+    clapper 45/s2 damped 4/s), 5 degrees to toll, the volumes.
+  - (`100_bell_still_after.jpg`, `100_bell_swinging_after.jpg`, `100_bell_after_after.jpg`)
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

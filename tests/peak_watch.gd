@@ -2413,3 +2413,123 @@ func _w_g3zip(a: Array) -> void:
 	await secs(2.0)
 	print("WATCH g3zip %s: the ride took %.1f s; the trolley ended at %s; let go, the climber is at %s (the deck: x -196..-190, top 720)" % [tag, pk.clock - t0 - 2.6, end_at, where()])
 	await shot("82_zip_let_go_" + tag)
+
+
+## NOTE 92: the storm ridge's foot, where the six cloud cards stood. g3clouds:TAG
+func _w_g3clouds(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("10.1")
+	await secs(6.5)
+	look(Vector2(-299.0, 891.0), 9.0)
+	await secs(0.5)
+	await shot("92_storm_ridge_foot_" + tag)
+	pk.warp("10.4")
+	await secs(3.0)
+	look(Vector2(-303.0, 928.0), 11.0)
+	await secs(0.5)
+	await shot("92_storm_ridge_towers_" + tag)
+
+
+## NOTE 96: the weather balloon's rope(s), and how far the ridge's wind carries a rope's foot. g3globo:TAG
+func _w_g3globo(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("10.8")
+	await secs(6.5)
+	look(Vector2(-322.5, 954.5), 6.5)
+	var most := 0.0
+	var t0 := pk.clock
+	while pk.clock - t0 < 10.0:
+		for r in pk.things.ropes:
+			if str(r.id).begins_with("globo"):
+				var end: RigidBody3D = r.bob if r.bob != null else (r.segs as Array).back()
+				var top: Vector2 = pk.local_of(Climber.pos2((r.segs as Array)[0]))
+				most = maxf(most, absf(pk.local_of(Climber.pos2(end)).x - top.x))
+		await ticks(1)
+	await shot("96_globo_rope_" + tag)
+	var ids := []
+	for r in pk.things.ropes:
+		if str(r.id).begins_with("globo"):
+			ids.append(r.id)
+	print("WATCH g3globo %s: ropes %s; over 10 s the foot strayed at most %.2f m sideways from the top" % [tag, ids, most])
+
+
+## NOTE 99: El Ultimo Salto, the post and the ring. g3ring:TAG
+func _w_g3ring(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("11.4")
+	await secs(6.5)
+	look(Vector2(-333.5, 997.0), 4.5)
+	await secs(0.3)
+	await shot("99_post_and_ring_" + tag)
+
+
+## NOTE 100: hang on the bell rope, pump it, and watch the bell. g3bell:TAG
+func _w_g3bell(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("11.5")
+	await secs(6.5)
+	var r: Dictionary = {}
+	for x in pk.things.ropes:
+		if str(x.id) == "bell_rope":
+			r = x
+	var c := me()
+	look(Vector2(-355.7, 1001.5), 5.5)
+	await shot("100_bell_still_" + tag)
+	var seg: RigidBody3D = (r.segs as Array)[6]
+	var at := pk.local_of(Climber.pos2(seg))
+	put_limb(1, at)
+	await ticks(2)
+	put_limb(1, at)
+	await ticks(1)
+	c.release_all()  # (the warp's pose already has a hand on the rope: let go, let the bell settle, then catch)
+	await secs(2.5)
+	at = pk.local_of(Climber.pos2(seg))
+	put_limb(1, at)
+	await ticks(2)
+	put_limb(1, at)
+	await ticks(1)
+	var tolls0 := int(pk.things.get("bell_tolls")) if pk.things.get("bell_tolls") != null else 0
+	var holds := []
+	for l in c.limbs:
+		holds.append(l.grab_other != null and l.grab_other.has_meta("peak_rope"))
+	print("WATCH g3bell %s: before the catch: on the rope already %s (limbs on rope pieces %s), tolls so far %d" % [tag, r.get("was_on"), holds, tolls0])
+	c.attach(1, seg)
+	await ticks(1)
+	print("WATCH g3bell %s: hand on the rope %s (limb 1 holds %s), the bell found %s, seg layer %d" % [tag, c.limbs[1].grab_other == seg, c.limbs[1].grab_other, r.get("bell_node") != null, seg.collision_layer])
+	var caught_tolls := 0
+	await secs(0.4)
+	caught_tolls = (int(pk.things.get("bell_tolls")) if pk.things.get("bell_tolls") != null else 0) - tolls0
+	var most := 0.0
+	var most_c := 0.0
+	var shot_done := false
+	var t0 := pk.clock
+	# pump: a shove of 2 m/s east, then each time the swing turns a shove the way it now goes (4 at most), over 12 s
+	var shoves := 0
+	var was_dir := 0.0
+	while pk.clock - t0 < 12.0:
+		var vx := (c.bodies["chest"] as RigidBody3D).linear_velocity.x
+		var dir := signf(vx) if absf(vx) > 0.15 else was_dir
+		if shoves < 4 and (shoves == 0 or (dir != was_dir and dir != 0.0)):
+			shoves += 1
+			var push := 2.0 if shoves == 1 else 2.0 * dir
+			for b: RigidBody3D in c.bodies.values():
+				b.linear_velocity += Vector3(push, 0, 0)
+			dir = signf(push)
+		was_dir = dir
+		if r.has("b_ang"):
+			most = maxf(most, absf(float(r.b_ang)))
+			most_c = maxf(most_c, absf(float(r.c_ang)))
+			if not shot_done and absf(float(r.b_ang)) > 0.18:
+				shot_done = true
+				await shot("100_bell_swinging_" + tag)
+		await ticks(1)
+	var tolls := (int(pk.things.get("bell_tolls")) if pk.things.get("bell_tolls") != null else 0) - tolls0
+	c.release_all()
+	var t1 := pk.clock
+	var settle := -1.0
+	while pk.clock - t1 < 10.0:
+		if r.has("b_ang") and absf(float(r.b_ang)) < 0.02 and absf(float(r.b_w)) < 0.05 and settle < 0.0:
+			settle = pk.clock - t1
+		await ticks(1)
+	await shot("100_bell_after_" + tag)
+	print("WATCH g3bell %s: tolls on the catch %d, in 12 s of pumping %d; the bell tipped at most %.0f deg, the clapper %.0f deg; let go, it rocked to rest in %.1f s (-1: not in 10 s)" % [tag, caught_tolls, tolls, rad_to_deg(most), rad_to_deg(most_c), settle])
