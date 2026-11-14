@@ -5,8 +5,9 @@ Parker, 11-14, after the two independent ratings (`docs/peak/rating/LOOKS_RATING
 a 9 or higher, same with the models. Making sure to incorporate well made THINGS as a diorama is
 things with painted backgrounds."
 
-Written by the Second Director. Nothing in it is started: it waits for Parker's word, like the
-playtest notes 104 to 146, which it takes in.
+Written by the Second Director. **Still being planned: nothing in it is started.** Parker is still
+playtesting (11-14: "I still have more playtesting to do so dont start just yet"; "Dont start the
+run, we are still planning"). His decisions so far are in part 7.
 
 ## 1. Where we are
 
@@ -71,40 +72,66 @@ the station signs and ticket booth (8.5), the forge's smith frog (9).
 Plus a few foreground framing pieces where nobody climbs behind them, and light that picks out the
 climb.
 
+**One connected world, from the background through the play space to the foreground** (Parker,
+11-14: "Make sure models can actually correctly come from background to playspace to foreground, so
+the world looks like it is all a connected thing, like the mushrooms in the garden had tops that
+were not connected to their stalks at all"). A thing that crosses the depths is ONE thing: a
+mushroom's stalk grows out of the ground behind and its cap is the bounce you land on; a branch
+grows from the trunk behind and its tip is the hold (note 134); a crystal spike roots in the big
+crystal behind and juts out through the climb (note 121); a pipe and its joints are one run (note
+115); a stair, its string and its treads are one stair (note 116). Nothing is made as a front piece
+and a separate back piece that only line up from straight ahead. Every such thing is made, and
+judged, from the game's own angled camera, high and low, and in the game with the climber in front
+of it and behind it.
+
 **A thing at 9:** a real silhouette that reads at 13.7 m from the game's camera; three levels of
 detail (the form, the secondary parts, the trim and wear); the house's character (pug faces, lucha
 masks, papel picado, honest wear); matte painted colour with ink; consistent with the plaza houses
 and the frogs; and seen right from the game's angled camera, not only from the front.
 
-## 4. The gate: how nothing under a 9 lands again
+## 4. How the models are made, and the gate
 
-1. **The maker's sheet** shows the thing from the front, three-quarter, and from the game's camera
-   (13.7 m, a little above and to one side, at true size and enlarged), as thread B did for the
-   stop frog. It must also show the thing beside its solid's outline where it is a skin.
-2. **The independent reviewer** (the rating session's method, not the maker) scores the sheet
-   against the standard pieces. Under 9 goes back with what is wrong. Two rounds, then it comes to me.
-3. **In the game:** after sync, a frame from the game's own camera of the place, scored again.
-   A frame under 9 is not done.
-4. **Parker sees one sheet per biome** at the end of each biome, and his word is final.
-5. **The sweeps run on every sync** (built once, in phase 0): pairs of pieces sharing a plane
+**One model at a time, each by its own session** (Parker, 11-14: "Each model will be made by an
+independent session, one at a time, then sent to the reviewer session to get feedback and iterate
+until it is at least rated an 8.5, instead of as batch models, since that produced much worse
+quality"). No batches.
+
+1. **A maker session per model.** It gets one model's brief (what it is, where it stands, its
+   size, the solid it must be the shape of, the layers it crosses, the standard pieces to match,
+   the old model it replaces if any, and the playtest notes on it), makes that one model, and
+   nothing else.
+2. **Its sheet** shows the model from the front, three-quarter, and from the game's camera (13.7 m,
+   a little above and to one side, at true size and enlarged, as thread B did for the stop frog);
+   where it is held, beside its solid's outline; where it crosses the depths, from high and low so
+   its parts are seen to join.
+3. **The reviewer session** scores the sheet against the standard pieces and says what is wrong.
+   The maker changes it and sends it again, round after round, until the reviewer rates it **8.5
+   or more**. Only then does it land.
+4. **In the game:** synced and imported, then a frame of its place from the game's own camera,
+   checked by the reviewer again (a model that drops under 8.5 in the game goes back).
+5. **The scenes the models make** are scored as frames by the same reviewer, against the target of
+   9 for every challenge and biome; Parker sees one sheet per biome and his word is final.
+6. **The sweeps run on every sync** (built once, in phase 0): pairs of pieces sharing a plane
    (z-fighting), pieces meant to touch at different depths, drawings against solids, plain stand-in
    boxes, blank or flat cards. A sync with a hit is fixed before frames.
 
-Fewer things, better made: reuse the 9-scored pieces wherever they fit (the station kit, the old
-models, the frogs), and make new ones only where nothing fits.
+Fewer things, better made: reuse the pieces that already score 8.5 or more wherever they fit (the
+station kit, the old models, the frogs), and make new ones only where nothing fits.
+
+**Solids are free.** Parker: "all solids have 100% freedom to change shape, that is actually
+encouraged." Every solid is re-cut to the real object's shape where that makes a better thing (a
+needle one crystal, a cap a dome on its stalk, a ledge a carved stone), and the course is re-worked
+to match; the play is checked after.
 
 ## 5. The phases
 
-### Phase 0: the quick wins and the tools (about a day)
+### Phase 0: the clean-up and the tools
 
-- **Put back the 29 better old models** (the full list is part 1 of THINGS_RATING): the gondola,
-  the express and parked cars (old gondola), the dead gondola, the chair, the trolley, the
-  counterweight, the low station house, the bull wheel (old look at the 7.6 m size), the summit
-  bell (note 105), the kite, the insulators, the hut, the boiler, the bellows, the snail, the giant
-  mushroom and the spotted caps, the chandelier, the altar cross, the collar, the vine, the slag
-  pan's chains, the rail, the barrel; the vulture's old bird in the new flying pose. Where a note
-  needed a new part (the gondola's step and rack, the trolley's solid bar, the counterweight's
-  size), add only that part to the old model.
+- **The 29 better old models are NOT put back now** (Parker, 11-14: "We do not need to put the
+  models back just yet since they will go back or be modified and go back once we do the full
+  run"). Each is handled in its biome's pass: the old model is the starting point, brought to 8.5
+  or more by its maker session and the reviewer, with any part a note needed added (the gondola's
+  step and rack, the trolley's solid bar). The list is part 1 of THINGS_RATING.
 - **Remove the blank and flat cards:** the lilac hexagon card through the crystal cave, the white
   void shapes and flat orange card of the storm ridge and summit (10.5 to 10.7, 11.1, 11.2, 11.5),
   the beige band in the cableway's sky, the glowing white bars and panels (temple 5.2, glacier 9.4,
@@ -117,7 +144,7 @@ models, the frogs), and make new ones only where nothing fits.
 - **Build the five sweeps** (part 4) and run them over the whole mountain. Fix their hits:
   z-fighting (notes 109, 119), depth (115), drawn against solid (113, 124, 129, 133), invisible
   geometry (104), the ram that traps you (113).
-- **Re-rate.** Expected: every biome up by about one point from this alone.
+- **Re-rate.** Expected: every biome up by about half a point to a point from this alone.
 
 ### Phase 1: the painted backdrops (the biggest single lift)
 
@@ -153,7 +180,10 @@ back. What each paints:
 Order: the crystal cave (4), the mine (4.5), the glacier (4.5), the garden (5), the storm ridge (5),
 the black waters (5.5), the forge (5.5), the summit (6), the cliffs (6.5), the temple (7), the
 cableway (7), the station's 0.3. Each biome: its hero pieces, its climb made of things, its
-props, then its re-rating. What each needs (from both ratings and the notes):
+props, then its re-rating. **Every playtest note for that biome is folded into its pass** (Parker:
+"fold the notes in to the pass so it is all done at once"), so each place is done once: the notes
+104 to 146 and any from the playtesting still to come. What each needs (from both ratings and the
+notes):
 
 - **3 The crystal cave.** Real crystals everywhere you climb: the spikes of note 121, the nubs of
   122, the needles of 126, El Prisma's crystals jutting from the wall (127), La Columna's spinning
@@ -208,21 +238,33 @@ props, then its re-rating. What each needs (from both ratings and the notes):
 
 ## 6. Who does it
 
-- **The makers:** threads B and C (B made the frogs and the station's props, the work Parker loved),
-  and the wall makers' method for painted walls. Give the hero pieces and the buildings to whoever
-  made the 9s (the plaza houses' Building Maker, thread B's frogs and props). Fewer pieces each,
-  each through the gate.
-- **The independent reviewer:** the rating session, scoring every sheet and every frame.
-- **The fix thread:** the course changes (solids reshaped to real objects with the play kept, the
-  sweeps' fixes, the notes' play changes).
-- **Me:** the per-biome plans, the briefs, the syncs and frames, and Parker's sheets.
-- One biome at a time through the gate, so a 9 is proven before the next.
+- **One maker session per model**, started for that model and ended when it lands (part 4). Many
+  models can be in flight at once, each in its own session, but each session makes one model.
+- **The reviewer session** (the independent rating session's method and eye), scoring every model
+  sheet until 8.5, every in-game check, and every frame against the 9.
+- **The fix thread:** the course changes (solids re-cut to real objects, the play re-checked), the
+  sweeps' fixes, the notes' play changes.
+- **Me:** the per-biome plans, one brief per model, the syncs and frames, and Parker's sheets.
+- One biome at a time through to its re-rating, so the method is proven on the first before the
+  next starts.
 
-## 7. For Parker to decide
+## 7. Decided, and still open
 
-1. Put back all 29 better old models now (phase 0), keeping only the parts the notes needed?
-2. May a solid change shape so its drawing can be a real object (a needle as one crystal, a cap as
-   a dome), as long as the move you make there plays the same?
-3. Start with phase 0 everywhere and then the crystal cave as the first full biome (the lowest
-   score), or another first?
-4. The held playtest notes (104 to 146) go into the biome passes above, so each biome is done once.
+Decided by Parker, 11-14:
+
+1. The old models are not put back now; they go back, or are modified and go back, in the full
+   run, each through the maker and reviewer loop.
+2. Solids have complete freedom to change shape, and it is encouraged.
+3. The playtest notes are folded into the biome passes, so everything is done at once.
+4. Each model is made by its own session, one at a time, and goes back and forth with the reviewer
+   until it is rated at least 8.5. No batches.
+5. Models cross from the background through the play space to the foreground as one connected
+   thing.
+6. Nothing starts yet: more playtesting first, and the planning goes on.
+
+Still open:
+
+1. Which biome goes first once the run starts (the plan suggests phase 0 everywhere, then the
+   crystal cave, the lowest score).
+2. Whether the painted backdrops (phase 1) are made the same way, one per session with the
+   reviewer, or as part of each biome's pass.
