@@ -173,6 +173,7 @@
 <tr><td>110</td><td><a href="#n110">Build 0.3.104: holding L does not zoom the camera out in some places; it must work everywhere</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>111</td><td><a href="#n111">Build 0.3.104: falling water must be 3D like standing water, and the mine's great falls a great falls again, not a trickle line</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>112</td><td><a href="#n112">Build 0.3.104, the black waters' tanks (2.4): a green bell floating off the end of the red pipe</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>113</td><td><a href="#n113">Build 0.3.104, the black waters' rams (Los Pistones): the lower part of a ram has no collision, and once you get in there you are stuck forever</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3880,6 +3881,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 2, page 2.4. It is `aguas_spout_face` (thread C), placed by a2_dress.py line 431: meant as the filler pipe's spout, a flared mouth turned DOWN at the pipe's west end, with a dribble of water out of it. Three things make it weird: it is a flat card 2 cm thick drawn in the climb's front plane, not a real spout on a bend; it sits at x -236.8 while the pipe (a plain painted course solid, x -236.6 .. -229.5, y 112.15 .. 112.45) ends 0.2 m short of it and does not bend down to meet it, so it floats; and the dribble it was meant to explain is not drawn. So it reads as a green bell hanging off nothing.</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>My recommendation: take it out, and finish the pipe properly instead: the red pipe's west end bending down in a short elbow to an open mouth, all one model on the pipe (a skin on its solid), with a thin dribble of 3D falling water out of it once note 111's falling water exists. The simpler choice is just to remove the card and leave the pipe end plain. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n113">
+  <div class="head"><span class="num">113</span><h3>Build 0.3.104, the black waters' rams (Los Pistones): the lower part of a ram has no collision, and once you get in there you are stuck forever</h3><span class="time">11-14 10:10</span></div>
+  <blockquote>"this platform has no collision ... and once you get in here you are stuck forever"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/113_aguas_ram_no_collision.png" alt="Parker's shot, build 0.3.104: the three rams (compuerta1 to 3) stepping up, the middle one raised. The climber's buttons show at the bottom of the raised ram's dark shaft: he is inside it.">
+    <figcaption>Parker's shot, build 0.3.104: the three rams (compuerta1 to 3) stepping up, the middle one raised. The climber's buttons show at the bottom of the raised ram's dark shaft: he is inside it.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 2, the rams (a2.py lines 148-154; compuerta1-3 at x -250.3, -252.4, -254.5). Each ram is a mover that rises 3.2 m and slams back in 0.4 s. Its SOLID is the head and 3.4 m of ram under it. Its DRAWING, `aguas_ram_head`, was re-made tonight 5.6 m long (thread C, at my request: with only 3.4 m drawn, a raised ram showed 2.2 m of empty air over its housing). So the lowest 2.2 m of every drawn ram is not solid: when a ram is up you can walk into the bottom of it, and when it slams back down you are left inside the ram or its housing, with solid all round, so you can't get out.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Make each ram's solid as long as its drawing: the ram 5.6 m under the head (the extra running down into the housing, as the drawing does), so the whole visible ram is solid and nothing can get under or inside it. Check the slam onto a climber under a ram now kills by crunch (head or body pinned: knock-out) rather than trapping; and check the housing's top cannot be stood in when the ram is up. Held until Parker says go.</p>
 </div>
 
 </main>
