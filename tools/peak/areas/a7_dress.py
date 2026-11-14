@@ -704,12 +704,14 @@ def dress(A):
     A.deco("riscos_wheel_drum", -220.2, 675.0, z=-2.0, size=(5.0, 5.0, 0.6), tone=IRON)      # origin: its axle
     A.deco("riscos_axle_bearing", -220.2, 674.5, z=-2.45, size=(1.0, 1.0, 0.3), tone=IRON)
     # The haul cable (one piece, made in place): black, greased, 0.15 m thick and taut, 2 m behind
-    # you: from biome 8's wheel over the dock (r 2.2 at (-237.2, 697)) down over the pylon head's first
-    # sheave, round the top of the drum ... the bottom of the drum, over the second sheave and back up;
-    # both long runs at least 6 m over the stage and the brace, the short ones 2.5 m over the
-    # platform. Corners of its road: (-236.4, 698.6) - (-213.4, 677.5) - (-220, 677.5) / drum /
-    # (-220, 672.5) - (-211.4, 676.5) - (-211.0, 677.5) - (-238.9, 695.7) (pages 7.10 and 7 to 8).
-    back("riscos_haul_cable", -239.0, -210.4, 672.35, 698.75, -1.925, -2.075, tone="back3")
+    # you: from biome 8's pulley at the foot of the station's end frame (r 0.4 at (-233.0, 688.6), page
+    # 8.1: from there the cable goes on up the frame to the wind engine, a8_dress's piece) down over the
+    # pylon head's first sheave, round the top of the drum ... the bottom of the drum, over the second
+    # sheave and back up to the pulley; the two long runs side by side, never crossing, about 5 m over
+    # the brace, the short ones 2.5 m over the platform. Corners of its road: (-233.2, 688.25) -
+    # (-213.4, 677.5) - (-220, 677.5) / drum / (-220, 672.5) - (-211.4, 676.5) - (-211.0, 677.5) -
+    # (-232.8, 688.95) (pages 7.10, 7 to 8 and 8.1).
+    back("riscos_haul_cable", -233.3, -210.4, 672.35, 689.05, -1.925, -2.075, tone="back3")
     # Along the back of the old catwalk: the trail's handrail of lashed poles, 1.1 m high, unpainted,
     # one rag of bunting; against it a stack of ochre posts carried up and never used; and the
     # platform's missing board lying on the catwalk below the gap.
@@ -730,9 +732,12 @@ def dress(A):
     # the deck's first plank cut to fit against it; above it the face is dark scree (biome 8's).
     skin("riscos_chalk_plug", -253.0, -250.0, 686.0, DECK, tone=ROCK)
     tuft(-251.7, DECK, -1.28)
-    # The station house, moved back to stand 2.5 m behind you, no roof and no post over the deck
-    # (note 77; the kit's cable_station_low).
-    A.deco("cable_station_low", -243.0, DECK, z=-4.0, size=(14.1, 6.06, 3.12), tone=ACCENT)
+    # The station house, moved back to stand 2.5 m behind you under biome 8's real roof (x -251 ..
+    # -237.6; its skin `tele_roof_low` carries the tin back to the ridge), no roof and no post of its own
+    # (note 77; page 8.1): the kit's cable_station_low RE-MADE as a board house 12 m wide (x -250 ..
+    # -238), 6.0 m at its back wall and 4.9 m at its front under the roof's slope, board walls in the
+    # greyed red below bare grey boards, dark windows and door, NO CREAM.
+    A.deco("cable_station_low", -244.0, DECK, z=-4.0, size=(12.0, 6.0, 3.12), tone="#9A5A4C")
     # The deck's planks carried back to its door: honey planks 0.3 m wide, two rows of nail heads,
     # sawn square and nailed.
     back("riscos_deck_back", -250.0, -236.0, 687.5, DECK, -1.25, HOUSE_FRONT, tone=WOOD)
@@ -750,11 +755,12 @@ def dress(A):
     # pointing east and staying there, full (flipped; the kit's bunting_pole at 0.9375 as its post).
     A.deco("bunting_pole", -249.2, DECK, z=-2.3, scale=0.9375, size=(0.17, 3.2, 0.17), tone=WOOD)
     A.deco("wind_sock", -248.75, 689.56, z=-2.3, size=(0.99, 1.48, 0.42), tone=ACCENT, flip=True)
-    # The line of pennants: the town's bunting from the house's east gable out to a pole on the
-    # scaffold's top ledger, 2 m back and well over every hand (two of the kit's 6 m units, tiled,
-    # at 1.056; each unit's cord ends at y 0.68 above its origin), all pointing east.
+    # The line of pennants: the town's bunting from the station's end frame (its west leg, biome 8's)
+    # out to a pole on the scaffold's top ledger, 2 m back and well over every hand (two of the kit's
+    # 6 m units, tiled, at about 1.01; each unit's cord ends at y 0.68 above its origin), all pointing
+    # east. (It was tied to the old house's east gable, which now stops 1.6 m further west.)
     A.deco("bunting_pole", -224.0, DECK, z=-2.3, size=(0.17, 3.2, 0.17), tone=WOOD)
-    p0, p1 = (-236.4, 693.6), (-224.0, 691.0)
+    p0, p1 = (-235.9, 693.6), (-224.0, 691.0)
     rot = math.atan2(p1[1] - p0[1], p1[0] - p0[0])
     s = math.dist(p0, p1) / 12.0
     for t in (0.25, 0.75):

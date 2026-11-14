@@ -187,7 +187,7 @@ zigzag: make each bay so its flip lines up with the next.
   (greyed). Its size stays 1.6 x 1.71 (the block 1.6 x 1.2 under the point).
 - **`cable_station_low`** (A; 8.1, note 77, a8_dress item 7a): re-made as the station HOUSE without a
   roof: 12.0 m wide (x -250 .. -238 when a7_dress centres it at -244.0), 6.0 m tall at its back wall,
-  its front wall lower (5.0 m) under the real roof's slope, 3.12 deep; board walls in the greyed red
+  its front wall lower (4.9 m, clearing the roof's underside) under the real roof's slope, 3.12 deep; board walls in the greyed red
   below bare grey boards, NO CREAM, dark windows, a dark door (about x -244.7 .. -243.5); the striped
   roof and the cream are taken off it (the roof is `tele_roof_low`, a skin). a7_dress's line changes
   to that size and x.

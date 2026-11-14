@@ -19,8 +19,8 @@ the broken treads, the driver's bench, the missing platform board), `iron_peg` (
 the tea cave's three), `iron_peg_stub` (13: La Cornisa's back row, the snapped stubs up the tower to
 the porch), `dead_tree_crown` (1), `dead_tree` (1, at 0.4, on the arch's body), `rock_fence_frame`
 (1), `rubble_pile` (1), `boulder` (3, at 0.917: the next three on the pile), `sign_pug_arrow_east`
-(1), `sign_warn_bang` (1, note 67), `pylon_head_low` (1), `cable_station_low` (1), `pennant_line` (2,
-tiled, at 1.056). a7.py's holds wear `forja_flint_knob` (a6's knob, the same as the chimney's La Luz:
+(1), `sign_warn_bang` (1, note 67), `pylon_head_low` (1), `cable_station_low` (1, RE-MADE: see the end), `pennant_line` (2,
+tiled, at about 1.01). a7.py's holds wear `forja_flint_knob` (a6's knob, the same as the chimney's La Luz:
 18 knobs) and `iron_peg` (La Cornisa's six pegs): its FOR THE AREA FILE item 8.
 
 Makers: **A** cliff masses, rock, far cards, the scaffold's big pieces (here: every painted wall
@@ -166,7 +166,7 @@ of them. Everything else stays exactly as it is (round four).
 | `riscos_scaffold_strut_short` | 0.3 x 9.2 x 0.3 | its iron shoe | 7.7: the fourth leg, onto the back of the tower's balcony (the same make) | 1 | C |
 | `riscos_wheel_drum` | 5.0 x 5.0 x 0.6 | its axle | 7.10: a plain grey drum 5 m across on the bull wheel's axle, 2 m behind the wheel, a groove round its rim where the haul cable runs (the cable is separate): why the wheel turns. It follows the wheel (a7_dress item 8) | 1 | C |
 | `riscos_axle_bearing` | 1.0 x 1.0 x 0.3 | foot | 7.10: the axle's iron bearing block bolted to the scaffold's third post, a pug plate above it | 1 | C |
-| `riscos_haul_cable` | 28.6 x 26.4 x 0.15 | foot (x -224.7, y 672.35), z -2.075 .. -1.925, made in place | 7.10, 7 to 8: the haul cable, one piece: black, greased, 0.15 thick and taut (not to be taken for a rope), 2 m behind you. Its road: from biome 8's wheel over the dock (r 2.2 at (-237.2, 697); leaves it at (-236.4, 698.6) and (-238.9, 695.7)) down to the pylon head's first sheave top (-213.4, 677.5), across to the drum's top (-220, 677.5), round the drum to its bottom (-220, 672.5), to the second sheave (-211.4, 676.5 .. -211.0, 677.5) and back up. Both long runs at least 6 m over the stage and the brace, the short ones 2.5 m over the platform | 1 | C |
+| `riscos_haul_cable` | 22.9 x 16.7 x 0.15 | foot (x -221.85, y 672.35), z -2.075 .. -1.925, made in place | 7.10, 7 to 8, 8.1: the haul cable, one piece: black, greased, 0.15 thick and taut (not to be taken for a rope), 2 m behind you. Its road: from biome 8's pulley at the foot of the station's end frame (r 0.4 at (-233.0, 688.6), page 8.1; the lower run leaves it at (-233.2, 688.25), the upper at (-232.8, 688.95); from the pulley biome 8's `tele_cable` goes on up the frame to the wind engine) down to the pylon head's first sheave top (-213.4, 677.5), across to the drum's top (-220, 677.5), round the drum to its bottom (-220, 672.5), to the second sheave (-211.4, 676.5 .. -211.0, 677.5) and back up to the pulley. The two long runs side by side and never crossing, about 5 m over the brace, the short ones 2.5 m over the platform. (Re-cut 11-14: it ran up to a wheel over the dock at (-237.2, 697) that page 8.1 moved) | 1 | C |
 | `riscos_trail_rail` | 23.2 x 1.15 x 0.15 | foot | 7.10: the pack trail's handrail along the back of the old catwalk: lashed poles 1.1 m high on posts at x -236.4, -232.8, -225.2, -217.0, -213.6, unpainted grey-honey, rope lashings, one rag of bunting | 1 | C |
 | `riscos_front_post` | 0.3 x 24.4 x 0.3 | foot | FOREGROUND 7.10: the scaffold's front west post, 0.3 square, yellow ochre, a pug plate at each ledger's height (662.5, 676.5, 682.45, 687.5), from the catwalk to the deck's underside | 1 | C |
 | `riscos_front_post_short` | 0.3 x 8.4 x 0.3 | foot | FOREGROUND 7 to 8: the same post in front of the deck's west end, from below the frame to just under the deck's top | 1 | C |
@@ -194,4 +194,9 @@ exactly the held box 0.28 x 0.5 under its origin, the body and wings dark; B); `
 the course keeps the 1.3 m solid, the model is made to agree; if the head and neck become solid, it
 stays; it faces west by the mover's flip; B); `rock_fence_frame` (only if, in the frames, its own two
 rails read as holds beside the course's three: page 7.6 draws four leaning posts, rope lashings and
-torn rope netting in two pieces under the first rail and a heap at its foot; C).
+torn rope netting in two pieces under the first rail and a heap at its foot; C);
+`cable_station_low` (7 to 8 and page 8.1, note 77: the station house under biome 8's real roof, which
+is that roof's skin `tele_roof_low`, x -251 .. -237.6: re-made at 12.0 x 6.0 x 3.12 with NO ROOF of
+its own and NO CREAM, a board house in the greyed red below bare grey boards, dark windows and a dark
+door, 6.0 m at its back wall and 4.9 m at its front so it stays under the roof's slope; origin the
+middle of its base, placed at (-244.0, 688, z -4.0), so x -250 .. -238, inside the roof's ends; A).
