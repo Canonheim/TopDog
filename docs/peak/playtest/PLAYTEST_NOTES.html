@@ -164,6 +164,8 @@
 <tr><td>101</td><td><a href="#n101">Top Dog: taking the belt gets a real ending</a></td><td><span class="chip c-plan">Plan; no fix (notes only)</span></td></tr>
 <tr><td>102</td><td><a href="#n102">La Cumbre: the drop west of the peak leads to a hot spring full of frogs</a></td><td><span class="chip c-ask">First version in (fix run, 4d0a921); not played by a person</span></td></tr>
 <tr><td>103</td><td><a href="#n103">El Carrito Loco: the cart goes far faster and down, and jumps to a chain on a ring in the wall</a></td><td><span class="chip c-ask">First version in (fix run, 4c1c86f); not played by a person</span></td></tr>
+<tr><td>104</td><td><a href="#n104">Build 0.3.104, the mine's camp: invisible geometry at the beam pegs and the broken stakes</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>105</td><td><a href="#n105">The summit's bell: use the old bell model</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3752,6 +3754,30 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
     <img src="after/103_on_the_chain_after.jpg" alt="After: caught on the chain.">
     <figcaption>After: caught on the chain.</figcaption>
   </figure>
+</div>
+
+<div class="note" id="n104">
+  <div class="head"><span class="num">104</span><h3>Build 0.3.104, the mine's camp: invisible geometry at the beam pegs and the broken stakes</h3><span class="time">11-14 09:20</span></div>
+  <blockquote>"lots of invisible geometry I am seeing, no changes yet, I will be giving lots of notes"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/104_mine_camp_invisible.png" alt="Parker's shot, build 0.3.104: the mine's camp (the frozen climber sitting by his tally marks, left). Red arrows: a square peg end on the beam's timber, and a broken stake standing in the floor.">
+    <figcaption>Parker's shot, build 0.3.104: the mine's camp (the frozen climber sitting by his tally marks, left). Red arrows: a square peg end on the beam's timber, and a broken stake standing in the floor.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 1, the camp by the frozen climber (tally marks at x -166.9). The course has five small wooden pegs as solids here, each 0.36 m square at y -10.78 to -10.42, at x -155.4, -156.7, -158.0, -164.6 and -165.9 (the round and square log ends on the beams are their look), and four wooden stakes standing in the floor at x -158.9, -160.3, -161.9 and -163.5, their solids reaching up to y -12.0 to -12.2, about 0.5 m above the floor at -12.6. The arrows sit on one peg and one stake, so the first suspicion is that what is drawn and what is solid there do not match (a solid with no drawing, or a drawing standing where no solid is). Not measured yet: Parker is playing, so no second game runs on the machine. To measure when he says go: each peg's and stake's drawn box against its solid.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Measure drawn against solid for every peg and stake in the camp, and the same check over the whole mountain (every solid that has no skin and no deco on it, every skin or deco in the play space with no solid under it), as one list for Parker before anything is changed.</p>
+</div>
+
+<div class="note" id="n105">
+  <div class="head"><span class="num">105</span><h3>The summit's bell: use the old bell model</h3><span class="time">11-14 09:00</span></div>
+  <blockquote>"a lot of stuff looks better but a lot of stuff looks substantially worse, like definitely use the old bell at the end's model. But before changing anything, get me a build with everything togther so I can check it out"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <h4>Where, and what is going on</h4>
+  <p>The overnight run re-made the summit's bell as a new stem, `cumbre_bell` (it swings, with no clapper of its own; thread C, P-C18), and the fix thread made the bell a solid you can hold, hung on its pin at (-355.7, 1005.15), wearing `cumbre_bell` with the old `summit_bell` as its fallback (2848c76, e1beb35). The old model is still in kit/models, untouched.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Point the solid bell back at `summit_bell` (and drop `cumbre_bell`), checking the old model's size against the solid bell's 2.2 x 2.6 m, and whether its clapper should stay the old one too. Held until Parker says go.</p>
 </div>
 
 </main>
