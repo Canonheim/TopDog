@@ -115,10 +115,10 @@ FOR THE AREA FILE (tools/peak/areas/a2.py; the fix thread's). Line numbers are a
         slabs P1, Q6, Q7, Q8, Q10 change kind "brick" -> "stone". The lip ledge, the apron
         and the crest are stone already.
      b. 2.1: the weir's lip: a stone solid x -244.45 .. -244.0, y 90.7 .. 91.0 (the pale coping
-        the river goes over at the slot), skin "aguas_weir_coping". If it upsets the swim,
+        the river goes over at the slot), skin "aguas_weir_coping". RULED 11-14: NOT BUILT (a hold at the lip of a fall stops the fall). If it upsets the swim,
         leave it out and take its deco out of this file with it.
      c. 2.7: the pool's lip: a stone sill x -288.25 .. -287.85, y 113.0 .. 115.0 (its top is
-        the worn sill a barrel tips on), skin "aguas_pool_sill"; the same proviso (the
+        the worn sill a barrel tips on), skin "aguas_pool_sill". RULED 11-14: NOT BUILT, as 6b; the same proviso (the
         barrels' `loose` point is -287.15, east of it).
      d. 2.0, the frog's room (Parker 11-13: settled): cut the room as air in brick that is
         solid today, x -284 .. -281, y 117.4 .. 120 with a round vault (the page's
@@ -334,8 +334,9 @@ def dress(A):
     wall("aguas_borde_back_wall", -288.0, -226.0, 86.0, 96.0, TUNNEL_WALL, 0.6)
     # The weir carried on behind: the same pale stone lip, from the play space back to the wall.
     A.deco("aguas_weir_lip_back", -244.2, 90.55, z=-1.925, size=(0.8, 0.45, 1.35), tone="stone")
-    # The weir's coping in the play space: the skin of the new stone solid (FOR THE AREA FILE 6b).
-    skin("aguas_weir_coping", -244.45, -244.0, 90.7, 91.0, tone="stone")
+    # (No coping in the play space: a solid at the very lip would be a hold that stops the fall
+    # being one, so the area file builds none (ruled 11-14). The coping shows only behind, as
+    # aguas_weir_lip_back above.)
     # The main's cast brackets from the back wall under it, stopping at the play space; a bigger
     # one where the chain hangs (origin: the middle of its foot; it runs from the wall forward).
     for x in (-251.0, -248.0, -241.0, -236.0, -234.2):
@@ -524,8 +525,8 @@ def dress(A):
     lantern(-289.6, 122.6, FLANK)
     outcrop(-309.5, 124.6, FLANK, "fern")
     outcrop(-286.0, 125.2, FLANK, "weed")
-    # The pool's lip: the skin of the new stone sill (FOR THE AREA FILE 6c).
-    skin("aguas_pool_sill", -288.25, -287.85, 113.0, 115.0, tone="stone")
+    # (No sill in the play space at the pool's lip: as at the weir, a hold at the lip of a fall
+    # would stop the fall (ruled 11-14). The lip is the water's own edge.)
 
     # ============================================================ 2.8 Contracorriente
     # The flume's back wall: brick, black and wet to a tide line 1 m over the water, three round
