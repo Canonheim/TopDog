@@ -2853,3 +2853,18 @@ func _w_ggap(a: Array) -> void:
 	look(Vector2(-128.0, -8.5), 4.5)
 	await secs(0.5)
 	await shot("gap_03c_" + tag)
+
+
+## a4: the hut's new roof, the giant's crown and shoulder, the mound under the frozen climber. g4:TAG
+func _w_g4(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("4.6")
+	await secs(2.0)
+	look(Vector2(-215.0, 330.0), 9.0)
+	await secs(0.4)
+	await shot("41_hut_and_giant_" + tag)
+	pk.warp("4.1")
+	await secs(2.0)
+	look(Vector2(-280.0, 268.0), 5.0)
+	await secs(0.4)
+	await shot("4_1_mound_" + tag)

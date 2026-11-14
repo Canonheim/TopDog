@@ -2184,6 +2184,35 @@ in. Nothing played by a person.
   -128, flush. (`gap_03c_before.jpg` / `gap_03c_after.jpg`)
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: a4's dress file wired in (the modelling run's a4_dress.py)
+
+- 1, the call. 2, lights: the glow stays; the two orange lights that lit the gone orange
+  mushroom and the giant are green; steady lights for the lantern pods, the hut's lantern
+  (the one warm light), the snail eggs and the web's three knots. 3 and 4: the props loop
+  and every card out (the stalk and tree helpers with them); the great cap's skin stays.
+- 5, skins (none of the garden's models has landed yet): the shell by edge
+  (`SHELL_SKINS`); the knee and stump, the mound, L1 to L3, the island and terrace, the
+  vine's knot, the wall cap's elbow, the root arm, the giant's cap (cap, brim, gills, strand,
+  knob), its crown, the two shoulder mushrooms, both 4.7 masses (L7 with the west), the
+  diving board, sill and post, the hut's roof.
+- 6, the course: **a, the hut's roof is a solid** (moss, kind "rock": it grips, it does not
+  throw; the page's dome, hollow under, eaves at 320.1). **b**, the mound under the frozen
+  climber is moss (kind "rock", no longer orange), with the moss blanket placed by his
+  legs. **c**, two shoulder mushrooms, not five (WARTS 1 and 3 stay); 4.6's moves run brim,
+  WARTS 1, WARTS 3, crown (gaps 2.8, 3.0, 2.8); the crown is dry cream (kind "gill"). **d**,
+  the bridge's planks can wear a model (new in the game: a rope's `plank_model`); it names
+  `jardin_bridge_tread` (boards until it lands). **e, a5:** the temple's beam is 2.6 m
+  longer (to x -300.9: both chains now hang from it; the 4.10 throw passes 1.8 m under its
+  end), and its two banners are just behind the play space (z -1.3, -1.5).
+- 7, found by the designer: **a**, the garden's west wall (edge 17) is the shared well's alone
+  now; st.py's east wall stops at x -291 beside the garden (it stood 1 m into the hall); the
+  open notch over the exit door (x -294 .. -291, y 378 .. 380) is filled. The exit's sill
+  still runs 0.8 m into the top of the well's wall (one solid inside another; left). **c**, 4.7's
+  wall caps poking 0.19 m into the west mass: not changed, not watched.
+- Not done: 8 (the caps squashing, the vine leaves and knots, the cords) and 9 (the effects).
+- (`4_1_mound_before.jpg` / `_after`, `41_hut_and_giant_before.jpg` / `_after`)
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

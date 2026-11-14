@@ -50,12 +50,12 @@ A.opening(-309, 474, -305, 488)   # EXIT, the well's mouth
 
 # ---- the entry door: sill, beam, the two banner chains a4's throw is caught on
 A.solid([(-309.1, 362), (-304, 362), (-304, 366), (-309.1, 366)], "stone")      # the grip sill, top y 366
-A.solid([(-310, 379.7), (-303.5, 379.7), (-303.5, 380.3), (-310, 380.3)], "stone")  # the banner beam, out into the well
+A.solid([(-310, 379.7), (-300.9, 379.7), (-300.9, 380.3), (-310, 380.3)], "stone")  # the banner beam, out into the well (2.6 m longer: both chains hang from it; page 4.10)
 A.solid([(-310, 380.3), (-309, 380.3), (-309, 384.2), (-310, 384.2)], "stone")  # its corbel, up into the hood
 A.rope("banner_chain_1", (-303.0, 380.0), 12.0, kind="chain")
 A.rope("banner_chain_2", (-301.5, 380.0), 12.0, kind="chain")
-A.deco("temple_banner", -303.0, 374.0, z=-0.4, size=(1.1, 11.0, 0.05), tone="accent")
-A.deco("temple_banner", -301.5, 374.0, z=-0.5, size=(1.1, 11.0, 0.05), tone="gold")
+A.deco("temple_banner", -303.0, 374.0, z=-1.3, size=(1.1, 11.0, 0.05), tone="accent")  # (just behind the play space: page 4.10)
+A.deco("temple_banner", -301.5, 374.0, z=-1.5, size=(1.1, 11.0, 0.05), tone="gold")
 # The hood over the door: keeps what comes down the drain from bouncing out into the well.
 A.solid([(-313, 384), (-309, 384), (-309, 414), (-313, 408)], "wet")
 # ---- the exit door: lintel (to the structure's wall at y 488) and the sill block

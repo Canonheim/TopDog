@@ -313,14 +313,21 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		rb.can_sleep = false
 		var cs := CollisionShape3D.new()
 		var mi := MeshInstance3D.new()
+		var plank_vis: Node3D = null
 		if planks:
 			var bx := BoxShape3D.new()
 			bx.size = Vector3(0.12, maxf(0.1, seg_len - 0.06), 1.0)
 			cs.shape = bx
-			var bm := BoxMesh.new()
-			bm.size = Vector3(0.1, maxf(0.1, seg_len - 0.08), 0.9)
-			mi.mesh = bm
-			CelPass.paint(mi, Color("#B07A32"))
+			# A bridge's planks can wear a model (page 4.8: shelf-fungus treads), its length
+			# along the rope: the model's own x is laid along the plank's y.
+			plank_vis = Peak.kit(str(def.plank_model)) if def.has("plank_model") else null
+			if plank_vis != null:
+				plank_vis.rotation.z = PI * 0.5
+			else:
+				var bm := BoxMesh.new()
+				bm.size = Vector3(0.1, maxf(0.1, seg_len - 0.08), 0.9)
+				mi.mesh = bm
+				CelPass.paint(mi, Color("#B07A32"))
 		else:
 			var cap := CapsuleShape3D.new()
 			cap.radius = SEG_R
@@ -332,7 +339,7 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 			mi.mesh = bm
 			CelPass.paint(mi, col)
 		rb.add_child(cs)
-		rb.add_child(mi)
+		rb.add_child(plank_vis if plank_vis != null else mi)
 		if kind == "banner" and i % 2 == 1:
 			var flag := LuchaKit.papel_flag([Color("#E0287A"), Color("#1FB8AE"), Color("#F28A1E"), Color("#7CC83A"), Color("#8A3FC0"), Color("#FFC928")][i / 2 % 6], i / 2)
 			flag.scale = Vector3.ONE * 0.8
