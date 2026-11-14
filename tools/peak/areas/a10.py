@@ -344,5 +344,29 @@ A.effect("rain", (-346, 884, -283, 952), density=0.8, tone="drip")
 A.effect("clouds", (-346, 940, -283, 956), density=0.7)
 A.effect("mist", (-330, 944, -316, 954), density=1.0)
 
+# THE FROGS' SLIDE COMES THROUGH (note 102; st.py's FROG_SLIDE): its passage through the
+# ridge's foot, y 886.2 .. 888.7, from the mountain's west side to the first ledge, is cut out
+# of the mass here.
+def _cut_passage(x0=-366.5, x1=-307.0, y0=886.2, y1=888.7):
+    from shapely.geometry import Polygon, box
+    band = box(x0, y0, x1, y1)
+    keep = []
+    for s in A.solids:
+        p = Polygon(s["pts"])
+        if not p.intersects(band) or p.intersection(band).area < 1e-4:
+            keep.append(s)
+            continue
+        rest = p.difference(band)
+        for g in getattr(rest, "geoms", [rest]):
+            if g.geom_type == "Polygon" and g.area > 1e-3:
+                q = dict(s)
+                q["pts"] = [[round(x, 3), round(y, 3)] for x, y in list(g.exterior.coords)[:-1]]
+                keep.append(q)
+    A.solids[:] = keep
+
+
+_cut_passage()
+
+
 if __name__ == "__main__":
     A.save()

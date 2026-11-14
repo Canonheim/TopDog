@@ -33,6 +33,18 @@ def tube(centre, width, kind="scree"):
     A.cave(air, kinds, default=kind, thick=3.0)
 
 
+# ---------------------------------------------------------------- the frogs' slide (note 102)
+# The hot spring's slide (a11, page 11.0) leaves the summit through its floor at 962 m between
+# x -379.2 and -377.0. Where it joins the fall line below is not designed yet; for now (the
+# Second Director, 11-14: "end it on the glacier's slide or the gap at 886 m, whichever the
+# course makes simplest") it drops down the mountain's west side, turns east at 887 m through
+# the storm ridge's foot (a10 cuts its mass there) and lets you out on the ridge's first
+# ledge at 886 m (a9's), where the start of 10.1 is. A 2.2 m slick pipe.
+FROG_SLIDE = [(-378.1, 963.5), (-378.1, 955.0), (-376.5, 944.0), (-372.5, 930.0), (-369.0, 916.0), (-367.0, 904.0),
+              (-366.2, 896.0), (-365.4, 891.0), (-363.8, 888.2), (-361.0, 887.4), (-345.0, 887.4), (-330.0, 887.4),
+              (-312.6, 887.4)]
+tube(FROG_SLIDE, 2.2)
+
 # ---------------------------------------------------------------- El Pozo del Diablo
 # Its walls where no area stands beside it, with the six doors left open.
 for x0, x1, spans in (

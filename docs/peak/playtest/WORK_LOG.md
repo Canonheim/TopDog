@@ -2046,6 +2046,50 @@ in. Nothing played by a person.
 - (`77_low_roof_car_passing_before.jpg` / `_after`, `77_high_roof_car_below_before.jpg` / `_after`)
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the frogs' hot spring, west of the peak (note 102; page 11.0)
+
+- **The way there.** The dome block's west corner gets an eave of black ice, its lip at
+  (-369.6, 983.0) (a convex piece of its own). Whatever slides down the summit's west face is
+  thrown off it into a sink in the shoulder: a hole from x -372.9 to -368.4, then a shaft
+  3 m wide down to a cave (x -379.6 .. -364.0, roof 974.9 to 974.0). The shoulder is carved
+  into convex slabs round the cave, shaft and slide (a1's way). In the cave: a pool (x -377.0
+  .. -368.2, surface 970.6, floor 969.8), a grip bank (to x -364.0, top 971) and a grip rim
+  before the slide (top 970.9). A stand-in glow light. Two camera zones.
+- **The way out, up:** an iron ring in the shaft's east wall at (-368.75, 977.4) with a rope
+  4.5 m long and a toll handle; a grip doorstep at 978.3 (x -368.4 .. -366.5); the frost
+  wall (x -366.5 .. -365.6, the tunnel's floor to its roof), rime that breaks 3 s after it is
+  taken and is back 12 s later. Through it, today's slick tunnel.
+- **The way out, down: the slide.** A 2.2 m slick pipe (st.py `FROG_SLIDE`) from the cave's
+  west end, down through the shoulder's floor at 962, down the mountain's west side, east at
+  887.4 m through the storm ridge's foot (a10 cuts its two masses there, y 886.2 .. 888.7),
+  out onto the ridge's first ledge (a9's, top 886), where 10.1 starts. **I ended it at the
+  gap at 886 m** (the Director's choice of two): the glacier's slide is the far side of the
+  glacier from here.
+- **The east horn's outer face** is 1.6 m further east (a box to x -318.6, its top 998.5);
+  the west post's outer foot loses a 0.6 m corner (page 11.3).
+- **The snow card on the shoulder** stood in front of the play space (z 2) and would have
+  covered the whole cave: it is cut round the cave, sink and slide.
+- **Reachable tonight without the open question** (whether the game goes on after the TOP
+  DOG card): yes. Any slide off the summit's west flank goes into the sink, and so does a
+  body flung over the bell. Neither passes the belt.
+- **Measured** (`g102`):
+  - drop: the climber, set down on the west flank by the apex (-361.9, 999.2), slid off the
+    eave and down the sink. **Found:** on the way down a free hand took the stair's rope (a
+    rope takes any free hand or foot within 0.17 m), and the climber hangs on it over the
+    pool rather than landing in it. Harmless (let go and you are in the pool), but the
+    page has the fall end in the water.
+  - out: a hand on the frost wall from the doorstep: broken 3.6 s later. With the feet let
+    go and a step east, the tunnel slid the climber out onto the alcove's slab
+    (-347.4, 965.2).
+  - slide: dropped into the cave's slide: out at (-305.6, 886.3) on 10.1's ledge, 13.5 m/s
+    at the fastest, stopped by the ice lip at the ledge's east end.
+  - Before: the same slide off the west flank went into the tunnel and out at the alcove.
+  - Not tried: swimming the pool to the bank; climbing the rope to the doorstep; a throw
+    over the bell; how the slide's fall reads.
+- (`102_off_the_eave_before.jpg` / `_after`, `102_in_the_spring_after.jpg`,
+  `102_on_the_frost_wall_after.jpg`, `102_out_by_the_tunnel_after.jpg`, `102_out_of_the_slide_after.jpg`)
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

@@ -2710,3 +2710,99 @@ func _w_g77(a: Array) -> void:
 	if not shot2:
 		await shot("77_high_roof_" + tag)
 	print("WATCH g77 %s: high station: the nearest a car's roof came to the eave's corner %.2f m (%s); any part of a car %.2f m; the deck's top to the roof's underside %.2f m" % [tag, near_roof, who, near_car, 790.5 - 786.0])
+
+
+## NOTE 102: the frogs' hot spring. "drop": slide off the summit's west flank; "slide": go
+## down the spring's slide; "out": break the frost wall from the doorstep. g102:TAG:WHICH
+func _w_g102(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	var which := str(a[1]) if a.size() > 1 else "drop"
+	pk.warp("11.6")
+	await secs(1.5)
+	var c := me()
+	var lowest := INF
+	var fastest := 0.0
+	var t0 := pk.clock
+	match which:
+		"drop":
+			stand(Vector2(-361.9, 999.2))
+			look(Vector2(-369.0, 985.0), 9.0)
+			var shot1 := false
+			while pk.clock - t0 < 14.0:
+				var p := where()
+				if not shot1 and p.y < 983.5:
+					shot1 = true
+					await shot("102_off_the_eave_" + tag)
+				await ticks(1)
+			look(Vector2(-371.0, 972.5), 5.5)
+			await shot("102_in_the_spring_" + tag)
+		"slide":
+			stand(Vector2(-378.5, 971.5))
+			for b: RigidBody3D in c.bodies.values():
+				b.linear_velocity = Vector3(0, -2.0, 0)  # (dropped in feet first)
+			look(Vector2(-372.0, 972.0), 6.0)
+			var shot2 := false
+			var p_prev := where()
+			while pk.clock - t0 < 30.0:
+				var p := where()
+				lowest = minf(lowest, p.y)
+				fastest = maxf(fastest, (p - p_prev).length() * 120.0)
+				p_prev = p
+				if p.y < 900.0 and not shot2:
+					look(Vector2(-330.0, 888.0), 9.0)
+				if not shot2 and p.x > -318.0 and p.y < 892.0:
+					shot2 = true
+					await shot("102_out_of_the_slide_" + tag)
+				await ticks(1)
+			if not shot2:
+				look(where(), 8.0)
+				await shot("102_slide_end_" + tag)
+		"out":
+			stand(Vector2(-367.6, 978.35))
+			look(Vector2(-360.0, 974.0), 9.0)
+			await secs(0.5)
+			var wall: Dictionary = {}
+			for h in pk.things.holds:
+				var at: Vector2 = pk.things._hold_at(h)
+				if absf(at.x + 366.05) < 0.4 and absf(at.y - 980.2) < 1.2:
+					wall = h
+			if not wall.is_empty():
+				var mid: Vector2 = pk.things._hold_at(wall)
+				put_limb(1, mid + Vector2(-0.3, -0.6))
+				await ticks(2)
+				put_limb(1, mid + Vector2(-0.3, -0.6))
+				await ticks(1)
+				c.attach(1, wall.body)
+				await shot("102_on_the_frost_wall_" + tag)
+			print("WATCH g102 %s out: the frost wall found %s, the hand on it %s" % [tag, not wall.is_empty(), c.limbs[1].grab_other != null])
+			await secs(3.6)
+			var broke := not wall.is_empty() and (wall.body as CollisionObject3D).collision_layer == 0
+			var held := []
+			for l in c.limbs:
+				held.append(l.grab_other != null)
+			var space := (c.bodies["chest"] as RigidBody3D).get_world_3d().direct_space_state
+			var hits := []
+			for q in [Vector2(-366.0, 978.8), Vector2(-366.0, 979.6), Vector2(-365.2, 978.3), Vector2(-364.5, 977.8)]:
+				var pp := PhysicsPointQueryParameters3D.new()
+				var w := pk.world_of(q)
+				pp.position = Vector3(w.x, w.y, 0.0)
+				pp.collision_mask = 1
+				hits.append(space.intersect_point(pp, 4).size())
+			print("WATCH g102 %s out: 3.6 s later the wall is broken: %s; limbs held %s; solids at points %s; the wall's layer %d" % [tag, broke, held, hits, (wall.body as CollisionObject3D).collision_layer])
+			c.release_all()  # (the feet were planted on the doorstep)
+			for l in c.limbs:
+				l.regrip = 1.5
+			for b: RigidBody3D in c.bodies.values():
+				b.linear_velocity += Vector3(3.0, -0.5, 0)  # (a step east, into the tunnel)
+			var shot3 := false
+			while pk.clock - t0 < 14.0:
+				var p := where()
+				if not shot3 and p.x > -352.0:
+					shot3 = true
+					look(Vector2(-347.0, 966.0), 6.0)
+					await shot("102_out_by_the_tunnel_" + tag)
+				await ticks(1)
+	var in_water := false
+	for z in pk.zones.waters if pk.zones.get("waters") != null else []:
+		pass
+	print("WATCH g102 %s %s: after %.0f s the climber is at %s (lowest %.1f, fastest %.1f m/s)" % [tag, which, pk.clock - t0, where(), lowest, fastest])

@@ -44,12 +44,100 @@ def dome_y(x):
 # The dome block, all slick: tunnel roof, alcove roof, the prow, the dome, the summit
 # block's east cliff, its apex (two 37 to 42 degree slopes: nothing rests), its west flank.
 A.solid([(-366.5, 982.6), (-349.0, 970.4), (-341.0, 968.4), (-330.15, 968.2), LIP, D1, D3,
-         (-359.0, 999.6), (-360.3, 1000.6), (-361.5, 999.5)], "blackice")
+         (-359.0, 999.6), (-360.3, 1000.6), (-361.5, 999.5), (-365.2, 987.0)], "blackice")
+# THE EAVE (note 102; page 11.0): the dome block's west corner gets a lip out over the sink,
+# so whatever slides down the summit's west face is thrown off it into the hole. Black ice.
+A.solid([(-365.2, 987.0), (-369.6, 983.0), (-369.6, 982.6), (-366.5, 982.6)], "blackice")
 
-# The west, closed: a slick shoulder from the unseen wall (x -390) down to a slick tunnel
-# that runs east under the dome at 34.8 degrees and pours onto the entry slab (grip).
-# A body flung over the bell lands here and is back at the area's start.
-A.solid([(-390.2, 962.0), (-349.0, 962.0), (-349.0, 966.0), (-372.0, 982.0), (-390.2, 996.0)], "blackice")
+# ================================================================ THE FROGS' HOT SPRING (note 102)
+# (Parker 11-13, late, as he corrected it: you reach the spring by going west off the summit,
+# past the belt; it is the reward for the climb.) Off the eave a body falls 12 m down a sink in
+# the shoulder into a warm pool in a cave. Two ways out: the slide at the cave's far end, which
+# leaves the summit through its floor (st.py carries it down the mountain's west side to the
+# storm ridge's foot at 886 m); or up a rope from an iron ring to a doorstep, and through a
+# wall of rime frost (it breaks 3 s after it is taken, back 12 s later) into the old slick
+# tunnel, which slides you out onto the alcove's slab, by the tea.
+# A body flung clean over the bell lands on the shoulder and slides into the sink too: the one
+# way into the spring that does not pass the belt. Its way back is the stair and the frost
+# wall, to the same slab, so a miss costs what it cost before. (The cave, the pool, the frogs
+# and the slide are modelled later: plain solids and water until then.)
+SHOULDER = [(-390.2, 962.0), (-349.0, 962.0), (-349.0, 966.0), (-372.0, 982.0), (-390.2, 996.0)]
+SPRING_AIR = [
+    # the sink: a hole in the shoulder from x -372.9 (982.7) to -368.4, then a shaft 3 m wide
+    # down to the cave's roof; and the doorstep cut level at 978.3 east of it, to the frost wall
+    [(-371.4, 973.8), (-368.4, 973.8), (-368.4, 978.3), (-366.5, 978.3), (-366.5, 990.0), (-374.0, 990.0),
+     (-372.9, 982.69), (-371.4, 980.6)],
+    # the cave: x -379.6 .. -364.0, its floor the pool's (969.8), its roof 974.9 falling to 974.0
+    [(-379.6, 969.8), (-364.0, 969.8), (-364.0, 974.0), (-371.4, 974.0), (-379.6, 974.9)],
+    # the slide's mouth at the cave's west end, down through the floor at 962 (x -379.2 .. -377.0)
+    [(-379.6, 970.0), (-377.4, 970.0), (-377.0, 961.0), (-379.2, 961.0)],
+]
+
+
+def _convex_pieces(solid_poly):
+    """Cut a polygon into convex slabs (vertical strips glued while they stay convex: a1's way)."""
+    from shapely.geometry import box
+    xs = sorted({round(x, 3) for g in getattr(solid_poly, "geoms", [solid_poly])
+                 for ring in [g.exterior] + list(g.interiors) for x, _ in ring.coords})
+    y0, y1 = solid_poly.bounds[1] - 1, solid_poly.bounds[3] + 1
+    pieces = []
+    for xa, xb in zip(xs, xs[1:]):
+        if xb - xa < 1e-4:
+            continue
+        band = solid_poly.intersection(box(xa, y0, xb, y1))
+        for g in getattr(band, "geoms", [band]):
+            if g.geom_type == "Polygon" and g.area > 1e-3:
+                pieces.append(g)
+    merged = True
+    while merged:
+        merged = False
+        for i in range(len(pieces)):
+            for j in range(i + 1, len(pieces)):
+                a, b = pieces[i], pieces[j]
+                if a.bounds[2] < b.bounds[0] - 1e-6 or b.bounds[2] < a.bounds[0] - 1e-6:
+                    continue
+                if a.bounds[3] < b.bounds[1] - 1e-6 or b.bounds[3] < a.bounds[1] - 1e-6:
+                    continue
+                u = a.union(b)
+                if u.geom_type == "Polygon" and not u.interiors and u.convex_hull.area - u.area < 1e-4:
+                    pieces[i] = u.convex_hull
+                    del pieces[j]
+                    merged = True
+                    break
+            if merged:
+                break
+    out = []
+    for p in pieces:
+        pts = list(p.simplify(1e-4).exterior.coords)[:-1]
+        out.append([q for k, q in enumerate(pts) if math.dist(q, pts[k - 1]) > 0.02])
+    return out
+
+
+def _shoulder():
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    rock = Polygon(SHOULDER).difference(unary_union([Polygon(p) for p in SPRING_AIR]))
+    for pts in _convex_pieces(rock):
+        A.solid(pts, "blackice")
+
+
+_shoulder()
+A.ledge(-368.4, -366.5, 978.3, "rock", t=0.4)  # the doorstep (grip)
+# The frost wall: the door between the doorstep and the tunnel, from the tunnel's floor to its
+# roof. Broken from the doorstep (like all the summit's rime: 3 s after it is taken, back 12 s later).
+A.solid([(-366.5, 978.17), (-365.6, 977.55), (-365.6, 981.97), (-366.5, 982.6)], "brittle", hold=STEP)
+# The stair: an iron ring in the shaft's east wall, a rope 4.5 m from it with a toll handle,
+# 0.55 m west of the bank's edge.
+A.hold(-368.75, 977.4, r=0.25, kind="iron")
+A.rope("escala_manantial", (-368.75, 977.4), 4.5, kind="rope", seg=0.5,
+       bob={"w": 0.5, "h": 0.3, "mass": 3.0, "kind": "wood"})
+# The pool, its bank and its rim.
+A.water((-377.0, 969.8, -368.2, 970.6), 970.6, flow=(0.0, 0.0), look="pool")
+A.ledge(-368.2, -364.0, 971.0, "rock", t=1.2)  # the bank
+A.ledge(-377.4, -377.0, 970.9, "rock", t=1.1)  # the rim before the slide
+A.light(-372.0, 973.0, color="#FFD9A8", rng=8.0, energy=0.9)  # (a stand-in glow until the cave is dressed)
+A.cam((-375.0, 976.0, -361.0, 1000.0), half_h=8.0, bias=(-2.0, -3.0))  # the west face and the sink
+A.cam((-381.0, 966.0, -362.0, 979.0), half_h=5.5)  # the spring
 
 # ================================================================ 11.1 Sobre las Nubes
 # The alcove under the prow: A10's ledge (top 964, x -340 to -332) and this slab behind it.
@@ -136,8 +224,12 @@ for k in range(3):
     east_face += [(foot[0] - en[0] * OFF, foot[1] - en[1] * OFF), (top[0] - en[0] * OFF, top[1] - en[1] * OFF)]
 # The horns: slick all over (you cannot cling to a horn or hold a rope).
 WTOP = 995.2
-A.solid(west_face + [(west_face[-1][0], WTOP - 0.5), (-332.2, WTOP - 0.5), (-332.2, west_face[0][1])], "blackice")
+A.solid(west_face + [(west_face[-1][0], WTOP - 0.5), (-332.2, WTOP - 0.5), (-332.2, west_face[0][1] + 0.6),
+                     (-331.6, west_face[0][1])], "blackice")  # (its outer foot loses a corner, 0.6 m a side: page 11.3)
 A.solid(east_face + [(-320.6, 999.9), (-320.2, 998.5), (-320.2, east_face[0][1])], "blackice")
+# The east post's outer face moves 1.6 m east (page 11.3: the horns cut square as two matching
+# corner posts), its top cut level at 998.5.
+A.solid([(-320.2, east_face[0][1]), (-318.6, east_face[0][1]), (-318.6, 998.5), (-320.2, 998.5)], "blackice")
 J5 = JEWELS[4]
 A.challenge("11.3", "Las Cuerdas del Campeón", (-321.0, SHELF), 4, "X", moves=[
     ["reach", [-321.6, SHELF + 0.8], list(J5)],
@@ -221,7 +313,20 @@ A.card([(-372, 982), (-366.5, 982.6), (-349, 970.4), (-349, 966)], z=-2.0, tone=
 # black ice shows as a wet rim all along the line a body slides on.
 A.card([(-333.5, 969.9), (-340.0, 975.4), (-358.9, 988.6), (-359.6, 999.2), (-360.3, 999.8), (-361.0, 999.0),
         (-365.3, 984.6), (-349.0, 972.0), (-341.0, 969.9)], z=2.0, tone="snow")
-A.card([(-389.5, 963), (-351, 963), (-351, 966.0), (-372, 980.6), (-389.5, 994.2)], z=2.0, tone="snow")
+# (the shoulder's snow card is cut round the spring's cave, sink and slide, which it would
+# have covered: nothing stands in front of where a climber can be)
+def _snow_cut():
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    snow = Polygon([(-389.5, 963), (-351, 963), (-351, 966.0), (-372, 980.6), (-389.5, 994.2)])
+    holes = unary_union([Polygon(q).buffer(0.25, join_style=2) for q in SPRING_AIR])
+    rest = snow.difference(holes)
+    for g in getattr(rest, "geoms", [rest]):
+        if g.geom_type == "Polygon" and g.area > 0.5:
+            A.card([(round(x, 2), round(y, 2)) for x, y in list(g.exterior.coords)[:-1]], z=2.0, tone="snow")
+
+
+_snow_cut()
 
 # The crown's teeth and the horns' roots: rock one layer back (see the note at the top).
 for i, (jx, jy) in enumerate(JEWELS):
