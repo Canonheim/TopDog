@@ -50,6 +50,8 @@ tube(FROG_SLIDE, 2.2)
 for _s in A.solids[_n0:]:
     if min(p[0] for p in _s["pts"]) >= -361.5 and max(p[1] for p in _s["pts"]) <= 892.0:
         _s["skin"] = "tormenta_ridge_mass"
+    elif min(p[1] for p in _s["pts"]) >= 961.0:
+        _s["skin"] = "cumbre_shoulder"  # (its first 1.5 m lie in the summit's shoulder, made with the slide's mouth in it: a11_dress 7b)
 # ("the celebratory drop all the way down": a ride, not a fall, wherever it lands)
 A.ride((-381.0, 886.0, -360.0, 964.0))  # down the mountain's west side
 A.ride((-366.5, 885.5, -313.0, 890.0))  # east through the storm ridge's foot
@@ -196,8 +198,8 @@ for i in range(34):
     face_x = -230 - (y - 578) * 0.27  # roughly where the east face is at this height
     x = face_x + _r.uniform(20, 130)
     _z, _s = -_r.uniform(26, 80), _r.uniform(1.4, 3.2)
-    if 560.0 <= y <= 890.0:
-        continue  # (none over the wind cliffs, the cableway or the glacier: "no cloud of our own" there; the far layers carry the banks. a7_dress 7b, a8_dress 7c, a9_dress 7a)
+    if y >= 560.0:
+        continue  # (none from the wind cliffs to the summit: "no cloud of our own" there; the far layers carry the banks. a7_dress 7b, a8_dress 7c, a9_dress 7a, a11_dress 7c)
     A.deco("cloud_" + "abcde"[i % 5], x, y, z=_z, scale=_s, size=(8, 3, 0.2), tone="#FFFFFF")
 
 if __name__ == "__main__":

@@ -55,7 +55,7 @@ A.wall([(F(884), 884), (F(923), 923), (F(962), 962)], default="wet", thick=8.0, 
 # El Alero: the prow over the entry ledge. Cap 40 degrees, slick; brink at (-300, 892).
 A.solid([(-300.0, 892.0), (-314.4, 904.1), (-318.0, 904.1), (-318.0, 894.6), (-311.6, 894.6), (-300.0, 891.7)], "wet", skin="tormenta_alero")
 # The exit ledge (a11 starts on it). It sits on the face's top and overhangs it 2 m.
-A.solid([(-340, 962), (-332, 962), (-332, 964), (-340, 964)], "rock", skin="tormenta_exit_slab")
+A.solid([(-340, 962), (-332, 962), (-332, 964), (-340, 964)], "rock", skin="cumbre_tea_floor")  # (one floor with the summit's tea slab, page 11.1)
 
 # The wind: bands over the whole ridge, gusts alternating sides, each with a warning.
 # W1 blows EAST only: it carries whatever leaves the Alero's brink away from a9's ledge.
@@ -69,7 +69,7 @@ A.wind((WX0, 926, WX1, 934), (-3.5, 0.0), gust(3.5))  # W6 west: the vane (a hea
 A.wind((WX0, 934, WX1, 943.2), (3.0, 0.0), gust(1.0))  # W7 east: the kites
 A.wind((-305.0, 943.2, WX1, 953), (-3.0, 0.0), gust(2.5))  # W8a west: flings 1 and 2 get a tailwind
 A.wind((WX0, 943.2, -305.0, 953), (3.0, 0.0), gust(4.6))  # W8b east: fling 3 flies into it; the cloud
-A.wind((WX0, 953, WX1, 968), (4.0, 0.0), gust(0.3, on=1.8, off=3.0))  # W9 east: the headwall (peels you off it)
+A.wind((WX0, 953, WX1, 962), (4.0, 0.0), gust(0.3, on=1.8, off=3.0))  # W9 east: the headwall (peels you off it); none on the tea shop's doorstep (note 89: to the ledge's underside)
 
 # ================================================================ 10.1 El Filo (D3, X)
 # Out from under the Alero on a torn prayer line, an F2 to the blade's foot, then up the

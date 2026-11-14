@@ -32,7 +32,7 @@ FRAME = {
     "a8": ("El Teleférico", (-285, 684, -140, 790), (-244, 688), (-272, 786)),
     "a9": ("El Glaciar", (-335, 784, -250, 888), (-274, 788), (-306, 886)),
     "a10": ("La Cresta de la Tormenta", (-360, 884, -285, 966), (-306, 888), (-336, 964)),
-    "a11": ("La Cumbre", (-380, 962, -320, 1010), (-336, 966), (-350, 1000)),
+    "a11": ("La Cumbre", (-391, 962, -317, 1010), (-336, 966), (-350, 1000)),  # (to the shoulder's west end and the east post's widened half: a11_dress 7a)
     "st": ("The mountain's structure", (-720, -40, 40, 1020), (0, 0), (0, 0)),
     "lab": ("The lab (tests only)", (-80, -10, 80, 60), (0, 0), (0, 0)),
 }

@@ -3175,6 +3175,20 @@ func _w_g10(a: Array) -> void:
 	print("WATCH g10 %s: rung whole %s, hanging %s, layer %d" % [tag, (h.vis as Node3D).visible, (h.hang_look as Node3D).visible, (h.body as CollisionObject3D).collision_layer])
 
 
+## The summit wired: the spring, the tea shop, the ring ropes, the solid bell. g11:TAG
+func _w_g11(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("11.1")
+	await secs(1.0)
+	for row in [[Vector2(-372.0, 973.0), 6.0, "spring"], [Vector2(-341.0, 966.0), 5.0, "tea_shop"],
+			[Vector2(-325.5, 990.0), 10.0, "ring_ropes"], [Vector2(-357.0, 1003.0), 5.0, "bell"]]:
+		look(row[0], float(row[1]))
+		await secs(0.6)
+		await shot("a11_%s_%s" % [row[2], tag])
+	var m: Dictionary = pk.things.movers["campana"]
+	print("WATCH g11 %s: the bell mover at %s, its look %s, layer %d" % [tag, (m.nodes[0] as Node3D).position, (m.vis as Node).name if m.vis != null else "-", (m.nodes[0] as CollisionObject3D).collision_layer])
+
+
 ## The serac's bare tower and stump at full size, the tower hidden. serbare:TAG
 func _w_serbare(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""

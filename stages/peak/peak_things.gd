@@ -449,7 +449,7 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		joints.append(j)
 	ropes.append({"id": str(def.id), "segs": segs, "bob": bob, "joints": joints, "area": str(a.id), "kind": kind, "creak": 0.0,
 		"planks": planks, "seg_len": seg_len, "top": top, "reach": length + 2.0,
-		"bell": str(def.get("bell", "")), "root": root, "wide": float(def.get("wide", 0.0))})
+		"bell": str(def.get("bell", "")), "bell_mover": str(def.get("bell_mover", "")), "root": root, "wide": float(def.get("wide", 0.0))})
 
 
 ## One of the ones who tried: a climber built, posed by joint turns from the T-pose, and frozen.
@@ -1307,7 +1307,10 @@ func _tick_bells(delta: float) -> void:
 		r.c_ang = c_ang
 		r.b_w = b_w
 		r.c_w = c_w
-		bell.rotation.z = b_ang
+		if r.has("bell_m"):
+			(r.bell_m as Dictionary).angle = b_ang  # (a solid bell: its mover turns, and whoever is on it with it)
+		else:
+			bell.rotation.z = b_ang
 		clap.rotation.z = c_ang
 
 
@@ -1328,21 +1331,35 @@ func _find_bell(r: Dictionary) -> void:
 	if not is_instance_valid(root):
 		return
 	var bell: Node3D = null
-	for n in root.get_children():
-		if n is Node3D and str((n as Node).get_meta("deco", "")) == str(r.bell):
-			bell = n
-			break
+	var drop := 1.2
+	if str(r.get("bell_mover", "")) != "" and movers.has(str(r.bell_mover)):
+		# A SOLID BELL (note 100): a mover on its pin, turned by the swing (a11_dress 6b).
+		var m: Dictionary = movers[str(r.bell_mover)]
+		bell = m.nodes[0]
+		r["bell_m"] = m
+		drop = 2.5
+	else:
+		for n in root.get_children():
+			if n is Node3D and str((n as Node).get_meta("deco", "")) == str(r.bell):
+				bell = n
+				break
+		if bell != null:
+			var box := Peak._model_box(bell)
+			drop = maxf(0.6, (box.size.y if box.size.y > 0.05 else 1.2) * bell.scale.y)
 	if bell == null:
 		return
-	# The clapper: hung from the bell's hanging point, down to a hand's breadth under its lip.
-	var box := Peak._model_box(bell)
-	var drop := maxf(0.6, (box.size.y if box.size.y > 0.05 else 1.2) * bell.scale.y)
+	# The clapper: hung from the bell's hanging point, down to a hand's breadth under its lip (its own
+	# model, `cumbre_bell_clapper`, origin the pin, once it lands).
 	var clap := Node3D.new()
 	clap.name = "clapper"
-	clap.position = bell.position
-	var iron := Color("#3A3532")
-	clap.add_child(LuchaKit.cyl(0.05, drop, iron, Vector3(0, -drop * 0.5, 0.0)))
-	clap.add_child(LuchaKit.ball(0.17, iron, Vector3(0, -drop - 0.1, 0.0)))
+	clap.position = Vector3(bell.position.x, bell.position.y, 0.0)
+	var made: Node3D = Peak.kit("cumbre_bell_clapper")
+	if made != null:
+		clap.add_child(made)
+	else:
+		var iron := Color("#3A3532")
+		clap.add_child(LuchaKit.cyl(0.05, drop, iron, Vector3(0, -drop * 0.5, 0.0)))
+		clap.add_child(LuchaKit.ball(0.17, iron, Vector3(0, -drop - 0.1, 0.0)))
 	bell.get_parent().add_child(clap)
 	r["bell_node"] = bell
 	r["clapper"] = clap

@@ -2378,6 +2378,17 @@ in. Nothing played by a person.
   its own streamer too), and the balloon's cable kept on its block while it stretches (7g: it rides at
   half the bob for now).
 
+- **a11** (a11_dress item 9): steam off the kettle and the shop's spout; the cowl's smoke running east
+  under the prow; snow smoking off the prow's lip; the awning, the papers and the garlands lifting east;
+  the apron stirring, the snapped back runs swaying; rime in its last second (ticks, frost dust, its crack)
+  and growing back from the needle westward over 4 s; the frost wall's pieces sliding down the tunnel and
+  melting on the tea floor with a breath of steam; THE STEAM COLUMN out of the sink (3 m wide, 26 m tall,
+  z -2.4 .. -2.2, leaning east at its top); thick steam over the pool; ripples where you land; a frog down
+  the slide on a tea tray; the cushions puffing when a rope throws; dust from the hanger's pin at the
+  first toll; petals off the frame when the bell rings. And THE FROG THAT SHOWS THE MOVE (item 8, note 98:
+  the game's `frog_sit` at a11_dress.ROPE_FROG_REST, croaking and riding all six ropes about every 25 s
+  while you are on the shelf, its block or the fifth boss): not built yet.
+
 ## The fix run of 11-14: a6's dress file wired in (the chimney and forge)
 
 - 1, the call. 2, lights: the loop and the grates' lanterns stay; its (-246.0, 481.5) became a
@@ -2681,6 +2692,39 @@ in. Nothing played by a person.
   triangle is gone (the tail ledge stands free over the exit ledge, as its own solid always did).
 - `templo_west_wall` has landed and follows the old solids: its poke still shows (the dark wedge under the
   tail ledge, `a5_5_8_west_wall_slab.jpg`, before | after: the same) until its maker re-cuts it.
+- **Checks:** lint; `--peak`. Clean.
+
+## The fix run of 11-14: a11's dress file wired in (the summit, the tea shop, the frogs' spring)
+
+- 1, the call (after the lights). 2, lights: the tea shop's lantern and stove (`TEA_LIGHTS`) in place of the
+  lamp on the back wall at x -343; the spring's three candle lanterns and the daylight down the sink
+  (`SPRING_LIGHTS`) in place of the stand-in glow; the gold lights kept. 3, decos: the three ring posts,
+  the four paper strings, the six garlands, the marigold pile and the cold lantern out; the belt kept (note
+  101 left alone); the bell deco out (the bell is a solid now, its look its own model). 4, cards: the three
+  cloud cards, the far side, the tunnel's dark, the five teeth and the two horn roots out; **the snow cards
+  kept** until the cap models land. The clouds effect drawn 6 m back (z -6), behind the climb; the gold
+  dust kept.
+- 5, skins on 18 stems: the dome and eave, every piece of the shoulder, the doorstep, the frost wall, the
+  three iron rings (`iron_ring_pin_long`, landed), the bank and lip, the slide's rim, the tea floor (and
+  a10's exit ledge: one floor), the rime nose, collars and block, the five gold bosses, the shelf and its
+  belly, both posts, the timber head, the bell frame, the hanger, the perch.
+- 6: **a**, the six ring ropes are thread C's (`ring_rope_red` / `_cream` / `_jade`, landed), laid on their
+  bounces in place of the stand-in bands. **b**, **THE BELL IS SOLID**: a mover "campana" on its pin
+  (-355.7, 1005.15), 2.2 m across and 2.6 m tall, mouth at the rope's top, held and stood on; the rope's
+  swing turns it (the rope names its bell mover; the game sets the mover's angle, so whoever is on it is
+  carried); the yoke is the hanger above the pin; 11.6's way up is rope, bell's mouth, flank, hanger,
+  beam. Watched: 3 tolls in 12 s of pumping, tipped 14 degrees, rocked to rest in 3 s. Its look is
+  `cumbre_bell` (KIT_FALLBACK `summit_bell`, which hangs 0.5 m high on the pin until the new one lands);
+  the clapper `cumbre_bell_clapper` once it lands. **c**, the camera over the shelf (half 9, leaning 3 m up
+  and west). **d**, a10's top wind stops at the ledge's underside (962). **e**, both toll handles name
+  `cumbre_toll_handle`.
+- 7: **a**, a11's region is x -391 .. -317 now (the shoulder's west part, the east post's widened half).
+  **b**, st.py's slide slabs inside the shoulder wear `cumbre_shoulder`. **c**, no st.py cloud above 560 m
+  now. **d**, the bell's hang: done with the solid. **e**, the doorstep split by the stair's chimney: to try
+  in play, not changed.
+- Not done: the frog that shows the move (item 8) and item 9's effects (to the effects list).
+- Pictures (`after/`): `a11_dress_sheet_after.jpg` (the spring, the tea shop, the ring ropes, the bell, the
+  bell swinging, 11.1 to 11.5), `a11_100_solid_bell_swinging.jpg`, `a11_98_ring_ropes.jpg`. Probe `g11`.
 - **Checks:** lint; `--peak`. Clean.
 
 ## To do: every note of 12 to 57 not done yet
