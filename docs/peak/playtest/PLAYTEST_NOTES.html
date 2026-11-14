@@ -137,6 +137,7 @@
 <tr><td>74</td><td><a href="#n74">La Gruta de Cristal: the column's rings become collars round the column</a></td><td><span class="chip c-parked">Decided: build the collars as drawn. Held with every other fix</span></td></tr>
 <tr><td>75</td><td><a href="#n75">El Templo: the hall of statues gets broken arms, with only hands to hold</a></td><td><span class="chip c-plan">Plan, not sent to the thread</span></td></tr>
 <tr><td>76</td><td><a href="#n76">Los Riscos: the big wheel at the low station catches you on parts you can't see</a></td><td><span class="chip c-plan">Cause found; no fix (notes only)</span></td></tr>
+<tr><td>77</td><td><a href="#n77">El Telef&eacute;rico: the low station's roof can't be held, and the gondolas' rails can't be seen</a></td><td><span class="chip c-plan">Cause found; no fix (notes only)</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -201,7 +202,8 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
 <a href="#n71">71</a> the Sump's frog cave;
 <a href="#n73">73</a> the cart's real hop;
 <a href="#n75">75</a> the statues' broken arms;
-<a href="#n76">76</a> the low station's wheel: its unseen rim and spoke ends</td></tr>
+<a href="#n76">76</a> the low station's wheel: its unseen rim and spoke ends;
+<a href="#n77">77</a> the low station's roof that can't be held, and the gondolas' unseen rails</td></tr>
 <tr><td><b>Decided by Parker on 11-13, not yet sent to the thread</b></td><td>
 <a href="#n6">6</a> one real chain, in rusty red, moved out past the track's end;
 <a href="#n7">7</a> a tool tip at the nine long jumps, bottom right: "Hold [key bind] to widen the camera" (this replaces the wider view);
@@ -2692,6 +2694,36 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
     <li>Make the two agree. Either draw the model at 1.5 times its size so its rim sits on the real one (one value, <code>model_scale</code>), or shrink the course's wheel to the model's 2.5 m and re-measure the two reaches of 7.10 that use it. Which one is a design call for this area: how big should the wheel be on screen?</li>
     <li>The same check for every moving piece that wears a kit model: does what is drawn match what can be touched? This wheel is unlikely to be the only one.</li>
     <li>Not fixed now. Parker: "It will likely be fixed in the design pass anyway". It goes with area 7's design.</li>
+  </ul>
+</div>
+
+<div class="note" id="n77">
+  <div class="head"><span class="num">77</span><h3>El Telef&eacute;rico: the low station's roof can't be held, and the gondolas' rails can't be seen</h3><span class="time">11-13 21:20</span></div>
+  <blockquote>"ok there is a ton of non grabbable roof and invisible grabbable geometry in this section"</blockquote>
+  <blockquote>"like Dan is connected here to the gondola and is just flying"</blockquote>
+  <p><span class="chip c-plan">Cause found; no fix (notes only)</span></p>
+  <figure>
+    <img src="shots/77_station_roof.jpg" alt="The low cableway station at 688 m: a red and cream building with a striped roof over a plank deck">
+    <figcaption>Parker's picture: 688 m, the low station, where area 8 starts (challenge 8.1, Abordar). The striped roof, the posts and the sign cannot be held.</figcaption>
+  </figure>
+  <figure>
+    <img src="shots/77_gondola_flying.png" alt="A climber hanging in the air to the right of a gondola, level with its floor">
+    <figcaption>Parker's picture: Dan holding on in the air, east of the car and level with its floor.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <p>Two faults that are the opposite of each other, side by side.</p>
+  <ul>
+    <li><b>Roof you can see and can't hold.</b> The station is one scenery model (<code>cable_station_low</code>, 14 m wide and 6 m tall). None of it is solid: not the striped roof, not the posts, not the sign. Above it the area adds a second, peaked roof as a flat painted card, also scenery. The only solid things at the station are the plank deck (top at 688 m), the short boarding gangway at its east end (0.7 m higher), one rail post and the rock at the west end. So from 689 m up, everything that looks like building is air.</li>
+    <li>The station model is 3 m deep and stands 1.2 m behind the climb, so its front half reaches into the play space. That breaks your second rule (11-13: "If it is in the play space you should generally be able to hold it").</li>
+    <li><b>Rails you can hold and can't see.</b> Every gondola is given a foot rail out of each end at floor level: a short one to the west (0.6 to 0.9 m, "what you catch") and a 2.4 m boom to the east ("what you launch from"). They are 10 cm thick, they are solid, and the challenges of 8.2 are built on them. The <code>gondola</code> model is the car alone, 2.6 m wide: it has no rails. So the two things the area asks you to catch and to jump from are not drawn. Dan in the picture is on the east boom: 1 to 2 m out from the car, level with its floor.</li>
+    <li>It is all eight gondolas (the two pairs on the first lines and the four express cars).</li>
+  </ul>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>The gondola:</b> its rails must be drawn. Either the model gains a west foot rail and an east boom at the lengths the course uses, or they are separate small iron pieces fixed to each car. A model request when building starts.</li>
+    <li><b>The station:</b> a design call for area 8. Either the roof is real (its eave and ridge solid, a way up onto it, and the route allowed to use it), or the building steps back out of the play space and is painted as background, so nothing in reach looks like a hold.</li>
+    <li>The same check for the area's other moving pieces (the four chairs, the zip trolley, the sheaves, the counterweights): does the model match what is solid? Note 76 is the same fault on the wheel.</li>
+    <li>Not fixed now. It goes with area 8's design.</li>
   </ul>
 </div>
 
