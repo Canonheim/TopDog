@@ -270,11 +270,12 @@ A.mover("globo", (-321.5, 961.0), [(box_pts(0, 0.3, 1.6, 0.6), "wood"), (box_pts
                                    (ngon(0, 3.9, 2.1, 10, sy=1.15), "wet")],
         {"type": "path", "pts": [[-321.5, 961.0], [-321.5, 963.0]], "speed": 0.5, "mode": "pingpong", "wait": 0.6},
         model="tormenta_balloon")
-# (a10_dress 6b, the sandbag on the rope's end (note 96, "to be tested"): not added, as the work log
-# found: the wind does not push ropes; add it only if the swing wants it.)
+# (a10_dress 6b, the sandbag on the rope's end (note 96, "to be tested"): added with its model (the Director,
+# 11-14), 3 kg as the toll handles; the wind does not push ropes, so it only weights the swing.)
 # (Note 96, Parker 11-13: "make the weather balloon only have one rope". Two free ropes side by
 # side swung apart under your hands; now one, the same 12 m, from the middle of the basket.)
-A.rope("globo_rope", (-321.5, 961.0), 12.0, kind="rope", anchor="globo")
+A.rope("globo_rope", (-321.5, 961.0), 12.0, kind="rope", anchor="globo",
+       bob={"w": 0.36, "h": 0.42, "mass": 3.0, "kind": "wood", "model": "tormenta_sandbag"})  # (a10_dress 6b: the sandbag, light, as the toll handles; "rope" is no solid kind)
 A.challenge("10.8", "El Globo", (-322.9, 951.9), 4, "X", moves=[["fling", [-321.5, 957.5], [-330.4, 955.5], "F2"]])
 A.cam((-328.4, 953.2, -316, 962), half_h=8.0, bias=(-3.0, -1.0))
 

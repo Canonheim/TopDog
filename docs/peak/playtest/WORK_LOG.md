@@ -2727,6 +2727,23 @@ in. Nothing played by a person.
   bell swinging, 11.1 to 11.5), `a11_100_solid_bell_swinging.jpg`, `a11_98_ring_ropes.jpg`. Probe `g11`.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the storm ridge's and the summit's re-makes landed (87cdd00)
+
+- Every stem the Director listed was already named by the wiring (with KIT_FALLBACK where a new stem
+  replaces an old one): `tormenta_wind_sock` (in the streamer list), `tormenta_vane`, `tormenta_balloon`,
+  `tormenta_kite`, `tormenta_rung_hanging` (a rotten rung's look while broken), `tormenta_hut` (a10_dress),
+  `cumbre_bell` (the solid bell's look), `cumbre_bell_clapper`, `cumbre_bell_frame`, `cumbre_timber_head`
+  and its grey and fallen kin (a11_dress). Measured against their movers, each lands at its made size: the
+  balloon (4.2 x 6.3, the shapes 4.2 x 6.2 with the neck), the bell (2.2 x 2.95 from its pin, as the solid),
+  the vane, the kites; the clapper hangs 3.35 m from the pin, just under the mouth.
+- **The sandbag added** to the balloon's rope (`tormenta_sandbag`, 3 kg as the toll handles: its kind is
+  wood, as the dress's "rope" is no solid kind). It only weights the swing (the wind pushes no rope): for
+  Parker to judge in play.
+- The bell watched three times (`g3bell`): 1, 3 and 12 tolls in 12 s of pumping, tipped 9 to 34 degrees
+  (the probe's pumping varies run to run); `a10_a11_remakes_landed.jpg`: 10.3, 10.4, the kites and their
+  strings, a rung hanging, 10.8 with the sandbag, 10.9, the bell, 11.6.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
