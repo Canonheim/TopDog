@@ -177,6 +177,7 @@
 <tr><td>114</td><td><a href="#n114">Build 0.3.104, the barrels (2.7): move the cove's arch back, and the barrels come out of the background darkness so their spawn is hidden</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>115</td><td><a href="#n115">Build 0.3.104, the black waters' steam pipe: the hot joints are not connected to the pipe; a lot of things look disconnected, as if only viewed from the front</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>116</td><td><a href="#n116">Build 0.3.104, the black waters' keepers' stair (the cascade's wall): looks super unfinished</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>117</td><td><a href="#n117">Build 0.3.104, the winch in the lift cage (and the levers): the hand should stick to it while you hold the button</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3936,6 +3937,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 2, the cascade's back wall (x -392 .. -380, y 134.5 .. 158). Parker's shot (sent inline, no file kept): a pale diagonal stone string hanging in the dark with four square treads along it, two pale and two near-black, a hanging rail end above, the pool and the arched culvert below, nothing else round it. What is there: the treads you hold are four small course solids in the climb's plane (0.42 m blocks, x -385.6 to -388.8, y 139.4 to 142.8), each drawn as `aguas_tread_end`; the string they belong to, `aguas_stair_string_low`, stands 2.45 m behind them on the wall, joined by `aguas_tread_root` pieces 1.9 m back. So it is note 115 again: pieces meant to be one stair sit at three depths and only line up from straight ahead, and from the game's camera the treads float off a string that floats off a wall. The two dark treads are the same model in shadow (the sun casts none inside; the lantern does not reach them). And the wall behind is plain bands with nothing to hang a stair on: no landing, no brackets, no bolts, no doorway at its top.</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Re-do the keepers' stair as one thing at one depth: the string, the treads and their brackets built together just behind the climb's plane, so the held treads sit on it from every camera angle; the treads all one look and lit (a lantern on the stair); a landing at its foot and at its head and the dead ladder bolted to the wall with plates; the wall behind given a real face (the stair's bolt-line, the stains where water ran down the treads). Part of the depth sweep in note 115. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n117">
+  <div class="head"><span class="num">117</span><h3>Build 0.3.104, the winch in the lift cage (and the levers): the hand should stick to it while you hold the button</h3><span class="time">11-14 10:30</span></div>
+  <blockquote>"when grabbing the whicnhc or lever or something, your hand should stick to it while you hold the button"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/117_winch_hand.png" alt="Parker's shot, build 0.3.104: the climber on the lift cage's floor (the black waters' winch cage, jaula), reaching for the winch's red grip; the hand is not on it.">
+    <figcaption>Parker's shot, build 0.3.104: the climber on the lift cage's floor (the black waters' winch cage, jaula), reaching for the winch's red grip; the hand is not on it.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 2, the lift cage (`jaula`, note 25). The winch (stages/peak/peak_things.gd, `_tick_winches`) is not a hold: a hand whose button is held 'takes' it when it comes within 0.3 m of the grip, and then the crank simply turns to point at wherever the hand is, every bit it turns winding the lift. The hand itself is never joined to the grip ('nothing to weld: the hand steers, the crank follows', as it was built), so the hand floats free of the handle, can slide off it, and lets go the moment it drifts 0.8 m away. The levers work the same way (the same take and lose distances).</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Make the winch's grip and every lever's handle a real hold: the hand closes on it and stays on it as long as the button is held, exactly like gripping a rung (the hand joined to the grip, the grip held to its circle round the hub, or to its arc for a lever), so pulling the hand round turns the crank and the crank carries the hand; letting go of the button lets go. Check it turns smoothly both ways at the lift's 0.6 m a turn, and that the climber can't be flung by a fast crank. Held until Parker says go.</p>
 </div>
 
 </main>
