@@ -228,6 +228,8 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		add_hold(nodes[0], def.hold, vis, Color.WHITE, peak.tone(a, "slick"), a)
 	if def.has("winch"):
 		_build_winch(m, a)
+	if (def.motion as Dictionary).has("chock"):
+		_build_chock(m, def.motion.chock, root)
 	movers[m.id] = m
 	for node: Node in nodes:
 		_mover_of[node.get_instance_id()] = m
@@ -1273,6 +1275,20 @@ func _along(m: Dictionary, d: float) -> Array:
 	return [pts[i - 1].lerp(pts[i], f), (pts[i] - pts[i - 1]).normalized()]
 
 
+## A path mover's speed at `d` along its road, from its `speeds` (one per point), in a line
+## between the points either side.
+func _speed_along(m: Dictionary, mo: Dictionary, d: float) -> float:
+	var cum: PackedFloat32Array = m.cum
+	var sp: Array = mo.speeds
+	d = clampf(d, 0.0, cum[cum.size() - 1])
+	var i := 1
+	while i < cum.size() - 1 and cum[i] < d:
+		i += 1
+	var span := cum[i] - cum[i - 1]
+	var f := (d - cum[i - 1]) / span if span > 0.0001 else 0.0
+	return lerpf(float(sp[mini(i - 1, sp.size() - 1)]), float(sp[mini(i, sp.size() - 1)]), f)
+
+
 func _tick_mover(m: Dictionary, delta: float) -> void:
 	var mo: Dictionary = m.mo
 	var t := peak.clock
@@ -1369,6 +1385,7 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 							m.run = true
 							m.v = 0.0
 							peak.audio.play("cart_start" if m.id.begins_with("cart") else "zip_whirr", _mover_at(m))
+							_kick_chock(m)
 					if m.run and m.has("fly"):
 						# in the air over the broken rail (note 73): no road under it
 						if _tick_hop(m, mo, delta):
@@ -1376,6 +1393,11 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 					elif m.run:
 						var acc := float(mo.get("accel", 0.0))
 						m.v = speed if acc <= 0.0 else minf(speed, float(m.v) + acc * delta)
+						if mo.has("speeds"):
+							# a speed for each stretch of its road (note 103's cart): it gathers to
+							# its first speed at `accel`, then takes the road's speed where it is
+							var want := _speed_along(m, mo, float(m.dist))
+							m.v = want if want > speed + 0.01 or float(m.v) > want else minf(want, float(m.v) + maxf(acc, 0.5) * delta)
 						if mo.has("decel"):
 							# a gentle stop at the end of its road (note 82's zip line)
 							var left := maxf(0.0, total - float(m.dist))
@@ -1403,6 +1425,7 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 							m.arrived = -1.0
 							m.board_t = 0.0
 							jumped = true
+							_reset_chock(m)
 					d = float(m.dist)
 			if mode != "once":
 				m.dist = d
@@ -1413,7 +1436,7 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 				var want := atan2(dir.y, dir.x)
 				if absf(want) > PI * 0.5:
 					want -= signf(want) * PI
-				m.angle = lerp_angle(float(m.angle), want, 1.0 - exp(-delta * 6.0))
+				m.angle = lerp_angle(float(m.angle), want, 1.0 - exp(-delta * float(mo.get("tilt_rate", 6.0))))
 		"spin":
 			m.angle = deg_to_rad(float(mo.get("phase", 0.0))) + t * float(mo.rpm) * TAU / 60.0
 		"swing":
@@ -1917,6 +1940,43 @@ func _tick_loose(m: Dictionary) -> void:
 		_loose_home(m)
 
 
+## THE CHOCK (a1_dress item 7, page 1.7): a wooden wedge under a cart's wheel, at `chock`
+## (x, y from the cart's home: on the rail). It is scenery, never solid. When the cart
+## starts it jumps out, tumbling, and lies where it falls; it is back when the cart is.
+func _build_chock(m: Dictionary, at: Array, root: Node3D) -> void:
+	var n: Node3D = Peak.kit("mine_chock")
+	if n == null:
+		n = LuchaKit.box(Vector3(0.45, 0.32, 0.3), Color("#8A5A32"), Vector3(0, 0.16, 0))
+	var home: Vector2 = (m.home as Vector2) + Vector2(float(at[0]), float(at[1]))
+	n.position = Vector3(home.x, home.y, 0.0)
+	root.add_child(n)
+	m["chock"] = n
+	m["chock_home"] = n.position
+
+
+func _kick_chock(m: Dictionary) -> void:
+	var n: Node3D = m.get("chock")
+	if n == null or not n.visible:
+		return
+	var away := signf(n.position.x - ((m.home as Vector2).x)) if absf(n.position.x - (m.home as Vector2).x) > 0.01 else 1.0
+	var tw := n.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(n, "position:x", n.position.x + away * 1.6, 0.7)
+	tw.tween_property(n, "position:y", n.position.y + 0.9, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(n, "position:y", n.position.y - 6.0, 0.6).set_delay(0.25).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	tw.tween_property(n, "rotation:z", -away * TAU * 1.5, 0.85)
+	tw.chain().tween_callback(func() -> void: n.visible = false)
+
+
+func _reset_chock(m: Dictionary) -> void:
+	var n: Node3D = m.get("chock")
+	if n == null:
+		return
+	n.position = m.chock_home
+	n.rotation = Vector3.ZERO
+	n.visible = true
+
+
 func _loose_home(m: Dictionary) -> void:
 	var rb: RigidBody3D = m.loose
 	_release_from([rb])
@@ -1927,6 +1987,7 @@ func _loose_home(m: Dictionary) -> void:
 	m.v = 0.0
 	m.arrived = -1.0
 	m.board_t = 0.0
+	_reset_chock(m)
 	m.angle = 0.0
 	m.offset = Vector2.ZERO
 	m.prev = m.home

@@ -2533,3 +2533,110 @@ func _w_g3bell(a: Array) -> void:
 		await ticks(1)
 	await shot("100_bell_after_" + tag)
 	print("WATCH g3bell %s: tolls on the catch %d, in 12 s of pumping %d; the bell tipped at most %.0f deg, the clapper %.0f deg; let go, it rocked to rest in %.1f s (-1: not in 10 s)" % [tag, caught_tolls, tolls, rad_to_deg(most), rad_to_deg(most_c), settle])
+
+
+## NOTE 103: the cart room. Ride the cart down the new road and off the lip; with "catch",
+## at the chain take it with the right hand (the nearest piece, if any is within 1.2 m). g103:TAG[:catch]
+func _w_g103(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	var catch := a.size() > 1 and str(a[1]) == "catch"
+	pk.warp("1.7")
+	await secs(1.0)
+	look(Vector2(-217.5, 38.0), 12.5)
+	await secs(0.5)
+	if not catch:
+		await shot("103_cart_room_" + tag)
+	var cart: Dictionary = pk.things.movers["cart1"]
+	var c := me()
+	stand(Vector2(-206.5, 40.56))
+	await secs(0.3)
+	c.attach(1, cart.nodes[0])
+	var chain: Dictionary = {}
+	for r in pk.things.ropes:
+		if str(r.id) == "cadena":
+			chain = r
+	var v_crest := 0.0
+	var v_dip := 0.0
+	var v_lip := 0.0
+	var worst := 0.0
+	var t0 := pk.clock
+	var dip_shot := false
+	while pk.clock - t0 < 12.0 and cart.get("loose") == null:
+		var at: Vector2 = (cart.home as Vector2) + (cart.offset as Vector2)
+		if float(cart.dist) > 0.0:
+			worst = maxf(worst, where().distance_to(at))
+		if at.x > -213.6 and at.x < -213.2:
+			v_crest = float(cart.v)
+		if at.y < 28.6:
+			v_dip = maxf(v_dip, float(cart.v))
+		v_lip = float(cart.v)
+		if not dip_shot and at.y < 29.0 and not catch:
+			dip_shot = true
+			await shot("103_cart_in_the_dip_" + tag)
+		await ticks(1)
+	var rb: RigidBody3D = cart.get("loose")
+	var cross_y := -1.0
+	var top_y := -INF
+	var tail_y := -1.0
+	var near_hand := INF
+	var near_chest := INF
+	var caught := false
+	var flight_shot := false
+	var lip_at := Vector2.ZERO
+	var lip_v := Vector2.ZERO
+	if rb != null:
+		lip_at = pk.local_of(Climber.pos2(rb))
+		lip_v = Vector2(rb.linear_velocity.x, rb.linear_velocity.y)
+		var t1 := pk.clock
+		var px := lip_at.x
+		while pk.clock - t1 < 3.0 and is_instance_valid(rb):
+			var p := pk.local_of(Climber.pos2(rb))
+			top_y = maxf(top_y, p.y)
+			var segs: Array = chain.segs
+			for seg: RigidBody3D in segs:
+				var sp := pk.local_of(Climber.pos2(seg))
+				near_chest = minf(near_chest, sp.distance_to(pk.local_of(Climber.pos2(c.bodies["chest"]))))
+				near_hand = minf(near_hand, minf(sp.distance_to(pk.local_of(c.limb_end(0))), sp.distance_to(pk.local_of(c.limb_end(1)))))
+			if px > -230.6 and p.x <= -230.6:
+				cross_y = p.y
+				var last: RigidBody3D = segs.back()
+				tail_y = pk.local_of(Climber.pos2(last)).y - 0.25
+			if catch and not caught and p.x < -228.0:
+				var hand := pk.local_of(c.limb_end(1))
+				var best: RigidBody3D = null
+				var bd := 0.35
+				for seg: RigidBody3D in segs:
+					var d := pk.local_of(Climber.pos2(seg)).distance_to(hand)
+					if d < bd:
+						bd = d
+						best = seg
+				if best != null:
+					for i in c.limbs.size():
+						c.release(i)
+					c.attach(1, best)
+					caught = true
+					var held := []
+					for k in [12, 48, 120]:
+						await ticks(k - (0 if held.is_empty() else [12, 48, 120][held.size() - 1]))
+						held.append(c.limbs[1].grab_other != null and segs.has(c.limbs[1].grab_other))
+					print("WATCH g103 %s: the hand was %.2f m from the chain when it took it; holding after 0.1 / 0.4 / 1.0 s: %s; last strain %s" % [tag, bd, held, pk.things.get("last_strain")])
+			if not flight_shot and p.x < -229.0:
+				flight_shot = true
+				look(Vector2(-226.0, 37.0), 9.0)
+				await shot("103_cart_at_the_chain_" + tag + ("_catch" if catch else ""))
+			px = p.x
+			await ticks(1)
+	var west := INF
+	var t2 := pk.clock
+	while pk.clock - t2 < (8.0 if catch else 2.0):
+		west = minf(west, where().x)
+		await ticks(1)
+	print("WATCH g103 %s: over %.0f s after the flight the climber came west to x %.2f (the fall's wind starts at x -238)" % [tag, 8.0 if catch else 2.0, west])
+	var on_chain := false
+	for l in c.limbs:
+		if l.grab_other != null and chain.segs.has(l.grab_other):
+			on_chain = true
+	if catch:
+		look(where() + Vector2(0, 2.0), 7.0)
+		await shot("103_on_the_chain_" + tag)
+	print("WATCH g103 %s%s: v over the crest %.1f, in the dip %.1f, at the lip %.1f m/s; the rider at most %.2f m from the cart; let loose at %s going %s (%.1f m/s); crossed the chain's line (x -230.6) at y %.2f, top of the arc %.2f; the chain's tail at %.2f; nearest hand to the chain %.2f m, chest %.2f m; on the chain 2 s later %s, the climber at %s" % [tag, " catch" if catch else "", v_crest, v_dip, v_lip, worst, lip_at, lip_v, lip_v.length(), cross_y, top_y, tail_y, near_hand, near_chest, on_chain, where()])

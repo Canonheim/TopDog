@@ -1934,6 +1934,65 @@ in. Nothing played by a person.
   shows as itself. (`28_controls_page_2_rs.jpg`)
 - **Checks:** lint; `--settings --input`. Clean.
 
+## The fix run of 11-14: the cart room reworked (note 103) and a1's dress file wired in
+
+- **Note 103, El Carrito Loco (1.7), from its redone page.** Both chains on Las Vigas's first
+  beam are gone. The cart's road now runs on from the stub's end (-213.2, 40.0): over a
+  crest of 2.2 m radius, down at 72 degrees, round a dip of 2.5 m radius (low point
+  (-220.51, 28.0)), up at 45 degrees to the lip (-223.0, 29.45): the page's own line. It
+  is solid, 0.4 m of timber under the rail (wood: held and stood on), one piece per stretch,
+  each wearing `mine_cart_road` (landed: it sits on the road exactly). The cart's line runs
+  0.45 m over the rail.
+  - **New in the game: a speed for each stretch** (`speeds` on a path mover, one per point;
+    `_speed_along` in peak_things.gd). The cart gathers to 5 m/s on the level at its old 2
+    m/s2, then takes the road's speed: as if by 4.96 m/s2 of fall to 12 in the dip, losing
+    on the rise to 10 at the lip. It leans with the road quicker (`tilt_rate` 30), and is
+    let loose at the lip and falls for real (as before, at a faller's 5.4 m/s2).
+  - One chain, 9 m, from an iron ring at (-230.6, 44.2), its tail at 35.2; rings at
+    (-226.2, 46.2) and (-221.8, 48.2), stand-in holds 0.5 across, each wearing
+    `iron_ring_pin_long` (landed; its deco placed at the pin's root, z -1.6). 1.7's moves:
+    the ride, then ring to ring (4.4 across, 2 up) and the last ring to the first beam's
+    underside (3.7 across, 1.9 up), all F2.
+  - The cart's camera zone now covers x -234 .. -200, y 26 .. 50 (half height 12.5).
+  - The chock under the cart's west wheel (`mine_chock`, landed) is on the cart: it jumps
+    out tumbling when the cart starts and is back when the cart is.
+  - **Measured** (`g103`, the rider standing in the cart, one hand on it): over the crest
+    5.0, in the dip 12.0, at the lip 10.2 m/s; let loose at (-222.74, 29.83) going 10.0 m/s
+    at 45 degrees; the rider never more than 1.1 m from the cart. The cart crossed the
+    chain's line (x -230.6) at y 34.1 to 34.5 in three runs, the top of its arc right there;
+    the chain's tail at 35.2, so 0.7 to 1.1 m over the cart's floor: the nearest hand came
+    within 0.14 to 0.29 m of the chain. **The page's numbers work as drawn.**
+  - **The catch** (`g103:catch`, the hand put on the chain when within 0.35 m): it held
+    (0.1, 0.4, 1.0 s and 2 s later), the cart flew on into the fall. **Found:** the catch
+    swings the climber west on the chain to x -237.8 at the far end, 0.2 m short of the
+    fall's wind (x -238, 6 m/s2 down). A limb may brush it at the end of the first swing.
+    Not tried: a catch by a player's own reach; climbing the chain and the three ring flings;
+    the first beam's underside from the last ring.
+  - First guesses: the speeds between the page's three (the 4.96 m/s2 drop curve and the
+    straight fall-off on the rise), tilt 30, the chock's flight.
+  - (`103_cart_room_before.jpg` / `103_cart_room_after.jpg`, `103_cart_in_the_dip_after.jpg`,
+    `103_cart_at_the_chain_after_catch.jpg`, `103_on_the_chain_after.jpg`)
+- **Note 103, Las Vigas (1.8).** Beams 2 to 4 are 0.3 m of wood over a 0.1 m slick (wet)
+  underside, the whole length; the staging the same (0.2 plank, 0.1 wet). Flings 2 and 3
+  start from the splintered west ends: (-222.8, 51.8) and (-227.3, 50.6). The posts on the
+  beams are the dress's, at the back. Not watched.
+- **a1_dress.py, FOR THE AREA FILE:** 1, the call (after the course; the 21 lantern
+  lights from `LANTERN_LIGHTS`); 2, the LANTERNS loop places no lanterns; 3, the decos it
+  lists out (the gallery's five posts, the camp's four things, the catwalk's six braces,
+  the pulley, the two braces at the hoist, the warning sign, the stub's broken rail, the
+  trestle, Las Vigas's four posts, the staging's brace, the ore crate, the stalactite at
+  -224, two buntings, the upper gallery's frame, the pit's cart, the pickaxe, the arrow
+  sign); 4, the three cards out; 5, the skins: every carved slab whose middle is in a
+  `SKIN_REGIONS` polygon, the eight ribs, the eight stubs, the road; 6, the frog's cave
+  (air, a grip floor at -27.5, a rock doorstep) and the chimney carved as air (a sliver
+  point the chimney left in one slab is dropped); 7, as above.
+  - **Not done yet:** 8, the holds' looks (La Cortina's staples): their wet holds show
+    their wet by their own colour, and a skinned solid is not drawn, so a staple skin would
+    hide the wet. That needs the wet look moved onto the skin first. 9, the water wheel and
+    the pulley turning (they are decos). a0_dress item 9 (`mine_frame_broken` at the door)
+    waits for the model: a missing model would draw a stand-in box across the doorway.
+- **Checks:** lint; `--peak`; `--peakride`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

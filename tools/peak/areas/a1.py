@@ -24,6 +24,7 @@ where it was put on purpose. Props are the kit's names (docs/peak/PARTS.md); the
 import math, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from peaklib import Area, box_pts, ngon
+import a1_dress  # the mine's scenery (the modelling run's): decos only
 
 A = Area("a1", "mine")
 
@@ -50,6 +51,11 @@ SHAFT = [(-172.0, -7.6), (-168.0, -7.6), (-168.0, 5.8), (-172.0, 5.8)]  # 1.2
 UPPER = [(-230.0, 57.1), (-218.5, 57.1), (-218.5, 77.0), (-222.1, 77.0), (-222.1, 62.0), (-230.0, 62.0)]  # upper gallery + 1.10
 DRIFT = [(-230.0, 71.7), (-222.1, 71.7), (-222.1, 76.0), (-230.0, 76.0)]  # the top drift
 DOOR = [(-152.0, -12.9), (-148.0, -12.9), (-148.0, -7.5), (-152.0, -7.5)]  # through the east wall, to A0
+# The frog's cave off the Sump's west shore (note 71; page 1.0): a low room, its doorway on the
+# chamber's west wall. And the chimney the cave-in's rocks fall out of (page 1.10), carved up
+# out of the shaft's top where nobody can reach it.
+FROG_CAVE = [(-248.0, -27.5), (-248.0, -25.4), (-249.2, -25.4), (-249.2, -24.8), (-253.4, -24.8), (-253.4, -27.5)]
+CHIMNEY = [(-221.3, 76.9), (-219.3, 76.9), (-219.5, 81.2), (-221.0, 81.2)]
 SLOT = [(FALL_X0, 86.0), (FALL_X1, 86.0), (FALL_X1, 90.0), (FALL_X0, 90.0)]  # the fall comes in here
 EXIT = [(-236.0, 86.0), (-232.0, 86.0), (-232.0, 90.0), (-236.0, 90.0)]  # the dry shaft out, to A2
 # A2's lip ledge (grip, top y 90, x -232..-226) lies on this roof. The roof is rebated 0.6 m
@@ -67,7 +73,7 @@ def carve():
     from shapely.geometry import Polygon, box
     from shapely.ops import unary_union
     main = unary_union([Polygon(CHAMBER).difference(Polygon(PILLAR))] +
-                       [Polygon(p) for p in (GALLERY, SHAFT, UPPER, DRIFT)])
+                       [Polygon(p) for p in (GALLERY, SHAFT, UPPER, DRIFT, FROG_CAVE, CHIMNEY)])
     assert main.geom_type == "Polygon", "the air is in pieces"
     hull = unary_union([main.buffer(THICK, join_style=2)] + [Polygon(p) for p in FILLS])
     hull = Polygon(hull.exterior)  # no pockets inside the rock
@@ -101,9 +107,14 @@ def carve():
                     break
             if merged:
                 break
+    from shapely.geometry import Point
+    regions = [(stem, Polygon(poly)) for stem, poly in a1_dress.SKIN_REGIONS.items()]
     for p in pieces:
         pts = list(p.simplify(1e-4).exterior.coords)[:-1]
-        A.solid(pts, "wet")
+        pts = [q for k, q in enumerate(pts) if math.dist(q, pts[k - 1]) > 0.02]  # (a sliver of a point the chimney leaves)
+        mid = p.centroid
+        skin = next((stem for stem, poly in regions if poly.contains(Point(mid.x, mid.y))), None)
+        A.solid(pts, "wet", skin=skin)  # (a1_dress FOR THE AREA FILE item 5: each mass one painted piece)
 
 
 carve()
@@ -129,6 +140,8 @@ for y in (-14.8, -17.0, -19.2, -21.4, -23.6, -25.8):
     x = -176.0 - (-12.9 - y) / 1.2833
     A.box(x - 0.25, y + 0.42, 1.1, 0.3, "wood")
 A.ledge(-190.4, -187.0, -27.7, "plank", t=0.3)  # the landing stage, a hand above the water
+A.ledge(-253.4, -248.0, -27.5, "rock", t=0.5)  # the frog's cave's floor (grip; page 1.0)
+A.solid([(-248.0, -28.3), (-247.2, -28.3), (-247.2, -27.5), (-248.0, -27.5)], "rock")  # its doorstep, out of the water
 for x in (-228.5, -219.0, -211.0, -194.5):
     A.box(x, -30.1, 0.4, 5.8, "wood")  # old staging piles: something to hold on the long swim east
 
@@ -142,7 +155,6 @@ A.ledge(-160.0, -162.0, -16.9, "rock2", t=0.5)  # the pit's bottom
 BEAM_Y = -10.6
 for x in (-155.4, -156.7, -158.0, -164.6, -165.9):
     A.box(x, BEAM_Y, 0.36, 0.36, "wood")  # roof beams, seen end-on, hung low on posts from the roof
-    A.deco("mine_post", x, BEAM_Y + 0.18, z=-0.6, scale=0.97, size=(0.35, 3.0, 0.35), tone="wood")
 POSTS = [(-158.9, -16.6, -12.0), (-160.3, -17.3, -12.2), (-161.9, -17.3, -12.0), (-163.5, -16.0, -12.2)]
 for x, yb, yt in POSTS:
     A.box(x, (yb + yt) / 2, 0.45, yt - yb, "wood")
@@ -162,10 +174,7 @@ RUNGS = [-11.6, -10.85, -10.1, -9.35, -7.85, -7.1, -6.35, -5.6, -3.72, -2.97, -2
 A.ladder(-171.55, RUNGS, w=0.9, kind="iron", crooked={2: -8.0, 6: 7.0, 9: -10.0, 13: 6.0})  # rusted iron, bracket rungs, some sagging
 A.ledge(-176.0, -172.0, 6.0, "rock", t=0.5)  # the ladder's head: a rest, and the catwalk's east end
 A.statue(-167.0, -12.28, "sit", flip=True)  # the one who kept count, by his cold lantern
-A.deco("lantern_mine", -166.2, -12.6, z=-0.5, size=(0.3, 0.5, 0.3), tone="iron")  # cold: no light on it
-A.deco("tally_marks", -167.0, -11.4, z=-1.15, size=(1.2, 0.8, 0.02), tone="bone")
-A.deco("camp_bedroll", -167.9, -12.6, z=-0.8, size=(1.6, 0.25, 0.6), tone="wood")
-A.deco("rope_coil", -166.6, -12.6, z=-0.9, size=(0.5, 0.2, 0.5), tone="wood")
+# (his camp's things are a1_dress's, out of the play space)
 A.challenge("1.2", "Escalera Rota", (-170.6, -12.6), 1, "S", moves=[
     ["reach", [-171.2, -9.35], [-171.2, -7.85]], ["reach", [-171.2, -5.6], [-171.2, -3.72]],
     ["fling", [-171.2, -1.47], [-171.2, 0.58], "F1"], ["reach", [-171.2, 5.08], [-172.2, 6.0]]])
@@ -179,8 +188,6 @@ PLANKS = [(-176.0, 2.2, "plank", 6.0), (-178.3, 1.2, "rotten", 5.95), (-179.6, 2
           (-186.4, 1.2, "rotten", 5.9), (-187.7, 2.4, "plank", 5.95), (-190.2, 2.6, "plank", 6.0)]
 for x_east, length, kind, top in PLANKS:
     A.ledge(x_east - length, x_east, top, kind, t=0.22)
-for x in (-178.25, -181.65, -184.25, -187.65, -190.15, -192.7):
-    A.deco("mine_beam", x, 4.5, z=-0.95, rot=62.0, scale=0.6, size=(4.0, 0.35, 0.35), tone="wood")  # its brackets
 A.challenge("1.3", "Los Tablones", (-174.5, 6.0), 2, "A", moves=[
     ["reach", [-178.2, 6.0], [-179.6, 5.9]], ["reach", [-186.3, 5.8], [-187.7, 5.95]]])
 
@@ -214,7 +221,6 @@ _cubo = A.mover("cubo", (-187.7, 26.5),
         {"type": "link", "to": "cubo_peso", "scale": -1.0}, model="ore_bucket")  # the bucket comes down as you go up
 _cubo["model_at"] = [0.0, 0.52]
 A.ledge(-199.8, -191.9, 26.2, "plank", t=0.3)  # the station deck. It stops 2.1 m short of the wall
-A.deco("pulley", -188.95, 31.4, z=-0.5, size=(0.8, 0.8, 0.3), tone="iron")
 # The lift's two cables are gone (Parker 11-12: "remove these track things and replace them
 # with something else. They look like the ropes you grab later"): a thin hanging line in
 # this mine is a rope or a chain, and those are held. The lift's "track" is now the
@@ -232,8 +238,6 @@ A.card([(-193.3, 26.2), (-192.7, 26.2), (-192.7, 29.6), (-190.2, 32.2), (-186.3,
 A.card([(-191.3, 13.4), (-190.7, 13.4), (-190.7, 12.6), (-189.9, 12.6), (-189.9, 13.9), (-189.2, 13.9), (-189.2, 12.9),
         (-188.3, 12.9), (-188.3, 13.6), (-187.6, 13.6), (-187.6, 12.4), (-186.9, 12.4), (-186.9, 32.2), (-191.3, 32.2)],
        z=-2.6, tone=HOIST_TONE)
-A.deco("mine_beam", -199.7, 11.5, z=-0.8, rot=44.0, scale=1.55, size=(4.0, 0.35, 0.35), tone="wood")  # the arm's brace
-A.deco("mine_beam", -199.7, 23.8, z=-0.8, rot=41.5, scale=1.47, size=(4.0, 0.35, 0.35), tone="wood")  # the deck's brace
 A.challenge("1.5", "El Cubo", (-200.0, 6.0), 2, "B", moves=[
     ["reach", [-201.3, 6.0], [-201.2, 7.1]], ["reach", [-201.2, 14.3], [-200.4, 14.2]],
     ["reach", [-191.5, 14.2], [-191.0, 15.0]]])
@@ -245,7 +249,8 @@ A.challenge("1.5", "El Cubo", (-200.0, 6.0), 2, "B", moves=[
 # 20 m down (or catch a rib on the way).
 RIBS = [(27.0, 0.6), (28.6, 0.9), (30.2, 0.6), (32.15, 1.2), (33.75, 0.6), (35.35, 0.9), (37.3, 1.2), (38.8, 0.6)]
 for top, proud in RIBS:
-    A.solid([(XF - 0.3, top - 0.42), (XF + proud, top - 0.34), (XF + proud, top), (XF - 0.3, top)], "rock")
+    A.solid([(XF - 0.3, top - 0.42), (XF + proud, top - 0.34), (XF + proud, top), (XF - 0.3, top)], "rock",
+            skin={0.6: "mine_rib_short", 0.9: "mine_rib", 1.2: "mine_rib_wide"}[proud])
 A.ledge(-208.9, XF, 40.0, "rock", t=0.5)  # the pillar's top: the track
 A.challenge("1.6", "Vetas de Lodo", (-198.0, 26.2), 2, "B", moves=[
     ["reach", [-199.8, 26.2], [-201.3, 27.0]], ["reach", [-201.3, 27.0], [-201.0, 28.6]],
@@ -255,15 +260,44 @@ A.challenge("1.6", "Vetas de Lodo", (-198.0, 26.2), 2, "B", moves=[
     ["reach", [-201.3, 38.8], [-201.9, 40.0]]])
 
 # ================================================================ 1.7 El Carrito Loco
-# The cart sits on the pillar's top. Stand in it 0.7 s and it runs west, off the broken
-# trestle (x -211.6), and down through the fall into the Sump. Two chains hang 2.6 and
-# 4.2 m past the trestle's end (too far to reach from it), their tails at chest height
-# over the cart's road: put a hand up and take one as you go under.
-# The trestle's stub, out to the end of the drawn broken rail (Parker 11-12: "this spot
-# right here should have collision on the boards going across the tracks"; it stopped at
-# x -211.6, 1.6 m short of the drawn boards). NOTE: the first chain is now 1.0 m from the
-# boards' end, so it can be taken without the cart.
+# THE CART ROOM, REWORKED (note 103; the redone pages 1.7 and 1.8, 11-14). The cart sits on
+# the pillar's top. Stand in it 0.7 s and it runs west, over the edge of the stub, down a
+# 72 degree drop, through a dip 12 m under the track and up a 45 degree rise to a lip that
+# throws it, up and west at the waterfall. Off the lip it is let loose and falls for real.
+# Near the top of its arc it passes one chain, 9 m long, hanging from an iron ring in the
+# rib of the back wall: put a hand up and take it. The cart is the only way to the chain.
+# Up the chain, then ring to ring, to the underside of Las Vigas's first beam.
+# The stub's deck stays solid to x -213.2 (Parker 11-12, note 6).
 A.ledge(-213.2, -208.5, 40.0, "wood", t=0.4)
+# The road: the rail from the stub's end (-213.2, 40.0) over a crest of 2.2 m radius, down
+# at 72 degrees, round a dip of 2.5 m radius whose lowest point is (-220.51, 28.0), and up
+# at 45 degrees to the lip (-223.0, 29.45): the page's own line (_road in a1_areas.py).
+ROAD = [(-213.2, 40.0)]
+for _i in range(1, 9):
+    _a = math.radians(72.0 * _i / 8)
+    ROAD.append((-213.2 - 2.2 * math.sin(_a), 37.8 + 2.2 * math.cos(_a)))
+for _i in range(0, 14):
+    _a = math.radians(-72.0 + 117.0 * _i / 13)
+    ROAD.append((-220.51 - 2.5 * math.sin(_a), 30.5 - 2.5 * math.cos(_a)))
+ROAD.append((-223.0, 29.45))
+ROAD = [(round(x, 3), round(y, 3)) for x, y in ROAD]
+
+
+def _up(i):
+    """The road's top side at point i (the cart's side): its tangent turned a quarter."""
+    ax, ay = ROAD[max(i - 1, 0)]
+    bx, by = ROAD[min(i + 1, len(ROAD) - 1)]
+    d = math.hypot(bx - ax, by - ay)
+    return ((by - ay) / d, -(bx - ax) / d)
+
+
+# It is solid: 0.4 m of timber under the rail, held and stood on like the stub, one piece
+# per stretch, wearing the road's painted piece (a1_dress places mine_cart_road).
+for _i in range(len(ROAD) - 1):
+    (x0, y0), (x1, y1) = ROAD[_i], ROAD[_i + 1]
+    n0, n1 = _up(_i), _up(_i + 1)
+    A.solid([(x0, y0), (x0 - 0.4 * n0[0], y0 - 0.4 * n0[1]), (x1 - 0.4 * n1[0], y1 - 0.4 * n1[1]), (x1, y1)], "wood",
+            skin="mine_cart_road")
 # 2.3 s from rolling to the trestle's end, at 4.5 m/s there. (3.4 m of the top is left east
 # of the cart to rest on.)
 # IT FALLS FOR REAL (Parker 11-12: "the mine cart that falls here falls too slow and should
@@ -273,32 +307,61 @@ A.ledge(-213.2, -208.5, 40.0, "wood", t=0.4)
 # LOOSE: a 140 kg thing with the speed and the lean it had, that tips, falls at a rock's
 # gravity (about 5 s to the water), bangs on what it meets and sinks to the Sump's floor.
 # Hold on and you go with it. It is back on the rails 12 s later, once you are clear of it.
-TRACK = [(-206.5, 40.45), (-211.6, 40.45), (-214.6, 40.1), (-217.6, 39.05)]
-CART_LOOSE = 9.2  # metres along TRACK: x -215.6, 2.4 m past the boards' end
+# The cart's own line runs 0.45 m over the rail, as before. Its speed is set stretch by
+# stretch (note 103: "the cart needs a speed for each stretch of its road"): 5 m/s over the
+# crest, gaining as it drops (as if by 4.96 m/s2 of fall) to 12 in the dip, losing on the
+# rise to 10 at the lip. It is let loose at the lip, with the lean and the speed it has.
+TRACK = [(-206.5, 40.45), (-211.6, 40.45)] + [(round(x + 0.45 * _up(i)[0], 3), round(y + 0.45 * _up(i)[1], 3))
+                                              for i, (x, y) in enumerate(ROAD)]
+_low = min(range(len(TRACK)), key=lambda i: TRACK[i][1])
+SPEEDS = []
+for _i, (x, y) in enumerate(TRACK):
+    if _i <= _low:
+        SPEEDS.append(round(math.sqrt(25.0 + 2.0 * 4.958 * max(0.0, 40.45 - y)), 2))
+    else:
+        f = (y - TRACK[_low][1]) / (TRACK[-1][1] - TRACK[_low][1])
+        SPEEDS.append(round(12.0 + (10.0 - 12.0) * f, 2))
+_total = sum(math.dist(a, b) for a, b in zip(TRACK, TRACK[1:]))
+CART_LOOSE = round(_total - 0.02, 3)  # let loose at the lip
 A.mover("cart1", TRACK[0],
         [(box_pts(0.0, 0.0, 2.4, 0.2), "plank"), (box_pts(-1.12, 0.35, 0.16, 0.9), "iron"), (box_pts(1.12, 0.35, 0.16, 0.9), "iron")],
-        {"type": "path", "pts": [list(p) for p in TRACK], "speed": 5.0, "mode": "once", "trigger": "board",
-         "reset": 12.0, "tilt": True, "accel": 2.0, "loose": CART_LOOSE, "mass": 140.0},
+        {"type": "path", "pts": [list(p) for p in TRACK], "speed": 5.0, "speeds": SPEEDS, "mode": "once", "trigger": "board",
+         "reset": 12.0, "tilt": True, "tilt_rate": 30.0, "accel": 2.0, "loose": CART_LOOSE, "mass": 140.0,
+         "chock": [-1.42, -0.45]},  # the chock under its west wheel, on the rail (a1_dress item 7: mine_chock)
         model="minecart")
-A.deco("sign_pug_skull", -202.6, 40.0, z=-1.0, size=(1.0, 2.2, 0.1), tone="bone")  # the warning, before the cart
 for x in (-204.35, -207.85):
     A.deco("rail_straight", x, 39.9, z=0.0, scale=0.875, size=(4.0, 0.25, 1.2), tone="iron")
-A.deco("rail_broken", -211.2, 39.9, z=0.0, size=(4.0, 0.4, 1.2), tone="iron")
-A.deco("trestle_bent", -210.3, 34.0, z=-0.9, size=(3.0, 6.0, 1.5), tone="wood")
-A.challenge("1.7", "El Carrito Loco", (-203.6, 40.0), 3, "A")
+# (the warning sign, the stub's broken rail and the trestle leg are gone from here: a1_dress
+# places the sign 0.4 m back and struts at the back; the broken stop is now at the lip)
+# The chain, and the three rings in the rib (stand-in rings; their look is iron_ring_pin_long,
+# a ring on a pin 1.6 m out of the rib: its origin where the pin meets the rock, the ring's
+# middle 0.22 under the pin).
+RINGS = [(-230.6, 44.2), (-226.2, 46.2), (-221.8, 48.2)]
+for x, y in RINGS:
+    A.hold(x, y, r=0.25, kind="iron", skin="iron_ring_pin_long")
+    A.deco("iron_ring_pin_long", x, round(y + 0.22, 2), z=-1.6, size=(0.5, 0.55, 1.65), tone="iron", skin=True)
+A.rope("cadena", RINGS[0], 9.0, kind="chain")  # its tail at 35.2
+A.challenge("1.7", "El Carrito Loco", (-203.6, 40.0), 3, "A", moves=[
+    ["ride", list(TRACK[0]), list(TRACK[-1])],
+    ["fling", list(RINGS[0]), list(RINGS[1]), "F2"], ["fling", list(RINGS[1]), list(RINGS[2]), "F2"],
+    ["fling", list(RINGS[2]), [-218.1, 50.1], "F2"]])
 
 # ================================================================ 1.8 Las Vigas
 # Four beams under the chamber's roof (y 55), 4.6 m apart, stepped up and down, 78 m over
-# the water. The chains hang from the first: climb one (8.6 m) and stand on the beam.
+# the water. You come to the first from below, off the last ring, and take its underside.
+# (Note 103: the two chains on the first beam are gone. The spray has turned the undersides
+# of the other three black and slick, their lowest 0.1 m the whole length: from the second
+# beam on you hold tops and ends only, swinging from a splintered west end.)
 BEAMS = [(-218.3, -213.9, 50.5), (-222.8, -220.8, 52.0), (-227.3, -225.3, 50.8), (-231.8, -229.8, 52.3)]
-for x0, x1, top in BEAMS:
-    A.ledge(x0, x1, top, "wood", t=0.4)
-    A.deco("mine_post", (x0 + x1) / 2, top, z=-0.6, scale=(55.0 - top) / 3.0, size=(0.35, 3.0, 0.35), tone="wood")
-A.rope("cadena_a", (-214.2, 50.1), 8.6, kind="chain")
-A.rope("cadena_b", (-215.8, 50.1), 9.0, kind="chain")
+for k, (x0, x1, top) in enumerate(BEAMS):
+    if k == 0:
+        A.ledge(x0, x1, top, "wood", t=0.4)
+    else:
+        A.ledge(x0, x1, top, "wood", t=0.3)
+        A.ledge(x0, x1, round(top - 0.3, 2), "wet", t=0.1)  # the black underside
 A.challenge("1.8", "Las Vigas", (-216.5, 50.5), 3, "A", moves=[
-    ["fling", [-218.1, 50.1], [-221.8, 52.0], "F2"], ["fling", [-222.6, 51.6], [-226.3, 50.8], "F2"],
-    ["fling", [-227.1, 50.4], [-230.8, 52.3], "F2"], ["reach", [-231.8, 52.3], [-232.2, 52.45]]])
+    ["fling", [-218.1, 50.1], [-221.8, 52.0], "F2"], ["fling", [-222.8, 51.8], [-226.3, 50.8], "F2"],
+    ["fling", [-227.3, 50.6], [-230.8, 52.3], "F2"], ["reach", [-231.8, 52.3], [-232.2, 52.45]]])
 
 # ================================================================ 1.9 La Polea Grande
 # The winding wheel at the throat's foot: 6 m across (the kit's winding_wheel), turning
@@ -308,7 +371,8 @@ A.challenge("1.8", "Las Vigas", (-216.5, 50.5), 3, "A", moves=[
 WHEEL = (-234.2, 57.4)
 # One staging (Parker 11-12: "make this part just part of the larger bridge to the
 # right"): its west 1.2 m was a plank of its own that the spray wet in turn, drawn dark.
-A.ledge(-237.2, -232.2, 52.45, "plank", t=0.3)
+A.ledge(-237.2, -232.2, 52.45, "plank", t=0.2)
+A.ledge(-237.2, -232.2, 52.25, "wet", t=0.1)  # its underside slick too (Parker's drawing; note 103)
 _w = A.wheel("polea_grande", WHEEL, 3.0, -3.0, spokes=6, kind="wood", rim=0.18, model="winding_wheel")
 _w["model_scale"] = 6.0 / 3.2  # (the Carpenter's wheel is 3.2 across; this one is 6)
 A.ledge(-230.6, -229.6, 57.4, "plank", t=0.4)  # the porch, half a metre clear of the rim
@@ -316,8 +380,6 @@ A.ledge(-230.0, -218.5, 57.4, "rock2", t=0.5)  # the upper gallery's floor
 # The awning: a slick roof over the wheel. Whoever comes off La Cortina lands on it and is
 # slid west off its tip (x -237.8) into the fall, and so to the Sump.
 A.solid([(-229.9, 68.2), (-237.8, 62.22), (-237.8, 61.67), (-229.9, 67.65)], "wet")
-A.deco("mine_beam", -231.2, 53.7, z=-0.9, rot=53.0, size=(4.0, 0.35, 0.35), tone="wood")  # the staging's brace
-A.deco("crate_ore", -227.6, 57.4, z=-0.9, size=(1.2, 1.1, 1.2), tone="wood")
 A.challenge("1.9", "La Polea Grande", (-232.6, 52.45), 2, "B", moves=[
     ["reach", [-234.2, 52.45], [-234.2, 54.31]]])
 
@@ -332,9 +394,11 @@ STUBS = [("E", 63.0, 0.75), ("E", 64.3, 0.75), ("W", 65.2, 0.75), ("W", 66.5, 0.
          ("E", 68.7, 0.75), ("E", 70.0, 0.6), ("W", 70.9, 0.75)]
 for side, top, length in STUBS:
     if side == "E":
-        A.solid([(-218.3, top - 0.3), (-218.3, top), (-218.5 - length, top), (-218.5 - length, top - 0.22)], "wood")
+        A.solid([(-218.3, top - 0.3), (-218.3, top), (-218.5 - length, top), (-218.5 - length, top - 0.22)], "wood",
+                skin="mine_stub" if length == 0.75 else "mine_stub_short")
     else:
-        A.solid([(-222.3, top - 0.3), (-222.1 + length, top - 0.22), (-222.1 + length, top), (-222.3, top)], "wood")
+        A.solid([(-222.3, top - 0.3), (-222.1 + length, top - 0.22), (-222.1 + length, top), (-222.3, top)], "wood",
+                skin="mine_stub" if length == 0.75 else "mine_stub_short")
 # THE ROCKS' RHYTHM IS WRITTEN OUT (Parker 11-12: "this part needs a longer delay between
 # rocks ... like a one second more delay, not a hugely longer delay", then "after the
 # double rock fall, there is an extra .5 seconds along with the extra one second we added",
@@ -440,7 +504,7 @@ A.cam((-173.0, -8.0, -167.0, 6.5), 5.5)  # the ladder shaft
 A.cam((-200.0, 3.0, -176.0, 12.0), 9.0, bias=(0.0, -4.0))  # catwalk and rope: the drop
 A.cam((-203.0, 12.0, -186.0, 30.0), 8.0, bias=(0.0, -2.0))  # the hoist
 A.cam((-204.0, 26.0, -198.0, 40.0), 8.0, bias=(2.0, -3.0))  # the banded wall
-A.cam((-220.0, 39.5, -200.0, 50.0), 11.0, bias=(-5.0, -2.0))  # the cart, the trestle, the chains
+A.cam((-234.0, 26.0, -200.0, 50.0), 12.5, bias=(-8.0, -4.0))  # the cart: its road, the lip and the chain (note 103)
 A.cam((-233.0, 46.0, -212.0, 55.0), 13.0, bias=(0.0, -7.0))  # Las Vigas: the whole drop
 A.cam((-238.5, 51.0, -229.0, 62.5), 7.0, bias=(0.0, 1.0))  # the wheel
 A.cam((-223.0, 57.0, -218.0, 78.0), 7.0, bias=(0.0, 2.5))  # the cave-in: look up
@@ -452,47 +516,42 @@ LANTERNS = [(-154.0, -8.6), (-166.5, -8.6), (-170.0, -1.0), (-174.6, 9.2), (-184
             (-196.5, 16.6), (-196.5, 28.8), (-200.2, 34.0), (-203.8, 43.4), (-210.8, 43.4), (-216.1, 53.2),
             (-226.3, 53.6), (-232.0, 60.6), (-226.0, 60.4), (-220.3, 66.8), (-226.0, 75.0), (-231.3, 80.0),
             (-188.6, -24.4)]
-for x, y in LANTERNS:
-    A.deco("lantern_hang", x, y + 0.5, z=-1.0, size=(0.3, 0.5, 0.3), tone="gold")
-    A.light(x, y, color="#FFB860", rng=10.0, energy=1.5, flicker=True)
+# (The lanterns themselves are a1_dress's now, out of the play space; their 21 lights follow
+# them: a1_dress.LANTERN_LIGHTS, filled when it dresses the area, below.)
 for x, y in ((-241.0, -24.0), (-225.0, -26.0), (-212.0, -26.0), (-241.0, 40.0), (-241.0, 82.0)):
     A.light(x, y, color="#9FD0FF", rng=14.0, energy=0.9, z=2.2)  # the water's own cold light: the drop is lit
 
 # ================================================================ the picture
-A.card([(-256, -40), (-146, -40), (-146, 94), (-256, 94)], z=-6.0, tone="back2")  # the room's back wall
 A.card([(-256, -40), (-146, -40), (-146, -8), (-178, 2), (-206, -6), (-232, 6), (-256, 0)], z=-14.0, tone="back3")
 A.card([(-150, 94), (-150, 26), (-168, 40), (-190, 44), (-204, 58), (-226, 62), (-226, 94)], z=-10.0, tone="back3")
 A.card([(-256, 94), (-256, 20), (-250, 34), (-247, 60), (-249, 94)], z=-4.0, tone="back")  # behind the fall
-A.card([(-211, -34), (-196, -34), (-197, -25), (-199, 4), (-203, 6), (-204, 38), (-208, 38), (-210, -20)], z=-2.0, tone="back")  # the pillar's root, behind its arch
 A.card([(-178, -8), (-150, -8), (-150, 8), (-170, 7), (-178, 4)], z=-3.0, tone="back")
-A.card([(-232, 55), (-214, 55), (-214, 80), (-222, 88), (-232, 88)], z=-3.0, tone="back")  # the upper works
 A.card([(-196, 56), (-190, 44), (-186, 49), (-181, 41), (-176, 43), (-170, 35), (-164, 38), (-158, 30), (-150, 32), (-150, 60)], z=3.0, tone="slick")  # stalactites, in front
 A.card([(-256, -40), (-146, -40), (-146, -33), (-200, -35), (-256, -33)], z=4.0, tone="slick")
 A.card([(-150, 6), (-150, 30), (-158, 26), (-160, 14), (-166, 12), (-168, 6)], z=-4.0, tone="back")  # old stopes, far side
 A.deco("station_scaffold", -160.0, 12.5, z=-4.6, scale=1.5, size=(4.0, 6.0, 2.0), tone="wood")  # workings nobody reaches now
 A.deco("lantern_hang", -162.0, 19.4, z=-4.4, size=(0.3, 0.5, 0.3), tone="gold")
 A.light(-162.0, 18.9, color="#FFB860", rng=8.0, energy=0.9, z=-3.0, flicker=True)
-for x, y, m in ((-224.0, 55.0, "stalactite_b"), (-209.0, 55.0, "stalactite_a"), (-203.0, 55.0, "stalactite_b"),
+for x, y, m in ((-209.0, 55.0, "stalactite_a"), (-203.0, 55.0, "stalactite_b"),
                 (-190.0, 50.9, "stalactite_a"), (-172.0, 40.0, "stalactite_b"), (-160.0, 34.0, "stalactite_a")):
     A.deco(m, x, y, z=-1.7, size=(0.8, 3.0, 0.8) if m.endswith("_a") else (1.5, 6.0, 1.5), tone="slick")
-A.deco("papel_tatters", -170.5, -9.5, z=-1.4, size=(8.0, 1.0, 0.05), tone="accent")  # the miners' bunting
-A.deco("papel_tatters", -184.5, 10.6, z=-2.4, size=(8.0, 1.0, 0.05), tone="accent")
 A.deco("papel_tatters", -226.0, 74.6, z=-1.4, scale=0.85, size=(8.0, 1.0, 0.05), tone="accent")
-A.deco("mine_frame", -152.0, -12.6, z=0.0, size=(0.6, 5.0, 2.6), tone="wood")  # the door's timber set
+A.deco("mine_frame", -152.0, -12.6, z=0.0, size=(0.6, 5.0, 2.6), tone="wood")  # the door's timber set (a0_dress item 9: mine_frame_broken when it lands)
 A.deco("mine_frame", -176.0, -12.6, z=0.0, size=(0.6, 5.0, 2.6), tone="wood")  # the gallery's mouth
-A.deco("mine_frame", -230.0, 57.4, z=0.0, scale=0.9, size=(0.6, 5.0, 2.6), tone="wood")  # the upper gallery's mouth
 A.deco("mine_frame", -230.0, 72.0, z=0.0, scale=0.8, size=(0.6, 5.0, 2.6), tone="wood")  # the top drift's mouth
 for x in (-150.0, -153.6):
     A.deco("rail_straight", x, -12.7, z=0.0, scale=0.9, size=(4.0, 0.25, 1.2), tone="iron")  # the rails end at the mud
-A.deco("minecart", -161.0, -16.7, z=-0.95, rot=24.0, size=(2.4, 1.1, 1.3), tone="iron")  # what the mud took
-A.deco("pickaxe", -174.8, 6.0, z=-0.8, size=(0.9, 0.6, 0.2), tone="iron")
-A.deco("sign_pug_arrow", -224.6, 72.0, z=-1.0, size=(1.0, 2.2, 0.1), tone="wood", flip=True)  # up, to the water
 A.effect("drips", (-176.0, 6.0, -172.0, 12.0))  # every rest has its unease
 A.effect("drips", (-201.9, 6.0, -197.9, 13.0))
 A.effect("drips", (-199.8, 26.2, -191.9, 32.0))
 A.effect("drips", (-208.9, 40.0, -201.9, 48.0))
 A.effect("drips", (-237.2, 52.5, -232.2, 56.0))
 A.effect("drips", (-233.2, 72.0, -222.1, 76.0))
+
+# ================================================================ the dress (the modelling run's)
+a1_dress.dress(A)
+for x, y in a1_dress.LANTERN_LIGHTS:
+    A.light(x, y, color="#FFB860", rng=10.0, energy=1.5, flicker=True)
 
 # THE PITS' INSIDES CAN'T BE HELD (note 52; Parker 11-13: all the slots the check finds,
 # `python tools/peak/checks.py pits`): each inside face lined slick under its lip.
