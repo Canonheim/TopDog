@@ -2366,6 +2366,18 @@ in. Nothing played by a person.
   `glaciar_ice_shard` for the serac's, the slabs' and a fallen bridge piece's shatters (the
   icicles' take it already).
 
+- **a10** (a10_dress item 9): the cabin's smoke streaming east in the lowest wind's gust and straight
+  between; the kettle's and the frog's cup's steam; the lamp swinging in each gust; the frog's croak as
+  you land; rain off El Alero's brink in a thin broken line east of the porch; snow off the glacier's top;
+  leaning rain in each band, straight where two winds meet; rain round each knob, the knob dry; the papers
+  snapping 0.8 s before a gust; after a strike, smoke from the tip and the burnt star, the picture pale
+  with hard shadows, the frozen climber's mask lit; rain thrown off each cup; the kites' paper rattling;
+  the far cloud flickering; above 953 m no rain, gold from above, water down the face in bright lines;
+  rust flakes off the two bad rungs; the balloon's skin steaming, the drum's pawl clicking. Also a sock
+  that hangs slack between gusts and lifts before one (7f: the model streams one way and the game flies
+  its own streamer too), and the balloon's cable kept on its block while it stretches (7g: it rides at
+  half the bob for now).
+
 ## The fix run of 11-14: a6's dress file wired in (the chimney and forge)
 
 - 1, the call. 2, lights: the loop and the grates' lanterns stay; its (-246.0, 481.5) became a
@@ -2618,6 +2630,44 @@ in. Nothing played by a person.
   the face (`riscos_face_body`, `riscos_colony_cliff`, `riscos_balcon_back`, z -2 to -3, not landed: the
   tan behind 7.1 to 7.7 is their stand-ins, the cliff as designed); in 9.7 the tongue's flank stand-in;
   in 10 the storm ridge's sky cards (z -20 .. -30, a10's dress takes them out); in 11 a11's cards.
+- **Checks:** lint; `--peak`. Clean.
+
+## The fix run of 11-14: a10's dress file wired in (the storm ridge)
+
+- 1, the call (after the passage cut) and the followers (`a10_dress.FOLLOWS`: the dial's hand spins with
+  the vane, each kite's reel rolls with its kite, the cable rides the balloon at half its bob). 2, lights:
+  the cabin's two (`CABIN_LIGHTS`, both flicker); the porch's cold light out; the other rests, the mast's
+  flash, La Nube's and the warm top kept. 3, decos: the paper lines, the torn one, the prayer flags, the
+  hut, the rain gauge, the insulators, the vane's mast, the tether, the rung stub and the arrow sign out
+  (the statue kept); a9.py's prayer pole out (a10_dress places it at the cabin's west corner). 4, cards:
+  all out but the gold under-lit cloud at -24 (kept until the frames are judged), and a9.py's rimaye card
+  (a10_dress places the gap's far wall, cut round the hollow and the mouth). Effects: the clouds out; the
+  rain kept; the mist over La Nube now drawn as a thin layer at z -1.4, behind the climb (an effect may
+  take `z`).
+- 5, skins on every solid: the face split at 923 m (`tormenta_face_low` / `_high`, the passage cut carries
+  them), the ridge's mass and top and a9's ridge rock (`tormenta_ridge_mass`), El Alero, a9's porch
+  (`tormenta_porch`), the exit slab, El Filo, the line pole, La Aguja (`tower()` takes a skin), the
+  station's tower and deck, the mast's timber (one skin) and its steel (one skin a piece: three spines,
+  six rungs, the tip), La Torre, the three line posts, the two lone towers, the buttress and its step,
+  every quartz knob, the headwall's rungs. **The strike's tint now reaches a worn skin** (every mesh of a
+  tagged piece, not only its direct children). st.py's frogs' slide slabs inside the ridge wear
+  `tormenta_ridge_mass` (7b).
+- 6: **a**, the balloon's neck, a slick solid from the basket to the skin. **b**, the sandbag not added
+  (the wind does not push ropes; only if the swing wants it). **c**, a rotten rung that breaks swings down
+  on its last bolt and hangs flat against the face (its `tormenta_rung_hanging` once it lands, else its
+  own piece turned about the bolt), and 8 s later is knocked back into its socket with a clank and a puff,
+  whole at once, and only then held (watched: hanging at 1.6 s, back and solid at 9.6 s). **d**, the bolt
+  comes from z -20 behind the ridge and reaches the play space only in its last 3 m (`bolt_z`). **e**, each
+  kite's string, a dark thread from its back to its reel 2.2 m behind, drawn every frame, never solid.
+  **f**, `tormenta_wind_sock` flies the game's streamer as `wind_sock` does.
+- 8: the vane, kites and balloon name `tormenta_vane`, `tormenta_kite`, `tormenta_balloon` (KIT_FALLBACK
+  to `anemometer`, `kite`, `weather_balloon`; `tormenta_wind_sock` to `wind_sock`). No storm ridge model
+  has landed yet: the frames show stand-ins.
+- Pictures (`after/`): `a10_dress_sheet_after.jpg` (the bolt, the strings, a rung hanging and back,
+  10.1, 10.2, 10.3, 10.6, 10.7, 10.9), `a10_strike_bolt.jpg`, `a10_kite_strings.jpg`,
+  `a10_rung_hanging.jpg`, `a10_rung_back.jpg`. Probe `g10`.
+- Not done: item 9's effects (to the effects list), 7f's slack sock, 7g's stretching cable; 7d (the
+  mast's rungs drawn 2.4 m deep until their thin skins land) and 7h, 7i are for the frames and the summit.
 - **Checks:** lint; `--peak`. Clean.
 
 ## To do: every note of 12 to 57 not done yet

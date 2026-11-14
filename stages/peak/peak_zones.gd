@@ -568,9 +568,9 @@ func _frame_strikes(_delta: float) -> void:
 		if lit != bool(row.get("lit", false)):
 			row["lit"] = lit
 			for b in bodies:
-				for ch in (b as Node).get_children():
-					if ch is GeometryInstance3D:
-						(ch as GeometryInstance3D).set_instance_shader_parameter(&"tint", METAL_LIT if lit else Color(1, 1, 1))
+				# (every mesh of the piece: a worn skin is the piece's child, a10_dress item 5)
+				for ch in (b as Node).find_children("*", "GeometryInstance3D", true, false):
+					(ch as GeometryInstance3D).set_instance_shader_parameter(&"tint", METAL_LIT if lit else Color(1, 1, 1))
 		var bolt: Node3D = row.get("bolt")
 		if bolt != null and is_instance_valid(bolt):
 			bolt.visible = t - float(row.get("struck", -9.0)) < 0.28
@@ -587,6 +587,17 @@ func _bolt(row: Dictionary, tip: Vector2) -> void:
 	for i in 9:
 		p += Vector2(randf_range(-1.6, 1.6), randf_range(2.6, 4.2))
 		pts.append(p)
+	# THE BOLT COMES FROM BEHIND (a10_dress 6d): from `bolt_z` back it comes forward as it comes down,
+	# and reaches the play space only in its last 3 m at the tip.
+	var back := float(row.def.get("bolt_z", 0.0))
+	var zs := PackedFloat32Array([0.0])
+	var run := 0.0
+	var total := 0.0
+	for i in pts.size() - 1:
+		total += pts[i].distance_to(pts[i + 1])
+	for i in range(1, pts.size()):
+		run += pts[i - 1].distance_to(pts[i])
+		zs.append(lerpf(0.0, back, clampf((run - 3.0) / maxf(total - 3.0, 0.1), 0.0, 1.0)))
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	st.set_normal(Vector3(0, 0, 1))
@@ -594,16 +605,20 @@ func _bolt(row: Dictionary, tip: Vector2) -> void:
 		var a := pts[i]
 		var b := pts[i + 1]
 		var side := Vector2(-(b - a).y, (b - a).x).normalized() * lerpf(0.12, 0.3, float(i) / pts.size())
-		for v in [a - side, b - side, b + side, a - side, b + side, a + side, a - side, b + side, b - side, a - side, a + side, b + side]:
-			st.add_vertex(Vector3(v.x, v.y, 0.0))  # (both windings: it is seen from the front, whichever way it zigzags)
+		var za := zs[i]
+		var zb := zs[i + 1]
+		for k in 12:
+			var v: Vector2 = [a - side, b - side, b + side, a - side, b + side, a + side, a - side, b + side, b - side, a - side, a + side, b + side][k]
+			st.add_vertex(Vector3(v.x, v.y, za if k in [0, 3, 5, 6, 9, 10] else zb))  # (both windings: it is seen from the front, whichever way it zigzags)
 	# a fork off its middle
 	var fork := pts[4]
+	var fz := zs[4]
 	var fp := fork
 	for i in 3:
 		var nxt := fp + Vector2(randf_range(0.8, 2.0) * (1.0 if tip.x < fork.x else -1.0), randf_range(-0.6, 1.4))
 		var side2 := Vector2(-(nxt - fp).y, (nxt - fp).x).normalized() * 0.1
 		for v in [fp - side2, nxt - side2, nxt + side2, fp - side2, nxt + side2, fp + side2, fp - side2, nxt + side2, nxt - side2, fp - side2, fp + side2, nxt + side2]:
-			st.add_vertex(Vector3(v.x, v.y, 0.0))
+			st.add_vertex(Vector3(v.x, v.y, fz))
 		fp = nxt
 	var mi := MeshInstance3D.new()
 	mi.mesh = st.commit()
@@ -1430,7 +1445,7 @@ func _wind_fx(a: Dictionary, z: Dictionary, root: Node3D) -> MeshInstance3D:
 ## wind's box flies a streamer from its top, which streams the wind's way while it blows
 ## and hangs slack between gusts. A chain of short painted pieces on the one material,
 ## laid out every frame (frame()).
-const STREAMER_POLES := ["streamer_pole", "flag_pole", "pole_flag", "wind_sock", "cane_flag"]
+const STREAMER_POLES := ["streamer_pole", "flag_pole", "pole_flag", "wind_sock", "cane_flag", "tormenta_wind_sock"]
 const STREAMER_COLS := [Color("#D8262E"), Color("#FFD23F"), Color("#2FA37C"), Color("#EFE3C6")]
 const STREAMER_N := 6
 const STREAMER_SEG := 0.26  # m a piece
@@ -1537,4 +1552,8 @@ func _effect(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 	p.initial_velocity_max = vel.length() * 1.3
 	p.gravity = Vector3.ZERO
 	p.position = mid
+	if e.has("z"):
+		# a thin layer at its own depth (the wisps over La Nube: behind the climb, never in front)
+		p.position.z = float(e.z)
+		p.emission_box_extents.z = 0.12
 	root.add_child(p)

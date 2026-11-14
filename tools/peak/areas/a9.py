@@ -93,8 +93,8 @@ A.solid([(-285.5, 834.7), (-281.0, 834.7), (-279.5, 834.5), (-279.5, 834.75), (-
          (-285.5, 845.7)], ICE, skin="glaciar_brow")
 
 # The exit: the storm ridge's foot. Rock, top y 886, x -312 .. -302.
-A.ledge(-312.0, -302.0, 886.0, "rock", t=1.4)
-A.solid([(-341, 884.6), (-312, 884.6), (-312, 886.0), (-341, 886.0)], "rock")  # the ridge's rock behind it
+A.ledge(-312.0, -302.0, 886.0, "rock", t=1.4, skin="tormenta_porch")  # (the porch: a10_dress's)
+A.solid([(-341, 884.6), (-312, 884.6), (-312, 886.0), (-341, 886.0)], "rock", skin="tormenta_ridge_mass")  # the ridge's rock behind it
 # Verglas on its nose: a lump of black ice, 33 degrees, that sheds a short landing.
 A.solid([(-302.9, 886.0), (-302.9, 886.75), (-301.75, 886.0), (-301.75, 884.6), (-302.0, 884.6), (-302.0, 886.0)], ICE,
         skin="glaciar_verglas_nose")
@@ -402,42 +402,8 @@ A.challenge("9.10", "El Rimaye", (-294.4, 873.3), 4, "X",
 A.cam((-299, 873, -292.5, 886), half_h=12.0, bias=(-4.0, -4.0))
 
 # ================================================================ the picture
-# (a9_dress places the glacier's look: the back walls, the flank, the far side and every skin. Of
-# the old cards only the gap's rock in shadow stays, until the storm ridge's dress places the
-# ridge's flank there, and it is cut round the slab hollow.)
-
-
-def _clip(poly, axis, val, keep_le):
-    """The part of poly on one side of the line x = val (axis 0) or y = val (axis 1)."""
-    out = []
-    for i in range(len(poly)):
-        p, q = poly[i], poly[(i + 1) % len(poly)]
-        pin = (p[axis] <= val) if keep_le else (p[axis] >= val)
-        qin = (q[axis] <= val) if keep_le else (q[axis] >= val)
-        if pin:
-            out.append(p)
-        if pin != qin:
-            f = (val - p[axis]) / (q[axis] - p[axis])
-            out.append((round(p[0] + (q[0] - p[0]) * f, 3), round(p[1] + (q[1] - p[1]) * f, 3)))
-    return out
-
-
-def card_with_hole(pts, hole, **kw):
-    """A card with a rectangular hole in it, laid as up to four cards round the hole (no card
-    has a hole)."""
-    x0, y0, x1, y1 = hole
-    mid = _clip(_clip(pts, 0, x0, False), 0, x1, True)
-    for piece in (_clip(pts, 0, x0, True), _clip(pts, 0, x1, False), _clip(mid, 1, y0, True), _clip(mid, 1, y1, False)):
-        if len(piece) >= 3:
-            A.card(piece, **kw)
-
-
-# The rimaye: rock in shadow (the storm ridge's flank, later), cut round the slab hollow.
-card_with_hole([(-302.5, 878.7), (-296, 866.5), (-288, 861.5), (-286.5, 866.95), (-286.5, 871.8), (-295.9, 871.8),
-                (-295.9, 881), (-302, 884.6)], (-292.6, 864.2, -287.6, 869.3), z=-2.4, tone="#56636F", edge=False)
-
-# The ridge's first prayer pole (the storm ridge's: its page "9 to 10" moves it, a10's dress places it).
-A.deco("prayer_pole", -309.0, 886.0, z=-1.2, size=(0.2, 4.0, 0.2), tone="accent")
+# (a9_dress places the glacier's look; a10_dress the gap's far wall, cut round the slab hollow and
+# the slab mouth, and the ridge's first prayer pole at the cabin's west corner.)
 
 # Light: cold lamps of sky coming through the ice inside, one about every 12 m of route.
 for x, y in ((-286.0, 788.4), (-298.0, 788.6), (-309.5, 792.5), (-320.0, 796.5), (-327.0, 801.2), (-312.5, 806.5),

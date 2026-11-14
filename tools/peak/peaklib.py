@@ -508,12 +508,15 @@ class Area:
         """A puffball: touch it and it bursts, throwing you straight away from its centre."""
         self.zones.append({"type": "puff", "at": _pt((x, y)), "r": _f(r), "power": _f(power), "respawn": _f(respawn)})
 
-    def strike(self, tag, period, warn=1.5, on=0.4, phase=0.0, at=None):
+    def strike(self, tag, period, warn=1.5, on=0.4, phase=0.0, at=None, bolt_z=None):
         """Lightning on every solid / mover tagged `tag`: every `period` s, after `warn` s of
-        hum, anyone holding it is knocked out. at: where the bolt is drawn from."""
+        hum, anyone holding it is knocked out. at: where the bolt is drawn from. bolt_z: how far
+        back its top starts (it comes forward to the tip over its last 3 m)."""
         z = {"type": "strike", "tag": tag, "period": _f(period), "warn": _f(warn), "on": _f(on), "phase": _f(phase)}
         if at is not None:
             z["at"] = _pt(at)
+        if bolt_z is not None:
+            z["bolt_z"] = _f(bolt_z)
         self.zones.append(z)
 
     def dark(self, rect, level=0.85, flash=None):
@@ -662,7 +665,8 @@ class Area:
 
     def effect(self, kind, rect, **params):
         """A drawn effect in rect: waterfall | mist | drips | spores | snow | steam | embers |
-        dust | rain | clouds. Extra params pass through (density, speed, tone)."""
+        dust | rain | clouds. Extra params pass through (density, speed, tone, z: a thin layer at
+        that depth instead of the whole play space's)."""
         e = {"type": kind, "rect": self._rect(rect)}
         e.update(params)
         self.fx.append(e)

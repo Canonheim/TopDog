@@ -209,6 +209,20 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	var m := {"id": str(def.id), "def": def, "area": str(a.id), "home": home, "nodes": nodes, "vis": vis, "mo": mo, "type": str(mo.type),
 		"offset": Vector2.ZERO, "angle": 0.0, "lo": lo, "hi": hi, "run": false, "dist": 0.0, "v": 0.0, "arrived": -1.0,
 		"board_t": 0.0, "tip_t": -1.0, "prog": 0.0, "prev": home, "speed": 0.0, "active": true}
+	if def.has("string"):
+		# A KITE'S STRING (a10_dress 6e): a dark thread from the kite's back to its reel behind, drawn
+		# each frame as the kite flies; never solid.
+		var cord := MeshInstance3D.new()
+		var cm := CylinderMesh.new()
+		cm.top_radius = 0.018
+		cm.bottom_radius = 0.018
+		cm.height = 1.0
+		cm.radial_segments = 6
+		cord.mesh = cm
+		cord.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		CelPass.paint(cord, Color("#2A2622"))
+		(nodes[0] as Node3D).get_parent().add_child(cord)
+		strings.append([m, cord, Vector3(float(def.string[0]), float(def.string[1]), float(def.string[2]))])
 	if m.type == "path":
 		var pts := PackedVector2Array()
 		for p in mo.pts:
@@ -569,6 +583,28 @@ func frame(delta: float) -> void:
 	_fly_thrown(delta)
 	_frame_glyphs()
 	_frame_followers()
+	_frame_strings()
+
+
+## The kites' strings: [mover, its cord, its reel].
+var strings: Array = []
+
+
+func _frame_strings() -> void:
+	for row in strings:
+		var cord: MeshInstance3D = row[1]
+		if not is_instance_valid(cord):
+			continue
+		var at := _mover_at(row[0])
+		var a := Vector3(at.x, at.y, -0.3)  # (the kite's back)
+		var b: Vector3 = row[2]
+		var d := b - a
+		var ln := d.length()
+		if ln < 0.01:
+			continue
+		var up := d / ln
+		var side := up.cross(Vector3.FORWARD if absf(up.z) < 0.9 else Vector3.RIGHT).normalized()
+		cord.transform = Transform3D(Basis(side, up, side.cross(up)).scaled(Vector3(1.0, ln, 1.0)), (a + b) * 0.5)
 
 
 ## DECOS THAT MOVE WITH A MOVER (a1_dress item 9, a2_dress item 8: the water wheels turn
@@ -1769,6 +1805,44 @@ func _tip_piece_show(m: Dictionary, key: String, on: bool) -> bool:
 	return true
 
 
+## A ROTTEN RUNG SWINGS DOWN ON ITS LAST BOLT (a10_dress 6c): `hang` = [the bolt's x, y, the angle it
+## hangs at]. Broken, it hangs flat against the face (its `hang_model` if that has landed, else its own
+## piece turned about the bolt); whole again, it is put back. False for a hold that does not hang.
+func _hang_rung(h: Dictionary, on: bool) -> bool:
+	var def: Dictionary = h.def
+	if not def.has("hang"):
+		return false
+	var hg: Array = def.hang
+	var piv := Vector3(float(hg[0]), float(hg[1]), 0.0)
+	var pivot: Node3D = h.get("hang_look")
+	if pivot == null:
+		pivot = Node3D.new()
+		pivot.position = piv
+		var model: Node3D = Peak.kit(str(def.hang_model)) if def.has("hang_model") else null
+		if model != null:
+			h["hang_made"] = true  # (made hanging: shown as it is)
+			pivot.add_child(model)
+		else:
+			var copy := (h.vis as Node3D).duplicate() as Node3D
+			copy.visible = true
+			copy.position = -piv
+			pivot.add_child(copy)
+		(h.vis as Node3D).get_parent().add_child(pivot)
+		h["hang_look"] = pivot
+	if not on:
+		pivot.visible = false
+		return true
+	pivot.visible = true
+	if bool(h.get("hang_made", false)):
+		pivot.rotation.z = 0.0
+	else:
+		pivot.rotation.z = 0.0
+		var tw := pivot.create_tween()
+		tw.tween_property(pivot, "rotation:z", deg_to_rad(float(hg[2])) + 0.12, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.tween_property(pivot, "rotation:z", deg_to_rad(float(hg[2])), 0.4).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	return true
+
+
 ## A broken piece's look: on the glacier `glaciar_ice_shard` (made 0.45 x 0.6 x 0.4), scaled to the
 ## piece; elsewhere, or until it lands, a box.
 const SHARD_SIZE := Vector3(0.45, 0.6, 0.4)
@@ -2314,6 +2388,7 @@ func _tick_holds(delta: float) -> void:
 					body.collision_layer = 0
 					(h.vis as Node3D).visible = false
 					(h.vis as Node3D).position = Vector3.ZERO
+					var hangs := _hang_rung(h, true)
 					if h.has("cracks"):
 						(h.cracks as Node3D).visible = false  # (it comes back cracked as it was, no worse)
 						var mid2 := _hold_at(h)
@@ -2321,7 +2396,8 @@ func _tick_holds(delta: float) -> void:
 						if str(h.kind) == "rusty":
 							peak.zones.burst(mid2, "sparks", 0.8)
 							peak.audio.play("hammer_clang", mid2, -4.0, 0.8)
-					_crumble(h)
+					if not hangs:
+						_crumble(h)
 					var at := Vector2(body.global_position.x, body.global_position.y)
 					if body is StaticBody3D and body.get_child_count() > 0:
 						at = _body_centre(body)
@@ -2332,6 +2408,14 @@ func _tick_holds(delta: float) -> void:
 					body.collision_layer = int(h.layer)
 					var v: Node3D = h.vis
 					v.visible = true
+					if _hang_rung(h, false):
+						# A gust knocks it back into its socket with a clank and a puff of rust: it is whole at once.
+						var mid0 := _hold_middle(body)
+						v.scale = Vector3.ONE
+						v.position = Vector3.ZERO
+						peak.audio.play("hammer_clang", mid0, -4.0, 0.8)
+						peak.zones.burst(mid0, "dust", 0.8)
+						continue
 					# It grows back from its own middle. (Its drawn piece is laid out in the
 					# area's own metres, so a bare scale grew it from the area's zero point: a
 					# plank 180 m from there flew in across the mine and shot past its place.

@@ -43,7 +43,13 @@ def tube(centre, width, kind="scree"):
 FROG_SLIDE = [(-378.1, 963.5), (-378.1, 955.0), (-376.5, 944.0), (-372.5, 930.0), (-369.0, 916.0), (-367.0, 904.0),
               (-366.2, 896.0), (-365.4, 891.0), (-363.8, 888.2), (-361.0, 887.4), (-345.0, 887.4), (-330.0, 887.4),
               (-312.6, 887.4)]
+_n0 = len(A.solids)
 tube(FROG_SLIDE, 2.2)
+# (Its slabs through the storm ridge's foot lie inside the ridge's mass, their fronts on the mass's front:
+# they wear the mass's skin, which is made with the tunnel in it. a10_dress 7b.)
+for _s in A.solids[_n0:]:
+    if min(p[0] for p in _s["pts"]) >= -361.5 and max(p[1] for p in _s["pts"]) <= 892.0:
+        _s["skin"] = "tormenta_ridge_mass"
 # ("the celebratory drop all the way down": a ride, not a fall, wherever it lands)
 A.ride((-381.0, 886.0, -360.0, 964.0))  # down the mountain's west side
 A.ride((-366.5, 885.5, -313.0, 890.0))  # east through the storm ridge's foot

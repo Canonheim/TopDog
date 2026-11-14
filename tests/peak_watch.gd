@@ -3135,6 +3135,46 @@ func _w_g8tele(a: Array) -> void:
 		print("WATCH g8tele %s: model %s, drawn as %s" % [id, m.def.get("model", "-"), (m.vis as Node).get_class() if m.vis != null else "-"])
 
 
+## The storm ridge wired: the bolt from behind, a rusted rung swinging down and back, the kites' strings. g10:TAG
+func _w_g10(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	# the strike
+	pk.warp("10.3")
+	await secs(1.0)
+	look(Vector2(-310.0, 932.0), 9.0)
+	var row: Dictionary = pk.zones.strikes[0]
+	var t0 := pk.clock
+	var got := false
+	while pk.clock - t0 < 8.0 and not got:
+		var bolt: Node3D = row.get("bolt")
+		if bolt != null and is_instance_valid(bolt) and bolt.visible:
+			await shot("a10_strike_bolt_" + tag)
+			got = true
+		await ticks(1)
+	print("WATCH g10 %s: bolt seen %s" % [tag, got])
+	# the kites
+	pk.warp("10.5")
+	await secs(1.0)
+	look(Vector2(-291.0, 939.0), 6.0)
+	await secs(0.5)
+	await shot("a10_kite_strings_" + tag)
+	print("WATCH g10 %s: %d strings" % [tag, pk.things.strings.size()])
+	# a rusted rung
+	pk.warp("10.9")
+	await secs(1.0)
+	var h := hold_near(Vector2(-332.4, 958.2), "crumble")
+	look(Vector2(-332.0, 959.0), 3.5)
+	stand(Vector2(-330.4, 955.5))
+	await secs(0.5)
+	me().attach(1, h.body)
+	await secs(1.6)
+	await shot("a10_rung_hanging_" + tag)
+	print("WATCH g10 %s: rung back_at %.1f, its look %s, hanging %s" % [tag, float(h.back_at) - pk.clock, (h.vis as Node3D).visible, h.has("hang_look") and (h.hang_look as Node3D).visible])
+	await secs(8.0)
+	await shot("a10_rung_back_" + tag)
+	print("WATCH g10 %s: rung whole %s, hanging %s, layer %d" % [tag, (h.vis as Node3D).visible, (h.hang_look as Node3D).visible, (h.body as CollisionObject3D).collision_layer])
+
+
 ## The serac's bare tower and stump at full size, the tower hidden. serbare:TAG
 func _w_serbare(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""

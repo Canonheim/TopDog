@@ -121,7 +121,8 @@ const WET_AS := {"geode_wheel": "glass", "crystal_ring_3": "glass", "crystal_rin
 const KIT_FALLBACK := {"vulture_flying": "vulture", "tele_gondola_express": "gondola", "bellows_forja": "bellows",
 	"slag_raft_forja": "slag_raft", "drop_hammer_forja": "drop_hammer", "anvil_forja": "anvil", "anvil_great_forja": "anvil_great",
 	"bull_wheel_76": "bull_wheel", "gondola_tele": "gondola", "gondola_dead_tele": "gondola_dead", "chair_tele": "chair",
-	"zip_trolley_tele": "zip_trolley", "counterweight_hung_tele": "counterweight_hung", "cable_station_low_tele": "cable_station_low"}
+	"zip_trolley_tele": "zip_trolley", "counterweight_hung_tele": "counterweight_hung", "cable_station_low_tele": "cable_station_low",
+	"tormenta_vane": "anemometer", "tormenta_kite": "kite", "tormenta_balloon": "weather_balloon", "tormenta_wind_sock": "wind_sock"}
 
 
 static func kit(model: String) -> Node3D:
