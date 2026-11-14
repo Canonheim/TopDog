@@ -251,6 +251,7 @@ var _firm_pose := PackedFloat32Array()  # the last pose with a hand or foot on s
 var _high_y := -INF  # the highest the climber has been since it last held on (a fall is measured from it)
 var _falling := false
 var _yelled := false
+var _riding := false  # (this drop has passed through a ride: it is not a fall when it ends)
 var _still_t := 0.0
 var _lamp: OmniLight3D
 var _lamp_at := Vector2.INF  # where the lamp is: it follows the climber smoothly (see frame)
@@ -1075,17 +1076,20 @@ func _tick_fall(_delta: float, p: Vector2) -> void:
 		if _falling:
 			var drop := _high_y - p.y
 			_falling = false
-			if drop >= FALL_COUNT_M:
+			if drop >= FALL_COUNT_M and not _riding:
 				falls += 1
 				fell.emit(drop)
 				audio.landed(drop)
 		_high_y = p.y
 		_yelled = false
+		_riding = false
 	else:
 		_high_y = maxf(_high_y, p.y)
+		if zones.in_ride(p):
+			_riding = true  # (THE RIDE: the spring's drop and its slide are the reward, not a fall)
 		if _high_y - p.y > 3.0:
 			_falling = true
-		if _high_y - p.y > FALL_COUNT_M and not _yelled:
+		if _high_y - p.y > FALL_COUNT_M and not _yelled and not _riding:
 			_yelled = true
 			Sound.play("fall", -4.0)
 

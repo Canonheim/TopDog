@@ -71,10 +71,10 @@ SPRING_AIR = [
     [(-379.6, 969.8), (-364.0, 969.8), (-364.0, 974.0), (-371.4, 974.0), (-379.6, 974.9)],
     # the slide's mouth at the cave's west end, down through the floor at 962 (x -379.2 .. -377.0)
     [(-379.6, 970.0), (-377.4, 970.0), (-377.0, 961.0), (-379.2, 961.0)],
-    # the stair's recess: a slot in the shaft's east wall under the doorstep, from the cave's roof
-    # up to the doorstep's underside, so the rope hangs out of the drop's line (the Second
-    # Director, 11-14: the drop ends in the warm water)
-    [(-368.5, 973.8), (-366.8, 973.8), (-366.8, 977.9), (-368.5, 977.9)],
+    # the stair's chimney: its own shaft beside the sink, 0.9 m wide, from the cave's roof up
+    # through the doorstep, walled off from the sink by 0.7 m of rock, so the rope hangs out of
+    # the drop's line (the Second Director, 11-14: the drop ends in the warm water)
+    [(-367.7, 973.7), (-366.8, 973.7), (-366.8, 978.6), (-367.7, 978.6)],
 ]
 
 
@@ -126,22 +126,33 @@ def _shoulder():
 
 
 _shoulder()
-A.ledge(-368.4, -366.5, 978.3, "rock", t=0.4)  # the doorstep (grip)
+A.ledge(-368.4, -367.7, 978.3, "rock", t=0.4)  # the doorstep (grip), west of the stair's chimney
+A.ledge(-366.8, -366.5, 978.3, "rock", t=0.4)  # and its last 0.3 m east of it, against the frost wall
 # The frost wall: the door between the doorstep and the tunnel, from the tunnel's floor to its
 # roof. Broken from the doorstep (like all the summit's rime: 3 s after it is taken, back 12 s later).
 A.solid([(-366.5, 978.17), (-365.6, 977.55), (-365.6, 981.97), (-366.5, 982.6)], "brittle", hold=STEP)
-# The stair: an iron ring at the top of a recess in the shaft's east wall, under the doorstep,
-# and a rope 4.6 m from it with a toll handle, over the bank. (The page hung it in the shaft
-# itself, 0.55 m west of the bank's edge: there a climber falling down the sink took it on the
-# way and hung over the pool. In the recess it hangs 0.8 m east of the shaft's line.) From the
-# ring, out west round the doorstep's lip and up onto it.
-RING_S = (-367.6, 977.5)
-A.hold(RING_S[0], RING_S[1], r=0.25, kind="iron")
-A.rope("escala_manantial", RING_S, 4.6, kind="rope", seg=0.5,
+# The stair: an iron ring 1 m down the stair's own chimney, and a rope 4.4 m from it with a toll
+# handle, over the bank's slick lip. (The page hung it in the sink itself, 0.55 m west of the
+# bank's edge: a climber falling down the sink took it and hung over the pool. In a recess open
+# to the sink it was still taken now and then. In its own chimney the rock between keeps a
+# falling climber off it.) From the ring, up the chimney onto the doorstep either side of it.
+RING_S = (-367.25, 977.3)
+A.hold(RING_S[0], RING_S[1], r=0.22, kind="iron")
+A.rope("escala_manantial", RING_S, 4.4, kind="rope", seg=0.5,
        bob={"w": 0.5, "h": 0.3, "mass": 3.0, "kind": "wood"})
 # The pool, its bank and its rim.
+# (Every drop ends in the water: the fastest of three had come to rest on the bank's lip, so the
+# lip is a slick slope from just under the surface up to the bank, and whatever lands on it
+# slides back into the pool. The Director, 11-14. The pool itself was tried 0.8 m further east,
+# under the stair's recess: then a falling climber passed close enough to the rope's foot to
+# take it. The grip of the bank starts 0.45 m east of the rope's handle.)
 A.water((-377.0, 969.8, -368.2, 970.6), 970.6, flow=(0.0, 0.0), look="pool")
-A.ledge(-368.2, -364.0, 971.0, "rock", t=1.2)  # the bank
+A.solid([(-368.2, 969.8), (-366.8, 969.8), (-366.8, 971.0), (-368.2, 970.35)], "wet")  # the slick lip, 1.4 m
+A.ledge(-366.8, -364.0, 971.0, "rock", t=1.2)  # the bank
+# THE DROP INTO THE SPRING IS A RIDE (the Director, 11-14; Parker: "the little cozy reward for
+# climbing the summit"): off the bell frame's west end, down the west face, over the eave and down the sink, it is not
+# a fall: no card, no fall counted, no cry. (The slide out of it is one too: st.py.)
+A.ride((-381.0, 962.0, -361.0, 1008.0))
 A.ledge(-377.4, -377.0, 970.9, "rock", t=1.1)  # the rim before the slide
 A.light(-372.0, 973.0, color="#FFD9A8", rng=8.0, energy=0.9)  # (a stand-in glow until the cave is dressed)
 A.cam((-375.0, 976.0, -361.0, 1000.0), half_h=8.0, bias=(-2.0, -3.0))  # the west face and the sink

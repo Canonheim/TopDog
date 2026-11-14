@@ -596,6 +596,12 @@ class Area:
         self.boards.append(b)
         return b
 
+    def ride(self, rect):
+        """A RIDE, NOT A FALL (note 102: the drop into the frogs' spring and its slide are the
+        summit's reward): a drop that passes through `rect` is not counted as a fall (no card,
+        no fall counted, no fall cry, no landing sting), however far it ends up."""
+        self.zones.append({"type": "ride", "rect": self._rect(rect)})
+
     def finish(self, rect):
         self.zones.append({"type": "finish", "rect": self._rect(rect)})
 

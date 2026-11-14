@@ -44,6 +44,9 @@ FROG_SLIDE = [(-378.1, 963.5), (-378.1, 955.0), (-376.5, 944.0), (-372.5, 930.0)
               (-366.2, 896.0), (-365.4, 891.0), (-363.8, 888.2), (-361.0, 887.4), (-345.0, 887.4), (-330.0, 887.4),
               (-312.6, 887.4)]
 tube(FROG_SLIDE, 2.2)
+# ("the celebratory drop all the way down": a ride, not a fall, wherever it lands)
+A.ride((-381.0, 886.0, -360.0, 964.0))  # down the mountain's west side
+A.ride((-366.5, 885.5, -313.0, 890.0))  # east through the storm ridge's foot
 
 # ---------------------------------------------------------------- El Pozo del Diablo
 # Its walls where no area stands beside it, with the six doors left open.

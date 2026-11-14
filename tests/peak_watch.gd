@@ -2722,6 +2722,10 @@ func _w_g102(a: Array) -> void:
 	var c := me()
 	var lowest := INF
 	var fastest := 0.0
+	var falls0 := pk.falls
+	var cards := [0]
+	var on_fell := func(_d: float) -> void: cards[0] += 1
+	pk.fell.connect(on_fell)
 	var t0 := pk.clock
 	match which:
 		"drop":
@@ -2746,7 +2750,7 @@ func _w_g102(a: Array) -> void:
 				if l.grab_other != null and (l.grab_other as Node).has_meta("peak_rope"):
 					on_rope = true
 			var p_end := where()
-			print("WATCH g102 %s drop%s: in the pool (x -377 .. -368.2, under 971.5): %s; on the rope: %s" % [tag, str(a[2]) if a.size() > 2 else "", p_end.x > -377.2 and p_end.x < -368.0 and p_end.y < 971.5, on_rope])
+			print("WATCH g102 %s drop%s: in the water: %s (at %s); on the rope: %s" % [tag, str(a[2]) if a.size() > 2 else "", pk.zones.in_water(c), p_end, on_rope])
 		"slide":
 			stand(Vector2(-378.5, 971.5))
 			for b: RigidBody3D in c.bodies.values():
@@ -2769,7 +2773,7 @@ func _w_g102(a: Array) -> void:
 				look(where(), 8.0)
 				await shot("102_slide_end_" + tag)
 		"out":
-			stand(Vector2(-367.6, 978.35))
+			stand(Vector2(-368.1, 978.35))
 			look(Vector2(-360.0, 974.0), 9.0)
 			await secs(0.5)
 			var wall: Dictionary = {}
@@ -2816,7 +2820,8 @@ func _w_g102(a: Array) -> void:
 	var in_water := false
 	for z in pk.zones.waters if pk.zones.get("waters") != null else []:
 		pass
-	print("WATCH g102 %s %s: after %.0f s the climber is at %s (lowest %.1f, fastest %.1f m/s)" % [tag, which, pk.clock - t0, where(), lowest, fastest])
+	print("WATCH g102 %s %s: after %.0f s the climber is at %s (lowest %.1f, fastest %.1f m/s); falls counted %d, fall cards %d" % [tag, which, pk.clock - t0, where(), lowest, fastest, pk.falls - falls0, cards[0]])
+	pk.fell.disconnect(on_fell)
 
 
 ## The decos that move with movers (a1 item 9, a2 item 8) and the gates' pistons (a2 6g). gfollow:TAG

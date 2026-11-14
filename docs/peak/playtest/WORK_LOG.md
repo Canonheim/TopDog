@@ -2213,6 +2213,33 @@ in. Nothing played by a person.
 - (`4_1_mound_before.jpg` / `_after`, `41_hut_and_giant_before.jpg` / `_after`)
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the spring is a ride; every drop ends in the water (note 102)
+
+- **A ride, not a fall** (the Director; Parker: "the little cozy reward for climbing the
+  summit"). New: `A.ride(rect)` (a zone): a drop that passes through one is not a fall when it
+  ends: no card, no fall counted, no cry, no landing sting (peak.gd `_tick_fall`, `_riding`
+  until the climber next holds on). Rides: a11, from the bell frame's west end down the west
+  face, the eave and the sink (x -381 .. -361, y 962 .. 1008); st.py, the whole slide (down the
+  west side, and east through the storm ridge's foot). Measured: nine drops into the spring
+  and the slide to 886 m: 0 falls counted, 0 cards.
+- **Every drop ends in the water.** Tried first: the pool 0.8 m further east, under the
+  stair's recess: a falling climber then passed close enough to the rope's foot to take it
+  (a free hand takes a rope within 0.17 m), and one ended on the bank. Then: the bank's lip a
+  slick slope, the rope still in the recess: one drop took the rope near its top from inside
+  the sink, one lay on the lip with its feet on the grip. **Now:** the stair has its own
+  chimney (x -367.7 .. -366.8, from the cave's roof up through the doorstep), walled off from
+  the sink by 0.7 m of rock; the ring 1 m down it at (-367.25, 977.3), the rope 4.4 m, its
+  handle over the bank's lip; the lip a slick slope 1.4 m wide from under the surface up to
+  the bank (grip from x -366.8). The doorstep is the 0.7 m west of the chimney and 0.3 m east
+  of it, against the frost wall.
+  - Measured: six drops (three starts, twice): **all six in the water, none on the rope**, 0
+    falls counted. The way out: the frost wall broken from the doorstep's west piece, out
+    through the tunnel onto the alcove's slab.
+  - The climb back: from the ring up the chimney to the doorstep is 1.0 m; from the bank's grip
+    to the handle 0.45 m across and about 1.65 up. **Not climbed by a player.**
+  - (`102_stair_chimney_and_lip.jpg`)
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

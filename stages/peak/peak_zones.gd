@@ -18,6 +18,7 @@ var puffs: Array = []
 var strikes: Array = []
 var darks: Array = []
 var finishes: Array = []
+var rides: Array = []  # (a drop through one of these is a ride, not a fall: peak.gd _tick_fall)
 var drip_lines: Array = []  # {def, area, nodes}: fat drips running down a line (La Cortina)
 var flash := 0.0  # lightning's light, 0..1, read by the look
 var _tags := {}  # tag -> Array of bodies
@@ -105,6 +106,8 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 				darks.append(row)
 			"finish":
 				finishes.append(row)
+			"ride":
+				rides.append(row)
 	for e in a.get("fx", []):
 		_effect(a, e, root)
 	_finish_bodies(str(a.id))
@@ -193,6 +196,14 @@ var _dark := 0.0  # the darkness at the climber, eased
 
 
 ## How dark it is at the climber (eased; `frame` keeps it).
+## Is p inside a ride (a drop that is the course's reward, not a fall)?
+func in_ride(p: Vector2) -> bool:
+	for row in rides:
+		if Peak.rect_has(row.def.rect, p, 0.0):
+			return true
+	return false
+
+
 func darkness(_p: Vector2) -> float:
 	return _dark
 
