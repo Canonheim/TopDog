@@ -1926,6 +1926,14 @@ in. Nothing played by a person.
 - **Checks:** lint; `--peak`; `--peakride`. Clean. Frames of the stand-ins are the
   modelling run's.
 
+## The fix run of 11-14: the Controls board's LOOK AROUND pad cell (note 28, the Director's look)
+
+- LOOK AROUND (HOLD) showed "-" in the PAD column. A pad looks with its right stick, always
+  (`Players.look_stick`; the pad's `look` bind is empty on purpose), so the cell now reads
+  RS while that bind is empty (`lucha_settings.gd` `_refresh_cells`). A button bound there
+  shows as itself. (`28_controls_page_2_rs.jpg`)
+- **Checks:** lint; `--settings --input`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

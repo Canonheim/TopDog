@@ -294,6 +294,8 @@ func _refresh_cells() -> void:
 		var parts: PackedStringArray = (key as String).split("|")
 		var b: Dictionary = Players.binds[parts[1]][parts[0]][int(parts[2])]
 		var label := Players.bind_label(b).to_upper()
+		if label == "-" and parts[0] == "look" and parts[1] == "pad" and parts[2] == "0":
+			label = "RS"  # (a pad looks with its right stick, always: Players.look_stick, no bind needed)
 		var c: Dictionary = _cells[key]
 		if c.shown == label:
 			continue
