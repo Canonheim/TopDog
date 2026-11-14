@@ -2731,8 +2731,9 @@ func _build_board(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		var mid := (p0 + p1) * 0.5
 		var piece: Node3D = Peak.kit(str(def.get("model", "plank")))
 		if piece != null:
-			# (the kit's board is 2 m long, its zero the middle of its underside)
-			piece.scale = Vector3(p0.distance_to(p1) / 2.0, 1.0, 1.0)
+			# (the kit's board is 2 m long, its zero the middle of its underside; a board's own model
+			# says the length it was made to)
+			piece.scale = Vector3(p0.distance_to(p1) / float(def.get("made", 2.0)), 1.0, 1.0)
 			piece.position = Vector3(mid.x - half.x, mid.y - half.y, 0) - pivot.position
 		else:
 			piece = LuchaKit.box(Vector3(p0.distance_to(p1), thick, 0.9), peak.kind_color(a, str(def.get("kind", "wood"))).darkened(0.1 * i))
@@ -2782,6 +2783,7 @@ func _board_throw(board: Dictionary, row: Array) -> void:
 	row[4] = Vector3(randf_range(-3.0, 3.0), randf_range(-2.0, 2.0), randf_range(3.0, 7.0))
 	row[6] = float(def.depth)
 	row[7] = float(def.gone)
+	row.append(def.get("burst", []))  # [8]: what it bursts into where it is gone
 	var at := Vector2(fly.position.x, fly.position.y)
 	peak.audio.play("kick_thwack", at, -5.0, randf_range(0.8, 0.95))
 	peak.audio.play("plank_creak", at, -3.0)
@@ -2815,6 +2817,12 @@ func _fly_thrown(delta: float) -> void:
 			var s := lerpf(1.0, 0.6, clampf(p.z / minf(depth, -0.01), 0.0, 1.0))
 			rb.scale = Vector3(s, s, s)
 			if p.y < float(row[7]) and v.y < 0.0:
+				# (a slab bursts in the hollow it was thrown into: note 91)
+				if row.size() > 8:
+					for kind in (row[8] as Array):
+						peak.zones.burst(Vector2(p.x, p.y), str(kind), 1.6, Vector2.UP, p.z + 0.3)
+					if not (row[8] as Array).is_empty():
+						peak.audio.play("snow_whump", Vector2(p.x, p.y), -4.0)
 				rb.queue_free()
 				row[0] = null
 
@@ -2840,15 +2848,14 @@ func _tick_coming(sp: Dictionary, def: Dictionary, at: Vector2, next: float, nea
 		var pre := Node3D.new()
 		var look: Node3D
 		if kind == "icicle":
-			look = LuchaKit.kit_model("icicle_big")
-			if look == null:
-				look = LuchaKit.cyl(r * 0.4, r * 3.0, Color("#9FDDF2"))
-				look.position.y = -r * 1.5  # (it hangs from its top)
+			look = _falling_icicle(r)
 			pre.position = Vector3(at.x, at.y + r * 1.5, 0)
 		else:
-			look = LuchaKit.box(Vector3(r * 6.0, r * 1.6, Peak.HALF * 1.6), Color("#F4F7FA"))
+			look = _slab_look(r)
 			pre.position = Vector3(at.x, at.y, 0)
+		if kind == "slab" and not LuchaKit.kit_model_exists("glaciar_slab_mouth"):
 			# The mouth in the ice the slabs come out of: a dark hole a little bigger than a slab.
+			# (Once a9_dress's glaciar_slab_mouth lands, that is the mouth: the dress places it.)
 			var mouth := Node3D.new()
 			var hole := MeshInstance3D.new()
 			var cm := CylinderMesh.new()
@@ -2888,6 +2895,36 @@ func _tick_coming(sp: Dictionary, def: Dictionary, at: Vector2, next: float, nea
 		pre.position = Vector3(at.x + back.x, at.y + back.y, -(Peak.HALF + 0.6) * (1.0 - f)) + jig
 
 
+## AN ICICLE THAT FALLS IS NOT ONE THAT HOLDS (playtest note 86; a9_dress item 6e): smooth, sharp, no
+## rings and no collar, made to the faller's capsule (r * 0.4 by r * 3.0) with its tip drawn past it.
+## Its zero is its top (where it hangs from its crack). Until `glaciar_icicle_falling` lands it is a
+## plain cone of the same size: never the kit's 2.5 m ringed icicle_big, which is a holding icicle.
+func _falling_icicle(r: float) -> Node3D:
+	var look := LuchaKit.kit_model("glaciar_icicle_falling")
+	if look != null:
+		return look
+	look = Node3D.new()
+	var mi := MeshInstance3D.new()
+	var cm := CylinderMesh.new()
+	cm.top_radius = r * 0.4
+	cm.bottom_radius = 0.02
+	cm.height = r * 3.0 + 0.25
+	cm.radial_segments = 12
+	mi.mesh = cm
+	mi.position.y = -cm.height * 0.5
+	CelPass.paint(mi, Color("#9FDDF2"))
+	look.add_child(mi)
+	return look
+
+
+## A snow slab's look (a9_dress item 8: `glaciar_snow_slab`, made to the game's slab), zero its middle.
+func _slab_look(r: float) -> Node3D:
+	var look := LuchaKit.kit_model("glaciar_snow_slab")
+	if look != null:
+		return look
+	return LuchaKit.box(Vector3(r * 6.0, r * 1.6, Peak.HALF * 1.6), Color("#F4F7FA"))
+
+
 ## An icicle that lands breaks into harmless pieces (they touch the world, never you).
 func _shatter_ice(rb: RigidBody3D, r: float) -> void:
 	var root: Node3D = rb.get_parent()
@@ -2905,7 +2942,13 @@ func _shatter_ice(rb: RigidBody3D, r: float) -> void:
 		bx.size = size
 		cs.shape = bx
 		ch.add_child(cs)
-		ch.add_child(LuchaKit.box(size, Color("#BFE8F6").darkened(randf_range(0.0, 0.15))))
+		# (a9_dress item 8: glaciar_ice_shard, made 0.45 x 0.6 x 0.4, scaled to each piece; boxes until it lands)
+		var shard := LuchaKit.kit_model("glaciar_ice_shard")
+		if shard != null:
+			shard.scale = size / Vector3(0.45, 0.6, 0.4)
+			ch.add_child(shard)
+		else:
+			ch.add_child(LuchaKit.box(size, Color("#BFE8F6").darkened(randf_range(0.0, 0.15))))
 		ch.position = at + Vector3(randf_range(-r, r) * 0.6, randf_range(-r, r) * 0.6, randf_range(-0.2, 0.2))
 		ch.linear_velocity = Vector3(randf_range(-2.2, 2.2), randf_range(0.6, 2.6), randf_range(-0.6, 0.6))
 		ch.angular_velocity = Vector3(randf_range(-6, 6), randf_range(-6, 6), randf_range(-8, 8))
@@ -2966,17 +3009,14 @@ func _spawn_faller(sp: Dictionary, def: Dictionary, at: Vector2) -> void:
 			cap.height = r * 3.0
 			cs.shape = cap
 			col = Color("#9FDDF2")
-			vis = LuchaKit.kit_model("icicle_big")
-			if vis == null:
-				vis = LuchaKit.cyl(r * 0.4, r * 3.0, col)
-			else:
-				vis.position.y = r * 1.5
+			vis = _falling_icicle(r)
+			vis.position.y = r * 1.5  # (its zero is its top)
 		"slab":
 			var bx := BoxShape3D.new()
 			bx.size = Vector3(r * 6.0, r * 1.6, Peak.HALF * 1.6)
 			cs.shape = bx
 			col = Color("#F4F7FA")
-			vis = LuchaKit.box(Vector3(r * 6.0, r * 1.6, Peak.HALF * 1.6), col)
+			vis = _slab_look(r)
 			rb.mass *= 4.0
 		_:
 			var sph := SphereShape3D.new()

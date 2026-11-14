@@ -2351,6 +2351,21 @@ in. Nothing played by a person.
   cross arm passes; both great censers' smoke trails, embers drifting east, torch gold and red
   on the sills.
 
+- **a9** (a9_dress item 9): a slow drip from the fringe onto each patch of ice on the deck; snow
+  sifting from the bridges, more from the one you are on; frost dust through the lit gap; a big
+  icicle creaking and snapping at its collar, a new one growing from the collar; the lanterns'
+  amber on one climber each; a cold draught west along the balcony; steam straight up from the
+  frog's kettle, flakes the cave's height; snow sliding off the serac's cap as it tips, a white
+  crack along its foot, ice dust out of the pit, the bent layers creeping as the next grows; the
+  draught's wavy lines across the bowl, snow smoking east off the kicker's lip, frost off the
+  rope; snow smoking off the brow and the niche the way the wind goes, the canes' flags going
+  slack and lifting the new way before each gust; snow dust down the roofed chute after each
+  burst; frost off a nub as it lets go, fine snow off the cornice; the last cane's flag and the
+  prayer pole's paper streaming together. Also the game's looks the pages add for the serac
+  (`glaciar_serac_bare` while it grows, `glaciar_serac_stump` at the pivot while it is gone) and
+  `glaciar_ice_shard` for the serac's, the slabs' and a fallen bridge piece's shatters (the
+  icicles' take it already).
+
 ## The fix run of 11-14: a6's dress file wired in (the chimney and forge)
 
 - 1, the call. 2, lights: the loop and the grates' lanterns stay; its (-246.0, 481.5) became a
@@ -2504,6 +2519,60 @@ in. Nothing played by a person.
 - Frames, one per biome (`inside_a1_after.jpg` .. `inside_a6_after.jpg`; `inside_a4_before.jpg`):
   the garden's painted far wall and its mushroom stands now show behind 4.2 where it was flat
   olive; the temple's hall shows its own dark; the others as they were or better.
+- **Checks:** lint; `--peak`. Clean.
+
+## The fix run of 11-14: a9's dress file wired in (the glacier)
+
+- 1, the call (after the effects). 2, lights: six warm candle lanterns (`a9_dress.LANTERN_LIGHTS`,
+  #FFB860, range 3.5, energy 0.9, flicker); the last climber's takes the place of the light on
+  his reaching arm; the cold sky lamps, the glint, the light under the cornice and the blue
+  shadow stay. 3, decos: the deep climbers, axe, coil, glove, dead lantern, tally marks, paper,
+  both icicle rows, the snow cornice, the ice block and the tiny town out (the dress places
+  what the pages keep); **the prayer pole stays** (the storm ridge's). 4, cards: all out (the
+  ice behind the hollows, the crevasse, the cave and upper level, the pale band, the six ribs,
+  the three snow strips, the far peaks and haze) and the ice cards at the frozen climbers'
+  backs (`climber()` draws none now; the horn's card at the last one's back too). **The gap's
+  rock card stays, cut round the slab hollow** (x -292.6 .. -287.6, y 864.2 .. 869.3): four
+  cards round it, none with a hole. The clouds effect out, and **st.py's eight clouds in this
+  sky** (none from 560 to 890 now).
+- 5, skins on every named solid: the bed, west wall, crevasse floor, lower tongue, cave slab and
+  snow, crack roof and lintel (one piece), balcony, serac block, brink, pit funnel, toboggan,
+  pillar snow, upper mass, brow, verglas nose, tower, the three niches; 9.1's twelve knuckles,
+  three stones and corner snow; 9.2's shelf, its snow, the five ringed icicles (a, b, a, c, d),
+  the tooth, the nose stone; 9.3's nine bridge pieces (each wears its own skin, so it falls
+  and comes back with its piece) and two wedged stones; 9.4's knuckles and stone; 9.6's flake
+  and sill; 9.7's tusk, nubs, stone and plates; 9.8's two long stones (both solids of each),
+  tusk, nubs, plates and the rope's horn; 9.9's and 9.10's tusks and nubs. No glacier model
+  has landed yet: every solid draws as before until its skin lands.
+- 6 and the Director's rulings: **a**, the kicker stays the board as played (four of four
+  thrown), its look `glaciar_kicker_chute` (a board's model may now say the length it was made
+  to: `made=1.03`, so it is not stretched as the kit's 2 m plank is). **b**, the slab spawner is
+  NOT moved to x -302.5: the slab is 3 m (ruled), so at x -301.2 its west end is already at the
+  ice wall (-302.7 against -302.5); at -302.5 half the slab would start inside the ice. The
+  page's 1.3 m was for a 1 m slab. **c**, the thrown slab goes back to z -2.2 (not -4.0, behind
+  the card) and is gone in a burst of snow (`burst`: steam and frost, a whump) as it comes down
+  to the hollow's floor (y 864.6): watched, **6 of 6 slabs ended inside the hollow** (x -289.3
+  .. -289.0). **d**, the slabs stay 3 m; their look `glaciar_snow_slab` (the white box until it
+  lands); the game's drawn mouth disc goes once `glaciar_slab_mouth` lands. **e**, the falling
+  icicles draw `glaciar_icicle_falling`, made to the capsule: **no rings** (the rings are in
+  `icicle_big`'s own mesh, so it is NOT the fallback; until the new one lands the falling ones
+  are a plain cone of the capsule's size, never the 2.5 m ringed one); their shatter uses
+  `glaciar_ice_shard` once it lands. **f**, blunt tips stay 0.08 m (the first guess for
+  Parker). **g**, 9.3's camera is the close camera again (the 9.5 cam out: the close camera is
+  4.2; watched, 8.4 m tall over 9.3).
+- **Found while wiring:** (1) a foreground deco whose model has not landed no longer draws a
+  stand-in (peak.gd `_deco`: z past the play space's 1.2): the glacier's three fringes stood in
+  front of 9.9's holds as an 11 x 8 m white box. The same rule takes away the stand-ins of a5's
+  balustrade and column bases, a6's floor kerbs, basalt fins and chalk overhang, a7's chalk
+  lips, ledge blocks and tufts, a8's platform post and snow lip until each lands. (2) The
+  dress's two back walls leave the upper level's air under the roof's slope open behind (x
+  -305.5 .. -300, above 834.7): a small stopgap card in the back wall's blue fills it until the
+  dress covers it. (3) Until `glaciar_far_side` lands its stand-in is a flat grey-blue wall east
+  of the glacier, in front of the given far view.
+- Pictures (`after/`): `a9_91_slab_into_the_hollow.jpg`, `a9_91_slab_bursts_in_the_hollow.jpg`,
+  `a9_91_the_hollow_and_the_kicker.jpg`, `a9_9_3_close_camera.jpg`, and `a9_dress_crevasse`,
+  `_cave`, `_upper`, `_outside`, `_top` (`_before` and `_after`). Probes: `slabland`, `g9`.
+- Not done: item 9's effects (to the effects list), the serac's growing look and stump.
 - **Checks:** lint; `--peak`. Clean.
 
 ## To do: every note of 12 to 57 not done yet

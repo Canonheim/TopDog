@@ -841,6 +841,11 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 		var size := Vector3(0.6, 0.6, 0.3)
 		if d.has("size"):
 			size = Vector3(float(d.size[0]), float(d.size[1]), float(d.size[2]))
+		if at.z > HALF:
+			# NOTHING STANDS IN FRONT OF WHERE A CLIMBER CAN BE (Parker 11-12): a foreground piece
+			# (a snow fringe, a lip, a kerb) is made as a thin strip that misses the holds; its
+			# stand-in would be its whole box in front of the climb. Until it lands it is not drawn.
+			return null
 		var c := tone(a, str(d.get("tone", "rock2")))
 		n = _standin(str(d.model), size, c)
 		n.set_meta("standin", true)

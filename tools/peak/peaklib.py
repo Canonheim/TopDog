@@ -580,7 +580,8 @@ class Area:
         self.solid([(x0, top - depth), (x0 + t, top - depth), (x0 + t, top - 0.07), (x0, top - 0.07)], "wet")
         self.solid([(x1 - t, top - depth), (x1, top - depth), (x1, top - 0.07), (x1 - t, top - 0.07)], "wet")
 
-    def board(self, p0, p1, p2=None, throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=None, t=0.13, model="plank", kind="wood"):
+    def board(self, p0, p1, p2=None, throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=None, t=0.13, model="plank", kind="wood",
+              made=2.0, burst=None):
         """A LITTLE MESSED UP BOARD at the foot of a rock fall (Parker 11-12: "the rocks
         shouldnt despawn, they should bounce into the background off a little messed up
         board"). It lies from p0 (its end on the ground, toward the fall) up to p1 (its
@@ -590,11 +591,17 @@ class Area:
         moment it touches nothing and can knock nobody out. It settles `depth` behind the
         climb and is removed once it has dropped under y = `gone`, which must be somewhere
         hidden (behind the floor the board stands on). The board is solid grip wood, drawn
-        with `model` (a kit board 2 m long, its zero the middle of its underside)."""
+        with `model` (a kit board `made` m long, 2 for the kit's plank, its zero the middle of its
+        underside: it is stretched to the board). burst: the zones' burst kinds played where a
+        thrown thing is gone (a slab bursting in the hollow it is thrown into)."""
         b = {"a": _pt(p0), "b": _pt(p1), "throw": [_f(v) for v in throw], "depth": _f(depth),
              "gone": _f(gone if gone is not None else min(p0[1], p1[1]) - 1.0), "t": _f(t), "model": model}
         if kind != "wood":
             b["kind"] = kind  # (kind "ice": a lip of ice, slick, drawn in the area's ice)
+        if made != 2.0:
+            b["made"] = _f(made)
+        if burst:
+            b["burst"] = list(burst)
         if p2 is not None:
             b["c"] = _pt(p2)
         self.boards.append(b)

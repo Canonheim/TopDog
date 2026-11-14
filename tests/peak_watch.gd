@@ -2013,6 +2013,45 @@ func _w_g1slab(a: Array) -> void:
 	await shot("91_the_kicker_" + tag)
 
 
+## NOTE 91 (a9_dress 6c): where each thrown slab of 9.8 ends, against the hollow behind the rope's foot
+## (x -292.6 .. -287.6, y 864.2 .. 869.3). slabland:TAG
+func _w_slabland(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("9.8")
+	await secs(0.4)
+	stand(Vector2(-284.0, 846.2))
+	look(Vector2(-290.0, 865.5), 5.5)
+	var sp := _spawner_near(Vector2(-301.2, 880.4))
+	var seen := []  # [row, last position, highest y, printed]
+	var shots := 0
+	var t0 := pk.clock
+	while pk.clock - t0 < 30.0:
+		for row: Array in sp.live:
+			if float(row[2]) >= 0.0 and row[0] != null and seen.filter(func(s): return is_same(s[0], row)).is_empty():
+				seen.append([row, (row[0] as Node3D).position, (row[0] as Node3D).position.y, false])
+		for s: Array in seen:
+			var row: Array = s[0]
+			if row[0] != null and is_instance_valid(row[0]):
+				s[1] = (row[0] as Node3D).position
+				s[2] = maxf(float(s[2]), (s[1] as Vector3).y)
+				if shots < 2 and (s[1] as Vector3).y > 865.0 and float(row[3].y) < 0.0:
+					shots += 1
+					await shot("91_slab_into_the_hollow_%d_%s" % [shots, tag])
+			elif not bool(s[3]):
+				s[3] = true
+				var p: Vector3 = s[1]
+				var inside := p.x >= -292.6 and p.x <= -287.6
+				print("WATCH slabland %s: a thrown slab was gone at (%.2f, %.2f, z %.2f), its top %.2f: %s the hollow" % [tag, p.x, p.y, p.z, float(s[2]), "IN" if inside else "OUTSIDE"])
+				if shots < 3:
+					shots = 3
+					await shot("91_slab_bursts_in_the_hollow_" + tag)
+		await ticks(1)
+	print("WATCH slabland %s: %d slabs thrown in 30 s" % [tag, seen.size()])
+	look(Vector2(-288.0, 862.0), 8.0)
+	await secs(0.3)
+	await shot("91_the_hollow_and_the_kicker_" + tag)
+
+
 ## NOTES 89 and 70: wind. g1wind:TAG
 func _w_g1wind(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""
@@ -3080,6 +3119,19 @@ func _w_g3cave(a: Array) -> void:
 
 
 ## Every inside biome, one frame each: no grey-tan mountain card inside the mountain. gbody:TAG
+## The glacier's dress wired in: the lower crevasse, the cave, the upper level, the outside, the top. g9:TAG
+func _w_g9(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	for row in [["9.1", Vector2(-310.0, 795.0), 11.0, "crevasse"], ["9.4", Vector2(-305.0, 815.0), 13.0, "cave"],
+			["9.5", Vector2(-310.0, 830.0), 10.0, "upper"], ["9.7", Vector2(-283.0, 842.0), 10.0, "outside"],
+			["9.9", Vector2(-292.0, 874.0), 10.0, "top"]]:
+		pk.warp(str(row[0]))
+		await secs(1.5)
+		look(row[1], float(row[2]))
+		await secs(0.4)
+		await shot("a9_%s_%s" % [row[3], tag])
+
+
 func _w_gbody(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""
 	for row in [["1.7", Vector2(-219.0, 38.0), 11.0, "a1"], ["2.5", Vector2(-252.0, 115.0), 7.0, "a2"], ["3.9", Vector2(-326.0, 258.0), 10.0, "a3"],
