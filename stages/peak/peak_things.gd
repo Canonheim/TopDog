@@ -1240,6 +1240,10 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 					elif m.run:
 						var acc := float(mo.get("accel", 0.0))
 						m.v = speed if acc <= 0.0 else minf(speed, float(m.v) + acc * delta)
+						if mo.has("decel"):
+							# a gentle stop at the end of its road (note 82's zip line)
+							var left := maxf(0.0, total - float(m.dist))
+							m.v = minf(float(m.v), maxf(0.6, sqrt(2.0 * float(mo.decel) * left)))
 						var was_d := float(m.dist)
 						m.dist = float(m.dist) + float(m.v) * delta
 						if mo.has("hop") and was_d < float(m.get("hop_d", INF)) and float(m.dist) >= float(m.get("hop_d", INF)):

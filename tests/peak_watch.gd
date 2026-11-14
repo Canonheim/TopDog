@@ -2382,3 +2382,34 @@ func _w_g3wind78(a: Array) -> void:
 		await ticks(1)
 	await secs(0.3)
 	await shot("70_wind_to_the_fang_" + tag)
+
+
+## NOTE 82: the zip line ridden to its end. g3zip:TAG
+func _w_g3zip(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("8.7")
+	await secs(6.5)
+	var m: Dictionary = pk.things.movers["zip"]
+	var c := me()
+	var handle: Vector2 = (m.home as Vector2) + Vector2(0.0, -0.9)
+	put_limb(1, handle)
+	await ticks(2)
+	put_limb(1, handle)
+	await ticks(1)
+	c.attach(1, m.nodes[0])
+	var t0 := pk.clock
+	var shot_mid := false
+	while pk.clock - t0 < 6.0 and (bool(m.run) or float(m.dist) == 0.0):
+		var at: Vector2 = (m.home as Vector2) + (m.offset as Vector2)
+		look(at + Vector2(-2.0, -2.0), 5.0)
+		if not shot_mid and pk.clock - t0 > 1.4:
+			shot_mid = true
+			await shot("82_zip_riding_" + tag)
+		await ticks(1)
+	var end_at: Vector2 = (m.home as Vector2) + (m.offset as Vector2)
+	await secs(0.6)
+	await shot("82_zip_at_the_end_" + tag)
+	c.release_all()
+	await secs(2.0)
+	print("WATCH g3zip %s: the ride took %.1f s; the trolley ended at %s; let go, the climber is at %s (the deck: x -196..-190, top 720)" % [tag, pk.clock - t0 - 2.6, end_at, where()])
+	await shot("82_zip_let_go_" + tag)

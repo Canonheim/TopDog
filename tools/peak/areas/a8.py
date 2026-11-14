@@ -147,49 +147,37 @@ gondola("g2b", [E2_HI, E2_LO, W_LO, W_HI], 2.0, "loop", wr=0.9)
 A.challenge("8.2", "De Góndola a Góndola", (-228.4, 702.0), 4, "X",
             moves=[["fling", [-224.7, 694.0], [-218.6, 694.0], "F2"]])
 
-# ---------------------------------------------------------------- 8.3 El Cable: 13 m of bare cable
-# Line 2's car comes down its east leg (t = 0 .. 2.9 of every 6 s) with its boom tip at
-# x -206.7, y 698.3 falling to 692.5. The cable's frayed end hangs stiff beside it, 0.64 m
-# east, from 700.0 down to 695.6: in reach for the first 1.4 s of that fall.
-A.box(-206.0, 697.8, 0.12, 4.4, "iron")  # the frayed end (stiff)
-A.ledge(-206.5, -205.3, 700.3, "iron", t=0.25)  # the clamp plate over it: one breath, 1.2 m wide
-C0, C1 = (-206.0, 700.0), (-194.0, 705.0)  # the cable: 12 across, 5 up = 13.0 m (23 degrees)
-
-
-def on_cable(s):
-    L = math.dist(C0, C1)
-    return (C0[0] + (C1[0] - C0[0]) * s / L, C0[1] + (C1[1] - C0[1]) * s / L)
-
-
-# hand over hand, the body hanging under it. Two greased stretches, 1.6 m each: a full reach.
-for s0, s1, kind in ((0.0, 3.1, "iron"), (3.1, 4.7, "grease"), (4.7, 7.8, "iron"), (7.8, 9.4, "grease"), (9.4, 11.3, "iron")):
-    A.beam(on_cable(s0), on_cable(s1), 0.12, kind)
-# The solid cable stops at s = 11.3 (-195.6, 704.3), your legs already against pylon 2's landing;
-# its last 1.7 m, up onto the sheave, is a scenery wire so nobody hangs in the spokes.
-wire(on_cable(11.3), C1)
-A.challenge("8.3", "El Cable", (-205.9, 700.3), 4, "X",
-            moves=[["reach", [-206.7, 697.6], [-206.0, 697.8]],
-                   ["reach", list(on_cable(3.05)), list(on_cable(4.75))],
-                   ["reach", list(on_cable(7.75)), list(on_cable(9.45))]])
+# ---------------------------------------------------------------- 8.3 El Cable: one long jump
+# (Note 79, Parker 11-13: "this whole pole does not need to be here, remove it so it's just a
+# long jump".) The cable is gone, its five stretches, its frayed end and its clamp plate:
+# nothing to hold between line 2's car and pylon 2. The car comes down its east leg (t = 0
+# .. 2.9 of every 6 s) with its boom tip at x -206.7, y 698.3 falling to 692.5; from the tip
+# to the west end of pylon 2's landing (-196.0, 703.0) is 10.7 m across and 4.7 m up: a
+# release of about 6.8 m/s, the biggest kind of fling (F4), thrown from the boom. A miss
+# falls into La Garganta as the cable's did. (How the snapped cable is drawn, a short end
+# hanging from each pylon out of reach, is the area's design.)
+C0, C1 = (-206.0, 700.0), (-194.0, 705.0)  # (where the cable ran: the scenery lines below still use its ends)
+A.challenge("8.3", "El Cable", (-205.9, 700.3), 5, "X",
+            moves=[["fling", [-206.7, 698.3], [-196.0, 703.0], "F4"]])
 
 # ---------------------------------------------------------------- 8.4 El Pilon: pylon 2
 # Real legs, slick, from below the frame up to the landing. Above it the tower is a card
-# and you climb its fittings: a sheave, a brace, a sheave turning the other way, a rung, the head.
+# and you climb its fittings: a sheave, a sheave turning the other way, the head.
+# (Note 81, Parker 11-13: "remove these poles, the jump from the wheels is enough": the brace
+# and the rung are gone. The lower sheave turns up its east side and throws you across 3.7 m
+# of air to the upper; the upper throws you 2.8 m up to the head's underside. Whether 9 rpm
+# throws far enough is for play to show.)
 A.box(-194.0, 686.4, 0.3, 32.8, "scree")  # legs, y 670 .. 702.8
 A.box(-191.0, 686.4, 0.3, 32.8, "scree")
 A.ledge(-196.0, -190.6, 703.0, "iron", t=0.3)  # the landing, 5.4 m: the cable ends 1.6 m over its west end
 tower(-194.0, -191.0, 703.0, 719.4)
 A.wheel("sheave1", (-194.6, 705.8), 1.0, 9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28, model="cable_sheave")  # counter-clockwise: its west side goes DOWN
-A.beam((-193.8, 708.4), (-191.2, 707.6), 0.16, "iron")  # brace
 A.wheel("sheave2", (-190.9, 710.3), 1.0, -9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28, model="cable_sheave")  # clockwise: its east side goes DOWN
-A.beam((-194.5, 712.8), (-191.9, 712.8), 0.16, "iron")  # rung
 A.ledge(-194.8, -190.8, 714.5, "plank", t=0.3)  # the head: a 4 m rest under the station roof
-A.challenge("8.4", "El Pilón", (-194.7, 703.0), 3, "X",
+A.challenge("8.4", "El Pilón", (-194.7, 703.0), 4, "X",
             moves=[["reach", [-194.6, 703.0], [-194.6, 704.8]],
-                   ["reach", [-194.6, 706.8], [-193.8, 708.4]],
-                   ["reach", [-191.2, 707.6], [-190.9, 709.3]],
-                   ["reach", [-190.9, 711.3], [-191.9, 712.8]],
-                   ["reach", [-194.5, 712.8], [-194.8, 714.35]]])
+                   ["fling", [-193.6, 705.8], [-191.9, 710.3], "F3"],
+                   ["fling", [-190.9, 711.3], [-191.5, 714.2], "F3"]])
 
 # The station roof over the head, and the maintenance deck on its ridge (8.7 lands there).
 # The roof is slick and 35 degrees: what lands on it slides off into the void, and nobody
@@ -208,7 +196,10 @@ A.beam(RIDGE, (-187.6, 715.9), 0.3, "grease")
 # the fang's rib.
 CHAIRS = [(-188.5, 716.5), (-184.6, 713.9), (-180.7, 711.3), (-176.8, 708.7)]
 for i, (piv, ph) in enumerate(zip(CHAIRS, (0.0, 0.5, 0.25, 0.75))):
-    A.pendulum("chair%d" % (i + 1), piv, 3.2, 20.0, 4.0, phase=ph, bob=(1.2, 0.25), kind="plank", rod=0.12, rod_kind="iron", model="chair")
+    # (Note 80, Parker 11-13: "make these poles background not play space": only the seat can be
+    # touched; the pole is drawn by the chair's model, which the modelling run re-makes.)
+    A.pendulum("chair%d" % (i + 1), piv, 3.2, 20.0, 4.0, phase=ph, bob=(1.2, 0.25), kind="plank", rod=0.12, rod_kind="iron",
+               rod_solid=False, model="chair")
 A.challenge("8.5", "Sillas Voladoras", (-192.8, 714.5), 4, "X",
             moves=[["reach", [-190.8, 714.5], [-190.2, 713.4]],
                    ["reach", [-186.8, 713.4], [-185.5, 712.2]],
@@ -259,14 +250,19 @@ A.challenge("8.6", "El Colmillo", (-174.3, 702.9), 4, "X",
 #   then the void. So the window is the last 0.45 s of the ride.
 #   Hold on past the stop and you are hanging 4 m short of the deck with the swing you
 #   arrived with: one more chance, a 4 m fling. The trolley goes home 6 s later.
-Z0, Z1 = (-166.2, 728.1), (-186.0, 725.1)
+# (Note 82, Parker 11-13: "The zip line should go all the way instead of stopping".) Now it
+# runs on to over the middle of the deck and slows to a stop there (6 m/s2 at the end), its
+# handle 2 m over the planks: let go and stand. No timed release. (What is left as the
+# challenge, and how the end looks, are the area's design.)
+Z0, Z1 = (-166.2, 728.1), (-193.0, 722.9)
 A.mover("zip", Z0, [(box_pts(0.0, 0.0, 0.5, 0.22), "iron"), (box_pts(0.0, -0.45, 0.06, 0.9), "iron"), (box_pts(0.0, -0.9, 0.7, 0.12), "paint")],
-        {"type": "path", "pts": [list(Z0), list(Z1)], "speed": 9.0, "mode": "once", "trigger": "grab", "reset": 6.0, "accel": 30.0},
+        {"type": "path", "pts": [list(Z0), list(Z1)], "speed": 9.0, "mode": "once", "trigger": "grab", "reset": 6.0, "accel": 30.0,
+         "decel": 6.0},
         model="zip_trolley")
 A.ledge(-196.0, -190.0, 720.0, "plank", t=0.4)  # the maintenance deck: 6 m
-A.challenge("8.7", "Tirolesa", (-165.3, 725.4), 4, "X",
+A.challenge("8.7", "Tirolesa", (-165.3, 725.4), 3, "X",
             moves=[["reach", [-166.2, 725.4], [-166.2, 727.2]],
-                   ["fling", [-186.0, 724.2], [-193.4, 720.0], "F4"]])
+                   ["ride", list(Z0), list(Z1)]])
 
 # ---------------------------------------------------------------- 8.8 Contrapesos
 # Four blocks (1.6 x 1.2) on two cables 3.2 m apart, west of the deck: a 1.6 m gap between
@@ -401,8 +397,6 @@ for a, b in ((D_LO, E_LO), (D_HI, E_HI), (W_LO, E2_LO), (W_HI, E2_HI), (Z0, Z1),
     wire(a, b)
 for k in range(4):
     wire((EX_E[0] + 4.0, EX_E[1] + EX_GAP * k - 4.0 * EX_SLOPE), (EX_W[0] - 13.0, EX_W[1] + EX_GAP * k + 13.0 * EX_SLOPE))
-wire(Z1, (-189.5, 722.6), t=0.07)  # the zipline's broken end, hanging
-wire((-189.5, 722.6), (-190.2, 720.9), t=0.07)
 wire((-188.5, 716.6), (-175.2, 707.7))  # the chairlift's cable, roof eave to the fang
 for x in (XA, XB):
     wire((x, 721.0), (x, 755.8), z=-0.4, t=0.07)  # the counterweights' cables

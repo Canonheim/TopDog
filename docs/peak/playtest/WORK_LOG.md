@@ -1825,6 +1825,32 @@ in. Nothing played by a person.
   `_after.jpg`, both mid-gust). The fling from the bough to the porch is inside the old box
   and unchanged; not flown.
 
+## The fix run of 11-13, group 3: the cableway (a8: notes 79 to 82)
+
+- **Note 79, El Cable out.** Its five stretches (grease and all), the frayed end and the
+  clamp plate are gone; the scenery wire up onto the sheave went with them. 8.3 is one
+  fling from line 2's boom tip (-206.7, 698.3) to the west end of pylon 2's landing
+  (-196.0, 703.0): 10.7 m across, 4.7 m up, about 6.8 m/s, an F4; rated 5. Not flown.
+  Where a miss lands (La Garganta, as before) was not looked at again.
+  (`79_el_cable_before.jpg`, `_after.jpg`)
+- **Note 80, the chairs' poles.** `A.pendulum(..., rod_solid=False)`: the four chairs'
+  hangers have no collision; only the seats can be touched. The chair model still draws its
+  pole where it was (its re-made look, behind the climb, is the modelling run's). The
+  gondolas' hangers stay solid, as settled.
+- **Note 81, El Pilón's brace and rung out.** The climb is the landing, the lower sheave, a
+  throw to the upper sheave, a throw to the head (both rated F3 by the course's own check:
+  the lower one needs about 5.1 m/s). Rated 4 (was 3). Whether 9 rpm throws far enough
+  is untried. (`81_el_pilon_before.jpg`, `_after.jpg`)
+- **Note 82, the zip line goes all the way.** It runs on to over the middle of the
+  maintenance deck (-193.0, 722.9) and slows to a stop there (a new `decel` on paths,
+  6 m/s2), its handle 2 m over the planks: let go and stand. No timed release; rated 3 (was
+  4). The scenery cable now runs to the new end and its "broken end" is gone.
+  - Watched (`g3zip`): the ride takes 3.9 s and stops over the deck, the climber's feet
+    just over the planks. Letting go was not shown (the probe's hand re-gripped at once).
+  - `82_zip_riding_*`, `82_zip_at_the_end_*`, `82_zip_let_go_*` (before: the old stop, 4 m
+    short).
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

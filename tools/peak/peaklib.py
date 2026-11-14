@@ -401,11 +401,13 @@ class Area:
                                        math.degrees(math.atan2(p1[1] - p0[1], p1[0] - p0[0]))), kind))
         return self.mover(mid, at, shapes, {"type": "spin", "rpm": _f(rpm), "phase": _f(phase)}, **kw)
 
-    def pendulum(self, mid, pivot, length, amp, period, phase=0.0, bob=(1.2, 0.5), kind="iron", rod=0.14, rod_kind=None, **kw):
+    def pendulum(self, mid, pivot, length, amp, period, phase=0.0, bob=(1.2, 0.5), kind="iron", rod=0.14, rod_kind=None,
+                 rod_solid=True, **kw):
         """A swinging arm hung from `pivot`: a rod `length` long with a bob (w, h) at its end.
-        amp in degrees each side of straight down, period in seconds, phase 0..1."""
-        shapes = [(box_pts(0, -length / 2, rod, length), rod_kind or kind),
-                  (box_pts(0, -length, bob[0], bob[1]), kind)]
+        amp in degrees each side of straight down, period in seconds, phase 0..1.
+        rod_solid=False: the rod is not in the play space (only the bob can be touched)."""
+        shapes = ([(box_pts(0, -length / 2, rod, length), rod_kind or kind)] if rod_solid else []) + \
+                 [(box_pts(0, -length, bob[0], bob[1]), kind)]
         return self.mover(mid, pivot, shapes, {"type": "swing", "amp": _f(amp), "period": _f(period), "phase": _f(phase)}, **kw)
 
     def rope(self, rid, at, length, kind="rope", seg=0.5, bob=None, to=None, planks=0, anchor=None, slack=1.03):
