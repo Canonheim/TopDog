@@ -430,9 +430,10 @@ def dress(A):
     # Under each loose board: the empty socket where its bearer was, a pale scar under it.
     for x in (-178.9, -182.3, -183.6, -187.0):
         drawn("mine_socket_scarred", x, 4.8, (0.3, 0.7, 0.02), tone="back3", z=CAVE_WALL_Z + 0.01)
-    # The side tunnel the walk was built to reach, boarded shut, with its gangway's stub.
-    A.deco("mine_boarded_tunnel", -185.3, 5.8, z=-2.75, size=(1.8, 2.9, 0.4), tone="back")
-    A.deco("mine_gangway_stub", -185.3, 5.65, z=-2.1, size=(1.0, 0.2, 0.9), tone="back")
+    # THE DRIFT PORTAL (quality run, E7: reviewer 8.5 PASS, 11-14): the side drift the walk was built to reach,
+    # timbered, boarded, its gangway on the walk's own bearers (x -186.05 and -184.55), a cart left on its rail stub.
+    # In place of the old boarded tunnel and gangway stub. Origin: the middle of its foot.
+    A.deco("mina_drift_portal", -185.3, 5.65, z=-2.35, size=(4.09, 3.93, 2.10), tone="back")
     # The lower walk that fell, 6 m down: a row of empty sockets, two bearers, one length left.
     for x in (-178.6, -181.1, -183.6, -186.1):
         drawn("mine_socket_empty", x, -0.15, (0.3, 0.3, 0.02), tone="back3", z=CAVE_WALL_Z + 0.01)
@@ -443,7 +444,7 @@ def dress(A):
     mushrooms(-189.6, 0.28, -2.0)
     # Two lanterns on iron brackets in the wall, 3 m over the planks.
     wall_lantern(-174.6, 9.47, CAVE_WALL_Z)
-    wall_lantern(-185.3, 9.57, CAVE_WALL_Z)
+    hang(-183.85, 8.70, -2.30)  # (on the drift portal's own bracket, quality run E7)
     A.deco("papel_tatters", -184.5, 10.6, z=-2.85, size=(8.0, 1.0, 0.05), tone="accent")  # nailed along the wall
     # Drawn on the five nailed lengths' front faces: two rows of nail heads each. (The four
     # grey boards show none; their crack and lost corner are the game's breakable look.)
