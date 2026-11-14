@@ -7,12 +7,14 @@ DESIGN ONLY. Nothing here changes the game. This script reads the course files a
 system (../build.py, loaded as a module: its main() is never run) and writes ONLY into this folder.
 
 The layout in one place (every number a first guess unless it says "as today"):
-    the mine moves by (DX, DY) = (-59, -17); everything west of x -246 (its west wall, the frog's cave)
-    a further 6 m west, which widens the falls' cavern and the Sump (Parker's drawing, note 146);
+    the mine moves by (DX, DY) = (-59, -17), all of it by the same amount (Parker, 11-14 15:30: the 17 m drop
+    agreed; no widening, since the great falls' shaft is 6 m all the way down);
     the cart ride is 59 m longer and ends 17 m lower, at the mine's moved door;
-    the great falls are one column, x -303 to -297, centred on the well's own middle line (x -300),
+    the great falls are one 6 m shaft, x -303 to -297, centred on the well's own middle line (x -300),
     from the well's foot down through the Charco, the black waters' floor, the new section and the mine;
-    the new section, La Esclusa, fills x -303 to -226, y 73 to 90, under the black waters' east end.
+    the new section, La Esclusa, fills x -303 to -222, y 73 to 90, under the black waters' east end:
+    1.12 Los Barriles (a ladder straight up beside the falls, then the flume, whose barrels are kicked back
+    into the background at its west end, never into the falls) and 1.13 La Esclusa (the lock).
 """
 import copy, importlib.util, io, json, math, os, sys
 
@@ -35,7 +37,7 @@ PAL = {a: META["palettes"].get(OLD[a].get("palette", ""), {}) for a in OLD}
 
 # ================================================================== the moves
 DX, DY = -59.0, -17.0            # the mine: 59 m west (its slot centred under the well's middle, x -300), 17 m down
-WIDEN, WIDEN_X = -6.0, -246.0    # and everything west of x -246 (today's coordinates) a further 6 m west
+WIDEN, WIDEN_X = 0.0, -246.0     # (the first pages widened the west wall 6 m; Parker, 11-14 15:30: not with a 6 m shaft. Kept at 0.)
 
 
 def mv(x, y):
@@ -125,20 +127,26 @@ A0_KEEP["decos"] = [d for d in A0_KEEP["decos"] if d["at"][0] > -136.0]
 A0_KEEP["movers"] = []
 
 # ================================================================== the new section: La Esclusa
-FALLS = (-303.0, -297.0)        # the great falls' column (6 m, the mine's slot moved; middle x -300 = the well's middle)
-MINE_TOP = 73.0                 # the mine's roof, moved (today 90): the lip room's floor
-LIP_ROOM = (-297.0, 73.0, -284.5, 75.2)
-BED_LO, BED = 75.2, 75.7        # the flume's bed slab over the lip room; the water's bottom
+FALLS = (-303.0, -297.0)        # the great falls' shaft (6 m all the way down; middle x -300 = the well's middle)
+MINE_TOP = 73.0                 # the mine's roof, moved (today 90): the floor at La Cortina's top
+STRIP = (-297.0, -295.0)        # the climb, straight up beside the falls (Parker, 11-14 15:30)
+LADDER_X = -295.4               # the keepers' ladder, standing on the pier's top, bolted to the platform's face
+LADDER_RUNGS = [73.8, 74.55, 75.3, 76.8, 77.55, 79.05]   # every 0.75 m; two gone (76.05 and 78.3): 1.5 m reaches
+LIP_ROOM = (-295.0, 73.0, -284.5, 75.2)   # the low room under the platform and the flume's west end: La Cortina lets out here
+BED_LO, BED = 75.2, 75.7        # the flume's bed slab over the room; the water's bottom
 S = 77.2                        # the flume's surface
-FLUME = (-297.0, -264.5)        # its water, the lip at the west end
-RACE = (-297.0, -295.0)         # its last 2 m, where it quickens
-FLOW, RACE_FLOW = -1.0, -2.4    # m/s, west (today's pool ran 1.0 east)
+FLUME = (-290.5, -258.5)        # its water: the west end a wall under the platform, the kicker in front of it
+FLOW = -1.0                     # m/s, west (today's pool ran 1.0 east)
 CEIL_W, CEIL_E = 83.0, 86.0     # the black waters' rock starts here: west and east of x -292
-LANDING = 79.4                  # the two hanging landings' tops (today's Q6 117.4 over a 115 pool: 2.4 above the water, less 0.2)
+LANDING = 79.4                  # the landings' tops (today's Q6 117.4 over a 115 pool: 2.4 above the water, less 0.2)
 LANDING_T = 0.7
-WEST_LANDING = (-297.6, -292.0)
-EAST_LANDING = (-271.0, -264.5)
-QUAY = (-264.5, -251.0)
+WEST_LANDING = (-295.0, -290.5) # solid now: the platform on the flume's west end
+EAST_LANDING = (-260.4, -258.5) # hanging over the flume's head, then the quay
+QUAY = (-258.5, -251.0)
+OUT_RUNGS = [(-290.25, 77.9), (-290.25, 78.65)]          # two rungs up the platform's east face, out of the water
+KICKER = [(-287.6, 77.05), (-290.4, 78.25)]              # the tipping ramp's line: barrels run up it and are thrown up and back
+KICK_THROW = (-0.6, 4.5, -3.5)                           # first guess, like note 91's kicker (vx, vy, vz)
+CHUTE = (-291.4, -286.4, 78.6, 82.2)                     # the waste chute's mouth in the back wall, where they go
 GATE = (-251.0, -250.0)         # the lock's lower gate (its wicket 79.4 to 81.9)
 LOCK = (-250.0, -228.0)         # the chamber
 LOCK_FLOOR, LOCK_CEIL = 75.7, 86.0
@@ -158,15 +166,12 @@ DRY_RUNGS = [(-232.25, 86.8), (-232.25, 87.6)]
 # the barrels: speed, spacing, road length and count exactly as today (a2.py), mirrored to run west
 BARREL_SPEED = 0.55
 BARREL_GAPS = [3.0, 3.4, 2.9, 5.8, 3.1, 3.5, 2.9, 6.2]
-WATER_EDGE = FLUME[0]                       # -297: the lip
-LIP_X = round(WATER_EDGE - 2.2, 2)          # the end of the barrels' line (today 2.2 m past the water's end)
-LOOSE_X = round(WATER_EDGE - 0.85, 2)       # let loose here (today 0.85 m past it)
-ROAD = 26.8                                 # as today: cove to lip
-COVE_X = round(LIP_X + ROAD, 2)             # -272.4: born here, 7 m deep in the tunnel
+KICK_X = -288.6                             # the end of the barrels' line: let loose onto the kicker here
+ROAD = 26.8                                 # as today: cove to the end of the line
+COVE_X = round(KICK_X + ROAD, 2)            # -261.8: born here, 7 m deep in the tunnel
 BARREL_Y = round(S + 0.3, 2)                # as today: 0.3 over the surface
 EMERGE = 2.4
-ARCH = (-275.5, -270.0)
-CHAIN = (-297.6, round(LANDING - LANDING_T, 2), 4.4)   # the lip chain: x, top, length (its tail at 74.3)
+ARCH = (-264.55, -259.05)
 
 # 2.7, El Salto de la Cascada (the Charco, x -320.5 to -284, y 113 to 128, as today)
 CH_FLOOR, CH_S, CH_ROOF = 113.0, 115.0, 128.0
@@ -195,10 +200,11 @@ def hanging(x0, x1, y, kind="stone", t=LANDING_T):
 def section_air():
     from shapely.geometry import box as sbox
     from shapely.ops import unary_union
-    parts = [sbox(FALLS[0], MINE_TOP, FALLS[1], CEIL_W),
+    parts = [sbox(FALLS[0], MINE_TOP, STRIP[1], CEIL_W),                # the falls' shaft and the strip the ladder stands in
              sbox(*LIP_ROOM),
+             sbox(WEST_LANDING[0], LANDING, FLUME[0], CEIL_W),           # over the platform
              sbox(FLUME[0], BED, FLUME[1], CEIL_W),
-             sbox(EAST_LANDING[1], LANDING, GATE[0], CEIL_E),
+             sbox(FLUME[1], LANDING, GATE[0], CEIL_E),
              sbox(GATE[1], LOCK_FLOOR, LOCK[1], LOCK_CEIL),
              sbox(GATE[0], LANDING, GATE[1], LANDING + 2.5),          # the wicket
              sbox(SLOT[0], 84.0, SLOT[1], 89.4), sbox(DRY[0], 84.0, DRY[1], 89.4)]
@@ -232,10 +238,15 @@ def build_section():
     sol = _poly_solids(rock, "wet")
     # the pier between the slot and the dry shaft, from its foot at 84 (it was the mine's roof below 89.4)
     sol.append(box(PIER[0], 84.0, PIER[1], 89.4, "wet"))
-    # the lip room's floor: the pier's top given a pale coping (it is the mine's slick roof today), and the old lip's grip
+    # the pier's top given a pale coping (it is the mine's slick roof today): the ladder's foot
     sol.append(box(-297.0, MINE_TOP - 0.3, -295.0, MINE_TOP, "stone"))
-    # the landings, the quay, the lock's ledges and rungs
-    sol += hanging(WEST_LANDING[0], WEST_LANDING[1], LANDING)
+    # the keepers' ladder: only its rungs are solid (a real ladder: rails drawn)
+    for y in LADDER_RUNGS:
+        sol.append(box(LADDER_X - 0.25, y - 0.07, LADDER_X + 0.25, y + 0.07, "iron"))
+    # the platform's coping, the two rungs out of the water, the east landing, the quay, the lock's ledges and rungs
+    sol.append(box(WEST_LANDING[0], LANDING - 0.3, WEST_LANDING[1], LANDING, "stone"))
+    for x, y in OUT_RUNGS:
+        sol.append(box(x - 0.25, y - 0.07, x + 0.25, y + 0.07, "iron"))
     sol += hanging(EAST_LANDING[0], EAST_LANDING[1], LANDING)
     sol.append(box(QUAY[0], LANDING - 0.3, QUAY[1], LANDING, "stone"))
     sol.append(box(GATE[0], LANDING - 0.3, L0[1], LANDING, "stone"))          # the wicket's sill, into the lock (L0)
@@ -248,15 +259,15 @@ def build_section():
     sol.append(box(SLOT[0], 85.4, SLOT[1], 86.0, "iron"))                    # the upstream flap gate, shut (it swings down to open)
     zones = [{"type": "water", "rect": [FLUME[0], BED, FLUME[1], S], "surface": S},
              {"type": "water", "rect": [LOCK[0] - 0.0, LOCK_FLOOR, LOCK[1], LOCK_LOW], "surface": LOCK_LOW}]
-    movers = [{"at": [COVE_X, BARREL_Y], "shapes": [], "motion": {"type": "path", "pts": [[COVE_X, BARREL_Y], [LIP_X, BARREL_Y]]}}]
-    x = -276.5                                          # a moment in the rhythm: the barrels where they would be
-    for g in [0.0] + BARREL_GAPS[:6]:
+    movers = [{"at": [COVE_X, BARREL_Y], "shapes": [], "motion": {"type": "path", "pts": [[COVE_X, BARREL_Y], [KICK_X, BARREL_Y]]}}]
+    x = -265.6                                          # a moment in the rhythm: the barrels where they would be
+    for g in [0.0] + BARREL_GAPS[:7]:
         x -= g
-        if x < WATER_EDGE + 0.9:
+        if x < KICK_X + 0.4:
             break
         movers.append({"at": [round(x, 2), BARREL_Y], "shapes": [{"pts": [list(p) for p in BARREL], "kind": "wood"}], "motion": {}})
-    ropes = [{"at": [CHAIN[0], CHAIN[1]], "len": CHAIN[2]}]
-    return {"solids": sol, "zones": zones, "movers": movers, "ropes": ropes}
+    zones.append({"type": "bounce", "a": list(KICKER[0]), "b": list(KICKER[1])})   # drawn as the kicker's line
+    return {"solids": sol, "zones": zones, "movers": movers, "ropes": []}
 
 
 NEW_SEC = build_section()
@@ -320,8 +331,8 @@ def _starts():
                            "same start; the ride is %.0f m longer and stops at the mine's moved door" % (path_len(RIDE_NEW) - path_len(RIDE_OLD))))
     for ch in OLD["a1"]["challenges"]:
         STARTS.append((ch["id"], ch["name"], tuple(ch["anchor"]), mv(*ch["anchor"]), "moved with the mine"))
-    STARTS.append(("1.12", "Los Barriles (working number)", None, (-296.0, MINE_TOP), "new: on the pier's top under the flume's lip"))
-    STARTS.append(("1.13", "La Esclusa (working number)", None, (-249.3, LANDING), "new: on the wicket's sill inside the lock's lower gate"))
+    STARTS.append(("1.12", "Los Barriles", None, (-296.0, MINE_TOP), "new: on the pier's top at the foot of the ladder, beside the falls"))
+    STARTS.append(("1.13", "La Esclusa", None, (-249.3, LANDING), "new: on the wicket's sill inside the lock's lower gate"))
     for ch in OLD["a2"]["challenges"]:
         if ch["id"] == "2.7":
             STARTS.append(("2.7", "El Salto de la Cascada (was El Charco del Pozo)", tuple(ch["anchor"]), tuple(ch["anchor"]),
@@ -415,9 +426,8 @@ def run_checks():
             if p.intersects(col) and p.intersection(col).area > 1e-4:
                 b = p.bounds
                 hits.append("%s: %s at x %.1f to %.1f, y %.1f" % (name, s["kind"], b[0], b[2], b[3]))
-    out.append(("The great falls' column (x -303 to -297, y -45 to 176) against every surface you can hold",
-                ("%d crossing: " % len(hits) + "; ".join(hits) + ". It is meant: the crane's platform overhangs the lip by 0.6 m so its chain "
-                 "hangs beside the falls. Nothing else you can hold is in the falls' way.") if hits else "it touches none."))
+    out.append(("The great falls' shaft (x -303 to -297, y -45 to 176) against every surface you can hold",
+                ("%d crossings: " % len(hits) + "; ".join(hits)) if hits else "it touches none: the shaft is clear from the well's foot to the Sump."))
     near = []
     for name, sols in (("the mine", NEW_A1["solids"]), ("the new section", NEW_SEC["solids"]), ("the Charco's new pieces", NEW_CHARCO["solids"])):
         for s in sols:
@@ -438,12 +448,24 @@ def run_checks():
                 ropes_in.append("%s: rope at x %.2f, y %.1f to %.1f (%.2f m from the column)" % (name, x, r["at"][1] - r["len"], r["at"][1], dist))
     out.append(("Ropes and chains beside the falls", "; ".join(ropes_in) if ropes_in else "none"))
     # reach checks
-    out.append(("Reach: the curtain's top hold to the pier's top", "%.2f m (the climber reaches 2.13)" % math.dist((mvx(-235.6 + 0.11 * 13), 89.55 + DY), (-295.0, MINE_TOP))))
-    out.append(("Reach: the pier's top to the lip chain's tail", "%.2f m up, %.2f m out" % (CHAIN[1] - CHAIN[2] - MINE_TOP, FALLS[1] - CHAIN[0])))
-    out.append(("Clearance: a barrel under the landings", "%.2f m (a barrel's top at %.2f, the landings' undersides at %.2f; today 0.85)"
+    top_hold = (mvx(-235.6 + 0.11 * 13), 89.55 + DY)
+    gaps = [b - a for a, b in zip([MINE_TOP] + LADDER_RUNGS, LADDER_RUNGS + [LANDING])]
+    out.append(("Reach: the curtain's top hold to the pier's top, and on to the ladder", "%.2f m to the pier's coping (the climber reaches 2.13); standing on the "
+                "pier, the ladder's first rung is %.2f m up" % (math.dist(top_hold, (-295.0, MINE_TOP)), LADDER_RUNGS[0] - MINE_TOP)))
+    out.append(("Reach: the ladder", "%.1f m from the pier's top to the platform's coping, rungs %s m apart (the longest %.2f m); the ladder %.1f m from the falls' edge, "
+                "in their spray" % (LANDING - MINE_TOP, ", ".join("%.2f" % g for g in gaps), max(gaps), LADDER_X - FALLS[1])))
+    out.append(("Steps onto and off the barrels", "the platform's coping (y %.1f) down to a barrel's top (y %.2f): %.2f m; the last barrel in your plane (east end x %.1f) "
+                "to the east landing (x %.1f): %.1f m across, %.2f m up: as today" % (LANDING, BARREL_Y + 0.55, LANDING - BARREL_Y - 0.55, COVE_X - EMERGE + 0.9,
+                                                                                 EAST_LANDING[0], EAST_LANDING[0] - (COVE_X - EMERGE + 0.9), LANDING - BARREL_Y - 0.55)))
+    out.append(("Out of the water at the west end", "from the surface (y %.1f) to the first rung on the platform's east face (y %.2f): %.2f m"
+                % (S, OUT_RUNGS[0][1], OUT_RUNGS[0][1] - S)))
+    out.append(("The kicker", "a barrel let loose at x %.1f runs up the tipping ramp and is thrown up %.1f m (to y %.1f, under the roof at %.0f) and back at %.1f m a second "
+                "into the waste chute's mouth: it never reaches the falls (x -297), %.1f m west" % (KICK_X, KICK_THROW[1] ** 2 / 5.58, BARREL_Y + KICK_THROW[1] ** 2 / 5.58 + 0.55,
+                                                                                                CEIL_W, -KICK_THROW[2], KICK_X - FALLS[1])))
+    out.append(("Clearance: a barrel under the east landing", "%.2f m (a barrel's top at %.2f, the landing's underside at %.2f; today 0.85)"
                 % (LANDING - LANDING_T - (BARREL_Y + 0.55), BARREL_Y + 0.55, LANDING - LANDING_T)))
-    out.append(("Headroom: the lip room", "%.1f m (the climber is 1.8 m)" % (BED_LO - MINE_TOP)))
-    out.append(("Headroom: on a barrel, and on the west landing", "%.2f m and %.2f m under the ceiling at y %.0f" % (CEIL_W - (BARREL_Y + 0.55), CEIL_W - LANDING, CEIL_W)))
+    out.append(("Headroom: the room under the platform, where La Cortina lets out", "%.1f m (the climber is 1.8 m)" % (BED_LO - MINE_TOP)))
+    out.append(("Headroom: on a barrel, and on the platform", "%.2f m and %.2f m under the roof at y %.0f" % (CEIL_W - (BARREL_Y + 0.55), CEIL_W - LANDING, CEIL_W)))
     out.append(("Reach: the lock's highest water to the lip ledge", "%.1f m (the lip ledge's top at 90; floating at %.1f). The top rung is %.1f m under it, out of reach."
                 % (90.0 - LOCK_HIGH, LOCK_HIGH, 90.0 - DRY_RUNGS[-1][1])))
     out.append(("The lock's lift", "%.1f m in %.0f s (%.2f m a second), held %.0f s, down in %.0f s (%.2f m a second), then %.0f s at the bottom (added): an %.0f s "
@@ -451,7 +473,7 @@ def run_checks():
                 % (LOCK_HIGH - LOCK_LOW, RISE, (LOCK_HIGH - LOCK_LOW) / RISE, HOLD, DRAIN, (LOCK_HIGH - LOCK_LOW) / DRAIN, LOW_HOLD, CYCLE, 89.4 - LOCK_FLOOR,
                    90.0 - 2.1, reach_window())))
     loop = sum(BARREL_GAPS)
-    out.append(("The barrels", "8 barrels, %.2f m a second, a %.1f m loop, %.1f m of road from the tunnel to the lip, %.1f s unseen each loop: all as today. "
+    out.append(("The barrels", "8 barrels, %.2f m a second, a %.1f m loop, %.1f m of road from the tunnel to the kicker, %.1f s unseen each loop: all as today. "
                 "Water between them: %s m." % (BARREL_SPEED, loop, ROAD, (loop - ROAD) / BARREL_SPEED, ", ".join("%.1f" % (g - 1.8) for g in BARREL_GAPS))))
     out.append(("The cart ride", "%.1f m of road today, %.1f m after (%.1f m longer); its end goes from (-148.4, -11.55) to (-207.4, -28.55). "
                 "The new incline is 20 degrees; the steepest stretch today is 17 (after the hop)." % (path_len(RIDE_OLD), path_len(RIDE_NEW), path_len(RIDE_NEW) - path_len(RIDE_OLD))))
@@ -588,8 +610,6 @@ def overview(path, win=(-470.0, -62.0, 25.0, 190.0), size=(26.0, 13.6), dpi=110,
     ax.add_patch(Rectangle((FALLS[0], -45.0), FALLS[1] - FALLS[0], y1 + 45.0, facecolor="#cfe6ff", edgecolor="#ffffff", lw=0.6, alpha=0.30, zorder=6))
     for k, xx in enumerate((-302.2, -300.9, -299.4, -298.0)):
         ax.plot([xx, xx], [-45.0, y1], color="#ffffff", lw=0.5, alpha=0.5, ls=(0, (6 + k, 5)), zorder=6)
-    # the widened falls area at the mine's west wall
-    ax.add_patch(Rectangle((mvx(-248.0), -50.0), 6.0, 69.0 + 50.0, facecolor="none", edgecolor="#9be24a", lw=1.0, hatch="///", alpha=0.7, zorder=6))
     # the new section's outline
     xs, ys = section_shell().exterior.xy
     ax.plot(xs, ys, color="#ffd36a", lw=1.6, ls=(0, (6, 3)), zorder=7)
@@ -614,16 +634,16 @@ def overview(path, win=(-470.0, -62.0, 25.0, 190.0), size=(26.0, 13.6), dpi=110,
     if not close:
         say(-60, 20, "0 La Estación", "#e0b040", 13, "bold")
         say(-130, -24, "0.3 El Descenso: the tunnel runs on 59 m past today's end,\ndown a 20 degree incline, to the mine's moved door (x -211, y -29)", "#e0b040", 9.5)
-        say(-206, -47, "1 La Mina Vieja: moved 59 m west and 17 m down,\nits west wall a further 6 m west", "#c98a35", 11, "bold")
+        say(-206, -47, "1 La Mina Vieja: moved 59 m west and 17 m down,\nall of it by the same amount (not widened)", "#c98a35", 11, "bold")
         say(-200, 32, "today's mine (dashed, faint)", "#b9b0a4", 9)
-        say(-338, -36, "the falls' cavern\nwidened 6 m", "#9be24a", 9, ha="right")
         say(-222, 80, "La Esclusa (new): Los Barriles and the lock", "#ffd36a", 11, "bold")
         say(-460, 100, "2 Las Aguas Negras", "#7fb4ea", 13, "bold")
-        say(-292, 172, "the great falls: one column, x -303 to -297,\nfrom under the forge to the Sump", "#cfe6ff", 9.5)
+        say(-292, 172, "the great falls: one 6 m shaft, x -303 to -297,\nall the way down to the Sump", "#cfe6ff", 9.5)
         ax.annotate("", xy=(-240, 20), xytext=(-185, 37), arrowprops=dict(arrowstyle="->", color="#b9b0a4", lw=1.2), zorder=10)
     else:
-        say(-290, 81.4, "Los Barriles: the flume", "#ffd36a", 10, "bold")
-        say(-262, 84.6, "the quay", "#f1eadf", 9)
+        say(-286, 81.4, "1.12 Los Barriles: the flume", "#ffd36a", 10, "bold")
+        say(-257.8, 84.6, "the quay", "#f1eadf", 9)
+        say(-296.0, 81.4, "the ladder", "#f1eadf", 9, ha="center")
         say(-243, 83.6, "the lock", "#ffd36a", 10, "bold")
         say(-224.5, 91.5, "2.1's lip ledge", "#f1eadf", 9)
         say(-318, 71.0, "the mine's roof (moved)", "#c98a35", 9)
@@ -634,7 +654,7 @@ def overview(path, win=(-470.0, -62.0, 25.0, 190.0), size=(26.0, 13.6), dpi=110,
            "Note 146, close up: the new section La Esclusa, the falls' shaft and 2.7 (design only)")
     fig.text(0.04, 0.965, ttl, color="#f1eadf", fontsize=14, fontweight="bold")
     fig.text(0.04, 0.94, "Red dots: challenge starts after the change (grey: where the moved ones start today). Yellow: the new and remade ones. "
-             "Pale band: the great falls. Yellow dashes: the new section. Blue: water. Green hatch: the widening at the mine's west wall.",
+             "Pale band: the great falls. Yellow dashes: the new section. Blue: water.",
              color="#b9b0a4", fontsize=9.5)
     fig.savefig(path, facecolor=fig.get_facecolor())
     plt.close(fig)
@@ -892,165 +912,176 @@ def faint_today(*ids):
 
 
 def page_barriles():
-    win = [-305.5, 70.0, -262.0, 85.0]
+    win = [-305.5, 70.0, -255.0, 85.0]
     marks = falls_marks(70.0, 85.0) + [("text", [(-304.8, 84.1), "the great falls"], "notep"),
-                                       ("text", [(-262.4, 84.1), "the quay and the lock: east"], "noteo")]
+                                       ("text", [(-255.6, 84.1), "the quay and the lock: east"], "noteo")]
+    ladder = [LAD(LADDER_X, MINE_TOP, LANDING)]
     items = [
         it("backdrop", "The view down the great falls", [-16.0, -12.0],
-           "A painted card 12 m behind the falls, the height of the whole drop: the falls' column going down past the mine's lit curtain into mist "
-           "and dark, the mine's lanterns as warm dots far below on its east side, and at the top the falls coming out of the black waters' floor. "
-           "The one place where you see the whole of the great falls at once. The same card carries on down behind the mine's throat.",
+           "A painted card 12 m behind the falls, the height of the whole drop: the falls' shaft going down past the mine's lit curtain into mist "
+           "and dark, the mine's lanterns as warm dots far below, and at the top the falls coming out of the black waters' floor. You climb the "
+           "ladder with it at your shoulder. The same card carries on down behind the mine's throat.",
            [R(-305.3, 70.2, -297.3, 82.8, "dark"), L(-304.5, 82.6, -304.5, 70.4, "mark"), L(-302.8, 82.6, -302.8, 70.4, "mark"),
             L(-301.1, 82.6, -301.1, 70.4, "mark"), L(-299.4, 82.6, -299.4, 70.4, "mark")], tag=[-305.0, 76.0]),
         it("backdrop", "The vaults going back", [-16.0, -12.0],
            "Seen through the arcade's arches: rows of brick vaults going back into the dark, the flume's water running away under them as a channel "
-           "that catches the lanterns, each row darker and smaller, and a lantern speck at the far end. A flat painted card, the house style.",
-           [arch(-291.2, -287.6, 77.2, 79.6, "line"), arch(-284.7, -281.1, 77.2, 79.6, "line"), arch(-278.2, -275.8, 77.2, 79.0, "line"),
-            arch(-268.6, -265.2, 77.2, 79.6, "line"), C(-283.0, 78.4, 0.08, "light")], tag=[-283.0, 80.6]),
+           "that catches the lanterns, each row darker and smaller, a lantern speck at the far end. A flat painted card, the house style.",
+           [arch(-284.7, -281.1, 77.2, 79.6, "line"), arch(-278.2, -274.6, 77.2, 79.6, "line"), arch(-271.7, -268.1, 77.2, 79.6, "line"),
+            C(-276.4, 78.4, 0.08, "light")], tag=[-276.4, 80.6]),
         it("set", "The flume's arcade", [-2.6, -2.2],
            "The flume's back wall is a brick arcade: piers 1 m wide every 6.5 m, round arches between them, cut stone in long courses below the "
-           "springing, iron mooring rings let into the piers at the waterline, and the brick vault of the roof overhead, cracked along its crown with "
-           "a dark seep line. So the wall is a place with depth, not a slab.",
-           [R(-293.5, 77.2, -292.5, 83.0, "pale"), R(-287.0, 77.2, -286.0, 83.0, "pale"), R(-280.5, 77.2, -279.5, 83.0, "pale"),
-            R(-266.4, 77.2, -265.4, 83.0, "pale"), L(-297.0, 82.4, -264.5, 82.4, "line")], tag=[-286.5, 81.6]),
+           "springing, iron mooring rings at the waterline, and the brick vault of the roof overhead, cracked along its crown with a dark seep line.",
+           [R(-286.5, 77.2, -285.5, 83.0, "pale"), R(-280.0, 77.2, -279.0, 83.0, "pale"), R(-273.5, 77.2, -272.5, 83.0, "pale"),
+            R(-267.0, 77.2, -266.0, 83.0, "pale"), L(-290.5, 82.4, -258.5, 82.4, "line")], tag=[-279.5, 81.6]),
         it("set", "The barrels' tunnel", [-7.0, -1.3],
-           "A brick arch at the waterline in the back wall, 5.5 m wide, a sluice gate jammed half raised in its mouth, black inside. Behind it a tunnel "
-           "runs back and up into the rock to the bypass that brings the river down past the lock. Each barrel is born 7 m back in it, where no light "
-           "reaches, and drifts forward out of the dark into your plane over its first 2.4 m. You never see one appear (note 114).",
-           [arch(-275.5, -270.0, 75.7, 78.8, "dark"), R(-275.1, 79.5, -270.4, 81.0, "pale")], tag=[-272.7, 77.9]),
+           "A brick arch at the waterline in the back wall at the flume's head, 5.5 m wide, a sluice gate jammed half raised in its mouth, black "
+           "inside. Behind it a tunnel runs back and up to the bypass that brings the river down past the lock. Each barrel is born 7 m back in it, "
+           "where no light reaches, and drifts forward out of the dark into your plane over its first 2.4 m. You never see one appear (note 114).",
+           [arch(ARCH[0], ARCH[1], BED, 78.8, "dark"), R(ARCH[0] + 0.4, 79.5, ARCH[1] - 0.4, 81.0, "pale")], tag=[-261.8, 77.9]),
+        it("set", "The waste chute", [-8.0, -1.3],
+           "Over the flume's west end, a brick-lined mouth in the back wall, black inside, where the barrel men tipped broken barrels away down a "
+           "chute into the dark. Every barrel that reaches the end of the flume now goes up the tipping ramp and is flung back into it, tumbling out "
+           "of sight with a hollow boom. None reaches the great falls (Parker, 11-14).",
+           [arch(CHUTE[0], CHUTE[1], CHUTE[2], CHUTE[3] - 2.5, "dark")], tag=[-288.9, 81.0]),
         it("things", "The broken crane", [-3.4, -2.4],
-           "The hero piece. The company's barrel crane, still standing on its platform at the head of the falls: a riveted iron post, its jib snapped "
-           "and hanging out over the falls at a slant with the pulley still on it, its hook long gone down the falls. Behind the climb, so it covers "
-           "nothing, and lit by the lantern on its post. It says what this place was for: barrels came along the flume and were swung down to the mine.",
-           [R(-296.1, 79.4, -295.5, 82.6, "pale"), P([[-295.8, 82.4], [-302.6, 79.7], [-302.7, 80.05], [-295.8, 82.8]], "pale"), C(-302.4, 79.55, 0.32, "line")],
-           tag=[-299.2, 81.7]),
+           "The hero piece. The company's barrel crane, still on the platform at the head of the falls: a riveted iron post, its jib snapped and "
+           "hanging out over the falls at a slant with the pulley still on it, its hook long gone. Behind the climb, so it covers nothing, and lit "
+           "by the lantern on its post. It says what this place was for: barrels came along the flume and were swung down to the mine. Now they go "
+           "into the chute instead.",
+           [R(-293.6, 79.4, -293.0, 82.6, "pale"), P([[-293.3, 82.4], [-301.8, 79.9], [-301.9, 80.25], [-293.3, 82.8]], "pale"), C(-301.6, 79.7, 0.32, "line")],
+           tag=[-298.0, 81.7]),
         it("things", "Lanterns", [-2.3, -2.1],
-           "Works lanterns on brackets: one on the crane's post so the lip and its chain are lit, one on each of two piers, one over the east landing. "
-           "Teal and steady (note 17: nothing in this biome's light pulses).",
-           [C(-295.0, 82.0, 0.17, "light"), C(-286.5, 81.5, 0.17, "light"), C(-280.0, 81.5, 0.17, "light"), C(-268.0, 81.9, 0.17, "light")], tag=[-280.0, 82.3]),
+           "Works lanterns on brackets, teal and steady (note 17): one on the crane's post so the ladder is lit, one on each of two piers, one over "
+           "the east landing.",
+           [C(-292.6, 82.0, 0.17, "light"), C(-279.5, 81.5, 0.17, "light"), C(-266.5, 81.5, 0.17, "light"), C(-257.6, 81.9, 0.17, "light")], tag=[-266.5, 82.3]),
         it("things", "The barrel men's things", [-2.4, -1.6],
-           "On the east landing's back wall: a rack of boat hooks for fishing barrels out, a chalk tally board of barrels counted (the last column never "
-           "finished), and a coil of rope on a peg. Small, dry and pale, so the landing reads as the place people stood.",
-           [R(-269.4, 79.4, -268.7, 81.8, "pale"), R(-268.3, 80.3, -267.2, 81.4, "pale"), C(-266.4, 80.4, 0.3, "line")], tag=[-268.0, 82.5]),
+           "On the quay's back wall by the east landing: a rack of boat hooks for fishing barrels out, a chalk tally board of barrels counted (the "
+           "last column never finished), a coil of rope on a peg. Small, dry and pale: the place people stood.",
+           [R(-257.9, 79.4, -257.2, 81.8, "pale"), R(-256.8, 80.3, -255.7, 81.4, "pale")], tag=[-256.6, 82.5]),
+        it("climb", "The keepers' ladder", [-0.4, 0.4],
+           "An iron ladder standing on the pier's top and bolted up the platform's west face, 1.6 m right of the falls, in their spray: 6.4 m from "
+           "the pier to the platform, rungs every 0.75 m, two of them rusted away (1.5 m reaches). A real ladder: rails drawn, only the rungs held. "
+           "It is how the keepers came down to the mine, and it is the way up: no barrels pass it (Parker, 11-14).",
+           ladder, tag=[-294.4, 76.0]),
         it("climb", "The curtain's top and the pier's coping", [-1.2, 1.2],
-           "La Cortina lets out at the top of its dry shaft, as today. Off the top row there are now two ways: east onto the old lip's grip (a rest "
-           "under the flume, x -291 to -284.5), or 1.9 m west onto the top of the pier between the dry shaft and the falls' slot, which gets a pale "
-           "stone coping (it is the mine's slick roof today). Los Barriles starts on the pier.",
-           [R(-297.0, 72.7, -295.0, 73.0, "pale"), R(-291.0, 72.4, -284.5, 72.7, "pale")], tag=[-296.0, 71.9]),
-        it("climb", "The lip chain", [-0.3, 0.3],
-           "The crane's hoist chain, still shackled to an iron bracket under the platform's west edge: 4.4 m of real chain, its tail 1.3 m over the "
-           "pier's top and 0.6 m out over the falls. It is the way up from the mine, and it is the great falls' one last chance for anyone the water "
-           "takes over the lip (law 7). Barrels go past it: climb it after one has gone over.",
-           [R(-297.9, 78.5, -297.3, 78.75, "pale")], tag=[-298.6, 76.4]),
-        it("climb", "The west landing: the crane's platform", [-1.2, 1.2],
-           "A cut stone slab on two iron beams out of the arcade's pier, 5.6 m long, top 2.2 m over the water, its west end 0.6 m out over the lip. "
-           "The pale coping is the part you stand on, as everywhere in the works. The barrels pass under it with 0.65 m to spare.",
-           [R(-296.4, 78.45, -296.1, 78.7, "pale"), R(-293.2, 78.45, -292.9, 78.7, "pale")], tag=[-294.6, 80.2]),
-        it("climb", "The lip and the race", [-1.2, 1.2],
-           "A worn stone sill at the flume's west end with white water breaking on it. Over its last 2 m the flume quickens (2.4 m a second, first "
-           "guess) and is painted as white water, so a barrel leaves the lip moving and arcs out into the falls instead of sliding down the face, and "
-           "anyone in the water can see where it is taking them.",
-           [R(-297.4, 75.2, -297.0, 75.75, "pale"), L(-297.0, 77.12, -295.0, 77.12, "mark")], tag=[-296.0, 76.5]),
+           "La Cortina lets out at the top of its dry shaft, as today, into a low room under the platform (x -295 to -284.5, 2.2 m tall, open to the "
+           "falls on its west side). Off the top row, 1.9 m west onto the top of the pier between the dry shaft and the falls' slot, which gets a "
+           "pale stone coping (it is the mine's slick roof today). The ladder's foot is there; Los Barriles starts there. The room's east end, the "
+           "old lip's grip, is a rest.",
+           [R(-297.0, 72.7, -295.0, 73.0, "pale"), R(-291.0, 72.4, -284.5, 72.7, "pale")], tag=[-288.0, 74.2]),
+        it("climb", "The platform", [-1.2, 1.2],
+           "The flume's west end: a cut stone platform 4.5 m long on the end wall, its pale coping at y 79.4, where the crane stands. You step off "
+           "its east edge down onto a barrel as one comes up to the kicker, 1.35 m down. Two iron rungs on its east face, out of the water, for "
+           "anyone the current brings back to the end.",
+           [R(WEST_LANDING[0], LANDING - 0.3, WEST_LANDING[1], LANDING, "pale")], tag=[-292.6, 78.4]),
+        it("climb", "The kicker", [-1.2, 1.2],
+           "The barrel men's tipping ramp: a worn stone ramp rising out of the water against the end wall, iron-shod, with white water on it. A "
+           "barrel drifting onto it is let loose and thrown up 3.6 m and back into the waste chute (first guess), as the glacier's ice slabs are "
+           "kicked into their cave (note 91). It throws barrels only; a climber the current brings to it is held against the end wall by the water "
+           "and climbs out by the rungs.",
+           [P([[-290.5, BED], [-287.4, BED], [-287.4, 76.3], [-290.5, 77.9]], "pale")], tag=[-288.6, 76.4]),
         it("climb", "The barrels", [-0.9, 0.9],
-           "As today: eight, each with two iron hoops and the company's pug branded on its ends, drawn on. Same speed, same spacing, now running west. "
-           "At the lip each tips over and goes down the great falls, tumbling past La Cortina into the Sump, where it sinks.",
-           [R(-283.4, 77.0, -283.2, 77.95, "pale"), R(-282.4, 77.0, -282.2, 77.95, "pale")], tag=[-282.8, 76.7]),
+           "As today: eight, two iron hoops each and the company's pug branded on their ends, drawn on. Same speed, same spacing, now running west, "
+           "right to left, against you.",
+           [R(-276.0, 77.0, -275.8, 77.95, "pale"), R(-275.0, 77.0, -274.8, 77.95, "pale")], tag=[-275.4, 76.7]),
         it("climb", "The east landing", [-1.2, 1.2],
-           "The same slab on beams over the flume's head, 6.5 m long, 1.4 m east of where the barrels come into your plane, as today's west ledge "
-           "was. It runs on east as the quay.",
-           [R(-270.5, 78.45, -270.2, 78.7, "pale"), R(-265.3, 78.45, -265.0, 78.7, "pale")], tag=[-267.8, 80.4]),
+           "A cut stone slab on beams over the flume's head, 1.4 m east of where the barrels come into your plane, as today's west ledge was. It "
+           "runs on east as the quay.",
+           [R(-260.0, 78.45, -259.7, 78.7, "pale")], tag=[-259.4, 80.4]),
         it("fore", "A low lip of wet rock", [1.6, 2.6],
            "Along the very bottom of the frame, below the lowest floor: a dark ragged lip of the rock the flume is cut in, with a few wet ferns. "
-           "Nothing in front of the open water or the falls.",
-           [P([[-305.5, 70.0], [-305.5, 70.8], [-298.0, 71.3], [-288.0, 70.9], [-276.0, 71.4], [-262.0, 71.0], [-262.0, 70.0]], "dark")], tag=[-280.0, 70.6]),
+           "Nothing in front of the ladder, the open water or the falls.",
+           [P([[-305.5, 70.0], [-305.5, 70.8], [-298.0, 71.3], [-288.0, 70.9], [-276.0, 71.4], [-255.0, 71.0], [-255.0, 70.0]], "dark")], tag=[-276.0, 70.6]),
     ]
     moves = [
         ["Off La Cortina's top", "the top row's west staple, x -293.2, y 72.55", "the pier's coping, x -295.0, y 73.0", "1.9 m", "reach"],
-        ["To the lip chain", "the pier's top", "the chain's tail, x -297.6, y 74.3", "1.3 m up, 0.6 m out over the falls", "reach"],
-        ["Up the chain", "y 74.3", "its bracket, y 78.7", "4.4 m, about 3 to 4 s", "climb, after a barrel has gone over: one tips past the chain's top 2.5 m every 5 to 11 s"],
-        ["Onto the west landing", "the chain's top", "the landing's coping, y 79.4", "0.7 m up", "reach"],
-        ["Down onto a barrel", "the landing's east end, x -292.0", "a barrel's top, y 78.05", "1.35 m down", "step, as from today's east ledge"],
+        ["Up the ladder", "the pier's top, y 73.0", "the platform's coping, y 79.4", "6.4 m; rungs 0.75 m apart, two gaps of 1.5 m",
+         "climb, beside the falls; nothing comes down it"],
+        ["Down onto a barrel", "the platform's east edge, x -290.5", "a barrel's top, y 78.05, as it comes up to the kicker", "1.35 m down",
+         "step, while the barrel is still a few metres short of the kicker (at 0.55 m a second it moves its own length in 3.3 s)"],
         ["Barrel to barrel, east", "the first barrel", "the last", "water between them 1.2, 1.6, 1.1, 4.0, 1.3, 1.7, 1.1 and 4.4 m",
          "four stretches, two lunges, two swims against 1.0 m a second: as today"],
-        ["Off the last barrel", "a barrel just come into your plane, x -274.8 or west of it", "the east landing, x -271.0, y 79.4",
+        ["Off the last barrel", "a barrel just come into your plane, x -264.2 or west of it", "the east landing, x -260.4, y 79.4",
          "2.9 m across, 1.35 m up", "lunge or a short fling (F1): today's last move onto the west ledge, mirrored"],
-        ["Fall in", "the water", "the lip, x -297", "carried 1.0 m a second, 2.4 in the last 2 m",
-         "the lip chain is the last chance; past it you ride the great falls 121 m down to the Sump (a ride, never a fall card: note 147)"],
+        ["Fall in", "the water", "the end wall, x -290.5", "carried 1.0 m a second", "held against the end by the current; out by the two rungs onto the "
+         "platform, and start the crossing again. Mind the barrels arriving at the kicker beside you"],
+        ["Fall off the ladder", "the ladder", "the great falls", "", "a ride all the way down to the Sump (note 147)"],
     ]
     return {
-        "slug": "los_barriles", "h1": "Challenge 1.12 (working number): Los Barriles",
+        "slug": "los_barriles", "h1": "Challenge 1.12: Los Barriles",
         "place": ("The company's barrel flume. A stone channel 32 m long under the black waters' east end, built to carry barrels west from the lock "
                   "to a crane at the head of the great falls, which swung them down to the mine. The crane broke and was never mended. The barrels "
-                  "still come: they drift out of the dark tunnel at the flume's east end, float west along it, and at the lip go over into the great "
-                  "falls one after another. You come up out of the mine beside that lip, climb the crane's old chain to its platform, and cross the "
-                  "flume east, barrel to barrel, against them. The water runs west into the falls; fall in and it takes you over the lip and down "
-                  "the falls to the Sump."),
-        "before": [("What did not fit, and what changed", "<p>%s</p>" % B.esc(
-            "The pitch had the mine let out along a short passage east into the new section. That cannot reach the flume's west end. La Cortina's "
-            "dry shaft is 2 m east of the falls' slot (as in the mine today), so it comes up under the flume's last metres, below its water. A passage "
-            "east from there runs under the flume, and every way up from below to the flume's west end crosses the flume's water or the line the "
-            "barrels fall down. So the mine lets out where it always did, at the top of its dry shaft, into a low room under the flume's lip, and the "
-            "way on is up the crane's chain beside the lip, between barrels. The chain is also the great falls' one last chance, as law 7 wants. If a "
-            "climb timed against the barrels is wrong for the start, the other way is for the barrels to sink back into the dark at the lip instead "
-            "of tipping over, which goes against note 21 and note 146: see the questions."))],
+                  "still come: they drift out of the dark tunnel at the flume's head, float west along it, and at its end run up the barrel men's "
+                  "old tipping ramp and are flung back into the waste chute, booming away into the dark. You come up out of the mine beside the "
+                  "falls, climb the keepers' ladder in their spray to the crane's platform, and cross the flume east, barrel to barrel, against them."),
+        "before": [("What changed after Parker's answers (11-14 15:30)", ul([
+            "The barrels no longer go over a lip into the great falls. At the flume's west end a kicker throws each one back into the background, into "
+            "the waste chute, like the glacier's slabs (note 91).",
+            "So the flume's west end no longer has to reach the falls, and the way up is a plain climb straight up beside the falls: the keepers' "
+            "ladder, 6.4 m, in a 2 m strip between the falls and the platform. No barrel passes it: the crane's chain and its barrel timing are gone.",
+            "The flume's water now runs from x -290.5 to -258.5; its barrels' road is as today (26.8 m), from the tunnel at x -261.8 to the kicker at x "
+            "-288.6. The quay beyond it is 7.5 m (it was 13.5).",
+            "A fall into the flume no longer goes down the falls: the current holds you against the end wall and you climb out onto the platform. "
+            "A fall off the ladder goes into the falls and rides them to the Sump (note 147)."]))],
         "keep": [
             "The barrels exactly as today: eight, 0.55 m a second, the written gaps 3.0, 3.4, 2.9, 5.8, 3.1, 3.5, 2.9 and 6.2 m round a 30.8 m loop, "
-            "26.8 m of it on the water, 7.3 s unseen each loop. Only their direction changes: east to west (note 146).",
+            "26.8 m of it on the water, 7.3 s unseen each loop. They run right to left, east to west, against you (note 146).",
             "Two of the eight gaps are swum, as today.",
-            "Their birth hidden deep in a dark tunnel (note 114), and their end: they go over the lip and fall. They never vanish on screen (note 21).",
+            "Their birth hidden deep in a dark tunnel (note 114); and their end seen: they are flung into the waste chute, they never vanish on screen (note 21).",
             "The current: 1.0 m a second, as today's pool, now running west.",
-            "A hanging landing at each end, 2.2 m over the water, as today's two ledges; the barrels pass under the west one as they passed under the old east one.",
-            "Fall in and you go over the lip, down the great falls, to the Sump.",
+            "A landing at each end, 2.2 m over the water, as today's two ledges.",
         ],
         "moves": moves,
         "after_moves": [("The barrels' spacing, as written today", rhythm_strip() + "<p class=\"sub\">%s</p>" % B.esc(
             "The water between each barrel and the next, round the loop. Yellow: a plain stretch (about 1.3 m of water is a stretch: the "
-            "work log's measurement). Orange: a lunge. Red: a swim against the current. A barrel takes 49 s to float the flume, so from the pier "
-            "you can watch several coming and pick your moment."))],
+            "work log's measurement). Orange: a lunge. Red: a swim against the current. A barrel takes 49 s to float the flume, so from the "
+            "platform you can watch several coming and pick your moment."))],
         "figures": [{"win": win, "faint": faint_today(), "bold": [(NEW_A1, PAL["a1"]), (NEW_A2, PAL["a2"]), (NEW_SEC, PAL["a2"])], "marks": marks,
-                     "screen": [-285.5, 78.5], "climbers": [(-296.0, 73.0)],
-                     "caption": "From the side. The dashed box is one screen of the close camera. The climber stands on the pier where Los Barriles starts; "
-                                "the chain hangs beside the falls above him. Faint underneath: today's mine, whose throat and lip were here."}],
+                     "screen": [-283.5, 78.5], "climbers": [(-296.0, 73.0)], "maxw": 860.0,
+                     "caption": "From the side. The dashed box is one screen of the close camera. The climber stands on the pier at the ladder's foot, the falls "
+                                "beside him. The green line is the kicker's ramp. Faint underneath: today's mine, whose throat and lip were here."}],
         "items": items,
         "explains": [
-            ["The pier's coping", "The top of the pier between the falls' slot and the curtain's dry shaft", "The crane's platform over it, the falls beside it"],
-            ["The lip chain", "The crane's hoist chain, shackled to the platform's edge", "The broken crane on the platform, its jib hanging over the falls"],
-            ["The west landing", "The crane's platform", "The crane's post, the beam ends under the slab"],
-            ["The barrels", "The company's barrels, coming down from the river by the bypass", "The tunnel they come out of; the falls they go over"],
+            ["The pier's coping", "The top of the pier between the falls' slot and the curtain's dry shaft", "The ladder's foot; the falls beside it"],
+            ["The keepers' ladder", "The keepers' way down to the mine", "The platform it is bolted to; the crane above"],
+            ["The platform", "Where the crane stood", "The crane, broken; its post and lantern"],
+            ["The barrels", "The company's barrels, coming down from the river by the bypass", "The tunnel they come out of; the chute they are flung into"],
+            ["The kicker", "The barrel men's tipping ramp", "The waste chute's black mouth over it"],
             ["The water", "The flume: a stone channel that took barrels to the crane", "The arcade, and the painted vaults going back"],
             ["The east landing", "The quay's end, where the barrel men stood", "The boat hooks, the tally board, the rope"],
         ],
         "pieces": [
-            ["Broken crane: post, snapped jib, pulley", "post 0.6 by 3.2 m, jib 7.5 m", "1", "Background (hero)", "new"],
+            ["Broken crane: post, snapped jib, pulley", "post 0.6 by 3.2 m, jib 8.5 m", "1", "Background (hero)", "new"],
             ["Arcade pier with its arch, mooring ring and course lines", "1 m wide, 5.8 m tall, 6.5 m bays", "4", "Background (set)", "new; the black waters' brick arch for the arches"],
             ["Barrel tunnel: arch, sluice gate half raised, deep black tunnel behind", "5.5 m wide, 7 m deep", "1", "Background (set)",
              "note 114's re-make of aguas_barrel_cove, moved here"],
+            ["Waste chute: brick-lined mouth, black, a chute going back", "5 m wide, 8 m deep", "1", "Background (set)", "new"],
+            ["Tipping ramp, iron-shod, with white water", "3.1 m", "1", "Play space", "new; the game's kicker (the mine's board, note 91's ice lip)"],
+            ["Keepers' ladder: iron, two rungs gone", "6.4 m", "1", "Play space", "kit: the mine's iron ladder (A.ladder), bolted"],
+            ["Platform: cut stone, pale coping, two rungs on its east face", "4.5 m", "1", "Play space", "kit: the works' coping and rungs"],
             ["Painted vaults going back", "far card 30 m by 8 m", "1", "Backdrop", "new"],
             ["The view down the great falls", "far card 8 m wide here, 120 m tall down the mine", "1", "Backdrop", "new"],
-            ["Hanging landing: cut stone slab on two beam ends", "5.6 m and 6.5 m", "2", "Play space", "kit: aguas_charco_landing_east and _west, lengthened"],
+            ["Hanging landing: cut stone slab on beam ends", "1.9 m, then the quay", "1", "Play space", "kit: aguas_charco_landing_west, re-cut"],
             ["Barrel", "1.8 by 1.1 m", "8", "Play space", "aguas_barrel, as today"],
-            ["Chain with edge bracket and shackle", "4.4 m", "1", "Play space", "kit: the works' chain and aguas_chain_shackle"],
-            ["Lip sill with white water", "0.4 m", "1", "Play space", "new, small"],
             ["Pier coping", "2 m", "1", "Play space", "kit: the works' stone coping"],
             ["Works lantern, teal", "0.3 m", "4", "Background", "kit"],
             ["Boat hook rack, tally board, rope coil", "small", "1 each", "Background", "rope coil from the kit; rack and board new"],
         ],
-        "effects": ["The spill over the lip as 3D falling water (note 111), joining the great falls' sheet with spray.",
-                    "The race's white water over the last 2 m.", "Mist rising out of the falls' column past the landing.",
-                    "A hollow knock and a splash as each barrel tips over the lip, so you hear the rhythm too."],
-        "first": ["The race: 2.4 m a second over the flume's last 2 m.", "Each barrel let loose with the race's speed, so it arcs out past the chain.",
-                  "The flume's surface at y 77.2, its bed at 75.7; the lip room under it 2.2 m tall.",
-                  "The lip chain: 4.4 m, at x -297.6, its tail at y 74.3.", "The landings' tops at y 79.4 (2.2 m over the water)."],
-        "notes": ["Note 146: the barrels move here, running right to left (east to west), and the great falls run through.",
-                  "Note 147 (settled): a fall into the great falls anywhere rides them all the way to the Sump, a ride and never a fall card.",
+        "effects": ["The great falls beside the ladder as 3D water (note 111), spray drifting across the strip and the rungs.",
+                    "White water on the tipping ramp; a hollow boom as each barrel goes into the chute, so you hear the rhythm too.",
+                    "Mist rising out of the falls' shaft past the platform."],
+        "first": ["The ladder: 6.4 m, at x -295.4, rungs every 0.75 m with two gone.", "The kicker's throw: 4.5 m a second up, 3.5 back, 0.6 west.",
+                  "The flume's surface at y 77.2, its bed at 75.7; the room under the platform 2.2 m tall.", "The landings' tops at y 79.4 (2.2 m over the water).",
+                  "The two rungs out of the water on the platform's east face."],
+        "notes": ["Note 146 and Parker's answers (11-14 15:30): the barrels run right to left and are thrown back into the background, never into the falls; "
+                  "a climb straight up beside the falls; numbered 1.12.",
+                  "Note 91: the kicker that throws the glacier's slabs into their cave, the model for this one.",
                   "Note 114: the barrels come out of the dark, their birth hidden: the tunnel.",
-                  "Note 21 and the work log: they fall, they never vanish; the written gaps; two swims.",
-                  "Note 111: the falls and the spill drawn as 3D water, the great falls at full width.",
-                  "Law 7 of the mountain: the great falls' one last chance is the lip chain."],
-        "ask": ["The way up from the mine is the crane's chain beside the lip, timed between barrels (a passage east cannot reach the flume's west end). "
-                "Is a timed climb right for the start of the crossing? If not, the barrels could sink back into the dark at the lip instead of going over.",
-                "Numbers: call the two new challenges 1.12 and 1.13 (the mine's, so nothing is renumbered), or make them the black waters' 2.1 and 2.2 "
-                "and renumber El Borde onward?"],
+                  "Note 21 and the work log: they leave by a thing you see, never vanish; the written gaps; two swims.",
+                  "Note 147 (settled): a fall into the great falls anywhere rides them all the way to the Sump.",
+                  "Note 111: the falls drawn as 3D water."],
+        "ask": ["A fall into the flume now only puts you back at the platform (the current holds you at the end wall). Is that gentle enough, or should "
+                "the end wall have a gap that lets a swimmer, not a barrel, go on into the falls?"],
     }
 
 
@@ -1062,7 +1093,7 @@ def page_lock():
     for xx in (-243.0, -241.5, -240.0, -238.6):
         marks.append(("line", [(xx, 85.3), (xx, 78.4)], "push"))
     marks += [("text", [(-231.6, 88.9), "highest water 88.5"], "notep"), ("text", [(-249.6, 76.3), "lowest 77.2"], "notep"),
-              ("text", [(-243.8, 87.3), "the river pours in"], "notep"), ("text", [(-264.6, 90.9), "the quay"], "noteo"),
+              ("text", [(-243.8, 87.3), "the river pours in"], "notep"), ("text", [(-258.3, 90.9), "the quay"], "noteo"),
               ("text", [(-231.6, 91.0), "El Borde starts here"], "note")]
     items = [
         it("backdrop", "The river's culverts, through a grating", [-16.0, -12.0],
@@ -1078,7 +1109,7 @@ def page_lock():
         it("set", "The quay's back wall and the keeper's booth", [-2.6, -1.3],
            "Brick, with the keeper's booth set into it beside the lower gate: a little stone room with a round-headed opening, a lamp, a stool and a "
            "window onto the chamber. Cut away at the front, so you see in.",
-           [R(-264.5, 79.4, -251.0, 86.0, "solid"), arch(-259.2, -254.0, 79.4, 81.8, "dark")], tag=[-262.0, 82.2]),
+           [R(QUAY[0], 79.4, -251.0, 86.0, "solid"), arch(-257.4, -253.4, 79.4, 81.4, "dark")], tag=[-257.9, 84.6]),
         it("set", "The slot's foot and the flap gate", [-2.0, -1.2],
            "Where the black waters' slot comes down through the roof: an iron frame round its foot and a heavy flap gate on a hinge, shut across it. "
            "When it drops, the river comes through as a white column into the chamber. When it is shut, the river slides off it into the bypass "
@@ -1089,19 +1120,19 @@ def page_lock():
            "The hero piece. A frog in an oilskin cap in the booth, one hand on a tall lever with a brass knob. One second before each fill he hauls "
            "it over: that is the warning, as every danger on the mountain warns before it acts. He sits in the house frogs' style, matte, and never "
            "leaves his booth.",
-           [C(-256.6, 80.6, 0.42, "pale"), R(-257.0, 79.4, -256.2, 80.25, "pale"), L(-255.3, 79.4, -254.7, 81.3, "line"), C(-254.7, 81.3, 0.12, "pale")],
-           tag=[-256.6, 82.4]),
+           [C(-255.4, 80.6, 0.42, "pale"), R(-255.8, 79.4, -255.0, 80.25, "pale"), L(-254.3, 79.4, -253.8, 81.3, "line"), C(-253.8, 81.3, 0.12, "pale")],
+           tag=[-255.4, 82.4]),
         it("things", "The gate wheel", [-1.9, -1.5],
            "A big iron hand wheel on the quay's wall over the booth, its hub a pug's face. It spins as the flap gate drops and spins back as it shuts, "
            "worked by shafts in the wall: the machine you can see (rule 6).",
-           [C(-252.9, 84.2, 0.8, "line"), C(-252.9, 84.2, 0.22, "pale")], tag=[-252.9, 85.6]),
+           [C(-252.2, 84.6, 0.7, "line"), C(-252.2, 84.6, 0.2, "pale")], tag=[-252.2, 85.8]),
         it("things", "The gauge board", [-1.7, -1.5],
            "A tall painted board on the back wall, from the floor to the dry shaft's top, marked every metre with a pug at the top, and a float on a "
            "guide that rides the water. Watching it tells you where the water is in its cycle.",
            [R(-235.6, 76.0, -234.4, 89.4, "pale"), C(-235.0, 77.5, 0.28, "light")], tag=[-235.0, 82.6]),
         it("things", "Lanterns", [-2.1, -1.9],
            "Three works lanterns, teal and steady: one in the booth, one on the chamber's west wall over L1, one on the east wall over L2.",
-           [C(-257.6, 81.2, 0.15, "light"), C(-247.2, 83.4, 0.17, "light"), C(-229.0, 83.6, 0.17, "light")], tag=[-229.0, 84.6]),
+           [C(-256.6, 81.0, 0.15, "light"), C(-247.2, 83.4, 0.17, "light"), C(-229.0, 83.6, 0.17, "light")], tag=[-229.0, 84.6]),
         it("climb", "The wicket and its sill", [-1.2, 1.2],
            "A small iron door in the foot of the lower gate, 2.5 m tall. It is open while the water is at the bottom, and shuts with a clang when the "
            "keeper pulls his lever. Its stone sill runs into the chamber as the lowest ledge.",
@@ -1139,14 +1170,15 @@ def page_lock():
         ["Miss it", "the top", "y 77.2", "down 11.3 m in 5 s", "the drain takes down everyone not on a ledge or a rung; wait %.0f s for the next fill" % CYCLE],
     ]
     return {
-        "slug": "la_esclusa_the_lock", "h1": "Challenge 1.13 (working number): La Esclusa, the lock",
+        "slug": "la_esclusa_the_lock", "h1": "Challenge 1.13: La Esclusa, the lock",
         "place": ("The lock that let the barrels down from the river to the flume. It is a stone chamber 22 m long and 13 m deep under the end of the "
                   "black waters' river, where the river used to pour into the mine. The black waters' slot still brings it down, now onto a flap gate "
                   "at the chamber's top. The old frog keeper still works it from his booth on the quay: he hauls his lever, the flap drops, the river "
                   "comes through as a white column, and the chamber fills 11 m in six seconds. Then it holds, the sluices in the lower gate open, and "
                   "it drains away. You go in through the wicket at the bottom, cross while it is low, ride the water up, and at the very top of a fill "
                   "reach out of the old dry shaft onto the lip ledge where El Borde starts."),
-        "keep": ["El Borde exactly as today: its lip ledge (x -232 to -226, y 90), the slot, the pier with its peaked top, the dry shaft, the river, its "
+        "keep": ["A fall from El Borde lands in this lock (it used to go on down the slot to the Sump): gentler, and kept (Parker, 11-14 15:30).",
+                 "El Borde exactly as today: its lip ledge (x -232 to -226, y 90), the slot, the pier with its peaked top, the dry shaft, the river, its "
                  "one chain.", "The way into El Borde is still up the old dry shaft onto the lip ledge, as from the mine today."],
         "moves": moves,
         "after_moves": [("The cycle", cycle_chart() + "<p>%s</p>" % B.esc(
@@ -1186,9 +1218,7 @@ def page_lock():
         "notes": ["Note 146: at least one more challenge in the new section; the lock, as pitched and liked.",
                   "Rule 6 and rule 7 of the mountain: the gate wheel and the flap show the machine; the keeper's lever warns before each fill."],
         "ask": ["The pitched 14 s cycle has no pause at the bottom, so I added 4 s (18 s in all) for the wicket and the crossing. All right?",
-                "The river pours in across the middle of the chamber (the slot is fixed by El Borde), so you cross while it is low. Keep that?",
-                "A fall from El Borde used to go down the slot into the mine and on to the Sump. Now it lands in this lock: a much gentler fall. Keep that, "
-                "or send it on down?"],
+                "The river pours in across the middle of the chamber (the slot is fixed by El Borde), so you cross while it is low. Keep that?"],
     }
 
 
@@ -1198,109 +1228,117 @@ def page_place():
         ("poly", [(DRY[0], LOCK_CEIL), (DRY[1], LOCK_CEIL), (DRY[1], LOCK_HIGH), (DRY[0], LOCK_HIGH)], "hiw"),
         ("poly", [(LOCK[0], LOCK_LOW), (LOCK[1], LOCK_LOW), (LOCK[1], LOCK_CEIL), (LOCK[0], LOCK_CEIL)], "hiw"),
         ("poly", [(x, y) for x, y in list(section_shell().exterior.coords)[:-1]], "newl"),
-        ("text", [(-305.9, 91.6), "the great falls"], "notep"), ("text", [(-291.0, 81.6), "Los Barriles"], "note"),
-        ("text", [(-262.8, 84.8), "the quay"], "noteo"), ("text", [(-247.6, 77.9), "La Esclusa"], "note"),
+        ("text", [(-305.9, 91.6), "the great falls"], "notep"), ("text", [(-284.0, 81.6), "1.12 Los Barriles"], "note"),
+        ("text", [(-257.6, 84.8), "the quay"], "noteo"), ("text", [(-247.6, 77.9), "1.13 La Esclusa"], "note"),
         ("text", [(-229.5, 91.6), "El Borde"], "note"), ("text", [(-305.9, 70.3), "the mine's roof"], "noteo"),
         ("text", [(-288.0, 91.3), "the black waters' lower river"], "notep")]
     items = [
         it("backdrop", "The view down the great falls", [-16.0, -12.0],
-           "Behind the falls' column: one tall painted card of the whole drop, from the black waters' floor down past the mine to the Sump's mist, "
+           "Behind the falls' shaft: one tall painted card of the whole drop, from the black waters' floor down past the mine to the Sump's mist, "
            "the mine's lanterns warm and tiny far below.",
            [R(-306.3, 69.7, -297.3, 82.8, "dark"), L(-304.5, 82.6, -304.5, 70.0, "mark"), L(-301.6, 82.6, -301.6, 70.0, "mark")], tag=[-305.2, 76.0]),
         it("backdrop", "The vaults going back", [-16.0, -12.0],
            "Through the flume's arcade: rows of brick vaults going back into the dark with the water running away under them.",
-           [arch(-291.2, -287.6, 77.2, 79.6, "line"), arch(-284.7, -281.1, 77.2, 79.6, "line"), arch(-278.2, -275.8, 77.2, 79.0, "line")], tag=[-283.0, 80.4]),
+           [arch(-284.7, -281.1, 77.2, 79.6, "line"), arch(-278.2, -274.6, 77.2, 79.6, "line"), arch(-271.7, -268.1, 77.2, 79.6, "line")], tag=[-276.4, 80.4]),
         it("backdrop", "The river's culverts", [-16.0, -12.0],
            "Through a barred opening high in the lock's back wall: the culverts behind the lock, painted going back, lit teal far off.",
            [R(-249.4, 83.8, -246.9, 85.6, "dark")], tag=[-248.2, 84.7]),
         it("set", "The flume's arcade and its cracked vault", [-2.6, -2.2],
            "Brick piers every 6.5 m with round arches, mooring rings at the waterline, a cracked brick vault overhead.",
-           [R(-293.5, 77.2, -292.5, 83.0, "pale"), R(-287.0, 77.2, -286.0, 83.0, "pale"), R(-280.5, 77.2, -279.5, 83.0, "pale"), R(-266.4, 77.2, -265.4, 83.0, "pale")],
-           tag=[-279.9, 81.8]),
-        it("set", "The barrels' tunnel", [-7.0, -1.3], "A brick arch at the waterline, a sluice gate half raised, black inside: where the barrels come from.",
-           [arch(-275.5, -270.0, 75.7, 78.8, "dark")], tag=[-272.7, 77.9]),
+           [R(-286.5, 77.2, -285.5, 83.0, "pale"), R(-280.0, 77.2, -279.0, 83.0, "pale"), R(-273.5, 77.2, -272.5, 83.0, "pale"), R(-267.0, 77.2, -266.0, 83.0, "pale")],
+           tag=[-272.9, 81.8]),
+        it("set", "The barrels' tunnel and the waste chute", [-8.0, -1.3],
+           "A brick arch at the waterline at the flume's head, a sluice gate half raised, black inside: where the barrels come from. Over the "
+           "flume's west end, the waste chute's black mouth: where they go.",
+           [arch(ARCH[0], ARCH[1], BED, 78.8, "dark"), arch(CHUTE[0], CHUTE[1], CHUTE[2], CHUTE[3] - 2.5, "dark")], tag=[-261.8, 77.9]),
         it("set", "The quay's wall and the keeper's booth", [-2.6, -1.3], "Brick, with the lock-keeper's booth set into it beside the lower gate.",
-           [R(-264.5, 79.4, -251.0, 86.0, "solid"), arch(-259.2, -254.0, 79.4, 81.8, "dark")], tag=[-261.6, 82.5]),
+           [R(QUAY[0], 79.4, -251.0, 86.0, "solid"), arch(-257.4, -253.4, 79.4, 81.4, "dark")], tag=[-257.9, 84.6]),
         it("set", "The lock chamber's wall", [-2.2, -1.9], "Cut stone stained teal to the highest water, the scum line painted at the top.",
            [R(-250.0, 75.7, -228.0, 86.0, "solid")], tag=[-232.0, 80.0]),
-        it("things", "The broken crane", [-3.4, -2.4], "Los Barriles' hero: the barrel crane at the head of the falls, its jib snapped over the drop.",
-           [R(-296.1, 79.4, -295.5, 82.6, "pale"), P([[-295.8, 82.4], [-302.6, 79.7], [-302.7, 80.05], [-295.8, 82.8]], "pale")], tag=[-299.6, 81.7]),
+        it("things", "The broken crane", [-3.4, -2.4], "Los Barriles' hero: the barrel crane on the platform at the head of the falls, its jib snapped over the drop.",
+           [R(-293.6, 79.4, -293.0, 82.6, "pale"), P([[-293.3, 82.4], [-301.8, 79.9], [-301.9, 80.25], [-293.3, 82.8]], "pale")], tag=[-298.4, 81.7]),
         it("things", "The frog keeper at his lever", [-1.9, -1.4], "La Esclusa's hero: the old keeper in his booth, who hauls the lever before every fill.",
-           [C(-256.6, 80.6, 0.42, "pale"), R(-257.0, 79.4, -256.2, 80.25, "pale"), L(-255.3, 79.4, -254.7, 81.3, "line")], tag=[-256.6, 82.5]),
+           [C(-255.4, 80.6, 0.42, "pale"), R(-255.8, 79.4, -255.0, 80.25, "pale"), L(-254.3, 79.4, -253.8, 81.3, "line")], tag=[-255.4, 82.5]),
         it("things", "The gate wheel and the gauge board", [-1.9, -1.5], "The machine you can see: the wheel spins as the flap drops; the board's float rides the water.",
-           [C(-252.9, 84.2, 0.8, "line"), R(-235.6, 76.0, -234.4, 89.4, "pale")], tag=[-252.9, 85.6]),
-        it("climb", "The crane's chain and platform", [-1.2, 1.2], "From the pier's top up the chain beside the lip, onto the crane's platform: the start of the crossing.",
-           [R(-297.0, 72.7, -295.0, 73.0, "pale"), R(-297.9, 78.5, -297.3, 78.75, "pale")], tag=[-298.4, 75.8]),
-        it("climb", "The barrels and the east landing", [-0.9, 0.9], "Barrel to barrel east against the current, onto the landing over the flume's head.",
-           [R(-283.4, 77.0, -283.2, 77.95, "pale")], tag=[-283.3, 76.4]),
+           [C(-252.2, 84.6, 0.7, "line"), R(-235.6, 76.0, -234.4, 89.4, "pale")], tag=[-235.0, 87.6]),
+        it("climb", "The keepers' ladder and the platform", [-1.2, 1.2], "From the pier's top straight up the ladder beside the falls onto the crane's platform: "
+           "no barrels on the way in.",
+           [LAD(LADDER_X, MINE_TOP, LANDING), R(-297.0, 72.7, -295.0, 73.0, "pale")], tag=[-294.0, 76.2]),
+        it("climb", "The barrels, the kicker and the east landing", [-0.9, 0.9], "Barrel to barrel east against the current; the barrels you pass are "
+           "flung into the chute behind you; onto the landing over the flume's head.",
+           [R(-276.0, 77.0, -275.8, 77.95, "pale"), P([[-290.5, BED], [-287.4, BED], [-287.4, 76.3], [-290.5, 77.9]], "pale")], tag=[-275.9, 76.4]),
         it("climb", "The wicket, the ledges, the rungs, the lip ledge", [-1.2, 1.2], "Into the lock at the bottom, up with the water, out onto El Borde's lip ledge at the top of a fill.",
            [R(-251.15, 79.4, -250.95, 81.9, "pale"), L(-246.4, 81.85, -245.5, 81.0, "line"), L(-229.4, 80.45, -228.5, 79.6, "line")], tag=[-244.0, 80.6]),
         it("fore", "A low lip of wet rock", [1.6, 2.6], "Along the bottom of the frame only, below the lowest floor.",
            [P([[-306.5, 69.5], [-306.5, 70.4], [-288.0, 70.9], [-262.0, 70.6], [-240.0, 71.0], [-222.0, 70.5], [-222.0, 69.5]], "dark")], tag=[-262.0, 70.2]),
     ]
     fits = [["y 69 to 73", "the mine's roof slab (moved 17 m down): the falls' slot and La Cortina's dry shaft go through it"],
-            ["y 73.0", "the lip room's floor: the pier's top and the old lip, where La Cortina lets out"],
-            ["y 73.0 to 75.2", "the lip room, 2.2 m tall, under the flume's last metres"],
+            ["y 73.0", "the pier's top and the room under the platform, where La Cortina lets out"],
+            ["y 73.0 to 79.4", "the keepers' ladder, in a 2 m strip between the falls and the platform"],
+            ["y 73.0 to 75.2", "the room under the platform and the flume's west end, 2.2 m tall"],
             ["y 75.2 to 75.7", "the flume's stone bed"], ["y 75.7 to 77.2", "the flume's water, 1.5 m deep"],
-            ["y 77.2 to 78.05", "the barrels, as today 0.3 m over the surface"], ["y 79.4", "the two landings and the quay"],
+            ["y 77.2 to 78.05", "the barrels, as today 0.3 m over the surface"], ["y 79.4", "the platform, the east landing and the quay"],
             ["y 83 (west of x -292) and 86 (east)", "the new section's roof: the black waters' rock starts here, as today"],
             ["y 75.7 to 86, and up the dry shaft to 88.5", "the lock's chamber and its water at the highest"],
-            ["y 90", "El Borde's lip ledge, as today; the black waters' lower river runs from y 90 to 91 over the new section's west part"]]
-    route = ["La Cortina, as today, up its dry shaft to the top of the mine.", "Off the top row west onto the pier's coping (1.9 m).",
-             "Up the crane's chain beside the lip, after a barrel has gone over, onto the crane's platform (Los Barriles starts).",
-             "East along the flume, barrel to barrel, against the current and the barrels coming at you, onto the east landing.",
-             "East along the quay past the keeper's booth (a rest, 13.5 m).", "In through the lock's wicket at the bottom of its cycle (La Esclusa starts).",
+            ["y 90", "El Borde's lip ledge, as today; the black waters' lower river runs from y 90 to 91 over the new section's middle"]]
+    route = ["La Cortina, as today, up its dry shaft to the top of the mine.", "Off the top row west onto the pier's coping (1.9 m): 1.12 Los Barriles starts.",
+             "Up the keepers' ladder, 6.4 m, straight up beside the falls in their spray, onto the crane's platform.",
+             "Down onto a barrel and east along the flume, barrel to barrel, against the current and the barrels coming at you, onto the east landing.",
+             "East along the quay past the keeper's booth (a rest, 7.5 m).", "In through the lock's wicket at the bottom of its cycle: 1.13 La Esclusa starts.",
              "Cross while it is low, float up as it fills, take a ledge or a rung, and at the top of a fill reach out of the dry shaft onto the lip ledge.",
              "El Borde (2.1), exactly as today."]
     water = ("The black waters' lower river still runs east along its tunnel to the slot at x -244 and pours down it, as today. It no longer falls "
              "into the mine: it falls onto the lock's flap gate. When the flap drops, the river fills the lock. When it is shut, the river slides "
              "off it into a bypass culvert behind the quay, which brings it down to the flume's head, and it comes out of the barrels' tunnel with the "
-             "barrels. The lock drains through sluices in its lower gate into the flume's head too. The flume runs west and goes over its lip into "
-             "the great falls, which come down from the well, through the Charco (2.7) and a shaft through the black waters' floor, past the lip, "
-             "into the mine's throat and on to the Sump. All of the new section's water ends in the great falls.")
-    changed = ["The mine drops 17 m as well as moving 59 m west (as Parker's drawing shows). Moved only west, its throat's roof would sit in the black "
-               "waters' rock (110 square metres of overlap) and there would be no room for a flume and a 12 m lock between its top and El Borde. "
+             "barrels. The lock drains through sluices in its lower gate into the flume's head too. The flume runs west; at its end its water goes "
+             "down a grating under the tipping ramp and by a culvert behind the climb into the great falls (the barrels are flung into the waste "
+             "chute and never reach them). The great falls come down from the well, through the Charco (2.7) and a 6 m shaft through the black "
+             "waters' floor, past the ladder and the platform, into the mine's throat and on to the Sump.")
+    changed = ["The mine drops 17 m as well as moving 59 m west (agreed by Parker). Moved only west, its throat's roof would sit in the black "
+               "waters' rock (86 square metres of overlap) and there would be no room for a flume and a 12 m lock between its top and El Borde. "
                "With the drop there are 17 m, which fit the lock exactly.",
-               "No passage east from the mine's top: it comes out under the flume and cannot reach the flume's west end. The mine lets out beside the "
-               "lip instead and you climb the crane's chain (see Los Barriles).",
-               "The lock is under the black waters' slot and the old dry shaft, because those are where El Borde's water and its lip ledge are. That "
-               "puts it 27 m east of the flume's head, so a short quay joins them.",
+               "The barrels are flung back into the waste chute at the flume's west end, never into the falls, so the way up from the mine is a plain "
+               "ladder straight up beside the falls (Parker's answer). The first pages had a passage east that could not work and then a chain timed "
+               "between barrels; both are gone.",
+               "The lock is under the black waters' slot and the old dry shaft, because those are where El Borde's water and its lip ledge are. The "
+               "quay between the flume's head and the lock is 7.5 m.",
                "The lock's cycle gets a 4 s pause at the bottom (18 s in all), for the wicket and the crossing.",
                "The strip of rock from x -252 to -223 between y 86 and 89.4, which was the mine's roof, is now the new section's (the lock's roof and "
                "the support under the lip ledge)."]
     return {
         "slug": "la_esclusa_the_place", "h1": "La Esclusa: the new section under the black waters",
         "place": ("The company's lower works, between the mine and the black waters. When the mine was worked, barrels came down the black waters' "
-                  "river, down a lock 12 m deep at its end, and along a stone flume 32 m long to a crane at the head of the great falls, which swung "
-                  "them down into the mine. The crane broke, the mine was abandoned, and nobody turned the water off. The great falls pour down "
-                  "through the west end. The barrels still drift out of the dark and float to the lip and over it, one after another. An old frog "
-                  "still keeps the lock, hauling his lever and filling and emptying the chamber every eighteen seconds for nobody. It is cut stone, "
-                  "brick vaults and riveted iron, the black waters' teal light and their dark water, and the roar of the falls at one end."),
+                  "river, down a lock 12 m deep at its end, and along a stone flume to a crane at the head of the great falls, which swung them down "
+                  "into the mine. The crane broke, the mine was abandoned, and nobody turned the water off. The great falls pour down past the west "
+                  "end. The barrels still drift out of the dark and float to the end of the flume, where the barrel men's old tipping ramp flings "
+                  "them into the waste chute, one after another. An old frog still keeps the lock, hauling his lever and filling and emptying the "
+                  "chamber every eighteen seconds for nobody. It is cut stone, brick vaults and riveted iron, the black waters' teal light and their "
+                  "dark water, and the roar of the falls at one end."),
         "before": [("How it fits, from the bottom up", tbl(["Height", "What is there"], fits)),
                    ("The route through it", "<ol>%s</ol>" % "".join("<li>%s</li>" % B.esc(x) for x in route)),
                    ("Where the water comes from and goes", "<p>%s</p>" % B.esc(water)),
                    ("What did not fit, and what changed", ul(changed))],
         "keep": ["La Cortina and every challenge of the mine exactly as today (moved); El Borde and every challenge of the black waters exactly as today.",
-                 "The barrels' speed, spacing, count and hidden birth exactly as today; only their direction changes (note 146).",
-                 "The great falls in one line, the well's middle, x -300, from under the forge to the Sump (notes 142, 143, 146)."],
+                 "The barrels' speed, spacing, count and hidden birth exactly as today; they run right to left (note 146).",
+                 "The great falls one 6 m shaft on the well's middle line, x -300, all the way down to the Sump (notes 142, 143, 146; Parker, 11-14 15:30)."],
         "figures": [{"win": win, "faint": faint_today(), "bold": [(NEW_A1, PAL["a1"]), (NEW_A2, PAL["a2"]), (NEW_SEC, PAL["a2"])], "marks": marks,
                      "climbers": [(-296.0, 73.0), (-249.4, 79.4)], "maxw": 900.0,
                      "caption": "The whole new section from the side, x -306.5 to -222, to scale. Yellow dashes: its outline. Faint underneath: today's mine, whose "
                                 "throat was here. Each challenge has its own page with a closer sketch."}],
         "items": items,
-        "explains": [["The pier's top and the chain", "The foot of the crane's platform at the head of the falls", "The crane, broken; the falls"],
-                     ["The barrels and the landings", "The flume and its two landing stages", "The arcade, the tunnel, the vaults going back"],
+        "explains": [["The pier's top and the ladder", "The foot of the keepers' way down to the mine, beside the falls", "The crane's platform above; the falls"],
+                     ["The barrels and the landings", "The flume and its two landing stages", "The arcade, the tunnel, the chute, the vaults going back"],
                      ["The quay", "Where the barrel men worked", "The booth, the gate wheel, the boat hooks"],
                      ["The lock", "The lock that let barrels down from the river", "The flap gate, the gauge board, the culverts through the grating"]],
-        "pieces": [["See Los Barriles and La Esclusa for each piece", "", "", "", ""]],
+        "pieces": [["See 1.12 Los Barriles and 1.13 La Esclusa for each piece", "", "", "", ""]],
         "first": ["Every height in the table above except the mine's roof (which follows from the drop) and El Borde's (as today).",
-                  "The flume's length (32 m of water, 26.8 m of it the barrels' road, as today) and the quay's (13.5 m)."],
-        "notes": ["Note 146, the brief: the mine moved under the falls, the longer ride, the barrels moved here running east to west, one more challenge, the old pool a jump.",
-                  "Notes 142 and 143: the great falls all the way down; the frogs' slide pours into them.",
-                  "Note 111: the falls drawn as 3D water.", "Note 114: the barrels' hidden birth.",
+                  "The flume's length (32 m of water, 26.8 m of it the barrels' road, as today) and the quay's (7.5 m)."],
+        "notes": ["Note 146, the brief, and Parker's answers (11-14 15:30): the mine moved under the falls and 17 m down, not widened; the barrels thrown "
+                  "back into the background; a climb beside the falls; 1.12 and 1.13.",
+                  "Notes 142 and 143: the great falls all the way down; the frogs' slide pours into them. Note 147: a fall into them is a ride to the Sump.",
+                  "Note 111: the falls drawn as 3D water.", "Note 114: the barrels' hidden birth. Note 91: the kicker.",
                   "docs/peak/QUALITY_TO_9_PLAN.md: the four layers in every frame; one hero per challenge (the crane, the keeper)."],
-        "ask": ["Is the story right: the company's lower works, a broken crane at the head of the falls, an old frog still keeping the lock?",
-                "The two challenges are numbered 1.12 and 1.13 here for now. Keep them as the mine's, or make them the black waters' first two and renumber?"],
+        "ask": ["Is the story right: the company's lower works, a broken crane at the head of the falls, an old frog still keeping the lock?"],
     }
 
 
@@ -1390,7 +1428,9 @@ def page_salto():
                  "The well's mouth in the roof, x -306 to -294, and the camera's lean upward.",
                  "The pool's current, 1.0 m a second, and two swims of about 4 m against it.",
                  "The old cascade and the black waters' lower river, now fed from the east basin.",
-                 "A miss costs what it cost before: down to the Sump (today by the lip, the cascade, the river and the mine; now by the falls)."],
+                 "A miss costs what it cost before: down to the Sump (today by the lip, the cascade, the river and the mine; now by the falls).",
+                 "A fall down the well beside the falls (the well is 12 m wide, the falls 6 m) lands in this pool's west half, and must swim, or in the "
+                 "east basin, and goes by the old cascade and El Borde's river into the lock: gentler than the falls, and kept (Parker, 11-14 15:30)."],
         "moves": moves,
         "figures": [{"win": win, "faint": faint_today("a2"), "bold": [(NEW_A2, PAL["a2"]), (NEW_CHARCO, PAL["a2"])], "marks": marks,
                      "screen": [-302.5, 119.0], "climbers": [(-295.8, 117.4)],
@@ -1415,14 +1455,12 @@ def page_salto():
         "first": ["No push from the falls in the hall; going into them is the ride (note 147). The mine's falls keep their push.",
                   "The pool's current 1.0, quickening to 1.6 m a second over its last 2 m.",
                   "The davit chain's place and length; C1 and C2's places.", "Q6 lengthened to x -296.6."],
-        "notes": ["Note 146: a big jump to a pool on the other side that feeds the falls, so you swim the moment you land.",
+        "notes": ["Note 146: a big jump to a pool on the other side that feeds the falls, so you swim the moment you land. The falls 6 m, the same shaft all the way down (Parker, 11-14 15:30).",
                   "Note 142: the great falls from the top of the well to the black waters; now on through.", "Note 111: 3D falling water.",
                   "Note 147 (settled): a fall into the great falls anywhere rides them all the way to the Sump.",
                   "Note 143: riders of the frogs' slide come down the falls through here, on to the Sump.",
                   "Note 114 and the barrels: they leave 2.7 for Los Barriles."],
-        "ask": ["Note 147 settles that a fall into the great falls rides them to the Sump. The well is 12 m wide and the falls 6 m, so a fall down the "
-                "well beside the falls lands in this pool's west half (and must swim, or is taken over its lip) or in the east basin (and goes by the "
-                "old cascade and El Borde's river into the lock). Keep that, or should the whole width of the well ride down?",
+        "ask": [
                 "The jump is a fling from a chain at the ledge's end, because the climber cannot run and jump 6 m. All right?"],
     }
 
@@ -1524,115 +1562,96 @@ def page_ride():
                    ["Rails and sleepers", "4 m pieces", "about 15 more", "Play space", "kit: rail_straight"],
                    ["Bed and roof skins for the new stretch", "62 m", "a few", "Play space", "today's dsc_bed_d and dsc_roof_d carried on"]],
         "effects": ["Dust off the wheels where the cart goes over the brow.", "Drips and the lanterns' warm light, as in today's tunnel."],
-        "first": ["The incline at 20 degrees from x -158 to -188, eased in and out.", "The new road's points (in make_rearrange.py, RIDE_NEW)."],
+        "first": ["The incline at 20 degrees from x -158 to -188, eased in and out (the 20 degrees agreed by Parker, 11-14 15:30).", "The new road's points (in make_rearrange.py, RIDE_NEW)."],
         "notes": ["Note 146: the ride lengthened by the same distance as the mine moves; it may drop a little lower.",
                   "Note 72: the lever starts the cart. Note 73: the hop. Both unchanged.",
                   "docs/peak/QUALITY_TO_9_PLAN.md: 0.3's painted tunnel receding, and the mouth onto the painted desert."],
-        "ask": ["The 17 m drop is all on one 20 degree incline near the end. All right, or spread it over the whole lower tunnel (that changes 0.3c)?",
-                "The winding house as the new stretch's hero piece?"],
+        "ask": ["The winding house as the new stretch's hero piece?"],
     }
 
 
 def page_mine():
     w1 = [-327.0, -57.0, -145.0, 92.0]
-    m1 = falls_marks(-45.0, 73.0) + [("poly", [(mvx(-248.0), -50.0), (mvx(-248.0) + 6.0, -50.0), (mvx(-248.0) + 6.0, 69.0), (mvx(-248.0), 69.0)], "wid"),
-                                     ("text", [(-200.0, 84.0), "today's mine (faint)"], "noteo"), ("text", [(-326.0, 80.0), "after: 59 m west, 17 m down"], "note"),
-                                     ("text", [(-326.0, -54.5), "the widening: 6 m"], "note")]
-    w2 = [-323.5, -54.5, -281.5, -18.0]
-    m2 = falls_marks(-45.0, -18.0) + [("poly", [(mvx(-248.0), -50.0), (mvx(-248.0) + 6.0, -50.0), (mvx(-248.0) + 6.0, -18.0), (mvx(-248.0), -18.0)], "wid"),
-                                      ("text", [(-312.6, -19.2), "the 6 m added"], "note"), ("text", [(-302.6, -19.2), "the falls"], "notep")]
+    m1 = falls_marks(-45.0, 73.0) + [("text", [(-200.0, 84.0), "today's mine (faint)"], "noteo"), ("text", [(-326.0, 80.0), "after: 59 m west, 17 m down"], "note")]
+    w2 = [-316.5, -54.5, -281.5, -18.0]
+    m2 = falls_marks(-45.0, -18.0) + [("text", [(-302.6, -19.2), "the falls"], "notep"), ("text", [(-316.0, -19.2), "the west wall"], "noteo")]
     items = [
-        it("backdrop", "The cavern's west reaches", [-16.0, -12.0],
-           "Behind the widened space west of the falls: a painted card of the cavern going on west into the dark, wet rock shelves catching the falls' "
-           "light, mist hanging in it, one far lantern on an old working. The waterfall's glow the quality plan asks for, with room to show it.",
-           [R(-313.0, -45.0, -303.2, -19.0, "solid"), C(-310.2, -27.0, 0.1, "light")], tag=[-310.0, -33.0]),
+        it("backdrop", "The cavern's far wall, painted", [-16.0, -12.0],
+           "Behind the falls' foot and the Sump: the far painted card of the cavern (today's back card, moved with the mine), its wet rock shelves "
+           "catching the falls' light, mist hanging in it, one far lantern on an old working. The waterfall's glow the quality plan asks for.",
+           [R(-307.0, -45.0, -282.0, -19.0, "solid"), C(-288.5, -27.0, 0.1, "light")], tag=[-286.0, -33.0]),
         it("set", "The rock shelves at the wall's foot", [-3.0, -2.0],
-           "Behind the Sump's new west water, low shelves of wet rock stepping back into the dark at the foot of the west wall, catching the falls' "
-           "light, so the 6 m added read as more cavern and not as a blank. (Higher up, today's dark card behind the fall moves west with the wall "
-           "too: x -321 to -312.)",
-           [P([[-313.0, -45.0], [-313.0, -41.0], [-309.5, -42.2], [-306.0, -43.6], [-304.0, -45.0]], "pale")], tag=[-309.0, -43.4]),
-        it("set", "The west wall's face", [-1.6, -1.25],
-           "The chamber's west wall, painted as the mine's walls are (long wavy bands, no blocks): 6 m further from the falls than today, so the falls "
-           "stand out in open air.",
-           [R(-313.6, -45.0, -313.0, -19.0, "pale")], tag=[-313.3, -30.5]),
-        it("things", "The frog's cave, moved with the wall", [-2.6, -1.2],
-           "Page 1.0's frog cave and its doorway, as designed, at the new west wall: its door now 10 m from the falls' foot instead of 4.",
-           [arch(-317.4, -314.0, -44.5, -42.6, "dark")], tag=[-315.7, -41.4], over=True),
+           "Low shelves of wet rock stepping back into the dark at the foot of the west wall, behind the Sump's west end, so the falls stand in front "
+           "of something and not a blank.",
+           [P([[-307.0, -45.0], [-307.0, -42.0], [-305.6, -42.8], [-304.0, -43.8], [-303.2, -45.0]], "pale")], tag=[-305.4, -43.6]),
+        it("things", "The frog's cave, moved with the mine", [-2.6, -1.2],
+           "Page 1.0's frog cave and its doorway, as designed, moved with the wall: its door 3.2 m from the falls' foot, as today.",
+           [arch(-311.4, -308.0, -44.5, -42.6, "dark")], tag=[-309.7, -41.4], over=True),
         it("things", "Mist and churn at the falls' foot", [-2.0, 1.0],
-           "The falls hit the Sump in white churn, and the mist fills the widened space: today's mist (x -250 to -230) widened west with the wall.",
-           [C(-300.0, -44.4, 0.6, "line"), C(-305.5, -40.0, 0.5, "line"), C(-309.5, -36.0, 0.45, "line")], tag=[-307.5, -38.0]),
-        it("climb", "One more staging pile", [-1.2, 1.2],
-           "An old staging pile standing in the Sump's new west water, like the four that are there today east of the falls: something to hold on "
-           "the 9 m swim from the falls' foot to the frog's cave.",
-           [R(-308.7, -50.0, -308.3, -44.2, "pale")], tag=[-308.5, -46.4]),
-        it("climb", "The frog's cave floor and doorstep", [-1.2, 1.2], "As today (page 1.0), moved 65 m west and 17 m down with the wall.",
-           [R(-318.4, -45.0, -313.0, -44.5, "pale"), R(-313.0, -45.3, -312.2, -44.5, "pale")], tag=[-316.0, -46.2]),
+           "The falls hit the Sump in white churn and the mist rises round them, as today's mist (moved).",
+           [C(-300.0, -44.4, 0.6, "line"), C(-302.0, -40.0, 0.5, "line"), C(-299.0, -36.0, 0.45, "line")], tag=[-296.0, -40.0]),
+        it("climb", "The frog's cave floor and doorstep", [-1.2, 1.2], "As today (page 1.0), moved 59 m west and 17 m down.",
+           [R(-312.4, -45.0, -307.0, -44.5, "pale"), R(-307.0, -45.3, -306.2, -44.5, "pale")], tag=[-310.0, -46.2]),
+        it("climb", "The staging piles", [-1.2, 1.2], "Today's four old piles in the Sump, moved: something to hold on the swim east.",
+           [R(-287.7, -50.0, -287.3, -44.2, "pale")], tag=[-287.5, -46.6]),
     ]
     moved = [["Everything in a1.py and a1_dress.py: solids, ledges, movers, ropes, the rock spawners and their board, zones, effects, lights, cameras, "
-              "cards, every deco and skin", "", "x minus 59, y minus 17"],
-             ["Everything west of x -246 (today's numbers): the chamber's west wall, the frog's cave with its floor and doorstep, the card behind the "
-              "fall, the west ends of the Sump's water, floor and mist", "", "a further 6 m west: x minus 65, y minus 17"],
-             ["The Sump's water", "x -248 to -187.4, surface -28", "x -313 to -246.4, surface -45"],
+              "cards, every deco and skin", "", "x minus 59, y minus 17, all of it"],
+             ["The Sump's water", "x -248 to -187.4, surface -28", "x -307 to -246.4, surface -45"],
              ["The great falls' push (the wind zone)", "x -244 to -238, y -22 to 90", "x -303 to -297, y -39 to 73"],
-             ["The falls' slot in the roof", "x -244 to -238, y 86 to 90", "x -303 to -297, y 69 to 73"],
+             ["The falls' slot in the roof", "x -244 to -238, y 86 to 90", "x -303 to -297, y 69 to 73: the 6 m shaft that runs all the way up"],
              ["La Cortina's dry shaft out", "x -236 to -232", "x -295 to -291"],
              ["The door from the cart tunnel", "x -152, floor -12.6", "x -211, floor -29.6"],
-             ["La Cortina's last move", "east onto the lip (x -232, y 89.7)", "west onto the pier's new coping (x -295, y 73.0), or east onto the old lip as a rest"],
-             ["The mine's frame region (stages/peak/course/_meta.json)", "x -292 to -146, y -36 to 90", "x -357 to -205, y -53 to 73"],
-             ["The body card's window (st.py BODY_WINDOWS)", "x -292 to -148, y -36 to 90, split at -220", "x -357 to -207, y -53 to 73, split at -279"],
-             ["The backstop card behind the far wall", "x -298 to -142, y -42 to 96", "x -363 to -201, y -59 to 79"],
+             ["La Cortina's last move", "east onto the lip (x -232, y 89.7)", "west onto the pier's new coping (x -295, y 73.0), the keepers' ladder's foot; "
+              "or east onto the old lip as a rest"],
+             ["The mine's frame region (stages/peak/course/_meta.json)", "x -292 to -146, y -36 to 90", "x -351 to -205, y -53 to 73"],
+             ["The body card's window (st.py BODY_WINDOWS)", "x -292 to -148, y -36 to 90, split at -220", "x -351 to -207, y -53 to 73, split at -279"],
+             ["The backstop card behind the far wall", "x -298 to -142, y -42 to 96", "x -357 to -201, y -59 to 79"],
              ["The mine's design pages (design/a1/)", "today's numbers", "add the same shift to every number; nothing else on them changes"]]
-    widen = ("Parker's drawing moves the chamber's whole west wall about 6 m further west than the rest of the mine, from the Sump's floor to the "
-             "throat's top (measured off the drawing: 6.6 m). So: the great falls, which today have 4 m of open air on their west side before the "
-             "wall, get 10 m; the Sump is 6 m longer at its west end; the frog's cave moves with the wall; the throat is 24 m wide at its top (x -313 "
-             "to -289), its roof carried on west over the widened part; the mist and the painted cavern fill the space. The falls' slot in the roof "
-             "stays 6 m (x -303 to -297) and the falls' push stays on it, so La Cortina, the wheel, the awning and the life ring stand to the falls "
-             "exactly as today. The swim from the falls' foot to the frog's cave grows from 4 m to 9 m, so one more old staging pile stands in it.")
+    foot = ("Not widened. The first pages moved the west wall a further 6 m out, from Parker's drawing; his answer (11-14 15:30) is that the mine is "
+            "not widened if the great falls' shaft matches the shaft above it all the way down, and it does: 6 m from the well to the Sump, the "
+            "same as the mine's slot today. So the falls keep today's 4 m of open air on their west side, the Sump, the frog's cave and the swim to "
+            "it are exactly as today, and the mist and the painted far wall carry the falls' glow.")
     return {
         "slug": "the_mine_moved", "h1": "La Mina Vieja, moved under the great falls",
         "place": ("The whole mine moves 59 m west and 17 m down, so its waterfall cavern stands straight under the well and the great falls come down "
-                  "through it in one line from under the forge to the Sump. Nothing inside it changes: every challenge, every hold, every lantern "
-                  "and every piece of scenery moves by the same amount. Two things change at its edges. Its west wall moves a further 6 m west, as "
-                  "Parker drew it, so the falls have room. And its top no longer opens into the black waters: La Cortina lets out into the new "
-                  "section's lip room, beside the flume's lip, where Los Barriles starts."),
+                  "through it in one 6 m shaft from the well to the Sump. Nothing inside it changes: every challenge, every hold, every lantern and "
+                  "every piece of scenery moves by the same amount. Its top no longer opens into the black waters: La Cortina lets out under the new "
+                  "section's platform, beside the falls, at the foot of the keepers' ladder, where 1.12 Los Barriles starts."),
         "before": [("What moves, and by how much", tbl(["What", "Today", "After"], moved)),
-                   ("The widened falls area at its foot", "<p>%s</p>" % B.esc(widen)),
+                   ("The falls' foot after the move", "<p>%s</p>" % B.esc(foot)),
                    ("Why it drops 17 m too", "<p>%s</p>" % B.esc(
                        "Moved only west, the throat's roof (y 86 to 90) would sit inside the black waters' rock, which starts at y 83 west of x -292: "
-                       "110 square metres of overlap. And there would be no room between the mine's top and El Borde (y 90) for the flume and the lock. "
-                       "Dropped 17 m, as in Parker's drawing, its top is at y 73, 10 m under the black waters' lowest rock, and the 17 m to El Borde hold "
-                       "the lip room, the flume and a 12 m lock exactly. The Sump's floor goes to y -50, inside the game's bug net at y -60: a drop of "
-                       "more than about 26 m would not fit."))],
+                       "86 square metres of overlap. And there would be no room between the mine's top and El Borde (y 90) for the flume and the lock. "
+                       "Dropped 17 m, as in Parker's drawing and agreed, its top is at y 73, 10 m under the black waters' lowest rock, and the 17 m to "
+                       "El Borde hold the ladder, the flume and a 12 m lock exactly. The Sump's floor goes to y -50, inside the game's bug net at y -60: "
+                       "a drop of more than about 26 m would not fit."))],
         "keep": ["Every challenge 1.1 to 1.11 exactly as today, relative to itself: the moves, the rhythms (the cave-in's written rocks, the curtain's drips), "
                  "the carts, the wheel, the lift.", "The falls' slot, 6 m, and their push on it; La Cortina's place beside them; the awning and the life ring.",
-                 "The Sump and its swim (6 m longer at the west end, with one more pile to hold).", "The door from the cart tunnel into 1.1 La Galería."],
+                 "The Sump and its swim, the frog's cave, the staging piles: as today.", "The door from the cart tunnel into 1.1 La Galería."],
         "figures": [{"win": w1, "faint": faint_today("a1"), "bold": [(NEW_A1, PAL["a1"]), (NEW_SEC, PAL["a2"]), (NEW_A0, PAL["a0"])], "marks": m1, "items": False,
-                     "maxw": 900.0, "caption": "The whole mine from the side: today's faint (east), after in its colours (west), the great falls through it, the "
-                                               "green band the 6 m widening. At the top, the new section; at the bottom right, the longer tunnel reaching the moved door."},
+                     "maxw": 900.0, "caption": "The whole mine from the side: today's faint (east), after in its colours (west), the great falls' 6 m shaft through it. "
+                                               "At the top, the new section; at the bottom right, the longer tunnel reaching the moved door."},
                     {"win": w2, "faint": [], "bold": [(NEW_A1, PAL["a1"])], "marks": m2,
-                     "caption": "The widened falls area at the mine's foot, after. The numbers match the lists below."}],
+                     "caption": "The falls' foot after the move, as today. The numbers match the lists below."}],
         "items": items,
-        "explains": [["The Sump's west water", "The cavern's floor, flooded, wider now", "The painted west reaches; the card behind the fall"],
-                     ["The new staging pile", "An old pile from the staging that stood in the Sump", "Its four fellows east of the falls"],
+        "explains": [["The Sump", "The cavern's floor, flooded", "The painted far wall; the rock shelves"],
+                     ["The staging piles", "The piles of the staging that stood in the Sump", "The far wall's old working and its lantern"],
                      ["The frog's cave", "As page 1.0", "As page 1.0"]],
-        "pieces": [["The west wall's painted skins, re-cut to the new wall", "as today's mine_throat_west and the Sump's west slabs", "a few", "Play space (slick)",
-                    "today's pieces, re-made to the new outline"],
-                   ["The cavern's west reaches", "far card 10 by 26 m", "1", "Backdrop", "new"],
-                   ["Staging pile", "0.4 by 5.8 m", "1", "Play space", "kit: the Sump's piles"]],
-        "first": ["The widening, 6 m (Parker's drawing measures 6.6).", "The new staging pile at x -308.5.",
-                  "The shift, 59 m: it centres the falls' slot on the well's middle line (x -300). Parker's drawing measures 57 to 58 m."],
-        "notes": ["Note 146: the mine moved under the falls, about 60 m; the falls area at its foot widened as drawn; it comes first in the quality run, then the mine's full pass.",
-                  "Note 111: the great falls at full width and 3D; with 10 m of air beside them they can read as a great falls."],
-        "ask": ["The drop of 17 m as well as 59 m west, as your drawing has it: agreed? It is what makes room for the new section.",
-                "The falls' slot: 6 m as today, or open the roof over the whole widened throat (12 m), as your drawing hints?"],
+        "pieces": [["Every piece of the mine, moved", "as today", "all", "all", "today's pieces, unchanged"],
+                   ["The cavern's far wall, painted behind the falls' foot", "far card 25 by 26 m", "1", "Backdrop", "new (the quality pass)"]],
+        "first": ["The shift, 59 m: it centres the falls' slot on the well's middle line (x -300). Parker's drawing measures 57 to 58 m."],
+        "notes": ["Note 146 and Parker's answers (11-14 15:30): the mine moved under the falls, 59 m west and 17 m down; the falls 6 m, the same shaft all the "
+                  "way down; so no widening.",
+                  "Note 111: the great falls at full width (6 m) and 3D."],
     }
 
 
-PAGES = [("the_mine_moved", page_mine, "The mine moved under the falls: what moves, the 6 m widening at its foot, why it drops 17 m."),
+PAGES = [("the_mine_moved", page_mine, "The mine moved under the falls: what moves (all of it, 59 m west and 17 m down, not widened), why it drops 17 m."),
          ("0_3_the_longer_ride", page_ride, "0.3 El Descenso, 59 m longer: the haulage incline, the winding house, the ore bins, the end of the line moved."),
          ("la_esclusa_the_place", page_place, "La Esclusa, the new section as a place: how it fits, the route, the water, what changed."),
-         ("los_barriles", page_barriles, "Los Barriles remade: the flume, the barrels running west, the crane's chain at the lip."),
-         ("la_esclusa_the_lock", page_lock, "La Esclusa, the lock: the wicket, the fill, the ledges, out onto El Borde; the cycle."),
+         ("los_barriles", page_barriles, "1.12 Los Barriles: the keepers' ladder beside the falls, the flume, the barrels running west and flung into the waste chute."),
+         ("la_esclusa_the_lock", page_lock, "1.13 La Esclusa, the lock: the wicket, the fill, the ledges, out onto El Borde; the cycle."),
          ("2_7_el_salto_de_la_cascada", page_salto, "2.7 El Salto de la Cascada: the leap over the great falls into the pool that feeds them.")]
 
 
@@ -1654,15 +1673,16 @@ def index_html(built):
     b.append('<figure><a href="146_closeup.png"><img class="map" src="146_closeup.png" alt="Close up of the new section and 2.7"></a>'
              '<figcaption>Close up: the new section, the falls\' shaft through the black waters\' floor, and 2.7.</figcaption></figure>')
     key = [["The mine's shift", "59 m west and 17 m down (the falls' slot moves from x -244 to -238 to x -303 to -297, centred on the well's middle, x -300)"],
-           ["The widening", "the mine's west wall and frog's cave a further 6 m west (Parker's drawing: 6.6 m)"],
-           ["The mine after", "x -322.4 to -207, y -54 to 73 (today x -257.4 to -148, y -37 to 90)"],
+           ["The mine after", "x -316.4 to -207, y -54 to 73 (today x -257.4 to -148, y -37 to 90); not widened"],
            ["The cart ride", "203 m of road (today 141 m); its end moves from (-148.4, -11.55) to (-207.4, -28.55); the mine's door to x -211, floor -29.6; "
                              "a 20 degree incline from x -158 to -188"],
-           ["The great falls", "one column, x -303 to -297, down the well (note 147 starts them at the glacier above) through the Charco, the black "
+           ["The great falls", "one 6 m shaft, x -303 to -297, down the well (note 147 starts them at the glacier above) through the Charco, the black "
                                "waters' floor, the new section and the mine to the Sump at y -45; a fall into them is a ride to the Sump (note 147)"],
-           ["The new section, La Esclusa", "x -303 to -222, y 73 to 90: the lip room y 73 to 75.2, the flume's water x -297 to -264.5, y 75.7 to 77.2, "
-                                           "landings and quay at 79.4, the lock x -250 to -228, y 75.7 to 86 and up the dry shaft to 88.5"],
-           ["The barrels", "as today: eight, 0.55 m a second, the same gaps, 26.8 m of road, now from x -272.4 west to the lip at x -297"],
+           ["The new section, La Esclusa", "x -303 to -222, y 73 to 90: the keepers' ladder x -295.4, y 73 to 79.4, 1.6 m right of the falls; "
+                                           "the platform x -295 to -290.5 at 79.4; the flume's water x -290.5 to -258.5, y 75.7 to 77.2; the east "
+                                           "landing and quay to x -251 at 79.4; the lock x -250 to -228, y 75.7 to 86 and up the dry shaft to 88.5"],
+           ["The barrels", "as today: eight, 0.55 m a second, the same gaps, 26.8 m of road, now from the tunnel at x -261.8 west to the kicker at "
+                           "x -288.6, which throws them back into the waste chute (never into the falls)"],
            ["The lock", "11.3 m in 6 s, held 3 s, drained in 5 s, 4 s at the bottom (added): 18 s"],
            ["2.7's leap", "over the falls (6 m) from a chain at x -296.9 to the pool beyond: 6.7 to 9.1 m, 4.4 m down"]]
     b.append("<h2>The layout's key numbers</h2>" + tbl(["", ""], key))
@@ -1671,29 +1691,31 @@ def index_html(built):
         f = lambda p: "x %.1f, y %.2f" % p if p else "new"
         rows.append([cid, name, f(old_at), f(new_at), note])
     b.append("<h2>Where each challenge now starts</h2>" + tbl(["", "Challenge", "Today", "After", ""], rows))
-    changed = ["The mine drops 17 m as well as moving west (as Parker drew it). Moved only west, its throat's roof sits in the black waters' rock "
-               "(110 square metres of overlap), and nothing fits between its top and El Borde. With the drop there are 17 m: the lip room, the "
-               "flume and a 12 m lock exactly.",
+    changed = ["Parker's answers (11-14 15:30) are folded in: 1.12 Los Barriles and 1.13 La Esclusa; the 17 m drop; the falls 6 m, the same shaft "
+               "all the way down; no widening of the mine; the 20 degree incline; the gentler falls kept.",
+               "The mine drops 17 m as well as moving west. Moved only west, its throat's roof sits in the black waters' rock (86 square metres of "
+               "overlap), and nothing fits between its top and El Borde. With the drop there are 17 m: the ladder, the flume and a 12 m lock exactly.",
                "The shift is 59 m, not 60: that centres the falls' slot on the well's middle line (x -300). Parker's drawing measures 57 to 58 m.",
-               "The pitch's short passage east from the mine's top cannot reach the flume's west end: La Cortina's dry shaft is 2 m east of the falls, "
-               "under the flume's last metres. So the mine lets out beside the lip, and you climb the broken crane's chain onto its platform, between "
-               "barrels. The chain is also the great falls' one last chance (law 7).",
-               "The lock sits under the black waters' slot and the old dry shaft, where El Borde's water and lip ledge are, 27 m east of the flume's "
-               "head: a 13.5 m quay joins them.",
+               "The barrels are flung back into the waste chute by a kicker at the flume's west end (note 91's kind), never into the falls. So the way "
+               "up from the mine is the keepers' ladder, 6.4 m, straight up beside the falls, with no barrel timing. (The first pages' passage east "
+               "could not reach the flume's west end, and their crane's chain had to be timed between barrels; both are gone.)",
+               "A fall into the flume now puts you back at the platform, not down the falls (asked on Los Barriles' page).",
+               "The lock sits under the black waters' slot and the old dry shaft, where El Borde's water and lip ledge are: a 7.5 m quay joins it to "
+               "the flume's head.",
                "The pitched 14 s lock cycle has no time at the bottom; 4 s added (18 s) so the wicket opens and you can cross before the fill.",
                "2.7's running leap is a fling from a chain (the climber cannot run and jump 6 m; a fling is this game's jump).",
                "The Charco's east half stays as a basin under Q6, so the old cascade and El Borde's river keep their water.",
-               "A fall into the great falls anywhere rides them to the Sump (note 147, settled while these pages were drawn): 2.7's miss, a fall "
-               "off the barrels, and a fall down the well into the falls all end in the Sump. Two softer falls are asked below: from El Borde "
-               "(now into the lock) and down the well beside the falls (into 2.7's pool)."]
+               "A fall into the great falls anywhere rides them to the Sump (note 147). The two gentler falls are kept: from El Borde into the lock, "
+               "and down the well beside the falls into 2.7's pool."]
     b.append("<h2>What did not fit, and what changed to make it fit</h2>" + ul(changed))
     b.append("<h2>The checks</h2><p>Run by make_rearrange.py over the course files (shapely), every time it is run.</p>" + tbl(["Check", "Result"], CHECKS))
     b.append("<h2>The pages</h2><ul>%s</ul>" % "".join('<li><a href="%s.html"><b>%s</b></a>: %s</li>' % (s, B.esc(h1), B.esc(line)) for s, h1, line in built))
-    builds = ["a1.py and a1_dress.py: every position moved by (-59, -17), and west of x -246 by (-65, -17); La Cortina's top (the pier's coping, "
-              "its last move west); the exit no longer into a2's lip ledge.",
+    builds = ["a1.py and a1_dress.py: every position moved by (-59, -17); La Cortina's top (the pier's coping, its last move west); the exit "
+              "no longer into a2's lip ledge.",
               "a0.py and a0_dress.py: RIDE carried on to (-207.4, -28.55), the tunnel to the door at x -211; the end of the line's pieces moved; the "
               "new stretch's pieces; the dark zone to x -211.",
-              "a new area file for La Esclusa (or a part of a2): the flume, the barrels moved here and reversed, the landings, the chain, the quay, "
+              "a new area file for La Esclusa (or a part of a2): the ladder, the platform, the flume, the barrels moved here and reversed, the kicker "
+              "(the mine's board made to throw a loose barrel), the landing, the quay, "
               "the lock as a water level that cycles, the wicket and the flap as movers, its dress.",
               "a2.py: the falls' shaft cut through the Charco's bed; the pool split; Q6 lengthened, the davit chain, C1, C2, Q7's rungs; the barrels "
               "and their cove taken out; the slot's waterfall now ending on the lock's flap; the strip x -252 to -223, y 86 to 89.4 no longer the mine's.",
