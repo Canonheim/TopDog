@@ -195,7 +195,7 @@ A.solid([(-223, 623.7), (-220, 623.7), (-220, 617.0), (-221.5, 614.0), (-223, 61
 A.ledge(-223.8, -220.0, 624.0, "rock", t=0.4, skin="riscos_keyhole_fin")  # R3: the keyhole's floor and its sill
 A.ledge(-220.0, -218.5, 624.0, "plank", t=0.25, skin="riscos_deck_stub")  # what is left of the deck, west
 A.ledge(-211.5, TW, 624.0, "plank", t=0.25, skin="riscos_deck_stub")  # ... and east
-BOB = {"w": 1.2, "h": 0.14, "mass": 3.0, "kind": "plank"}
+BOB = {"w": 1.2, "h": 0.14, "mass": 3.0, "kind": "plank", "model": "riscos_bridge_board"}  # (a level board, its origin its top face's middle: a box until it lands)
 # (Note 66, page 7.4: what you hold on each hanging half is the whole half, 0.3 m wide as the camera
 # sees it, two side ropes and their boards, where it was one rope: the rope is taken anywhere
 # across that width. The two halves' holds are 0.3 m nearer each other for it.)
@@ -203,6 +203,9 @@ _bw = A.rope("bridge_w", (-218.55, 623.7), 5.3, kind="rope", bob=dict(BOB))
 _be = A.rope("bridge_e", (-211.45, 623.7), 5.3, kind="rope", bob=dict(BOB))
 _bw["wide"] = 0.3
 _be["wide"] = 0.3
+# (each half's look: two side ropes and a ladder of honey boards, three gone; the Director, 11-14)
+_bw["ladder"] = {"w": 0.3, "missing": [2, 5, 6]}
+_be["ladder"] = {"w": 0.3, "missing": [3, 4, 8]}
 A.challenge("7.4", "Puente Roto", (-221.8, 624.0), 4, "A",
             moves=[["fling", [-218.55, 619.0], [-211.45, 619.6], "F2"]])
 A.cam((-245, 611, TW, 630), half_h=11.0, bias=(0.0, -3.0))

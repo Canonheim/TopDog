@@ -339,6 +339,16 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 			bm.size = Vector3(wide, seg_len + 0.02, wide)
 			mi.mesh = bm
 			CelPass.paint(mi, col)
+			if def.has("ladder"):
+				# A HANGING HALF OF A ROPE BRIDGE (page 7.4): two side ropes 0.3 m apart as the camera
+				# sees them, a honey board across every piece but the missing ones (plain boards
+				# until riscos_bridge_half lands)
+				var lw := float(def.ladder.get("w", 0.3))
+				mi.visible = false
+				for sx in [-lw * 0.5, lw * 0.5]:
+					rb.add_child(LuchaKit.box(Vector3(0.06, seg_len + 0.02, 0.06), col, Vector3(sx, 0.0, 0.0)))
+				if not (def.ladder.get("missing", []) as Array).has(i):
+					rb.add_child(LuchaKit.box(Vector3(lw + 0.08, 0.07, 0.3), Color("#C89048"), Vector3(0.0, 0.0, 0.0)))
 		rb.add_child(cs)
 		rb.add_child(plank_vis if plank_vis != null else mi)
 		if planks and bool(def.get("cords", false)):

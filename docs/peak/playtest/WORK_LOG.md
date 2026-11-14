@@ -2432,6 +2432,16 @@ in. Nothing played by a person.
   burro's ear and stamp and its kick's puff, feathers and chalk dust).
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: 7.4's bridge halves look like halves of a bridge (the Director's rulings)
+
+- A hanging rope can be drawn as a ladder (`ladder` on a rope, new): two side ropes 0.3 m apart
+  as the camera sees them and a plain honey board across every piece but the missing ones. Each
+  half has three boards gone (`66_bridge_halves_ladder.jpg`); `riscos_bridge_half` replaces it when
+  it lands, if a rope ever takes a segment model.
+- Each half's bob names `riscos_bridge_board` (to be re-made as a level board, its origin its top
+  face's middle, as the bob); the plain board shows until it lands.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
