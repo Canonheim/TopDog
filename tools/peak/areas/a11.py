@@ -71,6 +71,10 @@ SPRING_AIR = [
     [(-379.6, 969.8), (-364.0, 969.8), (-364.0, 974.0), (-371.4, 974.0), (-379.6, 974.9)],
     # the slide's mouth at the cave's west end, down through the floor at 962 (x -379.2 .. -377.0)
     [(-379.6, 970.0), (-377.4, 970.0), (-377.0, 961.0), (-379.2, 961.0)],
+    # the stair's recess: a slot in the shaft's east wall under the doorstep, from the cave's roof
+    # up to the doorstep's underside, so the rope hangs out of the drop's line (the Second
+    # Director, 11-14: the drop ends in the warm water)
+    [(-368.5, 973.8), (-366.8, 973.8), (-366.8, 977.9), (-368.5, 977.9)],
 ]
 
 
@@ -126,10 +130,14 @@ A.ledge(-368.4, -366.5, 978.3, "rock", t=0.4)  # the doorstep (grip)
 # The frost wall: the door between the doorstep and the tunnel, from the tunnel's floor to its
 # roof. Broken from the doorstep (like all the summit's rime: 3 s after it is taken, back 12 s later).
 A.solid([(-366.5, 978.17), (-365.6, 977.55), (-365.6, 981.97), (-366.5, 982.6)], "brittle", hold=STEP)
-# The stair: an iron ring in the shaft's east wall, a rope 4.5 m from it with a toll handle,
-# 0.55 m west of the bank's edge.
-A.hold(-368.75, 977.4, r=0.25, kind="iron")
-A.rope("escala_manantial", (-368.75, 977.4), 4.5, kind="rope", seg=0.5,
+# The stair: an iron ring at the top of a recess in the shaft's east wall, under the doorstep,
+# and a rope 4.6 m from it with a toll handle, over the bank. (The page hung it in the shaft
+# itself, 0.55 m west of the bank's edge: there a climber falling down the sink took it on the
+# way and hung over the pool. In the recess it hangs 0.8 m east of the shaft's line.) From the
+# ring, out west round the doorstep's lip and up onto it.
+RING_S = (-367.6, 977.5)
+A.hold(RING_S[0], RING_S[1], r=0.25, kind="iron")
+A.rope("escala_manantial", RING_S, 4.6, kind="rope", seg=0.5,
        bob={"w": 0.5, "h": 0.3, "mass": 3.0, "kind": "wood"})
 # The pool, its bank and its rim.
 A.water((-377.0, 969.8, -368.2, 970.6), 970.6, flow=(0.0, 0.0), look="pool")

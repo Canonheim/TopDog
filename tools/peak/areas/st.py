@@ -102,7 +102,22 @@ A.box(-392.0, 950.0, 4.0, 200.0, "void")  # behind the summit
 
 # ---------------------------------------------------------------- the mountain itself, as one great card
 body = EAST + WEST + [(-700, -40), (-34, -40)]
-A.card(body, z=-9.0, tone="#8C8273", edge=True)
+# A WINDOW BEHIND 0.3c's GAP (a0, x -124 .. -132: the tunnel's back walls are broken there and
+# the far cavern, a0_dress's dsc_cavern_far at z -16, shows through): this card stood in front
+# of it. It is cut away behind the gap; a card has no holes, so the body is drawn as two
+# pieces either side of x -128 (their faces meet flush).
+def _body_with_window(window=(-134.0, -13.0, -122.5, -4.0), split=-128.0):
+    from shapely.geometry import Polygon, box
+    whole = Polygon(body).buffer(0).difference(box(*window))
+    x0, y0, x1, y1 = whole.bounds
+    for half in (box(x0 - 1, y0 - 1, split, y1 + 1), box(split, y0 - 1, x1 + 1, y1 + 1)):
+        part = whole.intersection(half)
+        for g in getattr(part, "geoms", [part]):
+            if g.geom_type == "Polygon" and g.area > 1.0:
+                A.card([(round(x, 3), round(y, 3)) for x, y in list(g.exterior.coords)[:-1]], z=-9.0, tone="#8C8273", edge=True)
+
+
+_body_with_window()
 A.card([(-281, 784), (-307, 884), (-334, 962), (-350, 1000), (-372, 950), (-430, 800), (-380, 770), (-330, 800)], z=-8.8, tone="#F4F7FA")
 
 # ---------------------------------------------------------------- the sky outside: cardboard clouds, far and near

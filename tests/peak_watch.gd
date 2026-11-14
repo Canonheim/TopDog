@@ -2725,7 +2725,12 @@ func _w_g102(a: Array) -> void:
 	var t0 := pk.clock
 	match which:
 		"drop":
-			stand(Vector2(-361.9, 999.2))
+			var starts := [Vector2(-361.9, 999.2), Vector2(-362.6, 997.0), Vector2(-363.6, 993.6)]
+			var k := int(a[2]) if a.size() > 2 else 0
+			stand(starts[k])
+			if k > 0:
+				for b: RigidBody3D in c.bodies.values():
+					b.linear_velocity = Vector3(-1.0 * k, -1.0, 0.0)  # (arriving faster)
 			look(Vector2(-369.0, 985.0), 9.0)
 			var shot1 := false
 			while pk.clock - t0 < 14.0:
@@ -2735,7 +2740,13 @@ func _w_g102(a: Array) -> void:
 					await shot("102_off_the_eave_" + tag)
 				await ticks(1)
 			look(Vector2(-371.0, 972.5), 5.5)
-			await shot("102_in_the_spring_" + tag)
+			await shot("102_in_the_spring_" + tag + (str(a[2]) if a.size() > 2 else ""))
+			var on_rope := false
+			for l in c.limbs:
+				if l.grab_other != null and (l.grab_other as Node).has_meta("peak_rope"):
+					on_rope = true
+			var p_end := where()
+			print("WATCH g102 %s drop%s: in the pool (x -377 .. -368.2, under 971.5): %s; on the rope: %s" % [tag, str(a[2]) if a.size() > 2 else "", p_end.x > -377.2 and p_end.x < -368.0 and p_end.y < 971.5, on_rope])
 		"slide":
 			stand(Vector2(-378.5, 971.5))
 			for b: RigidBody3D in c.bodies.values():
@@ -2830,3 +2841,15 @@ func _w_gfollow(a: Array) -> void:
 		await secs(2.1)
 	for line in out:
 		print("WATCH gfollow %s: %s" % [tag, line])
+
+
+## 0.3c's gap in the tunnel's back wall: the far cavern behind it. ggap:TAG
+func _w_ggap(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("0.3")
+	await secs(1.0)
+	stand(Vector2(-127.0, -10.8))
+	await secs(1.5)
+	look(Vector2(-128.0, -8.5), 4.5)
+	await secs(0.5)
+	await shot("gap_03c_" + tag)

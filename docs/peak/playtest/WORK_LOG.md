@@ -2161,6 +2161,29 @@ in. Nothing played by a person.
   the weight's 1.6 x 1.2 collision): both were "could", and neither would match what is touched.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the spring's rope out of the drop's line; the window behind 0.3c's gap
+
+- **The spring's rope (note 102, the Director's word: the drop ends in the warm water).** The
+  ring and rope are out of the shaft: a recess is cut in the shaft's east wall under the
+  doorstep (x -368.5 .. -366.8, from the cave's roof 973.8 to the doorstep's underside 977.9).
+  The ring is at (-367.6, 977.5) and the rope, 4.6 m, hangs 0.8 m east of the shaft's line,
+  its toll handle over the bank (about 1.7 m over it, 0.6 m in from its edge).
+  - Measured (`g102:drop:0..2`, three drops, the last two arriving faster): none took the
+    rope. Two ended in the pool; the fastest ended on the bank's lip at the pool's east
+    edge (-368.06, 971.54): the shaft comes down at the pool's east end.
+  - The climb back: from the rope's top to the doorstep's lip (-368.4, 978.3) is 0.8 m west
+    and 0.8 up, 1.1 m (the course's reach is 1.9). **Not climbed by a player:** the probe
+    cannot climb a rope.
+  - **Found:** the drop into the spring counts as a fall on the HUD ("FELL 36 m, NOTED."), a
+    reward that is scored as a loss. Not changed.
+  - (`102_rope_in_its_recess.jpg`)
+- **The far cavern behind 0.3c's gap** (a0; the Director: `dsc_cavern_far` did not show). What
+  hid it was the course's own mountain card: st.py's body card at z -9, one flat grey-brown
+  polygon behind the whole mountain, in front of the cavern at -16. It is cut away behind the
+  gap (x -134 .. -122.5, y -13 .. -4); a card has no holes, so the body is two cards split at x
+  -128, flush. (`gap_03c_before.jpg` / `gap_03c_after.jpg`)
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
