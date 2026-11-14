@@ -166,6 +166,8 @@
 <tr><td>103</td><td><a href="#n103">El Carrito Loco: the cart goes far faster and down, and jumps to a chain on a ring in the wall</a></td><td><span class="chip c-ask">First version in (fix run, 4c1c86f); not played by a person</span></td></tr>
 <tr><td>104</td><td><a href="#n104">Build 0.3.104, the mine's camp: invisible geometry at the beam pegs and the broken stakes</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>105</td><td><a href="#n105">The summit's bell: use the old bell model</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>106</td><td><a href="#n106">Build 0.3.104, the mine's counterweight shaft: the east wall is just a black blob</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>107</td><td><a href="#n107">Build 0.3.104: the frozen climber's tally marks look terrible: redo them</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3778,6 +3780,30 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>The overnight run re-made the summit's bell as a new stem, `cumbre_bell` (it swings, with no clapper of its own; thread C, P-C18), and the fix thread made the bell a solid you can hold, hung on its pin at (-355.7, 1005.15), wearing `cumbre_bell` with the old `summit_bell` as its fallback (2848c76, e1beb35). The old model is still in kit/models, untouched.</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Point the solid bell back at `summit_bell` (and drop `cumbre_bell`), checking the old model's size against the solid bell's 2.2 x 2.6 m, and whether its clapper should stay the old one too. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n106">
+  <div class="head"><span class="num">106</span><h3>Build 0.3.104, the mine's counterweight shaft: the east wall is just a black blob</h3><span class="time">11-14 09:30</span></div>
+  <blockquote>"this is just a black blob. I thought you were going to model something here?"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/106_mine_shaft_black_blob.png" alt="Parker's shot, build 0.3.104: the mine's counterweight (the pug crate, cubo_peso, x -190.2) in its shaft, the climber on it. Behind it, the tall shape with the slanted shoulder is one flat black.">
+    <figcaption>Parker's shot, build 0.3.104: the mine's counterweight (the pug crate, cubo_peso, x -190.2) in its shaft, the climber on it. Behind it, the tall shape with the slanted shoulder is one flat black.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 1, the counterweight shaft (the crate rides x -190.2, y 14.7 to 26.7). The black shape IS a model: the skin `mine_east_mass` (thread A, 11-14, Top Dog Kit PARTS P-A7), the rock east of the shaft up to y 21.3. Its page asked for the shaft's east wall "black and glossy with drips in a dull colour (nothing pale on it)", the old way of saying you cannot hold it, and it was made that way: one black face, no painted beds. It was made before the painted-walls rule and before the matte rule, so in the game it reads as a hole, not as rock.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Re-make the shaft's east wall in the painted-walls look like the cliffs: long wavy painted beds in three or four close dark browns (dark, so it still reads as rock you can't hold, but plainly rock), matte, the drips painted as pale-ish streaks that don't taper to points, and check the rest of the mine's walls the same way (the mine's walls were already marked too dark in its light). Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n107">
+  <div class="head"><span class="num">107</span><h3>Build 0.3.104: the frozen climber's tally marks look terrible: redo them</h3><span class="time">11-14 09:35</span></div>
+  <blockquote>"redo the dead climber's tally marks too since they look terrible in game"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 1, the camp (note 104's picture): `tally_marks` (1.2 x 0.8 m, a1_dress.py line 377, scratched on the lining beside the sitting frozen climber). In the game it shows as a pale yellow glowing oval card with the strokes on it, so it reads as a lit sign or a speech bubble, not as scratches in the timber.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Re-make it as the scratches themselves: groups of four strokes and a slash, cut into the lining's own planks (pale raw-wood lines on the darker board, a few uneven groups, no card, no background shape), matte, laid flat on the lining. Held until Parker says go.</p>
 </div>
 
 </main>
