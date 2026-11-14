@@ -369,7 +369,6 @@ def dress(A):
     # of it. His bedroll on the bench; one miner's lamp left on a peg, cold.
     A.deco("mine_waiting_room", -169.025, GAL_Y, z=-2.25, size=(2.15, 2.1, 1.2), tone="back2")
     A.deco("camp_bedroll", -169.15, -12.1, z=-2.1, size=(1.6, 0.25, 0.6), tone="wood2")
-    A.deco("mina_tool_rack", -171.95, GAL_Y, z=-2.0, size=(1.80, 1.87, 0.49), tone="back")  # (quality run, E10) between the camp's posts
     hang(-169.5, -10.85, -2.5, lit=False)
     # His things against the wall beside him, back off the floor you walk on.
     A.deco("cold_lantern", -166.2, GAL_Y, z=-1.39, size=(0.28, 0.48, 0.28), tone="iron")
@@ -381,7 +380,9 @@ def dress(A):
     A.deco("mine_bunting_torn", -175.8, -8.1, z=-1.45, size=(3.5, 0.8, 0.1), tone="accent")
     # The winch at the head of the incline, in its own cut by the mouth (also 1.0b's).
     A.deco("mine_winch_cut", -174.8, GAL_Y, z=-2.45, size=(1.8, 1.7, 1.6), tone="back2")
-    A.deco("mine_hand_winch", -174.8, GAL_Y, z=-2.4, size=(1.6, 1.4, 0.8), tone="back")
+    # (quality run, E10, reviewer in the game: the camp's tool rack stands in the open left bay against the
+    # lining, in place of the hand winch, where it can be seen; the winch goes with the lining's remake, E5.)
+    A.deco("mina_tool_rack", -174.8, GAL_Y, z=-2.0, size=(1.80, 1.87, 0.49), tone="back")
     # Painted on the floor you walk on: the worn track from where he sits to the ladder's foot.
     A.deco("mine_worn_path", -169.2, GAL_Y, z=0.0, size=(3.4, 0.01, 0.35), tone="rock")
     A.deco("mine_rubble_lip", -170.85, -15.3, z=LIP_Z, size=(10.0, 1.0, 0.7), tone="back2")
@@ -477,7 +478,7 @@ def dress(A):
     # El Diente in one piece, in place of a1.py's two hoistway cards. Origin: its main post's foot on the deck.
     A.deco("mina_hoist_headframe", -193.0, 26.2, z=-2.05, size=(16.27, 24.92, 1.23), tone="back")
     # The miners' tool rack (quality run, E10: 8.5 PASS) on the shoulder landing; origin: its back face's foot.
-    A.deco("mina_tool_rack", -199.4, 6.0, z=-1.9, size=(1.80, 1.87, 0.49), tone="back")
+    A.deco("mina_tool_rack", -198.8, 6.0, z=-1.9, size=(1.80, 1.87, 0.49), tone="back")  # (east end: beside 1.5's start, not behind the climber)
     # The station's back half: the deck carried on to the wall on two bearers, the brace from
     # the pillar, three ore crates and a spare bucket on its side.
     A.deco("mine_deck_back", -195.85, DECK_Y - 0.3, z=-2.075, size=(7.9, 0.3, 1.65), tone="back")
@@ -600,7 +601,7 @@ def dress(A):
     A.deco("mine_frame_open", -230.0, UPPER_Y, z=0.0, size=(0.6, 4.5, 3.2), tone="back")
     side_lantern(-229.7, 60.85, -1.425)
     # The ore crate that stood like a step on the gallery floor, back against the wall.
-    A.deco("crate_ore", -228.1, UPPER_Y, z=-1.9, scale=0.917, size=(1.2, 1.1, 1.2), tone="back")
+    A.deco("crate_ore", -230.9, UPPER_Y, z=-1.9, scale=0.917, size=(1.2, 1.1, 1.2), tone="back")  # (west of the post: the tool rack shows)
     # Drawn on the staging's face: two rows of nail heads where the hanging posts take it.
     for x in (-236.9, -232.5):
         drawn("mine_nail_row", x, 52.3, (0.08, 0.08, 0.01))
