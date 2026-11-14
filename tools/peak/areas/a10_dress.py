@@ -138,7 +138,7 @@ FOR THE AREA FILE (tools/peak/areas/a10.py; the fix thread's). Line numbers are 
      - El Alero (53): "tormenta_alero" (with the torn line's spar let into its underside).
      - The porch, a9.py's ledge at 886 (a9 line 94): "tormenta_porch". (Its glazed nose, a9 line 97,
        keeps a9's `glaciar_verglas_nose`.)
-     - The exit ledge (55): "tormenta_exit_slab".
+     - The exit ledge (55): "cumbre_tea_floor" (placed by a11_dress.py: one floor with the tea shop).
      - El Filo: the blade (76), its scar (80) and its top (86): "tormenta_filo"; the eight knobs (84,
        89, each A.hold): "tormenta_quartz_knob".
      - The line pole (102): "tormenta_line_pole".
@@ -676,4 +676,4 @@ def dress(A):
     # The exit ledge's slab (skin, line 55): the ridge's last slab of slate, dry, pale warm grey, in square steps,
     # overhanging the face by 2 m, two old bolt holes with rust under them on its east end where the ladder's top
     # bracket was. Its top's dressing is the summit's (the tea shop, note 97).
-    skin("tormenta_exit_slab", -340.0, -332.0, 962.0, 964.0, tone=DRY)
+    # The exit ledge wears the summit's one tea floor, `cumbre_tea_floor` (a11_dress.py, page 11.1).
