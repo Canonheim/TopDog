@@ -2143,6 +2143,24 @@ in. Nothing played by a person.
   up with a ram at the top of its stroke).
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the holds' looks (a1_dress item 8, a2_dress item 7)
+
+- **La Cortina's 28 holds** wear their staples: `iron_staple` (18), `iron_staple_bent` (5:
+  rows 2, 5, 8, 11 and 12, alternate sides, my pick) and `mine_staple_bound` (the five dry
+  rests), each placed at its hold with its feet on the throat's back wall (z -1.6). The wet
+  holds wear theirs as their own piece (peak.gd `_wear_skins`), and **the wet look now
+  reaches a worn skin's meshes** (peak_things.gd), so a staple goes dark and shiny when the
+  drip reaches it. Watched (`cortina`): the drips and the wet timings are as before (each
+  hold wet 5.0 to 6.3 s in 15; never both of a row). (`13_cortina_staples.jpg`)
+- **a2:** the six aqueduct rings wear `aguas_ring_eyebolt` (placed at the bolt's root, z
+  -1.25); the eight barrels `aguas_barrel`; 2.10's seven wet holds name `aguas_tread_end`
+  (not landed yet: placed, drawn when it lands); each of the five chains has an
+  `aguas_chain_shackle` at its top.
+- **Not done:** El Cubo's rungs as `rung_iron` (that model is a rung seen front-on, these stick
+  out of the face side-on) and the lift's weight as `lift_counterweight` (1.0 x 1.6 m against
+  the weight's 1.6 x 1.2 collision): both were "could", and neither would match what is touched.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

@@ -105,8 +105,10 @@ moves23 = []
 for i, (x0, x1, y) in enumerate(CROWN[:3]):
     out = 1.6 if i < 2 else 1.3
     ra, rb = (x1 + 0.35, y + 1.95), (x1 + out, y + 2.3)  # the near ring, the launch ring
-    A.hold(*ra, r=0.2, kind="iron")
-    A.hold(*rb, r=0.22, kind="iron")
+    A.hold(*ra, r=0.2, kind="iron", skin="aguas_ring_eyebolt")
+    A.hold(*rb, r=0.22, kind="iron", skin="aguas_ring_eyebolt")
+    for rr in (ra, rb):  # (a2_dress item 7: each ring on an eye bolt back to its plate, z -1.25; the ring 0.2 under the bolt)
+        A.deco("aguas_ring_eyebolt", round(rr[0], 3), round(rr[1] + 0.2, 3), z=-1.25, size=(0.45, 0.45, 1.25), tone="iron", skin=True)
     # (note 18: the chains the rings hung on are gone)
     nx0, nx1, ny = CROWN[i + 1]
     moves23 += [["reach", list(ra), list(rb)], ["fling", list(rb), [(nx0 + nx1) / 2, ny], "F2"]]
@@ -224,7 +226,7 @@ for i in range(8):
             {"type": "path", "pts": [[COVE_X, 115.3], [LIP_X, 115.3]], "speed": BARREL_SPEED, "mode": "wrap",
              "wait": round((_loop - _road) / BARREL_SPEED, 3), "phase": round(_t / BARREL_SPEED, 3), "trigger": "none",
              "loose": round(-287.15 - COVE_X, 3), "mass": 60.0, "push": 1.3, "tip": 1.5,
-             "emerge": {"depth": -3.0, "over": 2.4}}, model="barrel_float")
+             "emerge": {"depth": -3.0, "over": 2.4}}, model="aguas_barrel")
     _t += BARREL_GAPS[i]
 # The cove's mouth: the aqueduct's own brick arch (the kit's brick_arch, 7 m, drawn at 4.6:
 # the size sets its scale), and the dark inside it, cut to the arch's opening.
@@ -271,7 +273,10 @@ A.water((-392, 134.5, -380, PS), PS, flow=(1.0, 0.0), look="pool")
 slab(-385, -378, 138.0, t=0.5, skin="aguas_cascada_landing")  # Q10, over the spill's lip
 WET = [(-385.6, 139.4), (-386.7, 140.5), (-387.9, 141.5), (-388.8, 142.8), (-388.0, 150.0), (-389.2, 151.1), (-390.4, 152.2)]
 for i, p in enumerate(WET):
-    A.hold(p[0], p[1], r=0.24, kind="rock", hold={"type": "wet", "on": 1.6, "off": 3.4, "phase": (i * 1.0) % 5.0})
+    A.hold(p[0], p[1], r=0.24, kind="rock", skin="aguas_tread_end",
+           hold={"type": "wet", "on": 1.6, "off": 3.4, "phase": (i * 1.0) % 5.0})
+    # (a2_dress item 7: the free end of a stone tread; its root running back into the wall is the dress's)
+    A.deco("aguas_tread_end", p[0], p[1], z=0.0, size=(0.55, 0.4, 0.3), tone="stone", skin=True)
 A.rope("cuerda_niebla", (-386.6, 158.0), 13.6, kind="rope")
 A.challenge("2.10", "La Cascada Chica", (-381.5, 138.0), 4, "B",
             moves=[["reach", [-385.0, 138.0], list(WET[0])], ["reach", list(WET[0]), list(WET[1])],
@@ -437,6 +442,10 @@ build_rock()
 A.line_pit(-405.30, -404.00, 153.00)
 A.line_pit(-412.80, -411.50, 153.00)
 A.line_pit(-419.80, -418.50, 153.00)
+
+# Each chain ends at the top in a shackle (a2_dress item 7).
+for x, y in ((-258.9, WINC), (-265.3, WINC), (-269.3, WINC), (-344.45, 117.6), (-246.6, PY - 0.2)):
+    A.deco("aguas_chain_shackle", x, y, z=0.0, size=(0.3, 0.4, 0.3), tone="iron")
 
 # ================================================================ the dress (the modelling run's)
 a2_dress.dress(A)

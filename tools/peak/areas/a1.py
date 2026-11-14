@@ -460,18 +460,24 @@ def _col_x(y, side):
 
 
 CORTINA = []
+# Their looks (a1_dress item 8): iron staples whose feet are in the throat's back wall (its face
+# at z -1.6), five of them bent; the five dry rests bound in pale cord. A wet one shows its wet
+# on the staple. (The five bent: my pick, spread up the climb.)
+BENT = {(2, 1), (5, 0), (8, 1), (11, 0), (12, 1)}
 for side in (0, 1):
     _top = (_col_x(DRIP_TOP_Y, side), DRIP_TOP_Y)
     A.drips(_top, (_col_x(DRIP_FOOT_Y, side), DRIP_FOOT_Y), speed=DRIP_SPEED, gap=DRIP_GAP, phase=3.5 * side)
     for r in range(ROWS):
         y = ROW0_Y + ROW_DY * r
         x = _col_x(y, side)
+        look = "mine_staple_bound" if ALWAYS_DRY.get(r) == side else ("iron_staple_bent" if (r, side) in BENT else "iron_staple")
         if ALWAYS_DRY.get(r) == side:
-            A.hold(x, y, r=0.26, kind="bone")
+            A.hold(x, y, r=0.26, kind="bone", skin=look)
         else:
-            A.hold(x, y, r=0.24, kind="rock", hold={
+            A.hold(x, y, r=0.24, kind="rock", skin=look, hold={
                 "type": "wet", "on": DRIP_WET, "off": DRIP_GAP / DRIP_SPEED - DRIP_WET, "look": "water",
                 "phase": Area.drip_phase(_top, (x, y), DRIP_SPEED, DRIP_GAP, 3.5 * side)})
+        A.deco(look, round(x, 3), round(y, 3), z=-1.6, size=(0.4, 0.1, 0.25), tone="iron", skin=True)
 for r in range(ROWS):
     y = ROW0_Y + ROW_DY * r
     CORTINA.append((_col_x(y, 0), _col_x(y, 1), y))

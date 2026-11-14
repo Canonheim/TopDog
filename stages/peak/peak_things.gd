@@ -2250,6 +2250,10 @@ func _tick_holds(delta: float) -> void:
 						else:
 							(h.vis as GeometryInstance3D).material_override = null
 							CelPass.paint(h.vis, h.col as Color)
+					else:
+						# a hold that wears its skin (a model): its meshes go wet and dry
+						for g in (h.vis as Node).find_children("*", "GeometryInstance3D", true, false):
+							(g as GeometryInstance3D).material_override = Peak.slick_material(cls) if wet else null
 					if near_me:
 						# The drip lands on it (a splash of drops, a drip's sound); or the
 						# last drops fall as it dries, and its colour comes back over a moment.
