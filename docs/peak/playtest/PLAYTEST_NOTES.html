@@ -172,6 +172,7 @@
 <tr><td>109</td><td><a href="#n109">Build 0.3.104, the mine's frog cave: tons of z-fighting; look for z-fighting everywhere and fix it</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>110</td><td><a href="#n110">Build 0.3.104: holding L does not zoom the camera out in some places; it must work everywhere</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>111</td><td><a href="#n111">Build 0.3.104: falling water must be 3D like standing water, and the mine's great falls a great falls again, not a trickle line</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>112</td><td><a href="#n112">Build 0.3.104, the black waters' tanks (2.4): a green bell floating off the end of the red pipe</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3865,6 +3866,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
     <img src="shots/111_aguas_fall_flat.png" alt="Parker's second shot">
     <figcaption>Parker's second shot, build 0.3.104, 110 m in the black waters: the 3D pool and its flat paper fall over the lip.</figcaption>
   </figure>
+</div>
+
+<div class="note" id="n112">
+  <div class="head"><span class="num">112</span><h3>Build 0.3.104, the black waters' tanks (2.4): a green bell floating off the end of the red pipe</h3><span class="time">11-14 10:05</span></div>
+  <blockquote>"what is this weirdness anyway?"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/112_aguas_spout_floating.png" alt="Parker's shot, build 0.3.104: the two tanks and the red filler pipe you hold. The arrow: a small green bell shape hanging in the air past the pipe's west end, in front of the barred arch.">
+    <figcaption>Parker's shot, build 0.3.104: the two tanks and the red filler pipe you hold. The arrow: a small green bell shape hanging in the air past the pipe's west end, in front of the barred arch.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 2, page 2.4. It is `aguas_spout_face` (thread C), placed by a2_dress.py line 431: meant as the filler pipe's spout, a flared mouth turned DOWN at the pipe's west end, with a dribble of water out of it. Three things make it weird: it is a flat card 2 cm thick drawn in the climb's front plane, not a real spout on a bend; it sits at x -236.8 while the pipe (a plain painted course solid, x -236.6 .. -229.5, y 112.15 .. 112.45) ends 0.2 m short of it and does not bend down to meet it, so it floats; and the dribble it was meant to explain is not drawn. So it reads as a green bell hanging off nothing.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>My recommendation: take it out, and finish the pipe properly instead: the red pipe's west end bending down in a short elbow to an open mouth, all one model on the pipe (a skin on its solid), with a thin dribble of 3D falling water out of it once note 111's falling water exists. The simpler choice is just to remove the card and leave the pipe end plain. Held until Parker says go.</p>
 </div>
 
 </main>
