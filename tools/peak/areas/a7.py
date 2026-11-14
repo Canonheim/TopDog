@@ -145,7 +145,7 @@ VSHAPES = [(box_pts(0.0, -0.25, 0.28, 0.5), "bone"),  # the legs: the only grip
 
 def vulture(mid, pts, phase, mode="loop", wait=0.0):
     A.mover(mid, pts[0], VSHAPES, {"type": "path", "pts": [list(p) for p in pts], "speed": 4.0, "mode": mode,
-                                   "phase": phase, "wait": wait, "trigger": "none"}, model="vulture")
+                                   "phase": phase, "wait": wait, "trigger": "none"}, model="vulture_flying")  # (the perched vulture shows until it lands)
 
 
 vulture("vulture1", VLOOP, 0.0)

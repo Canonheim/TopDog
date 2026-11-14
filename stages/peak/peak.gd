@@ -117,10 +117,16 @@ const WET_AS := {"geode_wheel": "glass", "crystal_ring_3": "glass", "crystal_rin
 	"quartz_pendulum": "glass", "crystal_raft": "glass", "crystal_column": "glass", "serac": "ice"}
 
 
+## A new model that replaces another under a new stem, and what shows until it lands.
+const KIT_FALLBACK := {"vulture_flying": "vulture"}
+
+
 static func kit(model: String) -> Node3D:
 	var n := LuchaKit.kit_model(model)
 	if n == null and model.ends_with("_jade"):
 		n = LuchaKit.kit_model(model.trim_suffix("_jade"))  # (a jade-band re-make not landed yet: the original shows)
+	if n == null and KIT_FALLBACK.has(model):
+		n = LuchaKit.kit_model(str(KIT_FALLBACK[model]))  # (a new stem not landed yet: the one it replaces shows)
 	if n != null:
 		var mud_as := str(WET_AS.get(model, "mud"))
 		if n is MeshInstance3D:
