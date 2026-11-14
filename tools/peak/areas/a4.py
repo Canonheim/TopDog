@@ -47,6 +47,7 @@ def leave(v_in, lean, power):
 
 
 ARCS = []  # (name, lean, power, rise, v_land) for the table printed at the bottom
+_CAPS = [0]  # (each cap's own tag: its bounce squashes it)
 
 
 def cap(cx, cy, w, lean, power, thick=0.7, min_in=0.6, kind="cap", name=None, v_in=None):
@@ -56,8 +57,12 @@ def cap(cx, cy, w, lean, power, thick=0.7, min_in=0.6, kind="cap", name=None, v_
     th = math.radians(lean)
     n = (math.sin(th), math.cos(th))
     d = (math.cos(th), -math.sin(th))  # along the face, west to east
-    A.box(cx - n[0] * thick / 2, cy - n[1] * thick / 2, w, thick, kind, rot=-lean)
-    A.bounce((cx - d[0] * w / 2, cy - d[1] * w / 2), (cx + d[0] * w / 2, cy + d[1] * w / 2), power, min_in=min_in)
+    _CAPS[0] += 1
+    tag = "a4_cap%d" % _CAPS[0]
+    # (note 36: each cap squashes and springs when it throws; its bounce names it by tag)
+    A.box(cx - n[0] * thick / 2, cy - n[1] * thick / 2, w, thick, kind, rot=-lean, tag=tag)
+    A.bounce((cx - d[0] * w / 2, cy - d[1] * w / 2), (cx + d[0] * w / 2, cy + d[1] * w / 2), power, min_in=min_in,
+             squash=tag)
     if name and v_in:
         out = leave(v_in, lean, power)
         ARCS.append((name, lean, power, out))
@@ -166,7 +171,8 @@ A.cam((-268, 262, -240, 290), half_h=9.0, bias=(0.0, -2.0))
 A.wind((-240.3, 277.3, -235.7, 285.0), (0.0, 3.70), look="spores")
 A.wind((-240.3, 285.0, -235.7, 292.5), (0.0, 2.00), look="spores")
 for i, x in enumerate((-239.4, -237.9, -236.4)):
-    A.rope("lift%d" % i, (x, 301.5), 10.0, kind="vine")  # y 291.5 .. 301.5
+    _lv = A.rope("lift%d" % i, (x, 301.5), 10.0, kind="vine")  # y 291.5 .. 301.5
+    _lv["gold_end"] = 1.0  # (its last metre furred gold with spores: a4_dress item 8)
 A.ledge(-235.5, -230.5, 295.0, "gill", t=0.6, skin="jardin_saucer_5")  # L3
 A.challenge("4.3", "El Ascensor de Esporas", (-241.5, 277.5), 2, "B",
             moves=[["reach", [-236.4, 294.6], [-235.5, 295.0]]])
@@ -279,8 +285,10 @@ A.challenge("4.6", "El Hongo Gigante", (-229.0, 333.6), 4, "B",
             moves=[["reach", list(GILLS[0]), list(GILLS[1])], ["reach", list(GILLS[4]), list(GILLS[5])],
                    ["reach", list(GILLS[5]), [-221.5, 336.6]],
                    ["fling", [-221.5, 336.6], [-223.4, 340.25], "F2"],
-                   ["reach", [-224.1, 340.25], list(WARTS[1])], ["reach", list(WARTS[1]), list(WARTS[3])],
-                   ["reach", list(WARTS[3]), [-230.0, 346.5]]])
+                   # (with two mushrooms, not five, the shoulder is three lunges, 2.6, 3.0 and 3.0 m: past
+                   # a reach, so flings up the slime from hold to hold)
+                   ["fling", [-224.1, 340.25], list(WARTS[1]), "F2"], ["fling", list(WARTS[1]), list(WARTS[3]), "F2"],
+                   ["fling", list(WARTS[3]), [-230.0, 346.5], "F2"]])
 A.cam((-236, 330, -212, 350), half_h=11.0, bias=(3.0, -3.0))
 
 # ---------------------------------------------------------------- 4.7 Trampolin en Cadena (D4, miss B)
@@ -322,6 +330,7 @@ A.cam((-251, 336, -229, 368), half_h=14.0, bias=(-2.0, 2.0))
 # Under all of it is the terrace, 27 m down: the start of 4.6.
 _puente = A.rope("puente", (-249.0, 361.0), 14.0, kind="rope", to=(-263.0, 361.0), planks=15, slack=1.06)
 _puente["plank_model"] = "jardin_bridge_tread"  # (page 4.8: its planks are shelf-fungus treads; until it lands, boards)
+_puente["cords"] = True  # (on two white mycelium cords)
 A.wind((-256.0, 356.5, -249.5, 366.0), (4.0, 0.8), gust={"on": 1.6, "off": 3.2, "phase": 0.0, "warn": 0.8}, look="spores")
 A.wind((-262.5, 356.5, -256.0, 366.0), (-3.0, 3.4), gust={"on": 1.6, "off": 3.2, "phase": 2.4, "warn": 0.8}, look="spores")
 A.ledge(-266.0, -263.0, 361.0, "root", t=0.6)  # L8
@@ -454,7 +463,9 @@ A.light(-295.5, 268.0, color="#BFE8C0", rng=10.0, energy=1.2)
 A.light(-296.5, 367.0, color="#BFE8C0", rng=12.0, energy=1.4)
 
 A.effect("spores", (-291, 264, -266, 364), density=0.35)  # the west hall: slow, all the way up
-A.effect("spores", (-240.3, 276, -235.7, 294), density=1.6, speed=2.0)  # the lift: a rising column of them
+# the lift: a column of pale gold spores, dense and fast below 285, thin and slow above (note 38)
+A.effect("spores", (-240.3, 276, -235.7, 285), density=2.4, speed=2.6, tone="#F2D88A")
+A.effect("spores", (-240.3, 285, -235.7, 294), density=0.7, speed=0.9, tone="#F2D88A")
 A.effect("spores", (-262.5, 355, -249.5, 367), density=1.2, speed=3.0)  # the bridge's gusts
 A.effect("spores", (-266, 264, -215, 301), density=0.4)
 A.effect("spores", (-266, 334, -190, 370), density=0.3)
@@ -463,6 +474,9 @@ A.effect("drips", (-229.5, 292, -224, 333), density=0.6)  # down the snail wall
 A.effect("drips", (-241.5, 333.6, -222.5, 340), density=0.3)  # off the giant's rim onto the terrace
 A.effect("mist", (-291, 264, -256, 267), density=0.5)
 A.effect("mist", (-215, 318, -190, 320.5), density=0.4)
+A.effect("steam", (-204.3, 322.8, -203.5, 325.5), density=0.8, tone="#A8A296", speed=0.4)  # a thin thread of smoke from the hut's chimney
+A.effect("spores", (-300.0, 365.0, -294.0, 377.0), density=0.5, speed=0.5, tone="#E6EFC4")  # spores drifting out of the west door over the well
+A.effect("spores", (-291, 264, -190, 378), density=0.02, z=2.2, tone="#E6EFC4")  # a few spores close to the camera (the sheet's foreground)
 
 # ================================================================ the dress (the modelling run's)
 a4_dress.dress(A)

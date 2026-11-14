@@ -2873,3 +2873,36 @@ func _w_g4(a: Array) -> void:
 	look(Vector2(-280.0, 268.0), 5.0)
 	await secs(0.4)
 	await shot("4_1_mound_" + tag)
+
+
+## a4's looks: a cap squashing, the lift's vines with leaves and gold ends, the bridge's cords. g4fx:TAG
+func _w_g4fx(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("4.1")
+	await secs(2.0)
+	var n := 0
+	var with_vis := 0
+	for row in pk.zones.bounces:
+		if row.def.has("squash_tag"):
+			n += 1
+			if row.has("vis"):
+				with_vis += 1
+	print("WATCH g4fx %s: caps that name a squash %d, of them drawn and ready to squash %d" % [tag, n, with_vis])
+	look(Vector2(-279.0, 268.5), 4.0)
+	for row in pk.zones.bounces:
+		if row.def.has("squash_tag") and row.has("vis"):
+			row["squash_t"] = 0.0
+	await ticks(9)
+	await shot("36_caps_squashed_" + tag)
+	await secs(1.5)
+	await shot("36_caps_after_" + tag)
+	pk.warp("4.3")
+	await secs(2.0)
+	look(Vector2(-238.0, 290.0), 6.0)
+	await secs(0.5)
+	await shot("4_3_lift_vines_" + tag)
+	pk.warp("4.8")
+	await secs(2.0)
+	look(Vector2(-256.0, 360.0), 5.0)
+	await secs(0.5)
+	await shot("4_8_bridge_" + tag)

@@ -2240,6 +2240,36 @@ in. Nothing played by a person.
   - (`102_stair_chimney_and_lip.jpg`)
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: a4's looks and effects (a4_dress items 8, 9); a3's effects
+
+- **The caps squash** (note 36): each of a4's ten throwing caps is its own drawn piece now (a
+  tag), and its bounce names it (`squash`, new in peaklib; the game's `_bounce_squash`): when
+  it throws, the cap flattens and springs about its face, as Del Mar's floats do. Every cap
+  that throws puffs spores from under its rim. Watched (`g4fx`): 10 of 10 ready; squashed in
+  the frame (`36_caps_squashed_after.jpg`). The great cap does not squash (it is re-made).
+- **The vines** hang leaves (the kit's `vine_leaf`, every other piece, turned by turns); the
+  lift's three are furred gold on their last metre (`gold_end`). Their knots (`jardin_vine_knot`)
+  are not placed: the model has not landed and its stand-in would be a box on the rock.
+  (`4_3_lift_vines_after.jpg`)
+- **The bridge** has two white mycelium cords along its treads (a rope's `cords`; the cord
+  model is not used: drawn bars). (`4_8_bridge_after.jpg`)
+- **Effects can name a colour and a speed** now (`tone`, `speed`: the game ignored both; a3's
+  white dust and a4's faster spores were written with them and now get them). a4: the lift's
+  column pale gold, dense and fast below 285, thin and slow above; a thin thread of smoke from
+  the hut's chimney; spores drifting out of the west door; a few spores close to the camera.
+  a3: the mist at the well violet on the cave's side and green on the garden's, the garden's
+  spores across the well, glitter in the frog's room, the drip off the nest's lip.
+- **Found, 4.6:** with two shoulder mushrooms the climb to the crown is three lunges of 2.6,
+  3.0 and 3.0 m: past the course's 1.9 m reach. As flings they need 3.5 to 3.8 m/s (F2). The
+  moves say so now; 4.6 is harder than the page meant.
+- **Not done** (they need new effects or decide play): a4, the pod bed's pods swelling in turn,
+  the gusts' bursts and the curtain bellying, the treads lifting, leaves falling, the slime's
+  sheen, the web's knots pulsing, the puffballs' pores turning, a croak; a3, the cave's breath
+  (a gust that would push climbers, the pendulum and the raft: a change of play), the rainbow
+  fan, the water down the nest, drops down the chandeliers' threads, the crack's drip (its place
+  is not in the list).
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

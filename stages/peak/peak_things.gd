@@ -51,6 +51,7 @@ const POSES := {
 var peak: Peak
 var movers := {}  # id -> Dictionary
 var ropes: Array = []
+var _leaf_ok := true  # (the vine leaf's model is there; once missing, not looked for again)
 var bodies := {}  # id -> {rb, last_angle, turned, area}
 var holds: Array = []  # Dictionary per hold with a behaviour
 var spawners: Array = []
@@ -340,6 +341,24 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 			CelPass.paint(mi, col)
 		rb.add_child(cs)
 		rb.add_child(plank_vis if plank_vis != null else mi)
+		if planks and bool(def.get("cords", false)):
+			# the bridge's two white mycelium cords, along every tread (page 4.8)
+			for zc in [-0.36, 0.36]:
+				var cord := LuchaKit.box(Vector3(0.07, seg_len + 0.04, 0.07), Color("#F0ECE2"), Vector3(0.0, 0.0, zc))
+				rb.add_child(cord)
+		if kind == "vine" and not planks:
+			if i % 2 == 1 and _leaf_ok:
+				# a vine hangs leaves (a4_dress item 8), turned to either side by turns
+				var leaf: Node3D = Peak.kit("vine_leaf")
+				if leaf == null:
+					_leaf_ok = false
+				else:
+					leaf.scale = Vector3.ONE * 0.5
+					leaf.rotation.z = 0.5 if i % 4 == 1 else -0.5
+					leaf.position.z = 0.06
+					rb.add_child(leaf)
+			if def.has("gold_end") and (n - i) * seg_len <= float(def.gold_end) + 0.01:
+				CelPass.paint(mi, Color("#E8C25A"))  # (furred gold with spores, the lift's vines' last metre)
 		if kind == "banner" and i % 2 == 1:
 			var flag := LuchaKit.papel_flag([Color("#E0287A"), Color("#1FB8AE"), Color("#F28A1E"), Color("#7CC83A"), Color("#8A3FC0"), Color("#FFC928")][i / 2 % 6], i / 2)
 			flag.scale = Vector3.ONE * 0.8

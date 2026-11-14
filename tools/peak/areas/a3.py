@@ -545,7 +545,11 @@ A.effect("dust", (-459, 176, -309, 278), density=0.5, tone=WHITE)
 A.effect("drips", (-448.2, 198.7, -447.4, 208.0), tone=CYAN)
 A.effect("drips", (-369.8, 231.8, -369.0, 246.0), tone=CYAN)
 A.effect("drips", (-387.8, 222.3, -387.0, 235.0), tone=CYAN)
-A.effect("mist", (-309, 262, -304, 280), density=0.4)
+A.effect("mist", (-309, 262, -304, 280), density=0.4, tone=VIOLET)  # (lit violet on the cave's side of the well: page 3.10)
+A.effect("mist", (-300, 262, -292, 280), density=0.3, tone="#9CF07A")  # and green on the garden's
+A.effect("spores", (-300, 263, -290, 279), density=0.3, speed=0.6, tone="#9CF07A")  # the garden's spores drifting west across the well
+A.effect("dust", (-461.9, 176.0, -459.0, 178.8), density=2.0, tone=WHITE)  # motes of glitter in the frog's room (3.0)
+A.effect("drips", (-420.7, 204.5, -420.1, 206.5), density=1.5, tone=CYAN)  # the drip from the nest's bottom lip (3.4)
 A.cam((-459, 176, -447.5, 184), 9.0, bias=(7.0, 5.0))  # coming up out of the hole: the whole hall
 
 # ================================================================ the dress (the modelling run's)

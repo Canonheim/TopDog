@@ -67,6 +67,8 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 			"bounce":
 				if z.has("model"):
 					_bounce_vis(a, z, root, row)
+				elif z.has("squash_tag"):
+					_bounce_squash(z, root, row)
 				elif str(z.get("look", "")) == "rope":
 					_rope_band(z, root, row)
 				bounces.append(row)
@@ -427,6 +429,9 @@ func _tick_bounce(c: Climber) -> void:
 			body.linear_velocity += Vector3(want.x - com_v.x, want.y - com_v.y, 0)
 		_bounce_wait = BOUNCE_COOL
 		var look := str(z.get("look", "cap"))
+		if look == "cap":
+			# a puff of spores from under the cap's rim as it throws (a4_dress item 9)
+			burst((a + b2) * 0.5 - n * 0.35, "spores", clampf(out / 6.0, 0.6, 1.6), -n)
 		if look == "ring":
 			Sound.play_at("floatie", Vector3(com.x + Peak.ORIGIN.x, com.y + Peak.ORIGIN.y, 0), 2.0)  # (Del Mar's own boing)
 		else:
@@ -1167,6 +1172,32 @@ func _bounce_vis(_a: Dictionary, z: Dictionary, root: Node3D, row: Dictionary) -
 	row["squash_t"] = 9.0
 
 
+## A CAP THAT SQUASHES (note 36: "squash and spring, the stalk rocking"): a bounce that names
+## the tagged solid it lies on (`squash_tag`) takes that solid's own drawn piece under a pivot
+## at the bounce line's middle, turned along it, so the squash flattens the cap about its face.
+func _bounce_squash(z: Dictionary, root: Node3D, row: Dictionary) -> void:
+	var bodies: Array = _tags.get(str(z.squash_tag), [])
+	if bodies.is_empty():
+		return
+	var sb: Node = bodies[0]
+	var piece: Node3D = null
+	for ch in sb.get_children():
+		if ch is Node3D and not (ch is CollisionShape3D):
+			piece = ch
+			break
+	if piece == null:
+		return
+	var a := Peak.v2(z.a)
+	var b := Peak.v2(z.b)
+	var pivot := Node3D.new()
+	pivot.position = Vector3((a.x + b.x) * 0.5, (a.y + b.y) * 0.5, 0)
+	pivot.rotation.z = (b - a).angle()
+	root.add_child(pivot)
+	piece.reparent(pivot, true)
+	row["vis"] = pivot
+	row["squash_t"] = 9.0
+
+
 ## A RING ROPE THAT HAS NO MODEL IS STILL DRAWN (playtest note 98; Parker 11-13: "oh there
 ## is invisible bouncy stuff"): a thick band lying exactly along its bouncing line, a
 ## padded cushion at each end, in the ring's colours by turn (red, cream, jade), standing
@@ -1487,7 +1518,12 @@ func _effect(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 	}
 	if not cfg.has(kind):
 		return
-	var c: Array = cfg[kind]
+	var c: Array = (cfg[kind] as Array).duplicate()
+	if e.has("tone"):  # (an effect may name its colour: a hex, or one of the area's tones)
+		var t := str(e.tone)
+		c[0] = Color(t) if t.begins_with("#") else peak.tone(a, t)
+	if e.has("speed"):  # (and how fast it drifts, as a share of its kind's own)
+		c[3] = (c[3] as Vector3) * float(e.speed)
 	var p := _particles(c[0], float(c[1]), int(clampf(w * h * float(c[2]) * density, 4, 220)), float(c[4]))
 	(p.material_override as StandardMaterial3D).albedo_color.a = float(c[5])
 	if kind == "rain" or kind == "drips":

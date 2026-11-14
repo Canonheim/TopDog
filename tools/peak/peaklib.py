@@ -467,7 +467,8 @@ class Area:
         self.zones.append({"type": "geyser", "at": _pt((x, y)), "w": _f(w), "height": _f(height), "speed": _f(speed),
                            "period": _f(period), "on": _f(on), "phase": _f(phase), "warn": _f(warn)})
 
-    def bounce(self, p0, p1, power, look="cap", min_in=0.6, gain=0.0, ko=False, throw=None, model=None, model_scale=1.0):
+    def bounce(self, p0, p1, power, look="cap", min_in=0.6, gain=0.0, ko=False, throw=None, model=None, model_scale=1.0,
+               squash=None):
         """A springy surface from p0 to p1 (a mushroom cap's top, a ring rope). It throws
         whatever hits it off along its normal (the LEFT of p0 -> p1) at `power` m/s, plus
         `gain` x the speed it was hit with. Not solid by itself: lay it on a solid for a cap.
@@ -482,6 +483,8 @@ class Area:
         if model:
             z["model"] = model
             z["model_scale"] = _f(model_scale)
+        if squash:
+            z["squash_tag"] = squash  # (the tagged solid it lies on squashes and springs when it throws: note 36)
         self.zones.append(z)
         return z
 
