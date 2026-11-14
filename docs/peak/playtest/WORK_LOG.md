@@ -2306,6 +2306,51 @@ in. Nothing played by a person.
 - (`75_champions_before.jpg` / `_after`, `60_temple_frog_room_before.jpg` / `_after`)
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the temple's moving decos and effects; 4.6 ruled; the effects still to build
+
+- **4.6, ruled by the Director:** two shoulder mushrooms; the three lunges are meant. They need
+  3.5, 3.8 and 3.8 m/s, inside F2 (4.8): no hold had to move.
+- **New follow kinds** (peak_things.gd `_frame_followers`; peaklib `follow(..., **params)`):
+  "tip" (a balance beam over two linked pans: `rise`, `span`), "hang" (a chain from a fixed top
+  that stretches as its weight drops: `len`), "ride" with a `scale` (-1: the other way),
+  "mallet" (lifts before each count of a bar and strikes on it, hardest on the first: `period`,
+  `count`, `lift`). Fixed on the way: a follower's rest turn was taken before its deco's own
+  `rot` was set (a deco with a rot lost it).
+- **a5:** the scale's beam tips with the pans (watched: 26.8 degrees east up at rest, level as
+  they pass, 26.8 west up with slab A down); the gullet's counterweight goes down 4.5 m as the
+  jaw comes up and its chain stretches (watched: 381.9 with the jaw up, chain 3.05 long); the
+  drum's mallet rests at 12.5 degrees and lifts before each count (watched to 30 degrees on the
+  first count, 24 on others).
+- **a5's effects that the kinds can show:** spores drifting in at the door, a drip from the
+  upper teeth into the gullet, grit down the piston throat, grease off the lowest wheel, a
+  drip off each fang.
+- **Checks:** lint; `--peak`. Clean.
+
+### The effects not yet built (for a later pass)
+
+- **a0** (a0_dress item 8): cold light and mist at the gap, drips past the wet wall, water
+  over the door's sill.
+- **a3** (item 8): the cave's breath (a gust that pushes climbers, the pendulum and the raft:
+  a change of play); the rainbow fan on the wall behind the leaves; the water down the nest's
+  west side; a drop down each chandelier's thread; a drip from the crack (3.1).
+- **a4** (item 9): a spore puff under every cap (done for all caps; the great cap's biggest is
+  not distinct); the pod bed's five pods swelling in turn; the bridge's gusts as bursts from
+  the pod nest, a puff before each, the curtain bellying, the treads lifting; leaves falling
+  from the creeper, slime drips between the vines; drips off each snail's foot; the giant's wet
+  sheen; the web's knots pulsing; each puffball's pore turning to face you, its burst of spores,
+  spores lit passing a puffball; the frog's croak; drips down the well lit at each door.
+- **a5** (item 9): a false tier shaking and dropping dust before it goes; a puff on the dish
+  when anything lands from the drain; the jade eyes dimming and brightening; dust from the
+  jaw's slots before it starts; a grind and puff at a socket before its piston goes back; dust
+  from a track's stop; clanks and sparks at the gears' meshes, dust onto the bronze jaws; bars
+  of torchlight through the gallery's slots; grit from the second champion's shoulders; a
+  scrape and hiss down the ramp; the censer's smoke trail and embers at its swing's ends; the
+  beam's groan and axle dust, light up through the slots, the first pan shaking; the frog's
+  croak; a grind from the serpent's bed, dust from a slot as a ram tops out; dust off the drum
+  skin, a puff from each block's socket; grit off each crumbling slab, a rush of air as a
+  cross arm passes; both great censers' smoke trails, embers drifting east, torch gold and red
+  on the sills.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

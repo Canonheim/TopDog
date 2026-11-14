@@ -476,6 +476,13 @@ A.effect("embers", (-306, 478, -294, 494), density=0.7)
 A.effect("drips", (-349, 381, -347, 396), density=0.4)
 A.effect("drips", (-313, 444, -311.8, 450), density=0.4)
 A.effect("steam", (-318, 366, -313, 372), density=0.2)      # dust kicked up where the drain lands
+# (a5_dress item 9, the ones the effect kinds can show)
+A.effect("spores", (-312.0, 366.0, -305.0, 372.0), density=0.4, speed=0.5, tone="#E6EFC4")  # the garden's spores drifting in at the door (5.1)
+A.effect("drips", (-359.4, 381.5, -357.0, 387.6), density=0.5)                            # a slow drip from the upper teeth into the gullet (5.2)
+A.effect("dust", (-372.0, 396.0, -366.5, 412.0), density=0.3, speed=0.5)                  # grit trickling down the throat (5.3)
+A.effect("drips", (-365.0, 412.5, -364.2, 414.0), density=0.8, tone="#2A2420")            # grease off the lowest wheel (5.4)
+for _fx in (-360.0, -354.0, -348.0):
+    A.effect("drips", (_fx - 0.15, 459.6, _fx + 0.15, 463.5), density=0.6)                # a drip off each fang (5.8)
 # ---- cameras for the rest (the flings have their own above)
 A.cam((-356, 363, -313, 386), half_h=6.5)                    # the door and the stairs
 A.cam((-366.5, 376, -350, 400), half_h=8.5, bias=(0.0, 1.0)) # the mask, whole
@@ -493,6 +500,13 @@ for x, y in a5_dress.FROG_LAMPS:  # the frog's two small lamps
 # (a5_dress item 8: the two pan hangers ride their pans)
 A.follow("templo_pan_hanger", (-354.8, 454.6), "cw_a", "ride")
 A.follow("templo_pan_hanger", (-360.75, 451.6), "cw_b", "ride")
+# The scale's beam tips with its pans (east end 3 m up at rest, 5.95 m between the pans), the
+# gullet's counterweight goes down as the jaw comes up (its chain stretching), and the drum's
+# mallet lifts before each count of the blocks' bar and strikes on it, hardest on the first.
+A.follow("templo_scale_beam", (-357.78, 456.0), "cw_a", "tip", rise=3.0, span=5.95)
+A.follow("counterweight_hung", (-358.15, 386.4), "jaw", "ride", scale=-1.0)
+A.follow("counterweight_chain", (-358.15, 387.5), "jaw", "hang", scale=-1.0, len=2.2)
+A.follow("templo_mallet_arm", a5_dress.MALLET, None, "mallet", period=5.0, count=COUNT, lift=0.8)
 
 # The engine's `cycle` clock reads t + phase (a phase ADVANCES a mover). This file was
 # written with phase meaning "starts p seconds late", so turn each one round here.

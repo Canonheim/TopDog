@@ -573,17 +573,41 @@ func _frame_followers() -> void:
 		if not is_instance_valid(n):
 			continue
 		var how: Dictionary = f[1]
+		if str(how.how) == "mallet":
+			# THE DRUM'S MALLET (page 5.9): it lifts before each count of the bar and strikes on it,
+			# hardest on the first. period = the bar, count = a count, lift = the first's lift (rad).
+			var per := float(how.get("period", 5.0))
+			var cnt := float(how.get("count", 1.25))
+			var t := fmod(peak.clock, per)
+			var k := int(t / cnt)
+			var to_next := cnt - fmod(t, cnt)
+			var next_k := (k + 1) % int(round(per / cnt))
+			var amp := float(how.get("lift", 0.8)) * (1.0 if next_k == 0 else 0.5)
+			var up := clampf((0.45 - to_next) / 0.45, 0.0, 1.0) if to_next < 0.45 else 0.0
+			n.rotation.z = float(f[3]) + amp * up
+			continue
 		var m: Dictionary = movers.get(str(how.mover), {})
 		if m.is_empty():
 			continue
 		var off: Vector2 = m.get("offset", Vector2.ZERO)
+		var sc := float(how.get("scale", 1.0))
 		match str(how.how):
 			"spin":
 				n.rotation.z = float(f[3]) + float(m.get("angle", 0.0))
 			"ride":
-				n.position = (f[2] as Vector3) + Vector3(off.x, off.y, 0.0)
+				n.position = (f[2] as Vector3) + Vector3(off.x, off.y, 0.0) * sc
 			"roll":
 				n.rotation.z = float(f[3]) - (off.x + off.y) / maxf(0.05, float(how.r))
+			"tip":
+				# a balance beam over two linked pans: its east end `rise` above its west at rest,
+				# the mover's pan going down by off.y and the other coming up by as much
+				n.rotation.z = atan2(float(how.get("rise", 0.0)) + 2.0 * off.y * sc, maxf(0.1, float(how.get("span", 1.0))))
+			"hang":
+				# a chain from a fixed top down to a weight that rides: it stretches as the weight drops
+				var ln := maxf(0.1, float(how.get("len", 1.0)))
+				var d := -off.y * sc
+				n.position = (f[2] as Vector3) + Vector3(0.0, -d * 0.5, 0.0)
+				n.scale.y = maxf(0.05, (ln + d) / ln)
 
 
 ## A LEVER A HAND TAKES AND DRAWS OVER (playtest note 72, Parker 11-13: "make it so you

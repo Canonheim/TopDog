@@ -2921,3 +2921,21 @@ func _w_g5(a: Array) -> void:
 	look(Vector2(-364.0, 456.0), 4.5)
 	await secs(0.4)
 	await shot("60_temple_frog_room_" + tag)
+
+
+## a5's moving decos: the scale's beam, the gullet's counterweight and chain, the mallet. g5f:TAG
+func _w_g5f(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("5.7")
+	await secs(2.0)
+	for k in 6:
+		var line := ""
+		for f in pk.things.followers:
+			var n: Node3D = f[0]
+			if not is_instance_valid(n) or str(f[1].how) in ["spin", "roll"]:
+				continue
+			line += "%s %s: at %s turn %.1f deg scale_y %.2f | " % [f[1].mover, f[1].how, Vector2(n.position.x, n.position.y), rad_to_deg(n.rotation.z), n.scale.y]
+		print("WATCH g5f %s t=%.1f: %s" % [tag, pk.clock, line])
+		if k == 1:
+			stand(Vector2(-354.8, 454.65))  # (on slab A: it sinks under a rider, and B rises)
+		await secs(0.9)

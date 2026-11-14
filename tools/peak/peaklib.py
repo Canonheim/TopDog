@@ -614,7 +614,7 @@ class Area:
         tone: a palette slot (back, back2, back3, rock, slick, accent ...) or "#RRGGBB"."""
         self.cards.append({"pts": _pts(pts), "z": _f(z), "tone": tone, "edge": bool(edge)})
 
-    def follow(self, model, near, mover, how, r=0.5, within=1.5):
+    def follow(self, model, near, mover, how, r=0.5, within=1.5, **params):
         """A DECO THAT MOVES WITH A MOVER (the dress files' 'things that would move'): the deco
         of `model` nearest `near` (within `within` m) follows mover `mover`: how="spin" turns
         it with the mover's angle, "ride" carries it by the mover's offset, "roll" turns it as
@@ -626,7 +626,8 @@ class Area:
                 if dd < bd:
                     best, bd = d, dd
         assert best is not None, ("follow: no deco", model, near)
-        best["follow"] = {"mover": mover, "how": how, "r": _f(r)}
+        best["follow"] = {"mover": mover or "", "how": how, "r": _f(r)}
+        best["follow"].update({k: _f(v) for k, v in params.items()})  # (scale, rise, span, len, period, count, lift)
         return best
 
     def deco(self, model, x, y, z=-0.8, rot=0.0, scale=1.0, size=None, tone=None, flip=False, skin=False):
