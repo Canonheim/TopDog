@@ -2575,6 +2575,31 @@ in. Nothing played by a person.
 - Not done: item 9's effects (to the effects list), the serac's growing look and stump.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the cableway's and the glacier's landed pieces swapped in
+
+- a8: the four cars of lines 1 and 2 name `gondola_tele` and `drawn=` is gone (both cars model their
+  step and rack now; each placed by the mover at its own size); the dead car `gondola_dead_tele`, the
+  chairs `chair_tele`, the zip `zip_trolley_tele`, the weights `counterweight_hung_tele`. a7.json
+  regenerated for the Director's `cable_station_low_tele`. KIT_FALLBACK takes each new stem back to
+  the one it replaces. (`a8_tele_line_cars` / `_chairs` / `_zip` / `_weights` / `_dead_car` / `_express`,
+  `_before` and `_after`.)
+- a9: the ringed icicles (`glaciar_icicle_ringed_a` .. `_d`) and `glaciar_snow_bridge` were already the
+  skins on their solids. The serac's motion names `glaciar_serac_bare` and `glaciar_serac_stump`: the
+  stump stands at the pivot from the shatter until the new tower is full height; the bare tower is
+  what grows, then the serac takes its place, held at full height (watched: gone 6.4 s, growing 9.6
+  and 11 s, back at 13 s). `glaciar_ice_shard` is every shatter on the glacier now: the icicles, the
+  serac's pieces and a fallen bridge piece's (a9 only). The falling icicle, the slab and the kicker
+  already named theirs; 5 of 5 slabs still end in the hollow.
+- The stopgap card under the upper level's sloped roof is out (the dress's upper back wall closes the
+  gap, ef4605a).
+- **Found:** the glacier's dark ice in four models (`glaciar_serac_bare`, `glaciar_serac_stump`,
+  `glaciar_kicker_chute`, `glaciar_ice_shard`) is painted in two glossy atlas cells (#2A3C50 at
+  1200, 416 and #1F2939 at 1232, 432) and draws near white in the game (`a9_88_serac_bare_full.jpg`,
+  `a9_91_kicker_chute_landed.jpg`). The serac's own dark ice reads right because it is painted in the
+  slick colour, which the game draws as its ice. For the maker: paint dark slick ice in SLICK_ICE
+  (#0C2440), which the game turns into the glacier's ice, or a matte navy. Not changed here.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

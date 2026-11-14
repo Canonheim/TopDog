@@ -231,8 +231,10 @@ A.mover("serac", PIV,
         # dumps you down there"; "the new serac needs to grow into place". Today's curve, on
         # through level at 5.5 s, shattering at 108 degrees (6.0 s); a new one grows in 3 s,
         # 3 s after.)
+        # (a9_dress item 8: the bare tower shows while the next one grows, the stump while it is gone)
         {"type": "tip", "angle": -75.0, "time": 5.0, "trigger": "grab", "reset": 12.0,
-         "shatter": -108.0, "regrow_wait": 3.0, "grow": 3.0}, model="serac")
+         "shatter": -108.0, "regrow_wait": 3.0, "grow": 3.0, "bare": "glaciar_serac_bare", "stump": "glaciar_serac_stump"},
+        model="serac")
 A.challenge("9.5", "El Serac", (-326.4, 832.0), 4, "B",
             moves=[["fling", [-315.56, 833.94], [-312.2, 834.5], "F1"]])
 A.cam((-327.6, 829, -310, 842), half_h=9.5, bias=(3.0, -4.0))
@@ -433,11 +435,6 @@ def card_with_hole(pts, hole, **kw):
 # The rimaye: rock in shadow (the storm ridge's flank, later), cut round the slab hollow.
 card_with_hole([(-302.5, 878.7), (-296, 866.5), (-288, 861.5), (-286.5, 866.95), (-286.5, 871.8), (-295.9, 871.8),
                 (-295.9, 881), (-302, 884.6)], (-292.6, 864.2, -287.6, 869.3), z=-2.4, tone="#56636F", edge=False)
-
-# A stopgap: the dress's two back walls leave the upper level's air under the roof's slope open
-# behind (the upper level's wall stops at x -305.5, the cave's at y 834.7). Until one of them takes
-# it, the back wall's own blue fills the gap.
-A.card([(-305.6, 834.6), (-299.9, 834.6), (-305.6, 838.42)], z=-2.4, tone="#4A7096", edge=False)
 
 # The ridge's first prayer pole (the storm ridge's: its page "9 to 10" moves it, a10's dress places it).
 A.deco("prayer_pole", -309.0, 886.0, z=-1.2, size=(0.2, 4.0, 0.2), tone="accent")

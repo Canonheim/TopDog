@@ -88,15 +88,13 @@ def gondola(mid, pts, speed, mode, wr=1.6, eb=2.4, wait=0.0):
     mo = {"type": "path", "pts": [list(p) for p in pts], "speed": speed, "mode": mode, "trigger": "none"}
     if wait:
         mo["wait"] = wait
-    # (Note 77, Parker 11-13: every gondola's step and rack are drawn. The kit's car has
-    # neither, so the two rails are drawn as plain iron bars exactly along their solids
-    # until the model gains them.)
+    # (Note 77, Parker 11-13: every gondola's step and rack are drawn: both cars' models have them
+    # now, the four cars of lines 1 and 2 (wr 0.9) `gondola_tele`, the express cars (wr 0.6)
+    # `tele_gondola_express`, each placed by the mover at its own size (the old car shows until a
+    # model lands: KIT_FALLBACK).)
     shapes = car_shapes(wr, eb)
-    # (note 77: the model follows the step: the four cars of lines 1 and 2 (wr 0.9) "gondola" re-made,
-    # the express cars (wr 0.6) "tele_gondola_express", the old car showing until it lands; drop
-    # `drawn=` when both have their rails modelled)
-    model = "tele_gondola_express" if abs(wr - 0.6) < 0.01 else "gondola"
-    return A.mover(mid, pts[0], shapes, mo, model=model, drawn=list(range(5, len(shapes))))
+    model = "tele_gondola_express" if abs(wr - 0.6) < 0.01 else "gondola_tele"
+    return A.mover(mid, pts[0], shapes, mo, model=model)
 
 
 # ---------------------------------------------------------------- the east face (our stretch)
@@ -216,7 +214,7 @@ for i, (piv, ph) in enumerate(zip(CHAIRS, (0.0, 0.5, 0.25, 0.75))):
     # (Note 80, Parker 11-13: "make these poles background not play space": only the seat can be
     # touched; the pole is drawn by the chair's model, which the modelling run re-makes.)
     A.pendulum("chair%d" % (i + 1), piv, 3.2, 20.0, 4.0, phase=ph, bob=(1.2, 0.25), kind="plank", rod=0.12, rod_kind="iron",
-               rod_solid=False, model="chair")
+               rod_solid=False, model="chair_tele")
 A.challenge("8.5", "Sillas Voladoras", (-192.8, 714.5), 4, "X",
             moves=[["reach", [-190.8, 714.5], [-190.2, 713.4]],
                    ["reach", [-186.8, 713.4], [-185.5, 712.2]],
@@ -280,7 +278,7 @@ Z0, Z1 = (-166.2, 728.1), (-193.0, 722.9)
 A.mover("zip", Z0, [(box_pts(0.0, -0.45, 0.06, 0.9), "iron"), (box_pts(0.0, -0.9, 0.7, 0.12), "paint")],
         {"type": "path", "pts": [list(Z0), list(Z1)], "speed": 9.0, "mode": "once", "trigger": "grab", "reset": 6.0, "accel": 30.0,
          "decel": 6.0},
-        model="zip_trolley")
+        model="zip_trolley_tele")
 A.ledge(-196.0, -190.0, 720.0, "plank", t=0.4, skin="tele_maint_deck")  # the maintenance deck: 6 m
 A.challenge("8.7", "Tirolesa", (-165.3, 725.4), 3, "X",
             moves=[["reach", [-166.2, 725.4], [-166.2, 727.2]],
@@ -299,7 +297,7 @@ for mid, x, ya, yb in (("cw_a1", XA, 720.5, 727.5), ("cw_b1", XB, 734.5, 727.5),
     # (page 8.8: the weights and the express cars are one machine, so their times match: the weights
     # take the cars' 10.25 s, 7 m at 1.697 m/s and 1 s at each end. The Director, 11-14; a first guess for Parker.)
     A.mover(mid, (x, ya), BLOCK, {"type": "path", "pts": [[x, ya], [x, yb]], "speed": 1.697, "mode": "pingpong", "wait": 1.0, "trigger": "none"},
-            model="counterweight_hung")
+            model="counterweight_hung_tele")
 A.challenge("8.8", "Contrapesos", (-193.0, 720.0), 3, "X",
             moves=[["reach", [-196.0, 720.0], [-196.3, 720.5]],
                    ["reach", [XA - 0.8, 727.5], [XB + 0.8, 727.5]],
@@ -348,7 +346,7 @@ def _centroid(shapes):
 _cx, _cy = _centroid(_dead)
 DEAD_TILT = math.degrees(math.atan2(_cx, _cy)) - 180.0 if _cy > 0 else math.degrees(math.atan(_cx / _cy))
 A.body("dead_gondola", HINGE, [(rot_pts(p, DEAD_TILT), k) for p, k in _dead], mass=120.0, hinge=HINGE, limits=(-55.0, 55.0), damp=0.3,
-       model="gondola_dead")
+       model="gondola_dead_tele")
 
 
 def dead_pt(x, y):

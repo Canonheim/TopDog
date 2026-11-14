@@ -1963,7 +1963,7 @@ func _w_g1serac(a: Array) -> void:
 	var c := me()
 	c.attach(0, m.nodes[0])
 	var t0 := pk.clock
-	var marks := [[2.5, "88_serac_tipping_"], [5.3, "88_serac_near_level_"], [5.9, "88_serac_past_level_"], [6.4, "88_serac_shattered_"], [9.6, "88_serac_growing_"], [13.0, "88_serac_back_"]]
+	var marks := [[2.5, "88_serac_tipping_"], [5.3, "88_serac_near_level_"], [5.9, "88_serac_past_level_"], [6.4, "88_serac_shattered_"], [9.6, "88_serac_growing_"], [11.0, "88_serac_half_grown_"], [13.0, "88_serac_back_"]]
 	var k := 0
 	var log := []
 	while pk.clock - t0 < 13.2:
@@ -3119,6 +3119,49 @@ func _w_g3cave(a: Array) -> void:
 
 
 ## Every inside biome, one frame each: no grey-tan mountain card inside the mountain. gbody:TAG
+## The re-made cableway pieces in place: line 1's cars, the chairs, the zip, the weights, the dead car, the express. g8tele:TAG
+func _w_g8tele(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	for row in [["8.1", Vector2(-222.0, 697.0), 7.0, "line_cars"], ["8.5", Vector2(-183.0, 712.0), 6.5, "chairs"],
+			["8.7", Vector2(-180.0, 724.0), 9.0, "zip"], ["8.8", Vector2(-198.5, 733.0), 9.0, "weights"],
+			["8.9", Vector2(-208.0, 750.0), 6.0, "dead_car"], ["8.10", Vector2(-235.0, 762.0), 10.0, "express"]]:
+		pk.warp(str(row[0]))
+		await secs(1.5)
+		look(row[1], float(row[2]))
+		await secs(0.5)
+		await shot("a8_tele_%s_%s" % [row[3], tag])
+	for id in ["g1a", "chair1", "zip", "cw_a1", "ex1"]:
+		var m: Dictionary = pk.things.movers[id]
+		print("WATCH g8tele %s: model %s, drawn as %s" % [id, m.def.get("model", "-"), (m.vis as Node).get_class() if m.vis != null else "-"])
+
+
+## The serac's bare tower and stump at full size, the tower hidden. serbare:TAG
+func _w_serbare(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("9.5")
+	await secs(0.6)
+	var m: Dictionary = pk.things.movers["serac"]
+	look(Vector2(-322.0, 835.5), 5.0)
+	await secs(0.3)
+	await shot("88_serac_full_" + tag)
+	m["vis_scale"] = (m.vis as Node3D).scale
+	pk.things._tip_piece_show(m, "bare", true)
+	pk.things._tip_piece_show(m, "stump", true)
+	(m.vis as Node3D).visible = false
+	await secs(0.3)
+	await shot("88_serac_bare_" + tag)
+	for pair in [["serac", m.vis], ["bare", (m.tip_pieces as Dictionary).get("bare")]]:
+		var root: Node = pair[1]
+		for mi: MeshInstance3D in root.find_children("*", "MeshInstance3D", true, false):
+			var out := []
+			for i in mi.mesh.get_surface_count():
+				var mat: Material = mi.get_surface_override_material(i)
+				if mat == null:
+					mat = mi.mesh.surface_get_material(i)
+				out.append("%s%s" % [mat.get_class() if mat != null else "null", (" " + str((mat as StandardMaterial3D).albedo_color)) if mat is StandardMaterial3D else ""])
+			print("WATCH serbare %s %s: %s, override %s, layers %d" % [pair[0], mi.name, out, mi.material_override, mi.layers])
+
+
 ## The glacier's dress wired in: the lower crevasse, the cave, the upper level, the outside, the top. g9:TAG
 func _w_g9(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""

@@ -1710,24 +1710,77 @@ func _tick_tip_fall(m: Dictionary, mo: Dictionary, t: float) -> bool:
 				m.angle = 0.0
 				m["tip_state"] = "gone"
 				m["gone_t"] = t
+				_tip_piece_show(m, "stump", true)
 				return true
 			m.angle = want
 		"gone":
 			if t - float(m.gone_t) >= float(mo.get("regrow_wait", 3.0)):
 				m["tip_state"] = "grow"
 				m["grow_t"] = t
-				(m.vis as Node3D).visible = true
+				# (the tower that grows is the bare one, if it has landed; else the tower itself)
+				if not _tip_piece_show(m, "bare", true):
+					(m.vis as Node3D).visible = true
 				peak.audio.play("ice_crack", _mover_at(m), -6.0, 0.7)
 		"grow":
 			var f := clampf((t - float(m.grow_t)) / maxf(0.1, float(mo.get("grow", 3.0))), 0.0, 1.0)
 			var base: Vector3 = m.get("vis_scale", Vector3.ONE)
-			(m.vis as Node3D).scale = Vector3(base.x * lerpf(0.6, 1.0, f), base.y * maxf(0.02, _ease(f)), base.z * lerpf(0.6, 1.0, f))
+			var bare: Node3D = (m.get("tip_pieces", {}) as Dictionary).get("bare")
+			var grows: Node3D = bare if bare != null and bare.visible else (m.vis as Node3D)
+			grows.scale = Vector3(base.x * lerpf(0.6, 1.0, f), base.y * maxf(0.02, _ease(f)), base.z * lerpf(0.6, 1.0, f))
 			if f >= 1.0:
 				m["tip_state"] = "up"
 				m.tip_t = -1.0
+				# Full height: the bare tower is the tower with its snow side and cap, and can be held.
+				_tip_piece_show(m, "bare", false)
+				_tip_piece_show(m, "stump", false)
+				(m.vis as Node3D).scale = base
+				(m.vis as Node3D).visible = true
 				for node: AnimatableBody3D in m.nodes:
 					node.collision_layer = Climber.LAYER_WORLD
 	return false
+
+
+## A tipping tower's other looks (a9_dress item 8): `bare`, the tower with no snow, shown while the
+## next one grows; `stump`, the broken foot left at the pivot while it is gone and while the next
+## grows. Each is the motion's stem, made lazily; false if it has none or it has not landed.
+func _tip_piece_show(m: Dictionary, key: String, on: bool) -> bool:
+	var mo: Dictionary = m.mo
+	if not mo.has(key):
+		return false
+	if not m.has("tip_pieces"):
+		m["tip_pieces"] = {}
+	var pieces: Dictionary = m.tip_pieces
+	if not pieces.has(key):
+		var n: Node3D = Peak.kit(str(mo[key]))
+		pieces[key] = n
+		if n != null:
+			var body := m.nodes[0] as Node3D
+			if key == "bare":
+				n.position = (m.vis as Node3D).position
+				n.scale = m.get("vis_scale", (m.vis as Node3D).scale)
+				body.add_child(n)  # (it stands where the tower stood, and turns with it as it will)
+			else:
+				n.position = Vector3(body.position.x, body.position.y, 0.0)
+				body.get_parent().add_child(n)  # (it stays at the pivot)
+	var piece: Node3D = pieces[key]
+	if piece == null:
+		return false
+	piece.visible = on
+	return true
+
+
+## A broken piece's look: on the glacier `glaciar_ice_shard` (made 0.45 x 0.6 x 0.4), scaled to the
+## piece; elsewhere, or until it lands, a box.
+const SHARD_SIZE := Vector3(0.45, 0.6, 0.4)
+
+
+func _chunk_look(size: Vector3, col: Color, area: String) -> Node3D:
+	if area == "a9":
+		var shard := LuchaKit.kit_model("glaciar_ice_shard")
+		if shard != null:
+			shard.scale = size / SHARD_SIZE
+			return shard
+	return LuchaKit.box(size, col)
 
 
 ## A mover breaks: whoever is on it lets go, its pieces fall, it is gone (unseen, untouchable).
@@ -1772,7 +1825,7 @@ func _shatter_mover(m: Dictionary) -> void:
 				bx.size = chunk
 				cs.shape = bx
 				rb.add_child(cs)
-				rb.add_child(LuchaKit.box(chunk, col.darkened(randf_range(0.0, 0.12))))
+				rb.add_child(_chunk_look(chunk, col.darkened(randf_range(0.0, 0.12)), str(m.area)))
 				rb.position = Vector3(w.x, w.y, randf_range(-0.2, 0.2))
 				rb.rotation = Vector3(0, 0, float(m.angle) + randf_range(-0.3, 0.3))
 				rb.linear_velocity = Vector3(randf_range(-1.0, 1.0), randf_range(-1.5, 0.8), randf_range(-0.5, 0.5))
@@ -2539,7 +2592,7 @@ func _crumble(h: Dictionary) -> void:
 				bx.size = chunk
 				cs.shape = bx
 				rb.add_child(cs)
-				rb.add_child(LuchaKit.box(chunk, col.darkened(randf_range(0.0, 0.14))))
+				rb.add_child(_chunk_look(chunk, col.darkened(randf_range(0.0, 0.14)), str(h.area)))
 				rb.position = Vector3(c.x, c.y, (float(half) - 0.5) * depth * 0.5)
 				rb.rotation = Vector3(randf_range(-0.3, 0.3), randf_range(-0.3, 0.3), randf_range(-0.5, 0.5))
 				rb.linear_velocity = Vector3(randf_range(-1.2, 1.2), randf_range(-0.4, 1.4), randf_range(-0.6, 0.6))
@@ -2942,13 +2995,7 @@ func _shatter_ice(rb: RigidBody3D, r: float) -> void:
 		bx.size = size
 		cs.shape = bx
 		ch.add_child(cs)
-		# (a9_dress item 8: glaciar_ice_shard, made 0.45 x 0.6 x 0.4, scaled to each piece; boxes until it lands)
-		var shard := LuchaKit.kit_model("glaciar_ice_shard")
-		if shard != null:
-			shard.scale = size / Vector3(0.45, 0.6, 0.4)
-			ch.add_child(shard)
-		else:
-			ch.add_child(LuchaKit.box(size, Color("#BFE8F6").darkened(randf_range(0.0, 0.15))))
+		ch.add_child(_chunk_look(size, Color("#BFE8F6").darkened(randf_range(0.0, 0.15)), "a9"))  # (icicles are the glacier's)
 		ch.position = at + Vector3(randf_range(-r, r) * 0.6, randf_range(-r, r) * 0.6, randf_range(-0.2, 0.2))
 		ch.linear_velocity = Vector3(randf_range(-2.2, 2.2), randf_range(0.6, 2.6), randf_range(-0.6, 0.6))
 		ch.angular_velocity = Vector3(randf_range(-6, 6), randf_range(-6, 6), randf_range(-8, 8))
