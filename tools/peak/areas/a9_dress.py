@@ -629,14 +629,15 @@ def dress(A):
     deep(-296.0, 812.5, -20.0)
 
     # ============================================================ 9.5 El Serac
-    # The upper level's far wall: ONE painted piece (x -331 .. -305.5, 817 .. 842; its outline leaves out the
-    # chimney, x -331 .. -327.5 below 832, which is the balcony's piece; its top follows the roof down to 834.7 at
-    # the east), banded ice 2.4 m back from the pit's floor to the roof; painted on it: the white crack beside the
+    # The upper level's far wall: ONE painted piece (x -331 .. -300, 817 .. 842; its outline leaves out the
+    # chimney, x -331 .. -327.5 below 832, which is the balcony's piece; east of x -305.5 it is only the wedge
+    # under the sloped roof, above the cave's back wall (834.7) up to the roof's slant (-311, 842) .. (-300, 834.7),
+    # so nothing shows through there; its top follows the roof: 842 to x -311, down to 834.7 at -300), banded ice 2.4 m back from the pit's floor to the roof; painted on it: the white crack beside the
     # tower's twin, two slabs of bluer ice leaning east in the pit's far wall ((-321.2 .. -317.7, 825.3 .. 842) and
     # (-316.6 .. -314.0, 827 .. 842)), behind the pillar a broad block two steps paler (the window's daylight coming
     # back along the roof), the water's two long grooves beside the slide (flush, following its curve down the face
     # and round into the bowl, 0.9 and 1.8 m off it).
-    back("glaciar_upper_back_wall", -331.0, -305.5, 817.0, 842.0, WALL, WALL_FAR)
+    back("glaciar_upper_back_wall", -331.0, -300.0, 817.0, 842.0, WALL, WALL_FAR)
     # The ice over the upper level, the cave and the chute (skin, line 87, also 9.6 and 9.8): the glacier's body,
     # one piece made for its place: the upper level's roof and the cave's (dark, glossy, unbroken from wall to wall),
     # the R7 niche's west wall, the chute's floor (polished, glazed, its blue seam of plates showing through as
