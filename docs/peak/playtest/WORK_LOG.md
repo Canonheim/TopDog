@@ -2125,6 +2125,24 @@ in. Nothing played by a person.
   coping and the pool's sill out).
 - **Checks:** lint; `--peak`. Clean. Frames of the stand-ins are the modelling run's.
 
+## The fix run of 11-14: the gates as pistons (a2_dress 6g) and the decos that move (a1 item 9, a2 item 8)
+
+- **The gates (2.5, note 19):** each mover wears `aguas_ram_head` (the head and its ram); a
+  fixed housing, 1 m tall, slick (`grease`), stands on each step where the block rested,
+  wearing `aguas_ram_housing` (its skin deco placed in a2.py). The ram rises out of it and
+  slams back as before. **Found:** the ram model is 3.4 m (head and ram), the travel 3.2, so
+  raised it leaves 2.2 m of air over the housing: the page's "a ram that fills the space
+  between the housing and the head as it rises" would need a longer ram or a shorter travel.
+  Left as it is. (`19_gate_pistons.jpg`)
+- **Decos that move with a mover** (new: `A.follow(model, near, mover, how)` in peaklib; the
+  game's `followers`, moved each frame): "spin" turns a deco with its mover's angle, "ride"
+  carries it by the mover's offset, "roll" turns it as a wheel rolling along the mover's
+  travel. a1: the water wheel turns with La Polea Grande; the hoistway's pulley rolls with
+  the counterweight (r 0.4). a2: the grey mill wheel turns with La Rueda; each gate's leaf
+  rides with its ram. **Watched** (`gfollow`): every one matches its mover (the leaves 3.2 m
+  up with a ram at the top of its stroke).
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

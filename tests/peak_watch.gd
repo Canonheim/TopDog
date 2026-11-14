@@ -2806,3 +2806,27 @@ func _w_g102(a: Array) -> void:
 	for z in pk.zones.waters if pk.zones.get("waters") != null else []:
 		pass
 	print("WATCH g102 %s %s: after %.0f s the climber is at %s (lowest %.1f, fastest %.1f m/s)" % [tag, which, pk.clock - t0, where(), lowest, fastest])
+
+
+## The decos that move with movers (a1 item 9, a2 item 8) and the gates' pistons (a2 6g). gfollow:TAG
+func _w_gfollow(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("2.5")
+	await secs(3.0)
+	look(Vector2(-252.5, 113.0), 6.0)
+	var out := []
+	for k in 2:
+		for f in pk.things.followers:
+			var n: Node3D = f[0]
+			if not is_instance_valid(n):
+				continue
+			var m: Dictionary = pk.things.movers.get(str(f[1].mover), {})
+			if m.is_empty():
+				continue
+			out.append("%s %s: deco moved %s / turned %.2f; the mover's offset %s, angle %.2f" % [f[1].mover, f[1].how,
+				Vector2(n.position.x - (f[2] as Vector3).x, n.position.y - (f[2] as Vector3).y), n.rotation.z - float(f[3]),
+				m.get("offset", Vector2.ZERO), float(m.get("angle", 0.0))])
+		await shot("followers_gates_%d_%s" % [k, tag])
+		await secs(2.1)
+	for line in out:
+		print("WATCH gfollow %s: %s" % [tag, line])

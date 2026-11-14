@@ -827,6 +827,8 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 		n.set_meta("standin", true)
 	n.position = at
 	n.set_meta("deco", str(d.model))  # (a rope that rings a bell finds it by this)
+	if d.has("follow"):
+		things.followers.append([n, d.follow, n.position, n.rotation.z])  # (it moves with its mover)
 	n.rotation.z = deg_to_rad(float(d.get("rot", 0.0)))
 	var s := float(d.get("scale", 1.0))
 	# A landed model far from the size the author drew for (a mask asked for at 21 m,

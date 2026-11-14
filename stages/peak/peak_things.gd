@@ -532,6 +532,32 @@ func tick(delta: float) -> void:
 func frame(delta: float) -> void:
 	_fly_thrown(delta)
 	_frame_glyphs()
+	_frame_followers()
+
+
+## DECOS THAT MOVE WITH A MOVER (a1_dress item 9, a2_dress item 8: the water wheels turn
+## with the wheels you ride, the pulley with the lift, each gate's leaf with its ram):
+## [node, {mover, how, r}, its own position, its own turn].
+var followers: Array = []
+
+
+func _frame_followers() -> void:
+	for f in followers:
+		var n: Node3D = f[0]
+		if not is_instance_valid(n):
+			continue
+		var how: Dictionary = f[1]
+		var m: Dictionary = movers.get(str(how.mover), {})
+		if m.is_empty():
+			continue
+		var off: Vector2 = m.get("offset", Vector2.ZERO)
+		match str(how.how):
+			"spin":
+				n.rotation.z = float(f[3]) + float(m.get("angle", 0.0))
+			"ride":
+				n.position = (f[2] as Vector3) + Vector3(off.x, off.y, 0.0)
+			"roll":
+				n.rotation.z = float(f[3]) - (off.x + off.y) / maxf(0.05, float(how.r))
 
 
 ## A LEVER A HAND TAKES AND DRAWS OVER (playtest note 72, Parker 11-13: "make it so you

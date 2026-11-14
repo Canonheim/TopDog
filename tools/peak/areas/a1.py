@@ -550,6 +550,10 @@ A.effect("drips", (-233.2, 72.0, -222.1, 76.0))
 
 # ================================================================ the dress (the modelling run's)
 a1_dress.dress(A)
+# (a1_dress item 9: the water wheel behind La Polea Grande turns with the winding wheel; the
+# pulley over the hoistway turns, stops and turns back with the lift's counterweight)
+A.follow("water_wheel", (-234.2, 57.4), "polea_grande", "spin")
+A.follow("pulley", (-188.95, 31.4), "cubo_peso", "roll", r=0.4)
 for x, y in a1_dress.LANTERN_LIGHTS:
     A.light(x, y, color="#FFB860", rng=10.0, energy=1.5, flicker=True)
 

@@ -141,11 +141,19 @@ GATES = ((-250.28, Q3Y), (-252.4, Q3Y + 3.0), (-254.52, Q3Y + 6.0))  # centre x,
 Q4Y = GATES[2][1] + GT  # 121.0
 air([(-255.6, GATES[2][1] - GH), (-253.45, GATES[2][1] - GH), (-253.45, GATES[1][1] - GH), (-251.35, GATES[1][1] - GH),
      (-251.35, MB), (-249.2, MB), (-249.2, WINC), (-255.6, WINC)])
+# EACH GATE IS A PISTON (note 19; page 2.5): a fixed iron housing, 1 m tall, black with oil and
+# slick, on its step where the block rested; the head (the riveted plate you hold) on a ram as
+# wide as it rises out of it and slams back. The mover is the head and its ram (aguas_ram_head);
+# the housings wear aguas_ram_housing (placed here).
 for i, (cx, low) in enumerate(GATES):
     A.mover("compuerta%d" % (i + 1), (cx, low),
             [(box_pts(0, -GH / 2, 2.05, GH), "grease"), (box_pts(0, -0.12, 2.05, 0.24), "iron")],
             {"type": "cycle", "to": [0, GT], "t_out": 1.8, "hold_out": 2.0, "t_in": 0.4, "hold_in": 2.0,
-             "phase": 3.1 if i == 1 else 0.0}, model="mill_gate")
+             "phase": 3.1 if i == 1 else 0.0}, model="aguas_ram_head")
+    step = low - GH
+    A.solid([(cx - 1.025, step), (cx + 1.025, step), (cx + 1.025, step + 1.0), (cx - 1.025, step + 1.0)], "grease",
+            skin="aguas_ram_housing")
+    A.deco("aguas_ram_housing", cx, step, z=0.0, size=(2.05, 1.0, 2.0), tone="iron", skin=True)
 A.challenge("2.5", "Las Compuertas", (-247.9, Q3Y), 3, "B")
 
 # ================================================================ EL DESAGUE: the Tobogan's drain
@@ -432,6 +440,11 @@ A.line_pit(-419.80, -418.50, 153.00)
 
 # ================================================================ the dress (the modelling run's)
 a2_dress.dress(A)
+# (a2_dress item 8: the grey wheel behind La Rueda turns with it on the same axle; each gate's
+# leaf rides with its ram)
+A.follow("aguas_mill_wheel_grey", WHEEL, "rueda", "spin")
+for i, (cx, low) in enumerate(GATES):
+    A.follow("aguas_gate_leaf", (cx, low - GH), "compuerta%d" % (i + 1), "ride")
 for x, y in a2_dress.LANTERN_LIGHTS:  # every lantern's steady light (note 17)
     A.light(x, y, color=TEAL, rng=10.0, energy=1.5, flicker=False)
 A.light(-452.5, 175.0, color="#B6A2E6", rng=8.0, energy=0.9)  # the join: soft violet, down the exit shaft
