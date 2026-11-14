@@ -129,6 +129,20 @@ body = EAST + WEST + [(-700, -40), (-34, -40)]
 # mine, the black waters, the garden, the temple and the forge too. Each interior keeps a backstop of
 # its own darkest tone behind its far wall (its area file, z -11.6), so a gap shows the inside's dark.
 # The climb in the open air (0, 7 to 11) keeps the body card.
+# BUT FROM THE CLIFFS UP IT STANDS WEST OF THE CLIMB (the Director, 11-14: on the open east face the
+# mountain's shoulder is on the WEST of the frame only, the far painted cards 12 m back, riscos_ and
+# tele_shoulder_a..d; east of them is sky and the given far view). Above y 560 the body's east edge is
+# OPEN_EDGE: the shoulders' west edges (x -280 by the cliffs, -310 by the cableway), then 15 to 20 m west
+# of the route up the glacier and the storm ridge, and nothing above 950 m. The snow cap with it.
+OPEN_EDGE = [(-224.0, 560.0), (-280.0, 566.0), (-280.0, 702.0), (-310.0, 702.0), (-310.0, 804.0), (-318.0, 886.0),
+             (-330.0, 915.0), (-345.0, 940.0), (-372.0, 950.0), (-372.0, 1100.0)]
+
+
+def _open_cut():
+    from shapely.geometry import Polygon
+    return Polygon(OPEN_EDGE + [(-100.0, 1100.0), (-100.0, 560.0)])
+
+
 BODY_WINDOWS = [((-134.0, -13.0, -122.5, -4.0), -128.0),   # a0, 0.3c's gap
                 ((-292.0, -36.0, -148.0, 90.0), -220.0),    # a1, the mine
                 ((-466.0, 82.0, -222.0, 188.0), -344.0),    # a2, the black waters (its far wall's span)
@@ -140,7 +154,7 @@ BODY_WINDOWS = [((-134.0, -13.0, -122.5, -4.0), -128.0),   # a0, 0.3c's gap
 
 def _body_with_window():
     from shapely.geometry import Polygon, box
-    whole = Polygon(body).buffer(0)
+    whole = Polygon(body).buffer(0).difference(_open_cut())
     for w, _ in BODY_WINDOWS:
         whole = whole.difference(box(*w))
     x0, y0, x1, y1 = whole.bounds
@@ -154,7 +168,19 @@ def _body_with_window():
 
 
 _body_with_window()
-A.card([(-281, 784), (-307, 884), (-334, 962), (-350, 1000), (-372, 950), (-430, 800), (-380, 770), (-330, 800)], z=-8.8, tone="#F4F7FA")
+
+
+def _snow_cap():
+    from shapely.geometry import Polygon
+    cap = Polygon([(-281, 784), (-307, 884), (-334, 962), (-350, 1000), (-372, 950), (-430, 800), (-380, 770), (-330, 800)])
+    part = cap.difference(_open_cut())
+    for g in getattr(part, "geoms", [part]):
+        if g.geom_type == "Polygon" and g.area > 1.0:
+            assert not g.interiors
+            A.card([(round(x, 3), round(y, 3)) for x, y in list(g.exterior.coords)[:-1]], z=-8.8, tone="#F4F7FA")
+
+
+_snow_cap()
 
 # ---------------------------------------------------------------- the sky outside: cardboard clouds, far and near
 import random

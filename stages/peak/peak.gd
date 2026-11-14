@@ -847,6 +847,12 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 			# (a snow fringe, a lip, a kerb) is made as a thin strip that misses the holds; its
 			# stand-in would be its whole box in front of the climb. Until it lands it is not drawn.
 			return null
+		if at.z <= -10.0:
+			# A FAR CARD (a shoulder, a far line, the glacier's far side) is a cut-out painted to its
+			# outline; its stand-in would be its whole box, a flat wall over the sky and the given far
+			# view (the Director, 11-14: the cableway's far line stood in as a 90 x 129 m tan wall
+			# that caught the towers' shadows). Until it lands it is not drawn.
+			return null
 		var c := tone(a, str(d.get("tone", "rock2")))
 		n = _standin(str(d.model), size, c)
 		n.set_meta("standin", true)

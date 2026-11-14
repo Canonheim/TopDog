@@ -2600,6 +2600,26 @@ in. Nothing played by a person.
   (#0C2440), which the game turns into the glacier's ice, or a matte navy. Not changed here.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the open air's sky (7 to 11): far stand-ins out, the body card west of the climb
+
+- The cableway's flat warm-tan sky (the Director's `a8_tele_sheet.jpg`) was not st.py's body card (it
+  stops at x -251 there; the cars are at -166 .. -235): it was a8_dress's `tele_far_line`, a far cut-out
+  card not landed yet, drawn as its whole stand-in box, 90.7 x 129 m at z -20, catching the towers'
+  shadows. **A far deco (z -10 or deeper) whose model has not landed is not drawn** (peak.gd `_deco`, as
+  the foreground rule): the given far view shows until it lands. The same takes out the stand-ins of
+  a7's four `riscos_shoulder`s, a8's three `tele_shoulder`s and a9's `glaciar_far_side`.
+  (`a8_8_2_far_line_standin_gone.jpg`, `a8_8_6_...`: the ranges and the valley behind the towers.)
+- **The body card from the cliffs up** (st.py `OPEN_EDGE`): above y 560 its east edge is the shoulders'
+  west edge (x -280 by the cliffs, -310 by the cableway: the shoulders are the painted mountain there),
+  then 15 to 20 m west of the route up the glacier and the storm ridge (-318 at 886, -345 at 940), and
+  nothing above 950 m; the snow cap card is cut the same way. No piece has a hole.
+- Frames in 7, 8, 9, 10 and 11 (`open_air_7_to_11_after.jpg`: 7.1, 7.3, 7.7, 7.10, 8.1, 8.11, 9.7, 10.1,
+  10.9, 11.2). What still stands behind the climb is the areas' own: in 7, a7_dress's cliff rock behind
+  the face (`riscos_face_body`, `riscos_colony_cliff`, `riscos_balcon_back`, z -2 to -3, not landed: the
+  tan behind 7.1 to 7.7 is their stand-ins, the cliff as designed); in 9.7 the tongue's flank stand-in;
+  in 10 the storm ridge's sky cards (z -20 .. -30, a10's dress takes them out); in 11 a11's cards.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
