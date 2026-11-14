@@ -1731,6 +1731,43 @@ in. Nothing played by a person.
   - `25_the_dam_*`, `25_winding_*`, `25_winding_higher_*`.
 - **Checks:** lint; `--peak`; `--peakride`; `--peakrules`. All clean.
 
+## The fix run of 11-13, group 3: the crystal cave (a3)
+
+- **Notes 74 and 34, La Columna's collars (3.9).** The three turning rings are gone. As the
+  design page draws it, three collars (the dress's: nothing of them is in the play space)
+  carry pairs of spikes across the front of the column on slants: up and west from beside
+  the lower shelf, up and east, up and west, each 6 m across and 3.8 m up in 10 s, each
+  starting 1 m above the last one's end. A spike's tip slides out of the back over its first
+  0.35 m, crosses, and slides back in over its last 0.35 m (`emerge` gained `back`); it can
+  be held only while it is out. Four pairs a collar, 12.7 s apart (a turn in 50.8 s); the
+  two of a pair 1.3 m apart. Each collar starts 8 s after the one below, so its first spike
+  is out 1 m above you 2 s before yours goes in (the page said 1.5 s).
+  - **Note 34 inside it:** each spike shakes for 0.5 s and goes in for 1.5 s of every 4.5,
+    under your hand or not (it lets go of you: `blink` on a wrap path). The two of a pair
+    take turns. Their phases were worked out so that a crossing's leading spike is never
+    in during its first 2 s or its last 2 s.
+  - Worked out (the game's own rule, off line): at each corner the leading spike near its
+    end and the next collar's leading spike just out are both there for 1.43 s; a pair is
+    never both in for more than a moment (0.18 s, at the slide-in edges).
+  - A new west horn, level, 7.7 m long and 0.7 m thick, from the upper shelf's west end
+    over the front of the column, its underside 1.2 m over the last crossing's end.
+  - **Not tried with a climber.** The whole climb (a reach, three rides, two changes, the
+    horn) is untested by play. Every number is a first try.
+  - Stand-ins: the spikes are plain crystal studs.
+  - `74_la_columna_before.jpg` (the rings), `74_la_columna_after*.jpg`, `74_la_columna_close_*`.
+- **Note 26, Primer Destello's slanted shafts (3.1).** The six hexagon pods are slanted
+  pointed shafts: five 1.1 m thick, leaning 30 degrees with their points high and west, a
+  2 m sloping top and a 0.9 m point (both grip), the under-face glass; from each point the
+  next top's low end is 2.2 m across and 1.3 m up (the flings re-laid). The sixth is
+  snapped: 1.4 m thick, 0.8 m up in 3.4 m, its west end a glassy break, and that end
+  exactly where today's rest ends, so El Espejo's first reach is unchanged.
+  - **Moved:** laid back from that fixed end, the first top starts 0.73 m above the floor
+    (the page said 1 m), and the first shaft's low end is now at its EAST end (x -411.5),
+    so the challenge starts east of it, at x -410.6 (it was -415.0).
+  - Not tried by play: walking up a top, hanging from a point, the flings.
+  - `26_primer_destello_before.jpg`, `26_primer_destello_after.jpg`, `26_primer_destello_start_*`.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

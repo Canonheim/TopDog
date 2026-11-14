@@ -163,21 +163,59 @@ A.box(-307.5, 279.5, 3.0, 3.0, "glass")  # the roof slab carried on, flush with 
 A.box(-448.7, 176.3, 0.5, 0.6, "crystal")  # a kerb east of the hole: what rolls along the floor stops here
 
 # ---------------------------------------------------------------- 3.1 Primer Destello
-# Six hexagonal columns, end-on, climbing WEST from the slope's foot back over the floor
-# you walked in on. Tops and shoulders grip, the under-facets are glass. The first is
-# taken from the floor by its west shoulder. Each fling is 2.7 m across and 2.23 m up,
-# from a top's west corner to the next top's east corner.
-STEPS = [(-412.6, 178.35), (-417.5, 180.58), (-422.4, 182.81), (-427.3, 185.04), (-432.2, 187.27)]
-for cx, top in STEPS:
-    hexstep(cx, top)
-R1 = (-439.0, -436.0, 189.5)  # the sixth column: the rest before the mirror. Its west shoulder is glass
-hexstep(-437.5, 189.5, wt=3.0, w=4.2, west_slick=True)
-m31 = [["reach", [-414.2, 177.5], [-413.7, 178.35]]]
-tops = STEPS + [(-437.5, 189.5)]
-for i in range(5):
-    east_corner = tops[i + 1][0] + (1.5 if i == 4 else 1.1)
-    m31.append(["fling", [tops[i][0] - 1.1, tops[i][1]], [east_corner, tops[i + 1][1]], "F2"])
-A.challenge("3.1", "Primer Destello", (-415.0, 176.0), 2, "S", moves=m31)
+# (Note 26, Parker 11-13: "truly slanted pointed shafts, with sloping tops, and the six flings
+# re-laid to suit".) As the design page draws it (design/a3/3_1_primer_destello.html): five
+# six-sided shafts 1.1 m thick, leaning 30 degrees, each pointing high and to the west. In the
+# play space each is a top face 2 m long and a point 0.9 m long, both rough (grip); its
+# under-face is glass. You walk up a top, hang from its point, swing and let go: from each
+# point the low end of the next top is 2.2 m across and 1.3 m up. The sixth is snapped:
+# thicker (1.4 m), nearly level (0.8 m up in 3.4 m), its west end a glassy break that can't
+# be held, and that west end exactly where today's rest before the mirror ends (-439.0,
+# 189.5), so El Espejo's first reach is unchanged. (Laid back from that end, the first top
+# starts 0.73 m above the floor, where the page said 1 m.)
+SH_U = (-math.cos(math.radians(30)), math.sin(math.radians(30)))  # up a top, west
+SH_D = (-0.5, -math.sin(math.radians(60)))  # down through the shaft, square to its top
+
+
+def shaft(lo, top=2.0, point=0.9, thick=1.1):
+    """One slanted shaft from the low end of its top face; returns its point (the tip)."""
+    tt = (lo[0] + SH_U[0] * top, lo[1] + SH_U[1] * top)
+    tip = (tt[0] + SH_U[0] * point + SH_D[0] * thick / 2, tt[1] + SH_U[1] * point + SH_D[1] * thick / 2)
+    ut = (tt[0] + SH_D[0] * thick, tt[1] + SH_D[1] * thick)
+    ul = (lo[0] + SH_D[0] * thick, lo[1] + SH_D[1] * thick)
+    body = [lo, tt, ut, ul]
+    A.solid(body, "glass")
+    root([lo, tt, tip, ut, ul])  # (its body going back into the far wall, in order round it)
+    A.patch(lo, tt, "crystal", t=0.3)  # the sloping top
+    A.solid([tt, tip, ut], "crystal")  # the point, all of it
+    return tip
+
+
+R1 = (-439.0, -436.0, 189.5)  # (the rest before the mirror: its west end is fixed)
+S6_W = (-439.0, 189.5)
+S6_RUN = math.sqrt(3.4 ** 2 - 0.8 ** 2)
+S6_L = (S6_W[0] + S6_RUN, S6_W[1] - 0.8)
+STEP = (-2.2, 1.3)  # from a point to the next top's low end
+# one shaft's own step from its low end to its point
+_tt = (SH_U[0] * 2.0, SH_U[1] * 2.0)
+TIP_OFF = (_tt[0] + SH_U[0] * 0.9 + SH_D[0] * 0.55, _tt[1] + SH_U[1] * 0.9 + SH_D[1] * 0.55)
+PER = (TIP_OFF[0] + STEP[0], TIP_OFF[1] + STEP[1])
+LO5_TIP = (S6_L[0] + 1.5, S6_L[1] - 1.9)  # the fifth point: the sixth's low end is 1.5 m across and 1.9 m up
+LO1 = (LO5_TIP[0] - TIP_OFF[0] - 4 * PER[0], LO5_TIP[1] - TIP_OFF[1] - 4 * PER[1])
+TIPS = []
+for k in range(5):
+    TIPS.append(shaft((LO1[0] + k * PER[0], LO1[1] + k * PER[1])))
+# the sixth, snapped: thick, nearly level, its west end a glassy break
+s6d = (-0.8 / 3.4, -S6_RUN / 3.4)  # square to its top, downward
+S6 = [S6_L, S6_W, (S6_W[0] + s6d[0] * 1.4, S6_W[1] + s6d[1] * 1.4), (S6_L[0] + s6d[0] * 1.4, S6_L[1] + s6d[1] * 1.4)]
+A.solid(S6, "glass")
+root(S6)
+A.patch(S6_L, S6_W, "crystal", t=0.3)  # its top, to the break
+m31 = [["reach", [LO1[0] + 0.85, 177.4], list(LO1)]]  # (from the floor beside the first shaft's low end)
+for k in range(4):
+    m31.append(["fling", list(TIPS[k]), [LO1[0] + (k + 1) * PER[0], LO1[1] + (k + 1) * PER[1]], "F2"])
+m31.append(["fling", list(TIPS[4]), list(S6_L), "F2"])
+A.challenge("3.1", "Primer Destello", (LO1[0] + 0.85, 176.0), 2, "S", moves=m31)
 A.cam((-446, 176, -409, 193), 7.0, bias=(-2.0, 2.0))
 
 # ---------------------------------------------------------------- 3.2 El Espejo
@@ -356,34 +394,55 @@ for hx, hy in ((-310.0, 243.2), (-311.6, 244.3), (-310.0, 245.5), (-311.6, 246.7
     A.hold(hx, hy, r=0.22, kind="crystal")  # the chimney: a breath
 
 # ---------------------------------------------------------------- 3.9 La Columna
-# The column stands behind the climbing plane (a card). It wears three rings, each 6 m
-# across, glass, with crystal studs: the studs are the only holds. Ring 1 turns counter-
-# clockwise, ring 2 clockwise, ring 3 counter-clockwise, and their studs mesh like gear
-# teeth every 5 s: ring 1's top stud meets ring 2's bottom stud, 0.9 m apart, both going
-# west; ring 2's top meets ring 3's bottom going east. Up the east side of ring 1, the
-# west side of ring 2, the east side of ring 3, and off onto R9.
+# (Notes 74 and 34. Parker 11-13, of the side-on diagram: "Yes, build that"; and "harder": a
+# spike can go in under your hand.) As the design page draws it (design/a3/3_9_la_columna.html):
+# three collars hang askew round the column, behind the climb, edge-on to you (the collars
+# themselves are the dress's). Each carries four pairs of spikes; a spike's tip slides out
+# of the collar's low end into the play space, crosses the front of the column on a slant,
+# 6 m across and 3.8 m up in 10 s, and slides back in at the high end. The next pair
+# follows 12.7 s behind (a turn in 50.8 s). The two spikes of a pair, 1.3 m apart, take
+# turns to shake for half a second and go in for a second and a half: when yours shakes,
+# move to the other. Each collar's crossing starts 1 m above where the one below ends, and
+# its pair slides out 2 s before the one below goes in for good: change there (the page
+# said 1.5 s; 2 s, with the slide-out taking 0.4 s, leaves about 1.4 s to change). Collar 1
+# runs up and west from beside the lower shelf (R8), 2 up and east, 3 up and west, and a
+# new west horn 1.2 m over its end takes you east onto the upper shelf (R9). Every number
+# is a first try. (The spikes are plain stand-ins until their models land.)
 COL_X = -328.0
-
-
-def ring(mid, cy, rpm, studs, stud0):
-    shapes = chords(2.75, 0.5, "glass")
-    for k in range(studs):
-        a = math.radians(stud0 + k * 360.0 / studs)
-        c, s = math.cos(a), math.sin(a)
-        shapes.append(([(2.8 * c + 0.26 * s, 2.8 * s - 0.26 * c), (3.45 * c, 3.45 * s), (2.8 * c - 0.26 * s, 2.8 * s + 0.26 * c)], "crystal"))
-    # (crystal_ring_4 has its studs at 0, 90, 180, 270; crystal_ring_4x at 45, 135, 225, 315)
-    A.mover(mid, (COL_X, cy), shapes, {"type": "spin", "rpm": rpm, "phase": 0.0}, model="crystal_ring_%d%s" % (studs, "x" if studs == 4 and stud0 % 90.0 else ""))
-
-
-RING_Y = (250.9, 258.7, 266.5)
-ring("anillo1", RING_Y[0], 3.0, 4, 90.0)   # a stud at its top at t = 0, 5, 10 ...
-ring("anillo2", RING_Y[1], -4.0, 3, 270.0)  # a stud at its bottom at t = 0, 5 ...; at its top at t = 2.5, 7.5 ...
-ring("anillo3", RING_Y[2], 3.0, 4, 45.0)   # a stud at its bottom at t = 2.5, 7.5 ...
+CROSS = [((-325.0, 250.9), (-331.0, 254.7)), ((-331.0, 255.7), (-325.0, 259.5)), ((-325.0, 260.5), (-331.0, 264.3))]
+SPIKE_SPEED = math.dist(*CROSS[0]) / 10.0  # 10 s a crossing
+PAIR_GAP_S, TURN_S, COLLAR_LAG_S = 12.7, 4 * 12.7, 8.0
+TRAIL_S = 1.3 / SPIKE_SPEED  # the pair's second spike, 1.3 m behind the first
+for c, (lo, hi) in enumerate(CROSS):
+    for p in range(4):
+        # Blink phases (each on the spike's own clock): the leading spike is in at 2.0-3.5 s and
+        # 6.5-8.0 s of its crossing, never in its first 2 s or its last 2 s, so the hand-off at
+        # each corner (this collar's leading spike near its end, the next collar's leading
+        # spike just out 1 m above) has both out for about 1.4 s; the trailing spike is in
+        # when the leader is out, half a cycle on in the leader's time.
+        for k, (lag, blink) in enumerate(((0.0, 1.0), (TRAIL_S, round((1.0 - 2.25 - TRAIL_S) % 4.5, 3)))):
+            start = c * COLLAR_LAG_S + p * PAIR_GAP_S + lag
+            A.mover("pua%d_%d%s" % (c + 1, p + 1, "ab"[k]), lo, [(ngon(0, 0, 0.22, 6), "crystal")],
+                    {"type": "path", "pts": [list(lo), list(hi)], "speed": round(SPIKE_SPEED, 4), "mode": "wrap",
+                     "wait": round(TURN_S - 10.0, 3), "phase": round(-start, 3),
+                     "emerge": {"over": 0.35, "depth": -1.2, "back": True},
+                     # in for 1.5 s of every 4.5 (after 0.5 s of shaking); the pair's two
+                     # spikes half a cycle apart, so one of them is always out
+                     "blink": {"period": 4.5, "in": 1.5, "warn": 0.5, "phase": blink}})
+# The west horn: a rough pale shaft 7.7 m long and 0.7 m thick, level, from the root of the
+# great horn on R9 west over the front of the column to a point, 1.2 m over collar 3's end.
+WH_Y = CROSS[2][1][1] + 1.2 + 0.35
+A.beam((-324.3, WH_Y), (-331.2, WH_Y), t=0.7, kind="crystal")
+A.solid([(-331.2, WH_Y - 0.35), (-332.0, WH_Y), (-331.2, WH_Y + 0.35)], "crystal")
 A.challenge("3.9", "La Columna", (-322.5, 249.4), 4, "B", moves=[
-    ["reach", [-324.3, 249.4], [COL_X + 3.45, RING_Y[0]]],
-    ["reach", [COL_X, RING_Y[0] + 3.45], [COL_X, RING_Y[1] - 3.45]],
-    ["reach", [COL_X, RING_Y[1] + 3.45], [COL_X, RING_Y[2] - 3.45]],
-    ["reach", [COL_X + 3.45, RING_Y[2]], [-324.3, 266.0]]])
+    ["reach", [-324.3, 249.4], list(CROSS[0][0])],
+    ["ride", list(CROSS[0][0]), list(CROSS[0][1])],
+    ["reach", list(CROSS[0][1]), list(CROSS[1][0])],
+    ["ride", list(CROSS[1][0]), list(CROSS[1][1])],
+    ["reach", list(CROSS[1][1]), list(CROSS[2][0])],
+    ["ride", list(CROSS[2][0]), list(CROSS[2][1])],
+    ["reach", list(CROSS[2][1]), [CROSS[2][1][0], WH_Y - 0.35]],
+    ["reach", [-326.0, WH_Y + 0.35], [-324.3, 266.0]]])
 A.cam((-333, 247, -322, 272), 11.0, bias=(-4.0, -3.0))
 
 # ---------------------------------------------------------------- R9, the sill, the horn: 3.10

@@ -1081,11 +1081,34 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 					if mo.has("emerge"):
 						# IT ARRIVES, IT DOESN'T APPEAR ("they should come out of some modeled
 						# cove"): over its first metres it floats forward out of the back
-						# wall, and can't be touched until it is in the play plane.
+						# wall, and can't be touched until it is in the play plane. With
+						# `back` it slides back in over its last metres too (note 74's spikes).
 						var em: Dictionary = mo.emerge
-						var f := clampf(d / maxf(0.1, float(em.over)), 0.0, 1.0)
+						var gone := d
+						if bool(em.get("back", false)):
+							gone = minf(d, total - d)
+						var f := clampf(gone / maxf(0.1, float(em.over)), 0.0, 1.0)
 						m["zoff"] = float(em.depth) * (1.0 - _ease(f))
+					if mo.has("blink"):
+						# IN AND OUT ON ITS WAY (note 34; Parker 11-13: "harder"): on its own
+						# clock along the line (seconds since it set out), it shakes for `warn`
+						# then goes in for `in` of every `period`, under your hand or not.
+						var bl: Dictionary = mo.blink
+						var per := maxf(0.5, float(bl.period))
+						var cyc := fposmod(d / speed + float(bl.get("phase", 0.0)), per)
+						var tin := float(bl.get("in", 1.5))
+						var vis_n: Node3D = m.vis
+						if cyc >= per - tin:
+							m["zoff"] = minf(float(m.get("zoff", 0.0)), float((mo.get("emerge", {}) as Dictionary).get("depth", -1.2)))
+							vis_n.position = Vector3.ZERO
+						elif cyc >= per - tin - float(bl.get("warn", 0.5)):
+							vis_n.position = Vector3(randf_range(-0.04, 0.04), randf_range(-0.04, 0.04), 0.0)
+						else:
+							vis_n.position = Vector3.ZERO
 					var solid := not bool(m.get("shed", false)) and absf(float(m.get("zoff", 0.0))) < 0.45
+					if not solid and bool(m.get("was_solid", true)):
+						_release_from(m.nodes)  # (it went in under the hand)
+					m["was_solid"] = solid
 					for node: AnimatableBody3D in m.nodes:
 						node.collision_layer = Climber.LAYER_WORLD if solid else 0
 				"pingpong":
