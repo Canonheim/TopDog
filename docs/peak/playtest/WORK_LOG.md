@@ -1816,6 +1816,15 @@ in. Nothing played by a person.
   (`62_the_grates_lit.jpg`)
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-13, group 3: the wind cliffs (a7: note 70)
+
+- **Note 70:** 7.8's tail wind now runs east to the fang's west face (x -172.2, measured
+  from the mountain's own body file across the box's height; it was -177.0), so there is no
+  still strip between the horn and the rock. Push, rhythm and whistle unchanged. With
+  group 1's drawn wind the lines now reach the rock (`70_wind_to_the_fang_before.jpg`,
+  `_after.jpg`, both mid-gust). The fling from the bough to the porch is inside the old box
+  and unchanged; not flown.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

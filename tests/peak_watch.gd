@@ -2363,3 +2363,22 @@ func _w_g3boom2(_a: Array) -> void:
 		if pk.things.blasts > 0 and start_v == 0.0:
 			start_v = Vector2((c.bodies["chest"] as RigidBody3D).linear_velocity.x, (c.bodies["chest"] as RigidBody3D).linear_velocity.y).length()
 	print("WATCH g3boom2: blasts %d, knocked out %s, the chest thrown at %.1f m/s" % [pk.things.blasts, ko, start_v])
+
+
+## NOTE 70: 7.8's tail wind, during a gust, looking at the horn and the fang. g3wind78:TAG
+func _w_g3wind78(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("7.8")
+	await secs(6.5)
+	look(Vector2(-182.0, 660.0), 8.0)
+	var t0 := pk.clock
+	while pk.clock - t0 < 9.0:
+		var k := 0.0
+		for row in pk.zones.winds:
+			if Peak.rect_has(row.def.rect, Vector2(-185.0, 660.0), 0.5):
+				k = maxf(k, pk.zones._gust(row.def))
+		if k > 0.9:
+			break
+		await ticks(1)
+	await secs(0.3)
+	await shot("70_wind_to_the_fang_" + tag)

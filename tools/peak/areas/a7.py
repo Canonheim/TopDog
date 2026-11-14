@@ -321,7 +321,10 @@ A.beam((-182.4, 654.0), (-182.7, 656.7), 0.3, "bone")  # the snag's stub
 A.hold(-183.6, 658.2, 0.2, "bone")  # a knot
 BOUGH, PORCH = (-184.7, 659.6), (-202.6, 664.0)
 A.hold(BOUGH[0], BOUGH[1], 0.25, "bone")  # the bough, end on: the launch hold
-A.wind((-203.5, 648, -177, 672), (-3.0, 0.0), gust={"on": 2.5, "off": 4.5, "phase": 0.0, "warn": 1.0})
+# (Note 70, Parker: "make the wind cover this whole area too": the box runs east to the fang's
+# west face, x -172.2, so there is no still strip between the horn and the rock. Its push,
+# rhythm and whistle are unchanged.)
+A.wind((-203.5, 648, -172.2, 672), (-3.0, 0.0), gust={"on": 2.5, "off": 4.5, "phase": 0.0, "warn": 1.0})
 for x, y in ((-203.2, 654.0), (-182.3, 654.0), (-202.8, 664.0)):
     A.deco("streamer_pole", x, y, z=-0.6, size=(0.15, 2.4, 0.15), tone="accent")
 A.challenge("7.8", "Viento a Favor", (-207.0, 654.0), 4, "X",
