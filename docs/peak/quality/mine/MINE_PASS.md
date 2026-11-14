@@ -909,6 +909,9 @@ lining as flat bands, `stn_a_mine_walls.py`), `MINE_LIGHT=1`.
 and at the camp (−167.0, −12.6) with stand-ins for the posts, beams, the statue and a climber; the
 tally marks enlarged on their own.
 
+
+**Carried from E10 (the tool rack, placed in the game):** the camp's tool rack now stands in the winch's cut in this lining (x -174.8), in place of the hand winch, because anything standing behind the lining (z -1.65) cannot be seen. Give the winch a new place in this remake (its own cut, or the incline's head), and keep the rack's bay open.
+
 ### E6. `mina_hoist_headframe` (NEW): El Cubo's hero
 
 **What and where.** The bucket lift's gallows and guides, in place of the two flat hoistway cards
