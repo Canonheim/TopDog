@@ -288,7 +288,7 @@ A.challenge("8.7", "Tirolesa", (-165.3, 725.4), 3, "X",
 
 # ---------------------------------------------------------------- 8.8 Contrapesos
 # Four blocks (1.6 x 1.2) on two cables 3.2 m apart, west of the deck: a 1.6 m gap between
-# the columns. Each rides 7 m at 1.75 m/s (4 s) and waits 1 s at each end; 10 s a round.
+# the columns. Each rides 7 m at 1.697 m/s (4.125 s) and waits 1 s at each end; 10.25 s a round (the express cars' run).
 # The columns run against each other, and each block's top meets the next one's bottom:
 #   A1 720.5 .. 727.5   B1 727.5 .. 734.5   A2 734.5 .. 741.5   B2 741.5 .. 748.5
 # so twice a round two tops stand level for 1 s, 1.6 m apart. Step across then.
@@ -296,7 +296,9 @@ A.challenge("8.7", "Tirolesa", (-165.3, 725.4), 3, "X",
 XA, XB = -197.1, -200.3
 BLOCK = [(box_pts(0.0, -0.6, 1.6, 1.2), "paint"), (box_pts(0.0, 0.25, 0.1, 0.5), "iron")]
 for mid, x, ya, yb in (("cw_a1", XA, 720.5, 727.5), ("cw_b1", XB, 734.5, 727.5), ("cw_a2", XA, 734.5, 741.5), ("cw_b2", XB, 748.5, 741.5)):
-    A.mover(mid, (x, ya), BLOCK, {"type": "path", "pts": [[x, ya], [x, yb]], "speed": 1.75, "mode": "pingpong", "wait": 1.0, "trigger": "none"},
+    # (page 8.8: the weights and the express cars are one machine, so their times match: the weights
+    # take the cars' 10.25 s, 7 m at 1.697 m/s and 1 s at each end. The Director, 11-14; a first guess for Parker.)
+    A.mover(mid, (x, ya), BLOCK, {"type": "path", "pts": [[x, ya], [x, yb]], "speed": 1.697, "mode": "pingpong", "wait": 1.0, "trigger": "none"},
             model="counterweight_hung")
 A.challenge("8.8", "Contrapesos", (-193.0, 720.0), 3, "X",
             moves=[["reach", [-196.0, 720.0], [-196.3, 720.5]],

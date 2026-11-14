@@ -129,7 +129,7 @@ for i, (bx, by) in enumerate(((-270.0, 512.8), (-273.4, 514.8), (-276.8, 516.8))
     A.mover("fuelle%d" % (i + 1), (bx, by),
             [(box_pts(0, -0.175, 2.2, 0.35), "plank"), (box_pts(0, -0.95, 1.8, 1.2), "grease")],
             {"type": "cycle", "to": [0.0, 1.8], "t_out": 1.6, "hold_out": 0.8, "t_in": 1.0, "hold_in": 0.8,
-             "phase": 1.4 * i}, model="bellows")
+             "phase": 1.4 * i}, model="bellows_forja")
 A.wind((-284.0, 513.0, -268.0, 520.5), (4.0, 0.0), gust={"on": 1.4, "off": 2.6, "phase": 0.0, "warn": 0.8}, look="steam")
 A.ledge(-288.0, -279.2, 519.5, "plank", t=0.6, skin="forja_bellows_deck")  # L4, the great bellows' top board
 for y in (520.9, 522.0, 524.2):
@@ -168,7 +168,7 @@ for i, (xa, xb, sp, wt, ph) in enumerate(((-278.8, -276.8, 0.7, 0.8, 0.0), (-273
                                           (-267.2, -265.0, 0.8, 0.7, 2.9))):
     pa, pb = [xa, slag_y(xa) + 0.5], [xb, slag_y(xb) + 0.5]  # raft 0.5 thick: its top rides 0.75 over the slag
     A.mover("balsa%d" % (i + 1), pa, [(box_pts(0, 0, 2.2, 0.5), "iron")],
-            {"type": "path", "pts": [pa, pb], "speed": sp, "mode": "pingpong", "wait": wt, "phase": ph}, model="slag_raft")
+            {"type": "path", "pts": [pa, pb], "speed": sp, "mode": "pingpong", "wait": wt, "phase": ph}, model="slag_raft_forja")
 for cx in (-275.0, -269.0):
     y = slag_y(cx)
     A.solid([(cx - 0.4, y - 0.1), (cx + 0.4, y - 0.1), (cx + 0.05, y + 0.6)], "slag", skin="forja_dead_crust")  # dead crust: a slick tooth, nothing to stand on
@@ -190,13 +190,13 @@ A.cam((-286, 521, -255, 533), half_h=9.0, bias=(0.0, -3.0))
 HX, HY = (-253.5, -249.3, -245.1), (523.6, 527.6, 531.6)
 for i in range(3):
     X, Y = HX[i], HY[i]
-    A.ledge(X - 1.5, X + 1.0, Y, "iron", t=0.5, skin="anvil_great")  # the anvil's face
-    A.solid([(X - 0.8, Y - 0.5), (X + 0.7, Y - 0.5), (X + 0.3, Y - 1.5), (X - 0.4, Y - 1.5)], "slag", skin="anvil_great")  # its waist
+    A.ledge(X - 1.5, X + 1.0, Y, "iron", t=0.5, skin="anvil_great_forja")  # the anvil's face
+    A.solid([(X - 0.8, Y - 0.5), (X + 0.7, Y - 0.5), (X + 0.3, Y - 1.5), (X - 0.4, Y - 1.5)], "slag", skin="anvil_great_forja")  # its waist
     A.mover("martillo%d" % (i + 1), (X, Y + 0.8),
             [(box_pts(0, 0.75, 2.0, 1.5), "grease"), ([(-1.0, 1.5), (1.0, 1.5), (0.0, 2.2)], "grease"),
              (box_pts(1.25, 0.15, 0.5, 0.2), "iron")],
             {"type": "cycle", "to": [0.0, 4.2], "t_out": 3.2, "hold_out": 2.6, "t_in": 0.35, "hold_in": 1.0,
-             "phase": 2.4 * i}, ko=True, model="drop_hammer")
+             "phase": 2.4 * i}, ko=True, model="drop_hammer_forja")
     A.rope("c66_%d" % (i + 1), (X + 1.5, Y + 0.85), 4.5, kind="chain", anchor="martillo%d" % (i + 1))
 A.ledge(-242.4, -236.0, 535.6, "rock", t=0.6, skin="forja_pier_head")  # L6
 A.challenge("6.6", "La Fragua", (-257.6, 523.0), 4, "A",

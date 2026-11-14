@@ -2478,6 +2478,19 @@ in. Nothing played by a person.
   the grey-tan strips either side of the column are the cave's violet now; `a3_gruta_3_1_after.jpg`.)
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the weights' time; re-makes under new stems
+
+- **8.8 (a8_dress 6f, the Director's ruling):** the counterweights take 10.25 s a round, the
+  express cars' run, so the two read as one machine: 7 m at 1.697 m/s (4.125 s) and 1 s at
+  each end (they were 1.75 m/s, 10 s). All four keep their places in the round, so the two
+  tops still stand level twice a round. **A first guess for Parker.**
+- **Re-makes under new stems** (the modelling run lands them beside the originals): a6's
+  stepping bellows, slag rafts and drop hammers name `bellows_forja`, `slag_raft_forja`,
+  `drop_hammer_forja`, the anvils' skins `anvil_great_forja` (a6.json regenerated for the
+  dress's own anvil switch too); a7's bull wheel names `bull_wheel_76`, the 7.6 m wheel, with no
+  scale now. `KIT_FALLBACK` (peak.gd) shows each original until its re-make is there.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
