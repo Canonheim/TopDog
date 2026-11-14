@@ -12,9 +12,12 @@ BIOME = {
     ],
     "built": [
         "Town building: thick plastered walls in cream, terracotta roof tiles, painted woodwork, all in the plaza's own painted-cardboard look.",
+        "The walls are painted, not built of blocks. A wall is adobe under plaster, and its face is one or two large planes of cream. The cracks, the long stain bands under the tiles and along the foot, and the patches where the plaster has gone and the adobe bricks show are flat colour on that face, in three or four tones. Nothing painted narrows to a point.",
+        "Only a few big breaks in a wall are real shape: a corner that has slumped, a deep door or window, a pier, one sheet of plaster standing proud. The top of a wall sags and is notched, and is never a ruled line. No square panel is repeated, and no brick is built as its own block.",
         "Station gear in honey timber and red paint: the loading platform on posts, ore crates, barrels, a hand crane, the cart, its red brake lever.",
         "The tunnel mouth is the first timber set of the mine: the same posts and cap as every set inside, here whitewashed, with a painted pug over the cap.",
         "Down the tunnel the same sets go from whitewashed, to bare, to grey and wet. That is the whole of the change from town to mine, and it happens while you ride.",
+        "The tunnel's rock is painted the same way. Its walls, its roof and the bed under the rails are a few large planes, with the rock's grain as long wavy lines and bands of flat colour. Its real breaks are the gap, a hollow where a side passage was, and a fallen block. Behind the timber sets the rock carries on as one dark body, not as a flat card.",
     ],
     "light": "Noon sun, the brightest place in the game: cream walls, a blue sky, short hard shadows. In the tunnel the daylight shrinks to a "
              "dot behind you and the lanterns take over, one every twenty metres, each a little dimmer and more amber than the last.",
@@ -30,7 +33,8 @@ BIOME = {
         ["Foreground", "Outside: one fence post with a tail of bunting at the right edge of the first screen, a clump of agave at the bottom edge. In the tunnel: the front post of every fourth set, sweeping past the cart."],
     ],
     "kit": [
-        ["Station house front: plaster wall, door, tiled roof, a bell on a bracket", "6 m wide, 4 m tall", "behind the platform", "Background", "new"],
+        ["Station house front: a wall of adobe under plaster, a door, a tiled roof, a bell on a bracket. The wall's face is painted: cracks, stain bands and patches of adobe brick as flat colour", "6 m wide, 4 m tall", "behind the platform", "Background", "in the kit: stn_house, to be re-made painted"],
+        ["Yard wall with the town's gate; the crumbling adobe house. Painted faces, a few real breaks, a sagging top edge", "wall 12.5 m long, 2.4 m tall; house 7 m wide, 4.6 m tall", "the town's side of the yard; behind the steps", "Background", "in the kit: stn_yard_wall, adobe_ruin, to be re-made painted"],
         ["Loading platform back posts and rail", "posts 0.3 m, 2.2 m tall", "behind the platform you climb", "Background", "new, from the mine's timber set"],
         ["Ore crate; barrel; ore sacks", "0.8 m; 0.9 m; 0.6 m", "the steps, and stacked behind them", "Play space, background", "crate in the kit (crate_ore); barrel and sacks new"],
         ["Hand crane", "3 m tall", "at the platform's back edge, its hook wound right up", "Background", "new"],
@@ -43,6 +47,8 @@ BIOME = {
         ["The Peak, and the town, as far cut-outs", "the whole sky", "behind everything outside", "Background, far", "the plaza's cut-outs, reused"],
         ["Tunnel timber set: whitewashed, bare, grey and wet", "as the mine's", "the tunnel, one every 2.6 m", "Background, foreground", "in the kit: mine_post, mine_beam"],
         ["Tunnel lantern", "0.4 m", "one every 20 m", "Background", "in the kit: lantern_mine"],
+        ["Tunnel rock: the walls, the roof and the bed under the rails. A few large planes, the grain painted as long wavy lines, an uneven edge", "the tunnel's 115 m, each piece made for its place", "the ride", "Play space", "new"],
+        ["Tunnel back wall: the rock's own body behind the timber sets, as one big form in two or three slanted planes, darker and duller, its grain painted as thin lines", "the tunnel's length", "1.5 to 3 m behind the track, in place of today's flat brown card", "Background", "new"],
         ["The gap: a broken-out stretch of tunnel wall", "8 m wide", "the one look at the waterfall cavern", "Background", "new"],
         ["Buffer stop", "1.2 m tall", "the end of the line", "Play space", "new"],
         ["The frog, on a windowsill", "0.3 m", "the station house window", "Background", "new (note 60)"],

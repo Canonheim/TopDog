@@ -14,6 +14,8 @@ BIOME = {
     "built": [
         "Crystal grows in points. Six-sided in section, ending in a point, always leaning the way it grew. Crystals jut out of the back wall towards you (note 26), out of the floor and down from the roof. Nothing in the cave is a flat-topped block or a plain hexagon post.",
         "Crystals come in clusters: one big point with smaller ones round its root, on a collar of rough dark rock.",
+        "Crystal is real shape, and rock is paint. Every crystal is modelled, with its own faces and its point. The rock is painted, not built of blocks: a collar, or the cave wall behind the crystals, is a few large planes of rough dark rock. Its grain is long wavy lines and bands of flat colour in three or four dark tones, none as pale as a hold. Nothing painted narrows to a point.",
+        "The real breaks in the rock are few: the socket a big crystal grows from, a hollow where one has fallen out, one overhang with its shadow painted under it. The rock's edge is uneven and never ruled. No square panel is repeated, and no band of rock is built as its own block.",
         "Two kinds of crystal. Rough crystal is pale lilac, frosted, and looks like rock: you can hold it (note 30). Clear crystal is deep indigo glass, mirror-smooth: you can't.",
         "What hangs, hangs on crystal: a thread of crystal as thick as an arm, grown down from the roof like a stalactite and still joined at both ends. What turns, turns in a socket of crystal worn round and smooth. No chain, no bronze, no carved stone.",
         "No timber, no brick, no iron, nothing carved. One coil of old rope and one frozen climber are the only things here that came from outside.",
@@ -37,7 +39,8 @@ BIOME = {
     "kit": [
         ["Wall point: a slanted, pointed crystal shaft jutting from the back wall, in rough lilac and in clear indigo", "0.8 to 1.6 m across, 2 to 4 m long", "the steps of Primer Destello, truly slanted (note 26), and every crystal ledge", "Play space, rooted in the background", "new, two looks, three sizes"],
         ["Needle spire: indigo glass shaft with a rough lilac point", "1 m across at the tip, 6 to 12 m tall", "Agujas: only the point holds (note 30)", "Play space", "in the kit: crystal_spire, to be re-made"],
-        ["Cluster on a rock collar", "1.5 to 4 m", "the root of every big crystal; dressing", "Background", "in the kit: crystal_cluster_a, b, c"],
+        ["Cluster on a rock collar: the crystals are real shapes, the collar is painted rock with an uneven edge", "1.5 to 4 m", "the root of every big crystal; dressing", "Background", "in the kit: crystal_cluster_a, b, c, to be re-made painted"],
+        ["Cave wall behind the crystals: rough dark rock as one big form in two or three slanted planes, its grain painted as thin wavy lines, crowded with smaller real points, with a few real hollows and one overhang", "to suit each stretch of the hall, each piece made for its place", "1.5 to 3 m behind the crystals you climb, in place of today's flat cards. The roots of the wall points run into it", "Background", "new"],
         ["Roof points, rough lilac, hanging", "0.6 to 2 m", "roofs; the ceiling's grips (note 33)", "Play space, background", "in the kit as stalactite_b; a crystal one is new"],
         ["Mirror face", "2 to 6 m", "big clear faces that show you", "Background, play space", "in the kit: mirror_facet"],
         ["Giant far crystal", "10 to 30 m", "the far background", "Background, far", "in the kit: crystal_column, crystal_shell_clear"],
