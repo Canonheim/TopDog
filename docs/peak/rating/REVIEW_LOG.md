@@ -29,3 +29,4 @@ against **9**, as in `LOOKS_RATING.html`.
 
 | Date | Model | Round | Score | Verdict | One line |
 |---|---|---|---|---|---|
+| 11-14 | `mina_hoist_headframe` | r1 | 6.5 | AGAIN | Head assembly is good (beam, knees, gusset, riveted plates, verdigris pug, bearing): about 7.5. But the guide boards fill 70% of the silhouette as one broad plain brown panel, and their evenly spaced short edge straps read as RUNGS at 13.7 m (note 4). Fixes: (1) two separate guide rails with iron-shod running faces and the wall showing between, spliced lengths with scarf joints, dark flush cross-ties; (2) no evenly spaced edge bars: fewer full-width riveted strap plates at the splices, irregular; (3) third level that reads at true size: the pictogram plate is a speck (make it about 0.6 m or put it on the post), add a pug signal bell or a sheave hood; the short posts floating above the beam must join something or go; shorten the grease drips so none reads as a hanging strand. |
