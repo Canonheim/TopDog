@@ -76,10 +76,10 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 | 1 La Mina Vieja | done; cart room redone (note 103) | `a1_dress.py` WIRED (4c1c86f), cart room built | all 94 landed and synced (A 30, B 24, C 40) | yes: `docs/peak/frames/a1_mine_*` (taken before the walls were redone) |
 | 2 Las Aguas Negras | done | `a2_dress.py` WIRED (5de53c7) | all 102 landed and synced (A 56, B 7, C 39) | yes: `docs/peak/frames/a2_aguas_*` |
 | 3 La Gruta de Cristal | done | `a3_dress.py` WIRED (63d1254) | all landed and synced (A 45 incl. the real 3D crystals, B 28) | yes: `docs/peak/frames/a3_gruta_*` (st's grey-tan body card shows through behind the giants and the column: with the fix thread) |
-| 4 El Jardín de Hongos | done | `a4_dress.py` WIRED (08a6185) | B 44 and C 1 landed; A 32 with thread B | |
+| 4 El Jardín de Hongos | done | `a4_dress.py` WIRED (08a6185) | all landed and synced (A 33, B 46, C 1) | yes: `docs/peak/frames/a4_jardin_*` (st's body card shows as flat olive where nothing stands behind: with the fix thread) |
 | 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | B 11 and C 12 landed; A 65 with the wall maker (moved off threads B and C 11-14); 11 `_jade` re-makes with C | |
-| 6 La Chimenea | done | `a6_dress.py` WIRED (8788f09) | 86 new: A 37, B 9, C 40, queued | |
-| 7 Los Riscos del Viento | done | `a7_dress.py` WIRED (8451f10) | 79 new: A 42 (maker agent, after the crystal cave), B 17, C 28; re-makes `bull_wheel` at 7.6 m, a flying vulture; the walls example becomes the tower top (cut at 658) | |
+| 6 La Chimenea | done | `a6_dress.py` WIRED (8788f09) | B 9 and C 40 landed; A 2 of 37 (the rest with thread B) | |
+| 7 Los Riscos del Viento | done | `a7_dress.py` WIRED (8451f10) | C 23 landed (and the 7.6 m wheel); A with the wall maker, B with thread B; re-makes `bull_wheel` at 7.6 m, a flying vulture; the walls example becomes the tower top (cut at 658) | |
 | 8 El Teleférico | done; revised (real roofs, hangers held) | `a8_dress.py` WIRED (faa373e) | 71 new: A 19 (wall maker), B 6, C 46; seven re-makes (gondola, dead gondola, chair as a bench, zip trolley, counterweight, low station, haul cable) with C | stand-ins only: `docs/peak/frames/a8_tele_stand_ins_*` (the towers' plain boxes fill the sky until the lattice lands) |
 | 9 El Glaciar | done; revised (three wall arrow signs) | being written | | |
 | 10 La Cresta de la Tormenta | done | | | |
