@@ -274,11 +274,13 @@ class Area:
         centred on the line, so it covers the wall's skin and stands t/2 proud)."""
         return self.beam(p0, p1, t, kind, **kw)
 
-    def cave(self, pts, kinds=None, default="wet", thick=3.0):
+    def cave(self, pts, kinds=None, default="wet", thick=3.0, skins=None):
         """A room: `pts` is the closed outline of the AIR. Every edge gets a slab of rock
         `thick` deep behind it. kinds: {edge index: kind}; edge i runs pts[i] -> pts[i+1].
-        Edges not named are `default` (slick). Returns the outline, counter-clockwise."""
+        Edges not named are `default` (slick). skins: {edge index: model}, each edge's slab
+        and the corner filler at its start wear it. Returns the outline, counter-clockwise."""
         kinds = kinds or {}
+        skins = skins or {}
         flipped = _area2(pts) < 0
         n = len(pts)
         if flipped:
@@ -286,10 +288,10 @@ class Area:
             order = [(pts[(i + 1) % n], pts[i], kinds.get(i, default)) for i in range(n)]
         else:
             order = [(pts[i], pts[(i + 1) % n], kinds.get(i, default)) for i in range(n)]
-        for a, b, kind in order:
+        for e, (a, b, kind) in enumerate(order):
             if kind is None:
                 continue  # an opening: no slab
-            self._slab(a, b, kind, thick)
+            self._slab(a, b, kind, thick, skin=skins.get(e))
         # Corner fillers: where two slabs turn away from each other they leave a wedge
         # behind the corner. Fill it (with the slick default, or the edges' own kind when
         # both sides agree).
@@ -305,7 +307,7 @@ class Area:
             v = a1
             tri = [v, (v[0] + n0[0] * thick, v[1] + n0[1] * thick), (v[0] + n1[0] * thick, v[1] + n1[1] * thick)]
             if abs(_area2(tri)) > 0.05 and (n0[0] * n1[1] - n0[1] * n1[0]) > 0:
-                self.solid(tri, k0 if k0 == k1 else (default or "wet"))
+                self.solid(tri, k0 if k0 == k1 else (default or "wet"), skin=skins.get(i))
         return ccw(pts)
 
     @staticmethod
@@ -327,7 +329,7 @@ class Area:
                 a, b = b, a
             self._slab(a, b, kind, thick)
 
-    def _slab(self, a, b, kind, thick):
+    def _slab(self, a, b, kind, thick, skin=None):
         # air is on the LEFT of a -> b (counter-clockwise outline): rock goes to the right.
         dx, dy = b[0] - a[0], b[1] - a[1]
         L = math.hypot(dx, dy)
@@ -336,7 +338,7 @@ class Area:
         nx, ny = dy / L, -dx / L  # right-hand normal
         ex, ey = dx / L * 0.02, dy / L * 0.02  # a hair of overlap along the run
         self.solid([(a[0] - ex, a[1] - ey), (a[0] - ex + nx * thick, a[1] - ey + ny * thick),
-                    (b[0] + ex + nx * thick, b[1] + ey + ny * thick), (b[0] + ex, b[1] + ey)], kind)
+                    (b[0] + ex + nx * thick, b[1] + ey + ny * thick), (b[0] + ex, b[1] + ey)], kind, skin=skin)
 
     def opening(self, x0, y0, x1, y1):
         """Say where the shell is open on purpose (a door to the next area, a chute)."""

@@ -18,12 +18,13 @@ const SEG_R := 0.065
 ## keeps a climber from hauling a light rope about and flying (Parker, earlier on 11-12,
 ## which is why these were once tripled) is in the climber: Feel rope_pull, and a pull
 ## paid by its own hands (Climber._tick_joints). tests/peak_rope_bench.tscn has the numbers.
-const ROPE_MASS := {"rope": 0.3, "chain": 0.5, "vine": 0.3, "cable": 0.5, "banner": 0.25}
+const ROPE_MASS := {"rope": 0.3, "chain": 0.5, "vine": 0.3, "cable": 0.5, "banner": 0.25, "thread": 0.5}
 const PLANK_MASS := 7.2  # a bridge's planks are stood on, not swung on: as they were
 const ROPE_DAMP := 0.03
 const ROPE_SPIN_DAMP := 0.15
 const ROPE_REACH := 0.17  # a free hand or foot this near a rope takes it
-const ROPE_TONE := {"rope": "#C9A36A", "chain": "#B5532A", "vine": "#7FA04A", "cable": "#B9B2A6", "banner": "#C9A36A"}
+const ROPE_TONE := {"rope": "#C9A36A", "chain": "#B5532A", "vine": "#7FA04A", "cable": "#B9B2A6", "banner": "#C9A36A",
+	"thread": "#C3A6EE"}  # (thread: the crystal cave's grown threads of lilac crystal, page 3.3; a chain's weight)
 const BOARD_S := 0.7  # in the cart this long and it rolls
 ## joints in parent-before-child order, with every piece that hangs off each one
 const POSE_TREE := [

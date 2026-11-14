@@ -2090,6 +2090,41 @@ in. Nothing played by a person.
   `102_on_the_frost_wall_after.jpg`, `102_out_by_the_tunnel_after.jpg`, `102_out_of_the_slide_after.jpg`)
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: a3's dress file wired in (the modelling run's a3_dress.py)
+
+- 1, the call (at the end). 2, lights: one steady white light (range 8) at each of the
+  dress's 10 `BRIGHT_LIGHTS`; the old loop's eight white lights out, its violet and cyan ones
+  kept; the soft green `GARDEN_LIGHT` through the far door. 3 and 4, out: the column, the
+  eleven mirror facets, the six clusters, the five far chandeliers, the five stalactites, the
+  three spires; all sixty cards (`root()` draws nothing now; the far card, the air card, the
+  fourteen prisms, the ten dark shards). Kept: the statue's crystal shell.
+- 5, skins: `A.cave` takes a skin per edge now (peaklib: `skins={edge: model}`, each edge's
+  slab and the corner filler at its start); the shell wears `SHELL_SKINS`, and every named
+  crystal its piece, by the list (shafts, the snapped sixth, the mirror, nubs, R2 to R9, the
+  sockets, the spar, the needles, the leaves, the plate, the pivot, the fin, the ceiling,
+  its tooth and crusts, the landing, the west horn, the sill, the horn, the six roof prisms
+  a b c d e d). The kerb wears `aguas_shaft_rim`. **None of the cave's own models has landed
+  yet**, so nothing looks different until they do.
+- **New in the game: a held solid wears its skin.** A solid with a behaviour (a breaking
+  leaf, a wet hold, a tag) drew its own piece and ignored its skin, so a leaf's skin deco
+  would have stayed when the leaf broke. Now, once the skin's model has landed, the nearest
+  deco of that model (within 3 m) is moved into the hold's piece (`_wear_skins`,
+  peak.gd), so it shakes, breaks and comes back with it. Not tried: no held skin has landed
+  anywhere yet. (A wet hold that wears a skin shows no wet tint on it.)
+- 6a, the frog's room: cut into the west wall's glass (the page's hollow, open at the face
+  176 .. 178.2), a frosted floor at 176.0. 6b, the three chains are grown threads (a new rope
+  kind, `thread`: a chain's weight, lilac) on worn sockets; the chandeliers wear
+  `gruta_chandelier` at 1.0. 6c, the geode turns at 3 rpm (note 29; a first guess). 6d, the
+  stump is the bonsai's outline. 6e, 3.9's camera sees 1.5 m further west. 6f, the hall's
+  east wall from the landing to the door (edge 6) is the shared well's alone, and the roof
+  slab carried on over the door is gone.
+- 7: the geode, the raft and the pendulum wear `gruta_geode`, `gruta_raft`,
+  `gruta_quartz_pendulum`; the 24 spikes `gruta_collar_spike`. The threads' knuckle model is
+  not used (the rope code takes no segment model). 8, the effects: not done.
+- Also: a2.json regenerated for the modelling run's own change to a2_dress (the weir's
+  coping and the pool's sill out).
+- **Checks:** lint; `--peak`. Clean. Frames of the stand-ins are the modelling run's.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

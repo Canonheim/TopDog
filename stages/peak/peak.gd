@@ -420,9 +420,16 @@ func _build_area(a: Dictionary) -> void:
 			var sb := _static_body(1.0)
 			root.add_child(sb)
 			_add_shapes(sb, pts, z0, z1)
-			var piece: Node3D = fit.single(s, pts, kind, vz0, vz1)
+			var piece: Node3D = null if skinned else fit.single(s, pts, kind, vz0, vz1)
 			var mi: MeshInstance3D = null
-			if piece == null:
+			if skinned:
+				# ITS SKIN IS ITS PIECE (a3_dress: "the skin must go with its leaf when it breaks
+				# and come back with it"): an empty piece now; once the area's decos are built,
+				# the skin deco nearest it is moved into it (_wear_skins), so whatever this hold
+				# does to its piece (it shakes, breaks, comes back) its model does.
+				piece = Node3D.new()
+				_skin_pieces.append([piece, str(s.skin), _centre(pts)])
+			elif piece == null:
 				mi = MeshInstance3D.new()
 				var one := PeakMesh.new()
 				one.prism(pts, vz0, vz1, Vector2.ZERO, Vector2.ZERO)
@@ -527,6 +534,7 @@ func _build_area(a: Dictionary) -> void:
 		var n := _deco(a, d)
 		if n != null:
 			root.add_child(n)
+	_wear_skins(root)
 	for l in a.get("lights", []):
 		var o := OmniLight3D.new()
 		o.position = Vector3(float(l.at[0]), float(l.at[1]), float(l.at[2]))
@@ -539,6 +547,36 @@ func _build_area(a: Dictionary) -> void:
 		_lights.append([o, float(l.energy), bool(l.get("flicker", false)), a.id, randf() * 10.0, 0.0])
 	things.build_area(a, root)
 	zones.build_area(a, root)
+
+
+## The held solids of the area being built whose skins have landed: [piece, skin, centre].
+var _skin_pieces: Array = []
+
+
+static func _centre(pts: PackedVector2Array) -> Vector2:
+	var c := Vector2.ZERO
+	for p in pts:
+		c += p
+	return c / maxf(1.0, float(pts.size()))
+
+
+## Each held solid's skin deco (the nearest one of that model, within 3 m) goes into its piece.
+func _wear_skins(root: Node3D) -> void:
+	var taken := {}
+	for row in _skin_pieces:
+		var piece: Node3D = row[0]
+		var best: Node3D = null
+		var best_d := 3.0
+		for n in root.get_children():
+			if n is Node3D and not taken.has(n) and str((n as Node).get_meta("deco", "")) == str(row[1]):
+				var d := Vector2((n as Node3D).position.x, (n as Node3D).position.y).distance_to(row[2])
+				if d < best_d:
+					best_d = d
+					best = n
+		if best != null:
+			taken[best] = true
+			best.reparent(piece, true)
+	_skin_pieces.clear()
 
 
 func _pts(arr) -> PackedVector2Array:
