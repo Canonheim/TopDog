@@ -78,7 +78,7 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 | 3 La Gruta de Cristal | done | `a3_dress.py` WIRED (63d1254) | B 28 landed; A 14 of 45 (the rest, crystals included, with a maker agent) | |
 | 4 El Jardín de Hongos | done | `a4_dress.py` WIRED (08a6185) | B 44 and C 1 landed; A 32 with thread B | |
 | 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | B 11 and C 12 landed; A 65 split between threads B and C, and 11 `_jade` re-makes with C | |
-| 6 La Chimenea | done | `a6_dress.py` written (3d5c465), sent to the fix thread to wire | 86 new: A 37, B 9, C 40, queued | |
+| 6 La Chimenea | done | `a6_dress.py` WIRED (8788f09) | 86 new: A 37, B 9, C 40, queued | |
 | 7 Los Riscos del Viento | done | being written | walls example landed | |
 | 8 El Teleférico | done; revised (real roofs, hangers held) | | | |
 | 9 El Glaciar | done; revised (three wall arrow signs) | | | |
