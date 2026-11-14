@@ -194,6 +194,7 @@
 <tr><td>131</td><td><a href="#n131">Build 0.3.104, La Columna (3.9): no more spikes going in and out; the discs really spin, the spikes ride on them, and you grab them as they come into the play space</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>132</td><td><a href="#n132">Build 0.3.104, under the crystal horn (3.10): make this area a crystal garden with a frog in it</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>133</td><td><a href="#n133">Build 0.3.104, the mushroom garden's bouncing caps: the collision does not match the drawing</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>134</td><td><a href="#n134">Build 0.3.104, the mushroom garden: the curved branch and the square block at its foot should be one connected branch, from the background into the play space</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -4190,6 +4191,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 4, every bouncing cap (a4.py `cap()`, line 53): its solid is a flat box w wide and 0.7 m thick, tilted, with the bounce on its top face. Its drawing is a round 3D cap, as deep (toward and away from the camera) as it is wide. Seen from the game's camera, which looks a little down, the near half of that round cap hangs in front of the climb and drops below the solid's line on screen, so a climber standing at the solid's edge or under it looks inside the cap, and the top you see is not quite the top that throws you. (The same parallax as notes 115, 116 and 121.)</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Make each cap's drawn top sit exactly on its solid's top, and keep its near rim from hanging in front of the climb: a cap that is round but shallow toward the camera (an oval seen from above), its underside and gills behind the play plane, the rim's front edge at the solid's own edge; or the solid widened to the drawn cap's outline seen from the camera. Checked with the solid drawn over it from the game's camera, high and low. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n134">
+  <div class="head"><span class="num">134</span><h3>Build 0.3.104, the mushroom garden: the curved branch and the square block at its foot should be one connected branch, from the background into the play space</h3><span class="time">11-14 12:00</span></div>
+  <blockquote>"this should be one connected branch coming from background to playspace"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/134_garden_branch.png" alt="Parker's shot, build 0.3.104: the climber standing on a square block with a ring-grained end, on top of a hanging vine; above it a separate orange branch curves up and away. His red line runs from behind, round the curve and down onto the block: one branch.">
+    <figcaption>Parker's shot, build 0.3.104: the climber standing on a square block with a ring-grained end, on top of a hanging vine; above it a separate orange branch curves up and away. His red line runs from behind, round the curve and down onto the block: one branch.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 4. The piece you stand on is a square course solid wearing a cut-log end (a plain block), and the curved orange branch above it is a separate piece placed at its own depth, so from the camera they don't meet and the block reads as a box on a vine. To pin down with a named frame when Parker says go (the root ends and knots of the garden carry skins named in a4_dress.py's FOR THE AREA FILE list).</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Make it one branch: grown out of the background trunk, curving forward through the play space and ending where you stand, its tip the part you hold (the block's solid re-cut to the branch's own end, round, bark on it, no square box), the vine hanging from the branch itself. Checked from the game's camera at an angle (note 115). Held until Parker says go.</p>
 </div>
 
 </main>
