@@ -143,8 +143,8 @@ for i in range(34):
     face_x = -230 - (y - 578) * 0.27  # roughly where the east face is at this height
     x = face_x + _r.uniform(20, 130)
     _z, _s = -_r.uniform(26, 80), _r.uniform(1.4, 3.2)
-    if 560.0 <= y <= 695.0:
-        continue  # (none over the wind cliffs: "no cloud of our own" there; the far layers carry the banks. a7_dress 7b)
+    if 560.0 <= y <= 785.0:
+        continue  # (none over the wind cliffs or the cableway: "no cloud of our own" there; the far layers carry the banks. a7_dress 7b, a8_dress 7c)
     A.deco("cloud_" + "abcde"[i % 5], x, y, z=_z, scale=_s, size=(8, 3, 0.2), tone="#FFFFFF")
 
 if __name__ == "__main__":

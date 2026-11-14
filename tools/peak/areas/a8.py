@@ -25,6 +25,7 @@ things that run against each other get their roads written from opposite ends.
 import math, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from peaklib import Area, box_pts, ngon, fling_speed
+import a8_dress  # the cableway's scenery (the modelling run's): decos only
 
 A = Area("a8", "cable")
 
@@ -38,7 +39,9 @@ def rot_pts(pts, deg):
 
 
 def wire(p0, p1, z=-0.5, t=0.09, tone=WIRE):
-    """A scenery cable (a thin card): never solid."""
+    """A scenery cable (a thin card): never solid. (a8_dress item 4: every one of them is the dress's
+    now, cables 2 m back, lattice bays and brackets: this draws nothing.)"""
+    return
     dx, dy = p1[0] - p0[0], p1[1] - p0[1]
     L = math.hypot(dx, dy)
     nx, ny = -dy / L * t / 2, dx / L * t / 2
@@ -47,7 +50,9 @@ def wire(p0, p1, z=-0.5, t=0.09, tone=WIRE):
 
 
 def tower(xw, xe, y0, y1, z=-1.2, bay=4.0, tone=STEEL):
-    """A lattice tower as cards: two legs and a zigzag of braces. Scenery only."""
+    """A lattice tower as cards: two legs and a zigzag of braces. Scenery only. (a8_dress item 4:
+    each tower stands 2.5 m back as the dress's lattice bays: this draws nothing.)"""
+    return
     for x in (xw, xe):
         A.card([(x - 0.16, y0), (x + 0.16, y0), (x + 0.16, y1), (x - 0.16, y1)], z=z, tone=tone, edge=False)
     y, flip = y0, False
@@ -87,24 +92,29 @@ def gondola(mid, pts, speed, mode, wr=1.6, eb=2.4, wait=0.0):
     # neither, so the two rails are drawn as plain iron bars exactly along their solids
     # until the model gains them.)
     shapes = car_shapes(wr, eb)
-    return A.mover(mid, pts[0], shapes, mo, model="gondola", drawn=list(range(5, len(shapes))))
+    # (note 77: the model follows the step: the four cars of lines 1 and 2 (wr 0.9) "gondola" re-made,
+    # the express cars (wr 0.6) "tele_gondola_express", the old car showing until it lands; drop
+    # `drawn=` when both have their rails modelled)
+    model = "tele_gondola_express" if abs(wr - 0.6) < 0.01 else "gondola"
+    return A.mover(mid, pts[0], shapes, mo, model=model, drawn=list(range(5, len(shapes))))
 
 
 # ---------------------------------------------------------------- the east face (our stretch)
 # Slick scree, 8 m of rock behind it, from a7's last point to a9's first. Nothing is built
 # within 11 m of it but the two stations: what falls from above keeps falling.
 FACE = [(-251.0, 684.0), (-256.6, 704.0), (-263.6, 727.0), (-270.8, 752.0), (-281.0, 784.0)]
-A.wall(FACE, default="scree", thick=8.0, rock_on="left")
+A.wall(FACE, default="scree", thick=8.0, rock_on="left",
+       skins={0: "tele_face_a", 1: "tele_face_b", 2: "tele_face_c", 3: "tele_face_d"})
 
 # ---------------------------------------------------------------- the dock (a7 built the deck, top 688, x -250..-236)
-A.ledge(-240.0, -236.7, 688.7, "plank", t=0.7)  # the boarding gangway, on the deck's east end
-A.box(-239.85, 689.3, 0.14, 1.2, "iron")  # its one rail post
+A.ledge(-240.0, -236.7, 688.7, "plank", t=0.7, skin="tele_gangway")  # the boarding gangway, on the deck's east end
+A.box(-239.85, 689.3, 0.14, 1.2, "iron", skin="tele_gangway")  # its one rail post
 # (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 # THE LOW STATION'S ROOF IS REAL (note 77; Parker 11-13: "Make the roof real"; page 8.1):
 # tin on timber, 0.3 m thick, x -251.0 .. -237.6, its top 4.8 m over the deck. It can be held
 # and stood on. Reached only from a car's step as the car comes down past its east end; from
 # the deck and the gangway it is out of reach. It takes the place of the peaked roof card.
-A.ledge(-251.0, -237.6, 692.8, "iron", t=0.3)
+A.ledge(-251.0, -237.6, 692.8, "iron", t=0.3, skin="tele_roof_low")
 A.challenge("8.1", "Abordar", (-238.6, 688.7), 2, "A",
             moves=[["reach", [-236.7, 688.7], [-236.6, 689.7]]])
 
@@ -131,8 +141,8 @@ gondola("g1b", [D_HI, D_LO, E_LO, E_HI], 2.0, "loop", wr=0.9)  # t=0: the opposi
 
 # Pylon 1's head: the one static thing out here. A perch over the bull wheel, 1.06 m over
 # the hangers' highest point, reached by climbing a car's hanger. The 8.2 warp stands here.
-A.ledge(-229.6, -227.2, 702.0, "iron", t=0.3)
-A.box(-229.5, 702.5, 0.12, 1.0, "iron")
+A.ledge(-229.6, -227.2, 702.0, "iron", t=0.3, skin="tele_perch")
+A.box(-229.5, 702.5, 0.12, 1.0, "iron", skin="tele_perch")
 tower(-229.9, -226.9, 664.0, 706.0)
 
 # ---------------------------------------------------------------- 8.2 line 2: gondola to gondola
@@ -174,13 +184,13 @@ A.challenge("8.3", "El Cable", (-227.4, 702.0), 5, "X",
 # and the rung are gone. The lower sheave turns up its east side and throws you across 3.7 m
 # of air to the upper; the upper throws you 2.8 m up to the head's underside. Whether 9 rpm
 # throws far enough is for play to show.)
-A.box(-194.0, 686.4, 0.3, 32.8, "scree")  # legs, y 670 .. 702.8
-A.box(-191.0, 686.4, 0.3, 32.8, "scree")
-A.ledge(-196.0, -190.6, 703.0, "iron", t=0.3)  # the landing, 5.4 m: the cable ends 1.6 m over its west end
+A.box(-194.0, 686.4, 0.3, 32.8, "scree", skin="tele_pylon2_leg")  # legs, y 670 .. 702.8
+A.box(-191.0, 686.4, 0.3, 32.8, "scree", skin="tele_pylon2_leg")
+A.ledge(-196.0, -190.6, 703.0, "iron", t=0.3, skin="tele_landing")  # the landing, 5.4 m: the cable ends 1.6 m over its west end
 tower(-194.0, -191.0, 703.0, 719.4)
 A.wheel("sheave1", (-194.6, 705.8), 1.0, 9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28, model="cable_sheave")  # counter-clockwise: its west side goes DOWN
 A.wheel("sheave2", (-190.9, 710.3), 1.0, -9.0, spokes=4, kind="iron", rim=0.16, spoke_t=0.14, hub=0.28, model="cable_sheave")  # clockwise: its east side goes DOWN
-A.ledge(-194.8, -190.8, 714.5, "plank", t=0.3)  # the head: a 4 m rest under the station roof
+A.ledge(-194.8, -190.8, 714.5, "plank", t=0.3, skin="tele_head_deck")  # the head: a 4 m rest under the station roof
 A.challenge("8.4", "El Pilón", (-194.7, 703.0), 4, "X",
             moves=[["reach", [-194.6, 703.0], [-194.6, 704.8]],
                    ["fling", [-193.6, 705.8], [-191.9, 710.3], "F3"],
@@ -190,8 +200,8 @@ A.challenge("8.4", "El Pilón", (-194.7, 703.0), 4, "X",
 # The roof is slick and 35 degrees: what lands on it slides off into the void, and nobody
 # climbs from the head to the deck through it.
 RIDGE = (-193.0, 719.45)
-A.beam(RIDGE, (-197.6, 716.2), 0.3, "grease")
-A.beam(RIDGE, (-187.6, 715.9), 0.3, "grease")
+A.beam(RIDGE, (-197.6, 716.2), 0.3, "grease", skin="tele_tar_roof")
+A.beam(RIDGE, (-187.6, 715.9), 0.3, "grease", skin="tele_tar_roof")
 
 # ---------------------------------------------------------------- 8.5 Sillas Voladoras
 # Four chairs on a line falling east to the fang: pivots 3.9 across and 2.6 down from each
@@ -217,7 +227,11 @@ A.challenge("8.5", "Sillas Voladoras", (-192.8, 714.5), 4, "X",
 # (-176, 715), then a 38 degree slab runs back to the top. Its east side drops to the bare slope.
 F_LO, F_HI = (-172.4, 696.0), (-176.0, 715.0)  # the overhang
 S_LO, S_HI = (-174.8, 717.4), (-165.6, 725.0)  # the slab
-A.solid([(-172.0, 684.0), (-158.0, 684.0), (-159.0, 698.0), (-161.5, 712.0), (-164.4, 725.0), S_HI, S_LO, F_HI, F_LO], "scree")
+# (page 8.6, the walls rule: its east side, which holds nothing, takes the designed outline: it leans
+# up to 0.8 m and is notched 0.9 m deep at 705.6 .. 707.3. tele_colmillo is made to it.)
+FANG_EAST = [(-158.5, 697.0), (-159.2, 701.5), (-159.7, 705.4), (-160.6, 705.6), (-160.6, 707.3), (-161.6, 710.4),
+             (-161.5, 714.6), (-163.3, 718.0), (-163.2, 721.8), (-164.3, 724.4)]
+A.solid([(-172.0, 684.0), (-158.0, 684.0)] + FANG_EAST + [(-164.4, 725.0), S_HI, S_LO, F_HI, F_LO], "scree", skin="tele_colmillo")
 
 
 def on_face(y, out=0.0):
@@ -233,16 +247,16 @@ def on_slab(s, out=0.0):
 
 
 # ---------------------------------------------------------------- 8.6 El Colmillo: the overhang
-A.ledge(-174.8, -173.5, 702.9, "rock", t=0.5)  # a foot ledge under the chairs: the only stance
-A.patch(on_face(703.2), on_face(706.6), "rock", t=0.3)  # the rib chair 4 swings to: 3.4 m of grip
+A.ledge(-174.8, -173.5, 702.9, "rock", t=0.5, skin="tele_colmillo")  # a foot ledge under the chairs: the only stance
+A.patch(on_face(703.2), on_face(706.6), "rock", t=0.3, skin="tele_colmillo")  # the rib chair 4 swings to: 3.4 m of grip
 FANG_HOLDS = [on_face(y, 0.1) for y in (708.3, 710.1, 711.9, 713.7)]  # 1.83 m apart up the overhang
 FANG_HOLDS.append((-176.15, 714.95))  # the nose
 FANG_HOLDS.append((-175.43, 716.36))  # over it
 FANG_HOLDS += [on_slab(s, 0.1) for s in (0.5, 2.3, 4.1, 5.9, 7.7, 9.5, 11.2)]  # the slab, 1.8 m apart
 for hx, hy in FANG_HOLDS:
-    A.hold(hx, hy, 0.2, "rock")
-A.ledge(-166.6, -164.0, 725.4, "iron", t=0.4)  # the anchor plate on the top: 2.6 m
-A.box(-164.25, 726.75, 0.2, 2.7, "iron")  # the zipline's anchor post
+    A.hold(hx, hy, 0.2, "rock", skin="tele_chalk_block")  # (thirteen chalk blocks: a8_dress places each at KNOBS)
+A.ledge(-166.6, -164.0, 725.4, "iron", t=0.4, skin="tele_fang_anchor")  # the anchor plate on the top: 2.6 m
+A.box(-164.25, 726.75, 0.2, 2.7, "iron", skin="tele_fang_anchor")  # the zipline's anchor post
 _route = [list(on_face(706.6))] + [list(p) for p in FANG_HOLDS] + [[-166.6, 725.2]]
 A.challenge("8.6", "El Colmillo", (-174.3, 702.9), 4, "X",
             moves=[["reach", _route[i], _route[i + 1]] for i in range(len(_route) - 1)])
@@ -262,11 +276,12 @@ A.challenge("8.6", "El Colmillo", (-174.3, 702.9), 4, "X",
 # handle 2 m over the planks: let go and stand. No timed release. (What is left as the
 # challenge, and how the end looks, are the area's design.)
 Z0, Z1 = (-166.2, 728.1), (-193.0, 722.9)
-A.mover("zip", Z0, [(box_pts(0.0, 0.0, 0.5, 0.22), "iron"), (box_pts(0.0, -0.45, 0.06, 0.9), "iron"), (box_pts(0.0, -0.9, 0.7, 0.12), "paint")],
+# (note 77, page 8.7: only the bar and the stem are solid; the trolley's body runs on the line 2 m back)
+A.mover("zip", Z0, [(box_pts(0.0, -0.45, 0.06, 0.9), "iron"), (box_pts(0.0, -0.9, 0.7, 0.12), "paint")],
         {"type": "path", "pts": [list(Z0), list(Z1)], "speed": 9.0, "mode": "once", "trigger": "grab", "reset": 6.0, "accel": 30.0,
          "decel": 6.0},
         model="zip_trolley")
-A.ledge(-196.0, -190.0, 720.0, "plank", t=0.4)  # the maintenance deck: 6 m
+A.ledge(-196.0, -190.0, 720.0, "plank", t=0.4, skin="tele_maint_deck")  # the maintenance deck: 6 m
 A.challenge("8.7", "Tirolesa", (-165.3, 725.4), 3, "X",
             moves=[["reach", [-166.2, 725.4], [-166.2, 727.2]],
                    ["ride", list(Z0), list(Z1)]])
@@ -291,8 +306,8 @@ A.challenge("8.8", "Contrapesos", (-193.0, 720.0), 3, "X",
                    ["reach", [XB - 0.8, 748.5], [-201.5, 749.0]]])
 
 # ---------------------------------------------------------------- pylon 3's head (a card tower; only the head is solid)
-A.ledge(-205.6, -201.5, 749.0, "plank", t=0.4)  # 4.1 m: the rest before the dead gondola
-A.box(-205.45, 749.6, 0.14, 1.2, "iron")  # the rail post you lean out from
+A.ledge(-205.6, -201.5, 749.0, "plank", t=0.4, skin="tele_head_p3")  # 4.1 m: the rest before the dead gondola
+A.box(-205.45, 749.6, 0.14, 1.2, "iron", skin="tele_head_p3")  # the rail post you lean out from
 # The crossarm the dead car hangs from: the tower's, and towers are never held (note 80,
 # page 8.9). Not solid now, and 2.5 m back.
 wire((-202.0, 754.6), (-209.2, 754.6), z=-2.5, t=0.25, tone=STEEL)
@@ -360,7 +375,7 @@ EX_SLOPE = (EX_W[1] - EX_E[1]) / (EX_E[0] - EX_W[0])
 for k in range(4):
     e, w = (EX_E[0], EX_E[1] + EX_GAP * k), (EX_W[0], EX_W[1] + EX_GAP * k)
     gondola("ex%d" % (k + 1), [e, w] if k % 2 == 0 else [w, e], 6.0, "pingpong", wr=0.6, eb=2.4, wait=1.5)
-A.ledge(-221.0, -219.4, 746.5, "iron", t=0.25)  # the grate under line 1's west rail at its east stop (the 8.10 warp)
+A.ledge(-221.0, -219.4, 746.5, "iron", t=0.25, skin="tele_grate")  # the grate under line 1's west rail at its east stop (the 8.10 warp)
 _mid = ((EX_E[0] + EX_W[0]) / 2, (EX_E[1] + EX_W[1]) / 2)
 A.challenge("8.10", "Vía Rápida", (-220.2, 746.5), 5, "X",
             moves=[["reach", [-220.2, 746.5], [-220.2, 748.35]]] +
@@ -370,13 +385,14 @@ A.challenge("8.10", "Vía Rápida", (-220.2, 746.5), 5, "X",
 # The deck: top 786, x -282 .. -268, against the face. ICE (it holds 2 s, then lets go, and
 # takes you again 0.6 s later) with three dry patches. Line 4's car stops for 1.5 s with its
 # west rail tip (-267.9, 786.2) on the deck's east edge and 0.15 m above it.
-for x0, x1, kind in ((-271.0, -268.0, "ice"), (-272.6, -271.0, "plank"), (-276.4, -272.6, "ice"), (-277.6, -276.4, "rock"),
-                     (-280.6, -277.6, "ice"), (-282.0, -280.6, "rock")):
+# (page 8.11: "all three [dry patches] are plank": two had the rock's colour)
+for x0, x1, kind in ((-271.0, -268.0, "ice"), (-272.6, -271.0, "plank"), (-276.4, -272.6, "ice"), (-277.6, -276.4, "plank"),
+                     (-280.6, -277.6, "ice"), (-282.0, -280.6, "plank")):
     A.ledge(x0, x1, 786.0, kind, t=0.6)
 # Black ice under its east end: the deck can only be taken from above, off line 4.
 # The face behind the deck's west end, where our wall's top meets a9's first slab: one plug of
 # scree on the face's own line, so no crack is left under the boards.
-A.solid([(-289.0, 782.0), (-280.4, 782.0), (-281.0, 784.0), (-281.4, 785.4), (-289.0, 785.4)], "scree")
+A.solid([(-289.0, 782.0), (-280.4, 782.0), (-281.0, 784.0), (-281.4, 785.4), (-289.0, 785.4)], "scree", skin="tele_face_d")
 A.solid([(-268.0, 785.42), (-268.0, 782.9), (-269.9, 785.42)], "blackice")
 A.box(-267.93, 784.44, 0.14, 3.08, "blackice")  # and up its east edge, to 2 cm under the top
 wire((-270.4, 785.3), (-279.4, 777.8), z=-0.7, t=0.3, tone=STEEL)  # its strut to the face: a card (a solid one would make a slick pocket against the face)
@@ -385,8 +401,8 @@ wire((-270.4, 785.3), (-279.4, 777.8), z=-0.7, t=0.3, tone=STEEL)  # its strut t
 # so only its east 3.5 m is open, and a glaze of black ice lies on the west 1.9 m of that
 # (x -271.5 .. -269.6, 0.15 thick): a drop from the roof's west end would skip the first ice.
 # What can be stood on is its last 1.6 m. Reached from the fourth car's roof as it stops.
-A.ledge(-281.4, -268.0, 790.8, "iron", t=0.3)
-A.ledge(-271.5, -269.6, 790.95, "blackice", t=0.15)
+A.ledge(-281.4, -268.0, 790.8, "iron", t=0.3, skin="tele_roof_high")
+A.ledge(-271.5, -269.6, 790.95, "blackice", t=0.15, skin="tele_roof_high")
 A.challenge("8.11", "La Estación Alta", (-268.8, 786.0), 3, "X",
             moves=[["reach", [-267.9, 786.2], [-268.3, 786.0]],
                    ["reach", [-269.4, 786.0], [-271.0, 786.0]]])
@@ -398,7 +414,7 @@ A.challenge("8.11", "La Estación Alta", (-268.8, 786.0), 3, "X",
 # (stages/peak/peak_backdrop.gd). It was three flat cards of far range at z -30, -22 and -14
 # in "#C98F6A", "#A9785E" and "#7E5E58", a `town_tiny` standing on the nearest at
 # (-196, 689), and a `sun_low` at (-150, 742).)
-A.effect("clouds", (-285, 676, -140, 700), density=0.5, tone="#F6D9B0")  # the void's floor is cloud
+# (no cloud floor: under the cars lie the valley and the town of the given far view. a8_dress item 4)
 A.effect("dust", (-240, 690, -160, 730), density=0.2, tone="gold")  # gold motes in the low sun
 A.effect("snow", (-285, 770, -262, 792), density=0.3)  # the first flakes at the high station
 
@@ -422,26 +438,9 @@ wire(HINGE, (-209.0, 754.6), t=0.12, tone=STEEL)
 
 # The stations.
 # (the two stations' peaked roof cards are gone: the roofs are real, note 77)
-A.deco("bull_wheel", -237.2, 697.0, z=-1.1, size=(4.4, 4.4, 0.3), tone="iron")
-A.deco("bull_wheel", -228.4, 698.9, z=-1.1, size=(4.4, 4.4, 0.3), tone="iron")
-A.deco("bull_wheel", -216.4, 698.9, z=-1.1, size=(4.4, 4.4, 0.3), tone="iron")
-A.deco("bull_wheel", -210.4, 701.4, z=-1.1, size=(4.4, 4.4, 0.3), tone="iron")
-A.deco("station_sign_pug", -246.0, 692.4, z=-1.0, size=(2.4, 1.4, 0.1), tone="accent")
-A.deco("station_sign_pug", -277.0, 790.2, z=-1.0, size=(2.4, 1.4, 0.1), tone="accent")
-# (no icicles on the high station: page 8.11)
-A.deco("pug_crest_peeling", -193.0, 717.4, z=-0.9, size=(1.6, 1.6, 0.05), tone="accent")  # on the roof's gable
-A.deco("pug_crest_peeling", -203.5, 752.0, z=-1.0, size=(1.4, 1.4, 0.05), tone="accent")
-A.deco("toolbox_open", -191.0, 720.0, z=-0.7, size=(0.8, 0.4, 0.4), tone="accent")  # somebody was mending it
-A.deco("oil_can", -191.6, 703.0, z=-0.7, size=(0.3, 0.4, 0.3), tone="iron")
-A.deco("ticket_booth", -247.5, 688.0, z=-1.4, size=(2.2, 3.0, 1.2), tone="wood")
-A.deco("glove_frozen", -279.0, 786.0, z=-0.6, size=(0.3, 0.2, 0.2), tone="accent")
-# Pennants: the town's papel picado, come up the mountain on the cables.
-for x, y, w, r in ((-231.4, 697.6, 6.0, 22.6), (-213.4, 703.2, 6.0, 22.6), (-200.0, 703.9, 10.0, 15.4), (-182.0, 713.0, 12.0, -33.7),
-                   (-176.0, 727.0, 16.0, 8.6), (-241.75, 770.0, 40.0, -25.8), (-241.75, 783.2, 40.0, -25.8)):
-    A.deco("pennant_line", x, y, z=-0.6, rot=r, size=(w, 0.7, 0.05), tone="accent")
-for x, y in ((-246.5, 691.6), (-192.8, 717.6), (-193.0, 722.6), (-203.5, 752.4), (-275.0, 789.6)):
-    A.deco("lantern_station", x, y, z=-0.8, size=(0.35, 0.55, 0.35), tone="gold")
-    A.light(x, y, color="#FFC46A", rng=9.0, energy=1.2, flicker=True)
+# (The wheels, signs, crests, toolbox, oil can, ticket booth, pennants and the five lit lanterns are
+# the dress's now, out of the play space; every lantern on the cableway is cold but the frog's.)
+A.deco("glove_frozen", -279.0, 786.0, z=-0.6, size=(0.34, 0.21, 0.18), tone="accent")  # (in the play space by design: page 8.11)
 A.light(-165.3, 727.6, color="#FFD890", rng=10.0, energy=1.0)  # the fang's top catches the last sun
 
 # ---------------------------------------------------------------- the camera: show the drop
@@ -455,6 +454,28 @@ A.cam((-207.0, 719, -190.0, 746.0), half_h=9.0, bias=(-2.0, -2.0))  # the deck a
 A.cam((-216.0, 746.0, -200.0, 762), half_h=9.0, bias=(-5.0, -2.0))  # pylon 3 and the dead gondola
 A.cam((-268.0, 742, -216.0, 796), half_h=14.0, bias=(0.0, -3.0))  # the express lines
 A.cam((-285.0, 782, -268.0, 796), half_h=7.0, bias=(-2.0, 1.0))  # the high station
+
+# ================================================================ the dress (the modelling run's)
+a8_dress.dress(A)
+A.light(a8_dress.FROG_LIGHT[0], a8_dress.FROG_LIGHT[1], color="#FFB860", rng=4.0, energy=0.9, flicker=True)  # the frog's: the one warm light for 100 m
+# things that turn (a8_dress item 8)
+A.follow("tele_bull_wheel_grey", (-232.2, 696.3), "g1a", "roll", r=2.2)
+A.follow("tele_bull_wheel_grey", (-214.2, 697.72), "g2a", "roll", r=2.2)
+for _p in (D_LO, E_LO, E_HI, D_HI):
+    A.follow("tele_guide_wheel", _p, "g1a", "roll", r=0.5)
+for _p in (W_LO, E2_LO, E2_HI, W_HI):
+    A.follow("tele_guide_wheel", _p, "g2a", "roll", r=0.5)
+for _k in range(4):
+    A.follow("tele_guide_wheel", a8_dress.EX_ARM_WHEELS[_k], "ex%d" % (_k + 1), "roll", r=0.5)
+for _k in range(4):
+    A.follow("tele_guide_wheel", a8_dress.SADDLES[_k], "ex%d" % (_k + 1), "roll", r=0.4)
+A.follow("tele_winding_drum", (-220.2, 755.2), "ex1", "roll", r=0.9)
+A.follow("tele_bull_wheel_frosted", (-269.0, 788.2), "ex4", "roll", r=2.2)
+A.follow("tele_top_wheel", (-198.7, 757.4), "cw_a1", "roll", r=1.6)
+A.follow("tele_wind_engine", (-234.4, 706.2), "g1a", "roll", r=2.5)
+A.follow("tele_wind_engine", (-192.5, 730.0), "sheave1", "spin")
+A.follow("tele_wind_engine", (-203.7, 761.6), "sheave1", "spin")
+A.follow("tele_shaft_pulley", (-192.5, 713.0), "sheave1", "spin")
 
 if __name__ == "__main__":
     print("dead gondola hangs at %.1f deg; 8.9 fling needs %.2f m/s" % (

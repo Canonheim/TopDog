@@ -2442,6 +2442,32 @@ in. Nothing played by a person.
   face's middle, as the bob); the plain board shows until it lands.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: a8's dress file wired in (the cableway)
+
+- 1, the call (after the cameras). 2, lights: the five lit lanterns and their lights out; the
+  frog's lantern in (the one warm light for 100 m); the fang's last sun stays. 3: the four wheels,
+  two signs, two crests, toolbox, oil can, ticket booth and seven pennant lines out; the frozen
+  glove stays (its made size now). 4: every tower card and every wire out (`tower()` and `wire()`
+  draw nothing now: the dress's lattice bays and cables 2 m back); the cloud floor out (and
+  **st.py's six clouds in this sky**: none from 560 to 785 now); the gold dust and snow stay.
+- 5, skins: the gangway and its post, both roofs (the high one's glaze too), the perch, pylon 2's
+  legs, landing and head, the tarred roof, El Colmillo (its foot ledge and rib), the thirteen
+  chalk holds, the anchor plate and post, the maintenance deck, pylon 3's head and post, the
+  grate, the face by edge, the plug behind the high deck.
+- 6: **a**, the fang's east side takes its designed outline (leaning, notched 0.9 m at 705.6 ..
+  707.3). **b**, the zip trolley's body is not solid; only its bar and stem (watched: the ride
+  ends at (-193.0, 722.9), let go onto the deck). **c**, the high deck's three dry patches are all
+  plank. **d**, the express cars name `tele_gondola_express` (the old car shows till it lands:
+  `KIT_FALLBACK`), the line 1 and 2 cars `gondola`; `drawn=` stays till both land. **e**, the sitting
+  climber left out. **f** (the weights' 10 s against the express cars' 10.25 s) and **g** (the
+  grate: done, not caught) noted.
+- 8: the bull wheels, guide wheels, saddles, the winding drum, the frosted wheel, the top wheel, the
+  three wind engines and the shaft pulley roll or spin with their movers (`follow`).
+- Not done: item 9's effects (to the effects list: gold dust between the towers, a car's long
+  shadow, and the rest of the page's list); the belts, the chair line's guide wheels, the frozen
+  engine, the pennants and socks moving. Pylon 3 behind 8.3's fling (7j) is for the frames to judge.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

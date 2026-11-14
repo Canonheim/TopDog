@@ -118,7 +118,7 @@ const WET_AS := {"geode_wheel": "glass", "crystal_ring_3": "glass", "crystal_rin
 
 
 ## A new model that replaces another under a new stem, and what shows until it lands.
-const KIT_FALLBACK := {"vulture_flying": "vulture"}
+const KIT_FALLBACK := {"vulture_flying": "vulture", "tele_gondola_express": "gondola"}
 
 
 static func kit(model: String) -> Node3D:
