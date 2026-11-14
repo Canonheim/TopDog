@@ -316,10 +316,11 @@ class Area:
         L = math.hypot(dx, dy)
         return None if L < 1e-6 else (dy / L, -dx / L)
 
-    def wall(self, pts, kinds=None, default="wet", thick=3.0, rock_on="left"):
+    def wall(self, pts, kinds=None, default="wet", thick=3.0, rock_on="left", skins=None):
         """An open run of wall (the outside faces). Rock lies on `rock_on` of the direction
-        of travel pts[0] -> pts[-1]."""
+        of travel pts[0] -> pts[-1]. skins: {edge index: model}, as cave()'s."""
         kinds = kinds or {}
+        skins = skins or {}
         for i in range(len(pts) - 1):
             kind = kinds.get(i, default)
             if kind is None:
@@ -327,7 +328,7 @@ class Area:
             a, b = pts[i], pts[i + 1]
             if rock_on == "left":
                 a, b = b, a
-            self._slab(a, b, kind, thick)
+            self._slab(a, b, kind, thick, skin=skins.get(i))
 
     def _slab(self, a, b, kind, thick, skin=None):
         # air is on the LEFT of a -> b (counter-clockwise outline): rock goes to the right.

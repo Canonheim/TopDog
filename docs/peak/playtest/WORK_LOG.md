@@ -2397,6 +2397,41 @@ in. Nothing played by a person.
   m, for the step pressing it; measured against the settled height it is nothing.)
   (`8_9_grate_under_the_step.jpg`)
 
+## The fix run of 11-14: a7's dress file wired in (the wind cliffs)
+
+- 1, the call. 2, lights: the tea cave's lantern and brazier (the only warm light on the cliffs)
+  and the station's gold on the house's west wall. 3: the seven streamer poles (one stood on
+  nothing), the two nests (one hung inside the alcove's roof), the tree's crown and lines 399-408
+  (the fence frame, scaffold, pylon head, station house, pennants, arrow, lantern, piles) out;
+  the lip's shrub stays. 4: all seven cards and the clouds effect out. **st.py's ten clouds over
+  the cliffs (y 560 .. 695) are gone too** ("no cloud of our own"); the others along the mountain stay.
+- 5, skins: El Balcon; the tower's pieces by their bottoms (`cut()` takes a skin now); the face
+  by edge (`wall()` takes `skins` now, as `cave()`); the tree, fin, deck stubs, cornice, nose,
+  gully, counter-slope, R6's roof, needle tops, horn, snag, brace lengths, chalk plug.
+- 6: **a, the tea cave** (note 68): cut out of every solid it crosses (the gully's mass, the
+  face's slab, R6's block, the mountain behind), 2.4 m tall, a 2.2 m doorway from the upper
+  pocket, a grip floor level with the pocket's. Watched: pushed west from the pocket, the climber
+  walks in (it first stopped on a 3 mm sliver of the pocket's back wall the cut had left;
+  the cut now runs 0.14 m into the pocket's air) (`68_tea_cave_after.jpg`). **b, the bridge
+  halves** (note 66): a rope can be taken across a width (`wide`, new); each half is 0.3 m wide
+  to a hand. Watched: a hand 0.25 m off the half's line takes it (`66_bridge_halves_after.jpg`).
+  **c, the burros**: their solid 1.8 m long to match the kit's model, the extra 0.5 m on the
+  west, the way they face (`model_flip`). **d**: the wheel keeps model_scale 1.52 until the
+  7.6 m wheel lands (the kit's is still 5 m). **e**: the sitting climber is left out, as the list asks.
+- 7c: a6's dark back card stops at the face's line (x -230): past it, it stood in front of the
+  shoulder seen from El Balcon.
+- 8: the knobs wear `forja_flint_knob`, the pegs the kit's `iron_peg`, the scar's stubs
+  `riscos_tree_stub`, the two breaking branches and the brace's rotten length theirs (worn as
+  their pieces: they break with them); the drum turns with the wheel (`follow`).
+- **Not done:** the bridge halves' look (`riscos_bridge_half`: a rope takes no segment model) and
+  the board model (`riscos_bridge_board` hangs by one end; the bob is a level board: they do
+  not match); the haul cable running, the sign swinging, the flags and socks; item 9's effects
+  (for the effects list: dust out of the door, tufts leaning in the gust, a vulture's shadow and
+  a feather, a branch's creak and dust, the frayed ends swaying, chalk dust and a leaf in the
+  crosswind, the pile shaking before each wave, the pot's steam and the brazier's smoke, a
+  burro's ear and stamp and its kick's puff, feathers and chalk dust).
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

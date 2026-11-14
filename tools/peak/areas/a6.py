@@ -302,8 +302,8 @@ A.cam((-296, 476, -236, 484), half_h=6.0, bias=(0.0, 2.0))
 # (a6_dress item 4: the dark behind everything stops round the door, so the real valley, the
 # Peak's far layers, shows through it; the far walls, the furnace face, the slag's glow and drip,
 # the hammer guides, the light shaft, the soot and the floor's lip are the dress's now.)
-A.card([(-297, 470), (-228, 470), (-228, 579.4), (-234, 579.4), (-234, 586), (-228, 586), (-228, 592), (-297, 592)],
-       z=-6.0, tone="back2", edge=False)
+A.card([(-297, 470), (-230, 470), (-230, 579.4), (-234, 579.4), (-234, 586), (-230, 586), (-230, 592), (-297, 592)],
+       z=-6.0, tone="back2", edge=False)  # (to the face's line, x -230: past it, it stood in front of the shoulder seen from El Balcon. a7_dress 7c)
 # La Luz: a slit of sky that widens up the last 20 m, and the light it throws down the flue.
 A.card([(-246.6, 566.0), (-246.3, 566.0), (-242.6, 573.0), (-243.6, 573.0)], z=-5.0, tone=SKY, edge=False)
 A.card([(-243.6, 573.0), (-242.6, 573.0), (-238.0, 579.0), (-240.4, 579.0)], z=-5.0, tone=SKY, edge=False)

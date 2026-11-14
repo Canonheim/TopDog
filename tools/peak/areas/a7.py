@@ -21,19 +21,26 @@ import math, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from peaklib import Area, box_pts, ngon, fling_speed
 from shapely.geometry import Polygon, box as sbox
+import a7_dress  # the wind cliffs' scenery (the modelling run's): decos only
 
 A = Area("a7", "cliffs")
 SL = "wet"  # the slick of the cliffs: dark, rain-glossed rock
 
 
-def cut(base, holes, kind=SL):
-    """base minus holes (shapely), written as simple solids."""
+def cut(base, holes, kind=SL, skin_by=None):
+    """base minus holes (shapely), written as simple solids. skin_by(piece) names each piece's skin."""
     g = base
     for h in holes:
         g = g.difference(h)
     for p in (g.geoms if hasattr(g, "geoms") else [g]):
         assert not p.interiors, "a hole inside a solid"
-        A.solid(list(p.exterior.coords)[:-1], kind)
+        A.solid(list(p.exterior.coords)[:-1], kind, skin=skin_by(p) if skin_by else None)
+
+
+def _tower_skin(p):
+    """The tower's pieces by their bottom (a7_dress item 5)."""
+    y0 = p.bounds[1]
+    return "riscos_tower_low" if y0 < 624.0 else ("riscos_tower_mid" if y0 < 656.0 else "ex_riscos_tower_top")
 
 
 def nubs(pts, kind="rock", r=0.22):
@@ -49,9 +56,9 @@ def chain(pts):
 # ================================================================ EL BALCON (the catch, cost A)
 # A rock shelf 5 m deep, top y 578, x -232..-204. Grip on top from the door to the tower's
 # foot; slick underneath and on its east lip (the tower's east face runs straight down it).
-A.solid([(-232, 577.5), (-204, 577.5), (-204, 575.0), (-212, 573.0), (-232, 573.0)], SL)
-A.ledge(-232.0, -209.9, 578.0, "rock", t=0.6)
-A.solid([(-210.0, 577.4), (-204.0, 577.4), (-204.0, 578.05), (-210.0, 578.05)], SL)  # under the tower: the lip stays slick
+A.solid([(-232, 577.5), (-204, 577.5), (-204, 575.0), (-212, 573.0), (-232, 573.0)], SL, skin="riscos_balcon")
+A.ledge(-232.0, -209.9, 578.0, "rock", t=0.6, skin="riscos_balcon")
+A.solid([(-210.0, 577.4), (-204.0, 577.4), (-204.0, 578.05), (-210.0, 578.05)], SL, skin="riscos_balcon")  # under the tower: the lip stays slick
 # (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 # The designed mercy: one shrub on the east lip, 0.5 m of root over 180 m of throat.
 A.hold(-203.7, 577.3, 0.28, "root")
@@ -72,11 +79,12 @@ FACE = [(-230.0, 578.0), (-230.0, 586.0),  # 0 the door (None)
         (-249.5, 653.0),  # 9 its back wall
         (-250.2, 658.8),  # 10 hidden behind R6's roof
         (-251.0, 684.0)]  # 11 the bare face up to the station
-A.wall(FACE, kinds={0: None, 2: None, 3: "rock", 8: "rock"}, default=SL, thick=8.0, rock_on="left")
-A.solid([(-230, 586), (-230, 590), (-238, 600), (-238.5, 599.5), (-246, 599.5), (-246, 586)], SL)  # lintel + slab
+A.wall(FACE, kinds={0: None, 2: None, 3: "rock", 8: "rock"}, default=SL, thick=8.0, rock_on="left",
+       skins={1: "riscos_face_slab", 3: "riscos_face_slab", **{e: "riscos_west_face" for e in range(4, 12)}})
+A.solid([(-230, 586), (-230, 590), (-238, 600), (-238.5, 599.5), (-246, 599.5), (-246, 586)], SL, skin="riscos_face_slab")  # lintel + slab
 # The mountain behind the skin (wall() leaves wedges behind its corners: nothing reaches them, this hides them).
 A.solid([(-244, 601), (-244, 605.5), (-240.5, 609), (-239.6, 626), (-245, 647), (-250.5, 647), (-250.5, 653.6),
-         (-251.4, 659.2), (-252, 684), (-260, 684), (-260, 601)], SL)
+         (-251.4, 659.2), (-252, 684), (-260, 684), (-260, 601)], SL, skin="riscos_west_face")
 
 # ================================================================ LA TORRE (x -210..-204, y 578..674)
 # One rock tower with its alcoves and windows cut out. Its east face is one clean slick
@@ -93,21 +101,21 @@ holes = [
     sbox(-206.0, 663.8, TE, 668.0),  # the porch (7.8 lands here)
     sbox(TW, 671.85, -208.2, 674.0),  # the west fin stops at 672: R9
 ]
-cut(tower, holes)  # (each hole is cut 0.2 under its floor, so the grip floor stands proud of the slick)
-A.solid([(-206.0, 665.7), (-205.5, 665.7), (-205.5, 668.0), (-206.0, 668.0)], SL)  # the tooth over the porch's inner end
-A.solid([(-206.0, 674.0), (TE, 674.0), (-204.6, 676.5)], SL)  # the east fin's peak: nothing rests on it
+cut(tower, holes, skin_by=_tower_skin)  # (each hole is cut 0.2 under its floor, so the grip floor stands proud of the slick)
+A.solid([(-206.0, 665.7), (-205.5, 665.7), (-205.5, 668.0), (-206.0, 668.0)], SL, skin="ex_riscos_tower_top")  # the tooth over the porch's inner end
+A.solid([(-206.0, 674.0), (TE, 674.0), (-204.6, 676.5)], SL, skin="ex_riscos_tower_top")  # the east fin's peak: nothing rests on it
 # floors (grip)
-A.ledge(TW, -206.5, 590.0, "rock", t=0.4)  # R1
-A.ledge(TW, TE, 624.0, "rock", t=0.4)  # R4
-A.ledge(-207.0, TE, 637.2, "rock", t=0.4)  # R5, three steps up to the west
-A.ledge(-208.5, -207.0, 638.4, "rock", t=0.4)
-A.ledge(TW, -208.5, 639.6, "rock", t=0.4)
-A.ledge(-216.0, TE, 654.0, "rock", t=0.5)  # R7 and its west balcony
-A.solid([(-216, 653.5), (-210, 653.5), (-210, 650.5)], SL)  # the balcony's corbel
+A.ledge(TW, -206.5, 590.0, "rock", t=0.4, skin="riscos_tower_low")  # R1
+A.ledge(TW, TE, 624.0, "rock", t=0.4, skin="riscos_tower_low")  # R4
+A.ledge(-207.0, TE, 637.2, "rock", t=0.4, skin="riscos_tower_mid")  # R5, three steps up to the west
+A.ledge(-208.5, -207.0, 638.4, "rock", t=0.4, skin="riscos_tower_mid")
+A.ledge(TW, -208.5, 639.6, "rock", t=0.4, skin="riscos_tower_mid")
+A.ledge(-216.0, TE, 654.0, "rock", t=0.5, skin="riscos_tower_mid")  # R7 and its west balcony
+A.solid([(-216, 653.5), (-210, 653.5), (-210, 650.5)], SL, skin="riscos_tower_mid")  # the balcony's corbel
 A.ledge(-203.9, -202.8, 654.0, "plank", t=0.25)  # the perch plank out of R7's east mouth
-A.ledge(-206.0, -202.5, 664.0, "rock", t=0.5)  # the porch: 3.5 m, 1.5 of it out over the throat
-A.solid([(-204, 663.5), (-202.5, 663.5), (-204, 661.5)], SL)
-A.ledge(TW, -208.2, 672.0, "rock", t=0.3)  # R9: the west fin's top
+A.ledge(-206.0, -202.5, 664.0, "rock", t=0.5, skin="ex_riscos_tower_top")  # the porch: 3.5 m, 1.5 of it out over the throat
+A.solid([(-204, 663.5), (-202.5, 663.5), (-204, 661.5)], SL, skin="ex_riscos_tower_top")
+A.ledge(TW, -208.2, 672.0, "rock", t=0.3, skin="ex_riscos_tower_top")  # R9: the west fin's top
 
 # ================================================================ 7.1 EL BALCON (D2, S)
 # Walk the Balcon east (22 m) to the tower's foot and climb its cracked west face: three
@@ -116,10 +124,9 @@ A.ledge(TW, -208.2, 672.0, "rock", t=0.3)  # R9: the west fin's top
 # back onto the Balcon. The streamers stand at the zone's two edges.
 CR = [(579.4, 581.4), (583.0, 584.6), (586.3, 588.2)]
 for y0, y1 in CR:
-    A.patch((TW, y0), (TW, y1), "rock", t=0.3)
+    A.patch((TW, y0), (TW, y1), "rock", t=0.3, skin="riscos_tower_low")
 A.wind((-221, 578, TW, 592), (-2.5, 0.0), gust={"on": 1.5, "off": 3.5, "phase": 0.0, "warn": 1.0})
-A.deco("streamer_pole", -221.0, 578.0, z=-0.6, size=(0.15, 3.0, 0.15), tone="accent")
-A.deco("streamer_pole", -210.6, 590.0, z=-0.6, size=(0.15, 2.2, 0.15), tone="accent")
+# (the streamers are the dress's now, moved back; the one at (-210.6, 590) stood on nothing)
 A.challenge("7.1", "El Balcón", (-228.0, 578.0), 2, "S",
             moves=[["reach", [TW, 581.4], [TW, 583.0]], ["reach", [TW, 584.6], [TW, 586.3]],
                    ["reach", [TW, 588.2], [TW, 590.0]]])
@@ -145,8 +152,7 @@ vulture("vulture1", VLOOP, 0.0)
 vulture("vulture2", VLOOP, 8.4)
 A.challenge("7.2", "Nidos", (-208.5, 590.0), 3, "A")
 A.cam((-245, 588, TW, 611), half_h=11.5, bias=(0.0, -2.0))
-A.deco("vulture_nest", -241.6, 600.0, z=-0.7, size=(1.6, 0.6, 1.2), tone="root")
-A.deco("vulture_nest", -208.0, 594.2, z=-0.9, size=(1.4, 0.5, 1.0), tone="root")
+# (the two nests are the dress's: the near one hung inside the alcove's roof)
 
 # ================================================================ 7.3 ARBOL SECO (D3, A)
 # A dead tree rooted at R2's back, leaning 37 degrees off plumb out over the Balcon: 24 m
@@ -161,17 +167,23 @@ def tp(s, off=0.0):
     return (TR[0] + TD[0] * s - TD[1] * off, TR[1] + TD[1] * s + TD[0] * off)
 
 
-A.beam(tp(0.0), tp(8.0), 0.7, "bone")
-A.beam(tp(8.0), tp(19.5), 0.7, SL)
-A.beam(tp(19.5), tp(24.0), 0.7, "bone")
+A.beam(tp(0.0), tp(8.0), 0.7, "bone", skin="riscos_dead_tree")
+A.beam(tp(8.0), tp(19.5), 0.7, SL, skin="riscos_dead_tree")
+A.beam(tp(19.5), tp(24.0), 0.7, "bone", skin="riscos_dead_tree")
 STUBS = [tp(8.8 + 1.4 * i, 0.5 if i % 2 == 0 else -0.5) for i in range(8)]
-nubs(STUBS, "bone")
-A.beam(tp(24.0), (-226.5, 621.0), 0.22, "rotten")
-A.beam((-226.2, 621.3), (-224.7, 623.0), 0.2, "brittle")
+for _sx, _sy in STUBS:  # (each a branch's broken root, bleached: riscos_tree_stub, its origin the stub's centre)
+    A.hold(_sx, _sy, 0.22, "bone", skin="riscos_tree_stub")
+    A.deco("riscos_tree_stub", round(_sx, 3), round(_sy, 3), z=0.0, size=(0.44, 0.44, 2.4), tone="bone", skin=True)
+# the two breaking branches: real boughs of the tree (note 65), made in place, worn as their pieces
+A.beam(tp(24.0), (-226.5, 621.0), 0.22, "rotten", skin="riscos_branch_break_a")
+A.deco("riscos_branch_break_a", round((tp(24.0)[0] - 226.5) / 2, 3), round((tp(24.0)[1] + 621.0) / 2, 3), z=0.0,
+       size=(2.9, 0.22, 2.4), tone="bone", skin=True)
+A.beam((-226.2, 621.3), (-224.7, 623.0), 0.2, "brittle", skin="riscos_branch_break_b")
+A.deco("riscos_branch_break_b", -225.45, 622.15, z=0.0, size=(2.3, 0.2, 2.4), tone="bone", skin=True)
 A.challenge("7.3", "Árbol Seco", (-240.5, 600.0), 3, "A",
             moves=chain([tp(8.0)] + STUBS + [tp(19.6)]) + [["reach", [-226.5, 621.0], [-226.2, 621.3]],
                                                              ["reach", [-224.7, 623.0], [-223.8, 624.0]]])
-A.deco("dead_tree_crown", tp(24.0)[0], tp(24.0)[1], z=-0.8, size=(5.0, 4.0, 0.3), tone="bone")
+# (the tree's crown is the dress's, out of the play space)
 
 # ================================================================ 7.4 PUENTE ROTO (D4, A)
 # A fin of rock hangs from the arch's crown (x -223..-220). The keyhole through it is R3.
@@ -179,13 +191,18 @@ A.deco("dead_tree_crown", tp(24.0)[0], tp(24.0)[1], z=-0.8, size=(5.0, 4.0, 0.3)
 # middle and its two halves hang down the two walls, 1.5 m off each, 7.1 m apart, each
 # 5.3 m of rope with its last board still tied on. Down the west half, swing it, let go:
 # 7.1 m across (still air, from a dead hang: 4.6 m/s, F2; a swung rope asks less).
-A.solid([(-223, 623.7), (-220, 623.7), (-220, 617.0), (-221.5, 614.0), (-223, 617.0)], SL)  # the fin under the keyhole
-A.ledge(-223.8, -220.0, 624.0, "rock", t=0.4)  # R3: the keyhole's floor and its sill
-A.ledge(-220.0, -218.5, 624.0, "plank", t=0.25)  # what is left of the deck, west
-A.ledge(-211.5, TW, 624.0, "plank", t=0.25)  # ... and east
+A.solid([(-223, 623.7), (-220, 623.7), (-220, 617.0), (-221.5, 614.0), (-223, 617.0)], SL, skin="riscos_keyhole_fin")  # the fin under the keyhole
+A.ledge(-223.8, -220.0, 624.0, "rock", t=0.4, skin="riscos_keyhole_fin")  # R3: the keyhole's floor and its sill
+A.ledge(-220.0, -218.5, 624.0, "plank", t=0.25, skin="riscos_deck_stub")  # what is left of the deck, west
+A.ledge(-211.5, TW, 624.0, "plank", t=0.25, skin="riscos_deck_stub")  # ... and east
 BOB = {"w": 1.2, "h": 0.14, "mass": 3.0, "kind": "plank"}
-A.rope("bridge_w", (-218.55, 623.7), 5.3, kind="rope", bob=dict(BOB))
-A.rope("bridge_e", (-211.45, 623.7), 5.3, kind="rope", bob=dict(BOB))
+# (Note 66, page 7.4: what you hold on each hanging half is the whole half, 0.3 m wide as the camera
+# sees it, two side ropes and their boards, where it was one rope: the rope is taken anywhere
+# across that width. The two halves' holds are 0.3 m nearer each other for it.)
+_bw = A.rope("bridge_w", (-218.55, 623.7), 5.3, kind="rope", bob=dict(BOB))
+_be = A.rope("bridge_e", (-211.45, 623.7), 5.3, kind="rope", bob=dict(BOB))
+_bw["wide"] = 0.3
+_be["wide"] = 0.3
 A.challenge("7.4", "Puente Roto", (-221.8, 624.0), 4, "A",
             moves=[["fling", [-218.55, 619.0], [-211.45, 619.6], "F2"]])
 A.cam((-245, 611, TW, 630), half_h=11.0, bias=(0.0, -3.0))
@@ -200,16 +217,28 @@ def roof_y(x):
     return 626.2 + 0.1628 * (x + 204.0)
 
 
-A.solid([(TE, 626.2), (-195.4, roof_y(-195.4)), (-194.7, 628.4), (-195.0, 629.6), (TE, 637.15)], SL)
-A.solid([(-195.9, 627.5), (-194.6, 627.8), (-194.3, 628.8), (-195.0, 629.85), (-196.1, 629.4)], "rock")  # the nose knob
-A.box(-204.5, 625.95, 0.4, 0.5, "rock")  # the first knob, hanging in the mouth
+A.solid([(TE, 626.2), (-195.4, roof_y(-195.4)), (-194.7, 628.4), (-195.0, 629.6), (TE, 637.15)], SL, skin="riscos_cornice")
+A.solid([(-195.9, 627.5), (-194.6, 627.8), (-194.3, 628.8), (-195.0, 629.85), (-196.1, 629.4)], "rock", skin="riscos_flint_nose")  # the nose knob
+
+
+def flint(x, y, r=0.22, box=None):
+    """A knob of flint in its white rind (forja_flint_knob, its origin its foot): a7_dress item 8."""
+    if box:
+        A.box(x, y, box[0], box[1], "rock", skin="forja_flint_knob")
+    else:
+        A.hold(x, y, r, "rock", skin="forja_flint_knob")
+    A.deco("forja_flint_knob", round(x, 3), round(y - (box[1] / 2 if box else r), 3), z=0.0, size=(0.4, 0.4, 0.4), tone="bone", skin=True)
+
+
+flint(-204.5, 625.95, box=(0.4, 0.5))  # the first knob, hanging in the mouth
 ROOF = [(x, roof_y(x) - 0.2) for x in (-203.0, -201.5, -200.0, -198.3, -196.8, -195.6)]
-nubs(ROOF)
+for _x, _y in ROOF:
+    flint(_x, _y)
 PEGS = [(x, 629.7 + 0.839 * (-195.0 - x)) for x in (-196.3, -197.6, -198.9, -200.2, -201.5, -202.8)]
-nubs(PEGS, "iron", r=0.2)
+for _x, _y in PEGS:  # (the kit's iron_peg: a square hammered head on a plate)
+    A.hold(_x, _y, 0.2, "iron", skin="iron_peg")
+    A.deco("iron_peg", round(_x, 3), round(_y - 0.05, 3), z=0.0, size=(0.14, 0.23, 0.4), tone="iron", skin=True)
 A.wind((TE, 616, -190, 640), (3.5, 0.0), gust={"on": 2.2, "off": 2.3, "phase": 0.0, "warn": 0.8})
-A.deco("streamer_pole", -204.4, 624.0, z=-0.6, size=(0.15, 2.0, 0.15), tone="accent")
-A.deco("streamer_pole", -195.2, 629.8, z=-0.6, size=(0.15, 2.4, 0.15), tone="accent")
 A.challenge("7.5", "La Cornisa", (-207.0, 624.0), 4, "X",
             moves=chain([(-204.3, 624.0), (-204.5, 625.8)] + ROOF + [(-194.45, 628.6), (-195.1, 629.8)] + PEGS
                         + [(TE, 637.2)]))
@@ -231,11 +260,11 @@ west = [(-238.5, 626.0), (-234.0, 628.2), (-228.0, 628.9), G0]
 for F, L in ((F1, L1), (F2, L2)):
     west += [F, (F[0] - 1.67, F[1]), (F[0] - 1.67, F[1] + 2.3), (F[0], F[1] + 2.0), L]  # tread top, nook floor, back, roof, nose
 west += [GT]
-A.solid(west, SL)
+A.solid(west, SL, skin="riscos_gully")
 A.solid([(-224.0, 630.5), (TW, 639.6), (TW, 628.6), (-215.0, 629.4), (-219.9, 629.4), (-219.9, 628.0),
-         (-223.1, 628.0), (-223.1, 628.9), (-224.0, 628.9)], SL)  # the east mass: counter-slope over, keyhole's roof under
+         (-223.1, 628.0), (-223.1, 628.9), (-224.0, 628.9)], SL, skin="riscos_counter_slope")  # the east mass: counter-slope over, keyhole's roof under
 # R6's roof: the boulders run down its back and drop off its lip, past the ledge.
-A.solid([(-249.5, 653.0), (-243.8, 653.8), (-243.6, 654.4), (-250.2, 658.8), (-253.0, 658.8), (-253.0, 653.0)], SL)
+A.solid([(-249.5, 653.0), (-243.8, 653.8), (-243.6, 654.4), (-250.2, 658.8), (-253.0, 658.8), (-253.0, 653.0)], SL, skin="riscos_gully_roof")
 
 # ================================================================ 7.6 DESPRENDIMIENTO (D4, A)
 # Boulders come down in waves of three every 9 s (a rumble 1.2 s before): off R6's roof,
@@ -259,11 +288,12 @@ route = [(-210.2, 639.6), RAIL[0][0]]
 moves76 = chain(route) + [["reach", list(RAIL[0][1]), list(RAIL[1][0])], ["reach", list(RAIL[1][1]), list(RAIL[2][0])]]
 moves76 += chain([RAIL[2][1]] + T1 + [(F1[0] + 0.3, F1[1] + 0.1)])
 for F, L, T, end in ((F1, L1, T2, (F2[0] + 0.3, F2[1] + 0.1)), (F2, L2, T3, GT)):
-    A.ledge(F[0] - 1.67, F[0] + 0.2, F[1] + 0.1, "rock", t=0.3)  # the pocket's floor
-    A.box(F[0] + 0.2, F[1] + 0.1, 0.6, 0.7, "rock")  # a step at its mouth (top + 0.45)
-    A.hold(F[0] + 0.02, F[1] + 2.25, 0.25, "rock")  # the lip's nose
+    A.ledge(F[0] - 1.67, F[0] + 0.2, F[1] + 0.1, "rock", t=0.3, skin="riscos_gully")  # the pocket's floor
+    A.box(F[0] + 0.2, F[1] + 0.1, 0.6, 0.7, "rock", skin="riscos_gully")  # a step at its mouth (top + 0.45)
+    flint(F[0] + 0.02, F[1] + 2.25, r=0.25)  # the lip's nose
     moves76 += chain([(F[0] + 0.2, F[1] + 0.45), (F[0] + 0.02, F[1] + 2.25)] + T + [end])
-nubs(T1 + T2 + T3)
+for _x, _y in T1 + T2 + T3:
+    flint(_x, _y)
 for ph in (0.0, 0.8, 1.6):
     A.spawner("boulder", (-249.2, 660.3), 9.0, vel=(2.0, -1.0), phase=ph, r=0.55, life=9.0, warn=1.2, mass=40.0)
 A.challenge("7.6", "Desprendimiento", (-205.5, 637.2), 4, "A", moves=moves76)
@@ -281,7 +311,9 @@ A.effect("dust", (-250, 630, -222, 660), density=0.5)
 #   K3 from (-223.1, 653.3), v (3.44, 4.61): apex 657.1 at x -217.4, lands (-213.3, 655.1) after 2.85 s
 # (points are the climber's middle, 1.1 m over the floor). K1 passes R6's roof lip with
 # its middle 2.7 m under it. A miss lands in the gully or the counter-slope: El Ojo, El Balcon.
-BURRO = [(box_pts(0.0, 0.85, 1.3, 0.7), "wood"), (box_pts(-0.45, 0.25, 0.2, 0.5), "wood"), (box_pts(0.45, 0.25, 0.2, 0.5), "wood")]
+# (Note 76, page 7.7: the kit's burro is 1.8 m long and its solid was 1.3: now they agree, the
+# extra 0.5 m its head and neck on its WEST side, the way it faces.)
+BURRO = [(box_pts(-0.25, 0.85, 1.8, 0.7), "wood"), (box_pts(-0.45, 0.25, 0.2, 0.5), "wood"), (box_pts(0.45, 0.25, 0.2, 0.5), "wood")]
 
 
 def kick_v(p0, p1, over=2.0):
@@ -293,10 +325,11 @@ def kick_v(p0, p1, over=2.0):
 for i, (at, p0, p1, over) in enumerate((((-247.6, 647.6), (-247.4, 648.7), (-234.9, 651.1), 1.0),
                                         ((-233.3, 650.0), (-233.1, 651.1), (-224.9, 653.3), 2.0),
                                         ((-223.3, 652.2), (-223.1, 653.3), (-213.3, 655.1), 2.0))):
-    A.mover("burro%d" % (i + 1), at, BURRO, {"type": "still"}, hold={"type": "kick", "v": kick_v(p0, p1, over)}, model="burro")
-for x0, x1, y in ((-236.0, -232.6, 650.0), (-226.0, -222.6, 652.2)):
-    A.ledge(x0, x1, y, "rock", t=0.5)
-    A.solid([(x0, y - 0.5), (x1, y - 0.5), ((x0 + x1) / 2, y - 3.5)], SL)
+    A.mover("burro%d" % (i + 1), at, BURRO, {"type": "still"}, hold={"type": "kick", "v": kick_v(p0, p1, over)}, model="burro",
+            model_flip=True)  # (the burros face west: the kit's faces +x)
+for (x0, x1, y), _ns in zip(((-236.0, -232.6, 650.0), (-226.0, -222.6, 652.2)), "ab"):
+    A.ledge(x0, x1, y, "rock", t=0.5, skin="riscos_needle_top_" + _ns)
+    A.solid([(x0, y - 0.5), (x1, y - 0.5), ((x0 + x1) / 2, y - 3.5)], SL, skin="riscos_needle_top_" + _ns)
 A.challenge("7.7", "Los Burros", (-245.2, 647.6), 3, "A")
 A.cam((-250, 647, TW, 662), half_h=11.0, bias=(3.0, -2.0))
 
@@ -315,18 +348,16 @@ A.cam((-250, 647, TW, 662), half_h=11.0, bias=(3.0, -2.0))
 # 10 m over the bough hits them. Short, long or blown: La Garganta.
 PERCH = [(-203.2, 656.0), (-198.0, 657.6), (-190.0, 657.4), (-183.5, 656.3)]
 vulture("vulture3", PERCH, 0.0, mode="pingpong", wait=1.0)
-A.solid([(-185.2, 653.5), (-181.8, 653.5), (-182.3, 648.0), (-183.5, 642.0), (-184.6, 648.0)], SL)  # the horn
-A.ledge(-185.0, -182.0, 654.0, "rock", t=0.6)
-A.beam((-182.4, 654.0), (-182.7, 656.7), 0.3, "bone")  # the snag's stub
-A.hold(-183.6, 658.2, 0.2, "bone")  # a knot
+A.solid([(-185.2, 653.5), (-181.8, 653.5), (-182.3, 648.0), (-183.5, 642.0), (-184.6, 648.0)], SL, skin="riscos_horn")  # the horn
+A.ledge(-185.0, -182.0, 654.0, "rock", t=0.6, skin="riscos_horn")
+A.beam((-182.4, 654.0), (-182.7, 656.7), 0.3, "bone", skin="riscos_snag")  # the snag's stub
+A.hold(-183.6, 658.2, 0.2, "bone", skin="riscos_snag")  # a knot
 BOUGH, PORCH = (-184.7, 659.6), (-202.6, 664.0)
-A.hold(BOUGH[0], BOUGH[1], 0.25, "bone")  # the bough, end on: the launch hold
+A.hold(BOUGH[0], BOUGH[1], 0.25, "bone", skin="riscos_snag")  # the bough, end on: the launch hold
 # (Note 70, Parker: "make the wind cover this whole area too": the box runs east to the fang's
 # west face, x -172.2, so there is no still strip between the horn and the rock. Its push,
 # rhythm and whistle are unchanged.)
 A.wind((-203.5, 648, -172.2, 672), (-3.0, 0.0), gust={"on": 2.5, "off": 4.5, "phase": 0.0, "warn": 1.0})
-for x, y in ((-203.2, 654.0), (-182.3, 654.0), (-202.8, 664.0)):
-    A.deco("streamer_pole", x, y, z=-0.6, size=(0.15, 2.4, 0.15), tone="accent")
 A.challenge("7.8", "Viento a Favor", (-207.0, 654.0), 4, "X",
             moves=chain([(-182.7, 656.7), (-183.6, 658.2), BOUGH]) + [["fling", list(BOUGH), list(PORCH), "F5"]])
 A.cam((TE, 646, -175, 672), half_h=13.0, bias=(0.0, -4.0))
@@ -339,9 +370,9 @@ A.cam((TE, 646, -175, 672), half_h=13.0, bias=(0.0, -4.0))
 EB = [(665.75, 666.2), (668.2, 668.6), (670.7, 671.1)]  # east wall bands (the first is on the tooth)
 WB = [(666.8, 667.2), (669.4, 669.8)]  # west wall bands
 for y0, y1 in EB:
-    A.patch((-206.0, y0), (-206.0, y1), "rock", t=0.24)
+    A.patch((-206.0, y0), (-206.0, y1), "rock", t=0.24, skin="ex_riscos_tower_top")
 for y0, y1 in WB:
-    A.patch((-208.2, y0), (-208.2, y1), "rock", t=0.24)
+    A.patch((-208.2, y0), (-208.2, y1), "rock", t=0.24, skin="ex_riscos_tower_top")
 CH = [(-206.0, 666.0), (-208.2, 667.0), (-206.0, 668.4), (-208.2, 669.6), (-206.0, 670.9), (-208.2, 672.0)]
 A.challenge("7.9", "Chimenea de Roca", (-204.6, 664.0), 3, "B",
             moves=[["reach", [-206.0, 664.0], [-206.0, 665.85]]] + [["fling", list(CH[i]), list(CH[i + 1]), "F1"] for i in range(5)])
@@ -368,14 +399,15 @@ def bp(s):
     return (B0[0] + (B1[0] - B0[0]) * s / BL, B0[1] + (B1[1] - B0[1]) * s / BL)
 
 
-A.beam(bp(0.0), bp(4.2), 0.3, "wood")
-A.beam(bp(4.2), bp(6.8), 0.3, "rotten")
-A.beam(bp(6.8), bp(BL), 0.3, "wood")
+A.beam(bp(0.0), bp(4.2), 0.3, "wood", skin="riscos_brace_foot")
+A.beam(bp(4.2), bp(6.8), 0.3, "rotten", skin="riscos_brace_rotten")
+A.deco("riscos_brace_rotten", round(bp(5.5)[0], 3), round(bp(5.5)[1], 3), z=0.0, size=(2.6, 0.3, 2.4), tone="wood", skin=True)
+A.beam(bp(6.8), bp(BL), 0.3, "wood", skin="riscos_brace_head")
 for x0, x1 in ((-237.0, -229.5), (-228.9, -221.0), (-220.4, -213.0)):
     A.ledge(x0, x1, 663.0, "plank", t=0.25)  # the old catwalk: the catch
 # The low station's deck (a8 starts from it): top 688, x -250..-236, and a plug behind it.
 A.ledge(-250.0, -236.0, 688.0, "plank", t=0.5)
-A.solid([(-253.0, 686.0), (-250.0, 686.0), (-250.0, 688.0), (-253.0, 688.0)], "rock")
+A.solid([(-253.0, 686.0), (-250.0, 686.0), (-250.0, 688.0), (-253.0, 688.0)], "rock", skin="riscos_chalk_plug")
 A.challenge("7.10", "La Estación Baja", (-209.2, 672.0), 3, "B",
             moves=[["reach", [-211.6, 672.0], [-213.0, 672.0]], ["reach", [-216.2, 672.0], [-217.16, 672.72]],
                    ["reach", list(bp(4.2)), list(bp(5.5))], ["reach", list(bp(5.5)), list(bp(6.8))]])
@@ -387,24 +419,9 @@ A.cam((-240, 662, TW, 690), half_h=9.0, bias=(-2.0, -1.0))
 # valley with the town on it, the two painted ranges and the rows of cloud
 # (stages/peak/peak_backdrop.gd). It was a `town_far` at (-186, 571), z -60, and two flat
 # cards of far range, z -30 in "back3" and z -18 in "back2", from x -262 to -150.)
-A.effect("clouds", (-262, 560, -150, 610), density=0.3)
-ROCKC = "#B9AC90"  # rock a step behind the climbing plane
-A.card([(-211, 573), (-203, 573), (-203, 677), (-211, 677)], z=-1.5, tone=ROCKC)  # the tower: its windows are alcoves
-A.card([(-240, 624), (-203, 624), (-203, 646), (-245, 650)], z=-1.6, tone=ROCKC)  # the arch: El Ojo is a well, not a window
-A.card([(-223.4, 613), (-219.6, 613), (-219.6, 632), (-223.4, 632)], z=-1.4, tone=ROCKC)  # the fin's root
-A.card([(-185.6, 654), (-181.4, 654), (-179.5, 560), (-188.5, 560)], z=-1.5, tone=ROCKC)  # the horn's stalk, up from the throat
-for x0, x1, y in ((-236.0, -232.6, 650.0), (-226.0, -222.6, 652.2)):
-    A.card([(x0 + 0.6, y), (x1 - 0.6, y), (x1 + 0.4, y - 16), (x0 - 0.4, y - 16)], z=-1.3, tone=ROCKC)  # the burros' needles
-A.card([(-262, 590), (-232, 590), (-232, 600), (-240, 628), (-246, 652), (-252, 690), (-262, 690)], z=-2.5, tone="back")  # (from 590, above the crack's roof: from 570 it covered the top of a6's flue and its sky. a6_dress 7c)
-A.deco("rock_fence_frame", -219.5, 636.5, z=-0.9, rot=-33.0, size=(19.0, 3.0, 0.3), tone="wood")  # what holds 7.6's rail
-A.deco("scaffold_frame", -225.0, 663.0, z=-1.0, size=(24.0, 25.0, 0.5), tone="wood")  # the station's legs, catwalk to dock
-A.deco("pylon_head_low", -212.0, 672.0, z=-0.9, size=(8.0, 5.0, 1.0), tone="iron")
-A.deco("cable_station_low", -243.0, 688.0, z=-1.2, size=(14.0, 6.0, 3.0), tone="accent")
-A.deco("pennant_line", -230.0, 689.0, z=-1.0, size=(26.0, 1.2, 0.05), tone="accent")
-A.deco("sign_pug_arrow", -226.5, 578.0, z=-1.0, size=(1.0, 2.2, 0.1), tone="wood", flip=True)
-A.deco("lantern_cold", -244.0, 688.0, z=-0.8, size=(0.3, 0.5, 0.3), tone="gold")
-A.deco("rubble_pile", -250.6, 659.4, z=-0.7, size=(3.0, 1.6, 1.0), tone="rock2")  # where the boulders start
-A.deco("bone_pile", -207.5, 590.0, z=-0.8, size=(1.0, 0.4, 0.6), tone="bone")  # a vulture's larder in R1
+# (No clouds of our own: the given far layers carry the cloud banks. The seven cards are gone: the
+# dress's bodies replace them. The fence frame, the scaffold, the pylon head, the station house,
+# the pennants, the pug arrow, the lantern and the two piles are the dress's, moved back.)
 
 # THE PITS' INSIDES CAN'T BE HELD (note 52; Parker 11-13: all the slots the check finds,
 # `python tools/peak/checks.py pits`): each inside face lined slick under its lip.
@@ -412,6 +429,55 @@ A.line_pit(-213.00, -211.60, 672.00)
 A.line_pit(-229.50, -228.90, 663.00)
 A.line_pit(-221.00, -220.40, 663.00)
 
+
+# ================================================================ 7.0 THE TEA CAVE (note 68, page 7.0)
+# A small room cut into the gully's west mass, the face's slab and R6's block behind it: x -245.4 ..
+# -240.34, 2.4 m tall over a new grip floor level with the upper pocket's, and a doorway 2.2 m tall
+# through the pocket's back wall. Only the floor and the doorway are new to touch; the room's back,
+# its roof's look, the furniture and the cut edge in front are the dress's.
+# (the cut runs 0.14 m on into the pocket's air: the pocket's back wall stands at -240.337, and a cut
+# that stopped at -240.34 left a sliver of it across the door)
+TEA_ROOM = [(-245.4, 641.37), (-240.2, 641.37), (-240.2, 643.57), (-240.5, 643.57), (-240.5, 643.77), (-245.4, 643.77)]
+
+
+def _cut_tea_room():
+    from shapely.geometry import box as _bx
+    room = Polygon(TEA_ROOM).buffer(0.0)
+    keep = []
+    for s in A.solids:
+        p = Polygon(s["pts"]).buffer(0.0)
+        if not p.intersects(room) or p.intersection(room).area < 1e-4:
+            keep.append(s)
+            continue
+        rest_ = p.difference(room)
+        pieces = list(getattr(rest_, "geoms", [rest_]))
+        out = []
+        for g in pieces:
+            if g.geom_type != "Polygon" or g.area < 1e-3:
+                continue
+            if g.interiors:  # (a hole: cut it in two through the room's middle height)
+                for half in (_bx(g.bounds[0] - 1, g.bounds[1] - 1, g.bounds[2] + 1, 642.57),
+                             _bx(g.bounds[0] - 1, 642.57, g.bounds[2] + 1, g.bounds[3] + 1)):
+                    h = g.intersection(half)
+                    out += [q for q in getattr(h, "geoms", [h]) if q.geom_type == "Polygon" and q.area > 1e-3]
+            else:
+                out.append(g)
+        for g in out:
+            q = dict(s)
+            q["pts"] = [[round(x, 3), round(y, 3)] for x, y in list(g.exterior.coords)[:-1]]
+            keep.append(q)
+    A.solids[:] = keep
+
+
+_cut_tea_room()
+A.ledge(-245.4, -240.34, 641.37, "rock", t=0.2, skin="riscos_gully")  # its floor, level with the pocket's
+
+# ================================================================ the dress (the modelling run's)
+a7_dress.dress(A)
+A.light(a7_dress.TEA_LIGHTS[0][0], a7_dress.TEA_LIGHTS[0][1], color="#FFB860", rng=4.0, energy=0.9, flicker=True)  # the tea cave's lantern
+A.light(a7_dress.TEA_LIGHTS[1][0], a7_dress.TEA_LIGHTS[1][1], color="#FF8A40", rng=3.0, energy=0.8, flicker=True)  # and its brazier
+A.light(a7_dress.STATION_LIGHT[0], a7_dress.STATION_LIGHT[1], color="#FFD08A", rng=12.0, energy=0.6)  # gold on the station house's west wall
+A.follow("riscos_wheel_drum", (-220.2, 675.0), "bullwheel", "spin")  # (the drum turns with the wheel)
 
 if __name__ == "__main__":
     A.save()

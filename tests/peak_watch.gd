@@ -3024,3 +3024,41 @@ func _w_g89(a: Array) -> void:
 				await shot("8_9_grate_under_the_step_" + tag)
 		await ticks(1)
 	print("WATCH g89 %s: stood %s; crunches %d, knocked out %s; the head at %.3f just before the car came, its lowest under the stop %.3f (the step's underside 748.35); the climber at %s" % [tag, stood, pk.things.crunches - cr0, ko, head_before, head_low, where()])
+
+
+## a7: the tea cave (walk in from the upper pocket), the bridge halves taken across their width. g7:TAG
+func _w_g7(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("7.4")
+	await secs(1.5)
+	var c := me()
+	var r: Dictionary = {}
+	for x in pk.things.ropes:
+		if str(x.id) == "bridge_w":
+			r = x
+	var seg: RigidBody3D = (r.segs as Array)[5]
+	var sp := pk.local_of(Climber.pos2(seg))
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 0.0
+	put_limb(1, sp + Vector2(0.25, 0.0))
+	await ticks(2)
+	put_limb(1, sp + Vector2(0.25, 0.0))
+	await ticks(3)
+	var took := c.limbs[1].grab_other != null and (r.segs as Array).has(c.limbs[1].grab_other)
+	print("WATCH g7 %s: a hand 0.25 m off the bridge half's line takes it: %s" % [tag, took])
+	look(Vector2(-215.0, 620.0), 6.0)
+	await shot("66_bridge_halves_" + tag)
+	pk.warp("7.7")
+	await secs(1.5)
+	stand(Vector2(-239.5, 641.45))
+	await secs(0.5)
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 1.0
+	for b: RigidBody3D in c.bodies.values():
+		b.linear_velocity += Vector3(-2.5, 0.0, 0)
+	await secs(2.5)
+	look(Vector2(-242.5, 642.5), 3.5)
+	await shot("68_tea_cave_" + tag)
+	print("WATCH g7 %s: pushed west from the upper pocket, the climber is at %s (the room x -245.4 .. -240.34)" % [tag, where()])

@@ -425,7 +425,7 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		joints.append(j)
 	ropes.append({"id": str(def.id), "segs": segs, "bob": bob, "joints": joints, "area": str(a.id), "kind": kind, "creak": 0.0,
 		"planks": planks, "seg_len": seg_len, "top": top, "reach": length + 2.0,
-		"bell": str(def.get("bell", "")), "root": root})
+		"bell": str(def.get("bell", "")), "root": root, "wide": float(def.get("wide", 0.0))})
 
 
 ## One of the ones who tried: a climber built, posed by joint turns from the T-pose, and frozen.
@@ -1153,6 +1153,7 @@ func _tick_rope_grabs() -> void:
 		var p := Vector2(end.global_position.x, end.global_position.y)
 		var best: RigidBody3D = null
 		var best_d := ROPE_REACH
+		var best_reach := ROPE_REACH
 		for r in ropes:
 			if bool(r.planks) or not bool(peak._area_active.get(r.area, true)):
 				continue
@@ -1165,7 +1166,9 @@ func _tick_rope_grabs() -> void:
 					continue
 				var axis := Vector2(seg.global_basis.y.x, seg.global_basis.y.y)
 				var along := clampf((p - sp).dot(axis), -half, half)
-				var d := p.distance_to(sp + axis * along)
+				# (a rope that is a whole hanging half, two side ropes 0.3 m apart edge-on, is taken
+				# anywhere across that width: note 66)
+				var d := p.distance_to(sp + axis * along) - float(r.get("wide", 0.0)) * 0.5
 				if d < best_d:
 					best_d = d
 					best = seg
