@@ -284,6 +284,26 @@ A.cam((-447, 189, -437, 199), 8.5, bias=(1.0, -4.0))
 A.statue(-443.4, 176.95, "reach")
 A.deco("crystal_shell_clear", -443.4, 176.0, z=0.4, size=(2.4, 3.6, 1.6), tone="accent")
 
+# ---------------------------------------------------------------- the crystal rhino beetle (note 120)
+# Parker, 11-14: "this whole long walk is boring, add a little crystal rhino beetle that walks back
+# and forth along this area's floor and if he runs into you, he knocks you slightly up and launches
+# you in the direction he is facing. He turns around at each end". His beat is the whole floor from
+# the frozen climber to the foot of 3.1: he turns 2.2 m east of the statue (clear of its crystal
+# shell) and 0.9 m short of the first shaft's point (his horn never reaches 3.1's start, x -412 on).
+# 0.7 m long, 0.41 tall at the horn. His back is frosted crystal (grip): climb on and he carries you.
+# What a walker does (the turn, the legs, the throw, one throw a meeting): peak_things.gd, _tick_walker.
+# All numbers first guesses for Parker to tune: speed, wait (each end), v / up (the throw), cool.
+BEETLE_W, BEETLE_E = -441.2, -415.0
+A.mover("beetle", (BEETLE_W, 176.0),
+        [([(-0.31, 0.04), (0.31, 0.04), (0.33, 0.14), (0.2, 0.31), (-0.2, 0.31), (-0.33, 0.14)], "crystal")],
+        {"type": "path", "pts": [[BEETLE_W, 176.0], [BEETLE_E, 176.0]], "speed": 1.2, "mode": "pingpong",
+         "wait": 1.2, "ease": False, "phase": 0.0},
+        model="gruta_rhino_beetle")
+A.movers[-1]["walker"] = {
+    "legs": "gruta_rhino_beetle_leg", "hips": [[0.13, 0.105, 0.075], [0.0, 0.105, 0.085], [-0.14, 0.105, 0.075]],
+    "stride": 0.24, "swing": 0.35, "splay": 0.9, "lift": 0.018, "bob": 0.008, "turn": 0.7,
+    "front": 0.33, "reach": 0.08, "v": 3.0, "up": 1.8, "cool": 1.2}
+
 # ---------------------------------------------------------------- 3.3 Candelabros
 # Three chandeliers on chains, 6 m apart, each hung 3.2 m higher than the last, over the
 # start hall: the chasm under them IS the area's start, 23 to 30 m down.

@@ -249,6 +249,8 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	movers[m.id] = m
 	for node: Node in nodes:
 		_mover_of[node.get_instance_id()] = m
+	if def.has("walker") and m.type == "path":
+		_build_walker(m)
 
 
 func _build_body(a: Dictionary, def: Dictionary, root: Node3D) -> void:
@@ -1108,6 +1110,8 @@ func _tick_crunch(delta: float) -> void:
 			if o == null or (o as Node).has_meta("peak_rope") or (o as Node).has_meta("peak_swing"):
 				continue
 			var m = _mover_of.get(o.get_instance_id())
+			if m != null and (m as Dictionary).has("walk"):
+				continue  # (the cave's beetle throws you; he never crushes you: note 120)
 			if m != null and _mover_moving(m):
 				moving[str(m.id)] = true
 			else:
@@ -1656,6 +1660,8 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 		node.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, float(m.get("zoff", 0.0))))
 	if bool((m.def as Dictionary).get("ko", false)):
 		_mover_ko(m)
+	if m.has("walk"):
+		_tick_walker(m, delta)
 	if str(m.type) in ["cycle", "path"]:
 		_wall_wipe(m)
 		if (m.def as Dictionary).has("socket") and str(m.type) == "cycle":
@@ -2268,6 +2274,185 @@ func _cart_sound(m: Dictionary) -> void:
 
 func _mover_at(m: Dictionary) -> Vector2:
 	return (m.home as Vector2) + (m.offset as Vector2)
+
+
+## THE CRYSTAL RHINO BEETLE (playtest note 120; Parker 11-14: "add a little crystal rhino beetle
+## that walks back and forth along this area's floor and if he runs into you, he knocks you
+## slightly up and launches you in the direction he is facing. He turns around at each end").
+## A pingpong `path` mover whose def has `walker`:
+## - his model faces the way he walks and turns round on the spot in his pause at each end (his
+##   face toward the camera halfway round, over `turn` s);
+## - six legs (the `legs` model hung at `hips`, mirrored to the far side) step in two tripods as
+##   far as he walks (a cycle every `stride` m), and his body bobs;
+## - a piece of the climber he walks INTO (in front of his face, below his back: a piece on his
+##   back is riding him) throws the whole climber his way, as the bounce caps throw: every grip
+##   let go, the body's middle sent `v` m/s forward and `up` m/s up, a thwack and a chime, dust
+##   and a glint. Never a knock-out (the crunch rule passes him by too);
+## - ONE THROW A MEETING: after a throw he is a ghost to you (not solid, throws nobody) for at
+##   least `cool` s and until you are behind him, he has turned round, or you are far off; and
+##   while he passes he steps round you, behind the play plane. Without it he would catch you
+##   again where you landed and herd you the length of the floor.
+const WALK_BACK := 0.33  # m over his foot: a piece above this, over his shell, is on his back
+const WALK_HORN := 0.55  # m: in front of his face the horn reaches this high
+const WALK_SIDESTEP := -0.6  # m: how far behind the play plane he steps round you while a ghost
+var bumps := 0  # (for the probes: how many times the beetle has thrown the climber)
+var last_bump := {}
+
+
+func _build_walker(m: Dictionary) -> void:
+	var w: Dictionary = (m.def as Dictionary).walker
+	var body: Node3D = m.nodes[0]
+	var vis: Node3D = m.vis
+	var root := Node3D.new()
+	root.name = "Walker"
+	body.remove_child(vis)
+	root.add_child(vis)
+	body.add_child(root)
+	var legs: Array = []
+	var hips: Array = w.get("hips", [])
+	var n := hips.size()
+	for side: float in [1.0, -1.0]:
+		for i in n:
+			var h: Array = hips[i]
+			var pivot := Node3D.new()
+			pivot.position = Vector3(float(h[0]), float(h[1]), float(h[2]) * side)
+			var leg: Node3D = Peak.kit(str(w.legs)) if w.has("legs") else null
+			if leg == null:
+				leg = LuchaKit.box(Vector3(0.03, 0.03, 0.17), Color("#4A3892"), Vector3(0.0, -0.05, 0.08))
+			pivot.add_child(leg)
+			vis.add_child(pivot)
+			# front legs splay forward, rear legs back; the far side's are turned round
+			var splay := float(w.get("splay", 0.55)) * ((1.0 - 2.0 * float(i) / float(n - 1)) if n > 1 else 0.0)
+			var base := splay if side > 0.0 else PI - splay
+			legs.append({"n": pivot, "base": base, "s": side, "off": PI * float((i + (0 if side > 0.0 else 1)) % 2), "y": pivot.position.y})
+			pivot.rotation.y = base
+	m["walk"] = {"legs": legs, "root": root, "vis": vis, "bob_y": vis.position.y, "yaw": 0.0, "set": false, "face": 1.0,
+		"phase": 0.0, "prev": _mover_at(m), "ghost": false, "hit_t": -INF, "ghost_face": 1.0, "side_z": 0.0}
+
+
+func _tick_walker(m: Dictionary, delta: float) -> void:
+	var w: Dictionary = (m.def as Dictionary).walker
+	var st: Dictionary = m.walk
+	var pts: PackedVector2Array = m.pts
+	var cum: PackedFloat32Array = m.cum
+	var total := cum[cum.size() - 1]
+	var d := float(m.dist)
+	var pos := _mover_at(m)
+	var moved: Vector2 = pos - (st.prev as Vector2)
+	st.prev = pos
+	var out := signf(pts[pts.size() - 1].x - pts[0].x)  # (the way he walks from his road's first point)
+	var face := float(st.face)
+	if d >= total - 0.001:
+		face = -out  # (at the far end: he turns to go back)
+	elif d <= 0.001:
+		face = out
+	elif absf(moved.x) > 0.0005:
+		face = signf(moved.x)
+	st.face = face
+	# he turns round on the spot, face to the camera halfway (yaw 0: east; -PI: west)
+	var want := 0.0 if face > 0.0 else -PI
+	var yaw := float(st.yaw)
+	if not bool(st.set):
+		yaw = want
+		st.set = true
+	var new_yaw := move_toward(yaw, want, PI / maxf(0.1, float(w.get("turn", 0.7))) * delta)
+	var dyaw := absf(new_yaw - yaw)
+	st.yaw = new_yaw
+	var root: Node3D = st.root
+	root.rotation.y = new_yaw
+	# the legs step as far as he goes (and as he turns), in two tripods; his body bobs on each step
+	var stride := maxf(0.05, float(w.get("stride", 0.24)))
+	st.phase = fposmod(float(st.phase) + TAU * (moved.length() + dyaw * 0.17) / stride, TAU)
+	var ph := float(st.phase)
+	var amp := float(w.get("swing", 0.35))
+	var lift := float(w.get("lift", 0.018))
+	for L: Dictionary in st.legs:
+		var a := ph + float(L.off)
+		var pv: Node3D = L.n
+		pv.rotation.y = float(L.base) + float(L.s) * amp * sin(a)
+		pv.position.y = float(L.y) + lift * maxf(0.0, cos(a))
+	(st.vis as Node3D).position.y = float(st.bob_y) + float(w.get("bob", 0.008)) * absf(sin(ph))
+	# THE THROW
+	var t := peak.clock
+	var c := peak.player
+	var live := c != null and c.state == Climber.State.LIVE
+	var nearest := INF
+	var hit := Vector2.INF
+	var behind := true
+	var inside := false
+	if live:
+		var front := float(w.get("front", 0.33))
+		var reach := float(w.get("reach", 0.08))
+		for b: RigidBody3D in c.bodies.values():
+			var p := peak.local_of(Climber.pos2(b)) - pos
+			nearest = minf(nearest, p.length())
+			if p.x * face > -0.4:
+				behind = false
+		if nearest < 2.5:
+			# what he walks INTO: the climber's shapes in a box in front of him up to under his back's top
+			# (a piece lying on his back is riding), and in front of his face up to his horn's point
+			hit = _walker_touch(pos, face, 0.0, front + reach, 0.02, WALK_BACK - 0.06)
+			if not hit.is_finite():
+				hit = _walker_touch(pos, face, front - 0.04, front + reach + 0.04, 0.02, WALK_HORN)
+			if bool(st.ghost):
+				inside = _walker_touch(pos, 1.0, -front - 0.05, front + 0.05, 0.0, WALK_BACK + 0.05).is_finite()
+	if bool(st.ghost):
+		var cool := t - float(st.hit_t) >= float(w.get("cool", 1.2))
+		if cool and (not live or behind or face != float(st.ghost_face) or nearest > 6.0) and not inside:
+			st.ghost = false
+			for node: AnimatableBody3D in m.nodes:
+				node.collision_layer = Climber.LAYER_WORLD
+	elif live and hit.is_finite() and moved.length() / maxf(delta, 0.0001) > 0.3:
+		_walker_throw(m, c, face, hit, pos)
+	# while a ghost he steps round you, behind the play plane
+	var side_want := WALK_SIDESTEP if bool(st.ghost) and nearest < 1.8 else 0.0
+	st.side_z = move_toward(float(st.side_z), side_want, 1.6 * delta)
+	root.position.z = float(st.side_z)
+
+
+var _walk_q: PhysicsShapeQueryParameters3D = null
+
+
+## The climber's piece in a box beside the walker (x0 .. x1 along his facing from his middle, y0 .. y1
+## over his foot), as the physics has its shapes; INF if none.
+func _walker_touch(pos: Vector2, face: float, x0: float, x1: float, y0: float, y1: float) -> Vector2:
+	if _walk_q == null:
+		_walk_q = PhysicsShapeQueryParameters3D.new()
+		_walk_q.shape = BoxShape3D.new()
+		_walk_q.collision_mask = Climber.LAYER_LIVE
+	(_walk_q.shape as BoxShape3D).size = Vector3(x1 - x0, y1 - y0, 1.0)
+	var mid := peak.world_of(pos + Vector2(face * (x0 + x1) * 0.5, (y0 + y1) * 0.5))
+	_walk_q.transform = Transform3D(Basis(), Vector3(mid.x, mid.y, 0.0))
+	var mine: Array = peak.player.bodies.values()
+	for h: Dictionary in peak.get_world_3d().direct_space_state.intersect_shape(_walk_q, 8):
+		var o: Object = h.get("collider")
+		if o != null and mine.has(o):
+			return peak.local_of(Climber.pos2(o as RigidBody3D))
+	return Vector2.INF
+
+
+func _walker_throw(m: Dictionary, c: Climber, face: float, hit: Vector2, pos: Vector2) -> void:
+	var w: Dictionary = (m.def as Dictionary).walker
+	var st: Dictionary = m.walk
+	var com_v := c.velocity()
+	var want := Vector2(face * maxf(float(w.get("v", 3.0)), com_v.x * face), maxf(float(w.get("up", 1.8)), com_v.y))
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 0.3
+	for b: RigidBody3D in c.bodies.values():
+		b.linear_velocity += Vector3(want.x - com_v.x, want.y - com_v.y, 0.0)
+	st.ghost = true
+	st.hit_t = peak.clock
+	st.ghost_face = face
+	for node: AnimatableBody3D in m.nodes:
+		node.collision_layer = 0
+	peak.audio.play("kick_thwack", hit, 2.0, 1.15)
+	peak.audio.play("crystal_chime", hit, -3.0, 1.3)
+	peak.zones.burst(Vector2(hit.x, pos.y + 0.05), "dust", 0.7, Vector2(face, 1.0))
+	peak.zones.burst(pos + Vector2(face * 0.36, 0.32), "glitter", 0.6, Vector2(face, 1.0))
+	peak.cam_kick = maxf(peak.cam_kick, 0.25)
+	bumps += 1
+	last_bump = {"at": hit, "face": face, "v": want, "t": peak.clock}
 
 
 ## A mover that hits hard knocks you out: any piece inside its box while it moves fast.

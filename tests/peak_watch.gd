@@ -3238,3 +3238,83 @@ func _w_gbody(a: Array) -> void:
 		look(row[1], float(row[2]))
 		await secs(0.4)
 		await shot("inside_%s_%s" % [row[3], tag])
+
+
+## NOTE 120: the crystal cave's rhino beetle. His walk, his legs close up, his turn at an end,
+## and a meeting: the climber stood in his way, thrown his way, never knocked out, and not
+## thrown again while he passes (one throw a meeting). beetle:TAG
+func _w_beetle(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	var m: Dictionary = pk.things.movers.get("beetle", {})
+	if m.is_empty():
+		print("WATCH beetle: no beetle")
+		return
+	pk.warp("3.1")
+	await secs(1.0)
+	stand(Vector2(-446.0, 176.0))  # (out of his way: by the hole, west of the statue)
+	await secs(1.0)
+	var st: Dictionary = m.walk
+	# his legs, close, as he walks
+	while absf(float(m.dist) - 13.0) > 8.0:
+		await ticks(1)
+	# the walk as it was (him hidden), and with him, framed on him
+	var mid := pk.things._mover_at(m)
+	look(Vector2(mid.x, 178.6), 3.6)
+	(m.nodes[0] as Node3D).visible = false
+	await secs(0.25)
+	await shot("120_beetle_before_" + tag)
+	(m.nodes[0] as Node3D).visible = true
+	await secs(0.05)
+	await shot("120_beetle_after_" + tag)
+	for k in 3:
+		var p := pk.things._mover_at(m)
+		look(p + Vector2(0.0, 0.3), 0.75)
+		await secs(0.1)
+		await shot("120_beetle_walk_%d_%s" % [k, tag])
+		await secs(0.07)
+	# his turn at an end
+	var total: float = (m.cum as PackedFloat32Array)[(m.cum as PackedFloat32Array).size() - 1]
+	while float(m.dist) > 0.001 and float(m.dist) < total - 0.001:
+		await ticks(1)
+	var end := pk.things._mover_at(m)
+	look(end + Vector2(0.0, 0.3), 0.9)
+	await secs(0.35)
+	await shot("120_beetle_turning_" + tag)
+	print("WATCH beetle turn at %s: yaw %.2f, facing %s" % [end, float(st.yaw), st.face])
+	await secs(1.0)
+	await shot("120_beetle_turned_" + tag)
+	print("WATCH beetle turned: yaw %.2f, facing %s" % [float(st.yaw), st.face])
+	# a meeting: once he is under way, the climber stood 1.6 m in front of him
+	await secs(1.2)
+	var c := me()
+	var bp := pk.things._mover_at(m)
+	var face := float(st.face)
+	var spot := Vector2(bp.x + face * 1.6, 176.0)
+	stand(spot)
+	var b0: int = pk.things.bumps
+	look(spot + Vector2(face * 1.2, 1.2), 3.2)
+	await secs(0.2)
+	await shot("120_beetle_meeting_" + tag)
+	var t0 := pk.clock
+	var shot_hit := false
+	var ko := false
+	var top_y := -INF
+	var v_after := Vector2.ZERO
+	var x0 := pk.local_of(c.centre_of_mass()).x
+	while pk.clock - t0 < 8.0:
+		ko = ko or c.knockout_left > 0.0
+		top_y = maxf(top_y, pk.local_of(c.centre_of_mass()).y)
+		if not shot_hit and pk.things.bumps > b0:
+			shot_hit = true
+			v_after = c.velocity()
+			await ticks(3)
+			await shot("120_beetle_hit_" + tag)
+			await secs(0.35)
+			await shot("120_beetle_thrown_" + tag)
+		await ticks(1)
+	var hits: int = pk.things.bumps - b0
+	var x1 := pk.local_of(c.centre_of_mass()).x
+	print("WATCH beetle meeting: stood at %s facing %s; throws %d in 8 s, velocity after %s, the middle rose to %.2f (floor 176), moved %.2f m his way, knocked out %s, ghost now %s, last %s" % [
+		spot, face, hits, v_after, top_y, (x1 - x0) * face, ko, st.ghost, pk.things.last_bump])
+	look(pk.local_of(c.centre_of_mass()) + Vector2(0, 1.0), 3.2)
+	await shot("120_beetle_passed_" + tag)
