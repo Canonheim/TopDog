@@ -196,6 +196,7 @@
 <tr><td>133</td><td><a href="#n133">Build 0.3.104, the mushroom garden's bouncing caps: the collision does not match the drawing</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>134</td><td><a href="#n134">Build 0.3.104, the mushroom garden: the curved branch and the square block at its foot should be one connected branch, from the background into the play space</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>135</td><td><a href="#n135">Build 0.3.104, the garden's terrace west of the giant mushroom: nothing of interest; add a sleeping frog on a log in the background and a snail moving back and forth</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>136</td><td><a href="#n136">Not the Peak (the VS modes, the Top Dog session's): the lock-in confetti should stay where the character locked in, in world space</a></td><td><span class="chip c-ask">Handed to the Top Dog session (VS modes are its own); on its list</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -4256,6 +4257,16 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 4, the terrace on top of the slime island (`jardin_terrace`, x -266 .. -225, top y 333.6), west of 4.6 El Hongo Gigante (start x -229) and before 4.7's chain of bouncing caps.</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>1) A frog asleep on a mossy log in the background behind the terrace (behind the climb, lit a little by the garden's glow; a sleepy pose, maybe a little 'z' puff of spores now and then; the wave-0 frogs' style). 2) A snail moving slowly back and forth along the terrace floor, turning at each end, its shell's spiral like the stone one there: built on the same walker the crystal beetle uses (note 120), but harmless (it just walks; you can step over it or stand on its shell) unless Parker wants it to push. Held until Parker says go (or sent to the beetle's thread if he wants it now).</p>
+</div>
+
+<div class="note" id="n136">
+  <div class="head"><span class="num">136</span><h3>Not the Peak (the VS modes, the Top Dog session's): the lock-in confetti should stay where the character locked in, in world space</h3><span class="time">11-14 12:10</span></div>
+  <blockquote>"unrelated to the peak notes, but add it somewhere to fix, when you lock in in the vs modes, the confetti explosion should stay where the character locked in, not change with the camera, so it should be worldspace not screen space"</blockquote>
+  <p><span class="chip c-ask">Handed to the Top Dog session (VS modes are its own); on its list</span></p>
+  <h4>Where, and what is going on</h4>
+  <p>The VS modes' lock-in effects (`ui3d/confetti_effect.gd` via `lucha_ui.confetti()`, laid out in screen thirds; likely the rose petals and peso bills too) burst in screen space, so they move with the camera.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Anchor each burst in the world at the climber who locked in, so it stays put as the camera moves, keeping docs/LOCK_IN_EFFECTS.md's rules. The Top Dog session owns the VS modes and has the note.</p>
 </div>
 
 </main>
