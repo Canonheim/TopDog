@@ -2670,6 +2670,19 @@ in. Nothing played by a person.
   mast's rungs drawn 2.4 m deep until their thin skins land) and 7h, 7i are for the frames and the summit.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the temple's west wall slab out of the hall (the Director)
+
+- The slab "poking into the hall at about y 457" was a mistake: the frog's room's domed notch (a5_dress's
+  SHELL_ROOM, points 9 to 14) leaves only 0.5 m of rock between it and the hall, and `cave()` lays every
+  edge's slab 3 m thick: the notch's east side (x -366.5) stood 2.5 m out of the west wall's face into the
+  hall at y 457 .. 457.8, and the lip's corner filler (a triangle to (-363, 457) and (-366, 460)) stood
+  under the tail ledge of 5.8. Both trimmed: no shell solid stands in the hall's air (only real
+  intrusions, over 0.5 m^2; the frog's room is left as it was). The slab is now x -366.5 .. -366; the
+  triangle is gone (the tail ledge stands free over the exit ledge, as its own solid always did).
+- `templo_west_wall` has landed and follows the old solids: its poke still shows (the dark wedge under the
+  tail ledge, `a5_5_8_west_wall_slab.jpg`, before | after: the same) until its maker re-cuts it.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

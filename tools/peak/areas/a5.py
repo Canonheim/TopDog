@@ -38,11 +38,38 @@ def torch(x, y, rng=10.0, energy=1.6):
 # exit ledge, its floor level with the ledge (y 455): the outline is a5_dress's SHELL_ROOM, the
 # same with the room's eight points. Only its floor can be stood on.)
 SHELL = a5_dress.SHELL_ROOM
+_n_shell = len(A.solids)
 A.cave(SHELL, {0: "stone",   # the entry floor: every great fall inside the temple ends here
                7: "stone",   # the frog's room's floor
                20: None,     # the exit door, onto the well's mouth
                22: None},    # the entry door, onto the well
        default="wet", thick=3.0, skins=a5_dress.SHELL_SKINS_ROOM)
+
+
+def _keep_out_of_the_air(n0):
+    """No shell solid stands in the shell's own air. (The frog's room's domed notch has only 0.5 m of rock
+    between it and the hall: its east side's slab and the lip's corner, 3 m thick, stood 2.5 to 3 m out of
+    the west wall into the hall at y 457 .. 460, and the west wall's skin followed them. The Director, 11-14.)"""
+    from shapely.geometry import Polygon, box
+    # (the hall's air only, not the frog's room's; and only a real intrusion, not a slab's 0.02 m end)
+    air = Polygon(SHELL).buffer(0).difference(box(-369.5, 454.5, -366.0, 458.5))
+    keep = A.solids[:n0]
+    for s in A.solids[n0:]:
+        p = Polygon(s["pts"]).buffer(0)
+        if not p.intersects(air) or p.intersection(air).area < 0.5:
+            keep.append(s)
+            continue
+        rest = p.difference(air)
+        for g in getattr(rest, "geoms", [rest]):
+            if g.geom_type == "Polygon" and g.area > 1e-3:
+                g = g.simplify(0.005)  # (no point in a straight run: a sliver makes a bad shape)
+                q = dict(s)
+                q["pts"] = [[round(x, 3), round(y, 3)] for x, y in list(g.exterior.coords)[:-1]]
+                keep.append(q)
+    A.solids[:] = keep
+
+
+_keep_out_of_the_air(_n_shell)
 A.opening(-309, 362, -305, 382)   # ENTRY, from the Pozo (a4's mushroom throws you at it)
 A.opening(-309, 474, -305, 488)   # EXIT, the well's mouth
 
