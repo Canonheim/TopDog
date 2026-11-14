@@ -81,12 +81,12 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 | 2 Las Aguas Negras | done | `a2_dress.py` WIRED (5de53c7) | all 102 landed and synced (A 56, B 7, C 39) | yes: `docs/peak/frames/a2_aguas_*` |
 | 3 La Gruta de Cristal | done | `a3_dress.py` WIRED (63d1254) | all landed and synced (A 45 incl. the real 3D crystals, B 28) | yes: `docs/peak/frames/a3_gruta_*` (the body card cut out at 36bee1e) |
 | 4 El Jardín de Hongos | done | `a4_dress.py` WIRED (08a6185) | all landed and synced (A 33, B 46, C 1) | yes: `docs/peak/frames/a4_jardin_*` (the body card out of every interior at 6275221) |
-| 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | all landed and synced (A 87, B 11, C 12) | yes: `docs/peak/frames/a5_templo_*` (the back walls are as bright as the holds in places: a darker, cooler pass due) |
+| 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | all landed and synced (A 87, B 11, C 12) | yes: `docs/peak/frames/a5_templo_*` (back pieces darker and cooler: `a5_templo_*_darker.jpg`) |
 | 6 La Chimenea | done | `a6_dress.py` WIRED (8788f09) | all landed and synced (A 37, B 9, C 40) | yes: `docs/peak/frames/a6_forja_*` |
 | 7 Los Riscos del Viento | done | `a7_dress.py` WIRED (8451f10) | all landed and synced (A 35 + the tower top, B 16, C 23; faces re-landed matte after the polished finish striped them); the 7.6 m wheel; the tower top cut at 658 | yes: `docs/peak/frames/a7_riscos_*` |
 | 8 El Teleférico | done; revised (real roofs, hangers held) | `a8_dress.py` WIRED (faa373e) | all landed and synced (A 13, B 6, C 46, and the seven re-makes as `_tele` stems) | yes: `docs/peak/frames/a8_tele_*` (the sky shows now; the fang's polished rock reads flat black: being re-made matte) |
-| 9 El Glaciar | done; revised (three wall arrow signs) | `a9_dress.py` WIRED (9b64b15) | B 6 and C 8 landed; A 54 with the cliffs' wall maker | |
-| 10 La Cresta de la Tormenta | done | `a10_dress.py` WIRED (fefc451) | all landed and synced (A 40, B 5, C 25) | yes: `docs/peak/frames/a10_tormenta_*` (the wet slate's polished finish stripes the faces: being re-made matte) |
+| 9 El Glaciar | done; revised (three wall arrow signs) | `a9_dress.py` WIRED (9b64b15) | all landed and synced (A 54, B 6, C 8) | yes: `docs/peak/frames/a9_glaciar_*` |
+| 10 La Cresta de la Tormenta | done | `a10_dress.py` WIRED (fefc451) | all landed and synced (A 40, B 5, C 25) | yes: `docs/peak/frames/a10_tormenta_*` (re-landed matte: `a10_tormenta_*_matte.jpg`) |
 | 11 La Cumbre | done; revised (the secret the right way round; the ring) | `a11_dress.py` WIRED (2848c76) | ring ropes landed (thread C); B 11 and C 14 landed; A 32 with thread C | |
 
 Mountain-wide small pieces (wave 0, no placement needed): frogs, signs, tea things
