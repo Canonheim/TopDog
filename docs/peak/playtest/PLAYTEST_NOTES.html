@@ -144,6 +144,7 @@
 <tr><td>81</td><td><a href="#n81">El Pil&oacute;n: take out the two poles; the jumps from the wheels are enough</a></td><td><span class="chip c-plan">Plan; no fix (notes only)</span></td></tr>
 <tr><td>82</td><td><a href="#n82">Tirolesa: the zip line goes all the way</a></td><td><span class="chip c-plan">Plan; no fix (notes only)</span></td></tr>
 <tr><td>83</td><td><a href="#n83">Held between two moving things: the higher one, or the one with more limbs on it, wins</a></td><td><span class="chip c-plan">Plan; no fix (notes only)</span></td></tr>
+<tr><td>84</td><td><a href="#n84">El Glaciar: the blue ice holds let go of you, and nothing shows why</a></td><td><span class="chip c-plan">Answered; the fix is one switch, not thrown (notes only)</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -215,7 +216,8 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
 <a href="#n80">80</a> the flying chairs' hanger poles become background;
 <a href="#n81">81</a> El Pil&oacute;n: the brace and the rung out, wheel to wheel;
 <a href="#n82">82</a> the zip line goes all the way to the deck;
-<a href="#n83">83</a> between two moving things, the higher one or the one with more limbs on it keeps you</td></tr>
+<a href="#n83">83</a> between two moving things, the higher one or the one with more limbs on it keeps you;
+<a href="#n84">84</a> the ice holds' frost language, written and switched off</td></tr>
 <tr><td><b>Decided by Parker on 11-13, not yet sent to the thread</b></td><td>
 <a href="#n6">6</a> one real chain, in rusty red, moved out past the track's end;
 <a href="#n7">7</a> a tool tip at the nine long jumps, bottom right: "Hold [key bind] to widen the camera" (this replaces the wider view);
@@ -2871,6 +2873,29 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
     <li>All the limbs on the losing thing let go together, so you are not left hanging by a foot.</li>
     <li>It is one rule for the mountain: these counterweights, gondola to gondola (8.2), the chairs (8.5), the temple's gears and pistons.</li>
     <li>Not built now. Held with every other fix.</li>
+  </ul>
+</div>
+
+<div class="note" id="n84">
+  <div class="head"><span class="num">84</span><h3>El Glaciar: the blue ice holds let go of you, and nothing shows why</h3><span class="time">11-13 21:34</span></div>
+  <blockquote>"what is going on here? Same thing as hot things?"</blockquote>
+  <p><span class="chip c-plan">Answered; the fix is one switch, not thrown (notes only)</span></p>
+  <figure>
+    <img src="shots/84_blue_ice.png" alt="A climber on a pale ice ramp with small ice blocks along it, both hands marked pale blue">
+    <figcaption>Parker's picture: challenge 9.1, Hielo Azul, at the foot of the glacier (786 m). The small blocks along the ramp are the holds.</figcaption>
+  </figure>
+  <h4>What is going on</h4>
+  <ul>
+    <li><b>Yes: the same thing as the hot holds, slower.</b> Pale blue ice can be held for 2 seconds. Then that hand lets go and cannot take anything for 0.6 seconds. A hot hold is the same rule with a shorter time.</li>
+    <li><b>Why it is baffling:</b> the hot holds were given a language you can read (they pulse, the hand smokes, they spit before they let go, the hand stays marked). The same language was written for ice (frost off the hold and the hand, a crack, a pale blue hand afterwards) and then left switched off, on purpose, because you had not played the glacier yet. So here you get a small tick half a second before and a crack as the hand goes, and nothing to see.</li>
+    <li>Also in this picture: the wide pale ramp is a painted card behind you. It is not solid. Only the small blocks are holds, and the dark blue ice is slick.</li>
+  </ul>
+  <h4>Plan</h4>
+  <ul>
+    <li><b>Switch the ice's language on</b> (one value, <code>TELL_COLD</code> in <code>stages/peak/peak_things.gd</code>), then look at it in the game: frost that thickens over the 2 seconds, a crack and a burst as it lets go, the hand pale blue until it can hold again. It covers the cableway's ice too.</li>
+    <li>For the glacier's design: a ramp you cannot stand on should not look like one. By your second rule it steps back and dulls, or it becomes real.</li>
+    <li>A first-ice warning in the world, as the hot holds are to get (note 23's sign): to decide with the area.</li>
+    <li>Not switched on now. Held with every other fix.</li>
   </ul>
 </div>
 
