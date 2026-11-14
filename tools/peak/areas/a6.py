@@ -10,6 +10,7 @@ the forge hood (a slick 35 degree slab) and off its spout into the same fall lin
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from peaklib import Area, box_pts
+import a6_dress  # the chimney's scenery (the modelling run's): decos only
 
 A = Area("a6", "chimney")
 SKY = "#58A8F0"
@@ -32,33 +33,39 @@ AIR = [
     (-291.0, 541.0),  # 13 hall roof, west
     (-291.0, 488.0),  # 14 west wall, top of the entry door   edge 14 = the ENTRY DOOR
 ]
-A.cave(AIR, {0: "rock", 1: "rock", 5: None, 14: None}, default="wet", thick=3.0)
+A.cave(AIR, {0: "rock", 1: "rock", 5: None, 14: None}, default="wet", thick=3.0, skins=a6_dress.SHELL_SKINS)
 A.opening(-295, 474, -291, 488)  # the well mouth (from A5)
 A.opening(-235, 580, -230, 586)  # daylight (to A7's Balcon)
 
 # The entry landing: my 3 m slab under the door (flush with the well at x -294), and the
 # grip ledge the censer drops you on, lipping 1.5 m out over the well.
-A.solid([(-294.0, 474.0), (-291.0, 474.0), (-291.0, 479.4), (-294.0, 479.4)], "wet")
-A.solid([(-295.5, 479.55), (-294.0, 479.0), (-290.9, 479.0), (-290.9, 480.0), (-295.5, 480.0)], "rock")
+A.solid([(-294.0, 474.0), (-291.0, 474.0), (-291.0, 479.4), (-294.0, 479.4)], "wet", skin="forja_landing")
+A.solid([(-295.5, 479.55), (-294.0, 479.0), (-290.9, 479.0), (-290.9, 480.0), (-295.5, 480.0)], "rock", skin="forja_landing")
 # (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
 
 
-def ring(x, y, r=0.25):
-    """An iron ring on a wall or in the air: a hold."""
-    return A.hold(x, y, r, "iron", n=8)
+def ring(x, y, r=0.25, look="iron_ring_pin_long"):
+    """An iron ring on a wall or in the air: a hold. Its look (a5_dress item 8): the kit's ring on a
+    long pin rooted 1.58 m back (its origin where the pin meets the rock, the ring 0.22 under it),
+    or `forja_ring_side_pin` (a ring on a pin driven sideways into the wall, its origin the ring)."""
+    if look == "iron_ring_pin_long":
+        A.deco(look, x, round(y + 0.223, 3), z=-1.583, size=(0.5, 0.55, 1.65), tone="iron", skin=True)
+    else:
+        A.deco(look, x, y, z=0.0, size=(0.6, 0.55, 0.1), tone="iron", skin=True)
+    return A.hold(x, y, r, "iron", n=8, skin=look)
 
 
 # ---------------------------------------------------------------- 6.1 Primer Vapor
 # A grate in the floor under the iron pug mask. Column 3.5 m, then a throw of 4.5 m
 # (speed = sqrt(2 x 2.79 x 4.5) = 5.01): 8 m in all, to the chain that hangs from the mask's
 # nose ring and the mask's tongue (L1, top 486) beside it.
-A.ledge(-283.0, -280.0, 479.5, "iron", t=0.5)  # the grate
+A.ledge(-283.0, -280.0, 479.5, "iron", t=0.5, skin="steam_grate")  # the grate
 # (Note 63, Parker 11-13: "Make all the vents only about 10% stronger than they currently are":
 # every vent's speed x 1.1 here and below; the columns and the timing are unchanged.)
 A.geyser(-281.5, 479.5, 2.0, 3.5, 5.51, period=5.0, on=2.0, phase=0.0, warn=1.2)
 ring(-281.5, 491.6, 0.3)  # the nose ring
 A.rope("c61", (-281.5, 491.3), 4.6, kind="chain")  # hangs to y 486.7, in the column's top
-A.ledge(-280.3, -276.4, 486.0, "iron", t=0.5)  # L1, the tongue
+A.ledge(-280.3, -276.4, 486.0, "iron", t=0.5, skin="forja_mask_tongue")  # L1, the tongue
 A.challenge("6.1", "Primer Vapor", (-281.5, 479.5), 2, "S",
             moves=[["reach", [-281.5, 487.0], [-280.3, 486.0]]])
 A.cam((-290, 478, -272, 494), half_h=8.0, bias=(0.0, 2.5))
@@ -70,8 +77,12 @@ HOT = [(-276.2, 487.5, "hot"), (-275.3, 488.3, "hot"), (-275.6, 489.4, "hot"), (
        (-273.7, 490.8, "hot"), (-274.0, 491.9, "hot"), (-273.0, 492.5, "hot"), (-272.9, 493.6, "rock"),
        (-273.7, 494.4, "hot"), (-272.8, 495.0, "hot"), (-273.0, 496.1, "rock"), (-272.2, 496.9, "hot")]
 for x, y, k in HOT:
-    A.hold(x, y, 0.3 if k == "rock" else 0.22, k)
-A.ledge(-271.5, -266.8, 496.0, "rock", t=0.6)  # L2
+    if k == "rock":  # (a cool boss: a small pug's head in plain cold stone, item 8)
+        A.hold(x, y, 0.3, k, skin="forja_cool_boss")
+        A.deco("forja_cool_boss", x, y, z=0.0, size=(0.6, 0.6, 0.4), tone="rock", skin=True)
+    else:
+        A.hold(x, y, 0.22, k)
+A.ledge(-271.5, -266.8, 496.0, "rock", t=0.6, skin="forja_charging_step")  # L2
 _route = [[-276.8, 487.6]] + [[x, y] for x, y, _ in HOT] + [[-271.5, 496.0]]
 # (Parker 11-12: "these have no indication of what is going on and no leading indicator".
 # Part of it was red knobs on a red wall. The furnace face is burnt black along the line
@@ -97,15 +108,15 @@ A.cam((-279, 485, -269, 498), half_h=9.0, bias=(0.0, -3.0))
 #   t0 = 0.0 .. 0.9 works (B is on from 3.5 and stays on until the latest of them is out of
 #   its column). Let go later than about 1 s into A's blast and it dies under you: you
 #   come down short of the funnel's west plate, to the floor.
-A.ledge(-269.0, -267.0, 496.05, "iron", t=0.3)  # A's grate, set in L2
+A.ledge(-269.0, -267.0, 496.05, "iron", t=0.3, skin="steam_grate")  # A's grate, set in L2
 A.geyser(-268.0, 496.0, 2.0, 4.0, 5.5, period=7.0, on=1.5, phase=0.0, warn=1.0)
 A.wind((-269.2, 500.0, -264.2, 508.0), (1.0, 0.0), look="steam")
-A.beam((-264.2, 500.8), (-265.7, 502.06), 0.5, "grease")  # B's funnel, west plate (40 degrees)
-A.beam((-261.8, 500.8), (-258.8, 503.3), 0.5, "grease")  # east plate
+A.beam((-264.2, 500.8), (-265.7, 502.06), 0.5, "grease", skin="forja_hopper_front")  # B's funnel, west plate (40 degrees)
+A.beam((-261.8, 500.8), (-258.8, 503.3), 0.5, "grease", skin="forja_hopper_front")  # east plate
 A.geyser(-263.0, 499.0, 2.4, 9.0, 4.4, period=7.0, on=3.2, phase=3.5, warn=1.0)
 ring(-262.1, 514.75, 0.28)  # the hook the chain hangs from (it hangs off the slag pan above)
 A.rope("c63", (-262.1, 514.5), 7.0, kind="chain")  # to y 507.5
-A.ledge(-267.6, -263.5, 512.0, "rock", t=0.6)  # L3
+A.ledge(-267.6, -263.5, 512.0, "rock", t=0.6, skin="forja_loft_lip")  # L3
 A.challenge("6.3", "Géiseres Gemelos", (-270.4, 496.0), 4, "A",
             moves=[["reach", [-262.1, 511.8], [-263.5, 512.0]]])
 A.cam((-272, 494, -256, 516), half_h=11.0, bias=(0.0, -2.0))
@@ -120,16 +131,18 @@ for i, (bx, by) in enumerate(((-270.0, 512.8), (-273.4, 514.8), (-276.8, 516.8))
             {"type": "cycle", "to": [0.0, 1.8], "t_out": 1.6, "hold_out": 0.8, "t_in": 1.0, "hold_in": 0.8,
              "phase": 1.4 * i}, model="bellows")
 A.wind((-284.0, 513.0, -268.0, 520.5), (4.0, 0.0), gust={"on": 1.4, "off": 2.6, "phase": 0.0, "warn": 0.8}, look="steam")
-A.ledge(-288.0, -279.2, 519.5, "plank", t=0.6)  # L4, the great bellows' top board
+A.ledge(-288.0, -279.2, 519.5, "plank", t=0.6, skin="forja_bellows_deck")  # L4, the great bellows' top board
 for y in (520.9, 522.0, 524.2):
-    A.beam((-286.4, y), (-285.6, y), 0.22, "iron")  # rungs up to the slag pan's shore
+    A.beam((-286.4, y), (-285.6, y), 0.22, "iron", skin="forja_staple_long")  # rungs up to the slag pan's shore
+    A.deco("forja_staple_long", -286.0, y, z=-1.3, size=(0.8, 0.1, 1.4), tone="iron", skin=True)  # (its legs back into the pier)
+A.deco("forja_rung_stubs", -286.0, 523.1, z=-1.3, size=(0.9, 0.2, 1.4), tone="iron")  # the snapped rung's stubs: the stick lies in them
 # THE DYNAMITE RUNG (note 58, Parker 11-13: "make the second one from the top a stick of dynamite and
 # explode if you hold it, it's fuse lights and it fuckin blows up"). Where the third rung was, the
 # same size, held like one: touch it and its fuse burns for 1 s (letting go doesn't save the
 # stick), then it blows, throwing and knocking out whoever is near, and a fresh stick is there
 # 10 s later. The clean way is a lunge past it, 2.2 m, rung to rung. (A plain red stand-in.)
 A.beam((-286.4, 523.1), (-285.6, 523.1), 0.22, "iron", hold={"type": "dynamite", "fuse": 1.0, "respawn": 10.0})
-A.ledge(-285.0, -280.3, 525.2, "iron", t=0.6)  # the shore
+A.ledge(-285.0, -280.3, 525.2, "iron", t=0.6, skin="forja_shore")  # the shore
 A.challenge("6.4", "El Fuelle", (-266.2, 512.0), 3, "A",
             moves=[["reach", [-267.6, 512.0], [-268.9, 512.8]], ["reach", [-271.1, 514.6], [-272.3, 514.8]],
                    ["reach", [-274.5, 516.6], [-275.7, 516.8]], ["reach", [-277.9, 518.6], [-279.2, 519.5]],
@@ -149,7 +162,7 @@ def slag_y(x):
     return PW[1] + (x - PW[0]) * (PE[1] - PW[1]) / (PE[0] - PW[0])
 
 
-A.solid([PW, PE, (PE[0], PE[1] - 1.1), (PW[0], PW[1] - 1.1)], "slag")  # the pan and its slag
+A.solid([PW, PE, (PE[0], PE[1] - 1.1), (PW[0], PW[1] - 1.1)], "slag", skin="forja_slag_pan")  # the pan and its slag
 A.bounce(PW, PE, 5.0, look="lava", min_in=0.0, ko=True)
 for i, (xa, xb, sp, wt, ph) in enumerate(((-278.8, -276.8, 0.7, 0.8, 0.0), (-273.2, -270.8, 1.0, 0.6, 1.3),
                                           (-267.2, -265.0, 0.8, 0.7, 2.9))):
@@ -158,10 +171,10 @@ for i, (xa, xb, sp, wt, ph) in enumerate(((-278.8, -276.8, 0.7, 0.8, 0.0), (-273
             {"type": "path", "pts": [pa, pb], "speed": sp, "mode": "pingpong", "wait": wt, "phase": ph}, model="slag_raft")
 for cx in (-275.0, -269.0):
     y = slag_y(cx)
-    A.solid([(cx - 0.4, y - 0.1), (cx + 0.4, y - 0.1), (cx + 0.05, y + 0.6)], "slag")  # dead crust: a slick tooth, nothing to stand on
+    A.solid([(cx - 0.4, y - 0.1), (cx + 0.4, y - 0.1), (cx + 0.05, y + 0.6)], "slag", skin="forja_dead_crust")  # dead crust: a slick tooth, nothing to stand on
 ring(-262.3, 529.25, 0.28)
 A.rope("c65", (-262.3, 529.0), 5.6, kind="chain")  # the way off the last raft (and one last chance for a faller)
-A.ledge(-259.2, -256.2, 523.0, "rock", t=0.6)  # L5
+A.ledge(-259.2, -256.2, 523.0, "rock", t=0.6, skin="forja_pier_landing")  # L5
 A.challenge("6.5", "Escoria", (-282.6, 525.2), 4, "A",
             moves=[["reach", [-280.3, 525.2], [-279.9, 525.14]], ["reach", [-275.7, 524.9], [-274.3, 524.6]],
                    ["reach", [-269.7, 524.0], [-268.3, 523.7]], ["reach", [-263.9, 523.25], [-262.3, 523.9]],
@@ -177,15 +190,15 @@ A.cam((-286, 521, -255, 533), half_h=9.0, bias=(0.0, -3.0))
 HX, HY = (-253.5, -249.3, -245.1), (523.6, 527.6, 531.6)
 for i in range(3):
     X, Y = HX[i], HY[i]
-    A.ledge(X - 1.5, X + 1.0, Y, "iron", t=0.5)  # the anvil's face
-    A.solid([(X - 0.8, Y - 0.5), (X + 0.7, Y - 0.5), (X + 0.3, Y - 1.5), (X - 0.4, Y - 1.5)], "slag")  # its waist
+    A.ledge(X - 1.5, X + 1.0, Y, "iron", t=0.5, skin="anvil_great")  # the anvil's face
+    A.solid([(X - 0.8, Y - 0.5), (X + 0.7, Y - 0.5), (X + 0.3, Y - 1.5), (X - 0.4, Y - 1.5)], "slag", skin="anvil_great")  # its waist
     A.mover("martillo%d" % (i + 1), (X, Y + 0.8),
             [(box_pts(0, 0.75, 2.0, 1.5), "grease"), ([(-1.0, 1.5), (1.0, 1.5), (0.0, 2.2)], "grease"),
              (box_pts(1.25, 0.15, 0.5, 0.2), "iron")],
             {"type": "cycle", "to": [0.0, 4.2], "t_out": 3.2, "hold_out": 2.6, "t_in": 0.35, "hold_in": 1.0,
              "phase": 2.4 * i}, ko=True, model="drop_hammer")
     A.rope("c66_%d" % (i + 1), (X + 1.5, Y + 0.85), 4.5, kind="chain", anchor="martillo%d" % (i + 1))
-A.ledge(-242.4, -236.0, 535.6, "rock", t=0.6)  # L6
+A.ledge(-242.4, -236.0, 535.6, "rock", t=0.6, skin="forja_pier_head")  # L6
 A.challenge("6.6", "La Fragua", (-257.6, 523.0), 4, "A",
             moves=[["reach", [-256.2, 523.0], [-255.0, 523.6]], ["reach", [-252.5, 523.6], [-252.0, 524.4]],
                    ["reach", [-252.0, 527.8], [-250.8, 527.6]], ["reach", [-248.3, 527.6], [-247.8, 528.4]],
@@ -197,7 +210,7 @@ A.cam((-260, 521, -236, 540), half_h=9.0, bias=(0.0, -2.0))
 # A slick slab at 35 degrees from the updraft shaft's window down to a spout at (-258.5, 531).
 # Whatever falls in the flue above lands on it, slides west and is thrown off the spout
 # into the hall: over the slag run or past the last-chance chain, and so to the floor.
-A.solid([(-241.5, 542.9), (-258.5, 531.0), (-258.5, 530.4), (-241.5, 542.3)], "wet")
+A.solid([(-241.5, 542.9), (-258.5, 531.0), (-258.5, 530.4), (-241.5, 542.3)], "wet", skin="forja_hood")
 
 # ---------------------------------------------------------------- 6.7 Tiro de Chimenea
 # The updraft shaft, x -241 .. -236 from L6 to L7 (13.4 m), between the hall's east wall and
@@ -210,8 +223,8 @@ A.solid([(-241.5, 542.9), (-258.5, 531.0), (-258.5, 530.4), (-241.5, 542.3)], "w
 #   that ring to the one above the band (547.3): 2.7 s. The lull is 3.5 s, so each leg must
 #   start within 0.8 s of the gust dying. (A flyer from L6 with the timing right goes straight through.)
 # Then three rings across the shaft's head, weightless in the draught, to L7's lip.
-A.solid([(-241.5, 540.0), (-241.0, 540.0), (-241.0, 543.4), (-241.5, 542.9)], "wet")  # baffle, under the window
-A.solid([(-241.5, 546.0), (-241.0, 546.0), (-241.0, 548.4), (-241.5, 548.4)], "wet")  # baffle, over it
+A.solid([(-241.5, 540.0), (-241.0, 540.0), (-241.0, 543.4), (-241.5, 542.9)], "wet", skin="forja_baffle")  # baffle, under the window
+A.solid([(-241.5, 546.0), (-241.0, 546.0), (-241.0, 548.4), (-241.5, 548.4)], "wet", skin="forja_baffle")  # baffle, over it
 A.wind((-241.0, 536.0, -236.0, 548.6), (0.0, 3.6), look="steam")
 A.wind((-241.5, 542.9, -236.0, 546.1), (-6.0, 0.0), gust={"on": 1.5, "off": 3.5, "phase": 0.0, "warn": 0.9})
 # (Note 61, Parker 11-13: "this place needs less rings. 50%". Seven become four: on the wall the
@@ -221,9 +234,11 @@ A.wind((-241.5, 542.9, -236.0, 546.1), (-6.0, 0.0), gust={"on": 1.5, "off": 3.5,
 # within the 3.5 s lull. On the ring over the band at 3.75 s.)
 E_RINGS = [(-236.3, 541.6), (-236.3, 547.3)]
 T_RINGS = [(-237.6, 548.2), (-240.1, 549.3)]
-for x, y in E_RINGS + T_RINGS:
+for x, y in E_RINGS:
+    ring(x, y, look="forja_ring_side_pin")  # (no wall behind them for a long pin: a ring on a pin driven sideways into the east wall)
+for x, y in T_RINGS:
     ring(x, y)
-A.ledge(-245.8, -241.0, 549.0, "rock", t=0.6)  # L7
+A.ledge(-245.8, -241.0, 549.0, "rock", t=0.6, skin="forja_basalt_shelf")  # L7
 _r = [E_RINGS[0], E_RINGS[1]] + T_RINGS + [(-241.0, 549.0)]
 A.challenge("6.7", "Tiro de Chimenea", (-241.9, 535.6), 3, "A",
             moves=[["drift", [-237.0, 537.6], list(_r[0])], ["drift", list(_r[0]), list(_r[1])],
@@ -241,16 +256,16 @@ A.cam((-246, 534, -234, 552), half_h=8.5, bias=(-1.5, 0.0))
 #   One clean run: off vent 1 at t = 0, on ring 1 at 2.7, across to grate 2 by 4.0, ring 2 at
 #   6.7, grate 3 by 8.0, the last ring and L8 at 10.7. Miss a blast and the next is 6 s away,
 #   standing on 1.2 m of iron over the hood.
-A.ledge(-245.6, -244.0, 549.05, "iron", t=0.3)  # vent 1's grate, set in L7
+A.ledge(-245.6, -244.0, 549.05, "iron", t=0.3, skin="steam_grate")  # vent 1's grate, set in L7
 A.geyser(-244.8, 549.0, 1.6, 4.5, 4.99, period=6.0, on=2.0, phase=0.0, warn=1.0)
 ring(-245.25, 557.9)
-A.ledge(-247.2, -246.0, 557.2, "iron", t=0.4)  # grate 2
+A.ledge(-247.2, -246.0, 557.2, "iron", t=0.4, skin="steam_grate")  # grate 2
 A.geyser(-246.6, 557.2, 1.4, 4.5, 4.99, period=6.0, on=1.6, phase=2.0, warn=0.9)
 ring(-247.05, 566.1)
-A.ledge(-249.0, -247.8, 565.4, "iron", t=0.4)  # grate 3
+A.ledge(-249.0, -247.8, 565.4, "iron", t=0.4, skin="steam_grate")  # grate 3
 A.geyser(-248.4, 565.4, 1.4, 4.5, 4.99, period=6.0, on=1.35, phase=4.0, warn=0.8)
 ring(-247.95, 573.5)
-A.ledge(-247.4, -243.4, 572.5, "rock", t=0.6)  # L8, the crack's doorstep
+A.ledge(-247.4, -243.4, 572.5, "rock", t=0.6, skin="forja_doorstep")  # L8, the crack's doorstep
 A.challenge("6.8", "El Último Aliento", (-242.2, 549.0), 5, "A",
             moves=[["reach", [-245.25, 557.9], [-246.0, 557.2]], ["reach", [-247.05, 566.1], [-247.8, 565.4]],
                    ["reach", [-247.95, 573.5], [-247.4, 572.5]]])
@@ -261,14 +276,19 @@ A.cam((-252, 547, -241.6, 575), half_h=12.0, bias=(0.0, -4.0))
 # The chockstone is rotten: 1.2 s and it goes (back in 8 s). Three nubs over the pipe are
 # the way when it is gone. The pipe drops into the top of the updraft shaft: the draught
 # sets you down on L6, two challenges back.
-A.solid([(-243.4, 554.0), (-240.0, 554.0), (-240.0, 575.0), (-241.7, 575.0), (-241.7, 573.5), (-243.4, 573.5)], "wet")
-A.ledge(-243.4, -241.7, 574.0, "rock", t=0.5)  # step 1
-A.ledge(-241.7, -240.0, 575.5, "rock", t=0.5)  # step 2
-A.solid([(-237.2, 571.0), (-236.0, 566.0), (-234.0, 574.0), (-234.0, 579.4), (-237.2, 579.4)], "wet")  # under the sill
-A.solid([(-237.2, 579.4), (-231.0, 579.4), (-231.0, 580.0), (-237.2, 580.0)], "rock")  # the sill, out through the door
-A.solid([(-240.05, 575.5), (-237.15, 576.2), (-237.15, 577.0), (-240.05, 577.0)], "rotten")  # the chockstone
+A.solid([(-243.4, 554.0), (-240.0, 554.0), (-240.0, 575.0), (-241.7, 575.0), (-241.7, 573.5), (-243.4, 573.5)], "wet", skin="forja_pillar")
+A.ledge(-243.4, -241.7, 574.0, "rock", t=0.5, skin="forja_crack_steps")  # step 1
+A.ledge(-241.7, -240.0, 575.5, "rock", t=0.5, skin="forja_crack_steps")  # step 2
+A.solid([(-237.2, 571.0), (-236.0, 566.0), (-234.0, 574.0), (-234.0, 579.4), (-237.2, 579.4)], "wet", skin="forja_crack_east")  # under the sill
+A.solid([(-237.2, 579.4), (-231.0, 579.4), (-231.0, 580.0), (-237.2, 580.0)], "rock", skin="forja_chalk_sill")  # the sill, out through the door
+# THE CHOCKSTONE IS A CRACKED BLOCK OF CHALK (note 64, page 6.9): the same size and wedge, the same
+# 1.2 s and 8 s; it wears forja_chockstone (worn as its own piece: it breaks with it), and comes back
+# out of the roof's split (the dress places the split over it).
+A.solid([(-240.05, 575.5), (-237.15, 576.2), (-237.15, 577.0), (-240.05, 577.0)], "rotten", skin="forja_chockstone")
+A.deco("forja_chockstone", -238.6, 576.25, z=0.0, size=(2.9, 1.5, 2.4), tone="bone", skin=True)
 for x, y in ((-239.5, 577.15), (-238.4, 578.1), (-237.45, 578.9)):
-    A.hold(x, y, 0.2, "rock")
+    A.hold(x, y, 0.2, "rock", skin="forja_flint_knob")
+    A.deco("forja_flint_knob", x, round(y - 0.2, 3), z=0.0, size=(0.4, 0.4, 0.4), tone="bone", skin=True)
 A.challenge("6.9", "La Luz", (-245.2, 572.5), 2, "B",
             moves=[["reach", [-243.4, 572.5], [-243.4, 574.0]], ["reach", [-241.7, 574.0], [-241.7, 575.5]],
                    ["reach", [-240.0, 575.5], [-239.5, 577.15]], ["reach", [-239.5, 577.15], [-238.4, 578.1]],
@@ -279,43 +299,20 @@ A.cam((-296, 476, -236, 484), half_h=6.0, bias=(0.0, 2.0))
 # ---------------------------------------------------------------- the picture
 # Back to front: the mountain's dark (z -6), the far forge (z -4.5), the glow of fires (z -3),
 # the sky and its shaft of light (z -5 .. -2.5), and soot curtains in front (z 3).
-A.card([(-297, 470), (-228, 470), (-228, 592), (-297, 592)], z=-6.0, tone="back2", edge=False)
-A.card([(-291, 478), (-236, 478), (-236, 500), (-262, 508), (-291, 498)], z=-4.6, tone="back3")  # the forge floor's far wall
-A.card([(-291, 506), (-268, 512), (-262, 541), (-291, 541)], z=-4.5, tone="back")  # the bellows loft
-A.card([(-262, 541), (-236, 520), (-236, 566), (-257, 566)], z=-4.4, tone="back3")  # the flue's throat
-A.card([(-279.5, 485.0), (-270.0, 485.5), (-268.5, 499.0), (-278.0, 498.5)], z=-3.0, tone="#8A2E14")  # the furnace face (6.2)
-A.card([(-277.5, 487.0), (-271.5, 487.5), (-270.5, 497.0), (-276.5, 496.5)], z=-2.8, tone="#C4481A")
-A.card([(-282.0, 521.0), (-262.0, 519.0), (-262.0, 523.0), (-282.0, 525.5)], z=-2.6, tone="#E8641C")  # the slag's glow
-A.card([(-263.6, 522.3), (-262.9, 522.3), (-262.6, 499.5), (-263.4, 499.5)], z=-2.4, tone="accent")  # the slag's drip off the lip, into vent B
-for x in (-253.5, -249.3, -245.1):
-    A.card([(x - 0.25, 541.0), (x + 0.25, 541.0), (x + 0.25, 524.0), (x - 0.25, 524.0)], z=-2.0, tone="back3", edge=False)  # hammer guides
+# (a6_dress item 4: the dark behind everything stops round the door, so the real valley, the
+# Peak's far layers, shows through it; the far walls, the furnace face, the slag's glow and drip,
+# the hammer guides, the light shaft, the soot and the floor's lip are the dress's now.)
+A.card([(-297, 470), (-228, 470), (-228, 579.4), (-234, 579.4), (-234, 586), (-228, 586), (-228, 592), (-297, 592)],
+       z=-6.0, tone="back2", edge=False)
 # La Luz: a slit of sky that widens up the last 20 m, and the light it throws down the flue.
 A.card([(-246.6, 566.0), (-246.3, 566.0), (-242.6, 573.0), (-243.6, 573.0)], z=-5.0, tone=SKY, edge=False)
 A.card([(-243.6, 573.0), (-242.6, 573.0), (-238.0, 579.0), (-240.4, 579.0)], z=-5.0, tone=SKY, edge=False)
-A.card([(-240.4, 579.0), (-238.0, 579.0), (-229.0, 579.6), (-229.0, 588.5), (-237.0, 586.0)], z=-5.0, tone=SKY, edge=False)
-A.card([(-234.0, 580.0), (-234.0, 586.0), (-249.0, 566.0), (-250.5, 562.0)], z=-4.0, tone="#E9D9B8", edge=False)  # the light shaft
-A.card([(-250.5, 562.0), (-249.0, 566.0), (-254.0, 552.0), (-254.6, 550.0)], z=-4.0, tone="#B88A68", edge=False)  # ... dying into the red
-A.card([(-291, 536), (-262, 536), (-262, 541), (-291, 541)], z=-2.6, tone="slick")  # soot under the hall's roof (was z 3, in front: a vent can throw a climber up into it)
-A.card([(-291, 470), (-236, 470), (-236, 477.6), (-291, 477.6)], z=3.0, tone="back3")  # the floor's front lip
+A.card([(-240.4, 579.0), (-238.0, 579.0), (-234.0, 579.4), (-234.0, 586.0), (-237.0, 586.0)], z=-5.0, tone=SKY, edge=False)  # (stops at the door)
+# THE FROZEN CLIMBER'S SEAT (note 59, page 6.0): an upturned iron bucket under him, held and stood on.
+A.solid([(-238.9, 479.08), (-238.3, 479.08), (-238.3, 479.53), (-238.9, 479.53)], "iron", skin="mine_bucket_upturned")
 
-A.deco("pug_mask_iron", -281.5, 483.6, z=-1.2, size=(8.0, 9.0, 0.6), tone="iron")  # cast over the first vent: the chain is its nose ring
-A.deco("steam_grate", -281.5, 479.5, z=0.0, size=(2.5, 0.3, 1.5), tone="iron")
-A.deco("steam_grate", -268.0, 496.05, z=0.0, size=(2.0, 0.3, 1.5), tone="iron")
-A.deco("steam_grate", -244.8, 549.05, z=0.0, size=(1.6, 0.3, 1.5), tone="iron")
-A.deco("steam_grate", -246.6, 557.2, z=0.0, size=(1.2, 0.3, 1.5), tone="iron")
-A.deco("steam_grate", -248.4, 565.4, z=0.0, size=(1.2, 0.3, 1.5), tone="iron")
-A.deco("vent_pipe", -263.0, 478.1, z=-1.4, size=(2.2, 21.0, 2.2), tone="iron")  # vent B's standpipe, floor to mouth
-A.deco("bellows_great", -287.5, 513.2, z=-1.0, size=(7.0, 6.0, 2.5), tone="wood")  # its nozzle points east
-A.deco("anvil", -286.5, 479.7, z=-1.0, size=(1.2, 0.9, 0.6), tone="iron")
-A.deco("anvil", -240.0, 479.1, z=-1.0, size=(1.2, 0.9, 0.6), tone="iron")
-for x, y in ((-253.5, 523.6), (-249.3, 527.6), (-245.1, 531.6)):
-    A.deco("anvil_great", x - 0.25, y - 1.6, z=-0.2, size=(2.6, 1.6, 1.2), tone="iron")
-A.deco("slag_pan_chains", -272.0, 524.0, z=-1.0, size=(17.0, 17.0, 0.3), tone="iron")  # the pan hangs from the roof
-A.deco("forge_hood_ribs", -250.0, 537.0, z=-0.6, size=(17.5, 12.5, 0.4), tone="iron")
-A.deco("tongs_rack", -290.2, 483.0, z=-1.0, size=(0.4, 3.0, 1.6), tone="iron")
-A.deco("papel_tatters", -262.0, 539.6, z=-1.6, size=(10.0, 1.0, 0.05), tone="accent")  # scorched bunting: the town was here
-A.deco("torch_wall", -290.4, 485.5, z=-1.0, size=(0.4, 1.2, 0.4), tone="gold")
-A.deco("torch_wall", -236.6, 484.0, z=-1.0, size=(0.4, 1.2, 0.4), tone="gold")
+# (a6_dress places the great mask, the grates, the standpipe, the bellows, the anvils, the pan's
+# chains, the hood's ribs, the tongs rack, the bunting and both torches, out of the play space.)
 A.statue(-238.6, 479.55, "sit", flip=True)  # one who tried: he sits by the cold anvil, facing the well
 A.statue(-246.6, 573.45, "reach")  # and one who nearly had it: on the last doorstep, a hand toward the light
 
@@ -325,8 +322,9 @@ for x, y, col, e, r in ((-289.0, 484.0, "#FFB060", 1.6, 10.0), (-281.5, 489.0, "
                         (-249.3, 533.0, "#FF8A40", 1.6, 11.0), (-239.0, 539.0, "#FFA050", 1.5, 9.0), (-238.5, 546.0, "#FFA050", 1.3, 8.0),
                         (-244.0, 552.5, "#FFC080", 1.4, 9.0), (-247.0, 561.0, "#FFD8A8", 1.4, 9.0), (-248.5, 569.0, "#F4E6D0", 1.6, 10.0),
                         (-241.0, 579.0, "#DCEBFF", 2.2, 12.0), (-235.0, 583.0, "#FFFFFF", 2.6, 12.0), (-262.0, 480.5, "#FF7A30", 1.3, 12.0),
-                        (-246.0, 481.5, "#FF7A30", 1.2, 11.0)):
+                        ):
     A.light(x, y, color=col, rng=r, energy=e, flicker=y < 560)
+# ((-246.0, 481.5) became the furnace mouth's light, MOUTHS[1], below)
 # (Note 62: the high red blocks are vents 2 and 3's grates, and can be held: a lantern right
 # over each, so the next step is the brightest thing above you. Their steam pipes are the
 # dress's.)
@@ -339,6 +337,14 @@ A.effect("steam", (-264.5, 499, -261.5, 512))
 A.effect("steam", (-241, 536, -236, 550), density=0.6)
 A.effect("drips", (-291, 478, -288, 541), density=0.3)
 A.effect("dust", (-252, 560, -234, 587), tone="#FFF2D0")  # motes in the shaft of daylight
+
+# ================================================================ the dress (the modelling run's)
+a6_dress.dress(A)
+A.light(a6_dress.HUT_LAMP[0], a6_dress.HUT_LAMP[1], color="#FFC27A", rng=4.0, energy=0.9, flicker=True)  # the hut's lamp: the last torch on the climb
+A.light(a6_dress.HEARTH[0], a6_dress.HEARTH[1], color="#FF9A40", rng=3.0, energy=0.7, flicker=True)  # the hut's coals
+for x, y in a6_dress.MOUTHS:  # the two banked furnace mouths and the great furnace's mouth, red from below
+    A.light(x, y, color="#FF3A14", rng=6.0, energy=1.3, flicker=True)
+A.light(a6_dress.DAYLIGHT_COLUMN[0], a6_dress.DAYLIGHT_COLUMN[1], color="#E6E8F0", rng=6.0, energy=0.7)  # the first daylight down into the shaft
 
 if __name__ == "__main__":
     A.save()

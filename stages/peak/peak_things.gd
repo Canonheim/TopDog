@@ -607,7 +607,7 @@ func _frame_followers() -> void:
 				var ln := maxf(0.1, float(how.get("len", 1.0)))
 				var d := -off.y * sc
 				n.position = (f[2] as Vector3) + Vector3(0.0, -d * 0.5, 0.0)
-				n.scale.y = maxf(0.05, (ln + d) / ln)
+				n.scale.y = maxf(0.05, float(f[4]) * (ln + d) / ln)
 
 
 ## A LEVER A HAND TAKES AND DRAWS OVER (playtest note 72, Parker 11-13: "make it so you
@@ -809,12 +809,16 @@ func _build_dynamite(h: Dictionary) -> void:
 	var mid := _hold_middle(body)
 	var stick := Node3D.new()
 	stick.position = Vector3(mid.x, mid.y, 0.0)
-	stick.add_child(LuchaKit.cyl(0.13, 0.82, Color("#C8322E"), Vector3.ZERO, Vector3.RIGHT))
-	for e in [-0.25, 0.25]:
-		stick.add_child(LuchaKit.cyl(0.135, 0.06, Color("#2E2A2C"), Vector3(e, 0, 0), Vector3.RIGHT))  # its paper bands
-	var fuse := LuchaKit.box(Vector3(0.3, 0.03, 0.03), Color("#3A2E26"), Vector3(0.52, 0.08, 0.0))
-	fuse.rotation.z = 0.6
-	stick.add_child(fuse)
+	var made: Node3D = Peak.kit("forja_dynamite_stick")  # (its model, when it lands: a6_dress item 8)
+	if made != null:
+		stick.add_child(made)
+	else:
+		stick.add_child(LuchaKit.cyl(0.13, 0.82, Color("#C8322E"), Vector3.ZERO, Vector3.RIGHT))
+		for e in [-0.25, 0.25]:
+			stick.add_child(LuchaKit.cyl(0.135, 0.06, Color("#2E2A2C"), Vector3(e, 0, 0), Vector3.RIGHT))  # its paper bands
+		var fuse := LuchaKit.box(Vector3(0.3, 0.03, 0.03), Color("#3A2E26"), Vector3(0.52, 0.08, 0.0))
+		fuse.rotation.z = 0.6
+		stick.add_child(fuse)
 	body.add_child(stick)
 	(h.vis as Node3D).visible = false
 	h["stick"] = stick

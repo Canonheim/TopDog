@@ -24,7 +24,7 @@ const FALL_COUNT_M := 15.0  # a drop of this much is a fall on the tally
 ## metallic max shiney to indicate they are wet"): one colour for everything that can't be
 ## held, in every area, with the house shader's polished glint and rim.
 const SLICK := Color("#3A2616")
-const STRETCH := ["hanger_chain", "counterweight_chain", "balloon_tether"]
+const STRETCH := ["hanger_chain", "counterweight_chain", "balloon_tether", "forja_drive_rod"]
 const FACET := 0.3  # how far a rock face's facets stand out of its body
 const LIGHT_FADE_S := 0.5  # a lantern takes this long to come on or go off
 const LIGHT_FLICKER := 0.05  # how far a flickering lantern's cast light swings (it was 0.14 each side of 0.86)
@@ -839,12 +839,11 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 	n.position = at
 	n.set_meta("deco", str(d.model))  # (a rope that rings a bell finds it by this)
 	n.rotation.z = deg_to_rad(float(d.get("rot", 0.0)))
-	if d.has("follow"):
-		things.followers.append([n, d.follow, n.position, n.rotation.z])  # (it moves with its mover; its own turn is its rest)
 	var s := float(d.get("scale", 1.0))
 	# A landed model far from the size the author drew for (a mask asked for at 21 m,
 	# modelled at 10) is scaled to it; within a quarter either way it is left as made.
-	if not n.has_meta("standin") and d.has("size") and not bool(d.get("skin", false)):
+	# (Not a stretched piece: its length is set below, its width and depth are its own: a6_dress 6e.)
+	if not n.has_meta("standin") and d.has("size") and not bool(d.get("skin", false)) and not model in STRETCH:
 		var box := _model_box(n)
 		var want := Vector2(float(d.size[0]), float(d.size[1]))
 		if box.size.x > 0.05 and box.size.y > 0.05:
@@ -859,6 +858,9 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 		var tall := _model_box(n).size.y
 		if tall > 0.05:
 			n.scale.y = float(d.size[1]) / tall
+	if d.has("follow"):
+		# it moves with its mover; its own place, turn and length are its rest
+		things.followers.append([n, d.follow, n.position, n.rotation.z, n.scale.y])
 	n.name = str(d.model)
 	if model.contains("torch") and not n.has_meta("standin"):
 		_light_torch(n)

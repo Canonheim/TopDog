@@ -63,8 +63,12 @@ for x0, x1, spans in (
         # now (its skin templo_east_wall). a5_dress 7a.)
         if (x0, y0) == (-310.0, 382):
             continue
+        # (and above the forge's door, y 488 .. 498, it lay on the forge's own west slab and reached
+        # 1 m into the forge's air: the forge's slab is that wall now. a6_dress 7a.)
+        if (x0, y0) == (-294.0, 488):
+            continue
         A.solid([(x0, y0), (xe, y0), (xe, y1), (x0, y1)], "wet")
-A.solid([(-310, 494), (-290, 494), (-290, 498), (-310, 498)], "wet")  # the cap over the well room
+A.solid([(-310, 494), (-291, 494), (-291, 498), (-310, 498)], "wet")  # the cap over the well room (to the forge's wall line, x -291)
 A.card([(-312, 170), (-288, 170), (-288, 500), (-312, 500)], z=-5.0, tone="#0B0A10")
 # THE WELL'S DARK IS MEANT, AND LOOKS IT (Parker 11-12, of flat black beside the garden's
 # great cap: "another one of those weird black spots"). The well had one flat near-black

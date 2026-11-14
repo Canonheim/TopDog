@@ -2939,3 +2939,53 @@ func _w_g5f(a: Array) -> void:
 		if k == 1:
 			stand(Vector2(-354.8, 454.65))  # (on slab A: it sinks under a rider, and B rises)
 		await secs(0.9)
+
+
+## a6: hammer 3 lifting a climber up under the hood (the crunch rule). g6crunch:TAG:stand|lie
+func _w_g6crunch(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	var how := str(a[1]) if a.size() > 1 else "stand"
+	pk.warp("6.6")
+	await secs(1.0)
+	var m: Dictionary = pk.things.movers["martillo3"]
+	var c := me()
+	# wait for it to be down, just before it rises
+	var t0 := pk.clock
+	while pk.clock - t0 < 10.0 and not ((m.offset as Vector2).y < 0.02 and (m.offset as Vector2).y >= 0.0):
+		await ticks(1)
+	await secs(0.3)
+	var top := (m.home as Vector2) + (m.offset as Vector2) + Vector2(0, 2.2)
+	if how == "stand":
+		stand(top + Vector2(0.0, 0.02))
+	else:
+		var p := c.pose()
+		var ch := pk.local_of(Climber.pos2(c.bodies["chest"]))
+		stand(top)
+		await ticks(1)
+		for b: RigidBody3D in c.bodies.values():
+			b.rotation.z = PI * 0.5  # (laid on its side over the peak)
+	var cr0: int = pk.things.crunches
+	var ko := false
+	var top_y := -INF
+	t0 = pk.clock
+	while pk.clock - t0 < 6.0:
+		ko = ko or c.knockout_left > 0.0
+		top_y = maxf(top_y, (m.home as Vector2).y + (m.offset as Vector2).y + 2.2)
+		await ticks(1)
+	look(Vector2(-245.1, 537.5), 4.0)
+	print("WATCH g6crunch %s %s: the hammer's peak rose to %.2f (the hood's underside 539.78 over it); crunches %d, knocked out %s, the climber at %s" % [tag, how, top_y, pk.things.crunches - cr0, ko, where()])
+
+
+## a6: the door to daylight (the real valley through it) and the frozen climber's bucket. g6:TAG
+func _w_g6(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("6.9")
+	await secs(2.0)
+	look(Vector2(-238.0, 580.0), 5.0)
+	await secs(0.4)
+	await shot("6_9_door_" + tag)
+	pk.warp("6.1")
+	await secs(2.0)
+	look(Vector2(-240.0, 481.0), 3.5)
+	await secs(0.4)
+	await shot("59_bucket_" + tag)

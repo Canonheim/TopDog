@@ -395,7 +395,7 @@ A.card([(-223.4, 613), (-219.6, 613), (-219.6, 632), (-223.4, 632)], z=-1.4, ton
 A.card([(-185.6, 654), (-181.4, 654), (-179.5, 560), (-188.5, 560)], z=-1.5, tone=ROCKC)  # the horn's stalk, up from the throat
 for x0, x1, y in ((-236.0, -232.6, 650.0), (-226.0, -222.6, 652.2)):
     A.card([(x0 + 0.6, y), (x1 - 0.6, y), (x1 + 0.4, y - 16), (x0 - 0.4, y - 16)], z=-1.3, tone=ROCKC)  # the burros' needles
-A.card([(-262, 570), (-232, 570), (-232, 600), (-240, 628), (-246, 652), (-252, 690), (-262, 690)], z=-2.5, tone="back")
+A.card([(-262, 590), (-232, 590), (-232, 600), (-240, 628), (-246, 652), (-252, 690), (-262, 690)], z=-2.5, tone="back")  # (from 590, above the crack's roof: from 570 it covered the top of a6's flue and its sky. a6_dress 7c)
 A.deco("rock_fence_frame", -219.5, 636.5, z=-0.9, rot=-33.0, size=(19.0, 3.0, 0.3), tone="wood")  # what holds 7.6's rail
 A.deco("scaffold_frame", -225.0, 663.0, z=-1.0, size=(24.0, 25.0, 0.5), tone="wood")  # the station's legs, catwalk to dock
 A.deco("pylon_head_low", -212.0, 672.0, z=-0.9, size=(8.0, 5.0, 1.0), tone="iron")

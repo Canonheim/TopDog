@@ -2351,6 +2351,41 @@ in. Nothing played by a person.
   cross arm passes; both great censers' smoke trails, embers drifting east, torch gold and red
   on the sills.
 
+## The fix run of 11-14: a6's dress file wired in (the chimney and forge)
+
+- 1, the call. 2, lights: the loop and the grates' lanterns stay; its (-246.0, 481.5) became a
+  furnace mouth; added the hut's lamp and hearth, the three furnace mouths (red from below) and
+  the steady daylight column into the shaft. 3: lines 301-318 out (mask, grates, standpipe,
+  great bellows 0.25 m in front of the climb, anvils, pan chains, the hood's ribs 6.25 m too
+  high, tongs, bunting, both torches); the statues stay. 4: the far walls, furnace face, slag
+  glow and drip, hammer guides, light shaft, soot and floor lip out; the burnt strip and the
+  sky slit stay; the dark at -6 and the sky at -5 stop round the door, so **the Peak's real far
+  layers show through it** (`6_9_door_before.jpg` / `_after`).
+- 5, skins: the shell (`SHELL_SKINS`) and the named solids; every ring wears
+  `iron_ring_pin_long` (rooted 1.58 m back, the ring 0.22 under its root) but the shaft's two
+  wall rings, which wear `forja_ring_side_pin`; the rungs `forja_staple_long` (and the snapped
+  rung's stubs, which stay); the cool bosses, the flint knobs and the chockstone theirs (placed
+  here); the dynamite stick wears `forja_dynamite_stick` when it lands (the stand-in until then).
+- 6: **a, the bucket** under the sitting climber: a new iron solid, held and stood on
+  (`59_bucket_after.jpg`). **b, the chockstone** is a cracked block of chalk: its look, worn as its
+  own piece, breaks with it (its 1.2 s and 8 s unchanged; the split it comes back from is the
+  dress's). **d, the crunch checks:** hammer 3 rises to 0.98 m under the hood, but a climber set
+  on its greased, peaked top (standing, and laid on it) slid off onto L6 before it rose: no
+  crunch, no knock-out. The rafts stop 0.3 m from the crusts: only a hand or foot fits there,
+  and the crunch rule looks at the head, chest and pelvis only. Not watched. **e:**
+  `forja_drive_rod` is in peak.gd's STRETCH, and a STRETCH model is no longer rescaled by its
+  drawn size (its width was being multiplied by its length's ratio). A follower now keeps its
+  deco's own length too (the gullet's chain).
+- 7: **a**, the well's east wall above the forge's door (st, y 488 .. 498) is gone and the cap over
+  the well room stops at x -291: both lay in the forge's air. **c**, a7's card behind the flue starts
+  at 590, over the crack's roof (it covered the top of the flue and its sky).
+- Not done: 7h (the stepping bellows' base staying still while its pleats stretch: an engine
+  change); the moving wheels, rods, flap and chain stub; item 9's effects (listed in the
+  effects list above, a6 to add: the breathing mouths, the hearth's smoke, the frog's sparks
+  and croak, the nostril wisps, the slag's drops 3 m back, the bellows' jet, the slag rope, the
+  hammers' sparks, the shaft's steam and soot, white dust at the opening, the chockstone's grit).
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
