@@ -72,21 +72,21 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 
 | Biome | Sheet and pages | Dress file | Models | In-game frames |
 |---|---|---|---|---|
-| 0 La Estación | done; 0.1-0.2 built | `a0_station.py`; `a0_dress.py` WIRED (df43021) | A 15 landed; B 10 and C 21 in progress | yes: `docs/peak/frames/a0_ride_*` (the gap's far cavern hidden by something: with the fix thread) |
-| 1 La Mina Vieja | done; cart room redone (note 103) | `a1_dress.py` WIRED (4c1c86f), cart room built | A 37 landed (walls too dark in the game: being redone); B 23, C 48 in progress | yes: `docs/peak/frames/a1_mine_*` |
-| 2 Las Aguas Negras | done | `a2_dress.py` WIRED (5de53c7) | A: 33 skins + 17 walls landed; B 13 + leftovers, C 44 queued | yes: `docs/peak/frames/a2_aguas_*` |
-| 3 La Gruta de Cristal | done | `a3_dress.py` written (245 placements), not wired | 105 new: A 61, B 44, queued | |
-| 4 El Jardín de Hongos | done | | | |
-| 5 El Templo | done | | | |
-| 6 La Chimenea | done | | | |
-| 7 Los Riscos del Viento | done | | walls example landed | |
+| 0 La Estación | done; 0.1-0.2 built | `a0_station.py`; `a0_dress.py` WIRED (df43021) | all 46 landed and synced (A 15, B 10, C 21) | yes: `docs/peak/frames/a0_ride_*`; the gap's far cavern fixed (625c171) |
+| 1 La Mina Vieja | done; cart room redone (note 103) | `a1_dress.py` WIRED (4c1c86f), cart room built | all 94 landed and synced (A 30, B 24, C 40) | yes: `docs/peak/frames/a1_mine_*` (taken before the walls were redone) |
+| 2 Las Aguas Negras | done | `a2_dress.py` WIRED (5de53c7) | all 102 landed and synced (A 56, B 7, C 39) | yes: `docs/peak/frames/a2_aguas_*` |
+| 3 La Gruta de Cristal | done | `a3_dress.py` WIRED (63d1254) | B 28 landed; A 14 of 45 (the rest, crystals included, with a maker agent) | |
+| 4 El Jardín de Hongos | done | `a4_dress.py` WIRED (08a6185) | B 44 and C 1 landed; A 32 with thread B | |
+| 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | B 11 and C 12 landed; A 65 split between threads B and C, and 11 `_jade` re-makes with C | |
+| 6 La Chimenea | done | `a6_dress.py` written (3d5c465), sent to the fix thread to wire | 86 new: A 37, B 9, C 40, queued | |
+| 7 Los Riscos del Viento | done | being written | walls example landed | |
 | 8 El Teleférico | done; revised (real roofs, hangers held) | | | |
 | 9 El Glaciar | done; revised (three wall arrow signs) | | | |
 | 10 La Cresta de la Tormenta | done | | | |
-| 11 La Cumbre | done; revised (the secret the right way round; the ring) | | ring ropes landed (thread C), not yet in the game | |
+| 11 La Cumbre | done; revised (the secret the right way round; the ring) | | ring ropes landed (thread C) | |
 
 Mountain-wide small pieces (wave 0, no placement needed): frogs, signs, tea things
 (thread B, in progress); iron rings, staples, pegs, the summit's ring ropes (thread C: all
 thirteen landed in the kit, not yet synced into the game).
 
-**Pace (night of 11-13):** the makers are the bottleneck. Biomes 0 to 2 need about 270 new models; more dress files are held until the first game frames are flowing and the makers' queues shorten.
+**Pace (night of 11-13):** the makers are the bottleneck. Biomes 0 to 2 are fully modelled (242 models). Thread A stopped on 11-14 (its handover note is in the side-session notes folder); its walls and masses for biomes 3 to 6 went to a maker agent and to threads B and C, who finished their own rows for biomes 0 to 5. The unwired effects the fix thread could not build yet are listed in its `WORK_LOG.md`.
