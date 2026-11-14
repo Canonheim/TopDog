@@ -200,6 +200,7 @@
 <tr><td>137</td><td><a href="#n137">Build 0.3.104, Puente de Micelio (4.8): the rope bridge should just be a rope</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>138</td><td><a href="#n138">Build 0.3.104, every rope: only the activated hand can take it, and once you have it you stay locked on while the button is held, still in control, like the chair and the winch</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>139</td><td><a href="#n139">Build 0.3.104, Los Ojos (4.9): make the puffballs bright orange, with a bursting animation and a grow-back animation</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>140</td><td><a href="#n140">Build 0.3.104, El Salto del Pozo II (4.10): the great cap should be an actual mushroom bouncer, not weird mushroom-block geometry</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -4309,6 +4310,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 4, 4.9: seven puffballs (a4.py line 377, `A.puff`, r 0.6, back after 4 s). Touch one and it throws you straight away from its middle; today it simply vanishes when it throws you (the game hides it) and simply reappears 4 s later. Drawn as a pale glowing ball ('glow like eyes').</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Bright orange puffballs (the garden's own orange, the caps' colour, with pale spots, still lit a little so they read in the dark): when one throws you it BURSTS (swells for a blink, splits, a big puff of orange spores and a pop, the skin crumpling into the hole), and when it comes back it GROWS back over about a second (a small bud swelling to full size, touchable only at full size), so you can see it coming. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n140">
+  <div class="head"><span class="num">140</span><h3>Build 0.3.104, El Salto del Pozo II (4.10): the great cap should be an actual mushroom bouncer, not weird mushroom-block geometry</h3><span class="time">11-14 12:25</span></div>
+  <blockquote>"this should be an actual mushroom bouncer not weirdly mushroom block geometry."</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/140_great_cap_block.png" alt="Parker's shot, build 0.3.104: the great cap under the diving board at the garden's west door: an angular orange-rimmed block sitting on the stone sill, its pale gills like a fan of planks, and a separate tilted stalk below it on the left that doesn't meet it.">
+    <figcaption>Parker's shot, build 0.3.104: the great cap under the diving board at the garden's west door: an angular orange-rimmed block sitting on the stone sill, its pale gills like a fan of planks, and a separate tilted stalk below it on the left that doesn't meet it.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 4, 4.10 (a4.py lines 385-432). The great cap's solid is one seven-point shape worked out for the throw (a 1 m dome in the middle that throws you to the temple's chains, a 1.9 m east flank leaning 12 degrees, a 1.5 m west flank leaning 40 degrees into the well, its foot filled down to the sill at 364), and its skin `shroom_great_cap` (the Building Maker's) was made to that outline. So it reads as a block with a mushroom's colours, sitting on the sill, and its stalk is a separate piece off to the side.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Make it a real mushroom: a round domed cap on a thick stalk rising out of the well's side (the stalk joined to the cap, under its middle), the cap's top face keeping exactly the three bouncing faces and their angles (so the throw Parker plays doesn't change), its underside gills and rim free under the cap (no solid fill down to the sill; the sill stays a sill), orange with pale spots like the other caps, squashing and springing when it throws like they do (note 36). Checked from the game's camera at an angle. Held until Parker says go.</p>
 </div>
 
 </main>
