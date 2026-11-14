@@ -879,6 +879,57 @@ beside it: `CHALLENGES.md` (the 111), `AUTHORING.md` (how area data is written),
 - **NOT DONE: nobody has played it.** Every challenge is right on paper only. Nobody
   has heard the music or the sound. Nothing is pushed and no build was made.
 
+## Far backgrounds are flat facade pieces (Parker, 2026-11-13)
+
+Said to the Second Director, of the dry hills behind the Peak's station, and passed on
+to this book at his word: "I like how you made the background back there a flat facade
+piece, that was good. You did a good job coloring it too to make it look nice, well
+done", and then: "yes that is now the correct way to do far backgrounds, let top dog
+know and make sure to put instructions on that in our main MDs".
+
+- **The rule.** What stands far behind a scene (far hills, a far town, a far range, the
+  far wall of a cavern) is ONE flat cut-out card standing well back. It is painted in a
+  few broad rows that haze toward the horizon, with a few bold silhouettes cut into its
+  ridge. It is not modelled terrain, and never an empty plane running to a ruled horizon.
+- **The worked example** is the kit's `stn_far_hills` (`Top Dog Kit\source\stn_b_ground.py`
+  and `stn_far_hills_design.py`; `Top Dog Kit\docs\PARTS.md`, P-B, the second list): one
+  card 160 m wide and 6 to 14 m tall, standing 95 m behind the climb. A back row hazed
+  toward the mountains' blue; a front row in ochre with a shade flank to each hill; olive
+  scrub in drifts along the foot; cactus and scrub cut into the ridge, a trunk 1 m across
+  so the ink cannot swallow it; mid-value colours, because the game's light lifts lit
+  faces a long way.
+- **The how-to** is in `Top Dog Kit\docs\HOW_WE_MAKE_KIT_PIECES.md` (section 7, "Far
+  backgrounds are flat facades"), and for the Peak in `docs\peak\PEAK_DESIGN.md` section 7
+  and `docs\peak\AUTHORING.md` under Looks on the `luchador-ui` branch.
+- This is the same language as the cardboard sky and the modelled mountains of the plaza:
+  the far layer is a painted card, the near layers carry the modelling.
+
+## Open ground is designed, never a flat plane (Parker, 2026-11-13)
+
+Said to the Second Director, of the Peak's station, and passed on to this book at his
+word. Of the first ground: "make the entire ground area look beter since right now it is
+a massive flat tan plane". Of the ground that replaced it: "your ground work was also very
+good, make sure that info on how you did it is written down".
+
+- **The rule.** Open ground is never one flat colour running to the horizon. It is one
+  painted slab, 2 cm thick, all flush colour regions on one plane and no height, that runs
+  off every edge of the screen at the close and the pulled-back camera.
+- **It is laid out as a real place, in bands from the camera back:** tufts and flat
+  stones; a worn road with a darker verge and ruts; a trodden yard with cart tracks;
+  paving where people built; patched open country with one wandering line; two or three
+  paler far bands. No more than about 4 m of one flat colour on screen. Real plants and
+  rocks stand on its darker patches. Then a far facade card on the horizon (the rule above).
+- **The worked example** is the kit's `stn_yard_floor` (`Top Dog Kit\source\build_stn_yard_floor.py`
+  and `stn_yard_floor_design.py`; `Top Dog Kit\docs\PARTS.md`, P-A) with the props of
+  `stn_b_ground.py`.
+- **A trap for every maker of foreground:** the camera sits at about the climber's chest
+  height, so anything standing in front of the play plane covers the climber up to its
+  own height wherever the climber stands behind it. Foreground there is under 0.3 m, or
+  stands where nobody stands behind it.
+- **The how-to**, with the traps met on the way, is in `Top Dog Kit\docs\HOW_WE_MAKE_KIT_PIECES.md`
+  (section 7, after the far facades), and for the Peak in `docs\peak\PEAK_DESIGN.md`
+  section 7 and `docs\peak\AUTHORING.md` under Looks on the `luchador-ui` branch.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
