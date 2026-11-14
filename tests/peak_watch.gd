@@ -3077,3 +3077,15 @@ func _w_g3cave(a: Array) -> void:
 	look(Vector2(-326.0, 258.0), 10.0)
 	await secs(0.5)
 	await shot("a3_gruta_3_9_" + tag)
+
+
+## Every inside biome, one frame each: no grey-tan mountain card inside the mountain. gbody:TAG
+func _w_gbody(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	for row in [["1.7", Vector2(-219.0, 38.0), 11.0, "a1"], ["2.5", Vector2(-252.0, 115.0), 7.0, "a2"], ["3.9", Vector2(-326.0, 258.0), 10.0, "a3"],
+			["4.2", Vector2(-255.0, 283.0), 10.0, "a4"], ["5.5", Vector2(-342.0, 438.0), 11.0, "a5"], ["6.3", Vector2(-266.0, 505.0), 10.0, "a6"]]:
+		pk.warp(str(row[0]))
+		await secs(1.5)
+		look(row[1], float(row[2]))
+		await secs(0.4)
+		await shot("inside_%s_%s" % [row[3], tag])

@@ -487,6 +487,11 @@ A.light(a4_dress.EGG_LIGHT[0], a4_dress.EGG_LIGHT[1], color="#9CF07A", rng=4.0, 
 for x, y in a4_dress.WEB_LIGHTS:  # the web's three knots in 4.7's slot
     A.light(x, y, color="#A6FF9A", rng=3.5, energy=0.7)
 
+# THE INSIDE'S OWN DARK (the Director, 11-14): the mountain's body card is cut away over this biome
+# (st.py BODY_WINDOWS); behind the far wall a backstop in this biome's darkest tone, so no gap shows
+# the body's grey-tan, or the sky.
+A.card([(-300, 252), (-180, 252), (-180, 390), (-300, 390)], z=-11.6, tone="back3", edge=False)
+
 if __name__ == "__main__":
     A.save()
     for name, lean, power, out in ARCS:

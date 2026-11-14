@@ -460,5 +460,10 @@ A.light(-452.5, 175.0, color="#B6A2E6", rng=8.0, energy=0.9)  # the join: soft v
 A.light(-442.0, 172.6, color="#F2F6FF", rng=6.0, energy=1.0)  # the bright crystal over the crest
 
 
+# THE INSIDE'S OWN DARK (the Director, 11-14): the mountain's body card is cut away over this biome
+# (st.py BODY_WINDOWS); behind the far wall a backstop in this biome's darkest tone, so no gap shows
+# the body's grey-tan, or the sky.
+A.card([(-472, 76), (-216, 76), (-216, 194), (-472, 194)], z=-11.6, tone="back3", edge=False)
+
 if __name__ == "__main__":
     A.save()

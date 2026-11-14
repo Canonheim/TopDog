@@ -2491,6 +2491,21 @@ in. Nothing played by a person.
   scale now. `KIT_FALLBACK` (peak.gd) shows each original until its re-make is there.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: no mountain card inside the mountain (every inside biome)
+
+- The Director: st.py's body card (z -9, flat grey-tan) showed as an olive wall in the garden
+  (4.2 nearly the whole frame) wherever nothing stood behind the climb: in front of the
+  biomes' own far walls (the black waters' and the cave's at z -10.25, the garden's at -11).
+  Fixed once for every inside biome, 1 to 6: the body card is cut away over each one's span
+  (`BODY_WINDOWS`, seven windows now with 0.3c's gap; the body is cut into strips through each
+  so no piece has a hole), and each interior has a backstop of its own darkest tone behind its
+  far wall (z -11.6, its area file: the palette's `back3`, the cave `#1B1722`), so any gap shows
+  the inside's dark and never the sky. The open-air climb (0, 7 to 11) keeps the body card.
+- Frames, one per biome (`inside_a1_after.jpg` .. `inside_a6_after.jpg`; `inside_a4_before.jpg`):
+  the garden's painted far wall and its mushroom stands now show behind 4.2 where it was flat
+  olive; the temple's hall shows its own dark; the others as they were or better.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

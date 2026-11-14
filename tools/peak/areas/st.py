@@ -125,7 +125,17 @@ body = EAST + WEST + [(-700, -40), (-34, -40)]
 # La Columna and at 3.10's west edge it showed as flat grey-tan, in front of the cave's own far wall,
 # a3_dress's gruta_far_wall at z -10.25, x -466 .. -300, y 168 .. 284): cut away there too. Each
 # window has a split through it, so no piece has a hole.
-BODY_WINDOWS = [((-134.0, -13.0, -122.5, -4.0), -128.0), ((-466.0, 168.0, -300.0, 284.0), -383.0)]
+# AND EVERY INSIDE BIOME (the Director, 11-14: "inside the mountain the body card should not show"): the
+# mine, the black waters, the garden, the temple and the forge too. Each interior keeps a backstop of
+# its own darkest tone behind its far wall (its area file, z -11.6), so a gap shows the inside's dark.
+# The climb in the open air (0, 7 to 11) keeps the body card.
+BODY_WINDOWS = [((-134.0, -13.0, -122.5, -4.0), -128.0),   # a0, 0.3c's gap
+                ((-292.0, -36.0, -148.0, 90.0), -220.0),    # a1, the mine
+                ((-466.0, 82.0, -222.0, 188.0), -344.0),    # a2, the black waters (its far wall's span)
+                ((-466.0, 168.0, -300.0, 284.0), -383.0),   # a3, the crystal cave
+                ((-294.0, 258.0, -186.0, 384.0), -240.0),   # a4, the garden (its far wall's span)
+                ((-380.0, 362.0, -305.0, 488.0), -343.0),   # a5, the temple
+                ((-297.0, 470.0, -236.0, 577.0), -265.0)]   # a6, the forge (to its east wall, under the crack)
 
 
 def _body_with_window():

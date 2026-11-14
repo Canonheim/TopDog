@@ -569,5 +569,10 @@ A.line_pit(-201.00, -200.40, 14.20)
 A.line_pit(-232.20, -231.80, 52.30)
 
 
+# THE INSIDE'S OWN DARK (the Director, 11-14): the mountain's body card is cut away over this biome
+# (st.py BODY_WINDOWS); behind the far wall a backstop in this biome's darkest tone, so no gap shows
+# the body's grey-tan, or the sky.
+A.card([(-298, -42), (-142, -42), (-142, 96), (-298, 96)], z=-11.6, tone="back3", edge=False)
+
 if __name__ == "__main__":
     A.save()

@@ -516,5 +516,10 @@ for _m in A.movers:
         _total = _mo.get("t_out", 0.5) + _mo.get("hold_out", 1.0) + _mo.get("t_in", 0.5) + _mo.get("hold_in", 1.0)
         _mo["phase"] = round((_total - _mo["phase"]) % _total, 3)
 
+# THE INSIDE'S OWN DARK (the Director, 11-14): the mountain's body card is cut away over this biome
+# (st.py BODY_WINDOWS); behind the far wall a backstop in this biome's darkest tone, so no gap shows
+# the body's grey-tan, or the sky.
+A.card([(-386, 356), (-305, 356), (-305, 494), (-386, 494)], z=-11.6, tone="back3", edge=False)
+
 if __name__ == "__main__":
     A.save()

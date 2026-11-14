@@ -558,5 +558,10 @@ for x, y in a3_dress.BRIGHT_LIGHTS:  # each place lit by its bright white crysta
     A.light(x, y, color=WHITE, rng=8.0, energy=1.5)
 A.light(a3_dress.GARDEN_LIGHT[0], a3_dress.GARDEN_LIGHT[1], color="#8FE07A", rng=6.0, energy=1.0)  # the spore lantern through the far door
 
+# THE INSIDE'S OWN DARK (the Director, 11-14): the mountain's body card is cut away over this biome
+# (st.py BODY_WINDOWS); behind the far wall a backstop in this biome's darkest tone, so no gap shows
+# the body's grey-tan, or the sky.
+A.card([(-472, 162), (-300, 162), (-300, 290), (-472, 290)], z=-11.6, tone="#1B1722", edge=False)
+
 if __name__ == "__main__":
     A.save()

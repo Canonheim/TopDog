@@ -346,5 +346,10 @@ for x, y in a6_dress.MOUTHS:  # the two banked furnace mouths and the great furn
     A.light(x, y, color="#FF3A14", rng=6.0, energy=1.3, flicker=True)
 A.light(a6_dress.DAYLIGHT_COLUMN[0], a6_dress.DAYLIGHT_COLUMN[1], color="#E6E8F0", rng=6.0, energy=0.7)  # the first daylight down into the shaft
 
+# THE INSIDE'S OWN DARK (the Director, 11-14): the mountain's body card is cut away over this biome
+# (st.py BODY_WINDOWS); behind the far wall a backstop in this biome's darkest tone, so no gap shows
+# the body's grey-tan, or the sky.
+A.card([(-303, 464), (-236, 464), (-236, 577), (-303, 577)], z=-11.6, tone="back3", edge=False)
+
 if __name__ == "__main__":
     A.save()
