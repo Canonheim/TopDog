@@ -80,10 +80,10 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 | 5 El Templo | done | `a5_dress.py` WIRED (f12c640) | B 11 and C 12 landed; A 65 with the wall maker (moved off threads B and C 11-14); 11 `_jade` re-makes with C | |
 | 6 La Chimenea | done | `a6_dress.py` WIRED (8788f09) | B 9 and C 40 landed; A 2 of 37 (the rest with thread B) | |
 | 7 Los Riscos del Viento | done | `a7_dress.py` WIRED (8451f10) | C 23 landed (and the 7.6 m wheel); A with the wall maker, B with thread B; re-makes `bull_wheel` at 7.6 m, a flying vulture; the walls example becomes the tower top (cut at 658) | |
-| 8 El Teleférico | done; revised (real roofs, hangers held) | `a8_dress.py` WIRED (faa373e) | 71 new: A 19 (wall maker), B 6, C 46; seven re-makes (gondola, dead gondola, chair as a bench, zip trolley, counterweight, low station, haul cable) with C | stand-ins only: `docs/peak/frames/a8_tele_stand_ins_*` (the towers' plain boxes fill the sky until the lattice lands) |
-| 9 El Glaciar | done; revised (three wall arrow signs) | `a9_dress.py` written (7263f84), sent to the fix thread to wire | 67 new + 6 for a9.py: A 56 (wall maker, after the cliffs), B 6, C 11 | |
-| 10 La Cresta de la Tormenta | done | being written | | |
-| 11 La Cumbre | done; revised (the secret the right way round; the ring) | | ring ropes landed (thread C) | |
+| 8 El Teleférico | done; revised (real roofs, hangers held) | `a8_dress.py` WIRED (faa373e) | 71 new: C 52 landed and synced; A 19 with thread C; B 6 with thread B; seven re-makes (gondola, dead gondola, chair as a bench, zip trolley, counterweight, low station, haul cable) with C | stand-ins only: `docs/peak/frames/a8_tele_stand_ins_*` (the towers' plain boxes fill the sky until the lattice lands) |
+| 9 El Glaciar | done; revised (three wall arrow signs) | `a9_dress.py` WIRED (9b64b15) | C 11 landed and synced; A 56 (cliffs' wall maker, after the cliffs), B 6 with thread B | |
+| 10 La Cresta de la Tormenta | done | `a10_dress.py` written (db9c93d), sent to the fix thread to wire | 69 new + 2 for a10.py + 5 re-makes: A 41 (temple's wall maker, after the temple), B 4, C 24 | |
+| 11 La Cumbre | done; revised (the secret the right way round; the ring) | being written | ring ropes landed (thread C) | |
 
 Mountain-wide small pieces (wave 0, no placement needed): frogs, signs, tea things
 (thread B, in progress); iron rings, staples, pegs, the summit's ring ropes (thread C: all
