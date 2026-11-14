@@ -217,7 +217,12 @@ A.mover("serac", PIV,
          (box_pts(-2.19, 3.6, 0.6, 6.8), "snow"),       # the snow up its west side (0.6 m: a strip of 0.3 read as a white line)
          (box_pts(-1.25, 7.3, 2.5, 0.4), "snow"),       # its cap
          (ngon(0.12, 7.42, 0.22, 6), "rock")],          # a horn of rock at the top corner
-        {"type": "tip", "angle": -75.0, "time": 5.0, "trigger": "grab", "reset": 12.0}, model="serac")
+        # (Note 88, Parker 11-13: "Make it fall all the way and then shatter in the hole so it
+        # dumps you down there"; "the new serac needs to grow into place". Today's curve, on
+        # through level at 5.5 s, shattering at 108 degrees (6.0 s); a new one grows in 3 s,
+        # 3 s after.)
+        {"type": "tip", "angle": -75.0, "time": 5.0, "trigger": "grab", "reset": 12.0,
+         "shatter": -108.0, "regrow_wait": 3.0, "grow": 3.0}, model="serac")
 A.challenge("9.5", "El Serac", (-326.4, 832.0), 4, "B",
             moves=[["fling", [-315.56, 833.94], [-312.2, 834.5], "F1"]])
 A.cam((-327.6, 829, -310, 842), half_h=9.5, bias=(3.0, -4.0))
@@ -327,6 +332,11 @@ for s0, ss in ((None, (1.3, 2.5)), (3.6, (4.4, 5.8, 7.2)), (8.4, (9.2, 10.6, 12.
 A.hold(-286.62, 867.0, r=0.2, kind="rock")
 A.rope("rope98", (-286.62, 866.9), 5.4, kind="rope")
 A.spawner("slab", (-301.2, 880.4), period=5.5, vel=(1.2, -2.2), phase=0.0, r=0.5, life=9.0, warn=1.3, mass=30.0)
+# THE KICKER (note 91, Parker 11-13: "They should get kicked out where I indicated"): a lip of
+# ice on the chute's floor just above the rope's foot. Every slab that reaches it is thrown up
+# and back into the cave behind the climb; none reaches the climb below. (A plain ice stand-in
+# until its model lands.)
+A.board(P(15.2, 0.05), P(14.3, 0.55), throw=(0.6, 4.5, -3.6), depth=-4.0, gone=856.0, t=0.22, model="", kind="ice")
 A.challenge("9.8", "La Avalancha", (-284.0, 846.0), 4, "X",
             moves=[["reach", list(H98[i]), list(H98[i + 1])] for i in range(len(H98) - 1)] +
                   [["reach", [-286.62, 866.8], [-286.5, 867.8]]])

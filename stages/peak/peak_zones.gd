@@ -66,6 +66,8 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 			"bounce":
 				if z.has("model"):
 					_bounce_vis(a, z, root, row)
+				elif str(z.get("look", "")) == "rope":
+					_rope_band(z, root, row)
 				bounces.append(row)
 			"drips":
 				_drips_vis(z, root, row)
@@ -473,15 +475,26 @@ func _tick_strikes(c: Climber) -> void:
 		elif bodies[0] is StaticBody3D:
 			at = peak.things._body_centre(bodies[0])
 		var near := c != null and peak.player_at().distance_to(at) < 70.0
+		row["at"] = at
+		row["humming"] = near and fposmod(ph, period) > period - warn
+		row["hum_f"] = clampf((fposmod(ph, period) - (period - warn)) / maxf(warn, 0.01), 0.0, 1.0)
 		if near and int(row.warned) != n and fposmod(ph, period) > period - warn:
 			row.warned = n
 			peak.audio.play("lightning_hum", at, 2.0)
+		# The hand on the metal buzzes through the hum (note 95).
+		if c != null:
+			for i in c.limbs.size():
+				var o = c.limbs[i].grab_other
+				peak.things.buzz[i] = bool(row.humming) and o != null and bodies.has(o)
 		if n == int(row.n):
 			continue
 		row.n = n
 		if not near:
 			continue
 		flash = 1.0
+		row["struck"] = peak.clock
+		_frame_strikes(0.0)  # (finds the metal's tip, the first time)
+		_bolt(row, row.get("tip", at))
 		peak.audio.play("lightning_zap", at, 6.0)
 		peak.audio.play("thunder", Vector2.INF, 0.0)
 		if c == null or c.state != Climber.State.LIVE:
@@ -492,6 +505,100 @@ func _tick_strikes(c: Climber) -> void:
 				for b: RigidBody3D in c.bodies.values():
 					b.linear_velocity += Vector3(randf_range(-2.0, 2.0), 2.5, 0)
 				break
+
+
+## LIGHTNING SAYS WHAT IT IS (playtest note 95; Parker 11-13: "what is happenin here? We
+## keep getting konocked out"). Through the hum, sparks crawl up the mast's metal from its
+## foot to the tip, faster and thicker toward the strike. Then a drawn bolt hits the tip
+## and the metal is lit (the house tint, not a glow) for the strike's `on` seconds. The
+## button mark of a limb on the metal buzzes through the hum (peak_things' glyphs).
+const BOLT_COL := Color("#FFE600")
+const METAL_LIT := Color(1.9, 2.0, 2.4)
+
+
+func _frame_strikes(_delta: float) -> void:
+	var t := peak.clock
+	for row in strikes:
+		var bodies: Array = _tags.get(str(row.def.tag), [])
+		if bodies.is_empty() or not row.has("at"):
+			continue
+		if not row.has("foot"):
+			# The metal's own reach: its lowest point and its highest (the tip the bolt takes).
+			var lo := Vector2(0, INF)
+			var hi := Vector2(0, -INF)
+			for b in bodies:
+				if b is StaticBody3D:
+					for ch in (b as Node).get_children():
+						if ch is CollisionShape3D and (ch as CollisionShape3D).shape is ConvexPolygonShape3D:
+							for q in ((ch as CollisionShape3D).shape as ConvexPolygonShape3D).points:
+								var w := Vector2(q.x + (b as Node3D).position.x, q.y + (b as Node3D).position.y)
+								if w.y < lo.y:
+									lo = w
+								if w.y > hi.y:
+									hi = w
+			row["foot"] = lo if lo.y < INF else (row.at as Vector2) - Vector2(0, 10)
+			row["tip"] = hi if hi.y > -INF else (row.at as Vector2)
+		var tip: Vector2 = row.tip
+		var foot := Vector2(tip.x, (row.foot as Vector2).y)
+		if bool(row.get("humming", false)) and t >= float(row.get("spark_next", 0.0)):
+			var f := float(row.get("hum_f", 0.0))
+			row["spark_next"] = t + lerpf(0.09, 0.03, f)
+			# a crawl that climbs the mast faster as the strike comes, and a few on the metal
+			var climb := fposmod(t * lerpf(0.8, 3.0, f), 1.0)
+			burst(foot.lerp(tip, climb) + Vector2(randf_range(-0.25, 0.25), 0.0), "sparks", lerpf(0.35, 0.9, f))
+			if randf() < f:
+				burst(foot.lerp(tip, randf()) + Vector2(randf_range(-0.3, 0.3), 0.0), "sparks", 0.4)
+		var lit := t - float(row.get("struck", -9.0)) < float(row.def.get("on", 0.4))
+		if lit != bool(row.get("lit", false)):
+			row["lit"] = lit
+			for b in bodies:
+				for ch in (b as Node).get_children():
+					if ch is GeometryInstance3D:
+						(ch as GeometryInstance3D).set_instance_shader_parameter(&"tint", METAL_LIT if lit else Color(1, 1, 1))
+		var bolt: Node3D = row.get("bolt")
+		if bolt != null and is_instance_valid(bolt):
+			bolt.visible = t - float(row.get("struck", -9.0)) < 0.28
+
+
+## The bolt: a jagged fork from the cloud down onto the tip, drawn in the bolt's yellow.
+func _bolt(row: Dictionary, tip: Vector2) -> void:
+	var old: Node3D = row.get("bolt")
+	if old != null and is_instance_valid(old):
+		old.queue_free()
+	var root := Node3D.new()
+	var pts := PackedVector2Array([tip])
+	var p := tip
+	for i in 9:
+		p += Vector2(randf_range(-1.6, 1.6), randf_range(2.6, 4.2))
+		pts.append(p)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3(0, 0, 1))
+	for i in pts.size() - 1:
+		var a := pts[i]
+		var b := pts[i + 1]
+		var side := Vector2(-(b - a).y, (b - a).x).normalized() * lerpf(0.12, 0.3, float(i) / pts.size())
+		for v in [a - side, b - side, b + side, a - side, b + side, a + side, a - side, b + side, b - side, a - side, a + side, b + side]:
+			st.add_vertex(Vector3(v.x, v.y, 0.0))  # (both windings: it is seen from the front, whichever way it zigzags)
+	# a fork off its middle
+	var fork := pts[4]
+	var fp := fork
+	for i in 3:
+		var nxt := fp + Vector2(randf_range(0.8, 2.0) * (1.0 if tip.x < fork.x else -1.0), randf_range(-0.6, 1.4))
+		var side2 := Vector2(-(nxt - fp).y, (nxt - fp).x).normalized() * 0.1
+		for v in [fp - side2, nxt - side2, nxt + side2, fp - side2, nxt + side2, fp + side2, fp - side2, nxt + side2, nxt - side2, fp - side2, fp + side2, nxt + side2]:
+			st.add_vertex(Vector3(v.x, v.y, 0.0))
+		fp = nxt
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	CelPass.paint(mi, BOLT_COL)
+	root.add_child(mi)
+	root.position = Vector3(0, 0, -0.35)
+	var body: Node3D = (_tags.get(str(row.def.tag), []) as Array)[0]
+	body.get_parent().add_child(root)
+	row["bolt"] = root
+	burst(tip, "sparks", 2.0)
 
 
 # ================================================================ drawn
@@ -524,9 +631,16 @@ func frame(_delta: float, _cam: Camera3D) -> void:
 		if randf() < 0.35:
 			sea.ripple(world, randf_range(0.6, 1.1))
 	for row in winds:
-		var fx: CPUParticles3D = row.get("fx")
+		var fx: MeshInstance3D = row.get("fx")
 		if fx != null:
-			fx.emitting = _gust(row.def) > 0.2 and bool(peak._area_active.get(row.area, true))
+			var on := bool(peak._area_active.get(row.area, true))
+			fx.visible = on
+			if on:
+				var mat := fx.material_override as ShaderMaterial
+				mat.set_shader_parameter("gust", _gust(row.def))
+				mat.set_shader_parameter("warn", 1.0 if _gust_warn(row.def) else 0.0)
+	_frame_streamers()
+	_frame_strikes(_delta)
 	for row in geysers:
 		var fx: CPUParticles3D = row.get("fx")
 		if fx != null:
@@ -1036,6 +1150,38 @@ func _bounce_vis(_a: Dictionary, z: Dictionary, root: Node3D, row: Dictionary) -
 	row["squash_t"] = 9.0
 
 
+## A RING ROPE THAT HAS NO MODEL IS STILL DRAWN (playtest note 98; Parker 11-13: "oh there
+## is invisible bouncy stuff"): a thick band lying exactly along its bouncing line, a
+## padded cushion at each end, in the ring's colours by turn (red, cream, jade), standing
+## proud of the rock. It squashes and springs when it throws you, as a cap does. The real
+## rope model replaces it later.
+const ROPE_COLS := [Color("#D8262E"), Color("#EFE3C6"), Color("#2FA37C")]
+const ROPE_THICK := 0.2
+const ROPE_PAD := 0.42
+var _ropes_drawn := 0
+
+
+func _rope_band(z: Dictionary, root: Node3D, row: Dictionary) -> void:
+	var a := Peak.v2(z.a)
+	var b := Peak.v2(z.b)
+	var len := a.distance_to(b)
+	var pivot := Node3D.new()
+	pivot.position = Vector3((a.x + b.x) * 0.5, (a.y + b.y) * 0.5, 0.0)
+	pivot.rotation.z = (b - a).angle()
+	var col: Color = ROPE_COLS[_ropes_drawn % ROPE_COLS.size()]
+	_ropes_drawn += 1
+	var band := LuchaKit.box(Vector3(len, ROPE_THICK, ROPE_THICK * 1.4), col)
+	band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pivot.add_child(band)
+	for e in [-1.0, 1.0]:
+		var pad := LuchaKit.box(Vector3(ROPE_PAD * 0.8, ROPE_PAD, ROPE_PAD), Color("#2E2A2C"))
+		pad.position = Vector3(e * len * 0.5, 0.0, 0.0)
+		pivot.add_child(pad)
+	root.add_child(pivot)
+	row["vis"] = pivot
+	row["squash_t"] = 9.0
+
+
 static func squash_curve(st: float) -> float:
 	if st < 0.07:
 		return st / 0.07
@@ -1201,32 +1347,88 @@ func burst(at: Vector2, kind: String, scale := 1.0, dir := Vector2.UP, z := 0.5)
 	peak.get_tree().create_timer(float(b[3]) + 0.4).timeout.connect(p.queue_free)
 
 
-func _wind_fx(_a: Dictionary, z: Dictionary, root: Node3D) -> CPUParticles3D:
+const WIND_LOOK := preload("res://stages/peak/peak_wind.gdshader")
+var _wind_seed := 0.0
+
+
+func _wind_fx(a: Dictionary, z: Dictionary, root: Node3D) -> MeshInstance3D:
 	var r: Array = z.rect
 	var w := float(r[2]) - float(r[0])
 	var h := float(r[3]) - float(r[1])
 	var acc := Peak.v2(z.accel)
 	if acc.length() < 0.1:
 		return null
-	var p := _particles(Color("#FFFFFF"), 0.7, int(clampf(w * h / 9.0, 8, 90)), 1.6)
-	# The streak lies along the wind. (Turning the emitter to stand it up also turned the
-	# box it is born in and the way it flies: the mine's 6 x 112 m down-draught drew as a
-	# band 112 m wide across the cavern, its streaks sliding sideways. Parker 11-12:
-	# "there is wind in the mine at this part that seams to do nothing".)
-	var upright := absf(acc.y) > absf(acc.x)
-	(p.mesh as QuadMesh).size = Vector2(0.04, 0.9) if upright else Vector2(0.9, 0.04)
-	(p.material_override as StandardMaterial3D).billboard_mode = BaseMaterial3D.BILLBOARD_DISABLED
-	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-	p.emission_box_extents = Vector3(w * 0.5, h * 0.5, Peak.HALF)
-	p.direction = Vector3(acc.x, acc.y, 0).normalized()
-	p.spread = 3.0
-	p.initial_velocity_min = 5.0 + acc.length()
-	p.initial_velocity_max = 8.0 + acc.length() * 1.5
-	p.gravity = Vector3.ZERO
-	p.preprocess = 0.0
-	p.position = Vector3((float(r[0]) + float(r[2])) * 0.5, (float(r[1]) + float(r[3])) * 0.5, 0.6)
-	root.add_child(p)
-	return p
+	var mi := MeshInstance3D.new()
+	var q := QuadMesh.new()
+	q.size = Vector2(w, h)
+	mi.mesh = q
+	var mat := ShaderMaterial.new()
+	mat.shader = WIND_LOOK
+	mat.set_shader_parameter("size", Vector2(w, h))
+	mat.set_shader_parameter("dir", acc.normalized())
+	mat.set_shader_parameter("speed", 3.0 + acc.length() * 1.6)
+	mat.set_shader_parameter("seed", _wind_seed)
+	mat.set_shader_parameter("gust", 0.0)
+	_wind_seed += 1.37
+	mi.material_override = mat
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	mi.position = Vector3((float(r[0]) + float(r[2])) * 0.5, (float(r[1]) + float(r[3])) * 0.5, 0.6)
+	root.add_child(mi)
+	_streamers_in(a, z, root)
+	return mi
+
+
+## ...AND THE WORLD STREAMS IN IT (note 89, "the flag"): every pole of the area standing in a
+## wind's box flies a streamer from its top, which streams the wind's way while it blows
+## and hangs slack between gusts. A chain of short painted pieces on the one material,
+## laid out every frame (frame()).
+const STREAMER_POLES := ["streamer_pole", "flag_pole", "pole_flag", "wind_sock", "cane_flag"]
+const STREAMER_COLS := [Color("#D8262E"), Color("#FFD23F"), Color("#2FA37C"), Color("#EFE3C6")]
+const STREAMER_N := 6
+const STREAMER_SEG := 0.26  # m a piece
+var streamers: Array = []  # {"at": Vector2, "z", "pieces": [Node3D], "wind": the wind's zone def, "area", "phase"}
+
+
+func _streamers_in(a: Dictionary, z: Dictionary, root: Node3D) -> void:
+	for d in a.get("decos", []):
+		var model := str(d.get("model", ""))
+		if not STREAMER_POLES.has(model):
+			continue
+		var top := Vector2(float(d.at[0]), float(d.at[1]) + float((d.get("size", [0, 2.0]) as Array)[1]) * 0.96)
+		if not Peak.rect_has(z.rect, top):
+			continue
+		var pieces: Array = []
+		var col: Color = STREAMER_COLS[streamers.size() % STREAMER_COLS.size()]
+		for i in STREAMER_N:
+			var p := LuchaKit.box(Vector3(STREAMER_SEG * 1.08, lerpf(0.16, 0.08, float(i) / STREAMER_N), 0.02), col)
+			p.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			root.add_child(p)
+			pieces.append(p)
+		streamers.append({"at": top, "z": float(d.at[2]) if (d.at as Array).size() > 2 else 0.0, "pieces": pieces,
+			"wind": z, "area": str(a.id), "phase": randf() * TAU})
+
+
+func _frame_streamers() -> void:
+	var t := peak.clock
+	for st: Dictionary in streamers:
+		if not bool(peak._area_active.get(st.area, true)):
+			continue
+		var z: Dictionary = st.wind
+		var k := _gust(z)
+		var acc := Peak.v2(z.accel)
+		var hang := -PI * 0.5
+		var blow := acc.angle()
+		var base := lerp_angle(hang + 0.25 * signf(acc.x), blow, clampf(k, 0.0, 1.0))
+		var p: Vector2 = st.at
+		for i in (st.pieces as Array).size():
+			var u := float(i) / STREAMER_N
+			var flutter := (sin(t * 11.0 - float(i) * 0.95 + float(st.phase)) * 0.32 * k + sin(t * 2.1 + float(i) + float(st.phase)) * 0.07) * (0.3 + u)
+			var ang := base + flutter
+			var step := Vector2(cos(ang), sin(ang)) * STREAMER_SEG
+			var piece: Node3D = st.pieces[i]
+			piece.position = Vector3(p.x + step.x * 0.5, p.y + step.y * 0.5, float(st.z) + 0.05)
+			piece.rotation = Vector3(0, 0, ang)
+			p += step
 
 
 func _geyser_fx(_a: Dictionary, z: Dictionary, root: Node3D) -> CPUParticles3D:

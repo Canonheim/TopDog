@@ -3899,6 +3899,149 @@ func _free(c: Climber) -> void:
 		l.regrip = 99.0  # (it won't catch anything until told)
 
 
+## THE MOUNTAIN'S RULES OF PLAY (the fix run of 11-13, group 1): sharp tips are blunt as
+## solids (note 90), a crunch of the head or body knocks you out and a pinched hand does not
+## (notes 49, 78), and held between two moving things the one with fewer of your limbs
+## (then the lower) lets go (note 83).
+func _run_peakrules() -> void:
+	var pk := _peak()
+	# ---- note 90: a 14 degree spike's point is cut back to a blunt end; a square is untouched
+	var spike := PackedVector2Array([Vector2(0, 0), Vector2(0.3, 0), Vector2(0.15, 1.2)])
+	var bl := Peak.blunt(spike)
+	var tip_w := bl[2].distance_to(bl[3]) if bl.size() == 4 else 0.0
+	var tip_y := maxf(bl[2].y, bl[3].y) if bl.size() == 4 else 9.0
+	t("peak rules: a sharp point is blunt as a solid (note 90)", bl.size() == 4 and tip_w >= 0.07 and tip_y <= 1.2 - 0.15,
+		"end %.3f m across, %.2f m short of the point" % [tip_w, 1.2 - tip_y])
+	var sq := PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)])
+	t("peak rules: a square corner is left as it is", Peak.blunt(sq) == sq)
+	var c := _peak_climber(pk, -5.0, 2.5)
+	await psec(pk, 1.0)
+	# ---- notes 49 and 78: the crunch
+	var jaw := _rule_box(Vector3(0.2, 0.7, 1.0), true)
+	var wall := _rule_box(Vector3(0.2, 0.7, 1.0), false)
+	var fake := {"id": "test_jaw", "speed": 1.2, "spin": 0.0}
+	pk.things._mover_of[jaw.get_instance_id()] = fake
+	var before: int = pk.things.crunches
+	for i in int(0.12 * Engine.physics_ticks_per_second):
+		var foot := (c.bodies["chest"] as RigidBody3D).global_position
+		wall.global_position = foot + Vector3(0.8, 0, 0)  # (beside, not in it: only the jaw touches)
+		jaw.global_position = foot + Vector3(-0.8, 0, 0)
+		await pticks(pk, 1)
+	var hand_only := pk.things.crunches == before and c.knockout_left <= 0.0
+	# the jaw closes on the hand only: the hand slips free, nothing happens
+	for i in int(0.4 * Engine.physics_ticks_per_second):
+		var hp := (c.bodies[c.limbs[1].def.end] as RigidBody3D).global_position
+		wall.scale = Vector3(0.35, 0.25, 1.0)
+		jaw.scale = Vector3(0.35, 0.25, 1.0)
+		wall.global_position = hp + Vector3(0.06, 0, 0)
+		jaw.global_position = hp + Vector3(-0.06, 0, 0)
+		await pticks(pk, 1)
+	hand_only = hand_only and pk.things.crunches == before and c.knockout_left <= 0.0
+	t("peak rules: a hand caught between a moving piece and a wall slips free (no knock-out)", hand_only,
+		"crunches %d, knocked out %s" % [pk.things.crunches - before, c.knockout_left > 0.0])
+	# a still piece and a wall closing on the chest: nobody moves, nothing happens
+	wall.scale = Vector3.ONE
+	jaw.scale = Vector3.ONE
+	fake.speed = 0.0
+	for i in int(0.3 * Engine.physics_ticks_per_second):
+		var cp := (c.bodies["chest"] as RigidBody3D).global_position
+		wall.global_position = cp + Vector3(0.12, 0, 0)
+		jaw.global_position = cp + Vector3(-0.12, 0, 0)
+		await pticks(pk, 1)
+	var still_ok := pk.things.crunches == before and c.knockout_left <= 0.0
+	t("peak rules: squeezed between two still things is not a crunch", still_ok, "crunches %d" % (pk.things.crunches - before))
+	# the moving jaw closes on the chest against the wall: knocked out
+	fake.speed = 1.2
+	var ko_at := -1.0
+	var seen := ""
+	for i in int(0.4 * Engine.physics_ticks_per_second):
+		var cp2 := (c.bodies["chest"] as RigidBody3D).global_position
+		wall.global_position = cp2 + Vector3(0.12, 0, 0)
+		jaw.global_position = cp2 + Vector3(-0.12, 0, 0)
+		await pticks(pk, 1)
+		if i == 3:
+			seen = "state %s, ko %.2f, wait %.2f, chest at %s" % [c.state, c.knockout_left, pk.things._ko_wait, (c.bodies["chest"] as RigidBody3D).global_position]
+		if c.knockout_left > 0.0:
+			ko_at = float(i) / Engine.physics_ticks_per_second
+			break
+	t("peak rules: the chest crunched between a moving piece and a wall knocks you out (notes 49, 78)",
+		ko_at >= 0.0 and pk.things.crunches == before + 1, "after %.2f s; %s" % [ko_at, seen])
+	jaw.global_position = Vector3(0, -500, 0)
+	wall.global_position = Vector3(0, -510, 0)
+	pk.things._mover_of.erase(jaw.get_instance_id())
+	c.remove()
+	await psec(pk, 0.3)
+	# ---- note 83: held between two moving things
+	var res: Array = []
+	# (one each: a hand on A and a FOOT on B, so A's held point is clearly the higher; which
+	# way each thing goes does not matter, only the height when the grip breaks)
+	for case in [["two limbs up, one down", [0, 2], [1], 1.0, -1.0], ["hand up, foot down", [0], [2], 1.0, -1.0],
+			["hand down, foot up", [0], [2], -1.0, 1.0], ["one moving, one still", [0], [1], 1.0, 0.0]]:
+		var c2 := _peak_climber(pk, -5.0, 6.0)
+		await psec(pk, 0.4)
+		var hi_box := _rule_box(Vector3(0.5, 0.5, 0.5), true)
+		var lo_box := _rule_box(Vector3(0.5, 0.5, 0.5), true)
+		var on_a: Array = case[1]
+		var on_b: Array = case[2]
+		var mid := (c2.bodies["chest"] as RigidBody3D).global_position
+		hi_box.global_position = mid + Vector3(-0.35, 0.3, 0)  # (level: which ends up lower is
+		lo_box.global_position = mid + Vector3(0.35, 0.3, 0)  # decided by which way each goes)
+		Climber.sync_server(hi_box)
+		Climber.sync_server(lo_box)
+		var va := float(case[3])
+		var vb := float(case[4])
+		pk.things._mover_of[hi_box.get_instance_id()] = {"id": "test_a", "speed": absf(va), "spin": 0.0}
+		pk.things._mover_of[lo_box.get_instance_id()] = {"id": "test_b", "speed": absf(vb), "spin": 0.0}
+		c2.release_all()
+		for i: int in on_a:
+			c2.attach(i, hi_box)
+		for i: int in on_b:
+			c2.attach(i, lo_box)
+		var gone_a := 0
+		var gone_b := 0
+		for k in int(2.0 * Engine.physics_ticks_per_second):
+			hi_box.global_position += Vector3(0, va / Engine.physics_ticks_per_second, 0)
+			lo_box.global_position += Vector3(0, vb / Engine.physics_ticks_per_second, 0)
+			await pticks(pk, 1)
+			gone_a = 0
+			gone_b = 0
+			for i: int in on_a:
+				gone_a += 1 if c2.limbs[i].grab_other != hi_box else 0
+			for i: int in on_b:
+				gone_b += 1 if c2.limbs[i].grab_other != lo_box else 0
+			if gone_a + gone_b > 0:
+				break
+		res.append([case[0], gone_a, on_a.size(), gone_b, on_b.size(), pk.things.last_strain.duplicate()])
+		pk.things.last_strain = []
+		pk.things._mover_of.erase(hi_box.get_instance_id())
+		pk.things._mover_of.erase(lo_box.get_instance_id())
+		c2.remove()
+		hi_box.queue_free()
+		lo_box.queue_free()
+		await psec(pk, 0.2)
+	t("peak rules: two limbs on the rising thing, one on the sinking: the one-limb grip lets go (note 83)",
+		int(res[0][1]) == 0 and int(res[0][3]) == 1, str(res[0]))
+	t("peak rules: one limb each: the lower held thing's grip lets go", int(res[1][1]) == 0 and int(res[1][3]) == 1, str(res[1]))
+	t("peak rules: one limb each, going the other ways: still the lower one", int(res[2][1]) == 0 and int(res[2][3]) == 1, str(res[2]))
+	t("peak rules: one thing still: the grip on the still thing lets go (the moving thing wins)", int(res[3][3]) == 1 and int(res[3][1]) == 0, str(res[3]))
+
+
+func _rule_box(size: Vector3, moving: bool) -> CollisionObject3D:
+	var b: CollisionObject3D = AnimatableBody3D.new() if moving else StaticBody3D.new()
+	if moving:
+		(b as AnimatableBody3D).sync_to_physics = false
+	b.collision_layer = Climber.LAYER_WORLD
+	b.collision_mask = 0
+	var cs := CollisionShape3D.new()
+	var bx := BoxShape3D.new()
+	bx.size = size
+	cs.shape = bx
+	b.add_child(cs)
+	world.add_child(b)
+	b.global_position = Vector3(0, -500, 0)
+	return b
+
+
 func _run_peak() -> void:
 	var pk := _peak("res://tests/peak_lab/")
 	var hz := Engine.physics_ticks_per_second

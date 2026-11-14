@@ -560,6 +560,7 @@ func _static_body(friction: float) -> StaticBody3D:
 
 ## Collision for a polygon: convex pieces, extruded through the plane.
 func _add_shapes(body: CollisionObject3D, pts: PackedVector2Array, z0: float, z1: float, at := Vector2.ZERO) -> void:
+	pts = blunt(pts)
 	var parts: Array = [pts] if _convex(pts) else Geometry2D.decompose_polygon_in_convex(pts)
 	if parts.is_empty():
 		var back := pts.duplicate()
@@ -579,6 +580,58 @@ func _add_shapes(body: CollisionObject3D, pts: PackedVector2Array, z0: float, z1
 		var col := CollisionShape3D.new()
 		col.shape = cv
 		body.add_child(col)
+
+
+## SHARP TIPS ARE BLUNT AS SOLIDS (playtest note 90; Parker 11-13, of the glacier's icicles:
+## "a hand was on one side of the point, and getting a little caught, like the hand was on
+## one side and the forearm on the other since the icicle was sharp enough to go into the
+## wrist crevasse"). Every solid's outline loses its sharp points before it becomes a
+## collision: a corner narrower than BLUNT_DEG is cut back along both its edges until the
+## end it leaves is BLUNT_W across (and at least BLUNT_MIN back from the point), never more
+## than BLUNT_MOST of either edge. What is drawn stays sharp. Icicles, needles, spikes, a
+## crystal's point, a wedge of rock: one rule, so nothing can wedge between a hand and its
+## forearm.
+const BLUNT_DEG := 40.0
+const BLUNT_W := 0.08  # m: the blunt end is at least this wide
+const BLUNT_MIN := 0.15  # m: and cut at least this far back
+const BLUNT_MOST := 0.3  # of the shorter of the corner's two edges
+
+
+static func blunt(pts: PackedVector2Array) -> PackedVector2Array:
+	var n := pts.size()
+	if n < 3:
+		return pts
+	var area := 0.0
+	for i in n:
+		area += pts[i].cross(pts[(i + 1) % n])
+	if absf(area) < 0.0001:
+		return pts
+	var turn := signf(area)  # (+1 counter-clockwise)
+	var out := PackedVector2Array()
+	var cut := false
+	for i in n:
+		var a := pts[(i + n - 1) % n]
+		var b := pts[i]
+		var c := pts[(i + 1) % n]
+		var e1 := a - b
+		var e2 := c - b
+		var l1 := e1.length()
+		var l2 := e2.length()
+		if l1 < 0.001 or l2 < 0.001:
+			out.append(b)
+			continue
+		var convex := signf((b - a).cross(c - b)) == turn
+		var ang := e1.angle_to(e2)
+		if not convex or absf(rad_to_deg(ang)) >= BLUNT_DEG:
+			out.append(b)
+			continue
+		var half := absf(ang) * 0.5
+		var back := maxf(BLUNT_MIN, BLUNT_W * 0.5 / maxf(tan(half), 0.01))
+		back = minf(back, minf(l1, l2) * BLUNT_MOST)
+		out.append(b + e1 / l1 * back)
+		out.append(b + e2 / l2 * back)
+		cut = true
+	return out if cut else pts
 
 
 static func _convex(pts: PackedVector2Array) -> bool:

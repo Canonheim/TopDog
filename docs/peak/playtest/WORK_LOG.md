@@ -1563,6 +1563,101 @@ buzz is still heard, the chirrs are the first thing to take out.
   against the same views as `*_after2.jpg`. `7_10_*_trial_a8.jpg` is the low station with
   only the cableway's cards out.
 
+## The fix run of 11-13, group 1: the mountain's rules of play
+
+The brief: `docs/peak/playtest/FIX_RUN_1113.md`. All eight items are in, each a first
+working version. Measured headless (`--peakrules`, new) and by frame in the real game
+(`tests/peak_watch.tscn`, scenes `g1ice`, `g1serac`, `g1slab`, `g1wind`, `g1bolt`,
+`g1drawn`, `g1cold`). The "before" frames are the same scenes with the old files swapped
+in. Nothing played by a person.
+
+1. **A crunch knocks you out (notes 49, 78).** `_tick_crunch` in `peak_things.gd`. Each
+   tick a small ball inside the head, the chest and the hips (62% of the part's own size)
+   is checked against the world. If one ball is touched by a moving piece and by anything
+   else solid, or by two moving pieces, for 0.08 s, you are knocked out (stars, bonk) and
+   drop. A piece is "moving" above 0.15 m/s or 0.15 rad/s, so gears, sheaves, pistons and
+   counterweights are all covered by one rule. Hands and feet are not checked.
+   - Measured (`--peakrules`): chest squeezed between a moving jaw and a wall: out after
+     0.07 s. The same squeeze with the jaw still: nothing. The jaw closing on a hand
+     only: nothing.
+   - **Not tried on the real gears of 5.4 or the sheave of 8.4.** The geometry of those
+     pinches was not reproduced by script.
+   - First guesses: the ball's size (62%), the 0.08 s.
+2. **Held between two moving things (note 83).** In `_tick_strain`. When a grip has to
+   break and two or more of the held things move, the thing with fewer of your limbs loses
+   and all your limbs on it let go together; on a tie the lower held point loses. With one
+   thing still, the moving thing wins as before.
+   - **Found on the way:** the old rule never fired for two things moving apart at the
+     same speed (it compared speeds, which were equal), which is the counterweights' case.
+     It now compares the grips' velocities. A thing counts as moving by its own speed (a
+     mover's speed and turn), not by the hand on it, because the hands lag behind.
+   - Measured: two limbs rising, one sinking: the one lets go. Hand on one thing, foot on
+     another, either way round: the foot (the lower) lets go. One thing still: its grip
+     lets go.
+3. **Cold shows on the hand (note 84).** `_frame_glyphs`. The button mark on a limb holding
+   timed ice shivers from 6 mm to 5 cm as its 2 s run out, then 8 mm while that hand cannot
+   grip again (0.6 s). Measured on 9.1: up to 0.011 m in the first half second, up to
+   0.048 m near the end. `TELL_COLD` is still off. The open call ("whether the mark keeps
+   a slight shiver while the hand cannot grip") is answered yes, slightly: a first guess.
+4. **Sharp tips are blunt as solids (note 90).** `Peak.blunt()`, used by every solid's
+   collision (`_add_shapes`). Any corner sharper than 40 degrees is cut back along both its
+   edges until its end is 8 cm across, at least 15 cm back from the point and never more
+   than 30% of the corner's shorter edge. What is drawn stays sharp. Measured: a 14
+   degree spike 1.2 m long ends 0.079 m across, 0.32 m short of its point.
+   - **Not tried:** a hand dragged across a real icicle in the game (the test the brief
+     names). The geometry is proven; the wrist is not.
+   - First guesses: 40 degrees, 8 cm, 30%. It changes every sharp solid on the mountain
+     (icicles, needles, crystal points, rock wedges). The Peak battery still passes.
+5. **What can be touched is drawn.**
+   - Note 98: a bounce line with look "rope" and no model is drawn as a band 0.2 m thick
+     along its line with a dark padded cushion at each end, red, cream and jade in turn,
+     squashing when it throws you. The summit's six ropes now show (`98_ring_ropes_*`).
+   - Note 76: the bull wheel is drawn at `model_scale` 1.52 (7.6 m, the solid's size);
+     `A.mover` gained `model_scale` (`76_bull_wheel_*`).
+   - Note 77: every gondola draws its west step and east rack as plain iron bars exactly
+     along their solids (`A.mover(..., drawn=[...])`), until the model has them
+     (`77_gondola_rails_*`).
+6. **Ice that comes is seen coming; ice that goes shatters (notes 86, 88, 91, 93).**
+   - Icicles: each grows at its source over its last 2.6 s (from 8% of its length),
+     shivers in the last 0.4 s, then drops, and shatters into pieces that touch nothing
+     but the world on the first solid thing it lands on. On the floor of 9.2 over 14 s:
+     before, 6 icicles lay there at once; after, at most 2 counted as still, both in the
+     instant of landing. A knocked-out climber left lying under the four sources for 20 s:
+     before, knocked out again 1 to 4 times; after, never, 18.4 s awake.
+   - The serac of 9.5 keeps today's curve through level (85 degrees at 5.3 s, 105 at
+     5.9 s), shatters at 108 degrees (6.0 s) and drops whoever is on it into the pit; a new
+     one grows out of the ice 3 s later over 3 s and is solid only at full height. Watched:
+     the climber left on it ended in the pit at 812 m (`88_serac_*`).
+   - The slabs of 9.8 sit in a dark mouth at their source and creep out of it through
+     their 1.3 s warning, then slide. A lip of ice (`A.board(..., kind="ice")`, a plain
+     stand-in) at the rope's foot throws every slab into the cave behind the climb. Over
+     22 s: 4 thrown, none past the rope's foot.
+   - **Found on the way:** on this branch the slabs stopped against the new lip without
+     being thrown, because a board meets a falling thing by its middle and a slab is a
+     3 m box: they now meet it by half the slab's length.
+7. **Wind is drawn loudly (notes 89, 70).** `stages/peak/peak_wind.gdshader`: one quad over
+   each wind's whole box, long wavy white lines with an inked edge, travelling along the
+   wind at 3 + 1.6 x its push m/s, showing at full strength while it blows and faintly in
+   its warning. They fade out over the box's last 0.7 m, so you see where the wind stops.
+   The old thin particle dashes are gone. Every streamer pole inside a wind's box flies a
+   streamer (a chain of six painted pieces) that streams the wind's way while it blows and
+   hangs slack between gusts. Only area 7 has such poles today; the glacier and the storm
+   ridge have the lines only.
+8. **Lightning says what it is (note 95).** Through the hum, sparks climb the mast's metal
+   from its foot to its tip, faster and thicker toward the strike; a drawn yellow bolt
+   hits the tip (the metal's own highest point, not the strike's sound point 30 m above
+   it); the metal is tinted pale for the strike's 0.4 s (the house tint, no glow); the
+   button mark of a limb on the metal buzzes through the hum. In a still frame the lit
+   metal's tint is hard to see.
+
+- **Checks:** lint; `--peak`; `--peakride`; `--peakrules` (9 of 9); `--swing --grab
+  --climb`. All clean.
+- **Pictures** (`docs/peak/playtest/after/`): `84_cold_hand_*`, `86_icicle_*`, `86_floor_*`,
+  `88_serac_*`, `91_*`, `93_*`, `89_wind_*`, `95_hum_*`, `95_strike_*`, `98_ring_ropes_*`,
+  `76_bull_wheel_*`, `77_gondola_rails_*`, each `_before` and `_after`.
+- **Stand-ins waiting for models:** the ice lip of 9.8, the slab mouth (a dark disc), the
+  gondola rails, the ring ropes' bands and cushions, the bull wheel's re-made model.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

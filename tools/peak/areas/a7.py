@@ -353,7 +353,9 @@ A.cam((TW, 658, TE, 676), half_h=7.0)
 # 9 m drop onto R7's balcony. Back to 7.8.
 A.ledge(-211.6, TW, 672.0, "plank", t=0.25)
 A.ledge(-216.2, -213.0, 672.0, "plank", t=0.25)
-A.wheel("bullwheel", (-220.2, 675.0), 3.8, 2.5, spokes=6, kind="wood", rim=0.25, model="bull_wheel")
+# (Note 76, Parker 11-13: "Draw it at 7.6 m": the kit's wheel is made 5 m across, the solid one
+# is 7.6, so it is drawn at 1.52 until the re-made model lands.)
+A.wheel("bullwheel", (-220.2, 675.0), 3.8, 2.5, spokes=6, kind="wood", rim=0.25, model="bull_wheel", model_scale=1.52)
 A.ledge(-229.0, -224.3, 677.0, "plank", t=0.25)
 B0, B1 = (-229.0, 677.3), (-235.8, 687.4)
 BL = math.dist(B0, B1)

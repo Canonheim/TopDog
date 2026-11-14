@@ -83,7 +83,11 @@ def gondola(mid, pts, speed, mode, wr=1.6, eb=2.4, wait=0.0):
     mo = {"type": "path", "pts": [list(p) for p in pts], "speed": speed, "mode": mode, "trigger": "none"}
     if wait:
         mo["wait"] = wait
-    return A.mover(mid, pts[0], car_shapes(wr, eb), mo, model="gondola")
+    # (Note 77, Parker 11-13: every gondola's step and rack are drawn. The kit's car has
+    # neither, so the two rails are drawn as plain iron bars exactly along their solids
+    # until the model gains them.)
+    shapes = car_shapes(wr, eb)
+    return A.mover(mid, pts[0], shapes, mo, model="gondola", drawn=list(range(5, len(shapes))))
 
 
 # ---------------------------------------------------------------- the east face (our stretch)

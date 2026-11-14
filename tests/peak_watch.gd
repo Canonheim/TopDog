@@ -1874,3 +1874,271 @@ func _w_far(a: Array) -> void:
 		await secs(0.5)
 		await shot(nm + "_pulled_back_" + tag)
 	_free_cam = false
+
+
+# ================================================================ the fix run of 11-13, group 1
+## (These scenes touch only what the old code has too, so the same scene shoots the
+## "before" with the old files swapped in.)
+
+## The spawner of an area nearest a point.
+func _spawner_near(at: Vector2) -> Dictionary:
+	var best: Dictionary = {}
+	var best_d := INF
+	for sp in pk.things.spawners:
+		var d := Peak.v2(sp.def.at).distance_to(at)
+		if d < best_d:
+			best_d = d
+			best = sp
+	return best
+
+
+## Seconds until a spawner's next drop.
+func _until_drop(sp: Dictionary) -> float:
+	return float(PeakThings._drops(sp.def, pk.clock + float(sp.def.get("phase", 0.0)))[1])
+
+
+## NOTE 86: the icicles of 9.2. g1ice:TAG
+func _w_g1ice(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("9.2")
+	await secs(6.5)  # (the area's banner clears)
+	stand(Vector2(-316.5, 786.6))
+	look(Vector2(-323.5, 799.0), 4.2)
+	var sp := _spawner_near(Vector2(-324.8, 802.1))
+	while _until_drop(sp) > 1.6 or _until_drop(sp) < 1.2:
+		await ticks(1)
+	await shot("86_icicle_coming_" + tag)
+	while _until_drop(sp) > 0.15:
+		await ticks(1)
+	await shot("86_icicle_about_to_drop_" + tag)
+	await secs(1.3)
+	await shot("86_icicle_landed_" + tag)
+	# what lies on the floor: over 14 s, the most icicles lying still at once
+	var most := 0
+	var t0 := pk.clock
+	while pk.clock - t0 < 14.0:
+		var lying := 0
+		for s2 in pk.things.spawners:
+			if str(s2.area) != "a9":
+				continue
+			for row: Array in s2.live:
+				if row[0] is RigidBody3D and is_instance_valid(row[0]) and (row[0] as RigidBody3D).linear_velocity.length() < 0.3:
+					lying += 1
+		most = maxi(most, lying)
+		await secs(0.1)
+	print("WATCH g1ice %s: the most icicles lying on the floor at once over 14 s: %d" % [tag, most])
+	await shot("86_floor_after_14s_" + tag)
+	# a knocked-out climber on the floor under the four sources: when can it get up?
+	var c := me()
+	var kos := 0
+	var up_windows: Array = []
+	var up_since := -1.0
+	t0 = pk.clock
+	stand(Vector2(-323.4, 786.6))
+	c.knock_out()
+	while pk.clock - t0 < 20.0:
+		if c.knockout_left > 0.0:
+			if up_since >= 0.0:
+				up_windows.append(snappedf(pk.clock - up_since, 0.1))
+				up_since = -1.0
+				kos += 1
+		elif up_since < 0.0:
+			up_since = pk.clock
+		await ticks(1)
+	if up_since >= 0.0:
+		up_windows.append(snappedf(pk.clock - up_since, 0.1))
+	print("WATCH g1ice %s: lying on the floor under the sources for 20 s: knocked out again %d times; the spells awake between: %s s" % [tag, kos, up_windows])
+
+
+## NOTE 88: the serac of 9.5. g1serac:TAG
+func _w_g1serac(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("9.5")
+	await secs(0.4)
+	var m: Dictionary = pk.things.movers["serac"]
+	look(Vector2(-320.0, 832.5), 8.0)
+	stand(Vector2(-326.4, 832.1))
+	await secs(1.0)
+	await shot("88_serac_standing_" + tag)
+	var c := me()
+	c.attach(0, m.nodes[0])
+	var t0 := pk.clock
+	var marks := [[2.5, "88_serac_tipping_"], [5.3, "88_serac_near_level_"], [5.9, "88_serac_past_level_"], [6.4, "88_serac_shattered_"], [9.6, "88_serac_growing_"], [13.0, "88_serac_back_"]]
+	var k := 0
+	var log := []
+	while pk.clock - t0 < 13.2:
+		if k < marks.size() and pk.clock - t0 >= float(marks[k][0]):
+			await shot(str(marks[k][1]) + tag)
+			log.append("%.1f s: %.0f deg, %s" % [pk.clock - t0, rad_to_deg(float(m.angle)), m.get("tip_state", "-")])
+			k += 1
+		await ticks(1)
+	print("WATCH g1serac %s: %s; the climber at %s" % [tag, log, where()])
+
+
+## NOTES 91 and 93: the slabs of 9.8. g1slab:TAG
+func _w_g1slab(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("9.8")
+	await secs(0.4)
+	stand(Vector2(-284.0, 846.2))
+	look(Vector2(-292.5, 870.0), 8.5)
+	var sp := _spawner_near(Vector2(-301.2, 880.4))
+	while _until_drop(sp) > 1.0 or _until_drop(sp) < 0.6:
+		await ticks(1)
+	await shot("93_slab_in_the_mouth_" + tag)
+	while _until_drop(sp) > 0.1:
+		await ticks(1)
+	await shot("93_slab_coming_out_" + tag)
+	await secs(1.6)
+	await shot("91_slab_on_the_chute_" + tag)
+	await secs(1.0)
+	await shot("91_slab_at_the_rope_" + tag)
+	# 22 s: how many slabs got past the rope's foot (below y 858) still on the chute
+	var past := {}
+	var thrown := {}
+	var t0 := pk.clock
+	while pk.clock - t0 < 22.0:
+		for row: Array in sp.live:
+			if row[0] == null or not is_instance_valid(row[0]):
+				continue
+			var id := (row[0] as Object).get_instance_id()
+			if float(row[2]) >= 0.0:
+				thrown[id] = true
+			elif (row[0] as Node3D).position.y < 857.0:
+				past[id] = true
+		await ticks(2)
+	print("WATCH g1slab %s: over 22 s, %d slabs went past the rope's foot down the chute, %d were thrown into the cave" % [tag, past.size(), thrown.size()])
+	look(Vector2(-288.0, 862.0), 5.0)
+	await secs(0.3)
+	await shot("91_the_kicker_" + tag)
+
+
+## NOTES 89 and 70: wind. g1wind:TAG
+func _w_g1wind(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	for spot in [["7.1", Vector2(-214.0, 584.0), 7.0, "89_wind_cliffs_"], ["9.7", Vector2(-280.0, 840.0), 7.0, "89_wind_glacier_"], ["10.1", Vector2(-300.0, 896.0), 9.0, "89_wind_storm_ridge_"]]:
+		pk.warp(str(spot[0]))
+		await secs(0.6)
+		look(spot[1], float(spot[2]))
+		# wait for a gust that blows over the spot
+		var t0 := pk.clock
+		while pk.clock - t0 < 8.0:
+			var k := 0.0
+			for row in pk.zones.winds:
+				if Peak.rect_has(row.def.rect, spot[1], 2.0):
+					k = maxf(k, pk.zones._gust(row.def))
+			if k > 0.8:
+				break
+			await ticks(1)
+		await secs(0.3)
+		await shot(str(spot[3]) + tag)
+
+
+## NOTE 95: the lightning of 10.3. g1bolt:TAG
+func _w_g1bolt(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("10.3")
+	await secs(6.5)
+	look(Vector2(-311.0, 926.0), 9.0)
+	var row: Dictionary = pk.zones.strikes[0]
+	var period := float(row.def.period)
+	while fposmod(pk.clock + float(row.def.get("phase", 0.0)), period) < period - 0.9 or fposmod(pk.clock + float(row.def.get("phase", 0.0)), period) > period - 0.6:
+		await ticks(1)
+	await shot("95_hum_" + tag)
+	while fposmod(pk.clock + float(row.def.get("phase", 0.0)), period) > 0.5:
+		await ticks(1)
+	await ticks(4)
+	await shot("95_strike_" + tag)
+
+
+## NOTES 98, 76, 77: what can be touched is drawn. g1drawn:TAG
+func _w_g1drawn(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("11.3")
+	await secs(0.6)
+	look(Vector2(-325.0, 990.0), 7.5)
+	await secs(0.3)
+	await shot("98_ring_ropes_" + tag)
+	pk.warp("7.10")
+	await secs(0.6)
+	look(Vector2(-219.0, 675.5), 6.0)
+	await secs(0.3)
+	await shot("76_bull_wheel_" + tag)
+	pk.warp("8.2")
+	await secs(0.6)
+	var g: Dictionary = pk.things.movers["g2a"]
+	var at: Vector2 = (g.home as Vector2) + (g.offset as Vector2) + Vector2(0.5, -3.2)
+	look(at, 4.5)
+	await secs(0.1)
+	await shot("77_gondola_rails_" + tag)
+
+
+## NOTE 84: the cold hand. g1cold:TAG
+func _w_g1cold(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("9.1")
+	await secs(0.6)
+	var c := me()
+	# the nearest timed ice hold to the start
+	var best: Dictionary = {}
+	var bd := INF
+	for h in pk.things.holds:
+		if str(h.type) == "timed" and float((h.def as Dictionary).t) >= 1.8:
+			var d: float = pk.things._hold_at(h).distance_to(where())
+			if d < bd:
+				bd = d
+				best = h
+	if best.is_empty():
+		print("WATCH g1cold: no ice hold")
+		return
+	var hat: Vector2 = pk.things._hold_at(best)
+	put_limb(1, hat)
+	still()
+	c.attach(1, best.body)
+	look(hat + Vector2(0.4, -0.6), 2.2)
+	var glyphs: Array = c.get("_glyphs")
+	var offs := []
+	var t0 := pk.clock
+	var shots := [[0.3, "84_cold_hand_just_taken_"], [1.75, "84_cold_hand_nearly_gone_"]]
+	var k := 0
+	while pk.clock - t0 < 2.3:
+		if glyphs != null and glyphs.size() > 1 and is_instance_valid(glyphs[1]):
+			offs.append(Vector2((glyphs[1] as Node3D).position.x, (glyphs[1] as Node3D).position.y).length())
+		if k < shots.size() and pk.clock - t0 >= float(shots[k][0]):
+			await shot(str(shots[k][1]) + tag)
+			k += 1
+		await ticks(1)
+	var early := 0.0
+	var late := 0.0
+	for i in offs.size():
+		if i < offs.size() / 4:
+			early = maxf(early, float(offs[i]))
+		elif i > offs.size() * 3 / 4 - 10 and i < offs.size() * 3 / 4:
+			late = maxf(late, float(offs[i]))
+	print("WATCH g1cold %s: the hand's mark moved up to %.3f m in its first half second, up to %.3f m near the end; the hand let go %s" % [tag, early, late, c.limbs[1].grab_other == null])
+
+
+
+## A slab's life on the chute of 9.8, followed: every live slab every half second. slabtrack
+func _w_slabtrack(_a: Array) -> void:
+	pk.warp("9.8")
+	await secs(0.4)
+	stand(Vector2(-284.0, 846.2))
+	look(Vector2(-296.0, 873.0), 10.0)
+	var sp := _spawner_near(Vector2(-301.2, 880.4))
+	var log := []
+	for i in 24:
+		var rows := []
+		for row: Array in sp.live:
+			var n = row[0]
+			if n == null or not is_instance_valid(n):
+				rows.append("dead")
+			else:
+				rows.append("(%.1f,%.1f)%s" % [(n as Node3D).position.x, (n as Node3D).position.y, " thrown" if float(row[2]) >= 0.0 else ""])
+		log.append("%.1f: %s" % [_until_drop(sp), rows])
+		if i == 6:
+			await shot("slabtrack_3s")
+		await secs(0.5)
+	print("WATCH slabtrack: near %s, at %s, def %s" % [pk.player_at().distance_to(Peak.v2(sp.def.at)), sp.def.at, sp.def.kind])
+	for l in log:
+		print("WATCH slab ", l)

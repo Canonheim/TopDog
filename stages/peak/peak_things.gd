@@ -195,6 +195,14 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		# metre in front of whoever rode it)
 		vis.position = Vector3(off.x, off.y, float(def.model_at[2]) if (def.model_at as Array).size() > 2 else 0.0)
 	(nodes[0] as Node3D).add_child(vis)
+	if def.has("model") and def.has("drawn"):
+		# WHAT CAN BE TOUCHED IS DRAWN (note 77): shapes the model lacks, as plain pieces.
+		var extra: Array = []
+		for k in def.drawn:
+			if int(k) < (def.shapes as Array).size():
+				extra.append(def.shapes[int(k)])
+		if not extra.is_empty():
+			(nodes[0] as Node3D).add_child(_shapes_mesh(a, extra))
 	var mo: Dictionary = def.motion
 	var m := {"id": str(def.id), "def": def, "area": str(a.id), "home": home, "nodes": nodes, "vis": vis, "mo": mo, "type": str(mo.type),
 		"offset": Vector2.ZERO, "angle": 0.0, "lo": lo, "hi": hi, "run": false, "dist": 0.0, "v": 0.0, "arrived": -1.0,
@@ -213,6 +221,8 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	if def.has("hold"):
 		add_hold(nodes[0], def.hold, vis, Color.WHITE, peak.tone(a, "slick"), a)
 	movers[m.id] = m
+	for node: Node in nodes:
+		_mover_of[node.get_instance_id()] = m
 
 
 func _build_body(a: Dictionary, def: Dictionary, root: Node3D) -> void:
@@ -496,6 +506,7 @@ func tick(delta: float) -> void:
 	_tick_rope_grabs()
 	_tick_levers(delta)
 	_tick_strain(delta)
+	_tick_crunch(delta)
 	_tick_holds(delta)
 	_tick_burns()
 	_tick_strays()
@@ -506,6 +517,7 @@ func tick(delta: float) -> void:
 
 func frame(delta: float) -> void:
 	_fly_thrown(delta)
+	_frame_glyphs()
 
 
 ## A LEVER A HAND TAKES AND DRAWS OVER (playtest note 72, Parker 11-13: "make it so you
@@ -640,16 +652,25 @@ func _tick_strain(delta: float) -> void:
 	var slowest_v := INF
 	var fastest_v := 0.0
 	var stuck := 0
+	var vs: Array = []
 	for i in c.limbs.size():
 		if c.limbs[i].grab_other == null:
 			continue
 		stuck += 1
-		var v: float = (c.bodies[c.limbs[i].def.end] as RigidBody3D).linear_velocity.length()
+		var vv: Vector3 = (c.bodies[c.limbs[i].def.end] as RigidBody3D).linear_velocity
+		var v := vv.length()
+		vs.append(vv)
 		fastest_v = maxf(fastest_v, v)
 		if v < slowest_v:
 			slowest_v = v
 			slowest = i
-	if stuck < 2 or fastest_v < 0.4 or fastest_v - slowest_v < 0.3:
+	# (How differently the grips move: two things going opposite ways at one speed differ
+	# as much as one moving and one still. Speeds alone called that "no strain" (note 83).)
+	var apart := 0.0
+	for x in vs.size():
+		for y in range(x + 1, vs.size()):
+			apart = maxf(apart, ((vs[x] as Vector3) - (vs[y] as Vector3)).length())
+	if stuck < 2 or fastest_v < 0.4 or apart < 0.3:
 		_strain_t = 0.0
 		return
 	var gap := c.worst_joint_gap()
@@ -660,11 +681,204 @@ func _tick_strain(delta: float) -> void:
 	if gap < STRAIN_SNAP and _strain_t < STRAIN_S:
 		return
 	_strain_t = 0.0
+	# HELD BETWEEN TWO MOVING THINGS (playtest note 83; Parker 11-13: "when 2 things are
+	# grabbed and moving, the one higher up should have priority, or the one you have more
+	# limbs connected to"; settled: "More limbs first"). The limbs are sorted by what they
+	# hold. When two or more of those things are moving, the one that loses is the one with
+	# FEWER of your limbs on it, and on a tie the LOWER one; every limb on it lets go
+	# together. With only one thing moving, the moving thing wins as before (below).
+	var things := _held_things(c)
+	var moving: Array = []
+	for th: Dictionary in things.values():
+		if float(th.v) >= STRAIN_MOVING:
+			moving.append(th)
+	if moving.size() >= 2:
+		var lose: Dictionary = {}
+		for th: Dictionary in moving:
+			if lose.is_empty() or (th.limbs as Array).size() < (lose.limbs as Array).size() \
+					or ((th.limbs as Array).size() == (lose.limbs as Array).size() and float(th.y) < float(lose.y)):
+				lose = th
+		var first: int = (lose.limbs as Array)[0]
+		var at0 := peak.local_of(c.limb_end(first))
+		last_strain = ["two moving", lose.limbs.duplicate(), things.values().map(func(th): return [th.limbs, snappedf(float(th.v), 0.01), snappedf(float(th.y), 0.01)])]
+		for i: int in lose.limbs:
+			c.release(i)
+			c.limbs[i].regrip = 0.5
+		Sound.play_at("grip", Vector3(c.limb_end(first).x, c.limb_end(first).y, 0), -2.0)
+		peak.audio.play("rope_creak", at0, -6.0)
+		return
 	var at := peak.local_of(c.limb_end(slowest))
+	last_strain = ["slowest", [slowest], things.values().map(func(th): return [th.limbs, snappedf(float(th.v), 0.01), snappedf(float(th.y), 0.01)])]
 	c.release(slowest)
 	c.limbs[slowest].regrip = 0.5
 	Sound.play_at("grip", Vector3(c.limb_end(slowest).x, c.limb_end(slowest).y, 0), -2.0)
 	peak.audio.play("rope_creak", at, -6.0)
+
+
+const STRAIN_MOVING := 0.4  # m/s: a held thing moving at least this fast counts as moving
+var last_strain: Array = []  # (for the batteries: what the strain rule last did and why)
+
+
+## What the climber's limbs hold, thing by thing: a mover is one thing however many bodies
+## it is made of; anything else is itself. {key: {"limbs": [limb indices], "v": how fast
+## the thing itself moves (m/s; a mover by its own speed and turn, a loose body by its
+## velocity, anything fixed 0: the hands on it lag behind it, so they don't say), "y": how
+## high the held points are (the mean)}}.
+func _held_things(c: Climber) -> Dictionary:
+	var out := {}
+	for i in c.limbs.size():
+		var o = c.limbs[i].grab_other
+		if o == null or not is_instance_valid(o):
+			continue
+		var m = _mover_of.get((o as Object).get_instance_id())
+		var key: String = ("m:" + str(m.id)) if m != null else ("b:%d" % (o as Object).get_instance_id())
+		if not out.has(key):
+			out[key] = {"limbs": [], "v": 0.0, "y": 0.0}
+		var end: RigidBody3D = c.bodies[c.limbs[i].def.end]
+		(out[key].limbs as Array).append(i)
+		var v := 0.0
+		if m != null:
+			var r := Vector2(end.global_position.x, end.global_position.y).distance_to(Vector2((o as Node3D).global_position.x, (o as Node3D).global_position.y))
+			v = float(m.get("speed", 0.0)) + float(m.get("spin", 0.0)) * r
+		elif o is RigidBody3D:
+			v = Vector2((o as RigidBody3D).linear_velocity.x, (o as RigidBody3D).linear_velocity.y).length()
+		out[key].v = maxf(float(out[key].v), v)
+		out[key].y = float(out[key].y) + end.global_position.y
+	for th: Dictionary in out.values():
+		th.y = float(th.y) / float((th.limbs as Array).size())
+	return out
+
+
+## A CRUNCH KNOCKS YOU OUT (playtest notes 49 and 78; Parker 11-13, of the temple's gears:
+## "Make them knock you out if you get crunched by them"; of El Pilon's sheave: "Make it
+## knock you out if you get crunched"; settled: "Head or body only"). When the head, the
+## chest or the hips are caught between a moving piece and anything solid (or between two
+## moving pieces) with no room left, you are knocked out, with the stars and the sound, and
+## you drop. A trapped hand or foot slips free as before. One rule for gears, sheaves,
+## pistons and counterweights: a small ball inside each of the three parts (well inside
+## its own shape) must be touched by both, for CRUNCH_S. Resting against a wall while a
+## piece carries you past it does not do it: the wall has to be inside you.
+const CRUNCH_PARTS := ["head", "chest", "pelvis"]
+const CRUNCH_IN := 0.62  # the ball's size against the part's own (a circle's radius, a box's shorter half)
+const CRUNCH_S := 0.08  # s: held so long
+const CRUNCH_MOVING := 0.15  # m/s or rad/s: a piece moving this much is moving
+var _crunch_t := 0.0
+var _crunch_q: PhysicsShapeQueryParameters3D = null
+var _mover_of := {}  # a mover's body (instance id) -> the mover
+
+
+func _mover_moving(m: Dictionary) -> bool:
+	return float(m.get("speed", 0.0)) > CRUNCH_MOVING or float(m.get("spin", 0.0)) > CRUNCH_MOVING
+
+
+func _tick_crunch(delta: float) -> void:
+	var c := peak.player
+	if c == null or c.state != Climber.State.LIVE or c.knockout_left > 0.0 or _ko_wait > 0.0:
+		_crunch_t = 0.0
+		return
+	if _crunch_q == null:
+		_crunch_q = PhysicsShapeQueryParameters3D.new()
+		_crunch_q.shape = SphereShape3D.new()
+		_crunch_q.collision_mask = Climber.LAYER_WORLD
+	var space := peak.get_world_3d().direct_space_state
+	var geo: Dictionary = c.get("_shape_geo")
+	var caught := ""
+	for pname: String in CRUNCH_PARTS:
+		var b: RigidBody3D = c.bodies.get(pname)
+		if b == null or not geo.has(pname):
+			continue
+		var g: Array = geo[pname]
+		var r := 0.1
+		match str(g[0]):
+			"circle":
+				r = float(g[1])
+			"box":
+				r = minf((g[1] as Vector2).x, (g[1] as Vector2).y)
+			"capsule":
+				r = float(g[3])
+		(_crunch_q.shape as SphereShape3D).radius = maxf(0.03, r * CRUNCH_IN)
+		_crunch_q.transform = Transform3D(Basis(), b.global_position)
+		var moving := {}
+		var still := 0
+		for hit: Dictionary in space.intersect_shape(_crunch_q, 8):
+			var o: Object = hit.get("collider")
+			if o == null or (o as Node).has_meta("peak_rope") or (o as Node).has_meta("peak_swing"):
+				continue
+			var m = _mover_of.get(o.get_instance_id())
+			if m != null and _mover_moving(m):
+				moving[str(m.id)] = true
+			else:
+				still += 1
+		if moving.size() >= 2 or (moving.size() >= 1 and still >= 1):
+			caught = pname
+			break
+	if caught == "":
+		_crunch_t = 0.0
+		return
+	_crunch_t += delta
+	if _crunch_t < CRUNCH_S:
+		return
+	_crunch_t = 0.0
+	_ko_wait = 2.5
+	var at := peak.local_of(Climber.pos2(c.bodies[caught]))
+	c.knock_out()
+	peak.audio.play("knock_out_bonk", at, 3.0)
+	peak.audio.play("rock_hit", at, 0.0, 0.8)
+	peak.zones.burst(at, "dust", 0.8)
+	crunches += 1
+
+
+var crunches := 0  # (for the batteries: how many crunches have knocked the climber out)
+
+
+## THE HAND TELLS YOU (playtest notes 84 and 95). Parker 11-13, of the timed ice: "make the
+## glyph shiver harder until you loose grip". The button mark on a limb that holds timed
+## ice shivers, harder as its seconds run out, until the hand lets go, and a little while
+## that hand cannot grip again. The same mark buzzes while a limb is on metal that the
+## lightning is about to take (`buzz`, set by the zones during the hum).
+const SHIVER_MIN := 0.006  # m: the mark's shake as the hand takes the ice
+const SHIVER_MAX := 0.05  # m: as the seconds run out
+const SHIVER_AFTER := 0.008  # m: while the frozen hand can't grip again
+const BUZZ := 0.03  # m: on metal during the hum
+var buzz := {}  # limb index -> true while that limb is on metal under the hum
+var _shivered := {}  # limb index -> true while its mark is shaken
+var _cold_after := {}  # limb index -> until when it shivers after letting go of ice
+
+
+func _frame_glyphs() -> void:
+	var c := peak.player
+	if c == null:
+		return
+	var glyphs: Array = c.get("_glyphs")
+	if glyphs == null:
+		return
+	var t := peak.clock
+	for i in mini(glyphs.size(), c.limbs.size()):
+		var g = glyphs[i]
+		if not is_instance_valid(g):
+			continue
+		var amp := 0.0
+		var fast := false
+		var o = c.limbs[i].grab_other
+		if o != null and is_instance_valid(o) and (o as Node).has_meta("peak_hold") and _grip_on.get(i) == o:
+			var h: Dictionary = (o as Node).get_meta("peak_hold")
+			var limit := float((h.def as Dictionary).get("t", 0.0))
+			if str(h.type) == "timed" and limit >= 1.8:
+				var used := clampf(float(_grip_t.get(i, 0.0)) / maxf(limit, 0.05), 0.0, 1.0)
+				amp = lerpf(SHIVER_MIN, SHIVER_MAX, used * used)
+				_cold_after[i] = t + float((h.def as Dictionary).get("rearm", 0.6)) + 0.05
+		elif t < float(_cold_after.get(i, -1.0)) and o == null:
+			amp = SHIVER_AFTER
+		if bool(buzz.get(i, false)):
+			amp = maxf(amp, BUZZ)
+			fast = true
+		if amp > 0.0:
+			var k := randf_range(0.6, 1.0) if fast else 1.0
+			(g as Node3D).position = Vector3(randf_range(-amp, amp) * k, randf_range(-amp, amp) * k, 0.3)
+			_shivered[i] = true
+		elif bool(_shivered.get(i, false)):
+			(g as Node3D).position = Vector3(0.0, 0.0, 0.3)
+			_shivered[i] = false
 
 
 ## A free hand or foot (not held, holding nothing, past its regrip wait) within reach of
@@ -885,7 +1099,9 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 			if not other.is_empty():
 				m.offset = (other.offset as Vector2) * float(mo.get("scale", -1.0))
 		"tip":
-			if float(m.tip_t) < 0.0:
+			if mo.has("shatter"):
+				jumped = _tick_tip_fall(m, mo, t)
+			elif float(m.tip_t) < 0.0:
 				if _player_limbs_on(m.nodes):
 					m.tip_t = t
 					peak.audio.play("ice_crack", _mover_at(m))
@@ -912,6 +1128,8 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 		_release_from(m.nodes)
 	m.speed = 0.0 if jumped else pos.distance_to(m.prev) / maxf(delta, 0.0001)
 	m.prev = pos
+	m["spin"] = 0.0 if jumped else absf(angle_difference(float(m.get("prev_ang", m.angle)), float(m.angle))) / maxf(delta, 0.0001)
+	m["prev_ang"] = m.angle
 	for node: AnimatableBody3D in m.nodes:
 		node.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, float(m.get("zoff", 0.0))))
 	if bool((m.def as Dictionary).get("ko", false)):
@@ -920,6 +1138,111 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 		_wall_wipe(m)
 		if (m.def as Dictionary).has("socket") and str(m.type) == "cycle":
 			_socket_tell(m)
+
+
+## THE SERAC FALLS ALL THE WAY (playtest note 88; Parker 11-13: "Make it fall all the way
+## and then shatter in the hole so it dumps you down there. That way you have to run across
+## it while it rotates"; then: "the new serac needs to grow into place by the way"). A tip
+## with `shatter` (degrees) does not stop: it keeps to its curve (angle x (t / time)^2)
+## through level until it reaches `shatter`, where it breaks into pieces and lets go of
+## whoever is on it. After `regrow_wait` s a new one grows up out of the ice where it stood,
+## over `grow` s, and can be touched only at full height.
+func _tick_tip_fall(m: Dictionary, mo: Dictionary, t: float) -> bool:
+	var st := str(m.get("tip_state", "up"))
+	match st:
+		"up":
+			if _player_limbs_on(m.nodes):
+				m.tip_t = t
+				m["tip_state"] = "fall"
+				peak.audio.play("ice_crack", _mover_at(m))
+		"fall":
+			var el := t - float(m.tip_t)
+			var dur := maxf(0.2, float(mo.get("time", 4.0)))
+			var want := deg_to_rad(float(mo.angle)) * (el / dur) * (el / dur)
+			var end := deg_to_rad(float(mo.shatter))
+			if absf(want) >= absf(end):
+				_shatter_mover(m)
+				m.angle = 0.0
+				m["tip_state"] = "gone"
+				m["gone_t"] = t
+				return true
+			m.angle = want
+		"gone":
+			if t - float(m.gone_t) >= float(mo.get("regrow_wait", 3.0)):
+				m["tip_state"] = "grow"
+				m["grow_t"] = t
+				(m.vis as Node3D).visible = true
+				peak.audio.play("ice_crack", _mover_at(m), -6.0, 0.7)
+		"grow":
+			var f := clampf((t - float(m.grow_t)) / maxf(0.1, float(mo.get("grow", 3.0))), 0.0, 1.0)
+			var base: Vector3 = m.get("vis_scale", Vector3.ONE)
+			(m.vis as Node3D).scale = Vector3(base.x * lerpf(0.6, 1.0, f), base.y * maxf(0.02, _ease(f)), base.z * lerpf(0.6, 1.0, f))
+			if f >= 1.0:
+				m["tip_state"] = "up"
+				m.tip_t = -1.0
+				for node: AnimatableBody3D in m.nodes:
+					node.collision_layer = Climber.LAYER_WORLD
+	return false
+
+
+## A mover breaks: whoever is on it lets go, its pieces fall, it is gone (unseen, untouchable).
+func _shatter_mover(m: Dictionary) -> void:
+	_release_from(m.nodes)
+	var c := peak.player
+	if c != null:
+		for l in c.limbs:
+			l.regrip = maxf(float(l.regrip), 0.4)
+	var root: Node3D = (m.nodes[0] as Node3D).get_parent()
+	var xf := Transform2D(float(m.angle), _mover_at(m))
+	var area: Dictionary = {}
+	for a in peak.areas:
+		if str(a.id) == str(m.area):
+			area = a
+	for sh in (m.def as Dictionary).shapes:
+		var pts: PackedVector2Array = peak._pts(sh.pts)
+		var lo := pts[0]
+		var hi := pts[0]
+		for p in pts:
+			lo = lo.min(p)
+			hi = hi.max(p)
+		var size := hi - lo
+		var nx := clampi(int(size.x / 0.7), 1, 4)
+		var ny := clampi(int(size.y / 0.7), 1, 10)
+		var cell := Vector2(size.x / nx, size.y / ny)
+		var col: Color = peak.kind_color(area, str(sh.kind)) if not area.is_empty() else Color("#BFE8F6")
+		for ix in nx:
+			for iy in ny:
+				var cp := lo + Vector2((ix + 0.5) * cell.x, (iy + 0.5) * cell.y)
+				if not Geometry2D.is_point_in_polygon(cp, pts):
+					continue
+				var w := xf * cp
+				var rb := RigidBody3D.new()
+				rb.collision_layer = 0
+				rb.collision_mask = Climber.LAYER_WORLD
+				rb.mass = 3.0
+				rb.gravity_scale = 0.75
+				var chunk := Vector3(cell.x * randf_range(0.7, 0.95), cell.y * randf_range(0.7, 0.95), 0.7)
+				var cs := CollisionShape3D.new()
+				var bx := BoxShape3D.new()
+				bx.size = chunk
+				cs.shape = bx
+				rb.add_child(cs)
+				rb.add_child(LuchaKit.box(chunk, col.darkened(randf_range(0.0, 0.12))))
+				rb.position = Vector3(w.x, w.y, randf_range(-0.2, 0.2))
+				rb.rotation = Vector3(0, 0, float(m.angle) + randf_range(-0.3, 0.3))
+				rb.linear_velocity = Vector3(randf_range(-1.0, 1.0), randf_range(-1.5, 0.8), randf_range(-0.5, 0.5))
+				rb.angular_velocity = Vector3(randf_range(-4, 4), randf_range(-4, 4), randf_range(-5, 5))
+				root.add_child(rb)
+				_debris.append([rb, peak.clock])
+	for node: AnimatableBody3D in m.nodes:
+		node.collision_layer = 0
+	if not m.has("vis_scale"):
+		m["vis_scale"] = (m.vis as Node3D).scale
+	(m.vis as Node3D).visible = false
+	var at := _mover_at(m)
+	peak.zones.burst(at + Vector2(3.0, -1.0), "glitter", 2.0)
+	peak.zones.burst(at + Vector2(3.0, -1.0), "frost", 1.6)
+	peak.audio.play("ice_shatter", at + Vector2(3.0, -1.0), 4.0)
 
 
 ## A HOLD THAT GOES INTO A WALL LETS GO OF YOU AT THE WALL'S FACE (Parker 11-12, of the
@@ -1729,6 +2052,7 @@ func _tick_spawners(delta: float) -> void:
 			sp.n = n
 			if near:
 				_spawn_faller(sp, def, at)
+		_tick_coming(sp, def, at, float(drops[1]), near)
 		var r := float(def.get("r", 0.45))
 		var has_board := not _area_boards(str(sp.area)).is_empty()
 		var keep: Array = []
@@ -1746,7 +2070,8 @@ func _tick_spawners(delta: float) -> void:
 			var rb: RigidBody3D = row[0]
 			var fp := Vector2(rb.position.x, rb.position.y)
 			if has_board:
-				var board := _board_under(str(sp.area), fp, r)
+				# (a slab is a long box: it meets a board with its end, half its length from its middle)
+				var board := _board_under(str(sp.area), fp, r * 3.0 if str(def.kind) == "slab" else r)
 				if not board.is_empty():
 					_board_throw(board, row)
 					keep.append(row)
@@ -1758,9 +2083,11 @@ func _tick_spawners(delta: float) -> void:
 					_break_faller(rb, r)
 					continue
 			elif t > float(row[1]):
-				rb.queue_free()
+				if str(def.kind) == "icicle":
+					_shatter_ice(rb, r)
+				else:
+					rb.queue_free()
 				continue
-			keep.append(row)
 			if c != null and _ko_wait <= 0.0 and c.knockout_left <= 0.0 and rb.linear_velocity.length() > 2.2:
 				for pname in ["head", "chest", "pelvis"]:
 					var b: RigidBody3D = c.bodies.get(pname)
@@ -1770,6 +2097,13 @@ func _tick_spawners(delta: float) -> void:
 						peak.audio.play("rock_hit", fp, 3.0)
 						peak.audio.play("knock_out_bonk", fp, 2.0)
 						break
+			# AN ICICLE SHATTERS ON THE FIRST SOLID THING IT LANDS ON (playtest note 86; Parker
+			# 11-13: "Make them shatter on the floor"): nothing is left lying, so nothing can pin.
+			if str(def.kind) == "icicle" and t - (float(row[1]) - float(def.get("life", 8.0))) > 0.05 \
+					and not rb.get_colliding_bodies().is_empty():
+				_shatter_ice(rb, r)
+				continue
+			keep.append(row)
 		sp.live = keep
 
 
@@ -1786,6 +2120,8 @@ func _build_board(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		pts.append(Peak.v2(def.c))
 	var thick := float(def.get("t", 0.13))
 	var sb: StaticBody3D = peak._static_body(1.0)
+	if str(def.get("kind", "wood")) != "wood":
+		sb.set_meta("no_weld", true)  # (a lip of ice: nothing holds it)
 	root.add_child(sb)
 	# It dips about its prop when a rock lands on it: the drawn pieces hang off a pivot there.
 	var pivot := Node3D.new()
@@ -1806,7 +2142,7 @@ func _build_board(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 			piece.scale = Vector3(p0.distance_to(p1) / 2.0, 1.0, 1.0)
 			piece.position = Vector3(mid.x - half.x, mid.y - half.y, 0) - pivot.position
 		else:
-			piece = LuchaKit.box(Vector3(p0.distance_to(p1), thick, 0.9), peak.kind_color(a, "wood").darkened(0.1 * i))
+			piece = LuchaKit.box(Vector3(p0.distance_to(p1), thick, 0.9), peak.kind_color(a, str(def.get("kind", "wood"))).darkened(0.1 * i))
 			piece.position = Vector3(mid.x, mid.y, 0) - pivot.position
 		piece.rotation.z = atan2(along.y, along.x)
 		pivot.add_child(piece)
@@ -1890,6 +2226,104 @@ func _fly_thrown(delta: float) -> void:
 				row[0] = null
 
 
+## WHAT FALLS IS SEEN COMING (playtest notes 86 and 93; Parker 11-13: "Make the falling
+## icicles grow before they fall", "make the ice blocks come out of a hole in the wall").
+## An icicle grows at its source over its last ICICLE_GROW seconds, shivers in the last
+## SHIVER_S, then drops. A snow slab sits in a dark mouth in the ice at its source and
+## creeps out of it during its warning, then tips out and goes. Each is a drawn piece only
+## (nothing to touch) until the real faller takes its place.
+const ICICLE_GROW := 2.6  # s
+const COMING_SHIVER := 0.4  # s
+const SLAB_CREEP := 1.6  # m: how far up the chute, set back in the mouth, a slab starts its creep
+
+
+func _tick_coming(sp: Dictionary, def: Dictionary, at: Vector2, next: float, near: bool) -> void:
+	var kind := str(def.kind)
+	if kind != "icicle" and kind != "slab":
+		return
+	var r := float(def.get("r", 0.45))
+	if not sp.has("pre"):
+		var root: Node3D = sp.root
+		var pre := Node3D.new()
+		var look: Node3D
+		if kind == "icicle":
+			look = LuchaKit.kit_model("icicle_big")
+			if look == null:
+				look = LuchaKit.cyl(r * 0.4, r * 3.0, Color("#9FDDF2"))
+				look.position.y = -r * 1.5  # (it hangs from its top)
+			pre.position = Vector3(at.x, at.y + r * 1.5, 0)
+		else:
+			look = LuchaKit.box(Vector3(r * 6.0, r * 1.6, Peak.HALF * 1.6), Color("#F4F7FA"))
+			pre.position = Vector3(at.x, at.y, 0)
+			# The mouth in the ice the slabs come out of: a dark hole a little bigger than a slab.
+			var mouth := Node3D.new()
+			var hole := MeshInstance3D.new()
+			var cm := CylinderMesh.new()
+			cm.top_radius = 1.0
+			cm.bottom_radius = 1.0
+			cm.height = 0.05
+			cm.radial_segments = 20
+			hole.mesh = cm
+			hole.rotation.x = PI * 0.5
+			hole.scale = Vector3(r * 3.8, 1.0, r * 2.2)
+			hole.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			CelPass.paint(hole, Color("#1C2A44"))
+			mouth.add_child(hole)
+			mouth.position = Vector3(at.x, at.y + r * 0.3, -Peak.HALF - 0.6)
+			root.add_child(mouth)
+		pre.add_child(look)
+		pre.visible = false
+		root.add_child(pre)
+		sp["pre"] = pre
+		sp["pre_dir"] = Peak.v2(def.get("vel", [1, -1])).normalized()
+	var pre: Node3D = sp.pre
+	var lead := ICICLE_GROW if kind == "icicle" else float(def.get("warn", 1.2))
+	if not near or next > lead:
+		pre.visible = false
+		return
+	pre.visible = true
+	var f := clampf(1.0 - next / maxf(lead, 0.01), 0.0, 1.0)
+	var jig := Vector3.ZERO
+	if next < COMING_SHIVER:
+		jig = Vector3(randf_range(-0.03, 0.03), randf_range(-0.02, 0.02), 0)
+	if kind == "icicle":
+		var s := lerpf(0.08, 1.0, f)
+		pre.scale = Vector3(lerpf(0.4, 1.0, f), s, lerpf(0.4, 1.0, f))
+		pre.position = Vector3(at.x, at.y + r * 1.5, 0) + jig
+	else:
+		var back: Vector2 = -(sp.pre_dir as Vector2) * SLAB_CREEP * (1.0 - f)
+		pre.position = Vector3(at.x + back.x, at.y + back.y, -(Peak.HALF + 0.6) * (1.0 - f)) + jig
+
+
+## An icicle that lands breaks into harmless pieces (they touch the world, never you).
+func _shatter_ice(rb: RigidBody3D, r: float) -> void:
+	var root: Node3D = rb.get_parent()
+	var at := rb.position
+	rb.queue_free()
+	for i in 7:
+		var ch := RigidBody3D.new()
+		ch.collision_layer = 0
+		ch.collision_mask = Climber.LAYER_WORLD
+		ch.mass = 1.0
+		ch.gravity_scale = 0.75
+		var size := Vector3(r * randf_range(0.25, 0.45), r * randf_range(0.35, 0.8), r * randf_range(0.25, 0.4))
+		var cs := CollisionShape3D.new()
+		var bx := BoxShape3D.new()
+		bx.size = size
+		cs.shape = bx
+		ch.add_child(cs)
+		ch.add_child(LuchaKit.box(size, Color("#BFE8F6").darkened(randf_range(0.0, 0.15))))
+		ch.position = at + Vector3(randf_range(-r, r) * 0.6, randf_range(-r, r) * 0.6, randf_range(-0.2, 0.2))
+		ch.linear_velocity = Vector3(randf_range(-2.2, 2.2), randf_range(0.6, 2.6), randf_range(-0.6, 0.6))
+		ch.angular_velocity = Vector3(randf_range(-6, 6), randf_range(-6, 6), randf_range(-8, 8))
+		root.add_child(ch)
+		_debris.append([ch, peak.clock - DEBRIS_S * 0.45])  # (ice goes quicker than rock)
+	var p := Vector2(at.x, at.y)
+	peak.zones.burst(p, "glitter", 1.0)
+	peak.zones.burst(p, "frost", 0.8)
+	peak.audio.play("ice_shatter", p, 0.0)
+
+
 ## A faller that never reached its board breaks up where it lies (chunks that tumble,
 ## shrink and are gone, as a breaking hold's do).
 func _break_faller(rb: RigidBody3D, r: float) -> void:
@@ -1963,6 +2397,9 @@ func _spawn_faller(sp: Dictionary, def: Dictionary, at: Vector2) -> void:
 	rb.add_child(cs)
 	rb.add_child(vis)
 	rb.position = Vector3(at.x, at.y, 0)
+	if kind == "icicle":
+		rb.contact_monitor = true  # (it shatters on the first solid thing it touches)
+		rb.max_contacts_reported = 4
 	var v := Peak.v2(def.get("vel", [0, 0]))
 	rb.linear_velocity = Vector3(v.x, v.y, 0)
 	(sp.root as Node3D).add_child(rb)

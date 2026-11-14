@@ -348,9 +348,13 @@ class Area:
         self._ids.add(i)
         return i
 
-    def mover(self, mid, at, shapes, motion, hold=None, model=None, ko=False, tag=None, model_flip=False):
+    def mover(self, mid, at, shapes, motion, hold=None, model=None, ko=False, tag=None, model_flip=False,
+              model_scale=None, drawn=None):
         """A body that moves by itself. shapes: [(pts relative to `at`, kind), ...].
-        motion: see AUTHORING.md (path / spin / swing / cycle / sink / link / tip / crank)."""
+        motion: see AUTHORING.md (path / spin / swing / cycle / sink / link / tip / crank).
+        model_scale: the model drawn at this size (what is drawn must be what is touched).
+        drawn: indices of shapes drawn as plain pieces in their kind's colour beside the
+        model, where the model lacks them (a gondola's rails until its model has them)."""
         m = {"id": self._id(mid), "at": _pt(at), "motion": motion,
              "shapes": [{"pts": _pts(ccw(p)), "kind": k} for p, k in shapes]}
         for _, k in shapes:
@@ -361,6 +365,10 @@ class Area:
             m["model"] = model
         if model_flip:
             m["model_flip"] = True  # the model is mirrored left to right (a piston out of the east wall)
+        if model_scale is not None:
+            m["model_scale"] = _f(model_scale)
+        if drawn:
+            m["drawn"] = list(drawn)
         if ko:
             m["ko"] = True  # it knocks out a climber it hits hard
         if tag:
@@ -545,7 +553,7 @@ class Area:
         self.levers.append({"id": lid, "at": _pt(at), "starts": starts, "len": _f(length), "rest": _f(rest),
                             "pull": _f(pull), "grip": _f(grip), "z": _f(z), "base": base, "arm": arm})
 
-    def board(self, p0, p1, p2=None, throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=None, t=0.13, model="plank"):
+    def board(self, p0, p1, p2=None, throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=None, t=0.13, model="plank", kind="wood"):
         """A LITTLE MESSED UP BOARD at the foot of a rock fall (Parker 11-12: "the rocks
         shouldnt despawn, they should bounce into the background off a little messed up
         board"). It lies from p0 (its end on the ground, toward the fall) up to p1 (its
@@ -558,6 +566,8 @@ class Area:
         with `model` (a kit board 2 m long, its zero the middle of its underside)."""
         b = {"a": _pt(p0), "b": _pt(p1), "throw": [_f(v) for v in throw], "depth": _f(depth),
              "gone": _f(gone if gone is not None else min(p0[1], p1[1]) - 1.0), "t": _f(t), "model": model}
+        if kind != "wood":
+            b["kind"] = kind  # (kind "ice": a lip of ice, slick, drawn in the area's ice)
         if p2 is not None:
             b["c"] = _pt(p2)
         self.boards.append(b)
