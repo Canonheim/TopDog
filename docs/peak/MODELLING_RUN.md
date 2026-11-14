@@ -49,6 +49,10 @@ approved), then the sheet and pages of the biome you are on.
   behind it.
 - One atlas material, no glowing materials, applied transforms: the makers' business, but
   do not ask for a lamp that glows; ask for colour.
+- **No polished or metallic finish on a wall, mass or skin** (learned 11-14 on the wind cliffs: the
+  atlas files such a colour as polished and the game mirrors the sky or a lamp into some painted
+  beds and not others, so a face reads as black-and-white stripes; the makers' bench never shows
+  it). A slick surface paints its shine as a pale band.
 - Far backgrounds are one flat painted card; open ground is one painted slab with real
   things on it; a wall is painted. Size each by the brief.
 - Reuse stems across the mountain. Before naming a new one, look in `kit/models/` and in
