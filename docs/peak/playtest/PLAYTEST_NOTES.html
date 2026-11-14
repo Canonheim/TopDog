@@ -171,6 +171,7 @@
 <tr><td>108</td><td><a href="#n108">Build 0.3.104, El Derrumbe (1.10): the rocks still pop in down in the shaft; spawn them up in the chimney, hidden behind a foreground piece</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>109</td><td><a href="#n109">Build 0.3.104, the mine's frog cave: tons of z-fighting; look for z-fighting everywhere and fix it</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>110</td><td><a href="#n110">Build 0.3.104: holding L does not zoom the camera out in some places; it must work everywhere</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>111</td><td><a href="#n111">Build 0.3.104: falling water must be 3D like standing water, and the mine's great falls a great falls again, not a trickle line</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3845,6 +3846,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>The zoom (the left trigger, L, on a pad; Shift on keyboard) is read everywhere in the solo climb (game/main.gd, the Peak camera), with no place switched off. But how far it pulls back comes from the camera zone you stand in: held, the view goes to that zone's drawn frame, or to twice the close view where no zone is drawn. The code takes the LARGER of the drawn frame and the close view, so wherever a zone's drawn frame is no bigger than the close view (tight rooms and caves, and every zone drawn at about the close camera's size), holding L widens by nothing at all. That is why it seems locked to certain places. (The pad's trigger must also be pulled past about half way, the trigger_press feel number, so a resting finger does not zoom; worth checking that too.)</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Make the zoom always pull well back: at least twice the close view everywhere, or the zone's drawn frame where that is wider still. One line in the camera code plus a check in a tight room (the frog cave, El Derrumbe) and an open one. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n111">
+  <div class="head"><span class="num">111</span><h3>Build 0.3.104: falling water must be 3D like standing water, and the mine's great falls a great falls again, not a trickle line</h3><span class="time">11-14 09:55</span></div>
+  <blockquote>"falling water needs to be 3d like standing water and also the great falls should still be a great falls, not a little trickle line"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/111_great_falls_trickle.png" alt="Parker's shot, build 0.3.104, 63 m: the mine's waterfall cavern. The great falls is one thin pale line down the middle; the wavy white lines are the falls' wind, drawn over empty dark.">
+    <figcaption>Parker's shot, build 0.3.104, 63 m: the mine's waterfall cavern. The great falls is one thin pale line down the middle; the wavy white lines are the falls' wind, drawn over empty dark.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 1, the waterfall cavern: the falls pours through the 6 m slot in the roof (x -244 .. -238) down to the Sump. Since the water overhaul (note 22, 47dee34) every waterfall is drawn as a flat ribbon, and this one was given a ribbon 0.25 m wide (a1.py line 133, `width=0.25`), so the great falls became a thin line while its push (the wind lines) still fills the whole 6 m. The pools and rivers were rebuilt as 3D bodies with depth in that overhaul; the falls were left flat. The same flat ribbon draws all six waterfalls in the mine and the black waters.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>1) Falling water as a 3D body, made the way the standing water is: a curtain with thickness and a front, back and edges, the travelling streaks and the broken white at the lip carried over its surface, churn and mist where it lands, tinted to its cave, joined to the pool above where one feeds it. 2) The great falls at its full width: the whole 6 m slot, a heavy sheet, so it reads as the cavern's great falls again (the wind lines can then thin out, since the water itself shows the push). Then the other five falls checked at their own widths. Held until Parker says go.</p>
 </div>
 
 </main>
