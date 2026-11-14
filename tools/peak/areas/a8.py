@@ -100,6 +100,11 @@ A.wall(FACE, default="scree", thick=8.0, rock_on="left")
 A.ledge(-240.0, -236.7, 688.7, "plank", t=0.7)  # the boarding gangway, on the deck's east end
 A.box(-239.85, 689.3, 0.14, 1.2, "iron")  # its one rail post
 # (The small slick patches that stood on this area's rest ledges are gone, every one. Parker 11-12: "remove them all they feel like bugs".)
+# THE LOW STATION'S ROOF IS REAL (note 77; Parker 11-13: "Make the roof real"; page 8.1):
+# tin on timber, 0.3 m thick, x -251.0 .. -237.6, its top 4.8 m over the deck. It can be held
+# and stood on. Reached only from a car's step as the car comes down past its east end; from
+# the deck and the gangway it is out of reach. It takes the place of the peaked roof card.
+A.ledge(-251.0, -237.6, 692.8, "iron", t=0.3)
 A.challenge("8.1", "Abordar", (-238.6, 688.7), 2, "A",
             moves=[["reach", [-236.7, 688.7], [-236.6, 689.7]]])
 
@@ -157,7 +162,9 @@ A.challenge("8.2", "De Góndola a Góndola", (-228.4, 702.0), 4, "X",
 # falls into La Garganta as the cable's did. (How the snapped cable is drawn, a short end
 # hanging from each pylon out of reach, is the area's design.)
 C0, C1 = (-206.0, 700.0), (-194.0, 705.0)  # (where the cable ran: the scenery lines below still use its ends)
-A.challenge("8.3", "El Cable", (-205.9, 700.3), 5, "X",
+# (Its start mark stood on the clamp plate, which is gone: it is on pylon 1's perch now, the
+# nearest still thing, at the perch's east end. Page 8.3.)
+A.challenge("8.3", "El Cable", (-227.4, 702.0), 5, "X",
             moves=[["fling", [-206.7, 698.3], [-196.0, 703.0], "F4"]])
 
 # ---------------------------------------------------------------- 8.4 El Pilon: pylon 2
@@ -286,7 +293,9 @@ A.challenge("8.8", "Contrapesos", (-193.0, 720.0), 3, "X",
 # ---------------------------------------------------------------- pylon 3's head (a card tower; only the head is solid)
 A.ledge(-205.6, -201.5, 749.0, "plank", t=0.4)  # 4.1 m: the rest before the dead gondola
 A.box(-205.45, 749.6, 0.14, 1.2, "iron")  # the rail post you lean out from
-A.beam((-202.0, 754.6), (-209.2, 754.6), 0.25, "iron")  # the crossarm the dead car hangs from (out of reach: 5.5 m up)
+# The crossarm the dead car hangs from: the tower's, and towers are never held (note 80,
+# page 8.9). Not solid now, and 2.5 m back.
+wire((-202.0, 754.6), (-209.2, 754.6), z=-2.5, t=0.25, tone=STEEL)
 tower(-205.0, -202.4, 664.0, 754.6)
 
 # ---------------------------------------------------------------- 8.9 La Gondola Rota
@@ -371,6 +380,13 @@ A.solid([(-289.0, 782.0), (-280.4, 782.0), (-281.0, 784.0), (-281.4, 785.4), (-2
 A.solid([(-268.0, 785.42), (-268.0, 782.9), (-269.9, 785.42)], "blackice")
 A.box(-267.93, 784.44, 0.14, 3.08, "blackice")  # and up its east edge, to 2 cm under the top
 wire((-270.4, 785.3), (-279.4, 777.8), z=-0.7, t=0.3, tone=STEEL)  # its strut to the face: a card (a solid one would make a slick pocket against the face)
+# THE HIGH STATION'S ROOF IS REAL (note 77; page 8.11): tin on timber, 0.3 m thick, x -281.4
+# .. -268.0, its top 790.8, 4.8 m over the deck. West of x -271.5 the glacier's lip lies on it,
+# so only its east 3.5 m is open, and a glaze of black ice lies on the west 1.9 m of that
+# (x -271.5 .. -269.6, 0.15 thick): a drop from the roof's west end would skip the first ice.
+# What can be stood on is its last 1.6 m. Reached from the fourth car's roof as it stops.
+A.ledge(-281.4, -268.0, 790.8, "iron", t=0.3)
+A.ledge(-271.5, -269.6, 790.95, "blackice", t=0.15)
 A.challenge("8.11", "La Estación Alta", (-268.8, 786.0), 3, "X",
             moves=[["reach", [-267.9, 786.2], [-268.3, 786.0]],
                    ["reach", [-269.4, 786.0], [-271.0, 786.0]]])
@@ -405,15 +421,14 @@ wire(E2_HI, C0)  # line 2's old cable, running on as the bare one
 wire(HINGE, (-209.0, 754.6), t=0.12, tone=STEEL)
 
 # The stations.
-A.card([(-252, 696.5), (-243, 701.0), (-233.5, 696.0), (-233.5, 695.4), (-243, 700.2), (-252, 695.9)], z=-1.0, tone="accent")  # the low station's roof
+# (the two stations' peaked roof cards are gone: the roofs are real, note 77)
 A.deco("bull_wheel", -237.2, 697.0, z=-1.1, size=(4.4, 4.4, 0.3), tone="iron")
 A.deco("bull_wheel", -228.4, 698.9, z=-1.1, size=(4.4, 4.4, 0.3), tone="iron")
 A.deco("bull_wheel", -216.4, 698.9, z=-1.1, size=(4.4, 4.4, 0.3), tone="iron")
 A.deco("bull_wheel", -210.4, 701.4, z=-1.1, size=(4.4, 4.4, 0.3), tone="iron")
-A.card([(-284, 793.5), (-275, 797.5), (-265, 792.5), (-265, 791.9), (-275, 796.7), (-284, 792.9)], z=-1.0, tone="accent")  # the high station's roof
 A.deco("station_sign_pug", -246.0, 692.4, z=-1.0, size=(2.4, 1.4, 0.1), tone="accent")
 A.deco("station_sign_pug", -277.0, 790.2, z=-1.0, size=(2.4, 1.4, 0.1), tone="accent")
-A.deco("icicle_row", -275.0, 791.8, z=-0.9, size=(12.0, 1.2, 0.2), tone="ice")
+# (no icicles on the high station: page 8.11)
 A.deco("pug_crest_peeling", -193.0, 717.4, z=-0.9, size=(1.6, 1.6, 0.05), tone="accent")  # on the roof's gable
 A.deco("pug_crest_peeling", -203.5, 752.0, z=-1.0, size=(1.4, 1.4, 0.05), tone="accent")
 A.deco("toolbox_open", -191.0, 720.0, z=-0.7, size=(0.8, 0.4, 0.4), tone="accent")  # somebody was mending it

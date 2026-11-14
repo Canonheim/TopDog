@@ -2022,6 +2022,30 @@ in. Nothing played by a person.
   gate leaves moving): not done.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: the stations' roofs made real (note 77; pages 8.1, 8.3, 8.9, 8.11)
+
+- **The low station (8.1):** a solid roof, tin on timber (`iron`: held and stood on), 0.3 m
+  thick, x -251.0 .. -237.6, its top 692.8. Its peaked card is gone (the station model's own
+  roof is the modelling run's). **Measured** (`g77`, over a lap): the cars come within 1.00 m
+  of its east end, and that is their steps: the page's 1.0 m. From the gangway's rail post
+  top to the roof's underside is 2.6 m.
+- **The high station (8.11):** a solid roof, x -281.4 .. -268.0, its top 790.8, under the
+  glacier's lip west of -271.5; a glaze of black ice on it from x -271.5 to -269.6 (0.15 m
+  thick, not held), so the standing roof is its last 1.6 m. Its card and the icicle row are
+  gone. **Measured:** the fourth car's roof comes within 2.15 m of the eave's corner
+  (-268.0, 790.5) when it stops (the page: 0.7 across, 2.0 up); the deck is 4.5 m under the
+  roof. Not tried: a climber reaching the eave from the car's roof; the drop from the roof
+  onto the deck.
+- **8.3's start mark** moves off the gone clamp plate to pylon 1's perch, its east end
+  (-227.4, 702.0).
+- **8.9:** the crossarm over the dead car is not solid now (the tower's), a card 2.5 m back.
+- Nothing else in the pages' notes changes the course: the hangers stay solid; the rung an
+  earlier design pass had under the perch was never in the course. The scenery moves (the
+  houses back, the wheels, the pennants, the lanterns going cold) are the area's dress.
+  8.9's check of the grate's headroom under the express car's step: not done.
+- (`77_low_roof_car_passing_before.jpg` / `_after`, `77_high_roof_car_below_before.jpg` / `_after`)
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

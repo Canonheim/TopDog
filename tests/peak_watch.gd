@@ -2640,3 +2640,73 @@ func _w_g103(a: Array) -> void:
 		look(where() + Vector2(0, 2.0), 7.0)
 		await shot("103_on_the_chain_" + tag)
 	print("WATCH g103 %s%s: v over the crest %.1f, in the dip %.1f, at the lip %.1f m/s; the rider at most %.2f m from the cart; let loose at %s going %s (%.1f m/s); crossed the chain's line (x -230.6) at y %.2f, top of the arc %.2f; the chain's tail at %.2f; nearest hand to the chain %.2f m, chest %.2f m; on the chain 2 s later %s, the climber at %s" % [tag, " catch" if catch else "", v_crest, v_dip, v_lip, worst, lip_at, lip_v, lip_v.length(), cross_y, top_y, tail_y, near_hand, near_chest, on_chain, where()])
+
+
+## The nearest a mover's shapes (or one of them) come to a point, now.
+func _mover_near(m: Dictionary, p: Vector2, only := -1) -> float:
+	var best := INF
+	var at: Vector2 = (m.home as Vector2) + (m.offset as Vector2)
+	var rot := Transform2D(float(m.get("angle", 0.0)), at)
+	var shapes: Array = m.def.shapes
+	for k in shapes.size():
+		if only >= 0 and k != only:
+			continue
+		var pts: Array = shapes[k].pts
+		var poly := PackedVector2Array()
+		for q in pts:
+			poly.append(rot * Vector2(float(q[0]), float(q[1])))
+		if Geometry2D.is_point_in_polygon(p, poly):
+			return 0.0
+		for i in poly.size():
+			var c := Geometry2D.get_closest_point_to_segment(p, poly[i], poly[(i + 1) % poly.size()])
+			best = minf(best, c.distance_to(p))
+	return best
+
+
+## NOTE 77: the two stations' real roofs: how near the cars come to them. g77:TAG
+func _w_g77(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("8.1")
+	await secs(2.0)
+	look(Vector2(-242.0, 692.0), 6.5)
+	var corner_lo := Vector2(-237.6, 692.5)
+	var corner_hi := Vector2(-237.6, 692.8)
+	var near_any := INF
+	var near_step := INF
+	var shot_done := false
+	var t0 := pk.clock
+	while pk.clock - t0 < 12.5:
+		for id in ["g1a", "g1b"]:
+			var m: Dictionary = pk.things.movers[id]
+			near_any = minf(near_any, minf(_mover_near(m, corner_lo), _mover_near(m, corner_hi)))
+			var s := minf(_mover_near(m, corner_lo, 5), _mover_near(m, corner_hi, 5))
+			near_step = minf(near_step, s)
+			if not shot_done and s < 1.3:
+				shot_done = true
+				await shot("77_low_roof_car_passing_" + tag)
+		await ticks(1)
+	print("WATCH g77 %s: low station: over a lap the cars came within %.2f m of the roof's east end (their steps %.2f m); the gangway's rail post top to the roof's underside %.2f m" % [tag, near_any, near_step, Vector2(-239.85, 689.9).distance_to(Vector2(-239.85, 692.5))])
+	pk.warp("8.11")
+	await secs(2.0)
+	look(Vector2(-272.0, 789.0), 5.5)
+	var eave := Vector2(-268.0, 790.5)
+	var near_roof := INF
+	var near_car := INF
+	var who := ""
+	t0 = pk.clock
+	var shot2 := false
+	while pk.clock - t0 < 16.0:
+		for k in 4:
+			var m: Dictionary = pk.things.movers["ex%d" % (k + 1)]
+			var r := _mover_near(m, eave, 1)
+			if r < near_roof:
+				near_roof = r
+				who = "ex%d" % (k + 1)
+			near_car = minf(near_car, _mover_near(m, eave))
+			if not shot2 and r < 2.3:
+				shot2 = true
+				await shot("77_high_roof_car_below_" + tag)
+		await ticks(1)
+	if not shot2:
+		await shot("77_high_roof_" + tag)
+	print("WATCH g77 %s: high station: the nearest a car's roof came to the eave's corner %.2f m (%s); any part of a car %.2f m; the deck's top to the roof's underside %.2f m" % [tag, near_roof, who, near_car, 790.5 - 786.0])
