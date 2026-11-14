@@ -56,6 +56,42 @@ their depth and their plainness. A sheet is about 70 to 90 lines.
 7. No glowing materials. Heat, cold and light are shown by colour, sparks, steam and
    frost. No reference to any other video game, ever.
 
+## Walls and masses
+
+**Walls and rock are painted, not built of blocks (Parker, 2026-11-13).** He asked: "is there
+a plan to make the walls and things look better? instead of so blocky". Until then every
+mass you climb was one of the course's straight boxes dressed in a 2 m square panel repeated
+in a grid, flat-fronted, with square corners. A first try that built each bed of rock as its
+own block still read as stacked blocks: in this art style every step of shape gets an ink
+line, so a bed built as a block is a brick. The second try was painted, and of it he said:
+"I judge it as looking pretty darn good... I like the painted look".
+
+The worked example is the split tower top of the wind cliffs (challenges 7.9 and 7.10):
+`walls_example_before.jpg` (the game today) and `walls_example_after.png` (the kit's
+`ex_riscos_tower_top`; its source is `Top Dog Kit\sourceuild_ex_riscos_tower_top.py`).
+
+How a wall or a mass is made:
+
+- **The face is paint.** A few large planes. The material's layers (beds of chalk, courses
+  of brick, bands in ice, the grain of a rock) are flush colour regions on those planes, in
+  three or four tones, long and uneven, with rain streaks or stains painted down across
+  them. No ink inside a face, and no step of shape for each layer.
+- **A few big breaks are real shape,** and only those get ink: one overhang with a painted
+  shadow under it, one deep recess or opened joint, one ledge with something on it, one
+  leaning slab or fallen block. They sit inside the game's frame, not below it.
+- **The outline is designed.** Away from the holds and the tops you stand on, the edge may
+  move up to 0.8 m: it leans, tapers, is notched where a piece has gone, and has no long
+  ruled level or upright edge. The holds, the standing tops and the faces of any gap you
+  climb stay exactly where the course has them.
+- **Holds belong to the wall.** A hold is a bed, a course or a band of the same wall, painted
+  running on across its face, and standing proud only where it is held.
+- **The body carries on behind:** in place of a flat card, the mass's own body 1.5 to 3 m
+  back as one big form in two or three slanted planes, duller and cooler, its layers painted
+  as thin lines that carry on from the wall's, with an uneven skyline.
+- **No tiling.** One piece made for its place. Repeating panels are for small filler only.
+- Each biome's sheet says what this means for its own material, in its `built` list and in
+  a kit line for its walls and masses.
+
 ## Read these
 
 - `docs/peak/CHALLENGES.md`: your biome's challenges, one line each.
