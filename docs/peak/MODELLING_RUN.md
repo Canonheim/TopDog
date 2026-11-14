@@ -72,18 +72,19 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 
 | Biome | Sheet and pages | Dress file | Models | In-game frames |
 |---|---|---|---|---|
-| 0 La Estación | done; 0.1-0.2 built | `a0_station.py` (0.1-0.2); the ride and the join to do | station set landed | station: yes |
-| 1 La Mina Vieja | done; the cart room being redone (note 103) | to do | | |
+| 0 La Estación | done; 0.1-0.2 built | `a0_station.py` (0.1-0.2); `a0_dress.py` (the ride, the join): written, not yet called | station set landed; 46 new on the list (`models/a0_models.md`): A 15, B 10, C 21, all sent | station: yes |
+| 1 La Mina Vieja | done; cart room redone (note 103) | `a1_dress.py` being written | the cart room's incline with thread C | |
 | 2 Las Aguas Negras | done | | | |
 | 3 La Gruta de Cristal | done | | | |
 | 4 El Jardín de Hongos | done | | | |
 | 5 El Templo | done | | | |
 | 6 La Chimenea | done | | | |
 | 7 Los Riscos del Viento | done | | walls example landed | |
-| 8 El Teleférico | done; roofs and hangers being revised | | | |
-| 9 El Glaciar | done; arrow signs being added | | | |
+| 8 El Teleférico | done; revised (real roofs, hangers held) | | | |
+| 9 El Glaciar | done; revised (three wall arrow signs) | | | |
 | 10 La Cresta de la Tormenta | done | | | |
-| 11 La Cumbre | done; the secret and the ring's look being redone | | | |
+| 11 La Cumbre | done; revised (the secret the right way round; the ring) | | ring ropes landed (thread C), not yet in the game | |
 
 Mountain-wide small pieces (wave 0, no placement needed): frogs, signs, tea things
-(thread B); iron rings, staples, pegs, the summit's ring ropes (thread C).
+(thread B, in progress); iron rings, staples, pegs, the summit's ring ropes (thread C: all
+thirteen landed in the kit, not yet synced into the game).
