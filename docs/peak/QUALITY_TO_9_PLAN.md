@@ -148,6 +148,11 @@ to match; the play is checked after.
 
 ### Phase 1: the painted backdrops (the biggest single lift)
 
+**The painted backdrops pass the reviewer too** (Parker, 11-14: "painted back drops must also pass
+the reviewer score"): each backdrop and painted set is made by its own session, one at a time, with
+the same sheets (including how it sits behind the climb from the game's camera) and the same loop
+with the reviewer until it is rated at least 8.5, then checked in the game.
+
 One painted backdrop and one painted set per biome stretch, made as flat painted cards and
 painted wall pieces in the house style (the station's and cliffs' are the model). This is the
 "painted background" of the diorama and is missing from biomes 1 to 6, 9, 10 and the summit's
@@ -175,9 +180,23 @@ back. What each paints:
 - **0.3 the cart ride's tunnel and the mine mouth:** a painted tunnel receding, and the mouth
   opening onto the painted desert, not bare sky.
 
+### The order (Parker, 11-14)
+
+1. **Phase 0, the clean-up**, over the whole mountain.
+2. **The mine first, as the test and the example** for the quality needed ("the first one done will
+   be the mine, as it is our test and example one for the quality needed"). Before its pass:
+   **move the mine and make the new barrel area** (note 146): the mine about 60 m west under the
+   great falls, the falls area at its foot widened as he drew, the cart ride lengthened, the new
+   section below the black waters with the barrel challenge moved there and at least one more
+   challenge, and the old barrel pool turned into the big jump into the pool that feeds the falls.
+   **In the new barrel challenge the barrels go RIGHT TO LEFT** (east to west), the opposite of the
+   old one. Then the mine's full pass (its backdrops, its things, its notes) through the reviewer,
+   to a 9, and Parker's look before the next biome.
+3. Then the other biomes, one at a time (the list below gives the suggested order after the mine).
+
 ### Phase 2: the things, biome by biome, worst first
 
-Order: the crystal cave (4), the mine (4.5), the glacier (4.5), the garden (5), the storm ridge (5),
+Order after the mine: the crystal cave (4), the glacier (4.5), the garden (5), the storm ridge (5),
 the black waters (5.5), the forge (5.5), the summit (6), the cliffs (6.5), the temple (7), the
 cableway (7), the station's 0.3. Each biome: its hero pieces, its climb made of things, its
 props, then its re-rating. **Every playtest note for that biome is folded into its pass** (Parker:
@@ -261,10 +280,10 @@ Decided by Parker, 11-14:
 5. Models cross from the background through the play space to the foreground as one connected
    thing.
 6. Nothing starts yet: more playtesting first, and the planning goes on.
+7. The painted backdrops pass the reviewer the same way as the models.
+8. The order: the clean-up first, then the mine as the test and example biome, after moving it and
+   making the new barrel area (barrels running right to left); then the other biomes.
 
 Still open:
 
-1. Which biome goes first once the run starts (the plan suggests phase 0 everywhere, then the
-   crystal cave, the lowest score).
-2. Whether the painted backdrops (phase 1) are made the same way, one per session with the
-   reviewer, or as part of each biome's pass.
+1. The order of the biomes after the mine.
