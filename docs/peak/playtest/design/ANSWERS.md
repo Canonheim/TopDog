@@ -110,3 +110,35 @@ unless a line says so.
 - Note 7: the camera numbers (widest view 11 m of height, looking at most 1 m below you).
 - Note 17: is the pulsing light under the mill race gone?
 - Note 40: the storm ridge's six clouds (he has not played that far).
+
+# Second round, 2026-11-13 (afternoon): the outstanding questions, asked one by one with pictures
+
+His exact words where he typed them; "Picked" where he chose an option.
+
+- **1. The station test (0.1 and 0.2): is this the look to build the rest of the mountain to?** Picked: "Yes, build on".
+- **2. The short string of flags across the alley, which no frame shows:** Picked: "Leave it".
+- **3. The plaza's painted ranges and the painted Peak:** "both pass but add the flag to the peak again".
+  - The flag was only down in one frame. Asked: fly it only after a summit (as before), or always? Picked: "Only after a summit". Nothing to change.
+- **4. The valley from the cliffs (the painted panorama and far ranges):**
+  "It is MUCH better but lets add a few more little houses and trees out on the plain and make the ground a little nice, houses n vegetation the same flat simple style as the town, and also make the town less square"
+- **5. The sea of cloud as painted banks:** Picked: "Too busy" (too many outlines packed together; fewer, bigger, calmer shapes with more plain white).
+- **6. Del Mar's far hills and isles:** Picked: "Passes".
+- **7. The three area trials (the areas' own stand-in far cards taken out of Los Riscos, El Teleférico, La Cumbre):**
+  "This will be addressed once we build that area as it is that area's background"
+  - Until then: Picked: "Leave as now" (the old cards stay out).
+- **8. La Columna (3.9): the collars proposal (three slanted collars in a zigzag, spikes that carry you, a change at each corner, a short horn to finish):** Picked: "Yes, build that".
+- **9. Note 40, the storm ridge's six clouds in front of the climb:** Picked: "Decide when I play it".
+- **10. Note 22, the water overhaul:** Picked: "Still not water". What is wrong: "Looks like a glass block", "Falls are wrong", and:
+  "Lets look up some good cheap fluid simulations we can use for it. It only has to be visual, the physics and feel were working well already, but it can be both if you can make it nice. Research it and figure out a good implementation"
+- **11. Note 4, the lift's dark hoistway:** Picked: "Fine for now".
+- **12. Note 7, the nine long jumps (widen by itself, or the zoom button):**
+  "Make it so when you come to these 9 areas, a tool tip shows in the bottom right saying "Hold [key bind] to widen the camera""
+  - This replaces his earlier "Wider at those nine".
+- **13. Note 28, rows for the two camera controls on the Controls board:**
+  "Add both rows and just add a Next page button to the current UI screen, no need for a full rework"
+- **14. Send the unsent notes and decisions to the fix thread now?**
+  "Nothing fixed yet except what we have done already. We will finish the playtest and re design first"
+- **15. Build played areas to the station's standard meanwhile?** Picked: "All building waits" (nothing new built or modelled until the playtest and the redesign are done; model requests stay unsent; only today's fixes go ahead: the valley, the clouds, the water research).
+- **16. Hand the branch to Top Dog to merge?** Picked: "After today's fixes" (the valley and the calmer clouds first, then hand it over in one go).
+
+Still needing his eye or ears in the game, not asked: the ropes' four calls (note 20), the mill-race light (17), the garden's sound (35), the camera numbers (7), the camera controls on a pad under Steam (28, 43).
