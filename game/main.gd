@@ -653,6 +653,10 @@ func _peak_camera(delta: float) -> void:
 	Players.mouse_aim_off = _peak_mouse_held
 	var look_off := Vector2(_peak_pan.x * half_now * aspect, _peak_pan.y * half_now) * PEAK_LOOK_REACH
 	cam.position = Vector3(_peak_cam_base.x + shift.x + look_off.x, _peak_cam_base.y + shift.y + look_off.y, half_now / tan_half)
+	if peak.cam_kick > 0.001:
+		# a hard landing jolts the view (the cart's hop, note 73)
+		cam.position += Vector3(randf_range(-0.4, 0.4), -1.0, 0.0) * peak.cam_kick
+		peak.cam_kick *= exp(-delta * 9.0)
 	cam.look_at(Vector3(cam.position.x, cam.position.y, 0.0), Vector3.UP)
 
 

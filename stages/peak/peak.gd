@@ -1180,6 +1180,11 @@ func inside_now() -> float:
 
 
 ## The camera's frame at the climber: [half height, bias, is it a zone an author drew].
+## A jolt of the camera (m), set by a hard landing (the cart's hop); main.gd shakes the view
+## by it and lets it die away.
+var cam_kick := 0.0
+
+
 ## THE NINE LONG JUMPS (playtest note 7): the written flings whose landing is out of the
 ## close camera's view from the launch (the view is 11 m tall, main.gd's
 ## PEAK_CAM_HALF_MAX, and as wide as the screen). Near one of their launches, the HUD shows

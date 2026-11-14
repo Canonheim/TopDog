@@ -1695,6 +1695,42 @@ in. Nothing played by a person.
   at the new speed were not measured again by play.
 - **Checks:** lint; `--peak`; `--peakrules`; `--input`; `--settings`. All clean.
 
+## The fix run of 11-13, group 3: the course by biome (a0 and a2)
+
+- **Note 73, the cart hops the broken rail (a0).** The cart's path has a `hop` at the crest
+  (x -90): there it leaves the rails at its own speed along them and flies under g 8.9 m/s2
+  (the design page's "real throw") until its floor is back on the track, then runs on from
+  there. On landing: dust off both wheels, the cart's crash, and a jolt of the camera
+  (`peak.cam_kick`, read in main.gd's Peak camera; there was no camera shake before).
+  The rail decos of the broken stretch (x -94 to -90) are left out; its bent stub and the
+  doubled sleepers are the dress's.
+  - Watched (`g3hop`): the floor rose at most 0.98 m over the track and came down at x -98.4.
+    A rider holding the cart's end stayed with it (never more than 1.09 m from it) and still
+    held on. `--peakride` passes (the cart reaches its buffer and comes home).
+  - First guess for Parker: g 8.9. With it the rider is lighter than the cart in the air
+    (the climber's own gravity is 2.79); one who is not holding floats up a little.
+  - `73_cart_in_the_air_*`, `73_cart_landing_dust_*` (the before frame shows the cart on
+    the unbroken track).
+- **Note 25, the dam's one lift (a2).** As the design page draws it: a gallery 7.8 m long
+  and 2.6 m tall through the dam's foot from the apron, a shaft 2.6 m wide straight up
+  inside the dam to the hall's roof, its east wall closed from the third step up, and one
+  cage (deck 2 m wide, top bar 2.2 m up, both held) with its winch 1.5 m over the deck. The
+  five lifts and five cranks are gone; the spillway's steps stay, bare.
+  - The winch is a new kind of thing (`A.winch_lift`, `_tick_winches`): its handle is taken
+    as the lever's is, by the limb whose button is held, near the handle; while it is held
+    the crank follows the hand round its hub, and every bit it turns (either way) winds
+    the cage up, 0.6 m a turn (about 25 turns). Stop and it sinks at 0.3 m/s, always. The
+    pawl clicks each quarter turn.
+  - Watched (`g3lift`): the hand took the handle at once; winding a turn every 1.4 s the
+    deck rose from 152.2 to 156.9 in 6 s, 165.1 in 16 s and the crest's 167.0 by 22 s, the
+    climber riding it; 3 s after letting go it had sunk 0.9 m.
+  - Stand-ins: the cage is its deck and top bar only, the winch a hub, an arm and a red
+    grip. The gallery's arch, the shaft's rails and rack, the lanterns: the dress's.
+  - Not tried: stepping off onto the crest at the top, a real pad's circling stick.
+  - First guesses: 0.6 m a turn, 0.3 m/s sinking.
+  - `25_the_dam_*`, `25_winding_*`, `25_winding_higher_*`.
+- **Checks:** lint; `--peak`; `--peakride`; `--peakrules`. All clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

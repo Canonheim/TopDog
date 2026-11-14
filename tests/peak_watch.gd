@@ -2172,3 +2172,94 @@ func _w_g2hud(a: Array) -> void:
 		await secs(0.6)
 		await shot("28_controls_page_2_" + tag)
 	main.show_screen("hud")
+
+
+## NOTE 73: the cart's hop over the broken rail. g3hop:TAG
+func _w_g3hop(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("0.3")
+	await secs(1.0)
+	var cart: Dictionary = pk.things.movers["cart0"]
+	var c := me()
+	stand(Vector2(-9.0, 2.76))
+	await secs(1.5)
+	# the right hand on the cart's end, held: a rider who holds on
+	c.attach(1, cart.nodes[0])
+	cart["pulled"] = true
+	var air_shot := false
+	var land_shot := false
+	var top_clear := 0.0
+	var flew := false
+	var landed_x := 0.0
+	var worst := 0.0
+	var t0 := pk.clock
+	while pk.clock - t0 < 16.0 and (bool(cart.run) or float(cart.dist) == 0.0):
+		var at: Vector2 = (cart.home as Vector2) + (cart.offset as Vector2)
+		look(at + Vector2(0, 0.8), 3.6)
+		worst = maxf(worst, where().distance_to(at))
+		if cart.has("fly"):
+			flew = true
+			var road: float = pk.things._road_y(cart, at.x)
+			top_clear = maxf(top_clear, at.y - road)
+			if not air_shot and at.x < -92.5:
+				air_shot = true
+				await shot("73_cart_in_the_air_" + tag)
+		elif flew and landed_x == 0.0:
+			landed_x = at.x
+			await ticks(3)
+			await shot("73_cart_landing_dust_" + tag)
+			land_shot = true
+		await ticks(1)
+	if not air_shot:
+		look(Vector2(-93.0, -2.5), 3.6)
+		await shot("73_cart_in_the_air_" + tag)
+	print("WATCH g3hop %s: flew %s, the floor's most clearance over the road %.2f m, down at x %.1f; the rider never more than %.2f m from the cart; still holding %s" % [tag, flew, top_clear, landed_x, worst, c.limbs[1].grab_other != null])
+
+
+## NOTE 25: the dam's one lift, its winch on board. g3lift:TAG
+func _w_g3lift(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	const Drivers := preload("res://climber/drivers.gd")
+	pk.warp("2.11")
+	await secs(6.5)
+	look(Vector2(-436.0, 159.0), 8.5)
+	await secs(0.3)
+	await shot("25_the_dam_" + tag)
+	if not pk.things.movers.has("jaula"):
+		print("WATCH g3lift %s: no lift (the old dam)" % tag)
+		return
+	var m: Dictionary = pk.things.movers["jaula"]
+	var c := me()
+	stand(Vector2(-438.9, 152.25))
+	await secs(1.0)
+	var old_driver = c.driver
+	var d := Drivers.ScriptDriver.new()
+	c.driver = d
+	var t0 := pk.clock
+	var took := -1.0
+	var ang := 0.0
+	var log := []
+	var shots := [[6.0, "25_winding_"], [16.0, "25_winding_higher_"]]
+	var k := 0
+	while pk.clock - t0 < 22.0:
+		var hub: Vector2 = pk.things.winch_hub(m)
+		if int(m.w_limb) < 0:
+			d.point_limb(1, true, pk.world_of(pk.things.winch_handle(m)))
+		else:
+			if took < 0.0:
+				took = pk.clock - t0
+			ang += TAU / 1.4 / Engine.physics_ticks_per_second  # a turn every 1.4 s
+			d.point_limb(1, true, pk.world_of(hub + Vector2(cos(ang), sin(ang)) * 0.35))
+		var deck: float = (m.home as Vector2).y + (m.offset as Vector2).y
+		look(Vector2(-436.5, deck + 1.5), 4.5)
+		if k < shots.size() and pk.clock - t0 >= float(shots[k][0]):
+			await shot(str(shots[k][1]) + tag)
+			log.append("%.0f s: deck %.1f" % [pk.clock - t0, deck])
+			k += 1
+		await ticks(1)
+	var top: float = (m.home as Vector2).y + (m.offset as Vector2).y
+	d.set_limb(1, false)
+	await secs(3.0)
+	var after: float = (m.home as Vector2).y + (m.offset as Vector2).y
+	c.driver = old_driver
+	print("WATCH g3lift %s: the hand took the winch after %.2f s; %s; after 22 s the deck at %.2f (from 152.2, the crest 167.0); 3 s after letting go %.2f; the climber at %s" % [tag, took, log, top, after, where()])

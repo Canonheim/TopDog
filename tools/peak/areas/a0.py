@@ -39,7 +39,12 @@ cart_shapes = [
 ]
 A.mover("cart0", RIDE[0], cart_shapes,
         {"type": "path", "pts": [list(p) for p in RIDE], "speed": 9.0, "mode": "once", "trigger": "lever",
-         "reset": 25.0, "tilt": True, "accel": 3.0},
+         "reset": 25.0, "tilt": True, "accel": 3.0,
+         # THE HOP (note 73, Parker 11-13: "real hop and make dust come off the wheels when it
+         # lands"): it leaves the rails at the crest (x -90) at its own speed and flies the
+         # broken stretch, as the design page's real throw (g 8.9: 0.9 s, about 0.9 m clear,
+         # down near x -98). A first guess, to tune by riding it.
+         "hop": {"x": -90.0, "g": 8.9}},
         model="minecart")
 # THE STATION'S LEVER (Parker 11-13, note 72: "make it so you have to pull the lever to start
 # the cart, regardless of if you are in the cart. If you pull the lever it goes"). Its foot
@@ -61,7 +66,10 @@ for (x0, y0), (x1, y1) in zip([(-4.6, 2.65)] + RIDE[1:-1], RIDE[1:]):
         ang -= math.copysign(180, ang)
     for i in range(n):
         f = (i + 0.5) / n
-        A.deco("rail_straight", x0 + (x1 - x0) * f, y0 + (y1 - y0) * f - 0.55, z=0.0, rot=ang, scale=L / n / 4.0, size=(4.0, 0.25, 1.2), tone="iron")
+        rx = x0 + (x1 - x0) * f
+        if -94.0 < rx < -90.0:
+            continue  # (note 73: the broken stretch past the crest has no rails; its bent stub is the dress's)
+        A.deco("rail_straight", rx, y0 + (y1 - y0) * f - 0.55, z=0.0, rot=ang, scale=L / n / 4.0, size=(4.0, 0.25, 1.2), tone="iron")
 A.challenge("0.2", "Súbete", (-6.2, 2.2), 1, "S")
 A.challenge("0.3", "El Descenso", (-9.0, 2.9), 1, "S")
 

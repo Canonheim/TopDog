@@ -303,8 +303,15 @@ weak(-423.6, -421.7)
 slab(-425.5, -423.6, 153.0, "iron", t=0.4)                  # the landing on the dam's apron
 
 # ================================================================ LA PRESA
-# Five lifts up the stepped face of the dam. Each rises 1.0 m while its crank is wound
-# and sinks when it isn't; the next lift's deck is 1.9 m above the top of the one before.
+# (Note 25, Parker 11-13: "replace this area with one elevator platform and the spiney which is
+# attached to it so you have to stand in the elevator and spin the winch"; settled: it goes
+# straight up in a shaft, and it always sinks when you stop winding.) The design page
+# (design/a2/2_11_la_presa.html): a gallery through the dam's foot from the apron, 7.8 m
+# long and 2.6 m tall, to a shaft 2.6 m wide straight up inside the dam to the hall's roof;
+# in it one cage, its deck 2 m wide, its winch on its back frame 1.5 m over the deck. It
+# rises from the apron's level (152.2) to the crest's (167.0) while you wind, and sinks when
+# you stop. The spillway's steps stay, without their platforms and cranks: nobody climbs
+# them now. (The cage and the winch are plain stand-ins until their models land.)
 X1, R1, STEP, RISE = -429.6, 152.5, 2.6, 2.9
 dam = [(-425.5, 151.9), (X1, 151.9)]
 for k in range(1, 5):
@@ -312,19 +319,21 @@ for k in range(1, 5):
 dam += [(-440, 166.7), (-449, 166.7), (-449, 163), (-459, 163), (-459, 173), (-440, 173), (-440, 170), (-425.5, 170)]
 air(dam)
 airbox(-456, 172.9, -449, 181)  # the exit
+SHAFT_X0, SHAFT_X1 = -440.0, -437.4
+airbox(SHAFT_X1, 151.9, X1, 154.8)  # the inspection gallery, through the dam's foot
+airbox(SHAFT_X0, 151.9, SHAFT_X1, 170.0)  # the lift shaft, straight up inside the dam
 A.opening(-456, 175, -449, 181)
 cap(X1, -425.5, 152.2)  # Q11, the apron
+cap(SHAFT_X1, X1, 152.2)  # the gallery's floor: the apron's coping, on into the dam
+A.box(SHAFT_X1 + 0.3, (160.9 + 170.0) / 2, 0.6, 170.0 - 160.9, "wet")  # the shaft's east wall, from the third step to the roof
 cap(-449, -440, 167.0)  # the dam's crest
 A.water((-459, 163, -449, 166.2), 166.2, flow=(0.0, 0.0), look="lake")
 A.beam((-449.5, 168.6), (-449.5, 178.2), 0.35, "iron")  # the rungs out, up through the roof
-for k in range(5):
-    x, y = X1 - k * STEP, R1 + k * RISE
-    hub = (x + 0.45, y + 1.8)
-    A.body("manivela%d" % (k + 1), hub, [(ngon(0, 0, 0.34, 8), "iron"), (ngon(0.42, 0, 0.13, 6), "iron")],
-           mass=6.0, hinge=hub, damp=0.6, model="crank_small")
-    A.mover("alza%d" % (k + 1), (x + 1.2, y), [(box_pts(0, -0.15, 2.4, 0.3), "plank")],
-            {"type": "crank", "to": [0, 1.0], "body": "manivela%d" % (k + 1), "per_turn": 0.3 if k < 3 else 0.25,
-             "fall": 0.3 if k < 2 else 0.45}, model="dam_lift")
+# The cage: its deck (its top at the mover's point) and its top bar, 2.2 m up, both held as
+# they are in the play space. 0.6 m a turn: about 25 turns from the apron to the crest.
+CAGE_X = (SHAFT_X0 + SHAFT_X1) / 2
+A.winch_lift("jaula", (CAGE_X, 152.2), [(box_pts(0, -0.1, 2.0, 0.2), "plank"), (box_pts(0, 2.2, 2.0, 0.12), "iron")],
+             rise=(0.0, 167.0 - 152.2), winch_at=(0.45, 1.5), r=0.35, per_turn=0.6, fall=0.3)
 A.challenge("2.11", "La Presa", (-426.3, 152.2), 3, "B")
 
 # ================================================================ CAMERAS (the drop under every fling)

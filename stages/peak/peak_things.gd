@@ -218,8 +218,16 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 			cum.append(cum[i - 1] + pts[i - 1].distance_to(pts[i]))
 		m["pts"] = pts
 		m["cum"] = cum
+		if mo.has("hop"):
+			# where on the road it leaves it: the path's point at the crest's x
+			var hx := float((mo.hop as Dictionary).x)
+			for i in pts.size():
+				if absf(pts[i].x - hx) < 0.01:
+					m["hop_d"] = cum[i]
 	if def.has("hold"):
 		add_hold(nodes[0], def.hold, vis, Color.WHITE, peak.tone(a, "slick"), a)
+	if def.has("winch"):
+		_build_winch(m, a)
 	movers[m.id] = m
 	for node: Node in nodes:
 		_mover_of[node.get_instance_id()] = m
@@ -505,6 +513,7 @@ func tick(delta: float) -> void:
 			_tick_mover(m, delta)
 	_tick_rope_grabs()
 	_tick_levers(delta)
+	_tick_winches()
 	_tick_strain(delta)
 	_tick_crunch(delta)
 	_tick_holds(delta)
@@ -629,6 +638,76 @@ func _tick_levers(delta: float) -> void:
 		(lv.turn as Node3D).rotation.z = float(lv.ang)
 		if lv.rod != null and not is_equal_approx(rest, pull):
 			(lv.rod as Node3D).position.x = float(lv.rod_x) + LEVER_CHOCK_M * clampf((rest - float(lv.ang)) / (rest - pull), 0.0, 1.0)
+
+
+## THE WINCH THAT RIDES ITS LIFT (playtest note 25; Parker 11-13: "stand in the elevator and
+## spin the winch"; "it connects to the hand like the chair does"). The handle is taken by
+## the limb whose button is held, when that hand comes within LEVER_TAKE of it, and kept
+## while the button is held and the hand stays near; while it is held the crank follows the
+## hand round its hub, and every bit it turns (either way) winds the lift up. Nothing to
+## weld: the hand steers, the crank follows. A plain stand-in (a hub, an arm, a red grip)
+## until its model lands.
+func _build_winch(m: Dictionary, _a: Dictionary) -> void:
+	var w: Dictionary = (m.def as Dictionary).winch
+	var r := float(w.get("r", 0.35))
+	var at := Peak.v2(w.at)
+	var hub := Node3D.new()
+	hub.position = Vector3(at.x, at.y, -0.15)
+	var drum := LuchaKit.cyl(0.16, 0.3, Color("#4A4F58"), Vector3.ZERO, Vector3.BACK)
+	hub.add_child(drum)
+	var arm := Node3D.new()
+	var bar := LuchaKit.box(Vector3(r, 0.07, 0.07), Color("#6A7078"))
+	bar.position = Vector3(r * 0.5, 0, 0.12)
+	arm.add_child(bar)
+	var grip := LuchaKit.cyl(0.06, 0.32, Color("#C8322E"), Vector3(r, 0, 0.22), Vector3.BACK)
+	arm.add_child(grip)
+	hub.add_child(arm)
+	(m.nodes[0] as Node3D).add_child(hub)
+	m["w_arm"] = arm
+	m["w_ang"] = 0.0
+	m["w_limb"] = -1
+	m["w_turned"] = 0.0
+
+
+## Where a winch's hub and handle are, in the course's metres.
+func winch_hub(m: Dictionary) -> Vector2:
+	return (m.home as Vector2) + (m.offset as Vector2) + Peak.v2((m.def as Dictionary).winch.at)
+
+
+func winch_handle(m: Dictionary) -> Vector2:
+	var r := float((m.def as Dictionary).winch.get("r", 0.35))
+	return winch_hub(m) + Vector2(cos(float(m.w_ang)), sin(float(m.w_ang))) * r
+
+
+func _tick_winches() -> void:
+	var c := peak.player
+	for m: Dictionary in movers.values():
+		if not m.has("w_arm") or not bool(m.active):
+			continue
+		var held := -1
+		if c != null and c.state == Climber.State.LIVE and c.knockout_left <= 0.0:
+			held = c.active_limb()
+		var limb := int(m.w_limb)
+		if limb >= 0 and (held != limb or peak.local_of(c.limb_end(limb)).distance_to(winch_handle(m)) > LEVER_LOSE):
+			m.w_limb = -1
+			limb = -1
+		if limb < 0 and held >= 0 and peak.local_of(c.limb_end(held)).distance_to(winch_handle(m)) <= LEVER_TAKE:
+			m.w_limb = held
+			limb = held
+			Sound.play_at("grip", Vector3(c.limb_end(held).x, c.limb_end(held).y, 0), -2.0)
+		if limb >= 0:
+			var h := peak.local_of(c.limb_end(limb)) - winch_hub(m)
+			if h.length() > 0.05:
+				var want := atan2(h.y, h.x)
+				var d := angle_difference(float(m.w_ang), want)
+				m.w_ang = want
+				m.w_turned = float(m.w_turned) + absf(d)
+				# the pawl clicks every quarter turn
+				m["w_click"] = float(m.get("w_click", 0.0)) + absf(d)
+				if float(m.w_click) > PI * 0.5:
+					m.w_click = 0.0
+					peak.audio.play("lever_clunk", winch_hub(m), -14.0, 1.6)
+		(m.w_arm as Node3D).rotation.z = float(m.w_ang)
 
 
 ## A GRIP BREAKS BEFORE THE BODY DOES (Parker 11-12: "a certain amount of force should
@@ -1038,10 +1117,19 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 							m.run = true
 							m.v = 0.0
 							peak.audio.play("cart_start" if m.id.begins_with("cart") else "zip_whirr", _mover_at(m))
-					if m.run:
+					if m.run and m.has("fly"):
+						# in the air over the broken rail (note 73): no road under it
+						if _tick_hop(m, mo, delta):
+							return
+					elif m.run:
 						var acc := float(mo.get("accel", 0.0))
 						m.v = speed if acc <= 0.0 else minf(speed, float(m.v) + acc * delta)
+						var was_d := float(m.dist)
 						m.dist = float(m.dist) + float(m.v) * delta
+						if mo.has("hop") and was_d < float(m.get("hop_d", INF)) and float(m.dist) >= float(m.get("hop_d", INF)):
+							_start_hop(m, mo)
+							if _tick_hop(m, mo, 0.0):
+								return
 						if mo.has("loose") and float(m.dist) >= float(mo.loose):
 							_let_loose(m)
 							return
@@ -1114,6 +1202,14 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 					m.tip_t = -1.0
 					m.angle = 0.0
 					jumped = true
+		"winch":
+			var to := Peak.v2(mo.to)
+			var w: Dictionary = (m.def as Dictionary).winch
+			var turned := float(m.get("w_turned", 0.0))
+			m["w_turned"] = 0.0
+			var rate := turned / TAU * float(w.get("per_turn", 0.6)) - float(w.get("fall", 0.3)) * delta * (0.0 if turned > 0.004 else 1.0)
+			m.prog = clampf(float(m.prog) + rate / maxf(to.length(), 0.01), 0.0, 1.0)
+			m.offset = to * float(m.prog)
 		"crank":
 			var to := Peak.v2(mo.to)
 			var b: Dictionary = bodies.get(str(mo.body), {})
@@ -1138,6 +1234,82 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 		_wall_wipe(m)
 		if (m.def as Dictionary).has("socket") and str(m.type) == "cycle":
 			_socket_tell(m)
+
+
+## THE CART HOPS THE BROKEN RAIL (playtest note 73; Parker 11-13: "real hop and make dust come
+## off the wheels when it lands"). A "once" path with `hop` {"x": the crest's x, "g": m/s2}
+## leaves its road where it passes the crest, at its own speed along the road there, and
+## flies under `g` until its floor is back on the road; there it lands with a bang, dust off
+## the wheels and a jolt of the camera, and runs on from that point. Hands and feet on it go
+## with it (the welds are to the cart). The rider is lighter in the air than the cart (the
+## climber's own gravity is 2.79): hold on.
+func _start_hop(m: Dictionary, mo: Dictionary) -> void:
+	var at: Array = _along(m, float(m.hop_d))
+	m["fly"] = {"p": at[0], "v": (at[1] as Vector2) * float(m.v), "t": 0.0}
+	m.dist = float(m.hop_d)
+
+
+## The road's height at x, past the crest (the road runs one way in x there), or INF.
+func _road_y(m: Dictionary, x: float) -> float:
+	var pts: PackedVector2Array = m.pts
+	for i in range(1, pts.size()):
+		var a := pts[i - 1]
+		var b := pts[i]
+		if (x - a.x) * (x - b.x) <= 0.0 and absf(b.x - a.x) > 0.001:
+			return lerpf(a.y, b.y, (x - a.x) / (b.x - a.x))
+	return INF
+
+
+func _road_dist(m: Dictionary, x: float) -> float:
+	var pts: PackedVector2Array = m.pts
+	var cum: PackedFloat32Array = m.cum
+	for i in range(1, pts.size()):
+		var a := pts[i - 1]
+		var b := pts[i]
+		if (x - a.x) * (x - b.x) <= 0.0 and absf(b.x - a.x) > 0.001 and cum[i - 1] >= float(m.hop_d) - 0.01:
+			return cum[i - 1] + a.distance_to(b) * clampf((x - a.x) / (b.x - a.x), 0.0, 1.0)
+	return float(m.hop_d)
+
+
+## One tick of the flight. True when the mover's own tick is done for this frame.
+func _tick_hop(m: Dictionary, mo: Dictionary, delta: float) -> bool:
+	var fly: Dictionary = m.fly
+	var g := float((mo.hop as Dictionary).get("g", 8.9))
+	var v: Vector2 = fly.v
+	var p: Vector2 = fly.p
+	v.y -= g * delta
+	p += v * delta
+	fly.t = float(fly.t) + delta
+	var road := _road_y(m, p.x)
+	if float(fly.t) > 0.05 and p.y <= road:
+		# down: back on the road where it touched, at its speed along it
+		m.erase("fly")
+		m.dist = _road_dist(m, p.x)
+		var at: Array = _along(m, float(m.dist))
+		m.v = clampf(v.dot(at[1]), 1.0, float(mo.get("speed", 9.0)))
+		m.offset = (at[0] as Vector2) - (m.home as Vector2)
+		var c := (at[0] as Vector2)
+		for e: float in [-0.9, 0.9]:
+			var wheel: Vector2 = c + (at[1] as Vector2) * e + Vector2(0, -0.35)
+			peak.zones.burst(wheel, "dust", 1.4, Vector2(-signf(e) * 0.4, 1.0))
+		peak.audio.play("cart_crash", c, 2.0)
+		peak.cam_kick = 0.35
+		return false
+	fly.v = v
+	fly.p = p
+	m.offset = p - (m.home as Vector2)
+	# it noses over in the air: the floor follows the flight
+	var want := atan2(v.y, v.x)
+	if absf(want) > PI * 0.5:
+		want -= signf(want) * PI
+	m.angle = lerp_angle(float(m.angle), want, 1.0 - exp(-delta * 5.0))
+	var pos := (m.home as Vector2) + (m.offset as Vector2)
+	m.speed = pos.distance_to(m.prev) / maxf(delta, 0.0001)
+	m.prev = pos
+	for node: AnimatableBody3D in m.nodes:
+		node.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, 0.0))
+	_cart_sound(m)
+	return true
 
 
 ## THE SERAC FALLS ALL THE WAY (playtest note 88; Parker 11-13: "Make it fall all the way

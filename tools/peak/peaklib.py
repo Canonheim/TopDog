@@ -376,6 +376,16 @@ class Area:
         self.movers.append(m)
         return m
 
+    def winch_lift(self, mid, at, shapes, rise, winch_at, r=0.35, per_turn=0.6, fall=0.3, **kw):
+        """A LIFT WITH ITS WINCH ON BOARD (note 25): a mover that climbs `rise` (dx, dy) while
+        its winch is wound and sinks at `fall` m/s whenever it isn't. The winch is a handle
+        on a crank of radius `r` about `winch_at` (relative to `at`, riding with the lift),
+        taken as the chair is: by the limb whose button is held, near the handle, for as
+        long as it is held. Each turn of it is `per_turn` metres."""
+        m = self.mover(mid, at, shapes, {"type": "winch", "to": _pt(rise)}, **kw)
+        m["winch"] = {"at": _pt(winch_at), "r": _f(r), "per_turn": _f(per_turn), "fall": _f(fall)}
+        return m
+
     def wheel(self, mid, at, r, rpm, spokes=6, kind="wood", rim=0.0, spoke_t=0.28, hub=0.5, phase=0.0, **kw):
         """A turning wheel of spokes (and a rim of `rim` thickness if > 0, as 12 chords)."""
         shapes = [(ngon(0, 0, hub, 8), kind)]
@@ -640,7 +650,7 @@ class Area:
         for mv in self.movers:
             for sh in mv["shapes"]:
                 poly_ok(sh["pts"], "mover " + mv["id"])
-            assert mv["motion"]["type"] in ("path", "spin", "swing", "cycle", "sink", "link", "tip", "crank", "still"), mv["id"]
+            assert mv["motion"]["type"] in ("path", "spin", "swing", "cycle", "sink", "link", "tip", "crank", "still", "winch"), mv["id"]
         for b in self.bodies:
             for sh in b["shapes"]:
                 poly_ok(sh["pts"], "body " + b["id"])
