@@ -389,7 +389,7 @@
    "tone": "ice",
    "hold": {
     "type": "crumble",
-    "t": 0.7,
+    "t": 1.5,
     "respawn": 9.0
    }
   },
