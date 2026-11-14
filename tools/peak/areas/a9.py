@@ -154,21 +154,26 @@ A.challenge("9.2", "Carámbanos", (-328.4, 798.5), 4, "B",
 # ================================================================ 9.3 Puente de Nieve
 # Three snow bridges from R2 to the cave's door, each of three pieces that fall in 1 s
 # after they are taken, with two chockstones wedged between the bridges.
-def bridge(x0, n, w):
+# (The lower crevasse's redesign, Parker 11-13: "Yes, that". As its design page lays them,
+# read off its to-scale sketch: nine pieces 1.1 m long and 0.45 m thick, each bridge sagging
+# 0.15 m in the middle, the stones moved east to suit, and 1.2 m of open air between the
+# shelf's broken end (x -319.0) and the first piece: stepping over it is the first move.)
+def bridge(x0, n=3, w=1.1, gap=0.04, sag=0.15):
     out = []
     for i in range(n):
-        a = x0 + i * w
-        A.solid([(a + 0.02, 803.55), (a + w - 0.02, 803.55), (a + w - 0.02, 804.0), (a + 0.02, 804.0)], "snowbridge")
-        out.append((a + w * 0.5, 804.0))
+        a = x0 + i * (w + gap)
+        dy = -sag if i == n // 2 else 0.0
+        A.solid([(a, 803.55 + dy), (a + w - 0.04, 803.55 + dy), (a + w - 0.04, 804.0 + dy), (a, 804.0 + dy)], "snowbridge")
+        out.append((a + (w - 0.04) * 0.5, 804.0 + dy))
     return out
-S93 = bridge(-319.0, 3, 1.25)
-A.solid([(-315.25, 804.0), (-315.1, 803.2), (-314.5, 802.9), (-314.05, 803.3), (-314.05, 804.0)], "rock")
-S93 += [(-314.65, 804.0)] + bridge(-314.05, 3, 1.25)
-A.solid([(-310.3, 804.0), (-310.3, 803.3), (-309.8, 802.8), (-309.2, 803.1), (-309.1, 804.0)], "rock")
-S93 += [(-309.7, 804.0)] + bridge(-309.1, 3, 1.2) + [(-305.2, 804.0)]
+S93 = bridge(-317.78)
+A.solid([(-314.5, 804.0), (-314.35, 803.2), (-313.75, 802.9), (-313.3, 803.3), (-313.3, 804.0)], "rock")
+S93 += [(-313.9, 804.0)] + bridge(-313.28)
+A.solid([(-310.0, 804.0), (-310.0, 803.3), (-309.5, 802.8), (-308.9, 803.1), (-308.8, 804.0)], "rock")
+S93 += [(-309.4, 804.0)] + bridge(-308.78) + [(-305.2, 804.0)]
 A.spawner("icicle", (-324.5, 809.2), period=10.0, phase=2.0, r=0.3, life=6.0, warn=1.2, mass=12.0)  # over R2
 A.challenge("9.3", "Puente de Nieve", (-320.4, 804.0), 3, "B",
-            moves=[["reach", [-319.3, 804.0], list(S93[0])]] +
+            moves=[["reach", [-319.2, 804.0], [-317.6, 804.0]], ["reach", [-317.6, 804.0], list(S93[0])]] +
                   [["reach", list(S93[i]), list(S93[i + 1])] for i in range(len(S93) - 1)])
 A.cam((-321, 800, -305, 809), half_h=9.5, bias=(0.0, -5.0))
 

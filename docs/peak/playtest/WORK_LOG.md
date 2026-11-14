@@ -1851,6 +1851,18 @@ in. Nothing played by a person.
     short).
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-13, group 3: the lower crevasse's small moves (a9: 9.3)
+
+- **9.3 Puente de Nieve,** as the redesigned lower crevasse's page lays it (read off its
+  to-scale sketch, 30 px a metre): nine pieces of snow lid 1.1 m long and 0.45 m thick (they
+  were 1.25 m), each bridge sagging 0.15 m in the middle, the two wedged stones moved 0.75 m
+  and 1.2 m east to suit, and 1.2 m of open air between the shelf's broken end (x -319.0)
+  and the first piece: the step across is now the leg's first move. The last bridge still
+  ends at the door's sill. In a frame the pieces' drawn snow caps overhang, so the step
+  looks narrower than it is. Not played. (`93_puente_de_nieve_before.jpg`, `_after.jpg`)
+- Notes 86, 88, 91, 93 of the glacier were group 1's.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
