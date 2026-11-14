@@ -1993,6 +1993,35 @@ in. Nothing played by a person.
     waits for the model: a missing model would draw a stand-in box across the doorway.
 - **Checks:** lint; `--peak`; `--peakride`. Clean.
 
+## The fix run of 11-14: a2's dress file wired in (the modelling run's a2_dress.py)
+
+- 1, the call (at the end, after the course). 2, the works' lanterns are the dress's: one
+  steady TEAL light per `LANTERN_LIGHTS` (23), no flicker (note 17), and the join's two
+  (violet down the exit shaft, white at the bright crystal: their range and energy are my
+  first guesses). 3, out: the aqueduct's twelve hanger chains (note 18), the cove's arch
+  and its dark card, the three flume pillars, the Tuberia's pipe pieces, the wheel's frame,
+  P1's bracket, the dam's stamp, the boiler, the bunting; a second valve wheel on the last
+  cool joint. 4, out: the far wall, the tunnel's brick strips, the aqueduct's pier cards
+  and arches, El Desague's card and window, the well's slot and dot, the pool hall's
+  arches, the dam's flank. 5, skins: `build_rock` cuts the rock by `SKIN_REGIONS` in order
+  (the regions cover all of it), every slab wearing its region's piece; the pier's peaked
+  top, the four aqueduct crowns, the five brick slabs' bodies and the shaft's east wall
+  wear theirs. **The seam with a1:** the strip under y 89.4 from x -252 to -223 is a1's
+  roof alone now (a2's rock there is cut away). The two dress files' pieces still both
+  draw over it.
+- 6a, the copings: Q1 to Q5 and the slabs' tops are `stone`. 6d, the frog's room: cut as
+  air (x -284 .. -281, a round vault to 120.0) with a stone sill floor at 117.4, Q6's
+  coping running on. 6f, three drowned rungs under the ladder (y 109.5, 109.1, 108.7),
+  held, wearing `rung_iron_rusted`. 6i, the cage wears `aguas_winch_cage`: the lift still
+  winds to the crest (167.0 in 22 s) and sinks when let go (`25_winding_cage_model.jpg`).
+- **Left out, for the Director:** 6b (the weir's coping at the waterfall's lip) and 6c (the
+  pool's sill at the cascade's lip). Both would be a hold at the very edge of a fall,
+  where a swimmer swept to the lip could catch it and the fall stops being one. Their
+  decos are in the dress file and still draw. 6g (the gates as pistons, housings and
+  rams): not done tonight. 7 and 8 (the holds' and movers' looks, the grey wheel and the
+  gate leaves moving): not done.
+- **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
