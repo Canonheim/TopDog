@@ -81,8 +81,8 @@ bespoke is modelled for the frozen climbers or the ending's climber until it is 
 | 6 La Chimenea | done | `a6_dress.py` WIRED (8788f09) | B 9 and C 40 landed; A 2 of 37 (the rest with thread B) | |
 | 7 Los Riscos del Viento | done | `a7_dress.py` WIRED (8451f10) | C 23 landed (and the 7.6 m wheel); A with the wall maker, B with thread B; re-makes `bull_wheel` at 7.6 m, a flying vulture; the walls example becomes the tower top (cut at 658) | |
 | 8 El Teleférico | done; revised (real roofs, hangers held) | `a8_dress.py` WIRED (faa373e) | 71 new: A 19 (wall maker), B 6, C 46; seven re-makes (gondola, dead gondola, chair as a bench, zip trolley, counterweight, low station, haul cable) with C | stand-ins only: `docs/peak/frames/a8_tele_stand_ins_*` (the towers' plain boxes fill the sky until the lattice lands) |
-| 9 El Glaciar | done; revised (three wall arrow signs) | being written | | |
-| 10 La Cresta de la Tormenta | done | | | |
+| 9 El Glaciar | done; revised (three wall arrow signs) | `a9_dress.py` written (7263f84), sent to the fix thread to wire | 67 new + 6 for a9.py: A 56 (wall maker, after the cliffs), B 6, C 11 | |
+| 10 La Cresta de la Tormenta | done | being written | | |
 | 11 La Cumbre | done; revised (the secret the right way round; the ring) | | ring ropes landed (thread C) | |
 
 Mountain-wide small pieces (wave 0, no placement needed): frogs, signs, tea things
