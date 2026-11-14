@@ -178,6 +178,7 @@
 <tr><td>115</td><td><a href="#n115">Build 0.3.104, the black waters' steam pipe: the hot joints are not connected to the pipe; a lot of things look disconnected, as if only viewed from the front</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>116</td><td><a href="#n116">Build 0.3.104, the black waters' keepers' stair (the cascade's wall): looks super unfinished</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 <tr><td>117</td><td><a href="#n117">Build 0.3.104, the winch in the lift cage (and the levers): the hand should stick to it while you hold the button</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
+<tr><td>118</td><td><a href="#n118">Build 0.3.104, the lift cage: it has a roof you collide with; remove it</a></td><td><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></td></tr>
 </table>
 <p class="sub">Notes 1 to 11: done by the thread, on the branch, not merged or built, not played. Notes 12 to 56: sent to the thread at 23:53 on Parker's word ("have the session get to work"). Their chips below still say "not sent"; read that as "sent, not started" until the thread reports.</p>
 <p class="sub">Notes 58 and up are new since the thread was sent its batch, and wait for Parker's word.</p>
@@ -3951,6 +3952,20 @@ cracked models for the breakables (<a href="#n16">16</a>, <a href="#n24">24</a>,
   <p>Biome 2, the lift cage (`jaula`, note 25). The winch (stages/peak/peak_things.gd, `_tick_winches`) is not a hold: a hand whose button is held 'takes' it when it comes within 0.3 m of the grip, and then the crank simply turns to point at wherever the hand is, every bit it turns winding the lift. The hand itself is never joined to the grip ('nothing to weld: the hand steers, the crank follows', as it was built), so the hand floats free of the handle, can slide off it, and lets go the moment it drifts 0.8 m away. The levers work the same way (the same take and lose distances).</p>
   <h4>Plan (held: no changes until Parker says)</h4>
   <p>Make the winch's grip and every lever's handle a real hold: the hand closes on it and stays on it as long as the button is held, exactly like gripping a rung (the hand joined to the grip, the grip held to its circle round the hub, or to its arc for a lever), so pulling the hand round turns the crank and the crank carries the hand; letting go of the button lets go. Check it turns smoothly both ways at the lift's 0.6 m a turn, and that the climber can't be flung by a fast crank. Held until Parker says go.</p>
+</div>
+
+<div class="note" id="n118">
+  <div class="head"><span class="num">118</span><h3>Build 0.3.104, the lift cage: it has a roof you collide with; remove it</h3><span class="time">11-14 10:35</span></div>
+  <blockquote>"this elevator has a roof collision, remove it"</blockquote>
+  <p><span class="chip c-ask">Noted (build 0.3.104 playtest); no changes yet: Parker is giving notes first</span></p>
+  <figure>
+    <img src="shots/118_cage_roof.png" alt="Parker's shot, build 0.3.104: the lift cage (jaula) at the bottom of its shaft, the climber on the ledge beside it; the cage's top bar is a solid roof.">
+    <figcaption>Parker's shot, build 0.3.104: the lift cage (jaula) at the bottom of its shaft, the climber on the ledge beside it; the cage's top bar is a solid roof.</figcaption>
+  </figure>
+  <h4>Where, and what is going on</h4>
+  <p>Biome 2, the lift cage (`jaula`, x -438.7, rides 14.8 m up its shaft by the winch). Its solid is two pieces: the plank floor (2.0 x 0.2 m) and an iron bar across the top, 2.0 m wide and 0.12 m thick, 2.14 m over the floor. That top bar is the roof you hit: it stops a climber getting in from above or standing up tall inside, and it bangs into you from below as the cage rises.</p>
+  <h4>Plan (held: no changes until Parker says)</h4>
+  <p>Take the top bar out of the cage's solid (the floor stays), so the cage is open above; the drawn frame stays as it is. Check a climber riding the cage to the top isn't then caught between the floor and the shaft's head (the crunch rule should knock out, not trap). Held until Parker says go.</p>
 </div>
 
 </main>
