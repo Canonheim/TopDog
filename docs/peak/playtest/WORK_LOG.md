@@ -2386,33 +2386,44 @@ in. Nothing played by a person.
   hammers' sparks, the shaft's steam and soot, white dust at the opening, the chockstone's grit).
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: 8.9's grate checked (page 8.9)
+
+- The page: "a climber standing on the grate has 2 cm of headroom under the express car's step
+  when it stops ... if a standing head can be caught, the grate goes down 0.2 m." Measured
+  (`g89`, a climber set standing on the grate as line 1's car came back to its stop): the head
+  settled at 748.18 before the car came and went no lower under the stop; its top clears the
+  step's underside (748.35) by about 2 cm. No crunch, no knock-out: **not caught, so the grate
+  stays where it is.** (A first reading took the climber's settling after being set down, 0.12
+  m, for the step pressing it; measured against the settled height it is nothing.)
+  (`8_9_grate_under_the_step.jpg`)
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
 
 **In hand:** nothing. Notes 20, 21, 22, 28, 43 and 35 are done (each has its entry above).
 
-**Parked until Parker says** (his design job comes first):
+**Parked until Parker says** (his design job comes first). Since then the night's run (11-13/14)
+built most of them from the redone pages; what each now is:
 
-- 12: a dark chimney in the cave-in's roof for the rocks to fall from.
-- 18: the rings fixed to the wall, six chains out.
-- 19: the gate's pistons (needs a model).
-- 25: the dam as one inclined elevator with its winch on board.
-- 26, 30, 33: the crystal cave's pieces in the pale purple cluster look (needs models;
-  the white "you can hold this" finish may be possible in code).
-- 29: the geode at 3 rpm.
-- 32: the crystal bonsai (needs a model).
-- 34: the ring's spikes pop in and out with a shake.
-- 36: the bounce caps squash and spring.
-- 37: the bouncy caps spotted (needs a model); the scenery mushrooms pushed back 6 to 10 m.
-- 38: the spore updraught drawn as a real column with a source at its foot.
-- 41: the mushroom hut and the frog (need models).
-- 42: the giant mushroom (needs a model).
-- 44: two warts, and the lunges checked.
-- 46: the great cap (needs a model).
-- 49: the gears, options 1 to 3.
-- 50: only the middle censer stays.
-- 54: the achievements list, "Pay Your Respects" first.
-- 57: the great bellows works its gust; the three small ones breathe.
+- 12: the chimney in the cave-in's roof: carved (a1's dress wiring).
+- 18: the aqueduct's twelve hanger chains out (a2's dress wiring); the rings wear eye bolts.
+- 19: the gates as pistons (a2's dress wiring); the ram model wants lengthening (the Director).
+- 25: done (the dam's one winch lift, group 3).
+- 26, 30, 33: the crystal cave's skins named (a3's dress wiring); its models not landed yet.
+- 29: the geode at 3 rpm (a3's dress wiring).
+- 32: the bonsai's outline (a3's dress wiring); its model not landed yet.
+- 34: done (La Columna's spikes, group 3).
+- 36: the caps squash and spring (a4's looks).
+- 37: the scenery mushrooms out of the play space (a4's dress); the spotted caps are a re-make.
+- 38: the spore column pale gold, dense below and thin above (a4's effects).
+- 41: the hut's solid moss roof (a4's dress wiring); the hut and frog are the dress's.
+- 42, 46: the giant and the great cap: re-makes (the modelling run's).
+- 44: done: two shoulder mushrooms; the three lunges F2, 3.5 to 3.8 m/s (ruled by the Director).
+- 49: done earlier (the gears at 5 rpm, a crunch knocks out).
+- 50: done: one censer (a5's dress wiring).
+- 54: done: the achievements list, "Pay Your Respects" first.
+- 57: the great bellows and the three small ones breathing: not done (an engine change: a
+  bellows' base kept still while its pleats stretch).
 - The model requests still to be written into `MODEL_REQUESTS.md`: 19, 26/30/33, 32,
   37, 41, 42, 46, and the four cracked pieces of group E.

@@ -2989,3 +2989,38 @@ func _w_g6(a: Array) -> void:
 	look(Vector2(-240.0, 481.0), 3.5)
 	await secs(0.4)
 	await shot("59_bucket_" + tag)
+
+
+## 8.9: a climber standing on the grate under express line 1's step as its car comes to the stop. g89:TAG
+func _w_g89(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("8.10")
+	await secs(1.0)
+	var c := me()
+	var m: Dictionary = pk.things.movers["ex1"]
+	var cr0: int = pk.things.crunches
+	var ko := false
+	var head_low := INF
+	var head_before := 0.0
+	var t0 := pk.clock
+	var stood := false
+	var shot_done := false
+	while pk.clock - t0 < 22.0:
+		var at: Vector2 = (m.home as Vector2) + (m.offset as Vector2)
+		# stand under the step once the car is on its way back east (a few metres out)
+		if not stood and at.x < -224.0 and at.x > -226.0 and float(m.get("dir", 1.0)) != 0.0:
+			stand(Vector2(-220.1, 746.52))
+			stood = true
+		if stood:
+			ko = ko or c.knockout_left > 0.0
+			var hy := pk.local_of(Climber.pos2(c.bodies["head"])).y
+			if at.x < -221.5:
+				head_before = hy  # (settled, the car still 3 m or more off)
+			else:
+				head_low = minf(head_low, hy)
+			if not shot_done and at.x > -218.8:
+				shot_done = true
+				look(Vector2(-220.0, 748.0), 3.0)
+				await shot("8_9_grate_under_the_step_" + tag)
+		await ticks(1)
+	print("WATCH g89 %s: stood %s; crunches %d, knocked out %s; the head at %.3f just before the car came, its lowest under the stop %.3f (the step's underside 748.35); the climber at %s" % [tag, stood, pk.things.crunches - cr0, ko, head_before, head_low, where()])
