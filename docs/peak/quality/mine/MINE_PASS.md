@@ -837,6 +837,9 @@ right; big plain slab block right". **Method:** as E2.
 start (−200.0, 6.0), on the counterweight at its top (−190.2, 27.0) and at 1.6 (−201.0, 33.0), with
 stand-ins for the headframe, deck, ribs and a climber; high and low.
 
+
+**Carried from E6 (the headframe maker, round 2):** six `mine_prop_short` placed by a1_dress.py in the old workings above El Cubo float in the air; this wall must give them something to stand on (a ledge, a working face, a drift floor), or they go.
+
 ### E4. `mine_chain_rib` (REMAKE, absorbing `mine_chain_rib_body` and `mine_incline_bench`): the set of the cart room and Las Vigas
 
 **What and where.** The back wall west of El Diente, from the bench under the incline up to the roof:
