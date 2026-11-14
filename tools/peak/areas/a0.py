@@ -6,6 +6,7 @@ import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from peaklib import Area, box_pts, ngon, save_meta
 import a0_station  # the station's scenery (the 11-13 diorama test): decos and cards only
+import a0_dress  # the tunnel's scenery past the first screen (the modelling run's): decos and cards only
 
 A = Area("a0", "town")
 
@@ -67,8 +68,8 @@ for (x0, y0), (x1, y1) in zip([(-4.6, 2.65)] + RIDE[1:-1], RIDE[1:]):
     for i in range(n):
         f = (i + 0.5) / n
         rx = x0 + (x1 - x0) * f
-        if -94.0 < rx < -90.0:
-            continue  # (note 73: the broken stretch past the crest has no rails; its bent stub is the dress's)
+        if any(abs(rx - c) < 0.2 for c in (-91.75, -98.75, -102.25)):
+            continue  # (note 73's torn stretch: dsc_rail_torn, dsc_rail_landing, dsc_rail_banked take these places, in a0_dress)
         A.deco("rail_straight", rx, y0 + (y1 - y0) * f - 0.55, z=0.0, rot=ang, scale=L / n / 4.0, size=(4.0, 0.25, 1.2), tone="iron")
 A.challenge("0.2", "Súbete", (-6.2, 2.2), 1, "S")
 A.challenge("0.3", "El Descenso", (-9.0, 2.9), 1, "S")
@@ -85,19 +86,28 @@ kinds[len(floor) - 1] = None  # the west end: the door into the mine
 for i in range(len(floor), len(air) - 1):
     kinds[i] = "rock2"  # the roof
 kinds[len(air) - 1] = None  # the east end: the mouth
+n_before = len(A.solids)
 A.cave(air, kinds, default="wet", thick=3.0)
+# The cave's slabs wear the dress's skins (a0_dress FOR THE AREA FILE, item 6), by where
+# each lies; the corner fillers go with the stretch the dress names for them.
+for s in A.solids[n_before:]:
+    cx = sum(p[0] for p in s["pts"]) / len(s["pts"])
+    if s["kind"] == "rock":  # the bed
+        s["skin"] = "dsc_bed_a" if cx > -62.3 else "dsc_bed_b" if cx > -104.5 else "dsc_bed_c" if cx > -136.0 else "dsc_bed_d"
+    elif s["kind"] == "rock2":  # the roof
+        s["skin"] = "dsc_roof_a" if cx > -62.5 else "dsc_roof_b" if cx > -105.0 else "dsc_roof_c" if cx > -137.0 else "dsc_roof_d"
 A.opening(-153, -13, -151, -6)  # the door to A1
 A.opening(-37, 2, -35, 8)  # the mouth
-A.box(-150.3, -11.6, 0.6, 0.8, "iron")  # the buffer the cart stops against
+A.box(-150.3, -11.6, 0.6, 0.8, "iron", skin="dsc_buffer_stop")  # the buffer the cart stops against
 A.dark((-152, -16, -40, 9), level=0.8)  # inside the mountain: the light goes
 
 # ---------------------------------------------------------------- the picture
-A.card([(-152, -17), (-36, -17), (-36, 9), (-152, 9)], z=-3.0, tone="#33241A")  # the tunnel's back wall
+# (The tunnel's back-wall card, the mouth's mine_frame and the seven lantern_mine decos are
+# gone: a0_dress places the back wall's pieces, the whitewashed mouth set and the lanterns.)
 a0_station.dress(A)  # the yard wall, the station house, the posters, the frog, the bunting, the foreground
-A.deco("mine_frame", -36.0, 2.2, z=0.0, size=(0.6, 5.0, 2.6), tone="wood")  # the mouth's timber frame
-for i, (x, y) in enumerate(RIDE[2:-1]):
-    A.deco("lantern_mine", x, y + 3.6, z=-1.0, size=(0.3, 0.5, 0.3), tone="gold")
-    A.light(x, y + 3.2, color="#FFB860", rng=10.0, energy=1.5, flicker=True)
+a0_dress.dress(A)  # the tunnel: its sets, back wall, lanterns, torn rail, trough, the mouth
+for x, y in a0_dress.LANTERNS:  # each light sits in its lantern, under the hook
+    A.light(x, round(y - 0.27, 3), color="#FFB860", rng=10.0, energy=1.5, flicker=True)
 A.cam((-152, -16, -30, 9), half_h=4.6)
 
 if __name__ == "__main__":

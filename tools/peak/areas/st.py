@@ -69,6 +69,11 @@ for _i in range(46):
 # ---------------------------------------------------------------- the outer slope, slick scree
 # Below La Boca's east rim: the bare slope down to the trailhead (a body flung far east ends there).
 A.wall([(-150, 322), (-130, 260), (-90, 150), (-60, 60), (-34, 5.5)], default="scree", thick=5.0, rock_on="right")
+# The last slab's inner corner (-38.5, 3.3) stood inside the tunnel's air, 1.1 m over the cart's
+# floor and 2.5 m in from the mouth: a rider's head met it (the modelling run's designer, 11-14).
+# Lifted to the tunnel roof's underside, so the slab's foot runs above the mouth.
+for s in A.solids:
+    s["pts"] = [[-36.0, 7.4] if abs(q[0] + 38.504) < 0.05 and abs(q[1] - 3.329) < 0.05 else q for q in s["pts"]]
 # The face from El Balcon's foot down into La Garganta.
 A.wall([(-230, 574), (-180, 400)], default="scree", thick=5.0, rock_on="right")
 # El Colmillo's lower half: the fang standing on the slope. Its west side is the throat's other wall.

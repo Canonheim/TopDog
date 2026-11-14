@@ -1909,6 +1909,23 @@ in. Nothing played by a person.
   - (`100_bell_still_after.jpg`, `100_bell_swinging_after.jpg`, `100_bell_after_after.jpg`)
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-14: a0's dress file wired in (the modelling run's a0_dress.py)
+
+- `a0.py` calls `a0_dress.dress(A)` after the station's dress. Out: the tunnel's back-wall
+  card (z -3), the mouth's `mine_frame`, the seven `lantern_mine` decos. The seven lights
+  stay, each moved into its lantern (the hook's x, its y - 0.27). The rail loop leaves out
+  the three torn-stretch pieces at x -91.75, -98.75, -102.25 (the dress's torn, landing and
+  banked rails take their places). The cave's slabs wear `dsc_bed_a`..`d` and
+  `dsc_roof_a`..`d` by stretch, the corner fillers going with the stretch the list names;
+  the buffer wears `dsc_buffer_stop`.
+- **The scree slab in the tunnel mouth (st.py), from the dress's designer:** the outer
+  slope's last slab had its inner corner at (-38.5, 3.3), inside the tunnel's air: at x -36
+  it filled y 4.5 to 7.2, a rider's head height over the cart's floor (2.2). The corner is
+  lifted to (-36.0, 7.4), the roof's underside, so the slab's foot runs above the mouth.
+  Not watched by a ride (the ride battery passes).
+- **Checks:** lint; `--peak`; `--peakride`. Clean. Frames of the stand-ins are the
+  modelling run's.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
