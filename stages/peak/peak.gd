@@ -263,6 +263,7 @@ signal area_entered(id: String, name: String, number: int)
 signal fell(metres: float)
 signal milestone(metres: int)
 signal summit(time_s: float, falls: int, best_s: float)
+signal achieved(id: String, title: String)
 
 
 static func v2(a) -> Vector2:
@@ -945,6 +946,7 @@ func tick(delta: float) -> void:
 		time_s += delta
 	_tick_fall(delta, p)
 	_tick_softlock(delta)
+	_tick_respects(p)
 	_save_t -= delta
 	if _save_t <= 0.0:
 		_save_t = SAVE_EVERY_S
@@ -1180,6 +1182,53 @@ func inside_now() -> float:
 
 
 ## The camera's frame at the climber: [half height, bias, is it a zone an author drew].
+## THE FIRST ACHIEVEMENT (playtest note 54; Parker 11-13: "make an achievement at this alter
+## where if you fart, you get an achievement called "pay your respects""; settled: both
+## altars count, and F is the keyboard's fart). The game had none: `achievements` is the
+## list the Peak's save keeps ({id: true}), `award` earns one once and for good and tells
+## the HUD (`achieved`). Steam takes them when the game has its own Steam app.
+const ACHIEVEMENTS := {"pay_your_respects": "Pay Your Respects"}
+const RESPECTS_NEAR := 2.5  # m from an altar's middle
+var achievements := {}
+var _fart_was := false
+
+
+func award(id: String) -> void:
+	if achievements.has(id) or not ACHIEVEMENTS.has(id):
+		return
+	achievements[id] = true
+	achieved.emit(id, str(ACHIEVEMENTS[id]))
+	_save_achievement()
+
+
+## Earned achievements are kept even on a warped run (a warp keeps the climb's own save
+## untouched, not this).
+func _save_achievement() -> void:
+	var cf := ConfigFile.new()
+	cf.load(SAVE_PATH)
+	cf.set_value("peak", "achievements", achievements)
+	cf.save(SAVE_PATH)
+
+
+func _tick_respects(p: Vector2) -> void:
+	var slot := player.local_slot
+	var farting := slot >= 0 and Players.fart_held(slot)
+	var pressed := farting and not _fart_was
+	_fart_was = farting
+	if not pressed or achievements.has("pay_your_respects"):
+		return
+	for a in areas:
+		if not rect_has(a.region, p, 4.0):
+			continue
+		for d in a.get("decos", []):
+			if str(d.get("model", "")) == "altar":
+				var mid := Vector2(float(d.at[0]), float(d.at[1]) + float((d.get("size", [0, 1.0]) as Array)[1]) * 0.5)
+				if mid.distance_to(p) <= RESPECTS_NEAR + float((d.get("size", [1.0]) as Array)[0]) * 0.5:
+					award("pay_your_respects")
+					zones.burst(mid + Vector2(0, 0.6), "steam", 1.0)  # (the altar's bowl answers with a puff)
+					return
+
+
 ## A jolt of the camera (m), set by a hard landing (the cart's hop); main.gd shakes the view
 ## by it and lets it die away.
 var cam_kick := 0.0
@@ -1315,6 +1364,7 @@ func _save() -> void:
 	cf.set_value("peak", "best_m", best_m)
 	cf.set_value("peak", "summits", summits)
 	cf.set_value("peak", "best_time", best_time_s)
+	cf.set_value("peak", "achievements", achievements)
 	cf.save(SAVE_PATH)
 
 
@@ -1329,6 +1379,7 @@ func _load() -> void:
 	best_m = float(cf.get_value("peak", "best_m", 0.0))
 	summits = int(cf.get_value("peak", "summits", 0))
 	best_time_s = float(cf.get_value("peak", "best_time", 0.0))
+	achievements = cf.get_value("peak", "achievements", {})
 	_milestone = int(best_m / 100.0)
 
 

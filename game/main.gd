@@ -431,6 +431,7 @@ func _start_peak() -> void:
 		game.peak.area_entered.connect(_on_peak_area)
 		game.peak.fell.connect(_on_peak_fell)
 		game.peak.milestone.connect(_on_peak_milestone)
+		game.peak.achieved.connect(_on_peak_achieved)
 		game.peak.summit.connect(_on_peak_summit)
 		if ResourceLoader.exists("res://ui3d/peak_hud.gd") and lucha != null:
 			_peak_hud = load("res://ui3d/peak_hud.gd").call("make", lucha)
@@ -457,6 +458,13 @@ func _on_peak_milestone(metres: int) -> void:
 		_peak_hud.call("milestone", metres)
 	else:
 		_on_announce("%d m!" % metres, false)
+
+
+func _on_peak_achieved(_id: String, title: String) -> void:
+	if _peak_hud != null and _peak_hud.has_method("achievement"):
+		_peak_hud.call("achievement", title)
+	else:
+		_on_announce(title.to_upper(), true)
 
 
 func _on_peak_summit(time_s: float, falls: int, best_s: float) -> void:
@@ -766,7 +774,9 @@ func _tick_peak(delta: float) -> void:
 		_peak_hud.call("set_altitude", alt, peak.best_m)
 		_peak_hud.call("set_paused", screen == "pause", peak.time_s, peak.falls, peak.best_m)
 		# Note 7: at the nine long jumps, the tool tip names the player's own zoom bind.
-		if peak.player != null and screen == "hud" and peak.long_jump_near(alt_at(peak)):
+		if float(_peak_hud.get("_ach_until")) > 0.0:
+			pass  # (an achievement's card is showing)
+		elif peak.player != null and screen == "hud" and peak.long_jump_near(alt_at(peak)):
 			_peak_hud.call("show_tip", "Hold %s to widen the camera" % _zoom_bind_name(peak.player.local_slot))
 		else:
 			_peak_hud.call("hide_tip")

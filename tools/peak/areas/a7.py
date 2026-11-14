@@ -403,5 +403,12 @@ A.deco("lantern_cold", -244.0, 688.0, z=-0.8, size=(0.3, 0.5, 0.3), tone="gold")
 A.deco("rubble_pile", -250.6, 659.4, z=-0.7, size=(3.0, 1.6, 1.0), tone="rock2")  # where the boulders start
 A.deco("bone_pile", -207.5, 590.0, z=-0.8, size=(1.0, 0.4, 0.6), tone="bone")  # a vulture's larder in R1
 
+# THE PITS' INSIDES CAN'T BE HELD (note 52; Parker 11-13: all the slots the check finds,
+# `python tools/peak/checks.py pits`): each inside face lined slick under its lip.
+A.line_pit(-213.00, -211.60, 672.00)
+A.line_pit(-229.50, -228.90, 663.00)
+A.line_pit(-221.00, -220.40, 663.00)
+
+
 if __name__ == "__main__":
     A.save()

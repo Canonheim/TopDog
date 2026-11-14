@@ -63,6 +63,7 @@ const DEFAULT_KBM := {
 	"pause": [{"key": KEY_ESCAPE}, {}],
 	"look": [{"key": KEY_ALT}, {}],
 	"zoom": [{"key": KEY_SHIFT}, {}],
+	"fart": [{"key": KEY_F}, {}],  # (note 54, Parker 11-13: "F" is the keyboard's fart, so everyone can pay their respects)
 }
 const DEFAULT_PAD := {
 	"arm_l": [{"pad": JOY_BUTTON_X}, {}],

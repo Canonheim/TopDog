@@ -494,5 +494,11 @@ A.effect("drips", (-208.9, 40.0, -201.9, 48.0))
 A.effect("drips", (-237.2, 52.5, -232.2, 56.0))
 A.effect("drips", (-233.2, 72.0, -222.1, 76.0))
 
+# THE PITS' INSIDES CAN'T BE HELD (note 52; Parker 11-13: all the slots the check finds,
+# `python tools/peak/checks.py pits`): each inside face lined slick under its lip.
+A.line_pit(-201.00, -200.40, 14.20)
+A.line_pit(-232.20, -231.80, 52.30)
+
+
 if __name__ == "__main__":
     A.save()

@@ -2263,3 +2263,25 @@ func _w_g3lift(a: Array) -> void:
 	var after: float = (m.home as Vector2).y + (m.offset as Vector2).y
 	c.driver = old_driver
 	print("WATCH g3lift %s: the hand took the winch after %.2f s; %s; after 22 s the deck at %.2f (from 152.2, the crest 167.0); 3 s after letting go %.2f; the climber at %s" % [tag, took, log, top, after, where()])
+
+
+## NOTE 54: Pay Your Respects (press F at the altar). g3fart
+func _w_g3fart(_a: Array) -> void:
+	pk.warp("5.10")
+	await secs(6.5)
+	stand(Vector2(-327.0, 469.0))
+	look(Vector2(-326.0, 470.0), 3.5)
+	await secs(1.0)
+	var had: bool = pk.get("achievements") != null and (pk.achievements as Dictionary).has("pay_your_respects")
+	var ev := InputEventKey.new()
+	ev.physical_keycode = KEY_F
+	ev.keycode = KEY_F
+	ev.pressed = true
+	Input.parse_input_event(ev)
+	await secs(0.5)
+	await shot("54_pay_your_respects")
+	var up := ev.duplicate()
+	up.pressed = false
+	Input.parse_input_event(up)
+	await secs(0.3)
+	print("WATCH g3fart: earned before %s, after %s; slot %d" % [had, (pk.achievements as Dictionary).has("pay_your_respects"), me().local_slot])

@@ -423,5 +423,12 @@ def build_rock():
 
 build_rock()
 
+# THE PITS' INSIDES CAN'T BE HELD (note 52; Parker 11-13: all the slots the check finds,
+# `python tools/peak/checks.py pits`): each inside face lined slick under its lip.
+A.line_pit(-405.30, -404.00, 153.00)
+A.line_pit(-412.80, -411.50, 153.00)
+A.line_pit(-419.80, -418.50, 153.00)
+
+
 if __name__ == "__main__":
     A.save()

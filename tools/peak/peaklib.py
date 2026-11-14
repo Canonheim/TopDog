@@ -563,6 +563,15 @@ class Area:
         self.levers.append({"id": lid, "at": _pt(at), "starts": starts, "len": _f(length), "rest": _f(rest),
                             "pull": _f(pull), "grip": _f(grip), "z": _f(z), "base": base, "arm": arm})
 
+    def line_pit(self, x0, x1, top, depth=0.6, t=0.08):
+        """THE INSIDES OF A PIT CAN'T BE HELD (note 52; Parker 11-12: "make the insides of
+        little pitfalls like this not grabbable so pits are actually an issue"; 11-13: all
+        of them). A slot from x0 to x1 whose floors' tops are at `top`: each inside face is
+        lined slick (a thin `wet` liner, t thick) from `depth` under the lip to 7 cm under it,
+        so a hand that catches the floor's top at the lip still holds."""
+        self.solid([(x0, top - depth), (x0 + t, top - depth), (x0 + t, top - 0.07), (x0, top - 0.07)], "wet")
+        self.solid([(x1 - t, top - depth), (x1, top - depth), (x1, top - 0.07), (x1 - t, top - 0.07)], "wet")
+
     def board(self, p0, p1, p2=None, throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=None, t=0.13, model="plank", kind="wood"):
         """A LITTLE MESSED UP BOARD at the foot of a rock fall (Parker 11-12: "the rocks
         shouldnt despawn, they should bounce into the background off a little messed up

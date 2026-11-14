@@ -469,6 +469,9 @@ func fell_line(metres: float) -> String:
 
 func _process(delta: float) -> void:
 	_t += delta
+	if _ach_until > 0.0 and _t >= _ach_until:
+		_ach_until = 0.0
+		hide_tip()
 	_tip_in = move_toward(_tip_in, 1.0 if _tip_text != "" else 0.0, delta * 3.5)
 	_place()
 	if not _area_wait.is_empty() and str(_area_wait[0]) == _area_said:
@@ -553,6 +556,18 @@ func show_tip(text: String) -> void:
 
 func hide_tip() -> void:
 	_tip_text = ""
+
+
+## An achievement earned (note 54): the same card, for ACHIEVEMENT_S, with a chime. (The
+## lucha ribbon it should drop in on is the UI director's to make.)
+const ACHIEVEMENT_S := 4.5
+var _ach_until := 0.0
+
+
+func achievement(title: String) -> void:
+	show_tip("ACHIEVEMENT: " + title.to_upper())
+	_ach_until = _t + ACHIEVEMENT_S
+	Sound.play("lock", -2.0)
 
 
 ## Where everything sits this frame: 1.25 m from the lens at the HUD's on-screen size,

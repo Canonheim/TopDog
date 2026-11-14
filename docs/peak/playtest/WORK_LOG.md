@@ -1768,6 +1768,29 @@ in. Nothing played by a person.
   - `26_primer_destello_before.jpg`, `26_primer_destello_after.jpg`, `26_primer_destello_start_*`.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-13, group 3: the temple's pits and altars (notes 52, 54)
+
+- **Note 52, all eight more pits lined.** `A.line_pit(x0, x1, top)` (new in peaklib): each
+  inside face of a slot is lined slick from 0.6 m under the lip to 7 cm under it, as the
+  gallery's two were, so a hand on the floor's top at the lip still holds. The eight the
+  check listed: a1 x -201.0..-200.4 (y 14.2) and -232.2..-231.8 (52.3); a2's three catwalk
+  gaps at y 153 (-405.3..-404.0, -412.8..-411.5, -419.8..-418.5); a7 -213.0..-211.6 (672.0),
+  -229.5..-228.9 and -221.0..-220.4 (663.0). `python tools/peak/checks.py pits` marks the
+  wide ones lined; the narrow ones no longer count as open slots (their liners fill part
+  of the shaft). Not watched by a drop into each.
+- **Note 54, Pay Your Respects.** F is the keyboard's fart (`DEFAULT_KBM` in
+  `core/players.gd`; the pad keeps the right bumper). This is for the party game too. The
+  game's first achievement: `Peak.award(id)` keeps it for good in the Peak's save
+  (`achievements`, written even on a warped run) and tells main.gd (`achieved`), which
+  shows it on the HUD's tool-tip card for 4.5 s with a chime. A fart pressed within
+  2.5 m (plus half the altar's width) of either altar (the one at 5.10's start and the
+  sacrifice stone by the well: every `altar` deco on the course) earns it; the altar puffs.
+  - Watched (`g3fart`): F pressed at the first altar: earned, the card showed, the altar
+    puffed (`54_pay_your_respects.jpg`). The second altar was not tried (the same code).
+  - **Not built:** Steam (the game has no Steam app of its own yet), a page to see what you
+    have earned, and the lucha ribbon the note asks for (the UI director's).
+- **Checks:** lint; `--peak`; `--peakride`; `--input --devices --settings`. All clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
