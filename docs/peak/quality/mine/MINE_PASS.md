@@ -472,7 +472,7 @@ otherwise the part C item it waits for. Sizes are metres (w x h x d), approximat
 | 103 | `mine_post_broken_short`, `mine_post_broken`, `mine_post_broken_long` | Front posts of sets in broken lengths (one family); each placed so it visibly stands on a sill or the rubble | fg | 0.3 x 1.6 / 2.6 / 3.8 | every shaft's sides | 3.5 / 3.5 / 3 | REMAKE | no | now |
 | 104 | `mine_rubble_lip` | The low lip of rubble along a frame's foot | fg | 10 x 1 x 0.7 | 1.1, 1.1b, 1.10 | 3.5 | REMAKE | no | now |
 
-### B9. The join (held for La Esclusa's page)
+### B9. The join (held for La Esclusa's page; answered in part F, F-B7)
 
 | # | Stem | What it is | Layer | Size | Where | Now | Verdict | Skin | Start |
 |---|---|---|---|---|---|---|---|---|---|
@@ -670,7 +670,7 @@ emptiest frames, the most-used pieces) and for being free of part C.
 - **Group 7, the foreground** (last, so it is placed against finished sets): the front post family,
   `mine_rubble_lip`.
 - **Held:** the join (`timber_set`, `works_arch_low`, `works_brick_pier_post`,
-  `mine_lining_dry_shaft`) until La Esclusa's page.
+  `mine_lining_dry_shaft`) until La Esclusa's page (answered in part F, F-B7: all four leave).
 - **Phase 0, before any of it:** the reviewer rates the fitted modules in the mine's light (B4 row 44)
   and the chock.
 
@@ -678,9 +678,9 @@ Then, per QUALITY_TO_9_PLAN part 4: each lands at 8.5 on its sheet, is synced, a
 a game frame of its place; the scenes are scored as frames against the 9; Parker sees one sheet for
 the mine before the next biome.
 
-**One question for the Director before the run:** do Los Barriles and La Esclusa (the draft's 1.12 and
-1.13) belong to the mine's pass (as their numbers say) or to the black waters' (as QUALITY_TO_9_PLAN
-phase 2 says)? This plan assumes the black waters', and makes only the join.
+**The Director's question, settled: see part F.** Los Barriles and La Esclusa (1.12 and 1.13) belong to the
+mine's pass, as their numbers say (note 146, Parker 11-14 15:30; built into a1.py 11-15). Their plan, and the
+join's, is part F.
 
 ---
 
@@ -1074,7 +1074,7 @@ shoulder landing with a climber standing beside it.
    x −246 at every height (the throat too), not only the foot. Parker drew "slightly widening the falls
    area at the bottom". Worth confirming on the page; the Sump's floor goes to y −50, 10 m above the
    bug net.
-3. **La Esclusa's ownership** (part D's question).
+3. **La Esclusa's ownership** (part D's question): settled, the mine's (part F).
 4. **The house doc says gold is satin metal**; the quality standard and A2's zebra fix say no metallic.
    The briefs say matte for everything; HOW_WE_MAKE section 7 should be brought in line.
 5. **The biome sheet's "glossy" black for what can't be held** predates the matte rule: it must be a
@@ -1083,3 +1083,857 @@ shoulder landing with a climber standing beside it.
 6. **Code-drawn things are in every frame and in neither rating:** the waterfall (note 111), the
    rope and chain looks, the falling rocks, the frozen climber, the hoistway cards, a1.py's picture
    cards. The reviewer should score them in the frames.
+
+---
+
+## F. La Esclusa and the cart ride's new incline, as a diorama
+
+Note 146 is built (11-15; `docs/peak/playtest/WORK_LOG.md`, "The fix run of 11-15"). The mine moved 59 m
+west and 17 m down. The cart ride (0.3) runs on down a 20 degree incline to the mine's moved door. La
+Esclusa stands between the mine's roof and the black waters: **1.12 Los Barriles** (the keepers' ladder
+beside the great falls, the flume, the barrels running west to the kicker) and **1.13 La Esclusa** (the
+lock). All of it wears stand-in scenery. Part F plans its things to the standard of parts A, B, D and E.
+
+**This settles part D's question.** Los Barriles and La Esclusa are the mine's. Parker numbered them 1.12
+and 1.13 (note 146, Settled 11-14 15:30: "the black waters keep theirs"), and the fix thread wrote them into
+a1.py as biome 1's (WORK_LOG 11-15, "Decided"). Part F also answers part B9, the join held for La
+Esclusa's page: see F-B7.
+
+**Coordinates.** Part F gives the GAME's numbers, as built on 11-15:
+- La Esclusa's are a1.py's own (written after `A.end_shift()`, line 582, so they are not moved);
+- the mine's are parts A to E's numbers (the course before the move) moved by (−59, −17) only (the extra
+  6 m west of x −246 in this plan's header was dropped: Parker, 11-14 15:30, "do not actually widen the
+  mine");
+- 0.3's are a0.py's own.
+
+Each place names the camera and the frame in `docs/peak/playtest/after/` it is seen from.
+
+**What is there today** (`146_new_section.jpg`, `146_before_after.jpg` and the frames one by one):
+- La Esclusa's back wall is one plain card (a1.py line 740) with two black cards for the chute and the
+  tunnel.
+- Its rock is the default dark cracked slab. The flume's bed and the lock's floor show pale through the
+  water.
+- The kicker is a red-orange bar. The ladder is drawn red, rails and rungs alike.
+- The join's honey timber set and grey arch stand behind the alcove, and its foreground post stands over
+  the climber at the ladder's foot.
+- Seven lights stand in front of the play space and glare white on the roof's front face and the lock's
+  gate.
+- 0.3's new stretch is a bright tan cobbled bed and roof (unskinned rock) on a flat card that reads
+  khaki-brown.
+
+### The idea in one paragraph
+
+La Esclusa is the company's lower works, a generation newer than the timber mine: cut stone, brick vaults,
+riveted iron, the black waters' cold light, and the roar of the falls at its west end. The join is where
+the mine's last timber set carries the works' first brick arch. Two sets carry its depth: the arcade
+behind the flume, and the quay and the lock behind 1.13. Each paints its own view going back. The view
+down the falls is the mine's cavern backdrop, already being made. Two heroes say what the place was for:
+the broken barrel crane at the head of the falls, and the old frog who still keeps the lock (his haul on
+his lever is the lock's warning). What you hold is the works' pale copings, the ladder's rungs and the
+honey barrels. Everything else is dark-wet stone, slate brick and verdigris iron, so the barrels and the
+water read first. The incline is the mine's: its lagging, its square sets, a winding house at the brow,
+and a bed that is no longer bright tan. Fewer things, better made: 24 rows, 23 maker sessions, seven
+stems out, and every 8.5 piece that fits reused.
+
+### F-A. The places
+
+For each place: what it is, the four layers, the things, what crosses the depths, and how the play
+reads. Stems in `code` are F-B's rows, or part B's where a row number is given.
+
+#### F-A1. The new incline, its foot and the door (0.3, x −148 .. −211)
+
+- **Seen from:** the ride's camera (a0.py line 130: one zone over the whole tunnel, half height 4.6,
+  following the cart): `146_0_3_incline_after.jpg` (the incline) and `146_0_3_end_after.jpg` (the end of
+  the line: the cart at the buffer, the climber at the mine's door).
+- **What it is:** the old haulage incline. From today's end of the line (x −148.4, road y −11.55) over the
+  brow (x −158), 32 m of track at 20 degrees (to x −188, road y −24.7), easing out to the level end (x −200
+  .. −211), the buffer (−209.3, −28.6) and the mine's door (x −211, the gallery's floor −29.6). The cart
+  rides the incline in 3.5 s. You stand still only at the end, so the end of the line is the frame that
+  must be a 9. It is now the mine's first frame after the station's 9.5.
+- **Backdrop:** none at 12 m (a bored tunnel). Its far layer is inside the set: two side galleries painted
+  going back through openings in the lining, sets in rows getting smaller, a lantern speck at the end (at
+  the brow, x −159.0 .. −162.2; at the foot, x −194.0 .. −197.2).
+- **Set:** `mina_ride_lining`: the mine's lagging in bays between the sets, stepping down with the road;
+  smashed in the run-in (x −148 .. −158) with rock behind; the winding house's recess at the brow. At the
+  door it meets `mine_lining_gallery` (8.5) with the same boards.
+- **Hero:** the winding house at the brow (`mina_winding_house`): the haulage drum 2.6 m across on its
+  timber frame, in a recess of the lining, with its brake band, its long brake lever, the brakeman's seat
+  and the rope's frayed end still wound on. It says why the track is steep and why the cart runs free.
+- **Things:**
+  - the mine's square sets every 2.6 m (the timber stock family, 8.5: posts plumb, caps stepping down);
+  - the skull-pug at the brow (`sign_pug_skull`, row 89);
+  - a lantern at the brow and one at the foot (`lantern_hang` on `mine_lantern_bracket`, rows 79, 82);
+  - at the end of the line, the buffer (`dsc_buffer_stop`, remade);
+  - in the same frame, the mine's own: the door set (`mine_frame`, row 60), the ore chute's hopper over
+    the rails just inside the door (`mine_ore_chute`, row 72), the first skull-pug, the gallery's lining.
+- **The climb as things:** the rail bed and the roof (`mina_ride_bed`); the rails (`rail_straight`, as
+  built); the buffer. The bed carries:
+  - ballast between the sleepers, on dark rock;
+  - the snapped haulage rope, lying flat between the rails from the brow sheave down to the foot;
+  - the runaway catch, sprung open beside the far rail at the brow;
+  - a little spilled ore at the foot.
+- **Through the depths:**
+  - The buffer is one thing: its baulk across the track (play) and its two braces raking back to the floor
+    behind.
+  - The sets stand at z −1.45 with their caps under the roof, and their bays are the lining's.
+  - The rope's torn end lies at the brow sheave (play) and its other end is wound on the drum (background):
+    one rope, snapped between, so nothing has to line up in the air.
+- **Readability:**
+  - Nothing here is held but the bed you walk on if you fall out: its top a step lighter than the walls,
+    never today's bright tan; the rock under it and the roof dark.
+  - The timber is the mine's one scenery grey. Today the door set reads honey orange beside the climber,
+    so its remake (row 60) must be the scenery grey.
+  - Nothing pale or red at the rider's height.
+- **Today:** a bright tan cobbled bed and roof (the cave's slabs west of x −152.5 are unskinned, a0.py
+  line 105) on a flat card (line 117, `#33291F`) that reads khaki-brown under the end-of-line glow. No
+  sets, no lights.
+
+#### F-A2. The keepers' ladder beside the falls (1.12's start, x −297 .. −290.5, y 73 .. 79.4)
+
+- **Seen from:** the ladder's camera (a1.py line 733, x −297.5 .. −290, y 72.5 .. 80.5, half height 5.5):
+  `146_cam_1_12.jpg`.
+- **What it is:** La Cortina lets out at the top of its dry shaft (x −295 .. −291) into the low room under
+  the platform (the lip room, x −295 .. −288, y 73 .. 75.2). Off the top row west onto the pier's coping
+  (x −297 .. −295, y 73): 1.12 starts. Then up the keepers' iron ladder (x −295.4, 6.4 m, two rungs gone)
+  in the falls' spray, onto the crane's platform (x −295 .. −290.5, y 79.4).
+- **Backdrop:** behind the falls' column (x −303 .. −297) the shaft is open. There you see the top of
+  `mina_backdrop_cavern` (E1, in flight): the falls dropping away past the mine's lit curtain into mist,
+  the mine's lanterns warm dots far below, and at its top the falls coming out of the black waters' broken
+  floor. The stand-in cards in front of it go (F-C6).
+- **Set:** the west end of `esclusa_wall_flume`:
+  - behind the ladder's strip (x −297 .. −295), black-wet rock, its edge returning back as the shaft's east
+    side, ferns on one outcrop;
+  - the lip room's back wall, with the works' first arch standing straight on the mine's last cap (the
+    join, F-B7).
+- **Hero:** the broken crane on the platform overhead (`esclusa_crane`), its snapped jib over the strip.
+- **Things:**
+  - the mine's last set at the dry shaft's top (the top frame of `mine_cortina_wall`, row 12, F-B7), with
+    the mine's last amber lantern on its west post and La Cortina's rope strapped to its east post;
+  - a works lantern on the crane's post, lighting the ladder (`aguas_works_lantern`);
+  - the great falls themselves (code: note 111's 3D falls).
+- **The climb as things:** the pier's coping (`esclusa_coping`), the ladder (`mina_iron_ladder`, row 24:
+  one more run), the platform's coping.
+- **Through the depths:**
+  - The ladder's brackets run back from its rails into the platform's west face.
+  - The crane's foot is bolted to the platform's coping behind the walk, and its back-stay goes into the
+    arcade.
+  - The last set is the throat wall's top frame, its posts sunk into the wall either side of the dry
+    shaft; its cap carries the arch.
+- **Readability:**
+  - The rungs are rust-orange (held). The rails are a step darker (drawn, not held).
+  - The two copings are pale. The pier's body, the platform's west face and the rock behind the strip are
+    dark-wet.
+  - The climber on the ladder has dark rock behind him, never the falls' glow. The falls are the one cool
+    bright thing.
+  - Nothing stands in front of the ladder, the falls or the pier's top. Today the join's foreground post
+    stands over the climber at the ladder's foot; it goes (F-C4).
+- **Today:** the ladder drawn red-orange, rails and rungs alike; the join's honey timber set with a red pug
+  sign under a grey arch; a grey foreground post over the climber; brown cracked stand-in rock; a pale
+  spray ball on the platform's block.
+
+#### F-A3. The flume and the barrels' tunnel mouth (1.12, x −290.5 .. −258.5, y 75.7 .. 79.4)
+
+- **Seen from:** the flume's camera (a1.py line 734, x −290 .. −258, y 75 .. 82.8, half height 6.0):
+  `146_la_esclusa_after.jpg`, and tiles 0:07 and 0:13 of `146_new_section.jpg`.
+- **What it is:** the company's barrel flume: 32 m of water (bed 75.7, surface 77.2) running west at 1 m/s.
+  Eight barrels are born in the tunnel at the flume's head (x −261.8) and float west to the kicker (x
+  −288.6). You cross east, barrel to barrel against them, onto the east landing (x −260.4 .. −258.5, y 79.4)
+  and the quay.
+- **Backdrop:** none at 12 m. Through the arcade's arches you see the vaults going back, painted inside
+  `esclusa_wall_flume` (its far plane at about z −10): rows of brick vaults with the water running away
+  under them, catching a lantern, each row darker and smaller.
+- **Set:** `esclusa_wall_flume`: brick piers 1 m wide about every 6.5 m with round arches, cut stone in
+  long courses below the springing, a level water band at 77.2 with a green band of growth, iron mooring
+  rings at the waterline, seep lines down from the vaults' cracked crowns.
+- **Hero:** the barrels' tunnel (`esclusa_barrel_tunnel`): the brick arch at the waterline (x −264.55 ..
+  −259.05), its sluice gate jammed half raised so the barrels pass under it, black inside. It is where the
+  barrels come from, and none is ever seen appearing (note 114). The section's two big heroes, the crane
+  and the keeper, stand at either end of this run.
+- **Things:** works lanterns on two piers and over the east landing (`aguas_works_lantern`); the crane at
+  the frame's west edge; the roof's brick vaults overhead (`esclusa_vault`).
+- **The climb as things:** the barrels (`aguas_barrel`, remade); the east landing (a member of
+  `esclusa_coping`: a slab on two beam ends); the platform's coping at the west end.
+- **Through the depths:**
+  - Each barrel comes out of the tunnel's dark (z −3) into the play plane over 2.4 m: the tunnel's water
+    channel runs from its back to the flume.
+  - The landing's beam ends run back into sockets in the arcade.
+  - The vaults spring from the piers' lines, so pier and vault are one arcade.
+- **Readability:**
+  - The barrels are honey with rust hoops, on mid-dark slate brick and dark water: warm on cool, so they
+    read first.
+  - The water's surface is a white line and its bed is dark under it. Today the bed's top face shows pale
+    through the water, like a floor.
+  - The brick is never pale. The mooring rings are dark iron, never rust-orange (they are not holds).
+  - The vault is dark. Today the lights in front of the play space glare white on the roof's front face
+    (F-C7).
+- **Today:** a plain card with two black cards (the chute, the arch); cracked brown rock above and below;
+  orange barrels that already read well.
+
+#### F-A4. The kicker (x −291.4 .. −286.4, y 77.05 .. 82.2)
+
+- **Seen from:** the flume's camera at its west end: `146_1_12_kicker_final.jpg`.
+- **What it is:** the barrel men's tipping ramp. A loose barrel runs up it and is thrown up and back into
+  the waste chute's mouth in the back wall (x −291.4 .. −286.4, y 78.6 .. 82.2), never into the falls. It
+  is gone at y 79.6, 3 m back (a1.py line 693). You step down off the platform's east edge onto a barrel as
+  it comes up to the ramp.
+- **Backdrop:** none: the chute's inside is black.
+- **Set:** the waste chute's mouth in `esclusa_wall_flume`: a brick-lined mouth, and a timber chute (the
+  mine's leftovers) going back and down into the dark.
+- **Things:** the tipping ramp (`esclusa_tipping_ramp`); the crane's post beside it.
+- **The climb as things:** none. The ramp is not a step (F-C2 makes it slick).
+- **Through the depths:** the ramp is one thing, from the water (play) up and back to the chute's lip (z
+  −2.3). Its iron-shod face is exactly the board's line, and its trough carries on back into the chute.
+- **Readability:** the ramp is black-wet with white water running down it, never pale and never
+  rust-orange. A kicked barrel vanishes into black (the chute's inside all round it at y 79.6, z −3).
+- **Today:** a red-orange bar (the board's own look: `model=""`, kind `iron`), right where you step down.
+  It reads as a held step.
+
+#### F-A5. The whirlpool and the pipe's alcove (x −291 .. −285.4, y 72.7 .. 77.5)
+
+- **Seen from:** the flume's camera at its west end (the whirlpool) and the ladder's camera over the lip
+  room (the alcove): `146_1_12_alcove_final.jpg`.
+- **What it is:** fall into the flume and the current carries you west into a whirlpool 1 m east of the
+  kicker (x −287.6 .. −285.4). A body under the water there goes down the pipe and out of its mouth in the
+  alcove's east wall (x −288, y 73.1 .. 74.2), onto the alcove's floor (the old lip's grip, x −291 .. −288,
+  y 72.7), 4 m from the ladder, to try again (a1.py lines 694 to 698).
+- **Backdrop:** none (a room under the platform).
+- **Set:** the lip room's back wall (`esclusa_wall_flume`'s west end), with the arch on the mine's last cap.
+- **Things:**
+  - the drain (`esclusa_drain`): the whirlpool's funnel of dark water with white foam at its rim, the
+    grating in the bed under it, and the cast-iron pipe through the rock to its flared, riveted mouth in
+    the alcove's wall;
+  - the mine's last amber lantern, on the set.
+- **The climb as things:** the alcove's floor (`esclusa_coping`'s alcove member, which takes the two drawn
+  faces' job); the pipe's mouth, at the play space's edge.
+- **Through the depths:** the drain is one run. The funnel is on the surface, the grating in the bed (z 0),
+  the pipe goes down and west through the rock (seen where it crosses the alcove's back wall, so you know
+  where it goes), and the mouth is in the alcove.
+- **Readability:**
+  - The whirlpool's eye is dark and its rim white: it reads as "down here".
+  - The alcove's floor is pale (held). The pipe's mouth is dark iron.
+  - The set is grey (today it is honey orange behind the climber).
+  - No spray balls (F-C11).
+- **Today:** the pipe is a white-edged channel cut through brown rock, and the old lip's pale grip runs on
+  east under the rock (F-C5).
+
+#### F-A6. The lock chamber and its gate, wicket and drain (1.13, x −245 .. −228, y 75.7 .. 89.4)
+
+- **Seen from:** the lock's camera (a1.py line 735, x −258 .. −226, y 75 .. 89.6, half height 7.5):
+  `146_cam_1_13.jpg`, `146_1_13_risen_final.jpg` (the water high), `146_1_13_high_final.jpg` (a rider
+  near the top).
+- **What it is:** a stone chamber 16 m long (x −244 .. −228, floor 75.7, roof 89) behind its lower gate (x
+  −245 .. −244). Every 14 s:
+  - the flap across the slot's foot slides open (the `compuerta` mover, at the roof, x −244 .. −238);
+  - the river comes down the back wall, and the water rises from 77.2 to 88.5 in 6 s;
+  - it holds 3 s, then drains through the gate's foot sluices in 5 s.
+
+  You go in through the wicket (the `portillo` mover, open while the water is under its sill) and catch the
+  rise on the sill (L0, x −244 .. −242.6, y 79.4). Then you swim across as it lifts you, or rest on L1 (x
+  −239.6 .. −238.2, y 83.0), on L2 (x −229.6 .. −228.0, y 81.0) or on the east wall's three rungs. At the
+  top you reach out of the old dry shaft onto El Borde's lip ledge (x −232, y 90).
+- **Backdrop:** none at 12 m. Through the barred opening high in the back wall (x −241.5 .. −239.0, y 85.5
+  .. 87.3) you see the river's culverts painted going back, lit teal far off (inside `esclusa_wall_lock`).
+- **Set:** `esclusa_wall_lock`, the chamber's back wall: cut stone stained teal up to the highest water and
+  green-black below the lowest, a scum line at 88.5, rust tracks down from the corbels' brackets, the
+  slot's iron frame, the river's track down the wall.
+- **Hero:** the frog keeper at his lever, in his booth on the quay (F-A7). His haul is the warning.
+- **Things:**
+  - the gauge board and its float (`esclusa_gauge_board`, on the back wall at x −231.4 .. −230.2): the
+    float rides the water;
+  - the flap (`esclusa_flap`);
+  - works lanterns by L1 and over L2;
+  - the river's white sheet down the back wall (the game's effect, a1.py line 730).
+- **The climb as things:**
+  - the lower gate and its wicket (`esclusa_lower_gate`: a riveted leaf from floor to roof, slick, with its
+    foot sluices);
+  - the sill, L1 and L2 (`esclusa_coping`'s three corbels, on iron brackets);
+  - the three rungs (`iron_staple`, row 29, turned into the east wall);
+  - the water;
+  - the lip ledge (El Borde's, as built).
+- **Through the depths:**
+  - Each corbel's bracket runs from its coping (play) back into a socket in the wall, with a rust track
+    under it.
+  - The staples' legs go into the east wall.
+  - The gate is one leaf, with a quay face and a chamber face; the wicket is a door in it.
+  - The flap's runners go into the rock it slides into (a dark housing in `esclusa_vault`).
+- **Readability:**
+  - The water level reads at a glance: the surface's white line, the float on the gauge, the wall dark
+    below the water.
+  - The gate is black-wet. Today it reads pale cream, lit by the light in front of it.
+  - The floor is dark. Today its top shows pale through the water.
+  - The sill, L1 and L2 are pale copings on dark bodies. The rungs are rust-orange.
+  - The gauge is mid: its marks mid, its float ochre. Nothing pale and nothing red behind a swimmer. The
+    grating's teal glow is mid.
+- **Today:** dark teal water in a plain box, two small dark ledges, the cream gate, a plain card behind, a
+  pale floor.
+
+#### F-A7. The keeper's booth and the quay (x −258.5 .. −245, y 79.4 .. 83)
+
+- **Seen from:** the lock's camera at 1.13's start, the climber at (−249.3, 79.4): `146_cam_1_13.jpg`.
+- **What it is:** the quay between the flume's head and the lock (13.5 m, a rest), where the barrel men
+  worked, with the lock-keeper's booth set into its back wall.
+- **Backdrop:** none. The booth's window looks onto the chamber.
+- **Set:** the west part of `esclusa_wall_lock`: brick, the booth's recess (x −255.5 .. −251.5), the gate
+  wheel's housing.
+- **Hero:** the old frog keeper on his lever (`esclusa_keeper_lever`: frog and lever, one model) in his
+  booth (`esclusa_keeper_booth`). The booth is a little stone room cut away at the front: a round-headed
+  opening, a stool, a window onto the chamber, a spare oilskin on a peg, a kettle on a shelf, a works
+  lantern and its painted glow. One second before each fill the keeper throws his weight back on the lever
+  (F-C1). That is the warning, as every danger on the mountain warns before it acts.
+- **Things:** the gate wheel (`esclusa_gate_wheel`, centre (−246.6, 82.1), above head height), which spins
+  as the flap opens and back as it shuts; the booth's lantern.
+- **The climb as things:** the quay's coping (`esclusa_coping`), the wicket.
+- **Through the depths:** the wheel's shaft goes into its housing and on along the wall to the gate (bolted
+  bearings, painted); the lever's rod goes down through the booth's floor to the gate's works.
+- **Readability:**
+  - The keeper is green against the booth's warm painted glow, in mid values.
+  - He stands west of 1.13's start, so the climber waiting at the wicket never covers him.
+  - The lever's knob is matte brass.
+  - The wheel's pug is verdigris, above the climber's head (81.15), never bone-white behind him.
+  - The quay's coping is pale.
+- **Today:** a plain card; no keeper, no wheel; the quay's coping pale, with the fitted modules' pattern.
+
+#### F-A8. 2.7's launch ledge and the west pool (x −320.5 .. −284, y 113 .. 117.4)
+
+- **Seen from:** the Charco's camera (a2.py line 351, x −321 .. −284, y 113 .. 128, half height 8.5):
+  `146_cam_2_7.jpg`.
+- **What it is:** the great falls pour down through the black waters' pool hall (x −303 .. −297). From the
+  launch ledge, Q6's west end flush with the falls (x −297, y 117.4), you swing out by your hands and let go
+  across the falling water into the west pool (x −320.5 .. −303.4). The pool runs east over its sill into
+  the falls (1.6 m/s at the sill), so you swim west at once.
+- **Whose it is:** 2.7 is the black waters' challenge. Part F plans only what the falls broke: Q6's carried
+  ledge and the two lips. Q6 has been plain since note 146 (WORK_LOG 11-15: its old 7 m skin went with the
+  barrels). The hall, the gantry and its chains, Q7 and the frog's room stay with the black waters' pass.
+- **Backdrop and set:** the black waters' (the well's far daylight on the pool).
+- **Things:** the reservoir's floor, broken into the shaft (both lips in `aguas_launch_ledge`):
+  - the west pool's sill, a worn stone lip with the white tongue pouring over it;
+  - the east basin's, a cracked brick edge with a snapped beam end.
+- **The climb as things:** Q6 (`aguas_launch_ledge`): the quay's stone coping carried 6 m west on two
+  riveted iron beams to the falls' edge, its pale coping running right to x −297 where you hang. And the
+  west pool.
+- **Through the depths:** Q6's beams run from under its coping back into the hall's wall (z about −2.5);
+  the broken floor's edges run back from the two lips.
+- **Readability:** the launch ledge's coping is pale to its very west edge, and its beams are dark iron
+  below. The lips are white water on dark stone. (One question for Parker, F-C11: the two sills are grip,
+  `stone`, 0.3 m under the pool's surface.)
+- **Today:** Q6 plain, 13 m long: the fitted modules' pale coping on a dark truss.
+
+### F-B. The model list
+
+One row per maker session, as part B (a family made by one script is one row). **Layer:** as part B; *S*
+is a skin whose shape is the course's, *F* a skin whose shape is fixed. **Waits for:** the F-C item, or –
+(it can start now). **When:** its place in F-D. Sizes are metres (w x h x d), approximate where new.
+
+#### F-B1. The painted sets
+
+| # | Stem | What it is | Layer | Size | Where; seen from | Now | Verdict | Waits for | When |
+|---|---|---|---|---|---|---|---|---|---|
+| F1 | `mina_ride_lining` | 0.3's new back wall: the mine's lagging in bays stepping down 17 m with the road, smashed in the run-in, the winding house's recess, two side galleries painted going back | bg | 63 x 23.6 x 2 (galleries to z −10) | x −148 .. −211; the ride's camera | new (a card) | NEW | – | 3 |
+| F2 | `esclusa_wall_flume` | The arcade behind 1.12: piers, arches, courses, rings, seeps; the vaults painted going back; the waste chute's mouth and chute; the tunnel's opening; the rock behind the ladder's strip and the shaft's east side; the lip room's wall with the join's arch (absorbs `works_arch_low`) | bg | 38.5 x 13 x 8 | x −297 .. −258.5, y 73 .. 86; the ladder's and flume's cameras | new (a card) | NEW | – | 1 |
+| F3 | `esclusa_wall_lock` | The quay's brick wall with the booth's recess and the wheel's housing; the lock chamber's wall: teal stain, scum line, rust tracks, the slot's frame, the grating on the culverts | bg | 36.5 x 16.4 x 8 | x −258.5 .. −222, y 73 .. 89.4; the lock's camera | new (a card) | NEW | – | 2 |
+
+#### F-B2. The rock (skins)
+
+| # | Stem | What it is | Layer | Size | Where; seen from | Now | Verdict | Waits for | When |
+|---|---|---|---|---|---|---|---|---|---|
+| F4 | `esclusa_mass_west` | The falls' two banks: the shaft's west side, the pier, the platform's block and its west face (where the ladder is bolted), the lip room's roof, the alcove's walls round the pipe's mouth | play, S | 20.6 x 10 x 2.4 | x −307 .. −286.4, y 73 .. 83; the ladder's camera | new (stand-in rock) | NEW | – (frozen from a1.json as built) | 19 |
+| F5 | `esclusa_mass_low` | Under the floors: the flume's bed and channel (dark under the water), the quay's block, the lock's floor and its east wall up to the lip ledge's support | play, S | 68.5 x 16.4 x 2.4 | x −290.5 .. −222, y 73 .. 89.4; the flume's and lock's cameras | new | NEW | – (frozen as built) | 8 |
+| F6 | `esclusa_vault` | The roof: transverse brick vaults over the flume and the quay springing from the arcade's piers, cracked at their crowns, seeping; the lock's lid; the flap's housing; the slot's and dry shaft's mouths | play, S | 64 x 6.4 x 2.4 | x −292 .. −228, y 83 .. 89.4; all three cameras | new | NEW | F-C3 | 23 |
+
+#### F-B3. The climb as things
+
+| # | Stem | What it is | Layer | Size | Where; seen from | Now | Verdict | Waits for | When |
+|---|---|---|---|---|---|---|---|---|---|
+| F7 | `esclusa_coping` (family) | The works' dressed stone you stand on, pale, with drafted edges and iron cramps, each on its dark body: the pier's top 2.0, the platform 4.5, the alcove's floor 3.0 (the old lip's grip), the east landing 1.9 on two beam ends, the quay 13.5, the sill 1.4, and L1 1.4 and L2 1.6 as corbels on iron brackets | play, F | lengths x 0.3 (bodies to 0.7) x 2.4 | all three cameras | new (the fitted modules; takes the jobs of `works_coping_face` 3 and `works_brick_courses_face` 5) | NEW | – | 18 |
+| F8 | `mina_iron_ladder` (the keepers' run) | One more run of the mine's ladder (part B row 24): 6.4 m, rungs every 0.75 m with two torn gaps (76.05, 78.3), brackets bolted to the platform's face | play, F | 0.9 x 6.4 | x −295.4, y 73 .. 79.4; the ladder's camera | new (drawn red) | REUSE (row 24's session) | C6 | with row 24 |
+| F9 | `aguas_barrel` | The company's barrel (mover x8): honey staves worn lighter on top where you stand, dark and wet below, crisp hoops, a bung, the company's pug branded on both sides (the camera never sees its ends) | play | 1.81 x 1.17 x 1.15 (contract kept) | the flume; the flume's camera | 7 | REMAKE (start from `barrel_float`, 7.5) | – | 7 |
+| F10 | `esclusa_lower_gate` | The lock's lower gate: a riveted iron leaf from floor to roof, black-wet, slick, white drips, its foot sluices; and its wicket door (a second file: the `portillo` mover) | play, F | 1.0 x 13.3 x 2.4; door 0.9 x 2.5 | x −245 .. −244, y 75.7 .. 89; the lock's camera | new (reads pale cream) | NEW | – | 14 |
+| F11 | `esclusa_flap` | The flap across the slot's foot (the `compuerta` mover): riveted plate black with water, iron runners, a cast pug boss | play | 6.0 x 0.35 x 2.4 | x −244 .. −238, y 89.0 .. 89.35; the lock's camera | new | NEW | – | 15 |
+| F12 | `esclusa_tipping_ramp` | The kicker: a worn stone ramp, iron-shod, white water running down it, exactly on the board's line, its trough rising back to the chute's lip | cross | 3.1 x 1.6 x 3.5 (z +1.2 .. −2.3) | (−287.6, 77.05) .. (−290.4, 78.25); the flume's camera | new (a red bar) | NEW | F-C2 before it lands | 16 |
+| F13 | `esclusa_drain` | The flume's drain: the whirlpool's funnel (white rim, dark eye), the grating in the bed, the cast-iron pipe through the rock to its flared, riveted mouth in the alcove's wall | cross | 3.2 x 4.6 x 2.4 | x −288.6 .. −285.4, y 72.9 .. 77.5; the flume's and ladder's cameras | new | NEW | – | 17 |
+| F14 | `mina_ride_bed` (family) | 0.3's new bed and roof slabs: ballast between sleepers on dark rock, the snapped haulage rope lying flat from the brow sheave to the foot, the sprung runaway catch, spilled ore at the foot; the roof the mine's dark rock with the sets' cap sockets | play, S | per slab, x −148 .. −211 | the ride's camera | new (unskinned: bright tan) | NEW | – (frozen from a0.json) | 6 |
+| F15 | `dsc_buffer_stop` | The end of the line: a timber baulk across the track, an iron-shod face, a pug plate, two braces raking back to the floor (a skin of the buffer's box) | cross | 1.7 x 0.8 x 3.4 | (−209.3, −28.6); the end-of-line frame | 4 | REMAKE | – | 20 |
+| F16 | `aguas_launch_ledge` | 2.7's Q6 and the falls' two lips, one model drawn over three solids: the quay's coping carried 6 m west on two riveted iron beams to the falls' edge (x −297), the beams back into the hall's wall; the west pool's worn lip under its white tongue; the east basin's cracked brick edge and a snapped beam end | play, F | 19.4 x 4.4 x 2.4 (beams to z −2.5) | x −303.4 .. −284, y 113 .. 117.4; the Charco's camera | new (Q6 plain) | NEW | – | 22 |
+
+#### F-B4. The heroes and the machines
+
+| # | Stem | What it is | Layer | Size | Where; seen from | Now | Verdict | Waits for | When |
+|---|---|---|---|---|---|---|---|---|---|
+| F17 | `mina_winding_house` | 0.3's hero: the haulage drum 2.6 m across on its timber frame, its brake band and long lever, the brakeman's seat, the rope's frayed end wound on | bg | 5 x 4.4 x 1.8 | x −151.5 .. −156.5, foot y −13.0, z −2.0 .. −3.8; the ride's camera at the brow | new | NEW | – | 11 |
+| F18 | `esclusa_crane` | 1.12's hero: the barrel crane: riveted iron post, foot plate with the pug, a hand winch, the jib snapped and wedged slanting west over the ladder's strip, the pulley on its tip | bg | 5 x 3.4 x 1.0 | post's foot (−292.5, 79.4), z −1.8; the ladder's camera | new | NEW | – | 5 |
+| F19 | `esclusa_barrel_tunnel` | The barrels' tunnel at the flume's head: a brick arch at the waterline, the sluice gate jammed half raised, the walls and water channel running back into black | cross | 5.5 x 3.8 x 7 (z −2.2 .. −9) | x −264.55 .. −259.05, y 77.1 .. 80.6; the flume's camera | 4.5 | REMAKE (start from `aguas_barrel_cove`) | – | 9 |
+| F20 | `esclusa_keeper_lever` | 1.13's hero: the old frog keeper in an oilskin sou'wester, on his lever's foot plate with both hands on its grip: frog and lever one model, turned 25 degrees about the pivot on the lock's clock | bg (moves) | 0.9 x 1.4 x 0.6 (frog 0.6, lever 1.3) | pivot (−253.2, 79.4), z −1.9; the lock's camera at 1.13's start | new | NEW (start from `frog_rain_hat` 9, `frog_stop`) | F-C1 for its frame | 4 |
+| F21 | `esclusa_keeper_booth` | The keeper's booth in the quay wall's recess: round-headed opening, stool, window onto the chamber, oilskin on a peg, kettle on a shelf, the lever's quadrant in the floor, the lantern's painted glow | bg | 4.0 x 2.6 x 1.25 | x −255.5 .. −251.5, y 79.4 .. 82.0, z −1.35 .. −2.6; the lock's camera | new | NEW | – | 10 |
+| F22 | `esclusa_gate_wheel` | The gate wheel: an iron hand wheel 1.4 across, a verdigris pug hub, its shaft into a housing; it spins with the flap | bg (turns) | 1.4 x 1.6 x 0.5 | centre (−246.6, 82.1), z −1.6; the lock's camera | 6.5 | REMAKE (start from `aguas_sluice_wheel_crusted`, the crust off) | F-C1 for its frame | 13 |
+| F23 | `esclusa_gauge_board` | The gauge board, floor to roof: a pug at the top, a pug-head notch every metre (no numbers), two guide rails, and the float that rides the water (a second file) | bg (+ a float that moves) | 1.2 x 13.3 x 0.3 | x −231.4 .. −230.2, y 75.7 .. 89.0, z −1.75; the lock's camera | 6 | REMAKE (start from `aguas_depth_gauge`) | F-C1 for its frame | 12 |
+
+#### F-B5. The light
+
+| # | Stem | What it is | Layer | Size | Where; seen from | Now | Verdict | Waits for | When |
+|---|---|---|---|---|---|---|---|---|---|
+| F24 | `aguas_works_lantern` | The works' teal lantern (also 23 placements in the black waters): on the crane's post, two piers, over the east landing, in the booth, by L1, over L2 | bg | 0.28 x 0.48 x 0.28 | all of La Esclusa | 7 | REMAKE (light pass: the reviewer first) | – | 21 |
+
+#### F-B6. Reused as they are (no maker session)
+
+- **The timber stock family** (8.5 in the game): the new stretch's sets (about 23 of them, plumb, caps
+  stepping down).
+- **`mina_backdrop_cavern`** (E1, in flight): behind the falls' strip. Its top edge must run to y 84 there,
+  with the falls coming down out of the black waters' broken floor at its top. Its brief's y 83 only just
+  reaches: check on its sheet.
+- **`iron_staple`** (row 29, as remade): the lock's three rungs, turned into the east wall.
+- **The incline's furniture:** `sign_pug_skull` (row 89) at the brow; `lantern_hang` and
+  `mine_lantern_bracket` (rows 79, 82) at the brow and the foot; two of the front post family (row 103) on
+  the rock below the bed.
+- **`rail_straight`** (5.5, the station's pass): the new stretch's rails, as built.
+- **At the door:** `mine_frame` and `mine_ore_chute` (rows 60, 72), as the mine's pass makes them (the door
+  set in the one scenery timber).
+
+#### F-B7. The join: part B9's answer, and what leaves
+
+The join is now the lip room: the mine's last timber set at the top of La Cortina's dry shaft, carrying
+the arcade's first brick arch. Part B's rows held for La Esclusa's page are answered here, and one stem
+of biome 0's that moved with the end of the line goes too:
+
+| B row | Stem | Now | Where its job goes | Verdict |
+|---|---|---|---|---|
+| 105 | `timber_set` | 7 | The top frame of `mine_cortina_wall` (row 12): two posts sunk into the wall either side of the dry shaft (x −294.8, −291.2) and a cap with its top at y 72.95, in the one scenery timber. A free-standing set at z −1.45 would sit inside the wall once part C's C7c brings its face to z −1.3. Today its honey ochre and red sign read as held, behind the climber | REMOVE |
+| 106 | `works_arch_low` | 4 | `esclusa_wall_flume`'s first arch, standing on that cap | REMOVE |
+| 107 | `works_brick_pier_post` (and the timber post under it) | 3 | Not needed: moved to x −296.0 it stands in front of 1.12's start (note 40; `146_cam_1_12.jpg`) | REMOVE |
+| 13 | `mine_lining_dry_shaft` | 2.5 | `mine_cortina_wall` (row 12) runs 4 m higher, to y 73 (26 to 30 m tall); its top 4 m are the dry shaft's plank lining on its frames, the last of them the mine's last set | REMOVE |
+| 164 | `works_coping_face` | 3 | `esclusa_coping`'s alcove member | REMOVE (as part B10) |
+| 165 | `works_brick_courses_face` | 5 | `esclusa_coping`'s alcove member | REMOVE (as part B10) |
+| – | `dsc_door_sill` (biome 0's) | 2 | `mine_frame` carries its own sill | REMOVE |
+
+So nothing in part D's "Held" group waits any more.
+
+#### F-B8. Counts
+
+| Verdict | Rows |
+|---|---|
+| NEW | 17 |
+| REMAKE | 6 (one a light pass, to the reviewer first) |
+| REUSE | 1 row (F8, inside row 24's session), plus F-B6's six groups |
+| REMOVE | 7 (F-B7) |
+
+So part F needs 23 maker sessions: 17 new and 6 remakes. Eight are skins: four whose shape is the
+course's (F4, F5, F6, F14) and four fixed. All but `esclusa_vault` (F-C3) can start now. Part B's four
+join rows (13, 105, 106, 107) leave, so the mine's whole pass needs at most 121 sessions (part B's 102,
+less those four, plus part F's 23).
+
+### F-C. Course changes for the fix thread
+
+In order. Each says which models wait for it. Solids are free to change shape; the play is checked after.
+
+- **F-C1. The keeper's warning, and the machines that show the lock working** (WORK_LOG 11-15, "Not done:
+  the keeper's lever 1 s before each fill"). The warning comes from the frog and his lever.
+  `esclusa_keeper_lever` is one model, frog and lever. The game turns it about its pivot:
+  - 25 degrees back in 0.4 s, one second before each fill (at 13.0 s of the 14 s cycle);
+  - held there through the rise;
+  - forward again in 0.4 s as the flap shuts (5.6 to 6.0 s).
+
+  With it go a clank of the lever's catch and the keeper's croak at the haul. Code: a deco turned on a
+  clock (as the water wheel follows the winding wheel, a1.py line 566, but on the lock's cycle with a 1 s
+  lead), or a small mover whose path is an angle. Two more follows go with it:
+  - the gate wheel spins as the flap opens and back as it shuts (a follow of `compuerta`, "roll", as the
+    pulley follows the counterweight, line 567);
+  - the gauge's float rides the lock's water (a follow of the water's `lock` level).
+
+  *Waiting:* the frames of F20, F22 and F23 (the models are made now).
+- **F-C2. The kicker can't be stood on** (a1.py line 693). Its board's kind goes from `iron` (a held step,
+  drawn as a red-orange bar where you step down onto the barrels) to `grease`, with
+  `model="esclusa_tipping_ramp"`. The kick is unchanged: re-watch it with the `esclusa` probe (5 barrels
+  kicked in 34 s, none into the falls). Optional: `gone` from 79.6 to about 78.4, so a kicked barrel drops
+  behind the chute's lip instead of vanishing in its black mouth (judge it in the frame first). *Waiting:*
+  F12.
+- **F-C3. The roof becomes the cracked brick vault.** Over the flume and the quay, the roof's flat
+  underside (y 83, and 86 over the quay) becomes a row of transverse brick vaults, one per arcade bay. They
+  spring at the piers' lines at the old underside and crown about 1.2 m higher, cut into the roof's slab
+  (`_section_rock`'s air, a1.py lines 646 to 650). Over the flume the piers' lines are about x −290.5,
+  −284.4, −277.9, −271.4, −265.1 and −258.5. Nothing reaches the roof (the highest stand is a barrel's top,
+  78.05), so the play does not change; check the lint and the cameras. The vault's front face then shows
+  each arch's brick ring. *Waiting:* F6.
+- **F-C4. The join's dress** (a1_dress.py, in the mine's shifted numbers).
+  - Out: `mine_lining_dry_shaft` (line 682), `timber_set` (713), `works_arch_low` (714), the two drawn
+    faces (718, 719), and the foreground post with `works_brick_pier_post` (721, 722: moved to x −296.0
+    they stand over the climber at 1.12's start, `146_cam_1_12.jpg`).
+  - Nothing new placed: `mine_cortina_wall` (row 12) carries the dry shaft's lining and the last set as its
+    top 4 m. The side lantern (715) moves onto the wall's face (`THROAT_Z`) at the set's west post; the
+    rope's strap (702) stays on its east post.
+
+  *Waiting:* nothing; do it when row 12 and F2 land together, so the arch always has a cap to stand on.
+- **F-C5. The old lip's grip** (a1.py line 493; moved, x −291 .. −284.5, top 72.7). Its east 3.5 m run on
+  under La Esclusa's rock (which starts at y 73) in a 0.3 m slot, and show pale in
+  `146_1_12_alcove_final.jpg`. Check the slot, then trim the ledge to the alcove (x −291 .. −288).
+  *Waiting:* F7's alcove member.
+- **F-C6. The cards out, and the falls' strip opened** (a1.py lines 740 to 745). The section's back-wall
+  card and the chute's and tunnel's black cards go as F2 and F3 land. Behind the falls (x −303 .. −297, y
+  73 .. 83) nothing may stand between the column and `mina_backdrop_cavern` (z −15). So the backstop card
+  at z −11.6 (line 745) moves behind it, to about z −18, as the mine's does (part C, C8). *Waiting:* the
+  frames of F2 and F3, and of F-A2.
+- **F-C7. The lights onto their lanterns** (a1.py lines 736 to 739). The seven lights stand at z +1.6 and
+  +1.8, in front of the play space, and glare white on the roof's front face and on the gate
+  (`146_1_12_kicker_final.jpg`, `146_1_13_risen_final.jpg`). Each moves under its lantern, at about z −1.9:
+  - the flume's four: the crane's post (−292.5, 81.5), two piers (−277.9, 81.5) and (−265.1, 81.5), over
+    the east landing (−259.5, 81.9);
+  - the lock's three: the booth (−253.5, 81.3), by L1 (−240.0, 84.7), over L2 (−228.8, 83.5).
+
+  Colours and energies stay as they are, steady (note 17). *Waiting:* every La Esclusa frame.
+- **F-C8. The life ring's block out of the falls** (a1.py lines 509, 510; moved, x −297.35 .. −296.75, y
+  45.0 .. 46.05). It stands 0.35 m into the falls' column (x −303 .. −297), as it did in the old fall line.
+  Before note 111's 3D falls (part C, C2), move the block and the ring 0.4 m east, and re-count note 15's
+  drops (the throw is the same; it lands 0.4 m further east on the balcony). *Waiting:* the frame of
+  `float_lifesaver` (row 43), and the 3D falls.
+- **F-C9. Note 114, watched** (a1.py line 689). Each barrel is born 3 m back (`emerge` depth −3 over 2.4
+  m), only 0.7 m behind the arcade's face, not 7 m as the page drew it. F19 is black from z −2.6 back.
+  Watch in the game that none is seen appearing. If one is, the birth goes deeper (depth −6), with the road
+  and the gaps as they are. *Waiting:* F19's frame.
+- **F-C10. 0.3's new stretch dressed** (a0.py).
+  - The slabs west of x −152.5 (line 105) wear `mina_ride_bed_*` and `mina_ride_roof_*` by place, as the
+    old stretch wears `dsc_bed_a..d`.
+  - The plain card (lines 116, 117) goes when F1 lands.
+  - Placed: the stock family's sets every 2.6 m from x −148.4 to −207 (posts plumb at z −1.45, caps under
+    the roof); `mina_winding_house` in its recess; `sign_pug_skull` at the brow; two lanterns (at the brow
+    and the foot) with their lights in a0_dress's LANTERNS; two broken front posts on the rock below the
+    bed (z about +1.4) at x −157 and −190, never in front of the cart.
+  - `dsc_door_sill` goes.
+
+  *Waiting:* the frames of F1, F14, F15 and F17.
+- **F-C11. The rest, hooked up as they land.**
+  - The keepers' run wears `mina_iron_ladder` (a1.py line 677; part C, C6).
+  - The barrels wear the remade `aguas_barrel` (line 689).
+  - Q6 (a2.py line 203) gets `skin="aguas_launch_ledge"`, and the same model is drawn on the two sills
+    (lines 199, 200).
+  - The flume's water draws the whirlpool as a turning foam ring and a dark eye over F13's funnel (the
+    water's look, code). The mist there (a1.py line 698) goes: it shows as pale balls, which are phase 0's
+    "floating spray balls".
+  - **Ask Parker:** 2.7's two sills are grip (`stone`) 0.3 m under the pool's surface. Are they a last
+    catch on purpose? If not, they go slick, and F16 paints them as wet stone under white water.
+
+### F-D. The order
+
+After the mine's first ten (part D: done or in flight). Chosen for the biggest lift first, heroes before
+props, and for being free of F-C. La Esclusa's frames are stand-in cards and boxes today, about a 2 to 3.
+The end of the line is the mine's first frame after the station's 9.5.
+
+1. **`esclusa_wall_flume`**: the set behind both of 1.12's frames, and the join's arch.
+2. **`esclusa_wall_lock`**: the set behind 1.13 and the quay.
+3. **`mina_ride_lining`**: the end of the line, the mine's first frame after the station.
+4. **`esclusa_keeper_lever`**: 1.13's hero and its warning (F-C1 runs beside it).
+5. **`esclusa_crane`**: 1.12's hero.
+
+Then, one model per session with many in flight, beside the mine's group 2:
+
+6. `mina_ride_bed` (the bright tan bed and roof at the door);
+7. `aguas_barrel`;
+8. `esclusa_mass_low` (the flume's bed and the lock's floor reading pale through the water);
+9. `esclusa_barrel_tunnel`;
+10. `esclusa_keeper_booth`;
+11. `mina_winding_house`;
+12. `esclusa_gauge_board`;
+13. `esclusa_gate_wheel`;
+14. `esclusa_lower_gate`;
+15. `esclusa_flap`;
+16. `esclusa_tipping_ramp` (F-C2 before it lands);
+17. `esclusa_drain`;
+18. `esclusa_coping`;
+19. `esclusa_mass_west`;
+20. `dsc_buffer_stop`;
+21. `aguas_works_lantern` (the light pass: the reviewer first);
+22. `aguas_launch_ledge`;
+23. after F-C3, `esclusa_vault`.
+
+With the mine's group 2: the keepers' run (`mina_iron_ladder`, row 24's session).
+
+Then as part D: each lands at 8.5 on its sheet, is synced, and is checked in a game frame of its place.
+1.12, 1.13 and 0.3's end are scored as frames against the 9 with the rest of the mine, and Parker sees them
+on the mine's one sheet.
+
+### F-E. The maker briefs for the first five
+
+Part E's shared rules hold for every brief here: one model; the house's look (matte, no emissive, no
+text); what a 9 is; the mine's colours, the game's light and the one scenery timber; readability;
+coordinates; the sheet; the methods. For La Esclusa, add:
+
+- **The works' colours** (`docs\peak\playtest\design\data\a2_biome.py`, "built" and "looks"):
+  - What you hold: pale stone copings, dry pale brick, rust-orange iron (the mine's `#B5532A`).
+  - What you can't: black-wet brick and rock (the sheen painted, matte), greased iron.
+  - Scenery brick: slate blue-grey, three or four close tones in long wavy courses, a step darker than any
+    coping, never pale. Scenery iron: verdigris or dark iron, never rust-orange.
+  - Water: black where it is deep, white where it breaks.
+  - The company's pug is cast in the iron. There are no timber sets in the works: the mine's timber stops
+    at the join (the barrels and the chute are its leftovers).
+- **The light:** La Esclusa is in the mine's area, so the mine's measured light and the game's colour curve
+  (part E) hold. Its lanterns are cold: blue-white `#9FD0FF` along the flume, teal `#6FE0D0` in the lock
+  (a1.py lines 736 to 739, moving to the lanterns: F-C7). Bench in the mine's light and a metre from a teal
+  lantern.
+- **Coordinates:** the game's, as said at part F's top. There is no "today" pair: La Esclusa was never
+  anywhere else.
+- **The cameras:** La Esclusa's zones (a1.py lines 733 to 735: half heights 5.5 for the ladder, 6.0 for
+  the flume, 7.5 for the lock) sit further back than the 13.7 m bench camera, so every sheet adds the
+  zone's own view.
+
+#### F-E1. `esclusa_wall_flume` (NEW, absorbing `works_arch_low`): the set behind Los Barriles
+
+**What and where.** The back wall of 1.12, from the falls' shaft to the flume's head: x −297 .. −258.5, y
+73 .. 86 (the roof is at 83 over the platform and the flume, at 86 over the quay's end). Its face, the
+piers' fronts, is at z −2.2; the arches' backs at −2.6. Through the arches the vaults go back to a painted
+far plane at about z −10. At its west end:
+- behind the ladder's strip (x −297 .. −295) the face is black-wet rock at z −2.2, and its edge at x −297
+  returns back to z −6 as the falls' shaft's east side (behind the falls themselves the shaft stays open);
+- the lip room's back wall (x −295 .. −288, y 73 .. 75.2) steps forward to z −1.7, so the join's arch
+  stands against it.
+
+Size about 38.5 x 13 x 8. Origin: the middle of its foot, (−277.75, 73.0), z −2.2 (its face). It replaces
+a1.py's stand-in back wall here and the chute's and tunnel's black cards (lines 740 to 744).
+
+**Layer and how it connects.** Background, near.
+- **The waste chute's mouth** (x −291.4 .. −286.4, y 78.6 .. 82.2): a brick-lined mouth with a timber chute
+  going back and down into black. A kicked barrel is gone at y 79.6, z −3: it must vanish into black, with
+  the chute's floor below it and the arch's soffit above.
+- **The barrels' tunnel** (x −264.55 .. −259.05, from the water at 77.1 to its crown at 80.6): leave its
+  opening, 4 cm clear round the arch's ring, for `esclusa_barrel_tunnel`.
+- **The piers** stand at about x −284.4, −277.9, −271.4 and −265.1 (the tunnel's west jamb), with the head
+  wall at −258.5. The roof's vaults (F-C3, `esclusa_vault`) spring from the same lines, so pier and vault
+  are one arcade.
+- **The east landing's two beam ends** go into sockets in its face at about x −260.0 and −258.9, y 78.6.
+- **The crane** stands in front of it on the platform (z −1.5 .. −2.1), its back-stay into the face.
+- **The join:** the works' first arch stands straight on the mine's last cap: the top frame of
+  `mine_cortina_wall` (row 12), posts at x −294.8 and −291.2, cap top y 72.95, its face at the throat
+  wall's face (z −1.3 once part C's C7c is done). The arch is x −294.95 .. −291.05, its face flush with the
+  cap's and 0.4 deep, its crown under the lip room's ceiling at 75.2.
+
+**What makes it a 9.** A place, not a slab: the company's brick arcade.
+- **The form:** brick in long wavy courses of slate blue-grey; round arches whose rings stand proud (real);
+  cut stone in long courses below the springing, with a level water band at 77.2, a green band of growth
+  along it, black-wet below.
+- **Through each arch:** the vaults going back, each row darker and smaller, the flume's water running away
+  under them as a channel that catches a lantern, a lantern speck at the far end (painted, no emissive).
+- **The west end:** the falls' shaft's east side, black-wet rock receding into spray, ferns on one outcrop;
+  the lip room's wall with the join: timber below, brick above, a cast iron pug in the arch's keystone.
+- **Three levels:** piers, arches, openings and the shaft's side; the rings, courses, the chute and its
+  timber, the far vaults; seeps down from the vaults' cracked crowns, a hole where a handful of bricks have
+  fallen out, a pier with a corner gone, rust runs under the mooring rings, ferns, the growth band.
+- **Readability:** the barrels (honey) and the climber (bone) read in front: the brick mid-dark, no pale
+  course, no red; the mooring rings dark iron (not holds); the chute's and tunnel's insides black; dark
+  rock, never the falls' glow, behind the climber on the ladder.
+
+**Standard:** the plaza houses (recessed openings with a reveal, the ring proud), `stn_yard_wall` (9),
+`mine_lining_gallery` (8.5, the mine's passed wall). **Old:** `works_arch_low` (4, "grey brick arch with a
+dark keystone; soft and washed out") for the join's arch; `aguas_barrel_cove` (4.5, "the opening is pure
+void") for what an opening must not be. **Notes:** 146 (the pitch's "cut stone, iron rings, a cracked
+brick vault"), 114, 21, 40; the frames `146_cam_1_12`, `146_la_esclusa_after`, `146_1_12_kicker_final`,
+`146_1_12_alcove_final` (a plain card). **Method:** painted walls (thread A: `stn_a_paint.py`,
+`stn_a_lib.py` `painted_model()` with `faces3d` for the rings, the reveals and the chute), the black
+waters' wall method (`a2_biome.py` "built": courses as long wavy lines, level water bands, a few real
+breaks); bench in the mine's light and by a blue-white lantern.
+
+**The sheet:** front; three-quarter; the game's camera at 13.7 m and the section's own zones (the ladder's
+at 1.12's start, the flume's at the kicker and at the east landing), true size and enlarged. Stand-ins for
+the platform, the crane, the ladder, the falls' column, the flume's water, two barrels, the tipping ramp,
+and a climber on a barrel and one on the ladder. A barrel caught at the chute's mouth at z −3, y 79.6: it
+must sit in black. High and low views (the arches recede 8 m).
+
+#### F-E2. `esclusa_wall_lock` (NEW): the set behind the quay and La Esclusa
+
+**What and where.** The quay's back wall and the lock chamber's: x −258.5 .. −222, y 73 .. 89.4.
+- **The quay's wall** (x −258.5 .. −245, y 79.4 .. 86, and to 89.4 east of x −252): brick, its face at z
+  −2.2, with the booth's recess (x −255.5 .. −251.5, y 79.4 .. 82.0, back to z −2.6) and the gate wheel's
+  housing (x −247.3 .. −245.9, y 81.2 .. 83.0).
+- **The chamber's back wall** (x −244 .. −228, y 75.7 .. 89.4): cut stone, its face at z −1.9, behind the
+  corbels' brackets.
+
+Size about 36.5 x 16.4 x 8 (the culverts painted back to z −10). Origin: the middle of its foot,
+(−240.25, 73.0), z −1.9. It replaces a1.py's stand-in back wall here (line 740).
+
+**Layer and how it connects.** Background, near.
+- The booth (`esclusa_keeper_booth`) fits its recess.
+- The gate wheel's shaft runs into its housing, and on along the wall to the gate as a line of bolted
+  bearings (painted).
+- L1's and L2's iron brackets go into sockets at about (−238.9, 82.3) and (−228.8, 80.3), with rust
+  tracks running down from them.
+- The flap's iron frame sits at the slot's foot (x −244 .. −238, y 88.6 .. 89.4); `esclusa_flap` slides in
+  front of it, west into its housing in the roof.
+- The river's white sheet (the game's effect, x −244 .. −242.2, z −1.9) pours down this face under the
+  slot: paint the wall wetter and greener there.
+- The gauge board stands on its face at x −231.4 .. −230.2, on stand-offs (z −1.75).
+
+**What makes it a 9.**
+- **The quay's wall:** brick in long courses; the booth's round-headed opening with a stone surround and a
+  worn step; a bracket for the booth's lantern; the wheel's housing a cast iron box with the pug.
+- **The chamber:** cut stone in long wavy courses, stained teal up to the highest water (88.5) with a crisp
+  scum line a step lighter than the stain (never pale), green-black below the lowest (77.2), and level
+  bands between, where the water stands.
+- **The barred opening** high in the wall (x −241.5 .. −239.0, y 85.5 .. 87.3): iron bars in a stone
+  surround. Behind it the river's culverts are painted going back in rows, lit teal far off.
+- **The slot's foot:** the iron frame and the flap's runners, and the river's track down the wall,
+  white-streaked.
+- **Three levels:** the planes (quay wall, chamber wall, opening); the stain bands, the booth's surround,
+  the grating, the frame; courses, rust tracks, drips, the scum's crust, moss in the joints.
+- **Readability:** mid values behind a swimmer at every height; the culverts' teal glow mid; nothing pale
+  and no red; the water level reads against it (dark below the water, the stain above).
+
+**Standard:** the plaza houses, `stn_yard_wall` (9), `mine_lining_gallery` (8.5). **Old:** none (a
+stand-in card). **Notes:** 146 ("teal stone, ... a gauge board of the water level"), rule 6 (the machine
+you can see); the frames `146_cam_1_13`, `146_1_13_risen_final`, `146_1_13_high_final`. **Method:** painted
+walls (thread A), `faces3d` for the booth's recess, the grating's surround and the slot's frame; bench in
+the mine's light and by a teal lantern.
+
+**The sheet:** front; three-quarter; the game's camera at 13.7 m and the lock's zone, true size and
+enlarged, with the water at its lowest (77.2) and its highest (88.5). Stand-ins for the gate, the corbels,
+the rungs, the gauge and the booth, and a climber on the sill, one on L1 and one swimming at the top. High
+and low views.
+
+#### F-E3. `mina_ride_lining` (NEW): the back wall of the cart ride's new stretch
+
+**What and where.** The new stretch's back wall, from today's end of the line to the mine's door. It is a
+band 6.2 m tall (from 0.6 under the bed to 0.6 over the roof) that follows the rail bed from (−148, −12.0)
+down the 20 degree incline (x −158 .. −188) to (−211, −29.6). Its face is at z −2.0, in place of a0.py's
+plain card (line 117, z −2.7, `#33291F`). Size about 63 x 23.6 x 2; its recesses go deeper (the winding
+house's to z −3.8, the two side galleries' painted depth to about z −10). Origin: the foot of its west end,
+at the door (−211.0, −29.6), z −2.0.
+
+**Layer and how it connects.** Background, near.
+- In front of it, at z −1.45, stand the mine's square sets every 2.6 m (the timber stock family, 8.5:
+  posts plumb, caps stepping down the incline). Its bays fit between them: leave a post's width at each set
+  (every 2.6 m from x −148.4).
+- Its recess at the brow (x −151.5 .. −156.5, a level floor at y −13.0, back to z −3.8) takes
+  `mina_winding_house`.
+- Two side gallery openings 3.2 m wide: at the brow (x −159.0 .. −162.2) and at the foot (x −194.0 ..
+  −197.2), each timbered and painted going back.
+- At its west end it meets the mine's door set (`mine_frame`, x −211) and `mine_lining_gallery` behind the
+  door, with the same boards, so the ride runs into the mine without a seam. At its east end it meets the
+  station tunnel's back wall (a0_dress, x −148).
+
+**What makes it a 9.** The mine's lagging, as the gallery's.
+- **The boards:** long flat bands in bays between the sets, following the slope, in the gallery's six close
+  tones (`mine_lining_gallery`'s `#5E574E` family), grey and wet, green at the seams.
+- **The run-in** (x −148 .. −158) smashed: boards burst and missing, rock showing behind, the old door's
+  set left standing.
+- **The two side galleries:** a timbered mouth (posts, cap, lagging), and inside, painted, sets in rows
+  getting smaller into the dark with a lantern speck at the end (the stretch's far layer).
+- **By the brow:** a chalk arrow and a worn skull-pug stencil on the boards.
+- **Three levels:** bays and openings; reveals, frames, the recess, the galleries' depth; grain, nail rows,
+  damp, and patches nailed across seams in their neighbours' tone (not pale plaques: the gallery's lesson
+  in the game).
+- **Readability:** mid values; nothing pale or red at the rider's height.
+
+**Standard:** `mine_lining_gallery` (8.5 in the game), the plaza houses (recessed openings with a reveal),
+`stn_house` (9). **Old:** today's card (a0.py line 117); the station tunnel's `dsc_back_wall_a..d` (3 to
+3.5, "flat banding") show what not to do. **Notes:** 146 (the ride lengthened; the page's "side galleries
+going back"), QUALITY_TO_9_PLAN phase 1 ("0.3: a painted tunnel receding"); the frames
+`146_0_3_incline_after`, `146_0_3_end_after`. **Method:** painted walls (thread A: `stn_a_mine_walls.py`,
+plank lining as flat bands; `faces3d` for the recess and the galleries' reveals; start from the gallery's
+own `mine_lining_gallery_design.py`); `MINE_LIGHT=1`, and lit a metre from a lantern.
+
+**The sheet:** front (the whole band); three-quarter; the ride's camera (half height 4.6, following the
+cart) at the brow, mid-incline, and at the end of the line with the cart at the buffer and a climber
+standing beside it, true size and enlarged. Stand-ins for the sets, the bed, the rails, the cart, the
+winding house and the door set. High and low views.
+
+#### F-E4. `esclusa_keeper_lever` (NEW): La Esclusa's hero, the old keeper at his lever
+
+**What and where.** The old frog who still keeps the lock. He stands on his lever's foot plate in his
+booth, both hands on its grip. Frog and lever are ONE model, turned by the game about the foot plate's
+pivot. It stands at (−253.2, 79.4), z −1.9, in the booth (x −255.5 .. −251.5), west of 1.13's start (x
+−249.3), so the climber never stands in front of him. The keeper is about 0.6 m standing: the house frogs
+are 0.26 to 0.44 m, and he is the oldest and biggest on the mountain, the family's shape scaled, not a new
+design. The lever is 1.3 m to its knob. Size about 0.9 x 1.4 x 0.6. Origin: the pivot (the middle of the
+foot plate's axle), on the booth's floor.
+
+**Layer and how it connects.** Background, behind the play space: its front at z −1.6, nothing nearer than
+−1.3. The axle sits in an iron quadrant bolted to the booth's floor; the quadrant is the booth's (it stays
+still). The lever's rod runs down through a slot in the floor to the gate's works. **The motion** (F-C1):
+the game turns the whole model 25 degrees back (west) about the pivot, in 0.4 s, one second before each
+fill. It holds through the rise and turns forward with the flap's clank. So the frog throws his weight back
+on the lever: at rest he stands upright with his hands on the grip at his chin; hauled, he leans back 25
+degrees with his arms straight and his heels on the plate. Model both poses' silhouettes to read; only one
+file.
+
+**What makes it a 9.** A house frog with a job and a history.
+- **The frog:** the family's round body and big eyes (`frog_sit`; `frog_stop`'s standing body and legs from
+  `stn_b_frogs.py`); an oilskin sou'wester (`frog_rain_hat`'s brim, in the works' oilskin yellow-ochre,
+  matte) and a short oilskin cape; a brass whistle on a cord; mittens; one eye a little narrowed (he has
+  done this for years), a set mouth.
+- **The lever:** an iron rod with a turned knob (matte brass, the shine a flush lighter band), a ratchet
+  catch with its trigger under his fingers, a foot plate with a cast pug.
+- **A silhouette that reads at the lock's camera:** the sou'wester's brim, the cape, the lever's long
+  line. The haul reads as a big change of angle.
+- **Three levels:** frog, lever, plate; hat, cape, mittens, catch, knob; stitching, rivets, the plate's
+  pug, a patch on the cape.
+- **Readability:** mid values against the booth's warm painted lamp glow; the brass knob not pale; nothing
+  red.
+
+**Standard:** the frogs (`frog_rain_hat` 9, `frog_apron` 9, `frog_stop` and its sheet
+`previews\frog_stop_review.png`), `forja_frog_smith` (9, a frog at his trade). **Old:** none; start from
+`source\build_frog_rain_hat.py` and `source\stn_b_frogs.py`. **Notes:** 146 ("a frog keeper in a booth with
+a lever"; the page's "one second before each fill he hauls it over: that is the warning"), WORK_LOG 11-15
+("Not done: the keeper's lever 1 s before each fill"). **Method:** props and frogs (thread B:
+`stn_b_frogs.py`, `stn_b_lib.py`, bench `tools\stn_b_views.py`).
+
+**The sheet:** front; three-quarter; at rest and hauled (25 degrees) side by side; the game's camera at
+13.7 m and the lock's zone, true size and enlarged, in a stand-in booth with a climber on the quay at
+1.13's start; his hands on the grip in both poses.
+
+#### F-E5. `esclusa_crane` (NEW): Los Barriles' hero, the broken barrel crane
+
+**What and where.** The company's barrel crane, still standing on the platform at the head of the falls,
+its jib snapped. Its post's foot is on the platform at (−292.5, 79.4), z −1.8, behind the climb (the
+platform's walk is z −1.2 .. 1.2). Its head is at y 82.6, under the roof (y 83): nothing behind the play
+space may pass the roof's line, because the roof's front face hides it. The jib is snapped near its heel.
+Its broken length hangs from the heel's torn plates and slants down west over the ladder's strip, its tip
+and pulley wedged against the shaft's east side at about (−297.3, 81.0), z −2.4. At the ladder (x −295.4)
+it is at about y 81.6, above the reach of a climber at the ladder's head. Size about 5 x 3.4 x 1.0.
+Origin: the middle of the post's foot.
+
+**Layer and how it connects.** Background, standing on the play space's platform: its foot plate is bolted
+to the coping's back half (z −1.5 .. −2.1), and a back-stay goes into the arcade's face (z −2.2). Its jib
+crosses behind the ladder (x −295.4, z 0) to the shaft's side. A works lantern hangs from a bracket on the
+post at about y 81.8, so the ladder is lit (`aguas_works_lantern`; the flume's first light moves there,
+F-C7). One thing, from the platform to the wall.
+
+**What makes it a 9.** It says what the place was for.
+- **The post:** riveted iron (plates, angle flanges, rivet rows), a cast foot plate with the company's
+  pug, and a hand winch on it with its crank, its drum and the chain's last links.
+- **The jib:** the snapped stub with torn plates and bent rivets; the hanging length a solid plate girder
+  0.35 deep with lightening holes (not a thin line); the pulley's sheave and cheeks at its tip; no hook.
+- **Note 4 holds:** nothing thin hangs near the climb, and no tie rod. It must not read as something to
+  hold or climb: scenery iron, verdigris and dark iron, never rust-orange (that is held iron in the works),
+  with the lantern's light catching it.
+- **Three levels:** post, jib, winch; plates, the sheave, the foot, the stub's tear; rivets, torn edges,
+  verdigris runs, a chalk barrel tally on the post (the barrel men's, no words).
+
+**Standard:** `hand_crane` (8, the station's), `mina_hoist_headframe` (8.5, the mine's passed machine:
+joinery you can see, broad, not thin), the old gondola (9). **Old:** `aguas_crane_beam` (2, "thin dark
+girder rod; invisible as an object") shows what not to do. **Notes:** 146 (the page's broken crane: "it says
+what this place was for"), 4, 40; the frame `146_cam_1_12`. **Method:** timber and iron (thread C:
+`stn_c_lib.py` PAL, bench `peak_c_mine_bench.py` or `stn_c_scene.py`), in the works' scenery iron tones.
+
+**The sheet:** front; three-quarter; the game's camera at 13.7 m and the ladder's zone, true size and
+enlarged. Stand-ins for the platform, the ladder, the falls' column (6 m, white), the roof's front face at
+y 83, the arcade's face, and climbers at the ladder's foot and on its top rung. High and low views (it
+steps back to the wall, and its jib crosses behind the ladder to the shaft).
+
+### Where part F could be wrong (for the Director)
+
+1. **2.7 is the black waters' challenge** (a2.py). Part F plans only its launch ledge and the falls' two
+   lips. If Parker wants 2.7 whole in the mine's pass, its gantry, chains and hall are more rows.
+2. **The keeper's size and haul.** At 0.6 m he is half again the house frogs' size, and he may read as
+   another family. Turning frog and lever as one rigid model about his feet is my choice; the reviewer may
+   want his arms to move.
+3. **No new far backdrop.** The falls' strip relies on `mina_backdrop_cavern` (in flight) reaching y 84
+   behind it. The arcade's and the lock's far views are painted inside their sets (at about z −10). If the
+   reviewer marks the flume's frame down for "no painted backdrop", the page's "vaults going back" card (30
+   x 8 m) is one more row.
+4. **The vaults reshape a solid nobody touches** (F-C3). If the fix thread finds a move that reaches the
+   roof, keep the flat underside and paint the vaults.
+5. **Left out to stay lean:** the ore bins at the incline's foot (the mine's ore chute stands just inside
+   the door) and the barrel men's rack of boat hooks and tally board on the quay. The end of the line and
+   the quay rely on their other things.
+6. **The winding house is seen for about a second** at 9 m/s, and the page asked Parker whether he wants it
+   as the stretch's hero. Moving frames may also want bolder shapes than a still sheet shows.
+7. **The gauge's place** (the chamber's east end, x −231.4 .. −230.2) is mine; the page put it on the back
+   wall without a place.
+8. **The light.** La Esclusa sits in the mine's warm measured light with cold lanterns. The colours must be
+   benched in both, and the game may show them differently.
+9. **The masses** (F4, F5) assume La Esclusa's rock stays as built. If the fix thread reshapes it beyond
+   the vaults, they wait.
