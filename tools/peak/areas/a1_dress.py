@@ -318,7 +318,7 @@ def dress(A):
     # the pit it has burst outward (painted: a black burst, no recess), and high by the door the
     # ore chute's dark hole is painted on it. Two openings are real: the miners' waiting room
     # and the winch's cut (1.1b).
-    A.deco("mine_lining_gallery", -164.0, GAL_Y, z=GAL_WALL_Z - 0.075, size=(24.0, 5.1, 0.15), tone="back")
+    A.deco("mine_lining_gallery", -164.0, GAL_Y, z=-1.65, size=(24.0, 5.32, 1.59), tone="back")  # (quality run E5, 8.5 PASS: the tally marks, the winch's cut and the rack's bay are in it)
     PZ = -1.45  # the back posts and the long timbers, between the lining and the play space
     for x in (-152.12, -155.4, -165.9):
         post(x, GAL_Y, -7.85, PZ)  # full height
@@ -374,15 +374,14 @@ def dress(A):
     A.deco("cold_lantern", -166.2, GAL_Y, z=-1.39, size=(0.28, 0.48, 0.28), tone="iron")
     A.deco("rope_coil", -166.65, GAL_Y, z=-1.42, scale=0.6, size=(0.5, 0.2, 0.5), tone="wood2")
     A.deco("pickaxe", -167.45, GAL_Y, z=-1.36, rot=68.0, size=(0.9, 0.6, 0.2), tone="iron")  # leaning on the post
-    A.deco("tally_marks", -166.9, -11.8, z=GAL_WALL_Z + 0.01, size=(1.2, 0.8, 0.02), tone="bone")  # scratched on the lining
     # The miners' bunting, shortened to 3.5 m so no line crosses behind the ladder's rungs.
     # Fixed at both ends (origin: its west hook).
     A.deco("mine_bunting_torn", -175.8, -8.1, z=-1.45, size=(3.5, 0.8, 0.1), tone="accent")
     # The winch at the head of the incline, in its own cut by the mouth (also 1.0b's).
-    A.deco("mine_winch_cut", -174.8, GAL_Y, z=-2.45, size=(1.8, 1.7, 1.6), tone="back2")
+    A.deco("mine_hand_winch", -172.6, GAL_Y, z=-2.05, size=(1.6, 1.4, 0.8), tone="back")  # (in its own cut in the lining, quality run E5)
     # (quality run, E10, reviewer in the game: the camp's tool rack stands in the open left bay against the
     # lining, in place of the hand winch, where it can be seen; the winch goes with the lining's remake, E5.)
-    A.deco("mina_tool_rack", -174.8, GAL_Y, z=-2.0, size=(1.80, 1.87, 0.49), tone="back")
+    A.deco("mina_tool_rack", -174.8, GAL_Y, z=-2.05, size=(1.80, 1.87, 0.49), tone="back")
     # Painted on the floor you walk on: the worn track from where he sits to the ladder's foot.
     A.deco("mine_worn_path", -169.2, GAL_Y, z=0.0, size=(3.4, 0.01, 0.35), tone="rock")
     A.deco("mine_rubble_lip", -170.85, -15.3, z=LIP_Z, size=(10.0, 1.0, 0.7), tone="back2")
