@@ -707,6 +707,7 @@ Every brief shares these rules, so they are said once:
   channel (thread A's hand-over); the game's colour change is `screen = M * file + o` (Top Dog Kit
   `docs\PARTS.md`, P-C2): mid-values brighten, darks go darker, file colours above about
   (213, 196, 200) go white; a band needs a light step 20 to 35 levels over its base to survive.
+- **The mine's ONE scenery timber (set by the reviewer in the game, 11-14):** faces `#66655E`, adze facets `#6F7372`, worn chamfers `#727777` (the timber family's round 3, solved through the game's colour curve so that even a metre from a lantern it lands mid grey-brown, below the honey of what you hold). The older `#8E7E6A` family goes pale under a lantern: never use it. Bench every scenery piece lit as the game lights it by a lantern, not only in the mine's average light.
 - **Readability:** nothing pale and nothing red behind the climber at climbing heights; the bone-white
   climber reads against mid-dark; nothing thin hangs near the climb (note 4); nothing stands in front
   of a place a climber can be (note 40).
