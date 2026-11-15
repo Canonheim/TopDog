@@ -734,6 +734,13 @@ class Area:
             d["skin"] = True  # the look of solids that name it: no stand-in while it is missing, never rescaled
         self.decos.append(d)
 
+    def drop_decos(self, models):
+        """Take every deco of these models out (the quality run's clean-up: a blank card, a stand-in nothing needs).
+        Returns how many went."""
+        n = len(self.decos)
+        self.decos[:] = [d for d in self.decos if d["model"] not in models]
+        return n - len(self.decos)
+
     def light(self, x, y, color="#FFC070", rng=9.0, energy=1.6, z=1.6, flicker=False):
         self.lights.append({"at": [_f(x), _f(y), _f(z)], "color": color, "range": _f(rng), "energy": _f(energy), "flicker": bool(flicker)})
 
@@ -799,6 +806,25 @@ class Area:
                         errs.append("challenge %s: a %s fling needing %.1f m/s (limit %.1f)" % (c["id"], mv[3], v, FLING_SPEED[mv[3]]))
         return errs
 
+    def _sweeps(self):
+        """THE SWEEPS ON EVERY BUILD (the quality run's phase 0; tools/peak/sweeps.py): the build's own fixes,
+        then this area's counts. The mine's scenery (a1_dress) is landing remade models all night: there the
+        decos' hits are listed, not moved (the Director, 11-15)."""
+        if self.id in ("st", "lab"):
+            return
+        try:
+            import sweeps
+            data = self.to_json()
+            grips = {k for k, v in KINDS.items() if v.get("grip")}
+            did = sweeps.resolve(self.id, data, grips, keep_decos=(self.id == "a1"))
+            for line in did[:8]:
+                print("  sweeps:", line)
+            if len(did) > 8:
+                print("  sweeps: ... and %d more" % (len(did) - 8))
+            print("  sweeps: %s" % sweeps.counts({k: v for k, v in sweeps.run_data(self.id, data, grips).items()}))
+        except Exception as e:
+            print("  sweeps: not run (%s)" % e)
+
     def to_json(self):
         return {"id": self.id, "name": self.name, "palette": self.palette, "region": list(self.region),
                 "entry": list(self.entry), "exit": list(self.exit), "openings": self.openings,
@@ -810,6 +836,7 @@ class Area:
 
     def save(self, folder=None):
         self._apply_shift()
+        self._sweeps()
         errs = self.check()
         folder = folder or COURSE_DIR
         os.makedirs(folder, exist_ok=True)
