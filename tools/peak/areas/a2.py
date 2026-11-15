@@ -186,9 +186,27 @@ airbox(-288, T0C - 0.1, -284, 113.1)  # the first cascade's shaft
 airbox(-320.5, 113, -284, 128)  # the pool's hall
 airbox(-306, 127.9, -294, 181)  # the well comes down through the rock to its roof
 A.opening(-306, 175, -294, 181)
-A.water((-320.5, 113, -288, CS), CS, flow=(1.0, 0.0), look="pool")
-slab(-291, -284, 117.4, skin="aguas_charco_landing_east")  # Q6, over the cascade's lip
-slab(-320.5, -314, 117.2, t=0.7, skin="aguas_charco_landing_west")  # Q7, the west bank
+# NOTE 146: THE GREAT FALLS COME DOWN THROUGH THE HALL (one 6 m shaft, x -303 .. -297, from the well to the
+# Sump: Parker 11-14). Where they hit, the reservoir's floor has broken and they pour on down a shaft cut
+# through the black waters' floor, to La Esclusa and the mine. The pool is cut in two: its west half, fed by
+# the flume from 2.8, runs east and pours over a sill into the falls; its east half is a basin under Q6
+# that still runs to the old cascade and El Borde's river (a fall beside the falls lands in one or the other).
+FALLS = (-303.0, -297.0)
+airbox(FALLS[0], 83.0, FALLS[1], 113.2)  # the falls' shaft through the floor (the rock there is cut on purpose)
+A.water((-320.5, 113, -306.0, CS), CS, flow=(1.0, 0.0), look="pool")       # the west pool, running east
+A.water((-306.0, 113, -303.4, CS), CS, flow=(1.6, 0.0), look="pool")       # quicker at the sill (FIRST GUESS)
+A.water((-296.6, 113, -288, CS), CS, flow=(1.0, 0.0), look="pool")         # the east basin, on to the old cascade
+A.solid([(-303.4, 113.0), (-303.0, 113.0), (-303.0, CS - 0.3), (-303.4, CS - 0.3)], "stone")  # the pool's lip sill, on the falls
+A.solid([(-297.0, 113.0), (-296.6, 113.0), (-296.6, CS - 0.3), (-297.0, CS - 0.3)], "stone")  # the east basin's sill
+# Q6, carried 6 m west to the falls' edge on more iron beams: its west end THE LAUNCH LEDGE, flush with the
+# falls (so the throw stays inside F2). Plain until its re-made skin: the old one was 7 m.
+slab(-297.0, -284, 117.4)  # Q6, over the cascade's lip and the east basin
+slab(-320.5, -314, 117.2, t=0.7, skin="aguas_charco_landing_west")  # Q7, the west bank (as today)
+for _y in (115.45, 116.25):  # Q7's two rungs up out of the pool (the swim's end)
+    A.solid([(-314.45, _y - 0.07), (-313.95, _y - 0.07), (-313.95, _y + 0.07), (-314.45, _y + 0.07)], "iron")
+# The gantry's two chains over the west pool, their tails 0.6 m over the water: the swim's two holds.
+A.rope("cadena_salto1", (-306.8, 121.8), 6.2, kind="chain")
+A.rope("cadena_salto2", (-310.6, 121.8), 6.2, kind="chain")
 # THE FROG'S ROOM (page 2.0; Parker 11-13, settled): a small room cut into the brick east
 # of Q6, 3 m wide, its round vault 1.5 m over the floor's springing, its floor the ledge's
 # coping running on as a worn sill. Its back, vault, door and things are the dress's.
@@ -196,42 +214,14 @@ _vault = [(-282.5 + 1.5 * math.cos(math.radians(a)), 118.5 + 1.5 * math.sin(math
 air([(-284.0, 117.1), (-281.0, 117.1)] + _vault)
 cap(-284.2, -281.0, 117.4, "stone")
 
-# ---------------------------------------------------------------- 2.7 the barrels
-BARREL = [(-0.9, -0.3), (-0.6, -0.55), (0.6, -0.55), (0.9, -0.3), (0.9, 0.3), (0.6, 0.55), (-0.6, 0.55), (-0.9, 0.3)]
-# THE BARRELS ARRIVE AND LEAVE (Parker 11-12: "the barrels should fall not despawn on
-# screen", then "they should come out of some modeled cove and they should have some more
-# space between them, like 40% less total barrels, and some variation in when they are
-# sent out"). There were 13 on one beat, 2.6 m apart, blinking in under the west bank and
-# blinking out over the lip. Now:
-#  - EIGHT, on a WRITTEN rhythm: BARREL_GAPS is the metres from each barrel's middle to the
-#    next one's, round the loop. A barrel is 1.8 m long, so the water between two is the
-#    gap less 1.8. They drift at one speed, so a gap never closes while you wait. Measured
-#    (work log): a climber leaning out after a hand gets it 1.55 m past its rear foot, so
-#    about 1.3 m of water is a plain stretch. Of these eight gaps four are inside that
-#    (1.1 to 1.3 m of water), two are a lunge (1.6, 1.7) and two are a swim against the
-#    pool's 1 m/s (4.0, 4.4). FIRST TRY: Parker chooses the gaps.
-#  - THE COVE: a brick arch in the back wall at the waterline, black inside, just east of
-#    the west bank. A barrel floats forward out of the dark over its first 2.4 m and
-#    can't be touched until it is in the climb's own plane.
-#  - OVER THE LIP: past the end of the water it is a loose thing: it tips over the lip and
-#    falls the 24 m down the cascade, tumbling, into the river, with you if you are on it.
-BARREL_SPEED = 0.55
-COVE_X, LIP_X = -312.6, -285.8
-BARREL_GAPS = [3.0, 3.4, 2.9, 5.8, 3.1, 3.5, 2.9, 6.2]   # a 30.8 m loop (the 13 were 2.6 apart: 33.8)
-_loop = sum(BARREL_GAPS)
-_road = LIP_X - COVE_X                                     # 26.8 m of it is the pool; the rest is out of sight
-_t = 0.0
-for i in range(8):
-    A.mover("barril%d" % (i + 1), (COVE_X, 115.3), [(BARREL, "wood")],
-            {"type": "path", "pts": [[COVE_X, 115.3], [LIP_X, 115.3]], "speed": BARREL_SPEED, "mode": "wrap",
-             "wait": round((_loop - _road) / BARREL_SPEED, 3), "phase": round(_t / BARREL_SPEED, 3), "trigger": "none",
-             "loose": round(-287.15 - COVE_X, 3), "mass": 60.0, "push": 1.3, "tip": 1.5,
-             "emerge": {"depth": -3.0, "over": 2.4}}, model="aguas_barrel")
-    _t += BARREL_GAPS[i]
-# The cove's mouth: the aqueduct's own brick arch (the kit's brick_arch, 7 m, drawn at 4.6:
-# the size sets its scale), and the dark inside it, cut to the arch's opening.
-# (aguas_barrel_cove, the dress's, takes the arch's and its dark card's place)
-A.challenge("2.7", "El Charco del Pozo", (-287.0, 117.4), 3, "X")
+# ---------------------------------------------------------------- 2.7 El Salto de la Cascada (note 146)
+# (The barrels moved to 1.12 Los Barriles, in La Esclusa under the black waters, running west.) From the
+# launch ledge, hanging by your hands, swing out and let go over the falling water into the west pool:
+# 6.6 to 9.0 m across, 2.4 m down, F2. The moment you land you swim, or it takes you back over the sill.
+A.challenge("2.7", "El Salto de la Cascada", (-287.0, 117.4), 3, "X", moves=[
+    ["fling", [-297.0, 117.4], [-304.6, CS], "F2"],
+    ["swim", [-306.8, 115.8], [-310.6, 115.8]], ["swim", [-310.6, 115.8], [-314.2, 116.25]],  # (swims: against 1 m/s, as today's two)
+    ["reach", [-314.2, 116.25], [-314.5, 117.2]]])
 
 # ================================================================ THE FLUME AND THE PIPE HALL
 FS = 116.0  # flume and tail pool surface (bed 114.5)
@@ -373,7 +363,7 @@ A.cam((-459, 150, -426, 176), 7.0, bias=(-1.5, 2.0))  # the dam
 A.deco("valve_wheel", -349.3, 120.0, z=-0.4, size=(0.9, 0.9, 0.2), tone="accent")  # the first cool joint's look
 A.deco("valve_wheel", -377.6, 136.6, z=-0.4, size=(0.9, 0.9, 0.2), tone="accent")  # and the last's (page 2.9)
 A.light(-300, 121.0, color="#DDF2EC", rng=14.0, energy=0.9, z=-2.0)  # the well's far daylight on the pool
-A.effect("waterfall", (-244, 84, -238, RIV_S), through=True)  # over the lip, and on down the mine's shaft (a1 draws the rest, from y 84)
+A.effect("waterfall", (-244, 89.4, -238, RIV_S), through=True)  # over the lip, onto the lock's flap (La Esclusa, a1, carries it on down its back wall)
 A.effect("waterfall", (-232.6, RS, -230.8, MS), density=0.6)  # the mill channel's drain, into the race (note 22)
 A.effect("waterfall", (-229.0, 90.0, -226.0, RS), density=0.5)  # the race's drain, onto the lip ledge
 A.effect("waterfall", (-320.5, 115.0, -318.6, 116.0))  # the flume spills a metre into the pool (El Charco del Pozo)
@@ -449,6 +439,8 @@ for x, y in ((-258.9, WINC), (-265.3, WINC), (-269.3, WINC), (-344.45, 117.6), (
 
 # ================================================================ the dress (the modelling run's)
 a2_dress.dress(A)
+# (note 146: the barrels' cove and Q6's old 7 m skin go with the barrels: Q6 is 13 m now, plain until re-made)
+A.decos[:] = [d for d in A.decos if d["model"] not in ("aguas_barrel_cove", "aguas_charco_landing_east")]
 # (a2_dress item 8: the grey wheel behind La Rueda turns with it on the same axle; each gate's
 # leaf rides with its ram)
 A.follow("aguas_mill_wheel_grey", WHEEL, "rueda", "spin")
