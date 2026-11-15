@@ -316,10 +316,12 @@ func _lock_warn(row: Dictionary, lk: Dictionary) -> void:
 	peak.audio.play("hammer_clang", p, -2.0, 0.7)
 	peak.audio.play("plank_creak", p, -6.0, 0.8)
 	if lever != null:
+		# (MINE_PASS F-C1: 25 degrees back in 0.4 s; held through the rise; forward in 0.4 s as the flap shuts, 5.6 .. 6.0 s)
+		var shut_at := float(lk.get("rise", 6.0)) - 0.4
 		var tw := lever.create_tween()
-		tw.tween_property(lever, "rotation:z", -0.55, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-		tw.tween_interval(warn + 0.6)
-		tw.tween_property(lever, "rotation:z", 0.45, 0.8).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(lever, "rotation:z", deg_to_rad(25.0), 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_interval(maxf(0.1, warn + shut_at - 0.4))
+		tw.tween_property(lever, "rotation:z", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
 
 
 ## The lock's water, drawn: a panel of the river's colour behind the climb from the chamber's floor to the
@@ -342,14 +344,19 @@ func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 		var at := Peak.v2(z.lock.lever)
 		var pivot := Node3D.new()
 		pivot.position = Vector3(at.x, at.y, -1.5)
-		pivot.rotation.z = 0.45
-		var arm := LuchaKit.box(Vector3(0.08, 1.3, 0.08), Color("#3A3532"), Vector3(0, 0.65, 0))
-		arm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		pivot.add_child(arm)
-		pivot.add_child(LuchaKit.ball(0.11, Color("#C9A24A"), Vector3(0, 1.32, 0)))
+		var made: Node3D = Peak.kit("esclusa_keeper_lever")  # (frog and lever, one model, its origin the pivot)
+		if made != null:
+			pivot.add_child(made)
+		else:
+			var lean := Node3D.new()
+			lean.rotation.z = -0.3  # (at rest it leans toward the chamber; hauled, it comes back past upright)
+			var arm := LuchaKit.box(Vector3(0.08, 1.3, 0.08), Color("#3A3532"), Vector3(0, 0.65, 0))
+			arm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			lean.add_child(arm)
+			lean.add_child(LuchaKit.ball(0.11, Color("#C9A24A"), Vector3(0, 1.32, 0)))
+			pivot.add_child(lean)
+			root.add_child(LuchaKit.box(Vector3(0.5, 0.25, 0.3), Color("#3A3532"), Vector3(at.x, at.y + 0.12, -1.5)))
 		root.add_child(pivot)
-		var base := LuchaKit.box(Vector3(0.5, 0.25, 0.3), Color("#3A3532"), Vector3(at.x, at.y + 0.12, -1.5))
-		root.add_child(base)
 		n.set_meta("lever", pivot)
 	return n
 

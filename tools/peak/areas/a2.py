@@ -200,8 +200,10 @@ airbox(FALLS[0], 83.0, FALLS[1], 113.2)  # the falls' shaft through the floor (t
 A.water((-320.5, 113, -306.0, CS), CS, flow=(1.0, 0.0), look="pool")       # the west pool, running east
 A.water((-306.0, 113, -303.4, CS), CS, flow=(1.6, 0.0), look="pool")       # quicker at the sill (FIRST GUESS)
 A.water((-296.6, 113, -288, CS), CS, flow=(1.0, 0.0), look="pool")         # the east basin, on to the old cascade
-A.solid([(-303.4, 113.0), (-303.0, 113.0), (-303.0, CS - 0.3), (-303.4, CS - 0.3)], "stone")  # the pool's lip sill, on the falls
-A.solid([(-297.0, 113.0), (-296.6, 113.0), (-296.6, CS - 0.3), (-297.0, CS - 0.3)], "stone")  # the east basin's sill
+# (The two sills are slick: the pool is meant to make you swim at once, not hang on 0.3 m under the water. THE
+# DIRECTOR'S CALL, 11-15, for Parker to reverse if he wants a last catch there.)
+A.solid([(-303.4, 113.0), (-303.0, 113.0), (-303.0, CS - 0.3), (-303.4, CS - 0.3)], "wet")  # the pool's lip sill, on the falls
+A.solid([(-297.0, 113.0), (-296.6, 113.0), (-296.6, CS - 0.3), (-297.0, CS - 0.3)], "wet")  # the east basin's sill
 # Q6, carried 6 m west to the falls' edge on more iron beams: its west end THE LAUNCH LEDGE, flush with the
 # falls (so the throw stays inside F2). Plain until its re-made skin: the old one was 7 m.
 slab(-297.0, -284, 117.4)  # Q6, over the cascade's lip and the east basin

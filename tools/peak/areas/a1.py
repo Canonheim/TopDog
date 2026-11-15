@@ -492,7 +492,9 @@ cortina_moves = [["reach", [-233.2, 72.0], [round(CORTINA[0][1], 2), CORTINA[0][
 for r in range(ROWS - 1):  # the lint's line: up the right-hand holds (any zigzag is shorter than 1.9 too)
     cortina_moves.append(["reach", [round(CORTINA[r][1], 2), CORTINA[r][2]], [round(CORTINA[r + 1][1], 2), CORTINA[r + 1][2]]])
 cortina_moves.append(["reach", [round(CORTINA[-1][1], 2), CORTINA[-1][2]], [-232.0, 89.7]])  # the lip
-A.ledge(-232.0, -225.5, 89.7, "rock", t=0.5)  # the roof's own grip under A2's lip ledge (which tops it at y 90)
+# (MINE_PASS F-C5: moved under La Esclusa, its east 3.5 m ran on under the section's rock in a 0.3 m slot. Trimmed to
+# the alcove, x -291 .. -288 after the move.)
+A.ledge(-232.0, -229.0, 89.7, "rock", t=0.5)  # the alcove's floor at La Cortina's top (was the roof's grip under A2's lip ledge)
 # A ROPE FROM THE TOP, TO HALF WAY (Parker 11-12: "make a rope hanging about half way down
 # this challenge", and of a short rope in the middle or a long one from the lip: "b").
 # It hangs from an iron bracket under the lip, a hand east of the east column, 8 m long:
@@ -508,8 +510,9 @@ A.challenge("1.11", "La Cortina", (-231.4, 72.0), 3, "A", moves=cortina_moves)
 # mine. Del Mar's life ring is propped there now, facing up and east. It throws a body
 # the same way however it arrives: up 10 m and back onto the balcony.
 RING_THROW = (1.9, 8.6)   # m/s. FIRST TRY, set by dropping a climber on it (see the work log)
-A.bounce((-238.25, 63.3), (-236.85, 62.95), 8.8, look="ring", throw=RING_THROW, model="float_lifesaver", model_scale=1.45)
-A.solid([(-238.35, 62.0), (-237.75, 62.0), (-237.75, 62.3), (-238.2, 63.05), (-238.35, 63.05)], "wet")  # the block it is propped on
+# (MINE_PASS F-C8: 0.4 m east, so the block no longer stands 0.35 m into the great falls' column; the throw is the same.)
+A.bounce((-237.85, 63.3), (-236.45, 62.95), 8.8, look="ring", throw=RING_THROW, model="float_lifesaver", model_scale=1.45)
+A.solid([(-237.95, 62.0), (-237.35, 62.0), (-237.35, 62.3), (-237.8, 63.05), (-237.95, 63.05)], "wet")  # the block it is propped on
 
 # ================================================================ cameras (the smallest zone you are in wins)
 A.cam((-178.0, -19.0, -148.0, -6.0), 4.6)  # the gallery
@@ -563,6 +566,9 @@ A.effect("drips", (-233.2, 72.0, -222.1, 76.0))
 
 # ================================================================ the dress (the modelling run's)
 a1_dress.dress(A)
+# (MINE_PASS F-C4, the Director: the join's foreground post, timber below and brick above, stood in front of the
+# climber at 1.12's start once the mine moved: out. a1_dress places it; it is taken out here.)
+A.decos[:] = [d for d in A.decos if not (abs(d["at"][0] + 237.025) < 0.4 and d["at"][2] > 1.2 and 85.5 < d["at"][1] < 90.0)]
 # (a1_dress item 9: the water wheel behind La Polea Grande turns with the winding wheel; the
 # pulley over the hoistway turns, stops and turns back with the lift's counterweight)
 A.follow("water_wheel", (-234.2, 57.4), "polea_grande", "spin")
@@ -688,11 +694,13 @@ for i in range(8):
             {"type": "path", "pts": [[COVE_X, BARREL_Y], [KICK_X, BARREL_Y]], "speed": BARREL_SPEED, "mode": "wrap",
              "wait": round((_loop - ROAD) / BARREL_SPEED, 3), "phase": round(_t / BARREL_SPEED, 3), "trigger": "none",
              "loose": round(COVE_X - (KICK_X + 1.35), 3), "mass": 60.0, "push": 1.3, "tip": 1.5,
-             "emerge": {"depth": -3.0, "over": 2.4}}, model="aguas_barrel")
+             "emerge": {"depth": -6.0, "over": 2.4}}, model="aguas_barrel")  # (note 114, MINE_PASS F-C9: born deep in the dark)
     _t += BARREL_GAPS[i]
 # THE KICKER: a loose barrel runs up the tipping ramp and is thrown up and back into the waste chute's mouth
 # in the back wall (never into the falls, 8 m west). The game kicks a loose barrel that meets a board.
-A.board(KICKER[0], KICKER[1], throw=KICK_THROW, depth=-3.0, gone=79.6, t=0.22, model="", kind="iron")
+# (MINE_PASS F-C2: not a step: slick and dark, not the red-orange of a hold; its model made to the board.)
+A.board(KICKER[0], KICKER[1], throw=KICK_THROW, depth=-3.0, gone=79.6, t=0.22, model="esclusa_tipping_ramp",
+        made=round(math.dist(KICKER[0], KICKER[1]), 2), kind="grease")
 # THE WHIRLPOOL AND ITS PIPE: a body under the water here goes down the pipe and out of its mouth in the
 # alcove's east wall (x -288, y 73.1 .. 74.2), onto the alcove's floor, as a ride, not a fall.
 A.zones.append({"type": "pipe", "rect": [WHIRL[0], BED, WHIRL[1], S + 0.3], "to": [-289.2, 73.75], "vel": [-1.4, 0.4]})  # (a floating body's middle rides at the surface)
@@ -716,7 +724,8 @@ for x, y in DRY_RUNGS:
     _box(x - 0.25, y - 0.07, x + 0.25, y + 0.07, "iron")
 A.water((LOCK[0], LOCK_FLOOR, LOCK[1], LOCK_HIGH), LOCK_LOW, flow=(0.0, 0.0), look="lock")
 A.zones[-1]["lock"] = {"low": LOCK_LOW, "high": LOCK_HIGH, "rise": RISE, "hold": HOLD, "drain": DRAIN, "low_hold": 0.0, "phase": 0.0,
-                       "warn": 1.0, "lever": [-247.6, LANDING]}  # (the keeper hauls his lever 1 s before each fill: his booth on the quay)
+                       "warn": 1.0, "lever": [-253.5, LANDING]}  # (the keeper hauls his lever 1 s before each fill: his booth on the quay;
+                                                              # `esclusa_keeper_lever`, frog and lever, drops in when made: MINE_PASS F-C1)
 # The wicket: open (up into the gate) while the water is under its sill, from 13.03 s to 1.17 s of the
 # next cycle: shut 11.86 s, opening and shutting in 0.2 s.
 _open_at = CYCLE - (79.4 - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW) * DRAIN    # 13.03 s: the drain under the sill
@@ -736,16 +745,22 @@ A.challenge("1.13", "La Esclusa", (-249.3, 79.4), 3, "B", moves=[["reach", [-233
 A.cam((-297.5, 72.5, -290.0, 80.5), 5.5, bias=(1.0, 1.0))     # the ladder beside the falls
 A.cam((-290.0, 75.0, -258.0, 82.8), 6.0, bias=(0.0, 0.5))     # the flume
 A.cam((-258.0, 75.0, -226.0, 89.6), 7.5, bias=(0.0, 1.0))     # the lock
-for x, y in ((-294.0, 78.0), (-282.0, 81.0), (-268.0, 81.0), (-252.0, 81.5)):
-    A.light(x, y, color="#9FD0FF", rng=10.0, energy=1.1, z=1.8)
-for x, y in ((-247.0, 82.0), (-239.0, 85.5), (-229.0, 84.0)):
-    A.light(x, y, color="#6FE0D0", rng=9.0, energy=1.0, z=1.6)   # the lock's three teal lanterns, steady
-A.card([(-307.0, MINE_TOP), (-222.0, MINE_TOP), (-222.0, 89.4), (-252.0, 89.4), (-252.0, CEIL_E), (-292.0, CEIL_E),
-        (-292.0, CEIL_W), (-307.0, CEIL_W)], z=-2.4, tone="back", edge=False)                 # the section's back wall (stand-in)
+# (MINE_PASS F-C7: the seven stood in front of the play space and glared white on the roof and the gate: each under
+# its lantern now, behind the climb.)
+for x, y in ((-292.5, 81.5), (-277.9, 81.5), (-265.1, 81.5), (-259.5, 81.9)):  # the crane's post, two piers, the east landing
+    A.light(x, y, color="#9FD0FF", rng=10.0, energy=1.1, z=-1.9)
+for x, y in ((-253.5, 81.3), (-240.0, 84.7), (-228.8, 83.5)):  # the booth, by L1, over L2
+    A.light(x, y, color="#6FE0D0", rng=9.0, energy=1.0, z=-1.9)   # the lock's three teal lanterns, steady
+# The section's back wall (stand-in), cut away behind the falls (MINE_PASS F-C6: nothing between the column and the
+# painted cavern far behind it).
+_bw = _Poly([(-307.0, MINE_TOP), (-222.0, MINE_TOP), (-222.0, 89.4), (-252.0, 89.4), (-252.0, CEIL_E), (-292.0, CEIL_E),
+             (-292.0, CEIL_W), (-307.0, CEIL_W)]).difference(_sbox(FALLS[0], MINE_TOP - 1.0, FALLS[1], CEIL_W + 1.0))
+for _g in getattr(_bw, "geoms", [_bw]):
+    A.card([(round(x, 3), round(y, 3)) for x, y in list(_g.exterior.coords)[:-1]], z=-2.4, tone="back", edge=False)
 A.card([(CHUTE[0], CHUTE[2]), (CHUTE[1], CHUTE[2]), (CHUTE[1], CHUTE[3]), (CHUTE[0], CHUTE[3])], z=-2.3, tone="back3", edge=False)  # the waste chute's mouth
 A.card([(ARCH[0], S - 0.1), (ARCH[1], S - 0.1), (ARCH[1], S + 2.6), ((ARCH[0] + ARCH[1]) / 2, S + 3.4), (ARCH[0], S + 2.6)],
        z=-2.3, tone="back3", edge=False)                                                       # the barrels' tunnel mouth
-A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-11.65, tone="back3", edge=False)  # its own dark behind (behind the mine's)
+A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-18.0, tone="back3", edge=False)  # its own dark, behind the cavern's painted far wall (MINE_PASS F-C6)
 
 if __name__ == "__main__":
     A.save()

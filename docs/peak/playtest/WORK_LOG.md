@@ -2817,6 +2817,26 @@ in. Nothing played by a person.
 - Frames (`after/phase0_before_after_1..3.jpg`, before | after: 0.2, 1.1, 1.11, 2.3, 2.7, 3.1, 3.8, 4.2, 4.4, 5.2, 5.6, 6.3,
   7.4, 8.2, 9.4, 9.7, 10.5, 11.2). **Checks:** lint; `--peak`. Clean.
 
+## The quality run, 11-15: La Esclusa's course fixes (MINE_PASS part F-C, 11-15)
+
+- **F-C4:** the join's foreground post (timber and brick, z 1.27 .. 1.63) stood over the climber at 1.12's start: taken out
+  after the dress (a1.py; a1_dress unchanged).
+- **F-C2:** the kicker is slick (`grease`), dark, and named `esclusa_tipping_ramp` (made to the board, 3.05 m): no longer a
+  held red-orange step where you step down onto the barrels. The kick is unchanged: 5 barrels kicked in 34 s, none into the falls.
+- **F-C7:** the seven lights moved under their lanterns, behind the play space (z -1.9): no glare on the roof or the gate.
+- **F-C6:** the section's stand-in back card is cut away behind the falls (x -303 .. -297); its backstop moved to z -18,
+  behind the cavern's painted far wall.
+- **F-C8:** the life ring and its block 0.4 m east, out of the falls' column (nothing of a1 stands in it now).
+- **F-C5:** the old lip's grip trimmed to the alcove (x -291 .. -288): no run of it in the slot under the flume.
+- **F-C9 (note 114):** the barrels are born 6 m back in the dark (was 3).
+- **F-C1:** the keeper's lever is hauled 25 degrees back in 0.4 s one second before each fill, held through the rise and
+  put forward as the flap shuts (5.6 .. 6.0 s), with a clank: a stand-in lever by his booth (x -253.5) until
+  `esclusa_keeper_lever` (frog and lever) lands, which then turns the same way. The keeper's croak waits: the game has no
+  croak sound yet.
+- **2.7's sills are slick: THE DIRECTOR'S CALL** (11-15), for Parker to reverse: the pool is meant to make you swim at once,
+  not hang on 0.3 m under the water.
+- Frames: `after/esclusa_fc_before_after.jpg` (1.12's start, the kicker, the lock, the life ring; before | after).
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
