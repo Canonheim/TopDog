@@ -583,6 +583,7 @@ func tick(delta: float) -> void:
 
 func frame(delta: float) -> void:
 	_fly_thrown(delta)
+	_fly_kicked(delta)
 	_frame_glyphs()
 	_frame_followers()
 	_frame_strings()
@@ -2097,6 +2098,7 @@ func _let_stray(m: Dictionary, d: float) -> void:
 	rb.transform = Transform3D(Basis(Vector3.BACK, float(m.angle)), Vector3(pos.x, pos.y, 0))
 	var first: Node3D = m.nodes[0]
 	first.get_parent().add_child(rb)
+	rb.set_meta("area", str(m.area))  # (a board of its area may kick it: note 146)
 	var push := float(mo.get("push", 1.2))
 	rb.linear_velocity = Vector3(dir.x, dir.y, 0) * maxf(push, float(mo.get("speed", 1.0)))
 	rb.angular_velocity = Vector3(0, 0, float(mo.get("tip", 1.4)) * (1.0 if dir.x < 0.0 else -1.0))
@@ -2128,6 +2130,13 @@ func _tick_strays() -> void:
 			_strays.remove_at(k)
 			continue
 		var here := Vector2(rb.position.x, rb.position.y)
+		# THE KICKER (note 146, Los Barriles): a loose barrel that meets a board of its area is thrown up and
+		# back into the background, never into the falls, as a rock is off note 91's board.
+		var board := _board_under(str(rb.get_meta("area", "")), here, 0.9)
+		if not board.is_empty() and not _player_limbs_on([rb]):
+			_kick_stray(board, rb)
+			_strays.remove_at(k)
+			continue
 		if float(row[2]) < 0.0 and peak.zones.water_at(here) != null:
 			row[2] = t
 			rb.linear_damp = 2.4
@@ -2142,6 +2151,53 @@ func _tick_strays() -> void:
 			else:
 				rb.queue_free()
 				_strays.remove_at(k)
+
+
+## A kicked stray, flown as a thrown rock is: [its look, velocity, spin, depth, gone under y, when].
+var _kicked: Array = []
+
+
+func _kick_stray(board: Dictionary, rb: RigidBody3D) -> void:
+	var def: Dictionary = board.def
+	var fly := Node3D.new()
+	fly.transform = rb.transform
+	rb.get_parent().add_child(fly)
+	for ch in rb.get_children():
+		if not ch is CollisionShape3D:
+			rb.remove_child(ch)
+			fly.add_child(ch)
+	rb.queue_free()
+	var v := Vector3(float(def.throw[0]) * randf_range(0.8, 1.25), float(def.throw[1]) * randf_range(0.92, 1.1), float(def.throw[2]) * randf_range(0.9, 1.1))
+	var spin := Vector3(randf_range(-2.0, 2.0), randf_range(-1.5, 1.5), randf_range(2.0, 5.0))
+	_kicked.append([fly, v, spin, float(def.depth), float(def.gone), peak.clock])
+	var at := Vector2(fly.position.x, fly.position.y)
+	peak.audio.play("kick_thwack", at, -5.0, randf_range(0.8, 0.95))
+	peak.zones.splash_at(at, 0.8)
+
+
+func _fly_kicked(delta: float) -> void:
+	for k in range(_kicked.size() - 1, -1, -1):
+		var row: Array = _kicked[k]
+		var n: Node3D = row[0]
+		if not is_instance_valid(n) or peak.clock - float(row[5]) > 6.0:
+			if is_instance_valid(n):
+				n.queue_free()
+			_kicked.remove_at(k)
+			continue
+		var v: Vector3 = row[1]
+		v.y -= 9.8 * FALLER_G * delta
+		var p := n.position + v * delta
+		if p.z <= float(row[3]):
+			p.z = float(row[3])
+			v.z = 0.0
+		row[1] = v
+		n.position = p
+		n.rotation += (row[2] as Vector3) * delta
+		var s := lerpf(1.0, 0.6, clampf(p.z / minf(float(row[3]), -0.01), 0.0, 1.0))
+		n.scale = Vector3(s, s, s)
+		if p.y < float(row[4]) and v.y < 0.0:
+			n.queue_free()
+			_kicked.remove_at(k)
 
 
 func _tick_loose(m: Dictionary) -> void:

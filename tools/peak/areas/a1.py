@@ -577,5 +577,168 @@ A.card([(-298, -42), (-142, -42), (-142, 96), (-298, 96)], z=-11.6, tone="back3"
 
 A.end_shift()  # (everything above is moved by MOVE at save; La Esclusa, below, stands where it is written)
 
+# ================================================================ LA ESCLUSA (note 146): the new section, x -303 .. -222, y 73 .. 90
+# Between the moved mine's roof (73) and the black waters' floor, under their east end: the keepers'
+# ladder straight up beside the great falls, 1.12 Los Barriles (the flume, the barrels running west to a
+# kicker that throws them into the background), and 1.13 La Esclusa (the lock that floats you up to El
+# Borde). Every number from the design pages (design/rearrange_146/make_rearrange.py, final at 35c3f2e).
+# Scenery: plain stand-ins until the makers come.
+from shapely.geometry import Polygon as _Poly, box as _sbox
+from shapely.ops import unary_union as _union
+
+FALLS = (-303.0, -297.0)        # the great falls' shaft: 6 m, the same all the way down (middle x -300, the well's)
+MINE_TOP = 73.0                 # the moved mine's roof: the floor at La Cortina's top
+STRIP_E = -295.0                # the strip the ladder stands in, beside the falls
+LADDER_X = -295.4
+LADDER_RUNGS = [73.8, 74.55, 75.3, 76.8, 77.55, 79.05]   # every 0.75 m, two gone: 1.5 m reaches
+LIP_ROOM = (-295.0, 73.0, -288.0, 75.2)   # the low room under the platform; its east end (x -291 .. -288) the alcove
+BED = 75.7                      # the flume's bed; its water's bottom
+S = 77.2                        # the flume's surface
+FLUME = (-290.5, -258.5)
+CEIL_W, CEIL_E = 83.0, 86.0     # the black waters' rock starts here: west and east of x -292
+LANDING = 79.4                  # the landings' tops
+WEST_LANDING = (-295.0, -290.5) # the platform on the flume's west end
+EAST_LANDING = (-260.4, -258.5)
+QUAY = (-258.5, -245.0)
+WHIRL = (-287.6, -285.4)        # the whirlpool, 1 m east of the kicker
+PIPE = [(-287.05, 75.7), (-285.95, 75.7), (-285.95, 74.0), (-287.0, 73.1), (-288.0, 73.1), (-288.0, 74.2), (-287.05, 74.6)]
+KICKER = [(-287.6, 77.05), (-290.4, 78.25)]   # the tipping ramp: barrels run up it and are thrown up and back
+KICK_THROW = (-0.6, 4.5, -3.5)                # FIRST GUESS (note 91's kind)
+CHUTE = (-291.4, -286.4, 78.6, 82.2)          # the waste chute's mouth in the back wall, where they go
+GATE = (-245.0, -244.0)         # the lock's lower gate (its wicket 79.4 .. 81.9)
+LOCK = (-244.0, -228.0)         # the chamber, 16 m; the slot (where the river comes in) at its west end
+LOCK_FLOOR, LOCK_CEIL = 75.7, 89.0
+LOCK_LOW, LOCK_HIGH = 77.2, 88.5
+RISE, HOLD, DRAIN = 6.0, 3.0, 5.0           # 14 s, no pause at the bottom (Parker: "keep it 14 s")
+CYCLE = RISE + HOLD + DRAIN
+SLOT = (-244.0, -238.0)         # the black waters' slot (as today)
+PIER = (-238.0, -236.0)
+DRY = (-236.0, -232.0)          # the old dry shaft, up to El Borde's lip ledge
+L0 = (-244.0, -242.6, 79.4)     # the wicket's sill, into the lock
+L1 = (-239.6, -238.2, 83.0)
+L2 = (-229.6, -228.0, 81.0)
+DRY_RUNGS = [(-228.25, 84.8), (-228.25, 85.8), (-228.25, 86.8)]
+BARREL_SPEED = 0.55             # the barrels: speed, spacing, road and count as today (a2.py), now running WEST
+BARREL_GAPS = [3.0, 3.4, 2.9, 5.8, 3.1, 3.5, 2.9, 6.2]
+KICK_X = -288.6                 # the end of their line
+ROAD = 26.8
+COVE_X = round(KICK_X + ROAD, 2)  # -261.8: born in the tunnel at the flume's head
+BARREL_Y = round(S + 0.3, 2)
+ARCH = (-264.55, -259.05)       # the tunnel's mouth at the flume's head
+BARREL = [(-0.9, -0.3), (-0.6, -0.55), (0.6, -0.55), (0.9, -0.3), (0.9, 0.3), (0.6, 0.55), (-0.6, 0.55), (-0.9, 0.3)]
+
+
+def _box(x0, y0, x1, y1, kind, **kw):
+    A.solid([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], kind, **kw)
+
+
+def _hanging(x0, x1, y, kind="stone", t=0.7):
+    """A slick body with a pale grip coping on top (a2's slab)."""
+    _box(x0, y - t, x1, y - 0.2, "wet")
+    _box(x0, y - 0.3, x1, y, kind)
+
+
+def _section_rock():
+    air = _union([_sbox(FALLS[0], MINE_TOP, STRIP_E, CEIL_W), _sbox(*LIP_ROOM),
+                  _sbox(WEST_LANDING[0], LANDING, FLUME[0], CEIL_W), _sbox(FLUME[0], BED, FLUME[1], CEIL_W),
+                  _sbox(FLUME[1], LANDING, GATE[0], CEIL_E), _sbox(GATE[1], LOCK_FLOOR, LOCK[1], LOCK_CEIL),
+                  _sbox(GATE[0], LANDING, GATE[1], LANDING + 2.5),
+                  _sbox(SLOT[0], 84.0, SLOT[1], 89.4), _sbox(DRY[0], 84.0, DRY[1], 89.4), _Poly(PIPE)])
+    shell = _Poly([(-307.0, MINE_TOP), (-222.0, MINE_TOP), (-222.0, 89.4), (-252.0, 89.4), (-252.0, CEIL_E),
+                   (-292.0, CEIL_E), (-292.0, CEIL_W), (-307.0, CEIL_W)])
+    rock = shell.difference(air)
+    todo = list(getattr(rock, "geoms", [rock]))
+    while todo:
+        p = todo.pop()
+        if p.geom_type != "Polygon" or p.area < 0.05:
+            continue
+        if len(p.interiors):  # (a solid has no holes: split through the first)
+            x0, y0, x1, y1 = p.bounds
+            cx = p.interiors[0].centroid.x
+            for half in (_sbox(x0 - 1, y0 - 1, cx, y1 + 1), _sbox(cx, y0 - 1, x1 + 1, y1 + 1)):
+                g = p.intersection(half)
+                todo.extend(getattr(g, "geoms", [g]))
+            continue
+        A.solid([(round(x, 3), round(y, 3)) for x, y in list(p.simplify(0.005).exterior.coords)[:-1]], "wet")
+
+
+_section_rock()
+_box(PIER[0], LOCK_CEIL, PIER[1], 89.4, "wet")              # the pier's foot between the slot and the dry shaft
+_box(-297.0, MINE_TOP - 0.3, -295.0, MINE_TOP, "stone")      # the pier's top, coped: the ladder's foot, 1.12's start
+# ---------------------------------------------------------------- 1.12 Los Barriles
+# Up the keepers' ladder beside the falls (6.4 m, 1.6 m from their edge, in their spray) to the platform;
+# down onto the barrels coming at you from the east, barrel to barrel against the current, and up onto the
+# east landing and the quay. A fall in: the current takes you west into the whirlpool by the kicker, down
+# its pipe, and out in the alcove at La Cortina's top, 4 m from the ladder (Parker, 11-14).
+A.ladder(LADDER_X, LADDER_RUNGS, w=0.5, kind="iron")
+_box(WEST_LANDING[0], LANDING - 0.3, WEST_LANDING[1], LANDING, "stone")   # the platform's coping
+_hanging(EAST_LANDING[0], EAST_LANDING[1], LANDING)                         # the east landing, over the flume's head
+_box(QUAY[0], LANDING - 0.3, QUAY[1], LANDING, "stone")                     # the quay, on to the lock's gate
+A.water((FLUME[0], BED, FLUME[1], S), S, flow=(-1.0, 0.0), look="flume")    # the flume: it runs WEST, 1 m a second
+_loop = sum(BARREL_GAPS)
+_t = 0.0
+for i in range(8):
+    A.mover("esclusa_barril%d" % (i + 1), (COVE_X, BARREL_Y), [(BARREL, "wood")],  # (ids are the mountain's: a2 had barril1 ..)
+            {"type": "path", "pts": [[COVE_X, BARREL_Y], [KICK_X, BARREL_Y]], "speed": BARREL_SPEED, "mode": "wrap",
+             "wait": round((_loop - ROAD) / BARREL_SPEED, 3), "phase": round(_t / BARREL_SPEED, 3), "trigger": "none",
+             "loose": round(COVE_X - (KICK_X + 1.35), 3), "mass": 60.0, "push": 1.3, "tip": 1.5,
+             "emerge": {"depth": -3.0, "over": 2.4}}, model="aguas_barrel")
+    _t += BARREL_GAPS[i]
+# THE KICKER: a loose barrel runs up the tipping ramp and is thrown up and back into the waste chute's mouth
+# in the back wall (never into the falls, 8 m west). The game kicks a loose barrel that meets a board.
+A.board(KICKER[0], KICKER[1], throw=KICK_THROW, depth=-3.0, gone=79.6, t=0.22, model="", kind="iron")
+# THE WHIRLPOOL AND ITS PIPE: a body under the water here goes down the pipe and out of its mouth in the
+# alcove's east wall (x -288, y 73.1 .. 74.2), onto the alcove's floor, as a ride, not a fall.
+A.zones.append({"type": "pipe", "rect": [WHIRL[0], BED, WHIRL[1], S + 0.3], "to": [-289.2, 73.75], "vel": [-1.4, 0.4]})  # (a floating body's middle rides at the surface)
+A.ride((-291.0, 72.6, WHIRL[1], S + 0.4))
+A.effect("mist", (WHIRL[0], S - 0.2, WHIRL[1], S + 0.5), density=0.6)
+A.challenge("1.12", "Los Barriles", (-296.0, 73.0), 3, "B", moves=(
+    [["reach", [LADDER_X, LADDER_RUNGS[i]], [LADDER_X, LADDER_RUNGS[i + 1]]] for i in range(len(LADDER_RUNGS) - 1)]
+    + [["reach", [LADDER_X, LADDER_RUNGS[-1]], [WEST_LANDING[0], LANDING]]]))
+# ---------------------------------------------------------------- 1.13 La Esclusa
+# The lock: 14 s, 6 rising, 3 held, 5 draining, no rest at the bottom. In through the wicket while the water
+# is under its sill (2.1 s of each cycle), catch the rise on the sill, swim across as it lifts you (10.3 m
+# in 8.1 s), out of the old dry shaft onto El Borde's lip ledge at the top. The river comes down the back
+# wall without pushing.
+_box(GATE[0], LANDING - 0.3, L0[1], LANDING, "stone")       # the wicket's sill, running in as the lowest ledge (L0)
+_box(GATE[0], LANDING + 2.5, GATE[1], LOCK_CEIL, "grease")  # the lower gate above the wicket
+_box(GATE[0], LOCK_FLOOR, GATE[1], LANDING - 0.3, "grease") # and below it
+for x0, x1, y in (L1, L2):
+    _box(x0, y - 0.55, x1, y - 0.25, "wet")
+    _box(x0, y - 0.3, x1, y, "stone")
+for x, y in DRY_RUNGS:
+    _box(x - 0.25, y - 0.07, x + 0.25, y + 0.07, "iron")
+A.water((LOCK[0], LOCK_FLOOR, LOCK[1], LOCK_HIGH), LOCK_LOW, flow=(0.0, 0.0), look="lock")
+A.zones[-1]["lock"] = {"low": LOCK_LOW, "high": LOCK_HIGH, "rise": RISE, "hold": HOLD, "drain": DRAIN, "low_hold": 0.0, "phase": 0.0}
+# The wicket: open (up into the gate) while the water is under its sill, from 13.03 s to 1.17 s of the
+# next cycle: shut 11.86 s, opening and shutting in 0.2 s.
+_open_at = CYCLE - (79.4 - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW) * DRAIN    # 13.03 s: the drain under the sill
+_shut_at = (79.4 - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW) * RISE                      # 1.17 s: the rise over it
+_open_for = CYCLE - _open_at + _shut_at
+A.mover("portillo", (-244.5, 80.65), [(box_pts(0.0, 0.0, 0.9, 2.5), "grease")],
+        {"type": "cycle", "to": [0.0, 2.5], "t_out": 0.2, "hold_out": round(_open_for - 0.4, 3), "t_in": 0.2,
+         "hold_in": round(CYCLE - _open_for, 3), "phase": round(CYCLE - (_open_at - 0.1), 3)})
+# The flap gate across the slot's foot: shut it holds the river off (a slick plate: what falls from El Borde
+# waits on it), open through each rise it lets the river and whoever is in it down into the lock.
+A.mover("compuerta", (-241.0, 89.175), [(box_pts(0.0, 0.0, 6.0, 0.35), "grease")],
+        {"type": "cycle", "to": [-6.2, 0.0], "t_out": 0.4, "hold_out": RISE - 0.8, "t_in": 0.4,
+         "hold_in": HOLD + DRAIN, "phase": 0.0})
+A.effect("waterfall", (SLOT[0], LOCK_LOW, SLOT[0] + 1.8, LOCK_CEIL), z=-1.9, through=True)  # the river down the back wall
+A.challenge("1.13", "La Esclusa", (-249.3, 79.4), 3, "B", moves=[["reach", [-233.0, 88.6], [-232.0, 90.0]]])
+# ---------------------------------------------------------------- the section's cameras, light and stand-ins
+A.cam((-297.5, 72.5, -290.0, 80.5), 5.5, bias=(1.0, 1.0))     # the ladder beside the falls
+A.cam((-290.0, 75.0, -258.0, 82.8), 6.0, bias=(0.0, 0.5))     # the flume
+A.cam((-258.0, 75.0, -226.0, 89.6), 7.5, bias=(0.0, 1.0))     # the lock
+for x, y in ((-294.0, 78.0), (-282.0, 81.0), (-268.0, 81.0), (-252.0, 81.5)):
+    A.light(x, y, color="#9FD0FF", rng=10.0, energy=1.1, z=1.8)
+for x, y in ((-247.0, 82.0), (-239.0, 85.5), (-229.0, 84.0)):
+    A.light(x, y, color="#6FE0D0", rng=9.0, energy=1.0, z=1.6)   # the lock's three teal lanterns, steady
+A.card([(-307.0, MINE_TOP), (-222.0, MINE_TOP), (-222.0, 89.4), (-252.0, 89.4), (-252.0, CEIL_E), (-292.0, CEIL_E),
+        (-292.0, CEIL_W), (-307.0, CEIL_W)], z=-2.4, tone="back", edge=False)                 # the section's back wall (stand-in)
+A.card([(CHUTE[0], CHUTE[2]), (CHUTE[1], CHUTE[2]), (CHUTE[1], CHUTE[3]), (CHUTE[0], CHUTE[3])], z=-2.3, tone="back3", edge=False)  # the waste chute's mouth
+A.card([(ARCH[0], S - 0.1), (ARCH[1], S - 0.1), (ARCH[1], S + 2.6), ((ARCH[0] + ARCH[1]) / 2, S + 3.4), (ARCH[0], S + 2.6)],
+       z=-2.3, tone="back3", edge=False)                                                       # the barrels' tunnel mouth
+A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-11.6, tone="back3", edge=False)  # its own dark behind
+
 if __name__ == "__main__":
     A.save()

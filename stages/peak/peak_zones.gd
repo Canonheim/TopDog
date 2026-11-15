@@ -11,6 +11,8 @@ const BOUNCE_COOL := 0.3
 
 var peak: Peak
 var waters: Array = []
+var locks: Array = []  # water rows whose surface rises and falls on a clock (note 146: La Esclusa)
+var pipes: Array = []  # whirlpools that take a body down a pipe and out at its mouth (note 146)
 var winds: Array = []
 var geysers: Array = []
 var bounces: Array = []
@@ -51,10 +53,16 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 		var row: Dictionary = {"def": z, "area": str(a.id)}
 		match str(z.type):
 			"water":
+				if z.has("lock"):
+					row["lock_vis"] = _lock_vis(a, z, root)
+					locks.append(row)
 				if body_of.has(zi):
 					row["body"] = body_of[zi]
 					row["sea"] = (body_of[zi] as Dictionary).sea
 				waters.append(row)
+			"pipe":
+				row["next"] = 0.0
+				pipes.append(row)
 			"wind":
 				row["fx"] = _wind_fx(a, z, root)
 				row["was"] = false
@@ -238,8 +246,10 @@ func tick(delta: float) -> void:
 	var c := peak.player
 	_tick_strikes(c)
 	_tick_puffs()
+	_tick_locks()
 	if c == null or c.state != Climber.State.LIVE:
 		return
+	_tick_pipes(c)
 	_tick_water(c, delta)
 	_tick_wind(c)
 	_tick_geysers(c)
@@ -249,6 +259,88 @@ func tick(delta: float) -> void:
 			for i in [0, 1]:
 				if Peak.rect_has(row.def.rect, peak.local_of(c.limb_end(i))):
 					peak.finish()
+
+
+## A LOCK (note 146, La Esclusa; Parker: "keep it 14 s"): its water rises from `low` to `high` in `rise` s,
+## holds `hold` s, drains in `drain` s, and at once rises again (`low_hold` s at the bottom, 0 here). The
+## zone's rect reaches its highest water; its surface is moved every tick, so swimming, floating and the
+## drain taking you down are the water's own.
+func lock_level(lk: Dictionary, t: float) -> float:
+	var lo := float(lk.low)
+	var hi := float(lk.high)
+	var r := float(lk.get("rise", 6.0))
+	var h := float(lk.get("hold", 3.0))
+	var d := float(lk.get("drain", 5.0))
+	var b := float(lk.get("low_hold", 0.0))
+	var cyc := fposmod(t + float(lk.get("phase", 0.0)), r + h + d + b)
+	if cyc < r:
+		return lerpf(lo, hi, cyc / r)
+	if cyc < r + h:
+		return hi
+	if cyc < r + h + d:
+		return lerpf(hi, lo, (cyc - r - h) / d)
+	return lo
+
+
+func _tick_locks() -> void:
+	for row in locks:
+		var z: Dictionary = row.def
+		var level := lock_level(z.lock, peak.clock)
+		z.surface = level
+		z["vy"] = (lock_level(z.lock, peak.clock + 0.05) - level) / 0.05  # its speed, up or down
+		var vis: Node3D = row.get("lock_vis")
+		if vis != null and is_instance_valid(vis):
+			var floor_y := float(z.rect[1])
+			vis.scale.y = maxf(0.02, level - floor_y)
+			vis.position.y = floor_y
+
+
+## The lock's water, drawn: a panel of the river's colour behind the climb from the chamber's floor to the
+## water, its top a pale line (a stand-in until the lock's water is drawn as water). It is scaled every tick.
+func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
+	var x0 := float(z.rect[0])
+	var x1 := float(z.rect[2])
+	var cols: Array = water_colors(a)
+	var n := Node3D.new()
+	var body := LuchaKit.box(Vector3(x1 - x0, 1.0, 0.1), (cols[0] as Color).darkened(0.15), Vector3(0, 0.5, 0))
+	body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	n.add_child(body)
+	var top := LuchaKit.box(Vector3(x1 - x0, 0.04, 0.12), (cols[0] as Color).lerp(Color("#DDF2FB"), 0.6), Vector3(0, 1.0, 0.01))
+	top.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	n.add_child(top)
+	n.position = Vector3((x0 + x1) * 0.5, float(z.rect[1]), -1.35)
+	root.add_child(n)
+	return n
+
+
+## A WHIRLPOOL AND ITS PIPE (note 146; Parker 11-14: "Put a little whirl pool that goes to a pipe. If you get
+## sucked in, you go in the pipe and get popped out in the little alcove"): a body whose middle is under the
+## water in `rect` is taken: it lets go of everything and comes out of the pipe's mouth at `to`, moving at
+## `vel`, with a splash at each end. (A ride zone round both, in the area file, keeps it from counting as
+## a fall.)
+func _tick_pipes(c: Climber) -> void:
+	var com := peak.local_of(c.centre_of_mass())
+	for row in pipes:
+		var z: Dictionary = row.def
+		if peak.clock < float(row.next) or not Peak.rect_has(z.rect, com):
+			continue
+		row.next = peak.clock + 1.5
+		var to := Peak.v2(z.to)
+		var vel := Peak.v2(z.get("vel", [0, 0]))
+		splash_at(com, 1.0)
+		c.release_all()
+		var p := c.pose()
+		var shift := to - com
+		for k in range(0, p.size(), 3):
+			p[k] += shift.x
+			p[k + 1] += shift.y
+		c.apply_pose(p)
+		for b: RigidBody3D in c.bodies.values():
+			b.linear_velocity = Vector3(vel.x, vel.y, 0)
+			b.angular_velocity = Vector3.ZERO
+		burst(to, "drops", 1.4, vel.normalized() if vel.length() > 0.01 else Vector2.UP)
+		splash_at(to, 0.8)
+		return
 
 
 func _tick_water(c: Climber, _delta: float) -> void:
@@ -287,7 +379,7 @@ func _tick_water(c: Climber, _delta: float) -> void:
 		# Buoyancy: weightless at FLOAT_DEPTH, pushed back toward it either side.
 		var lift := b.mass * g * clampf(depth / FLOAT_DEPTH, 0.0, 2.2)
 		var drag := (flow - v) * b.mass * WATER_DRAG
-		drag.y = -v.y * b.mass * 3.0
+		drag.y = (float(zone.get("vy", 0.0)) - v.y) * b.mass * 3.0  # (a lock's water carries you up and down with it)
 		if Climber._is_end(pname) and depth > 0.0:
 			# THE SWIM: a hand or foot moving through the water is pushed back by it,
 			# hard (quadratic). Circle an arm and the stroke under the surface drives you.
@@ -729,8 +821,8 @@ func _build_bodies(a: Dictionary, root: Node3D) -> Dictionary:
 	var all: Array = a.get("zones", [])
 	var groups: Array = []
 	for i in all.size():
-		if str(all[i].type) != "water":
-			continue
+		if str(all[i].type) != "water" or (all[i] as Dictionary).has("lock"):
+			continue  # (a lock's water is drawn by _lock_vis: its surface moves)
 		var mine: Array = [i]
 		var keep: Array = []
 		for g: Array in groups:
