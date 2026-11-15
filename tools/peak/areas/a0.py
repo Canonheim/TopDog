@@ -114,7 +114,7 @@ A.dark((-212, -34, -40, 9), level=0.8)  # inside the mountain: the light goes
 # The new stretch's back wall: a plain dark card behind the road from today's end to the door, until its
 # pieces are made (note 146: the haulage incline, the winding house and the ore bins are the makers').
 _f = [p for p in floor if p[0] <= -148.0]
-A.card([(x, y - 0.6) for x, y in _f] + [(x, y + 5.6) for x, y in reversed(_f)], z=-2.7, tone="back", edge=False)
+A.card([(x, y - 0.6) for x, y in _f] + [(x, y + 5.6) for x, y in reversed(_f)], z=-2.7, tone="#33291F", edge=False)  # (the tunnel's own dark: the palette's back is the sky's tan)
 
 # ---------------------------------------------------------------- the picture
 # (The tunnel's back-wall card, the mouth's mine_frame and the seven lantern_mine decos are

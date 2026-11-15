@@ -2744,6 +2744,55 @@ in. Nothing played by a person.
   strings, a rung hanging, 10.8 with the sandbag, 10.9, the bell, 11.6.
 - **Checks:** lint; `--peak`. Clean.
 
+## The fix run of 11-15: note 146 built, the bottom of the mountain rearranged (the design pages, final at 35c3f2e)
+
+- **The mine moved 59 m west and 17 m down, not widened** (6f16399). peaklib's Area takes a shift:
+  `begin_shift(dx, dy)` .. `end_shift()`, and at save everything placed in between is moved as one (solids,
+  movers and their paths, ropes, bodies, zones and water surfaces, spawners, boards and their `gone`, levers,
+  cards, decos, lights, cameras, effects and their `x`, statues, challenges with their moves, openings).
+  a1.py wraps itself and its `a1_dress.dress(A)` call in it, so **a1_dress.py needed no hook and is not
+  changed**. Checked against the old file: all 1763 positions moved by exactly (-59, -17). a1's frame is
+  x -351 .. -205, y -53 .. 90 (with La Esclusa); the body card's window and the backstop follow.
+- **The cart ride, 203 m** (from 141): the design's road, on past today's end and down the 20 degree incline
+  (x -158 .. -188) to the mine's moved door (x -211, floor -29.6); the tunnel with it (its new stretch plain
+  rock, a dark back card), the buffer stop and the door's sill moved by the same (-59, -17), the door's
+  opening, the dark and the camera to x -212. The tunnel's last 4 m lie in the mine's door frame, 21.6 m2, the
+  same seam as today.
+- **La Esclusa** (6a4b48b), x -303 .. -222, y 73 .. 90, written in a1.py after the shift (biome 1's numbers):
+  the section's rock is its shell less its air, from the pages. **1.12 Los Barriles**: the keepers' ladder
+  (x -295.4, rungs 0.75 m, two gone) from the pier's top beside the falls to the platform; the flume running
+  WEST at 1 m/s; the eight barrels with today's speed, gaps and road, born in a tunnel at the flume's head
+  and running right to left; **the kicker** at x -288.6 throwing each loose barrel up and back into the
+  waste chute's mouth (the game now kicks a loose barrel off a board: `_kick_stray`); **the whirlpool**
+  1 m east of it: a body under the water there goes down the pipe and out of its mouth in the alcove at La
+  Cortina's top (a `pipe` zone, inside a ride zone). **1.13 La Esclusa**: the 14 s lock (6 rising, 3 held,
+  5 draining, no rest) whose water the game moves (`lock` on a water zone; it carries a floater with it, as
+  a body floats up slower than 1.88 m/s), its wicket open while the water is under its sill (13.03 to 1.17 s:
+  2.1 s), the sill, L1, L2, the east wall's rungs, out of the dry shaft onto El Borde's lip.
+  Watched (`esclusa`): 5 barrels kicked in 34 s, none into the falls; the whirlpool puts you in the alcove;
+  the wicket 13.07 .. 0.93 s; a floater carried to y 88.3, 1.7 m under the lip ledge.
+- **2.7 El Salto de la Cascada** (f3091ea): the falls' shaft cut through the black waters' floor; the pool
+  split (the west half runs east over a sill into the falls, 1.6 m/s at the sill; the east half a basin under
+  Q6 on to the old cascade); Q6 on to a launch ledge flush with the falls (x -297); the fling (6.6 to 9 m,
+  2.4 m down, F2); the gantry's two chains; Q7's two rungs. The barrels, their cove and Q6's old 7 m skin out.
+- **The great falls**: one 6 m ribbon, x -303 .. -297, from the Sump up to the well's foot (176), behind
+  the climb (the mine's waterfall stretched; note 111's 3D falls later). Nothing to hold in the column (the
+  life ring's slick block stands 0.35 m into it, as it did today).
+- **Decided** (Parker asleep): La Esclusa is part of a1 (not a new area: 1.12, 1.13 are biome 1's); the flap
+  across the slot is a slick plate that slides open for each rise (a shut solid flap would catch whoever falls
+  from El Borde: they wait on it and drop into the lock); the whirlpool is a pipe zone, not a suction (a body
+  through a 1.1 m drain against the water's lift is not reliable); the lock's water carries floaters; La
+  Esclusa's barrels are `esclusa_barril1..8` (the game's mover ids are the mountain's: a2's were `barril1..8`).
+- **First guesses**: the kicker's throw (-0.6, 4.5, -3.5), its depth -3 and gone 79.6; the sill's 1.6 m/s;
+  the pipe's exit (-289.2, 73.75) at (-1.4, 0.4) m/s; the flap's 0.4 s; the shift's 59 m; the 20 degree incline.
+- **Not done**: the scenery of La Esclusa and the new tunnel stretch (stand-ins: the makers'); the keeper's
+  lever 1 s before each fill (a look and a sound); note 147's ride down the falls (a fall down the column is
+  a fall today); the mine's design pages' numbers (design/a1/).
+- Pictures (`after/`): `146_before_after.jpg` (overview, the mine, 0.3's end, 2.7: before | after),
+  `146_new_section.jpg` (the incline, La Esclusa, 1.12, the kicker, the alcove, the lock high, a rider near the
+  top, 1.12's and 1.13's cameras, 2.7's camera), and the frames one by one. Probes `g146`, `esclusa`.
+- **Checks:** lint; `--peak`. Clean after each step.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

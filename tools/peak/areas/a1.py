@@ -137,7 +137,11 @@ A.wind((FALL_X0, -22.0, FALL_X1, 90.0), (0.0, -6.0))
 # (It is the black waters' river, come over its lip. a2 draws it down to y 84, where it
 # is 1.68 m east of the slot's west side and a quarter of a metre thick; this is the
 # rest of it, on the same line.)
-A.effect("waterfall", (FALL_X0, SUMP_Y, FALL_X1, 84.0), x=FALL_X0 + 1.68, head=0.0, width=0.25, front=True)
+# THE GREAT FALLS (note 146; Parker: "the great falls goes to the bottom"): one 6 m column from the well's foot
+# (y 176) down through the black waters, La Esclusa and the mine to the Sump: for now this waterfall, stretched
+# to the column's full width and height (its top written 193, moved to 176), drawn just behind the climb.
+# (Note 111's 3D falls come later.)
+A.effect("waterfall", (FALL_X0, SUMP_Y, FALL_X1, 193.0), x=(FALL_X0 + FALL_X1) / 2, head=0.0, width=6.0, z=-0.6)
 A.effect("mist", (-250.0, -30.0, -230.0, -17.0), density=0.8)
 A.effect("mist", (-240.0, 62.0, -230.5, 90.0), density=0.4)
 

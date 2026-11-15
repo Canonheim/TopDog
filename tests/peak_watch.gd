@@ -3135,6 +3135,125 @@ func _w_g8tele(a: Array) -> void:
 		print("WATCH g8tele %s: model %s, drawn as %s" % [id, m.def.get("model", "-"), (m.vis as Node).get_class() if m.vis != null else "-"])
 
 
+## NOTE 146: the bottom of the mountain rearranged. Overviews, 0.3's end, the new section, 2.7. g146:before|after
+func _w_g146(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else "after"
+	var after := tag.begins_with("after")
+	pk.warp("1.1")
+	await secs(1.5)
+	var dx := -59.0 if after else 0.0
+	var dy := -17.0 if after else 0.0
+	for row in [[Vector2(-235.0, 50.0), 72.0, "146_overview"], [Vector2(-200.0 + dx, 25.0 + dy), 40.0, "146_mine"],
+			[Vector2(-185.0, -16.0), 16.0, "146_0_3_incline"], [Vector2(-150.0 + dx, -9.0 + dy), 6.0, "146_0_3_end"],
+			[Vector2(-300.0, 119.0), 9.0, "146_2_7"], [Vector2(-270.0, 80.0), 14.0, "146_la_esclusa"],
+			[Vector2(-280.0, 77.5), 7.0, "146_1_12"], [Vector2(-237.0, 82.0), 8.0, "146_1_13"]]:
+		look(row[0], float(row[1]))
+		await secs(0.6)
+		await shot("%s_%s" % [row[2], tag])
+
+
+## NOTE 146's new section working: the barrels and the kicker, the whirlpool's pipe, the lock's cycle. esclusa:TAG
+func _w_esclusa(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.12")
+	await secs(1.5)
+	# the barrels: 34 s of them, how many are kicked, and does any reach the falls (x -297)?
+	look(Vector2(-276.0, 78.5), 7.0)
+	var t0 := pk.clock
+	var kicked := 0
+	var into_falls := 0
+	var seen := {}
+	var shot_k := false
+	while pk.clock - t0 < 34.0:
+		for row: Array in pk.things._kicked:
+			var id := (row[0] as Object).get_instance_id()
+			if not seen.has(id):
+				seen[id] = true
+				kicked += 1
+				if not shot_k:
+					shot_k = true
+					look(Vector2(-288.0, 79.0), 4.5)
+					await secs(0.35)
+					await shot("146_1_12_kicker_" + tag)
+					look(Vector2(-276.0, 78.5), 7.0)
+		for row: Array in pk.things._strays:
+			var rb: RigidBody3D = row[0]
+			if is_instance_valid(rb) and rb.position.x < -297.0 and rb.position.y < 77.0:
+				into_falls += 1
+		await ticks(4)
+	var bx: Array = []
+	for i in 8:
+		var bm: Dictionary = pk.things.movers["esclusa_barril%d" % (i + 1)]
+		bx.append("%.1f/%s" % [float(bm.dist), bm.get("loose") != null])
+	for row: Array in pk.things._strays:
+		var srb: RigidBody3D = row[0]
+		if is_instance_valid(srb):
+			print("WATCH esclusa stray at %s area %s board %s" % [srb.position, srb.get_meta("area", "?"), pk.things._board_under(str(srb.get_meta("area", "")), Vector2(srb.position.x, srb.position.y), 0.9).is_empty() == false])
+	var nb := 0
+	for bd in pk.things.boards:
+		if str(bd.area) == "a1":
+			nb += 1
+			print("WATCH esclusa board %s %s" % [bd.pts, bd.def.throw])
+	print("WATCH esclusa %s: in 34 s %d barrels kicked, %d stray samples in the falls; strays now %d; barrels dist/loose %s" % [tag, kicked, into_falls, pk.things._strays.size(), bx])
+	await shot("146_1_12_barrels_" + tag)
+	# the whirlpool: a climber put in the water over it
+	stand(Vector2(-286.5, 76.3))
+	await secs(1.2)
+	var w := where()
+	print("WATCH esclusa %s: after the whirlpool the climber is at %s (the alcove is x -291 .. -288, y 72.7 .. 75.2)" % [tag, w])
+	look(Vector2(-290.0, 74.5), 4.0)
+	await secs(0.3)
+	await shot("146_1_12_alcove_" + tag)
+	# the lock: its level and its wicket over one cycle
+	var lock: Dictionary = {}
+	for row in pk.zones.locks:
+		lock = row.def
+	var lo := INF
+	var hi := -INF
+	var n_all := 0
+	var n_open := 0
+	var was_open := false
+	var wk: Dictionary = pk.things.movers["portillo"]
+	t0 = pk.clock
+	look(Vector2(-237.0, 82.0), 8.0)
+	var shot_hi := false
+	while pk.clock - t0 < 14.0:
+		var s := float(lock.surface)
+		lo = minf(lo, s)
+		hi = maxf(hi, s)
+		n_all += 1
+		var op := (wk.offset as Vector2).y > 2.0
+		if op:
+			n_open += 1
+		if op != was_open:
+			was_open = op
+			print("WATCH esclusa wicket %s at lock t %.2f" % ["opens" if op else "shuts", fposmod(pk.clock, 14.0)])
+		if not shot_hi and s > 88.3:
+			shot_hi = true
+			await shot("146_1_13_high_" + tag)
+		await ticks(1)
+	print("WATCH esclusa %s: the lock's water from %.2f to %.2f; the wicket open %.2f s of 14" % [tag, lo, hi, 14.0 * n_open / maxf(n_all, 1)])
+	# ride it: on the sill when the wicket opens, then 9 s
+	pk.warp("1.13")
+	await secs(0.5)
+	while absf(fposmod(pk.clock, 14.0) - 0.3) > 0.05:
+		await ticks(1)
+	stand(Vector2(-236.0, 78.6))  # (in the open chamber, over the low water: the sill's grip holds a standing climber's feet)
+	var top := -INF
+	t0 = pk.clock
+	var next_log := 0.0
+	while pk.clock - t0 < 9.5:
+		top = maxf(top, where().y)
+		if pk.clock - t0 >= next_log:
+			next_log += 1.0
+			var com := pk.local_of(me().centre_of_mass())
+			print("WATCH esclusa trace: lock t %.2f surface %.2f com %s float %s wicket y %.2f flap x %.2f" % [fposmod(pk.clock, 14.0), float(lock.surface), com, me().float_mode,
+				(wk.offset as Vector2).y, (pk.things.movers["compuerta"].offset as Vector2).x])
+		await ticks(2)
+	print("WATCH esclusa %s: standing on the sill as it drained, the climber rose to y %.2f" % [tag, top])
+	await shot("146_1_13_risen_" + tag)
+
+
 ## The storm ridge wired: the bolt from behind, a rusted rung swinging down and back, the kites' strings. g10:TAG
 func _w_g10(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""
