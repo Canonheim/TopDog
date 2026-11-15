@@ -27,6 +27,13 @@ from peaklib import Area, box_pts, ngon
 import a1_dress  # the mine's scenery (the modelling run's): decos only
 
 A = Area("a1", "mine")
+# THE MINE MOVED (note 146; Parker 11-14: "move the mine over to line up it's big fall with the falls"):
+# 59 m west and 17 m down, not widened, so its waterfall cavern stands under the well and the great falls
+# come down through it in one 6 m shaft. Everything this file and a1_dress place, down to the end of
+# the dress, is written in today's numbers and moved as one at save (peaklib begin_shift / end_shift).
+# La Esclusa, the new section above it (1.12, 1.13), is written where it stands.
+MOVE = (-59.0, -17.0)
+A.begin_shift(*MOVE)
 
 # ================================================================ the air
 FALL_X0, FALL_X1 = -244.0, -238.0  # the waterfall's line (the slot in the roof)
@@ -567,6 +574,8 @@ A.line_pit(-232.20, -231.80, 52.30)
 # (st.py BODY_WINDOWS); behind the far wall a backstop in this biome's darkest tone, so no gap shows
 # the body's grey-tan, or the sky.
 A.card([(-298, -42), (-142, -42), (-142, 96), (-298, 96)], z=-11.6, tone="back3", edge=False)
+
+A.end_shift()  # (everything above is moved by MOVE at save; La Esclusa, below, stands where it is written)
 
 if __name__ == "__main__":
     A.save()

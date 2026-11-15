@@ -31,8 +31,17 @@ A.challenge("0.1", "El Primer Paso", (4.0, 0.0), 1, "S",
 
 # ---------------------------------------------------------------- 0.2 Subete / 0.3 El Descenso: the cart
 # The cart's origin is the middle of its floor. Its path is that point's road.
+import math
+# THE LONGER RIDE (note 146; Parker 11-14: "make the initial mine cart ride longer"): the mine moved 59 m west
+# and 17 m down, so the road runs on past today's end (-148.4, -11.55), down a 20 degree incline (x -158 to
+# -188; Parker: "good"), to the mine's moved door (x -211, floor -29.6): 203 m of road (today 141).
+# (design/rearrange_146/make_rearrange.py RIDE_NEW)
+_INC = math.tan(math.radians(20.0))
 RIDE = [(-9.0, 2.65), (-34.0, 2.65), (-46.0, 1.2), (-62.0, -3.0), (-78.0, -4.2), (-90.0, -2.2),
-        (-104.0, -6.5), (-120.0, -9.6), (-136.0, -11.2), (-148.4, -11.55)]
+        (-104.0, -6.5), (-120.0, -9.6), (-136.0, -11.2), (-148.4, -11.55), (-152.0, -11.85), (-155.0, -12.6),
+        (-158.0, -13.75), (-188.0, round(-13.75 - 30.0 * _INC, 2)), (-191.0, -25.75), (-194.0, -26.75), (-197.0, -27.6),
+        (-200.0, -28.2), (-203.5, -28.45), (-207.4, -28.55)]
+MOVE = (-59.0, -17.0)  # the mine's move: the end of the line's pieces move with it
 cart_shapes = [
     (box_pts(0.0, 0.0, 2.4, 0.2), "plank"),  # floor
     (box_pts(-1.12, 0.35, 0.16, 0.9), "iron"),  # the two ends
@@ -74,11 +83,11 @@ for (x0, y0), (x1, y1) in zip([(-4.6, 2.65)] + RIDE[1:-1], RIDE[1:]):
 A.challenge("0.2", "Súbete", (-6.2, 2.2), 1, "S")
 A.challenge("0.3", "El Descenso", (-9.0, 2.9), 1, "S")
 
-# The tunnel: its air, from the mouth (x -36) to the door into the mine (x -152).
+# The tunnel: its air, from the mouth (x -36) to the door into the mine (x -211: note 146).
 # cave() takes the AIR's outline; every edge gets rock behind it. Edge i runs pts[i] -> pts[i+1].
 floor = [(p[0], p[1] - 0.45) for p in RIDE[1:]]  # the rail bed, under the cart's road
 floor[0] = (-36.0, 2.2)
-floor[-1] = (-152.0, -12.0)
+floor[-1] = (-211.0, -29.0)
 roof = [(x, y + 5.0) for x, y in reversed(floor)]
 air = floor + roof
 kinds = {i: "rock" for i in range(len(floor) - 1)}  # the rail bed grips: fall out and you can walk
@@ -92,23 +101,33 @@ A.cave(air, kinds, default="wet", thick=3.0)
 # each lies; the corner fillers go with the stretch the dress names for them.
 for s in A.solids[n_before:]:
     cx = sum(p[0] for p in s["pts"]) / len(s["pts"])
+    if cx < -152.5:
+        continue  # (the new stretch, note 146: plain rock until its pieces are made)
     if s["kind"] == "rock":  # the bed
         s["skin"] = "dsc_bed_a" if cx > -62.3 else "dsc_bed_b" if cx > -104.5 else "dsc_bed_c" if cx > -136.0 else "dsc_bed_d"
     elif s["kind"] == "rock2":  # the roof
         s["skin"] = "dsc_roof_a" if cx > -62.5 else "dsc_roof_b" if cx > -105.0 else "dsc_roof_c" if cx > -137.0 else "dsc_roof_d"
-A.opening(-153, -13, -151, -6)  # the door to A1
+A.opening(-212, -30, -210, -23)  # the door to A1 (moved: note 146)
 A.opening(-37, 2, -35, 8)  # the mouth
-A.box(-150.3, -11.6, 0.6, 0.8, "iron", skin="dsc_buffer_stop")  # the buffer the cart stops against
-A.dark((-152, -16, -40, 9), level=0.8)  # inside the mountain: the light goes
+A.box(-150.3 + MOVE[0], -11.6 + MOVE[1], 0.6, 0.8, "iron", skin="dsc_buffer_stop")  # the buffer the cart stops against (moved with the end of the line)
+A.dark((-212, -34, -40, 9), level=0.8)  # inside the mountain: the light goes
+# The new stretch's back wall: a plain dark card behind the road from today's end to the door, until its
+# pieces are made (note 146: the haulage incline, the winding house and the ore bins are the makers').
+_f = [p for p in floor if p[0] <= -148.0]
+A.card([(x, y - 0.6) for x, y in _f] + [(x, y + 5.6) for x, y in reversed(_f)], z=-2.7, tone="back", edge=False)
 
 # ---------------------------------------------------------------- the picture
 # (The tunnel's back-wall card, the mouth's mine_frame and the seven lantern_mine decos are
 # gone: a0_dress places the back wall's pieces, the whitewashed mouth set and the lanterns.)
 a0_station.dress(A)  # the yard wall, the station house, the posters, the frog, the bunting, the foreground
 a0_dress.dress(A)  # the tunnel: its sets, back wall, lanterns, torn rail, trough, the mouth
+# (note 146: the end of the line moves with the mine: the buffer stop and the door's sill, by MOVE)
+for d in A.decos:
+    if d["model"] in ("dsc_buffer_stop", "dsc_door_sill"):
+        d["at"] = [round(d["at"][0] + MOVE[0], 3), round(d["at"][1] + MOVE[1], 3)] + d["at"][2:]
 for x, y in a0_dress.LANTERNS:  # each light sits in its lantern, under the hook
     A.light(x, round(y - 0.27, 3), color="#FFB860", rng=10.0, energy=1.5, flicker=True)
-A.cam((-152, -16, -30, 9), half_h=4.6)
+A.cam((-212, -34, -30, 9), half_h=4.6)
 
 if __name__ == "__main__":
     save_meta()

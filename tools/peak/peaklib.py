@@ -21,8 +21,8 @@ FLING_SPEED = {"F1": 3.4, "F2": 4.8, "F3": 6.1, "F4": 7.6, "F5": 8.9}  # release
 # ---------------------------------------------------------------- the frame every area fits
 # id: (name, region (x0, y0, x1, y1), entry, exit)
 FRAME = {
-    "a0": ("La Estación", (-150, -14, 12, 10), (6, 0), (-150, -12)),
-    "a1": ("La Mina Vieja", (-292, -36, -146, 90), (-150, -12), (-232, 90)),
+    "a0": ("La Estación", (-212, -34, 12, 10), (6, 0), (-211, -29.6)),  # (note 146: the ride 59 m longer, to the mine's moved door)
+    "a1": ("La Mina Vieja", (-351, -53, -205, 90), (-211, -29.6), (-232, 90)),  # (note 146: moved 59 m west and 17 m down; La Esclusa above it to y 90)
     "a2": ("Las Aguas Negras", (-462, 86, -226, 176), (-232, 90), (-452, 176)),
     "a3": ("La Gruta de Cristal", (-462, 176, -306, 276), (-452, 178), (-306, 270)),
     "a4": ("El Jardín de Hongos", (-294, 264, -182, 376), (-294, 270), (-294, 370)),
@@ -185,6 +185,85 @@ class Area:
         self.openings = []  # [x0, y0, x1, y1]: where this area's shell is open on purpose
         self._ids = set()
         self.warnings = []
+        self._shift = None  # (dx, dy, the lists' lengths when it began, when it ended): see begin_shift
+
+    # ------------------------------------------------------------ moving a whole area (note 146)
+    _LISTS = ("solids", "movers", "ropes", "bodies", "zones", "spawners", "cards", "decos", "lights", "cams", "fx",
+              "statues", "challenges", "boards", "levers", "openings")
+
+    def begin_shift(self, dx, dy):
+        """MOVE EVERYTHING PLACED FROM HERE ON by (dx, dy), until end_shift (note 146: the mine moved 59 m west
+        and 17 m down as one offset). The files keep writing today's numbers; save() moves what was placed in
+        between: every solid, mover, rope, body, zone, spawner, board, lever, card, deco, light, camera, effect,
+        statue, challenge (its anchor and its moves) and opening."""
+        self._shift = [dx, dy, {k: len(getattr(self, k)) for k in self._LISTS}, None]
+
+    def end_shift(self):
+        """What is placed after this is written where it stands (the new section, beside the moved mine)."""
+        self._shift[3] = {k: len(getattr(self, k)) for k in self._LISTS}
+
+    def _apply_shift(self):
+        if not self._shift:
+            return
+        dx, dy, m0, m1 = self._shift
+        self._shift = None
+
+        def P(p):
+            return [_f(p[0] + dx), _f(p[1] + dy)] + list(p[2:])
+
+        def R(r):
+            return [_f(r[0] + dx), _f(r[1] + dy), _f(r[2] + dx), _f(r[3] + dy)]
+
+        def items(k):
+            lst = getattr(self, k)
+            return lst[m0[k]:(m1[k] if m1 else len(lst))]
+
+        for s in items("solids"):
+            s["pts"] = [P(q) for q in s["pts"]]
+        for m in items("movers") + items("bodies"):
+            m["at"] = P(m["at"])
+            if "hinge" in m:
+                m["hinge"] = P(m["hinge"])
+            if "string" in m:
+                m["string"] = P(m["string"])
+            mo = m.get("motion", {})
+            if mo.get("pts"):
+                mo["pts"] = [P(q) for q in mo["pts"]]
+        for r in items("ropes"):
+            r["at"] = P(r["at"])
+            if "to" in r:
+                r["to"] = P(r["to"])
+        for z in items("zones"):
+            if "rect" in z:
+                z["rect"] = R(z["rect"])
+            if "surface" in z:
+                z["surface"] = _f(z["surface"] + dy)
+            for k in ("a", "b", "at", "to"):
+                if k in z and isinstance(z[k], list) and len(z[k]) >= 2 and z["type"] not in ("bounce_unused",):
+                    if k == "to" and z["type"] != "pipe":
+                        continue
+                    z[k] = P(z[k])
+        for o in items("spawners") + items("levers") + items("decos") + items("lights") + items("statues"):
+            o["at"] = P(o["at"])
+        for b in items("boards"):
+            for k in ("a", "b", "c"):
+                if k in b:
+                    b[k] = P(b[k])
+            b["gone"] = _f(b["gone"] + dy)
+        for c in items("cards"):
+            c["pts"] = [P(q) for q in c["pts"]]
+        for c in items("cams") + items("fx"):
+            c["rect"] = R(c["rect"])
+            if "x" in c:
+                c["x"] = _f(c["x"] + dx)
+        for c in items("challenges"):
+            c["anchor"] = P(c["anchor"])
+            for mv in c.get("moves", []):
+                for i in (1, 2):
+                    if i < len(mv) and isinstance(mv[i], (list, tuple)):
+                        mv[i] = P(list(mv[i]))
+        lst = self.openings
+        lst[m0["openings"]:(m1["openings"] if m1 else len(lst))] = [R(o) for o in items("openings")]
 
     # ------------------------------------------------------------ static rock
     def solid(self, pts, kind="rock", hold=None, z=None, tag=None, ghost=False, skin=None, fit=None):
@@ -730,6 +809,7 @@ class Area:
                 "challenges": self.challenges}
 
     def save(self, folder=None):
+        self._apply_shift()
         errs = self.check()
         folder = folder or COURSE_DIR
         os.makedirs(folder, exist_ok=True)
