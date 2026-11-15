@@ -464,8 +464,12 @@ A.light(-296.5, 367.0, color="#BFE8C0", rng=12.0, energy=1.4)
 
 A.effect("spores", (-291, 264, -266, 364), density=0.35)  # the west hall: slow, all the way up
 # the lift: a column of pale gold spores, dense and fast below 285, thin and slow above (note 38)
-A.effect("spores", (-240.3, 276, -235.7, 285), density=2.4, speed=2.6, tone="#F2D88A")
-A.effect("spores", (-240.3, 285, -235.7, 294), density=0.7, speed=0.9, tone="#F2D88A")
+# (the quality run's clean-up: at 0.7 m a mote and 2.4 dense it read as a flat yellow column. A curtain now:
+# small faint motes, many of them, and the column's own warm light, so it glows.)
+A.effect("spores", (-240.3, 276, -235.7, 285), density=6.0, speed=2.6, tone="#F2D88A", size=0.16, alpha=0.5)
+A.effect("spores", (-240.3, 285, -235.7, 294), density=2.4, speed=0.9, tone="#F2D88A", size=0.14, alpha=0.4)
+for _y in (279.0, 288.0):
+    A.light(-238.0, _y, color="#F2D88A", rng=6.0, energy=0.7, z=-0.6)
 A.effect("spores", (-262.5, 355, -249.5, 367), density=1.2, speed=3.0)  # the bridge's gusts
 A.effect("spores", (-266, 264, -215, 301), density=0.4)
 A.effect("spores", (-266, 334, -190, 370), density=0.3)
@@ -480,6 +484,7 @@ A.effect("spores", (-291, 264, -190, 378), density=0.02, z=2.2, tone="#E6EFC4") 
 
 # ================================================================ the dress (the modelling run's)
 a4_dress.dress(A)
+A.drop_decos({"jardin_outcrop"})  # (the quality run's clean-up: the worst 30's plain boxes)
 for x, y in a4_dress.LAMP_LIGHTS:  # the spore lantern pods, the pod bed, the pod nest: steady
     A.light(x, y, color="#B8F08A", rng=5.0, energy=0.9)
 A.light(a4_dress.HUT_LIGHT[0], a4_dress.HUT_LIGHT[1], color="#FFC27A", rng=6.0, energy=1.2)  # the lantern by the hut's door

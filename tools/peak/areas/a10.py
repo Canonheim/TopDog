@@ -310,8 +310,7 @@ A.solid([(-333.9, 962.0), (-362.0, 962.0), (-362.0, 961.6), (-339.9, 961.6), (-3
 # (a10_dress places the ridge's look: its flank, the nook and the cabin, the towers' bodies and collars,
 # the painted cloud, the far towers and every skin. The sky, the storm's deck and the sea of cloud are
 # given. Of the old cards only the gold under-lit cloud stays, until the frames are judged.)
-A.card([(-362, 951), (-345, 955), (-325, 952.5), (-304, 956.5), (-279, 953), (-279, 961), (-300, 963), (-322, 960), (-345, 963.5), (-362, 960)],
-       z=-24.0, tone="#E9C27E", edge=False)  # gold under-lit cloud, far off
+# (the gold under-lit cloud card is out: "a flat orange card", the quality run's clean-up)
 
 A.statue(-311.25, 914.05, pose="sit", flip=True)  # one of them, in the lee of the hut, facing the mast
 # Light: cold on the rests, white on the mast, warm at the top. The cabin's amber is the porch's light.

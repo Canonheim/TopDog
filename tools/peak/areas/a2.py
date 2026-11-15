@@ -147,9 +147,13 @@ air([(-255.6, GATES[2][1] - GH), (-253.45, GATES[2][1] - GH), (-253.45, GATES[1]
 # slick, on its step where the block rested; the head (the riveted plate you hold) on a ram as
 # wide as it rises out of it and slams back. The mover is the head and its ram (aguas_ram_head);
 # the housings wear aguas_ram_housing (placed here).
+# THE RAM IS SOLID AS FAR AS IT IS DRAWN (note 113: its drawing is 5.6 m long and its solid was 3.4, so a
+# raised ram's lowest 2.2 m could be walked into, and its slam left you inside it for good). The extra runs down
+# into the housing, as the drawing does.
+RAM = 5.6
 for i, (cx, low) in enumerate(GATES):
     A.mover("compuerta%d" % (i + 1), (cx, low),
-            [(box_pts(0, -GH / 2, 2.05, GH), "grease"), (box_pts(0, -0.12, 2.05, 0.24), "iron")],
+            [(box_pts(0, -RAM / 2, 2.05, RAM), "grease"), (box_pts(0, -0.12, 2.05, 0.24), "iron")],
             {"type": "cycle", "to": [0, GT], "t_out": 1.8, "hold_out": 2.0, "t_in": 0.4, "hold_in": 2.0,
              "phase": 3.1 if i == 1 else 0.0}, model="aguas_ram_head")
     step = low - GH
@@ -441,6 +445,8 @@ for x, y in ((-258.9, WINC), (-265.3, WINC), (-269.3, WINC), (-344.45, 117.6), (
 a2_dress.dress(A)
 # (note 146: the barrels' cove and Q6's old 7 m skin go with the barrels: Q6 is 13 m now, plain until re-made)
 A.decos[:] = [d for d in A.decos if d["model"] not in ("aguas_barrel_cove", "aguas_charco_landing_east")]
+# (the quality run's clean-up: the worst 30's plain beam ends, nothing needs them)
+A.drop_decos({"aguas_beam_end", "aguas_beam_end_long"})
 # (a2_dress item 8: the grey wheel behind La Rueda turns with it on the same axle; each gate's
 # leaf rides with its ram)
 A.follow("aguas_mill_wheel_grey", WHEEL, "rueda", "spin")

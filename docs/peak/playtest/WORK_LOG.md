@@ -2793,6 +2793,30 @@ in. Nothing played by a person.
   top, 1.12's and 1.13's cameras, 2.7's camera), and the frames one by one. Probes `g146`, `esclusa`.
 - **Checks:** lint; `--peak`. Clean after each step.
 
+## The quality run's phase 0, 11-15: the five sweeps, the clean-up, the keeper's lever
+
+- **The sweeps** (`tools/peak/sweeps.py`; the report `docs/peak/quality/SWEEPS.md`, every hit by biome): z-fighting read
+  from the models' own flat faces, plane by plane (notes 109, 119); depth (115); drawing against solid (113, 124, 129, 133);
+  stand-ins, invisible solids and skins drawn with no solid (104); flat cards. They run on every course build
+  (`peaklib.Area.save`), which also applies the build's own fixes: flickering pairs parted (the smaller deco 1.5 cm forward
+  or up, a card 2 cm back), and a solid whose landed skin covers it nowhere drawn again. In the mine the decos' hits are
+  listed, not moved (the Director is landing its scenery). Z-fighting 113 hits to 15 (7 of them the mine's scenery).
+- **By hand:** note 113, the rams solid as far as drawn (5.6 m); note 109, the mine frog cave's two plain floor solids wear
+  the throat's skin; La Esclusa's backstop and the pier's coping off the mine's planes; the lift's spores (4.3) a glowing
+  curtain (small faint motes and two warm lights; an effect takes `size` and `alpha` now).
+- **Removed:** the lilac hexagon cards (a3), the storm ridge's flat orange card (a10), the summit's snow cards (a11: the caps
+  have landed), the glacier's white window box (a9), and the worst 30's `gruta_floor_back`, `_landing_back`, `_rampa_back`,
+  `_well_back`, `gruta_leaf_stump`, `aguas_beam_end`, `aguas_beam_end_long`, `jardin_outcrop`. The rest of the worst 30 wait
+  for makers (SWEEPS.md lists them by biome).
+- **Not found in the data** (part 5): the olive slab (2.3, 2.4), the cableway's beige band, the white panels at 5.2, 9.4,
+  9.6, the white shapes at 10.5 to 10.7, the spray balls and squares. The flat yellow column at 4.3 is painted in a model
+  behind the lift: a model job.
+- **The keeper's lever** (note 146, page 1.13): 1 s before each fill the lever by his booth on the quay swings over with an
+  iron clank and eases back as the water comes (a stand-in lever until the booth is made).
+- **Not done:** the depth and skin hits are listed (each a maker's re-cut or a re-cut solid); the mine's design pages.
+- Frames (`after/phase0_before_after_1..3.jpg`, before | after: 0.2, 1.1, 1.11, 2.3, 2.7, 3.1, 3.8, 4.2, 4.4, 5.2, 5.6, 6.3,
+  7.4, 8.2, 9.4, 9.7, 10.5, 11.2). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

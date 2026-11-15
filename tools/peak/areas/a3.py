@@ -612,6 +612,10 @@ A.cam((-459, 176, -447.5, 184), 9.0, bias=(7.0, 5.0))  # coming up out of the ho
 
 # ================================================================ the dress (the modelling run's)
 a3_dress.dress(A)
+# (the quality run's clean-up: the flat lilac hexagon cards repeated through the cave, and the worst 30's
+# plain black bars and boxes nothing needs)
+A.drop_decos({"gruta_mirror_wide", "mirror_facet", "gruta_floor_back", "gruta_landing_back", "gruta_rampa_back",
+              "gruta_well_back", "gruta_leaf_stump"})
 for x, y in a3_dress.BRIGHT_LIGHTS:  # each place lit by its bright white crystals, steady
     A.light(x, y, color=WHITE, rng=8.0, energy=1.5)
 A.light(a3_dress.GARDEN_LIGHT[0], a3_dress.GARDEN_LIGHT[1], color="#8FE07A", rng=6.0, energy=1.0)  # the spore lantern through the far door

@@ -426,6 +426,7 @@ A.effect("snow", (-302, 862, -286, 884), density=0.9, speed=2.0)  # spindrift do
 # (No clouds: "never a sheet of ice, an icicle or a cloud in front of the climb"; the banks are given.)
 
 a9_dress.dress(A)
+A.drop_decos({"glaciar_window"})  # (the quality run's clean-up: an unlit white box in the game)
 
 if __name__ == "__main__":
     A.save()

@@ -151,8 +151,10 @@ for y in (-14.8, -17.0, -19.2, -21.4, -23.6, -25.8):
     x = -176.0 - (-12.9 - y) / 1.2833
     A.box(x - 0.25, y + 0.42, 1.1, 0.3, "wood")
 A.ledge(-190.4, -187.0, -27.7, "plank", t=0.3)  # the landing stage, a hand above the water
-A.ledge(-253.4, -248.0, -27.5, "rock", t=0.5)  # the frog's cave's floor (grip; page 1.0)
-A.solid([(-248.0, -28.3), (-247.2, -28.3), (-247.2, -27.5), (-248.0, -27.5)], "rock")  # its doorstep, out of the water
+# (note 109: these two drew their own dark boxes with their tops in the throat skin's plane, and flickered.
+# They wear the throat's skin now: its top is the floor.)
+A.ledge(-253.4, -248.0, -27.5, "rock", t=0.5, skin="mine_throat_west")  # the frog's cave's floor (grip; page 1.0)
+A.solid([(-248.0, -28.3), (-247.2, -28.3), (-247.2, -27.5), (-248.0, -27.5)], "rock", skin="mine_throat_west")  # its doorstep, out of the water
 for x in (-228.5, -219.0, -211.0, -194.5):
     A.box(x, -30.1, 0.4, 5.8, "wood")  # old staging piles: something to hold on the long swim east
 
@@ -668,7 +670,7 @@ def _section_rock():
 
 _section_rock()
 _box(PIER[0], LOCK_CEIL, PIER[1], 89.4, "wet")              # the pier's foot between the slot and the dry shaft
-_box(-297.0, MINE_TOP - 0.3, -295.0, MINE_TOP, "stone")      # the pier's top, coped: the ladder's foot, 1.12's start
+_box(-297.0, MINE_TOP - 0.29, -295.0, MINE_TOP + 0.01, "stone")  # the pier's top, coped: the ladder's foot, 1.12's start (1 cm proud of the mine's roof: no shared plane)
 # ---------------------------------------------------------------- 1.12 Los Barriles
 # Up the keepers' ladder beside the falls (6.4 m, 1.6 m from their edge, in their spray) to the platform;
 # down onto the barrels coming at you from the east, barrel to barrel against the current, and up onto the
@@ -713,7 +715,8 @@ for x0, x1, y in (L1, L2):
 for x, y in DRY_RUNGS:
     _box(x - 0.25, y - 0.07, x + 0.25, y + 0.07, "iron")
 A.water((LOCK[0], LOCK_FLOOR, LOCK[1], LOCK_HIGH), LOCK_LOW, flow=(0.0, 0.0), look="lock")
-A.zones[-1]["lock"] = {"low": LOCK_LOW, "high": LOCK_HIGH, "rise": RISE, "hold": HOLD, "drain": DRAIN, "low_hold": 0.0, "phase": 0.0}
+A.zones[-1]["lock"] = {"low": LOCK_LOW, "high": LOCK_HIGH, "rise": RISE, "hold": HOLD, "drain": DRAIN, "low_hold": 0.0, "phase": 0.0,
+                       "warn": 1.0, "lever": [-247.6, LANDING]}  # (the keeper hauls his lever 1 s before each fill: his booth on the quay)
 # The wicket: open (up into the gate) while the water is under its sill, from 13.03 s to 1.17 s of the
 # next cycle: shut 11.86 s, opening and shutting in 0.2 s.
 _open_at = CYCLE - (79.4 - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW) * DRAIN    # 13.03 s: the drain under the sill
@@ -742,7 +745,7 @@ A.card([(-307.0, MINE_TOP), (-222.0, MINE_TOP), (-222.0, 89.4), (-252.0, 89.4), 
 A.card([(CHUTE[0], CHUTE[2]), (CHUTE[1], CHUTE[2]), (CHUTE[1], CHUTE[3]), (CHUTE[0], CHUTE[3])], z=-2.3, tone="back3", edge=False)  # the waste chute's mouth
 A.card([(ARCH[0], S - 0.1), (ARCH[1], S - 0.1), (ARCH[1], S + 2.6), ((ARCH[0] + ARCH[1]) / 2, S + 3.4), (ARCH[0], S + 2.6)],
        z=-2.3, tone="back3", edge=False)                                                       # the barrels' tunnel mouth
-A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-11.6, tone="back3", edge=False)  # its own dark behind
+A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-11.65, tone="back3", edge=False)  # its own dark behind (behind the mine's)
 
 if __name__ == "__main__":
     A.save()

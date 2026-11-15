@@ -333,26 +333,8 @@ A.cam((-363, 989.5, -352.6, 1009), half_h=8.0, bias=(2.0, -1.5))
 A.effect("clouds", (-392, 952, -316, 966), z=-6.0)
 A.effect("dust", (-380, 966, -320, 1008), tone="gold", density=0.3)
 
-# Snow on the dome and the shoulder: white cards in front, set back from the surface so the black ice shows
-# as a wet rim all along the line a body slides on. (They stay until `cumbre_snow_cap_dome` and
-# `cumbre_snow_cap_shoulder` land: the game draws no stand-in for a foreground piece, so until then these
-# cards are the only snow.)
-A.card([(-333.5, 969.9), (-340.0, 975.4), (-358.9, 988.6), (-359.6, 999.2), (-360.3, 999.8), (-361.0, 999.0),
-        (-365.3, 984.6), (-349.0, 972.0), (-341.0, 969.9)], z=2.0, tone="snow")
-# (the shoulder's snow card is cut round the spring's cave, sink and slide, which it would
-# have covered: nothing stands in front of where a climber can be)
-def _snow_cut():
-    from shapely.geometry import Polygon
-    from shapely.ops import unary_union
-    snow = Polygon([(-389.5, 963), (-351, 963), (-351, 966.0), (-372, 980.6), (-389.5, 994.2)])
-    holes = unary_union([Polygon(q).buffer(0.25, join_style=2) for q in SPRING_AIR])
-    rest = snow.difference(holes)
-    for g in getattr(rest, "geoms", [rest]):
-        if g.geom_type == "Polygon" and g.area > 0.5:
-            A.card([(round(x, 2), round(y, 2)) for x, y in list(g.exterior.coords)[:-1]], z=2.0, tone="snow")
-
-
-_snow_cut()
+# (The snow cards are out: `cumbre_snow_cap_dome` and `cumbre_snow_cap_shoulder` have landed, and the card stood
+# in the cap's own plane. The quality run's clean-up.)
 
 # The story: the town's colours, whole and bright. (The bell is the solid "campana" above, its look its model.)
 A.deco("champion_belt", POST_X, 1006.9, z=0.0, size=(1.2, 0.6, 0.2), tone="gold")  # (the Top Dog session's: note 101)

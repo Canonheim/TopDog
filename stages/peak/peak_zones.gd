@@ -285,6 +285,7 @@ func lock_level(lk: Dictionary, t: float) -> float:
 func _tick_locks() -> void:
 	for row in locks:
 		var z: Dictionary = row.def
+		_lock_warn(row, z.lock)
 		var level := lock_level(z.lock, peak.clock)
 		z.surface = level
 		z["vy"] = (lock_level(z.lock, peak.clock + 0.05) - level) / 0.05  # its speed, up or down
@@ -293,6 +294,32 @@ func _tick_locks() -> void:
 			var floor_y := float(z.rect[1])
 			vis.scale.y = maxf(0.02, level - floor_y)
 			vis.position.y = floor_y
+
+
+## THE KEEPER HAULS HIS LEVER (note 146, page 1.13: "one second before each fill he hauls it over: that is the
+## warning, as every danger on the mountain warns before it acts"): `warn` s before each rise the lever by his
+## booth swings over with an iron clank; it eases back as the water comes.
+func _lock_warn(row: Dictionary, lk: Dictionary) -> void:
+	var warn := float(lk.get("warn", 0.0))
+	if warn <= 0.0:
+		return
+	var period := float(lk.get("rise", 6.0)) + float(lk.get("hold", 3.0)) + float(lk.get("drain", 5.0)) + float(lk.get("low_hold", 0.0))
+	var cyc := fposmod(peak.clock + float(lk.get("phase", 0.0)), period)
+	var prev := float(row.get("prev_cyc", cyc))
+	row["prev_cyc"] = cyc
+	var at := period - warn
+	if not (prev < at and cyc >= at):
+		return
+	var vis: Node3D = row.get("lock_vis")
+	var lever: Node3D = vis.get_meta("lever") if vis != null and is_instance_valid(vis) and vis.has_meta("lever") else null
+	var p := Peak.v2(lk.get("lever", [0, 0]))
+	peak.audio.play("hammer_clang", p, -2.0, 0.7)
+	peak.audio.play("plank_creak", p, -6.0, 0.8)
+	if lever != null:
+		var tw := lever.create_tween()
+		tw.tween_property(lever, "rotation:z", -0.55, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_interval(warn + 0.6)
+		tw.tween_property(lever, "rotation:z", 0.45, 0.8).set_trans(Tween.TRANS_SINE)
 
 
 ## The lock's water, drawn: a panel of the river's colour behind the climb from the chamber's floor to the
@@ -310,6 +337,20 @@ func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 	n.add_child(top)
 	n.position = Vector3((x0 + x1) * 0.5, float(z.rect[1]), -1.35)
 	root.add_child(n)
+	if (z.lock as Dictionary).has("lever"):
+		# the keeper's lever by his booth (a stand-in until the booth is made): an iron arm with a brass knob
+		var at := Peak.v2(z.lock.lever)
+		var pivot := Node3D.new()
+		pivot.position = Vector3(at.x, at.y, -1.5)
+		pivot.rotation.z = 0.45
+		var arm := LuchaKit.box(Vector3(0.08, 1.3, 0.08), Color("#3A3532"), Vector3(0, 0.65, 0))
+		arm.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		pivot.add_child(arm)
+		pivot.add_child(LuchaKit.ball(0.11, Color("#C9A24A"), Vector3(0, 1.32, 0)))
+		root.add_child(pivot)
+		var base := LuchaKit.box(Vector3(0.5, 0.25, 0.3), Color("#3A3532"), Vector3(at.x, at.y + 0.12, -1.5))
+		root.add_child(base)
+		n.set_meta("lever", pivot)
 	return n
 
 
@@ -1631,6 +1672,10 @@ func _effect(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 		c[0] = Color(t) if t.begins_with("#") else peak.tone(a, t)
 	if e.has("speed"):  # (and how fast it drifts, as a share of its kind's own)
 		c[3] = (c[3] as Vector3) * float(e.speed)
+	if e.has("size"):  # (a mote's size, m)
+		c[1] = float(e.size)
+	if e.has("alpha"):  # (and how solid it is)
+		c[5] = float(e.alpha)
 	var p := _particles(c[0], float(c[1]), int(clampf(w * h * float(c[2]) * density, 4, 220)), float(c[4]))
 	(p.material_override as StandardMaterial3D).albedo_color.a = float(c[5])
 	if kind == "rain" or kind == "drips":
