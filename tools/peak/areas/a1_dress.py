@@ -438,8 +438,8 @@ def dress(A):
         drawn("mine_socket_empty", x, -0.15, (0.3, 0.3, 0.02), tone="back3", z=CAVE_WALL_Z + 0.01)
     for x in (-188.6, -191.1):
         A.deco("mine_walk_bearer", x, 0.15, z=-2.075, size=(0.4, 1.3, 1.65), tone="back")
-    for x in (-190.6, -189.1):
-        A.deco("plank", x, 0.15, z=-2.4, size=(2.0, 0.13, 0.9), tone="back")
+    for x, y in ((-190.6, 0.15), (-189.1, 0.19)):  # the second lies over the first (sweeps: z-fight)
+        A.deco("plank", x, y, z=-2.4, size=(2.0, 0.13, 0.9), tone="back")
     mushrooms(-189.6, 0.28, -2.0)
     # Two lanterns on iron brackets in the wall, 3 m over the planks.
     wall_lantern(-174.6, 9.47, CAVE_WALL_Z)
@@ -550,7 +550,7 @@ def dress(A):
     # Four lanterns: two on thin lamp posts at the back of the track, one under the cap at the
     # lip, one on a bracket on the rib so the chain is lit.
     for x in (-203.8, -210.8):
-        A.deco("mine_lamp_post", x - 0.35, TRACK_Y, z=-1.45, size=(0.55, 3.5, 0.2), tone="back")
+        A.deco("mine_lamp_post", x - 0.35, TRACK_Y - 0.03, z=-1.45, size=(0.55, 3.5, 0.2), tone="back")  # foot sunk 3 cm into El Diente's top (sweeps)
         hang(x, TRACK_Y + 3.45, -1.45)
     hang(-222.7, 28.8, -1.6)
     wall_lantern(-228.6, 47.17, RIB_Z)
@@ -591,7 +591,7 @@ def dress(A):
     # The frame: a bearer out of the rock under the axle on its slanting strut, the staging
     # hung under it on two posts (the porch is the bearers' near end); and the roof's two posts.
     hbeam(-237.8, -230.0, 56.95, -1.5)
-    timber((-230.0, 54.3), (-233.7, 56.95), -1.5)
+    timber((-230.0, 54.3), (-233.7, 56.95), -1.56)  # 6 cm behind the post it crosses (sweeps: z-fight)
     for x in (-236.9, -232.5):
         post(x, 52.45, 56.95, -1.5)
     post(-236.9, 57.3, 62.3, -1.5)
