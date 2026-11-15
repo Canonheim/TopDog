@@ -132,7 +132,7 @@ MINE_TOP = 73.0                 # the mine's roof, moved (today 90): the floor a
 STRIP = (-297.0, -295.0)        # the climb, straight up beside the falls (Parker, 11-14 15:30)
 LADDER_X = -295.4               # the keepers' ladder, standing on the pier's top, bolted to the platform's face
 LADDER_RUNGS = [73.8, 74.55, 75.3, 76.8, 77.55, 79.05]   # every 0.75 m; two gone (76.05 and 78.3): 1.5 m reaches
-LIP_ROOM = (-295.0, 73.0, -284.5, 75.2)   # the low room under the platform and the flume's west end: La Cortina lets out here
+LIP_ROOM = (-295.0, 73.0, -288.0, 75.2)   # the low room under the platform: La Cortina lets out here; its east end (x -291 to -288) is the alcove
 BED_LO, BED = 75.2, 75.7        # the flume's bed slab over the room; the water's bottom
 S = 77.2                        # the flume's surface
 FLUME = (-290.5, -258.5)        # its water: the west end a wall under the platform, the kicker in front of it
@@ -142,27 +142,32 @@ LANDING = 79.4                  # the landings' tops (today's Q6 117.4 over a 11
 LANDING_T = 0.7
 WEST_LANDING = (-295.0, -290.5) # solid now: the platform on the flume's west end
 EAST_LANDING = (-260.4, -258.5) # hanging over the flume's head, then the quay
-QUAY = (-258.5, -251.0)
-OUT_RUNGS = [(-290.25, 77.9), (-290.25, 78.65)]          # two rungs up the platform's east face, out of the water
+QUAY = (-258.5, -245.0)
+OUT_RUNGS = []                                           # (no rungs out at the end wall now: the whirlpool is the way out)
+WHIRL = (-287.6, -285.4)        # the whirlpool on the flume's surface, 2 m east of the kicker: every faller drifts into it (Parker, 11-14)
+WHIRL_X = -286.5                # its middle, and its drain mouth in the bed (x -287.05 to -285.95)
+PIPE = [(-287.05, 75.7), (-285.95, 75.7), (-285.95, 74.0), (-287.0, 73.1), (-288.0, 73.1), (-288.0, 74.2), (-287.05, 74.6)]
+PIPE_RIDE = (-288.0, 73.1, -285.4, 77.2)                 # the ride zone: the whirlpool's pull and the pipe, as the frogs' slide (st.py A.ride)
+ALCOVE = (-291.0, -288.0)       # the room's east end, on the right at the top of La Cortina's wet holds: the pipe's mouth in its east wall
 KICKER = [(-287.6, 77.05), (-290.4, 78.25)]              # the tipping ramp's line: barrels run up it and are thrown up and back
 KICK_THROW = (-0.6, 4.5, -3.5)                           # first guess, like note 91's kicker (vx, vy, vz)
 CHUTE = (-291.4, -286.4, 78.6, 82.2)                     # the waste chute's mouth in the back wall, where they go
-GATE = (-251.0, -250.0)         # the lock's lower gate (its wicket 79.4 to 81.9)
-LOCK = (-250.0, -228.0)         # the chamber
-LOCK_FLOOR, LOCK_CEIL = 75.7, 86.0
+GATE = (-245.0, -244.0)         # the lock's lower gate (its wicket 79.4 to 81.9)
+LOCK = (-244.0, -228.0)         # the chamber, 16 m: the slot (where the river comes in) at its west end
+LOCK_FLOOR, LOCK_CEIL = 75.7, 89.0
 LOCK_LOW, LOCK_HIGH = 77.2, 88.5
 RISE, HOLD, DRAIN = 6.0, 3.0, 5.0   # the pitch's 14 s
-LOW_HOLD, WARN_T = 4.0, 1.0         # added: a pause at the bottom (the wicket is open then), and the keeper's lever 1 s before each fill
+LOW_HOLD, WARN_T = 0.0, 1.0         # no pause at the bottom (Parker, 11-14: "keep it 14 s"); the keeper's lever 1 s before each fill
 CYCLE = RISE + HOLD + DRAIN + LOW_HOLD
 SLOT = (-244.0, -238.0)         # the black waters' slot (as today): the river pours in here
-PIER = (-238.0, -236.0)         # its foot hangs to 84 (as today's air polygon has it)
+PIER = (-238.0, -236.0)         # between the slot and the dry shaft: its foot at the chamber's roof, y 89 (no hanging foot)
 DRY = (-236.0, -232.0)          # the old dry shaft (as today), up to the lip ledge
 LIP_LEDGE = (-232.0, -226.0, 90.0)   # 2.1's start, as today
-L0 = (-250.0, -248.6, 79.4)
-L1 = (-246.6, -245.0, 82.4)
+L0 = (-244.0, -242.6, 79.4)
+L1 = (-239.6, -238.2, 83.0)
 L2 = (-229.6, -228.0, 81.0)
-PIER_RUNGS = [(-235.75, 84.6), (-235.75, 85.5)]
-DRY_RUNGS = [(-232.25, 86.8), (-232.25, 87.6)]
+PIER_RUNGS = []
+DRY_RUNGS = [(-228.25, 84.8), (-228.25, 85.8), (-228.25, 86.8)]   # the east wall's rungs, under the lip ledge: holds to wait on
 # the barrels: speed, spacing, road length and count exactly as today (a2.py), mirrored to run west
 BARREL_SPEED = 0.55
 BARREL_GAPS = [3.0, 3.4, 2.9, 5.8, 3.1, 3.5, 2.9, 6.2]
@@ -178,9 +183,9 @@ CH_FLOOR, CH_S, CH_ROOF = 113.0, 115.0, 128.0
 WEST_POOL = (-320.5, -303.0)
 EAST_BASIN = (-297.0, -288.0)
 POOL_FLOW, POOL_LIP_FLOW = 1.0, 1.6
-Q6 = (-296.6, -284.0, 117.4)    # today -291 to -284: 5.6 m longer, to the falls' edge
+Q6 = (-297.0, -284.0, 117.4)    # today -291 to -284: 7 m longer, its west end the launch ledge, flush with the falls' edge
 Q7 = (-320.5, -314.0, 117.2)    # as today
-DAVIT_CHAIN = (-296.9, 121.6, 2.2)
+LAUNCH = (-297.0, 117.4)       # the launch ledge's west edge: hang from it, swing, let go (Parker, 11-14: "a fling from a ledge")
 C1 = (-306.8, 121.8, 6.2)
 C2 = (-310.6, 121.8, 6.2)
 Q7_RUNGS = [(-314.2, 115.45), (-314.2, 116.25)]
@@ -198,7 +203,7 @@ def hanging(x0, x1, y, kind="stone", t=LANDING_T):
 
 
 def section_air():
-    from shapely.geometry import box as sbox
+    from shapely.geometry import box as sbox, Polygon
     from shapely.ops import unary_union
     parts = [sbox(FALLS[0], MINE_TOP, STRIP[1], CEIL_W),                # the falls' shaft and the strip the ladder stands in
              sbox(*LIP_ROOM),
@@ -207,7 +212,8 @@ def section_air():
              sbox(FLUME[1], LANDING, GATE[0], CEIL_E),
              sbox(GATE[1], LOCK_FLOOR, LOCK[1], LOCK_CEIL),
              sbox(GATE[0], LANDING, GATE[1], LANDING + 2.5),          # the wicket
-             sbox(SLOT[0], 84.0, SLOT[1], 89.4), sbox(DRY[0], 84.0, DRY[1], 89.4)]
+             sbox(SLOT[0], 84.0, SLOT[1], 89.4), sbox(DRY[0], 84.0, DRY[1], 89.4),
+             Polygon(PIPE)]                                              # the whirlpool's pipe down to the alcove
     return unary_union(parts)
 
 
@@ -237,7 +243,7 @@ def build_section():
     rock = section_shell().difference(section_air())
     sol = _poly_solids(rock, "wet")
     # the pier between the slot and the dry shaft, from its foot at 84 (it was the mine's roof below 89.4)
-    sol.append(box(PIER[0], 84.0, PIER[1], 89.4, "wet"))
+    sol.append(box(PIER[0], LOCK_CEIL, PIER[1], 89.4, "wet"))
     # the pier's top given a pale coping (it is the mine's slick roof today): the ladder's foot
     sol.append(box(-297.0, MINE_TOP - 0.3, -295.0, MINE_TOP, "stone"))
     # the keepers' ladder: only its rungs are solid (a real ladder: rails drawn)
@@ -256,7 +262,7 @@ def build_section():
         sol += [box(x0, y - 0.55, x1, y - 0.25, "wet"), box(x0, y - 0.3, x1, y, "stone")]
     for x, y in PIER_RUNGS + DRY_RUNGS:
         sol.append(box(x - 0.25, y - 0.07, x + 0.25, y + 0.07, "iron"))
-    sol.append(box(SLOT[0], 85.4, SLOT[1], 86.0, "iron"))                    # the upstream flap gate, shut (it swings down to open)
+    sol.append(box(SLOT[0], LOCK_CEIL, SLOT[1], LOCK_CEIL + 0.35, "iron"))  # the upstream flap gate, shut (it swings down to open)
     zones = [{"type": "water", "rect": [FLUME[0], BED, FLUME[1], S], "surface": S},
              {"type": "water", "rect": [LOCK[0] - 0.0, LOCK_FLOOR, LOCK[1], LOCK_LOW], "surface": LOCK_LOW}]
     movers = [{"at": [COVE_X, BARREL_Y], "shapes": [], "motion": {"type": "path", "pts": [[COVE_X, BARREL_Y], [KICK_X, BARREL_Y]]}}]
@@ -267,6 +273,7 @@ def build_section():
             break
         movers.append({"at": [round(x, 2), BARREL_Y], "shapes": [{"pts": [list(p) for p in BARREL], "kind": "wood"}], "motion": {}})
     zones.append({"type": "bounce", "a": list(KICKER[0]), "b": list(KICKER[1])})   # drawn as the kicker's line
+    zones.append({"type": "wind", "rect": list(PIPE_RIDE)})                         # drawn as the whirlpool's ride zone
     return {"solids": sol, "zones": zones, "movers": movers, "ropes": []}
 
 
@@ -284,8 +291,7 @@ def build_charco():
         sol.append(box(x - 0.25, y - 0.07, x + 0.25, y + 0.07, "iron"))
     zones = [{"type": "water", "rect": [WEST_POOL[0], CH_FLOOR, WEST_POOL[1], CH_S], "surface": CH_S},
              {"type": "water", "rect": [EAST_BASIN[0], CH_FLOOR, EAST_BASIN[1], CH_S], "surface": CH_S}]
-    ropes = [{"at": [DAVIT_CHAIN[0], DAVIT_CHAIN[1]], "len": DAVIT_CHAIN[2]},
-             {"at": [C1[0], C1[1]], "len": C1[2]}, {"at": [C2[0], C2[1]], "len": C2[2]}]
+    ropes = [{"at": [C1[0], C1[1]], "len": C1[2]}, {"at": [C2[0], C2[1]], "len": C2[2]}]
     return {"solids": sol, "zones": zones, "ropes": ropes, "movers": []}
 
 
@@ -336,7 +342,7 @@ def _starts():
     for ch in OLD["a2"]["challenges"]:
         if ch["id"] == "2.7":
             STARTS.append(("2.7", "El Salto de la Cascada (was El Charco del Pozo)", tuple(ch["anchor"]), tuple(ch["anchor"]),
-                           "same start on Q6; the launch is Q6's new west end, x -296.6"))
+                           "same start on Q6; the launch ledge is Q6's new west end, x -297.0"))
         else:
             STARTS.append((ch["id"], ch["name"], tuple(ch["anchor"]), tuple(ch["anchor"]), "unchanged"))
 
@@ -457,8 +463,14 @@ def run_checks():
     out.append(("Steps onto and off the barrels", "the platform's coping (y %.1f) down to a barrel's top (y %.2f): %.2f m; the last barrel in your plane (east end x %.1f) "
                 "to the east landing (x %.1f): %.1f m across, %.2f m up: as today" % (LANDING, BARREL_Y + 0.55, LANDING - BARREL_Y - 0.55, COVE_X - EMERGE + 0.9,
                                                                                  EAST_LANDING[0], EAST_LANDING[0] - (COVE_X - EMERGE + 0.9), LANDING - BARREL_Y - 0.55)))
-    out.append(("Out of the water at the west end", "from the surface (y %.1f) to the first rung on the platform's east face (y %.2f): %.2f m"
-                % (S, OUT_RUNGS[0][1], OUT_RUNGS[0][1] - S)))
+    from shapely.geometry import Polygon as _P
+    pipe = _P(PIPE)
+    plen = math.dist((WHIRL_X, BED), (WHIRL_X, 74.3)) + math.dist((WHIRL_X, 74.3), (-287.5, 73.65)) + math.dist((-287.5, 73.65), (ALCOVE[1], 73.65))
+    out.append(("The whirlpool and its pipe", "any faller drifts west at %.1f m a second into the whirlpool's pull (x %.1f to %.1f), %.1f m east of the kicker: "
+                "no one reaches the end wall. The pipe runs %.1f m from the drain in the flume's bed down to its mouth in the alcove's east wall (x %.1f, y 73.1 "
+                "to 74.2), 1.1 m across; it overlaps the moved mine by %.2f and the black waters by %.2f square metres. The alcove's floor (the old lip's grip, "
+                "y 72.7) is %.1f m from the ladder's foot." % (-FLOW, WHIRL[0], WHIRL[1], WHIRL[0] - KICK_X, plen, ALCOVE[1], pipe.intersection(mine).area,
+                                                              pipe.intersection(a2n).area, ALCOVE[0] - (-295.0))))
     out.append(("The kicker", "a barrel let loose at x %.1f runs up the tipping ramp and is thrown up %.1f m (to y %.1f, under the roof at %.0f) and back at %.1f m a second "
                 "into the waste chute's mouth: it never reaches the falls (x -297), %.1f m west" % (KICK_X, KICK_THROW[1] ** 2 / 5.58, BARREL_Y + KICK_THROW[1] ** 2 / 5.58 + 0.55,
                                                                                                 CEIL_W, -KICK_THROW[2], KICK_X - FALLS[1])))
@@ -468,18 +480,31 @@ def run_checks():
     out.append(("Headroom: on a barrel, and on the platform", "%.2f m and %.2f m under the roof at y %.0f" % (CEIL_W - (BARREL_Y + 0.55), CEIL_W - LANDING, CEIL_W)))
     out.append(("Reach: the lock's highest water to the lip ledge", "%.1f m (the lip ledge's top at 90; floating at %.1f). The top rung is %.1f m under it, out of reach."
                 % (90.0 - LOCK_HIGH, LOCK_HIGH, 90.0 - DRY_RUNGS[-1][1])))
-    out.append(("The lock's lift", "%.1f m in %.0f s (%.2f m a second), held %.0f s, down in %.0f s (%.2f m a second), then %.0f s at the bottom (added): an %.0f s "
-                "cycle. The chamber is %.1f m from its floor to the dry shaft's top. The lip ledge is in reach (2.1 m) while the water is over %.1f: %.1f s of each cycle."
-                % (LOCK_HIGH - LOCK_LOW, RISE, (LOCK_HIGH - LOCK_LOW) / RISE, HOLD, DRAIN, (LOCK_HIGH - LOCK_LOW) / DRAIN, LOW_HOLD, CYCLE, 89.4 - LOCK_FLOOR,
-                   90.0 - 2.1, reach_window())))
+    shut = RISE * (L0[2] - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW)
+    opens = RISE + HOLD + DRAIN * (LOCK_HIGH - L0[2]) / (LOCK_HIGH - LOCK_LOW)
+    win_end = RISE + HOLD + DRAIN * (LOCK_HIGH - 87.9) / (LOCK_HIGH - LOCK_LOW)
+    swim = (-233.0) - (L0[0] + L0[1]) / 2
+    out.append(("The lock's lift", "%.1f m in %.0f s (%.2f m a second), held %.0f s, down in %.0f s (%.2f m a second): a %.0f s cycle with no pause at the bottom "
+                "(Parker: keep it 14 s). The chamber is x %.0f to %.0f, %.1f m from its floor to its roof (y %.0f). The lip ledge is in reach (2.1 m) while the water "
+                "is over 87.9: %.1f s of each cycle." % (LOCK_HIGH - LOCK_LOW, RISE, (LOCK_HIGH - LOCK_LOW) / RISE, HOLD, DRAIN, (LOCK_HIGH - LOCK_LOW) / DRAIN,
+                                                          CYCLE, LOCK[0], LOCK[1], LOCK_CEIL - LOCK_FLOOR, LOCK_CEIL, reach_window())))
+    out.append(("The lock at 14 s, catching the rise", "the wicket is open while the water is under its sill (y 79.4): from %.1f s to %.1f s of the next cycle, "
+                "%.1f s. Standing on the sill, the rise reaches you at %.1f s and floats you; from there to the lip ledge's edge (x -232) is %.1f m of swimming in "
+                "the %.1f s until the reach ends (%.1f s): %.2f m a second, under the 2 m a second a swimmer manages. So one fill does it, and the ledges and "
+                "rungs hold you through a drain for another try." % (opens, shut, CYCLE - opens + shut, shut, swim, win_end - shut, win_end, swim / (win_end - shut))))
     loop = sum(BARREL_GAPS)
     out.append(("The barrels", "8 barrels, %.2f m a second, a %.1f m loop, %.1f m of road from the tunnel to the kicker, %.1f s unseen each loop: all as today. "
                 "Water between them: %s m." % (BARREL_SPEED, loop, ROAD, (loop - ROAD) / BARREL_SPEED, ", ".join("%.1f" % (g - 1.8) for g in BARREL_GAPS))))
     out.append(("The cart ride", "%.1f m of road today, %.1f m after (%.1f m longer); its end goes from (-148.4, -11.55) to (-207.4, -28.55). "
                 "The new incline is 20 degrees; the steepest stretch today is 17 (after the hop)." % (path_len(RIDE_OLD), path_len(RIDE_NEW), path_len(RIDE_NEW) - path_len(RIDE_OLD))))
-    out.append(("2.7's jump", "from the davit chain (x %.1f) over the falls (x -297 to -303) to the pool beyond: %.1f m to the pool's lip, %.1f to %.1f m to the "
-                "landing water, %.1f m down. An F2 fling (up to 8 m level, more with a drop)." % (DAVIT_CHAIN[0], DAVIT_CHAIN[0] - WEST_POOL[1], DAVIT_CHAIN[0] + 303.6,
-                                                                                               DAVIT_CHAIN[0] + 306.0, DAVIT_CHAIN[1] - DAVIT_CHAIN[2] - CH_S)))
+    def level(d, h):
+        return d * d / (d + h)              # the level throw that carries d with a drop of h (45 degrees, same speed)
+    near, far = LAUNCH[0] - (WEST_POOL[1] - 0.6), LAUNCH[0] - (-306.0)
+    out.append(("2.7's jump", "a fling from the launch ledge's west edge (x %.1f, y %.1f, flush with the falls' east edge): %.1f m to the first safe water past "
+                "the sill (x -303.6), %.1f m to the far side of the landing water (x -306, just short of C1), %.1f m down. On the level that is a throw of %.1f to %.1f m (taking the body's middle 0.8 m under the hand: "
+                "%.1f to %.1f m): F2, up to 8 m, the black waters' tier. Set flush with the falls, the ledge keeps it inside F2; 1 m further back the far end "
+                "would need %.1f m (F3)." % (LAUNCH[0], LAUNCH[1], near, far, LAUNCH[1] - CH_S, level(near, LAUNCH[1] - CH_S), level(far, LAUNCH[1] - CH_S),
+                                             level(near, LAUNCH[1] - 0.8 - CH_S), level(far, LAUNCH[1] - 0.8 - CH_S), level(far + 1.0, LAUNCH[1] - 0.8 - CH_S))))
     for k, v in out:
         CHECKS.append((k, v))
     return out
@@ -602,9 +627,7 @@ def overview(path, win=(-470.0, -62.0, 25.0, 190.0), size=(26.0, 13.6), dpi=110,
     _draw_movers(ax, MPoly, {"movers": list(NEW_A2["movers"]), "ropes": NEW_A2["ropes"]}, PAL["a2"])
     _draw_movers(ax, MPoly, NEW_A0, PAL["a0"])
     # the lock's highest water: up the dry shaft to 88.5
-    ax.add_patch(Rectangle((DRY[0], LOCK_CEIL), DRY[1] - DRY[0], LOCK_HIGH - LOCK_CEIL, facecolor="#2b6cb0", edgecolor="#7fb4ea", lw=0.7,
-                           ls=(0, (3, 2)), alpha=0.25, zorder=5))
-    ax.add_patch(Rectangle((LOCK[0], LOCK_LOW), LOCK[1] - LOCK[0], LOCK_CEIL - LOCK_LOW, facecolor="#2b6cb0", edgecolor="#7fb4ea", lw=0.7,
+    ax.add_patch(Rectangle((LOCK[0], LOCK_LOW), LOCK[1] - LOCK[0], LOCK_HIGH - LOCK_LOW, facecolor="#2b6cb0", edgecolor="#7fb4ea", lw=0.7,
                            ls=(0, (3, 2)), alpha=0.18, zorder=5))
     # ---- the great falls: one column on the well's middle line
     ax.add_patch(Rectangle((FALLS[0], -45.0), FALLS[1] - FALLS[0], y1 + 45.0, facecolor="#cfe6ff", edgecolor="#ffffff", lw=0.6, alpha=0.30, zorder=6))
@@ -854,23 +877,20 @@ def cycle_chart():
     for s in range(0, int(CYCLE) + 1, 2):
         o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#2c2622"/>' % (X(s), t, X(s), H - bt))
         o.append('<text x="%.1f" y="%.1f" class="lbl2" text-anchor="middle">%d s</text>' % (X(s), H - bt + 16, s))
-    # level lines: labels in the low-water stretch at the right (left side for the two that sit under the rising water)
-    for y, name, col, side in ((LOCK_LOW, "lowest water 77.2", "#7fb4ea", "R"), (L0[2], "the wicket's sill 79.4", "#ffe08a", "R"),
-                               (L2[2], "L2, east wall 81.0", "#ffe08a", "R"), (L1[2], "L1, west wall 82.4", "#ffe08a", "R"),
-                               (LOCK_CEIL, "the chamber's roof 86 (only the dry shaft goes on up)", "#b9b0a4", "R"),
-                               (DRY_RUNGS[-1][1], "top rung 87.6", "#ffe08a", "L"), (90.0 - 2.1, "lip ledge in reach above 87.9", "#ef6b63", "R"),
-                               (90.0, "the lip ledge, 90", "#ef6b63", "R")):
+    # level lines, labelled over the held top of the cycle (the water is above them all there)
+    for y, name, col, dy in ((LOCK_LOW, "lowest water 77.2", "#7fb4ea", -3), (L0[2], "the wicket's sill 79.4", "#ffe08a", -3),
+                             (L2[2], "L2, east wall 81.0", "#ffe08a", -3), (L1[2], "L1, under the slot 83.0", "#ffe08a", -3),
+                             (DRY_RUNGS[-1][1], "top rung 86.8", "#ffe08a", -3), (90.0 - 2.1, "lip ledge in reach above 87.9", "#ef6b63", 12),
+                             (LOCK_CEIL, "the chamber's roof 89", "#b9b0a4", -3), (90.0, "the lip ledge, 90", "#ef6b63", -3)):
         o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="%s" stroke-dasharray="4 4" stroke-width="1"/>' % (l, Y(y), W - r, Y(y), col))
-        if side == "R":
-            o.append('<text x="%.1f" y="%.1f" class="lbl2" fill="%s" text-anchor="end">%s</text>' % (W - r - 4, Y(y) - 3, col, B.esc(name)))
-        else:
-            o.append('<text x="%.1f" y="%.1f" class="lbl2" fill="%s">%s</text>' % (l + 4, Y(y) + 12, col, B.esc(name)))
+        o.append('<text x="%.1f" y="%.1f" class="lbl2" fill="%s">%s</text>' % (X(RISE + 0.15), Y(y) + dy, col, B.esc(name)))
     pts = " ".join("%.1f,%.1f" % (X(k / 10.0), Y(water_at(k / 10.0))) for k in range(int(CYCLE * 10) + 1))
     o.append('<polygon points="%.1f,%.1f %s %.1f,%.1f" fill="#2b6cb0" opacity=".35"/>' % (l, Y(y0), pts, X(CYCLE), Y(y0)))
     o.append('<polyline points="%s" fill="none" stroke="#7fb4ea" stroke-width="2.2"/>' % pts)
     # events: ticks, labelled in two rows above the plot
-    for k, (s, txt) in enumerate(((0.0, "0 s: the flap drops, the river pours in"), (RISE, "held"), (RISE + HOLD, "the sluices open: it drains"),
-                                  (RISE + HOLD + DRAIN, "at the bottom: the wicket opens"), (CYCLE - WARN_T, "the keeper's lever"))):
+    shut = RISE * (L0[2] - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW)
+    for k, (s, txt) in enumerate(((0.0, "0 s: the flap drops, the river pours in"), (shut, "the wicket shuts"), (RISE, "held"),
+                                  (RISE + HOLD, "the sluices open: it drains"), (CYCLE - WARN_T, "the keeper's lever; the wicket opens"))):
         o.append('<line x1="%.1f" y1="%.1f" x2="%.1f" y2="%.1f" stroke="#ffd36a" stroke-width="1"/>' % (X(s), t - (8 if k % 2 == 0 else 24), X(s), H - bt))
         anchor = "start" if s < CYCLE * 0.7 else "end"
         o.append('<text x="%.1f" y="%.1f" class="lbl2" fill="#ffd36a" text-anchor="%s">%s</text>'
@@ -887,7 +907,7 @@ def rhythm_strip():
     o = ['<rect x="0" y="0" width="%.0f" height="%.0f" fill="#17120f"/>' % (W, H)]
     x = W - 20
     o.append('<text x="%.1f" y="16" class="lbl2" text-anchor="end">east: out of the tunnel</text>' % (W - 20))
-    o.append('<text x="20" y="16" class="lbl2">west: to the lip and the falls</text>')
+    o.append('<text x="20" y="16" class="lbl2">west: to the kicker and the waste chute</text>')
     o.append('<line x1="20" y1="58" x2="%.1f" y2="58" stroke="#2b6cb0" stroke-width="10" opacity=".5"/>' % (W - 20))
     for k, g in enumerate(BARREL_GAPS):
         bx = x - 0.9 * s
@@ -964,22 +984,35 @@ def page_barriles():
            "It is how the keepers came down to the mine, and it is the way up: no barrels pass it (Parker, 11-14).",
            ladder, tag=[-294.4, 76.0]),
         it("climb", "The curtain's top and the pier's coping", [-1.2, 1.2],
-           "La Cortina lets out at the top of its dry shaft, as today, into a low room under the platform (x -295 to -284.5, 2.2 m tall, open to the "
+           "La Cortina lets out at the top of its dry shaft, as today, into a low room under the platform (x -295 to -288, 2.2 m tall, open to the "
            "falls on its west side). Off the top row, 1.9 m west onto the top of the pier between the dry shaft and the falls' slot, which gets a "
-           "pale stone coping (it is the mine's slick roof today). The ladder's foot is there; Los Barriles starts there. The room's east end, the "
-           "old lip's grip, is a rest.",
-           [R(-297.0, 72.7, -295.0, 73.0, "pale"), R(-291.0, 72.4, -284.5, 72.7, "pale")], tag=[-288.0, 74.2]),
+           "pale stone coping (it is the mine's slick roof today). The ladder's foot is there; Los Barriles starts there.",
+           [R(-297.0, 72.7, -295.0, 73.0, "pale")], tag=[-296.0, 71.9]),
+        it("climb", "The alcove", [-1.2, 1.2],
+           "The room's east end, on the right at the top of La Cortina's wet holds: a little alcove with the old lip's pale grip for a floor, 3 m "
+           "long, and the whirlpool's pipe coming out of its east wall in a flared iron mouth. Whoever the whirlpool takes is popped out here, 4 m "
+           "from the ladder's foot, to try again (Parker, 11-14).",
+           [R(ALCOVE[0], 72.4, ALCOVE[1], 72.7, "pale"), R(-288.3, 73.0, -288.0, 74.3, "pale")], tag=[-289.6, 74.0]),
         it("climb", "The platform", [-1.2, 1.2],
            "The flume's west end: a cut stone platform 4.5 m long on the end wall, its pale coping at y 79.4, where the crane stands. You step off "
-           "its east edge down onto a barrel as one comes up to the kicker, 1.35 m down. Two iron rungs on its east face, out of the water, for "
-           "anyone the current brings back to the end.",
+           "its east edge down onto a barrel as one comes up to the kicker, 1.35 m down.",
            [R(WEST_LANDING[0], LANDING - 0.3, WEST_LANDING[1], LANDING, "pale")], tag=[-292.6, 78.4]),
         it("climb", "The kicker", [-1.2, 1.2],
            "The barrel men's tipping ramp: a worn stone ramp rising out of the water against the end wall, iron-shod, with white water on it. A "
            "barrel drifting onto it is let loose and thrown up 3.6 m and back into the waste chute (first guess), as the glacier's ice slabs are "
-           "kicked into their cave (note 91). It throws barrels only; a climber the current brings to it is held against the end wall by the water "
-           "and climbs out by the rungs.",
+           "kicked into their cave (note 91). It throws barrels only: a climber in the water never gets this far, because the whirlpool takes them "
+           "first.",
            [P([[-290.5, BED], [-287.4, BED], [-287.4, 76.3], [-290.5, 77.9]], "pale")], tag=[-288.6, 76.4]),
+        it("climb", "The whirlpool", [-1.2, 1.2],
+           "A small whirlpool turning on the flume's surface 1 m east of the kicker, white at its rim and dark in its eye, over a drain in the "
+           "flume's bed. The current carries anyone in the water west into it: it pulls them under and down the drain. The barrels float over it "
+           "(their line does not feel the water).",
+           [C(WHIRL_X, S - 0.05, 1.1, "line"), C(WHIRL_X, S - 0.05, 0.6, "line"), C(WHIRL_X, S - 0.05, 0.2, "pale")], tag=[WHIRL_X, 78.9]),
+        it("climb", "The pipe", [-1.2, 1.2],
+           "A cast-iron drain pipe 1.1 m across, slick inside: from the whirlpool's drain down through the rock and round a bend to its mouth in the "
+           "alcove's east wall, 3.1 m. The body rides it and is thrown out of the mouth onto the alcove's floor. Seen as a riveted pipe where it "
+           "crosses the alcove's back wall, so you know where it goes.",
+           [P(PIPE, "line")], tag=[-286.4, 73.6]),
         it("climb", "The barrels", [-0.9, 0.9],
            "As today: eight, two iron hoops each and the company's pug branded on their ends, drawn on. Same speed, same spacing, now running west, "
            "right to left, against you.",
@@ -1003,8 +1036,8 @@ def page_barriles():
          "four stretches, two lunges, two swims against 1.0 m a second: as today"],
         ["Off the last barrel", "a barrel just come into your plane, x -264.2 or west of it", "the east landing, x -260.4, y 79.4",
          "2.9 m across, 1.35 m up", "lunge or a short fling (F1): today's last move onto the west ledge, mirrored"],
-        ["Fall in", "the water", "the end wall, x -290.5", "carried 1.0 m a second", "held against the end by the current; out by the two rungs onto the "
-         "platform, and start the crossing again. Mind the barrels arriving at the kicker beside you"],
+        ["Fall in", "the water", "the whirlpool, x -287.6 to -285.4", "carried west at 1.0 m a second", "pulled under and down the pipe (3.1 m, a ride) and "
+         "popped out in the alcove at the top of La Cortina, 4 m from the ladder: climb it again"],
         ["Fall off the ladder", "the ladder", "the great falls", "", "a ride all the way down to the Sump (note 147)"],
     ]
     return {
@@ -1020,9 +1053,17 @@ def page_barriles():
             "So the flume's west end no longer has to reach the falls, and the way up is a plain climb straight up beside the falls: the keepers' "
             "ladder, 6.4 m, in a 2 m strip between the falls and the platform. No barrel passes it: the crane's chain and its barrel timing are gone.",
             "The flume's water now runs from x -290.5 to -258.5; its barrels' road is as today (26.8 m), from the tunnel at x -261.8 to the kicker at x "
-            "-288.6. The quay beyond it is 7.5 m (it was 13.5).",
-            "A fall into the flume no longer goes down the falls: the current holds you against the end wall and you climb out onto the platform. "
-            "A fall off the ladder goes into the falls and rides them to the Sump (note 147)."]))],
+            "-288.6. The quay beyond it is 13.5 m.",
+            "A fall into the flume (Parker, 11-14): the current takes you into a small whirlpool by the west end, which sucks you down a pipe and "
+            "pops you out in the little alcove at the top of La Cortina's wet holds, on their right, to climb the ladder again. A fall off the "
+            "ladder goes into the falls and rides them to the Sump (note 147)."])),
+                   ("How the game could do the whirlpool and the pipe", ul([
+            "The whirlpool: a small zone on the flume's surface (x -287.6 to -285.4) that pulls a body in toward its middle and down through the drain "
+            "(a downward pull stronger than the water's lift there). The barrels' line is a path, so they float over it.",
+            "The pipe: a tube of air 1.1 m across with slick walls cut in the rock, as st.py's tube() cuts the frogs' slide.",
+            "A ride zone over the whirlpool's eye and the pipe (x -288 to -285.4, y 73.1 to 77.2), as st.py's A.ride does for the frogs' slide: "
+            "the body is carried along it, never dropped.",
+            "At the mouth, a small throw out of the pipe (first guess 2 m a second west, like a bounce line) so you land on the alcove's floor."]))],
         "keep": [
             "The barrels exactly as today: eight, 0.55 m a second, the written gaps 3.0, 3.4, 2.9, 5.8, 3.1, 3.5, 2.9 and 6.2 m round a 30.8 m loop, "
             "26.8 m of it on the water, 7.3 s unseen each loop. They run right to left, east to west, against you (note 146).",
@@ -1047,6 +1088,7 @@ def page_barriles():
             ["The platform", "Where the crane stood", "The crane, broken; its post and lantern"],
             ["The barrels", "The company's barrels, coming down from the river by the bypass", "The tunnel they come out of; the chute they are flung into"],
             ["The kicker", "The barrel men's tipping ramp", "The waste chute's black mouth over it"],
+            ["The whirlpool and the pipe", "The flume's old drain, still pulling", "The pipe's riveted run behind the alcove, its flared mouth"],
             ["The water", "The flume: a stone channel that took barrels to the crane", "The arcade, and the painted vaults going back"],
             ["The east landing", "The quay's end, where the barrel men stood", "The boat hooks, the tally board, the rope"],
         ],
@@ -1058,7 +1100,9 @@ def page_barriles():
             ["Waste chute: brick-lined mouth, black, a chute going back", "5 m wide, 8 m deep", "1", "Background (set)", "new"],
             ["Tipping ramp, iron-shod, with white water", "3.1 m", "1", "Play space", "new; the game's kicker (the mine's board, note 91's ice lip)"],
             ["Keepers' ladder: iron, two rungs gone", "6.4 m", "1", "Play space", "kit: the mine's iron ladder (A.ladder), bolted"],
-            ["Platform: cut stone, pale coping, two rungs on its east face", "4.5 m", "1", "Play space", "kit: the works' coping and rungs"],
+            ["Platform: cut stone, pale coping", "4.5 m", "1", "Play space", "kit: the works' coping"],
+            ["Whirlpool: foam ring and dark eye on the water, drain grating in the bed", "2.2 m", "1", "Play space", "new, painted water and an effect"],
+            ["Cast-iron drain pipe with a flared mouth, riveted", "1.1 m across, 3.1 m", "1", "Play space edge (its mouth) and background", "new"],
             ["Painted vaults going back", "far card 30 m by 8 m", "1", "Backdrop", "new"],
             ["The view down the great falls", "far card 8 m wide here, 120 m tall down the mine", "1", "Backdrop", "new"],
             ["Hanging landing: cut stone slab on beam ends", "1.9 m, then the quay", "1", "Play space", "kit: aguas_charco_landing_west, re-cut"],
@@ -1069,10 +1113,11 @@ def page_barriles():
         ],
         "effects": ["The great falls beside the ladder as 3D water (note 111), spray drifting across the strip and the rungs.",
                     "White water on the tipping ramp; a hollow boom as each barrel goes into the chute, so you hear the rhythm too.",
+                    "The whirlpool's turning foam and its gurgle; a gush and a clang from the pipe's mouth in the alcove when it delivers someone.",
                     "Mist rising out of the falls' shaft past the platform."],
         "first": ["The ladder: 6.4 m, at x -295.4, rungs every 0.75 m with two gone.", "The kicker's throw: 4.5 m a second up, 3.5 back, 0.6 west.",
                   "The flume's surface at y 77.2, its bed at 75.7; the room under the platform 2.2 m tall.", "The landings' tops at y 79.4 (2.2 m over the water).",
-                  "The two rungs out of the water on the platform's east face."],
+                  "The whirlpool: 2.2 m wide, 1 m east of the kicker; its pull; the pipe's throw out of its mouth (2 m a second)."],
         "notes": ["Note 146 and Parker's answers (11-14 15:30): the barrels run right to left and are thrown back into the background, never into the falls; "
                   "a climb straight up beside the falls; numbered 1.12.",
                   "Note 91: the kicker that throws the glacier's slabs into their cave, the model for this one.",
@@ -1080,156 +1125,160 @@ def page_barriles():
                   "Note 21 and the work log: they leave by a thing you see, never vanish; the written gaps; two swims.",
                   "Note 147 (settled): a fall into the great falls anywhere rides them all the way to the Sump.",
                   "Note 111: the falls drawn as 3D water."],
-        "ask": ["A fall into the flume now only puts you back at the platform (the current holds you at the end wall). Is that gentle enough, or should "
-                "the end wall have a gap that lets a swimmer, not a barrel, go on into the falls?"],
+        "ask": ["The pipe pops you out in the alcove on the right at the top of La Cortina's wet holds (the 1.11 staples), which I read as the place you "
+                "meant. If you meant the top of the keepers' ladder instead, its mouth moves up onto the platform: say which."],
     }
 
 
 def page_lock():
-    win = [-265.0, 74.0, -222.0, 92.5]
-    marks = [("poly", [(LOCK[0], LOCK_LOW), (LOCK[1], LOCK_LOW), (LOCK[1], LOCK_CEIL), (DRY[1], LOCK_CEIL), (DRY[1], LOCK_HIGH), (DRY[0], LOCK_HIGH),
-                       (DRY[0], LOCK_CEIL), (PIER[1], LOCK_CEIL), (PIER[1], 84.0), (PIER[0], 84.0), (PIER[0], LOCK_HIGH), (SLOT[0], LOCK_HIGH),
-                       (SLOT[0], LOCK_CEIL), (LOCK[0], LOCK_CEIL)], "hiw")]
-    for xx in (-243.0, -241.5, -240.0, -238.6):
-        marks.append(("line", [(xx, 85.3), (xx, 78.4)], "push"))
-    marks += [("text", [(-231.6, 88.9), "highest water 88.5"], "notep"), ("text", [(-249.6, 76.3), "lowest 77.2"], "notep"),
-              ("text", [(-243.8, 87.3), "the river pours in"], "notep"), ("text", [(-258.3, 90.9), "the quay"], "noteo"),
+    win = [-260.0, 74.0, -222.0, 92.5]
+    shut = RISE * (L0[2] - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW)
+    opens = RISE + HOLD + DRAIN * (LOCK_HIGH - L0[2]) / (LOCK_HIGH - LOCK_LOW)
+    marks = [("poly", [(LOCK[0], LOCK_LOW), (LOCK[1], LOCK_LOW), (LOCK[1], LOCK_HIGH), (LOCK[0], LOCK_HIGH)], "hiw")]
+    marks += [("text", [(-231.6, 88.0), "highest water 88.5"], "notep"), ("text", [(-243.6, 76.3), "lowest 77.2"], "notep"),
+              ("text", [(-243.8, 90.2), "the river pours in here"], "notep"), ("text", [(-259.6, 90.9), "the quay"], "noteo"),
               ("text", [(-231.6, 91.0), "El Borde starts here"], "note")]
     items = [
         it("backdrop", "The river's culverts, through a grating", [-16.0, -12.0],
            "High in the chamber's back wall, a barred opening onto the culverts the river runs through behind the lock: painted going back in rows, "
            "lit teal from far off, with the sound of the water. The one look out of the chamber.",
-           [R(-249.4, 83.8, -246.9, 85.6, "dark"), L(-248.8, 83.8, -248.8, 85.6, "line"), L(-248.1, 83.8, -248.1, 85.6, "line"),
-            L(-247.5, 83.8, -247.5, 85.6, "line")], tag=[-248.2, 86.4]),
+           [R(-235.0, 84.4, -232.5, 86.2, "dark"), L(-234.4, 84.4, -234.4, 86.2, "line"), L(-233.7, 84.4, -233.7, 86.2, "line"),
+            L(-233.1, 84.4, -233.1, 86.2, "line")], tag=[-233.8, 87.0]),
         it("set", "The chamber's back wall", [-2.2, -1.9],
            "Cut stone in long courses, stained teal up to the highest water and green-black below the lowest, with a pale scum line painted where "
-           "the water stands at the top of each fill. Rust tracks run down from the ledges' brackets. The two ends of the chamber are the lower gate "
-           "(west) and plain wet rock (east).",
-           [R(-250.0, 75.7, -228.0, 86.0, "solid"), L(-250.0, 80.2, -228.0, 80.2, "mark"), L(-250.0, 84.0, -228.0, 84.0, "mark")], tag=[-233.0, 79.0]),
+           "the water stands at the top of each fill. Rust tracks run down from the ledges' brackets. Under the slot, the river comes down this wall "
+           "as a white sheet while it fills, behind you (looks only: it does not push you).",
+           [R(LOCK[0], LOCK_FLOOR, LOCK[1], LOCK_CEIL, "solid"), L(LOCK[0], 80.2, LOCK[1], 80.2, "mark"), L(LOCK[0], 84.0, LOCK[1], 84.0, "mark")], tag=[-231.0, 79.0]),
         it("set", "The quay's back wall and the keeper's booth", [-2.6, -1.3],
            "Brick, with the keeper's booth set into it beside the lower gate: a little stone room with a round-headed opening, a lamp, a stool and a "
            "window onto the chamber. Cut away at the front, so you see in.",
-           [R(QUAY[0], 79.4, -251.0, 86.0, "solid"), arch(-257.4, -253.4, 79.4, 81.4, "dark")], tag=[-257.9, 84.6]),
+           [R(QUAY[0], 79.4, GATE[0], 86.0, "solid"), arch(-253.4, -249.4, 79.4, 81.4, "dark")], tag=[-256.0, 84.0]),
         it("set", "The slot's foot and the flap gate", [-2.0, -1.2],
-           "Where the black waters' slot comes down through the roof: an iron frame round its foot and a heavy flap gate on a hinge, shut across it. "
-           "When it drops, the river comes through as a white column into the chamber. When it is shut, the river slides off it into the bypass "
+           "Where the black waters' slot comes down through the chamber's roof, at its west end: an iron frame and a heavy flap gate on a hinge, shut "
+           "across it. When it drops, the river comes down the back wall into the chamber. When it is shut, the river slides off it into the bypass "
            "culvert's mouth at the back of the slot, which takes it down to the flume (and the barrels with it).",
-           [L(-244.0, 84.0, -244.0, 86.2, "line"), L(-238.0, 84.0, -238.0, 86.2, "line"), C(-243.7, 85.7, 0.18, "pale"), R(-243.6, 86.4, -238.4, 88.0, "dark")],
-           tag=[-241.0, 87.4]),
+           [L(SLOT[0], LOCK_CEIL, SLOT[0], 90.4, "line"), L(SLOT[1], LOCK_CEIL, SLOT[1], 90.4, "line"), C(SLOT[0] + 0.3, LOCK_CEIL + 0.2, 0.18, "pale")],
+           tag=[-241.0, 90.9]),
         it("things", "The frog keeper and his lever", [-1.9, -1.4],
            "The hero piece. A frog in an oilskin cap in the booth, one hand on a tall lever with a brass knob. One second before each fill he hauls "
            "it over: that is the warning, as every danger on the mountain warns before it acts. He sits in the house frogs' style, matte, and never "
            "leaves his booth.",
-           [C(-255.4, 80.6, 0.42, "pale"), R(-255.8, 79.4, -255.0, 80.25, "pale"), L(-254.3, 79.4, -253.8, 81.3, "line"), C(-253.8, 81.3, 0.12, "pale")],
-           tag=[-255.4, 82.4]),
+           [C(-251.4, 80.6, 0.42, "pale"), R(-251.8, 79.4, -251.0, 80.25, "pale"), L(-250.3, 79.4, -249.8, 81.3, "line"), C(-249.8, 81.3, 0.12, "pale")],
+           tag=[-251.4, 82.4]),
         it("things", "The gate wheel", [-1.9, -1.5],
-           "A big iron hand wheel on the quay's wall over the booth, its hub a pug's face. It spins as the flap gate drops and spins back as it shuts, "
+           "A big iron hand wheel on the quay's wall by the gate, its hub a pug's face. It spins as the flap gate drops and spins back as it shuts, "
            "worked by shafts in the wall: the machine you can see (rule 6).",
-           [C(-252.2, 84.6, 0.7, "line"), C(-252.2, 84.6, 0.2, "pale")], tag=[-252.2, 85.8]),
+           [C(-247.2, 84.6, 0.7, "line"), C(-247.2, 84.6, 0.2, "pale")], tag=[-247.2, 85.8]),
         it("things", "The gauge board", [-1.7, -1.5],
-           "A tall painted board on the back wall, from the floor to the dry shaft's top, marked every metre with a pug at the top, and a float on a "
-           "guide that rides the water. Watching it tells you where the water is in its cycle.",
-           [R(-235.6, 76.0, -234.4, 89.4, "pale"), C(-235.0, 77.5, 0.28, "light")], tag=[-235.0, 82.6]),
+           "A tall painted board on the back wall from the floor to the roof, marked every metre with a pug at the top, and a float on a guide that "
+           "rides the water. Watching it tells you where the water is in its cycle.",
+           [R(-236.6, 76.0, -235.4, 88.8, "pale"), C(-236.0, 77.5, 0.28, "light")], tag=[-236.0, 82.6]),
         it("things", "Lanterns", [-2.1, -1.9],
-           "Three works lanterns, teal and steady: one in the booth, one on the chamber's west wall over L1, one on the east wall over L2.",
-           [C(-256.6, 81.0, 0.15, "light"), C(-247.2, 83.4, 0.17, "light"), C(-229.0, 83.6, 0.17, "light")], tag=[-229.0, 84.6]),
+           "Three works lanterns, teal and steady: one in the booth, one on the back wall by L1, one on the east wall over L2.",
+           [C(-252.6, 81.0, 0.15, "light"), C(-240.8, 85.2, 0.17, "light"), C(-229.0, 83.6, 0.17, "light")], tag=[-229.0, 84.6]),
         it("climb", "The wicket and its sill", [-1.2, 1.2],
-           "A small iron door in the foot of the lower gate, 2.5 m tall. It is open while the water is at the bottom, and shuts with a clang when the "
-           "keeper pulls his lever. Its stone sill runs into the chamber as the lowest ledge.",
-           [R(-251.15, 79.4, -250.95, 81.9, "pale"), R(-251.15, 81.9, -249.9, 82.1, "pale")], tag=[-249.6, 80.4]),
+           "A small iron door in the foot of the lower gate, 2.5 m tall. It is open while the water is under its sill and shuts with a clang as the "
+           "water reaches it: %.1f s of every cycle (from %.1f s, as the drain ends, to %.1f s, as the next rise comes). Its stone sill runs into the "
+           "chamber as the lowest ledge, where you stand to catch the rise." % (CYCLE - opens + shut, opens, shut),
+           [R(GATE[0] - 0.15, 79.4, GATE[0] + 0.05, 81.9, "pale"), R(GATE[0] - 0.15, 81.9, GATE[1] + 0.1, 82.1, "pale")], tag=[-242.6, 80.4]),
         it("climb", "The lower gate", [-1.2, 1.2],
            "The chamber's west end: a riveted iron gate from the floor to the roof, black with water and slick. At the top of a fill it holds the "
            "whole chamber back from the quay; the drain's sluices are at its foot, under the quay, and let the water out into the flume's head.",
-           [L(-250.5, 82.6, -250.5, 85.7, "mark"), L(-250.5, 76.0, -250.5, 78.8, "mark")], tag=[-250.5, 84.4]),
+           [L(-244.5, 82.6, -244.5, 88.6, "mark"), L(-244.5, 76.0, -244.5, 78.8, "mark")], tag=[-244.5, 86.4]),
         it("climb", "The two ledges", [-1.2, 1.2],
-           "Stone corbels with pale copings on iron brackets: L1 on the west wall (x -246.6 to -245.0, top 82.4), L2 on the east wall (x -229.6 to "
-           "-228.0, top 81.0). Each is too high to reach from the water at the bottom: you take it as the water brings you level.",
-           [L(-246.4, 81.85, -245.5, 81.0, "line"), L(-229.4, 80.45, -228.5, 79.6, "line")], tag=[-229.0, 82.0]),
+           "Stone corbels with pale copings on iron brackets out of the back wall: L1 under the slot (x -239.6 to -238.2, top 83.0), L2 on the east "
+           "wall (x -229.6 to -228.0, top 81.0). Each is out of reach from the water at the bottom: you take it as the water brings you level, and it "
+           "keeps you up through a drain.",
+           [L(-239.4, 82.45, -238.6, 81.6, "line"), L(-229.4, 80.45, -228.5, 79.6, "line")], tag=[-229.0, 82.0]),
         it("climb", "The rungs", [-0.3, 0.3],
-           "Iron staples: two on the pier's foot (y 84.6 and 85.5) and two in the dry shaft's east wall (86.8 and 87.6). Holds to wait on near the top. "
-           "The top one is 2.4 m under the lip ledge: out of reach, so only the highest water gets you out.",
-           [R(-235.95, 84.3, -235.6, 85.8, "pale"), R(-232.4, 86.5, -232.0, 87.9, "pale")], tag=[-233.6, 86.6]),
+           "Three iron staples up the east wall under the lip ledge (y 84.8, 85.8, 86.8): holds to wait on near the top. The top one is 3.2 m under "
+           "the lip ledge and you are under its slab there: out of reach, so only the highest water gets you out.",
+           [R(-228.4, 84.5, -228.0, 87.1, "pale")], tag=[-229.4, 86.0]),
         it("climb", "The top of the dry shaft", [-1.2, 1.2],
-           "The old dry shaft, as today: the mine's last timber set against the works' first brick, now the top of the lock. From the water at its "
-           "highest you reach the lip ledge's edge, 1.5 m up, and climb out. El Borde starts there.",
-           [R(-236.25, 86.0, -235.95, 89.8, "pale"), R(-232.05, 86.0, -231.75, 89.8, "pale")], tag=[-231.0, 89.0]),
+           "The old dry shaft's head, as today: the mine's last timber set against the works' first brick, now the lock's way out. From the water at "
+           "its highest you reach the lip ledge's edge, 1.5 m up, and climb out. El Borde starts there.",
+           [R(-236.25, LOCK_CEIL, -235.95, 89.8, "pale"), R(-232.05, LOCK_CEIL, -231.75, 89.8, "pale")], tag=[-231.0, 89.4]),
         it("fore", "The gate's front post", [1.3, 1.6],
            "One thin timber post in front of the lower gate's edge, over solid gate, so it frames the way in and covers nothing you need (the "
            "doorway exception to the foreground rule).",
-           [R(-251.5, 79.4, -251.2, 86.0)], tag=[-251.35, 86.6]),
+           [R(GATE[0] - 0.5, 79.4, GATE[0] - 0.2, 86.0)], tag=[GATE[0] - 0.35, 86.6]),
     ]
     moves = [
-        ["In through the wicket", "the quay, y 79.4", "the wicket's sill, x -249.3", "level", "walk; only at the bottom of the cycle (it shuts during each fill)"],
-        ["Across at the bottom", "the sill", "the east side, x -236 to -228", "up to 13 m of still water 1.5 m deep", "swim, before the fill: while it fills, the river "
-         "pours down the middle (x -244 to -238) and pushes down whoever is under it"],
-        ["Float up", "the water, y 77.2", "y 88.5, in the dry shaft", "11.3 m in 6 s", "ride the water. East of x -232 or west of x -244 the chamber's roof (y 86) stops you"],
-        ["Rest on a ledge", "the water", "L2, east wall, y 81.0 (or L1, west wall, y 82.4)", "take it as it comes level", "reach; it keeps you up through the drain"],
-        ["Wait near the top", "the water", "the pier's rungs (84.6, 85.5) or the dry shaft's (86.8, 87.6)", "", "reach, then hold"],
-        ["Out", "the water at its highest, y 88.5, in the dry shaft", "the lip ledge's edge, x -232, y 90", "1.5 m up", "reach, in the %.1f s the water is high enough "
-         "(over 87.9); from the top rung it is 2.4 m, out of reach" % reach_window()],
-        ["Miss it", "the top", "y 77.2", "down 11.3 m in 5 s", "the drain takes down everyone not on a ledge or a rung; wait %.0f s for the next fill" % CYCLE],
+        ["In through the wicket", "the quay, y 79.4", "the wicket's sill, x -243.3", "level",
+         "walk, while the water is under the sill: %.1f s of every 14 s (from %.1f s to %.1f s)" % (CYCLE - opens + shut, opens, shut)],
+        ["Catch the rise", "the sill", "the water", "it reaches you at %.1f s" % shut, "float: it lifts you 9.1 m more in the next %.1f s" % (RISE - shut)],
+        ["Across, while it lifts you", "x -243.3", "the dry shaft's line, x -236 to -232", "10.3 m in the %.1f s until the top's reach ends" % (9.27 - shut),
+         "swim, 1.3 m a second (a swimmer manages 2); nothing pushes you: the river comes down the back wall"],
+        ["Rest on a ledge", "the water", "L1, under the slot, y 83.0, or L2, east wall, y 81.0", "take it as it comes level", "reach; it keeps you up through the drain"],
+        ["Wait near the top", "the water", "the east wall's rungs (84.8, 85.8, 86.8)", "", "reach, then hold for the next top"],
+        ["Out", "the water at its highest, y 88.5, x -236 to -232", "the lip ledge's edge, x -232, y 90", "1.5 m up",
+         "reach, in the %.1f s the water is high enough (over 87.9)" % reach_window()],
+        ["Miss it", "the top", "y 77.2", "down 11.3 m in 5 s", "the drain takes down everyone not on a ledge or a rung; the next rise follows at once"],
     ]
     return {
         "slug": "la_esclusa_the_lock", "h1": "Challenge 1.13: La Esclusa, the lock",
-        "place": ("The lock that let the barrels down from the river to the flume. It is a stone chamber 22 m long and 13 m deep under the end of the "
+        "place": ("The lock that let the barrels down from the river to the flume. It is a stone chamber 16 m long and 13 m deep under the end of the "
                   "black waters' river, where the river used to pour into the mine. The black waters' slot still brings it down, now onto a flap gate "
-                  "at the chamber's top. The old frog keeper still works it from his booth on the quay: he hauls his lever, the flap drops, the river "
-                  "comes through as a white column, and the chamber fills 11 m in six seconds. Then it holds, the sluices in the lower gate open, and "
-                  "it drains away. You go in through the wicket at the bottom, cross while it is low, ride the water up, and at the very top of a fill "
-                  "reach out of the old dry shaft onto the lip ledge where El Borde starts."),
+                  "in the chamber's roof at its west end. The old frog keeper still works it from his booth on the quay: he hauls his lever, the flap "
+                  "drops, the river comes down the back wall in a white sheet, and the chamber fills 11 m in six seconds. It holds for three, the "
+                  "sluices in the lower gate open, and it drains in five; then straight away it fills again. You step in through the wicket as the "
+                  "water drains under its sill, stand on the sill, catch the rise as it comes, and swim across as it lifts you, to reach out of the old "
+                  "dry shaft onto the lip ledge where El Borde starts."),
         "keep": ["A fall from El Borde lands in this lock (it used to go on down the slot to the Sump): gentler, and kept (Parker, 11-14 15:30).",
-                 "El Borde exactly as today: its lip ledge (x -232 to -226, y 90), the slot, the pier with its peaked top, the dry shaft, the river, its "
-                 "one chain.", "The way into El Borde is still up the old dry shaft onto the lip ledge, as from the mine today."],
+                 "El Borde exactly as today: its lip ledge (x -232 to -226, y 90), the slot, the pier with its peaked top, the dry shaft, the river, its one chain.",
+                 "The way into El Borde is still up the old dry shaft onto the lip ledge, as from the mine today."],
         "moves": moves,
-        "after_moves": [("The cycle", cycle_chart() + "<p>%s</p>" % B.esc(
-            "The pitch's cycle is 14 s: 6 s rising, 3 s held, 5 s draining. That leaves no time at the bottom, so the wicket would never be open and "
-            "nobody could cross before the fill. I added 4 s at the bottom (first guess), so the cycle is 18 s. The keeper hauls his lever 1 s before "
-            "each fill. The lip ledge is in reach for %.1f s of each cycle: the last moment of the rise and the 3 s hold." % reach_window()))],
+        "after_moves": [("The cycle: 14 s, as pitched", cycle_chart() + "<p>%s</p>" % B.esc(
+            "Kept at 14 s (Parker, 11-14): 6 s rising, 3 s held, 5 s draining, no pause at the bottom. It still works. The wicket is open while the "
+            "water is under its sill, %.1f s of every cycle, enough to step in. On the sill you catch the rise as it comes (at %.1f s); it lifts you, "
+            "and in the %.1f s until the lip ledge goes out of reach you swim the 10.3 m to the dry shaft's line at 1.3 m a second. To make that "
+            "work without a pause, the chamber is now 16 m (the slot at its west end, by the gate), open to y 89 all along so nothing pins you under "
+            "a roof, and the river comes down the back wall instead of pushing down through the middle. The lip ledge is in reach for %.1f s of each "
+            "cycle: the end of the rise and the hold." % (CYCLE - opens + shut, shut, 9.27 - shut, reach_window())))],
         "figures": [{"win": win, "faint": faint_today(), "bold": [(NEW_A2, PAL["a2"]), (NEW_SEC, PAL["a2"])], "marks": marks,
-                     "screen": [-240.0, 82.5], "climbers": [(-249.4, 79.4)],
-                     "caption": "From the side. Water at its lowest, drawn solid; its highest, dashed blue. The dotted column under the slot is where the river "
-                                "pours in while it fills. The climber stands on the wicket's sill. Faint underneath: today's mine, whose throat was here."}],
+                     "screen": [-238.5, 82.5], "climbers": [(-243.3, 79.4)],
+                     "caption": "From the side. Water at its lowest, drawn solid; its highest, dashed blue. The climber stands on the wicket's sill, waiting for "
+                                "the rise. Faint underneath: today's mine, whose throat was here."}],
         "items": items,
         "explains": [
             ["The wicket's sill", "The lock-keeper's door through the lower gate", "The booth beside it, the gate's riveted face"],
-            ["The water that lifts you", "The lock filling from the river", "The flap gate and the white column under the slot; the gauge board"],
+            ["The water that lifts you", "The lock filling from the river", "The flap gate, the white sheet down the back wall, the gauge board"],
             ["L1 and L2", "Corbels the keepers stood on to work the chamber", "Their brackets and rust tracks on the back wall"],
-            ["The rungs", "The keepers' iron staples up the pier and the dry shaft", "The pier's foot, the dry shaft's timber set"],
+            ["The rungs", "The keepers' iron staples up the east wall", "The lip ledge's slab over them"],
             ["The lip ledge", "El Borde's lip ledge, as today", "The brick tunnel of the river above"],
         ],
         "pieces": [
             ["Frog keeper in an oilskin cap, at a lever", "frog 0.8 m; lever 1.9 m", "1", "Background (hero)", "new pose in the house frogs' style"],
-            ["Keeper's booth: recess, lamp, stool, window", "4.6 m wide, 2.4 m tall", "1", "Background (set)", "new"],
-            ["Gate wheel with a pug hub", "1.6 m across", "1", "Background (turns)", "new"],
-            ["Gauge board with float", "1.2 by 13.4 m", "1", "Background", "new"],
-            ["Lower gate: riveted iron leaf with a wicket door and foot sluices", "1 by 10.3 m", "1", "Play space (slick)", "new; the wicket shuts and opens"],
+            ["Keeper's booth: recess, lamp, stool, window", "4 m wide, 2.4 m tall", "1", "Background (set)", "new"],
+            ["Gate wheel with a pug hub", "1.4 m across", "1", "Background (turns)", "new"],
+            ["Gauge board with float", "1.2 by 12.8 m", "1", "Background", "new"],
+            ["Lower gate: riveted iron leaf with a wicket door and foot sluices", "1 by 13.3 m", "1", "Play space (slick)", "new; the wicket shuts and opens"],
             ["Flap gate in an iron frame", "6 m", "1", "Play space (moves)", "new"],
             ["Corbel ledge with coping and bracket", "1.4 to 1.6 m", "2", "Play space", "kit: the works' coping on a new bracket"],
-            ["Iron staple", "0.5 m", "4", "Play space", "kit: iron_staple"],
-            ["Chamber back wall with water-line bands", "22 by 10.3 m", "1", "Background (set)", "new, painted"],
+            ["Iron staple", "0.5 m", "3", "Play space", "kit: iron_staple"],
+            ["Chamber back wall with water-line bands and the river's white sheet", "16 by 13.3 m", "1", "Background (set)", "new, painted; the sheet as 3D falling water"],
             ["Barred opening onto the culverts, painted behind", "2.5 by 1.8 m", "1", "Backdrop", "new"],
             ["Works lantern, teal", "0.3 m", "3", "Background", "kit"],
         ],
-        "effects": ["The white column of the river through the slot while it fills, foam where it hits, spray.", "Bubbles and a swirl as the sluices drain it.",
-                    "The clang of the wicket and the flap, the wheel's rattle.", "Drips from the roof all the time (every rest has its unease)."],
-        "first": ["Low 77.2, high 88.5; 6 s up, 3 s held, 5 s down, and the added 4 s at the bottom.", "The keeper's warning 1 s before each fill.",
-                  "The inflow's push while it fills: 4 m a second each second downward under the slot.",
-                  "The two ledges' places and heights, the four rungs.", "The chamber: x -250 to -228, floor 75.7, roof 86."],
-        "notes": ["Note 146: at least one more challenge in the new section; the lock, as pitched and liked.",
+        "effects": ["The river's white sheet down the back wall under the slot while it fills, foam where it meets the water, spray.",
+                    "Bubbles and a swirl as the sluices drain it.", "The clang of the wicket and the flap, the wheel's rattle.",
+                    "Drips from the roof all the time (every rest has its unease)."],
+        "first": ["Low 77.2, high 88.5; 6 s up, 3 s held, 5 s down (the pitch's 14 s, kept).", "The keeper's warning 1 s before each fill.",
+                  "The chamber: x -244 to -228, floor 75.7, roof 89.", "The two ledges' places and heights, the three rungs.",
+                  "The river's sheet down the back wall: looks only, no push."],
+        "notes": ["Note 146: at least one more challenge in the new section; the lock, as pitched and liked; numbered 1.13 (Parker, 11-14 15:30).",
+                  "Parker, 11-14: keep it 14 s.",
                   "Rule 6 and rule 7 of the mountain: the gate wheel and the flap show the machine; the keeper's lever warns before each fill."],
-        "ask": ["The pitched 14 s cycle has no pause at the bottom, so I added 4 s (18 s in all) for the wicket and the crossing. All right?",
-                "The river pours in across the middle of the chamber (the slot is fixed by El Borde), so you cross while it is low. Keep that?"],
     }
 
 
 def page_place():
     win = [-306.5, 69.5, -222.0, 92.5]
     marks = falls_marks(69.5, 92.5) + [
-        ("poly", [(DRY[0], LOCK_CEIL), (DRY[1], LOCK_CEIL), (DRY[1], LOCK_HIGH), (DRY[0], LOCK_HIGH)], "hiw"),
-        ("poly", [(LOCK[0], LOCK_LOW), (LOCK[1], LOCK_LOW), (LOCK[1], LOCK_CEIL), (LOCK[0], LOCK_CEIL)], "hiw"),
+        ("poly", [(LOCK[0], LOCK_LOW), (LOCK[1], LOCK_LOW), (LOCK[1], LOCK_HIGH), (LOCK[0], LOCK_HIGH)], "hiw"),
         ("poly", [(x, y) for x, y in list(section_shell().exterior.coords)[:-1]], "newl"),
         ("text", [(-305.9, 91.6), "the great falls"], "notep"), ("text", [(-284.0, 81.6), "1.12 Los Barriles"], "note"),
-        ("text", [(-257.6, 84.8), "the quay"], "noteo"), ("text", [(-247.6, 77.9), "1.13 La Esclusa"], "note"),
+        ("text", [(-257.6, 84.8), "the quay"], "noteo"), ("text", [(-241.6, 77.9), "1.13 La Esclusa"], "note"),
         ("text", [(-229.5, 91.6), "El Borde"], "note"), ("text", [(-305.9, 70.3), "the mine's roof"], "noteo"),
         ("text", [(-288.0, 91.3), "the black waters' lower river"], "notep")]
     items = [
@@ -1242,7 +1291,7 @@ def page_place():
            [arch(-284.7, -281.1, 77.2, 79.6, "line"), arch(-278.2, -274.6, 77.2, 79.6, "line"), arch(-271.7, -268.1, 77.2, 79.6, "line")], tag=[-276.4, 80.4]),
         it("backdrop", "The river's culverts", [-16.0, -12.0],
            "Through a barred opening high in the lock's back wall: the culverts behind the lock, painted going back, lit teal far off.",
-           [R(-249.4, 83.8, -246.9, 85.6, "dark")], tag=[-248.2, 84.7]),
+           [R(-235.0, 84.4, -232.5, 86.2, "dark")], tag=[-233.8, 85.3]),
         it("set", "The flume's arcade and its cracked vault", [-2.6, -2.2],
            "Brick piers every 6.5 m with round arches, mooring rings at the waterline, a cracked brick vault overhead.",
            [R(-286.5, 77.2, -285.5, 83.0, "pale"), R(-280.0, 77.2, -279.0, 83.0, "pale"), R(-273.5, 77.2, -272.5, 83.0, "pale"), R(-267.0, 77.2, -266.0, 83.0, "pale")],
@@ -1252,15 +1301,15 @@ def page_place():
            "flume's west end, the waste chute's black mouth: where they go.",
            [arch(ARCH[0], ARCH[1], BED, 78.8, "dark"), arch(CHUTE[0], CHUTE[1], CHUTE[2], CHUTE[3] - 2.5, "dark")], tag=[-261.8, 77.9]),
         it("set", "The quay's wall and the keeper's booth", [-2.6, -1.3], "Brick, with the lock-keeper's booth set into it beside the lower gate.",
-           [R(QUAY[0], 79.4, -251.0, 86.0, "solid"), arch(-257.4, -253.4, 79.4, 81.4, "dark")], tag=[-257.9, 84.6]),
+           [R(QUAY[0], 79.4, GATE[0], 86.0, "solid"), arch(-253.4, -249.4, 79.4, 81.4, "dark")], tag=[-256.0, 84.0]),
         it("set", "The lock chamber's wall", [-2.2, -1.9], "Cut stone stained teal to the highest water, the scum line painted at the top.",
-           [R(-250.0, 75.7, -228.0, 86.0, "solid")], tag=[-232.0, 80.0]),
+           [R(LOCK[0], LOCK_FLOOR, LOCK[1], LOCK_CEIL, "solid")], tag=[-231.0, 80.0]),
         it("things", "The broken crane", [-3.4, -2.4], "Los Barriles' hero: the barrel crane on the platform at the head of the falls, its jib snapped over the drop.",
            [R(-293.6, 79.4, -293.0, 82.6, "pale"), P([[-293.3, 82.4], [-301.8, 79.9], [-301.9, 80.25], [-293.3, 82.8]], "pale")], tag=[-298.4, 81.7]),
         it("things", "The frog keeper at his lever", [-1.9, -1.4], "La Esclusa's hero: the old keeper in his booth, who hauls the lever before every fill.",
-           [C(-255.4, 80.6, 0.42, "pale"), R(-255.8, 79.4, -255.0, 80.25, "pale"), L(-254.3, 79.4, -253.8, 81.3, "line")], tag=[-255.4, 82.5]),
+           [C(-251.4, 80.6, 0.42, "pale"), R(-251.8, 79.4, -251.0, 80.25, "pale"), L(-250.3, 79.4, -249.8, 81.3, "line")], tag=[-251.4, 82.5]),
         it("things", "The gate wheel and the gauge board", [-1.9, -1.5], "The machine you can see: the wheel spins as the flap drops; the board's float rides the water.",
-           [C(-252.2, 84.6, 0.7, "line"), R(-235.6, 76.0, -234.4, 89.4, "pale")], tag=[-235.0, 87.6]),
+           [C(-247.2, 84.6, 0.7, "line"), R(-236.6, 76.0, -235.4, 88.8, "pale")], tag=[-236.0, 87.6]),
         it("climb", "The keepers' ladder and the platform", [-1.2, 1.2], "From the pier's top straight up the ladder beside the falls onto the crane's platform: "
            "no barrels on the way in.",
            [LAD(LADDER_X, MINE_TOP, LANDING), R(-297.0, 72.7, -295.0, 73.0, "pale")], tag=[-294.0, 76.2]),
@@ -1268,7 +1317,7 @@ def page_place():
            "flung into the chute behind you; onto the landing over the flume's head.",
            [R(-276.0, 77.0, -275.8, 77.95, "pale"), P([[-290.5, BED], [-287.4, BED], [-287.4, 76.3], [-290.5, 77.9]], "pale")], tag=[-275.9, 76.4]),
         it("climb", "The wicket, the ledges, the rungs, the lip ledge", [-1.2, 1.2], "Into the lock at the bottom, up with the water, out onto El Borde's lip ledge at the top of a fill.",
-           [R(-251.15, 79.4, -250.95, 81.9, "pale"), L(-246.4, 81.85, -245.5, 81.0, "line"), L(-229.4, 80.45, -228.5, 79.6, "line")], tag=[-244.0, 80.6]),
+           [R(GATE[0] - 0.15, 79.4, GATE[0] + 0.05, 81.9, "pale"), L(-239.4, 82.45, -238.6, 81.6, "line"), L(-229.4, 80.45, -228.5, 79.6, "line")], tag=[-234.0, 80.6]),
         it("fore", "A low lip of wet rock", [1.6, 2.6], "Along the bottom of the frame only, below the lowest floor.",
            [P([[-306.5, 69.5], [-306.5, 70.4], [-288.0, 70.9], [-262.0, 70.6], [-240.0, 71.0], [-222.0, 70.5], [-222.0, 69.5]], "dark")], tag=[-262.0, 70.2]),
     ]
@@ -1279,13 +1328,14 @@ def page_place():
             ["y 75.2 to 75.7", "the flume's stone bed"], ["y 75.7 to 77.2", "the flume's water, 1.5 m deep"],
             ["y 77.2 to 78.05", "the barrels, as today 0.3 m over the surface"], ["y 79.4", "the platform, the east landing and the quay"],
             ["y 83 (west of x -292) and 86 (east)", "the new section's roof: the black waters' rock starts here, as today"],
-            ["y 75.7 to 86, and up the dry shaft to 88.5", "the lock's chamber and its water at the highest"],
+            ["y 75.7 to 89", "the lock's chamber, 16 m long; its water from 77.2 to 88.5 every 14 s"],
             ["y 90", "El Borde's lip ledge, as today; the black waters' lower river runs from y 90 to 91 over the new section's middle"]]
     route = ["La Cortina, as today, up its dry shaft to the top of the mine.", "Off the top row west onto the pier's coping (1.9 m): 1.12 Los Barriles starts.",
              "Up the keepers' ladder, 6.4 m, straight up beside the falls in their spray, onto the crane's platform.",
-             "Down onto a barrel and east along the flume, barrel to barrel, against the current and the barrels coming at you, onto the east landing.",
-             "East along the quay past the keeper's booth (a rest, 7.5 m).", "In through the lock's wicket at the bottom of its cycle: 1.13 La Esclusa starts.",
-             "Cross while it is low, float up as it fills, take a ledge or a rung, and at the top of a fill reach out of the dry shaft onto the lip ledge.",
+             "Down onto a barrel and east along the flume, barrel to barrel, against the current and the barrels coming at you, onto the east landing. "
+             "Fall in, and the whirlpool takes you down its pipe to the alcove at La Cortina's top, to try again.",
+             "East along the quay past the keeper's booth (a rest, 13.5 m).", "In through the lock's wicket while the water is under its sill: 1.13 La Esclusa starts.",
+             "Catch the rise on the sill, swim across as it lifts you, and at the top of the fill reach out of the dry shaft onto the lip ledge; or rest on a ledge or a rung for the next fill.",
              "El Borde (2.1), exactly as today."]
     water = ("The black waters' lower river still runs east along its tunnel to the slot at x -244 and pours down it, as today. It no longer falls "
              "into the mine: it falls onto the lock's flap gate. When the flap drops, the river fills the lock. When it is shut, the river slides "
@@ -1301,8 +1351,10 @@ def page_place():
                "ladder straight up beside the falls (Parker's answer). The first pages had a passage east that could not work and then a chain timed "
                "between barrels; both are gone.",
                "The lock is under the black waters' slot and the old dry shaft, because those are where El Borde's water and its lip ledge are. The "
-               "quay between the flume's head and the lock is 7.5 m.",
-               "The lock's cycle gets a 4 s pause at the bottom (18 s in all), for the wicket and the crossing.",
+               "quay between the flume's head and the lock is 13.5 m.",
+               "The lock keeps the pitched 14 s (Parker). To work with no pause at the bottom its chamber is 16 m, the slot at its west end, open to "
+               "y 89 all along, and the river comes down its back wall instead of pushing down through the middle.",
+               "A fall into the flume: a whirlpool by its west end takes you down a pipe to the alcove at the top of La Cortina, to try again (Parker).",
                "The strip of rock from x -252 to -223 between y 86 and 89.4, which was the mine's roof, is now the new section's (the lock's roof and "
                "the support under the lip ledge)."]
     return {
@@ -1322,7 +1374,7 @@ def page_place():
                  "The barrels' speed, spacing, count and hidden birth exactly as today; they run right to left (note 146).",
                  "The great falls one 6 m shaft on the well's middle line, x -300, all the way down to the Sump (notes 142, 143, 146; Parker, 11-14 15:30)."],
         "figures": [{"win": win, "faint": faint_today(), "bold": [(NEW_A1, PAL["a1"]), (NEW_A2, PAL["a2"]), (NEW_SEC, PAL["a2"])], "marks": marks,
-                     "climbers": [(-296.0, 73.0), (-249.4, 79.4)], "maxw": 900.0,
+                     "climbers": [(-296.0, 73.0), (-243.3, 79.4)], "maxw": 900.0,
                      "caption": "The whole new section from the side, x -306.5 to -222, to scale. Yellow dashes: its outline. Faint underneath: today's mine, whose "
                                 "throat was here. Each challenge has its own page with a closer sketch."}],
         "items": items,
@@ -1332,7 +1384,7 @@ def page_place():
                      ["The lock", "The lock that let barrels down from the river", "The flap gate, the gauge board, the culverts through the grating"]],
         "pieces": [["See 1.12 Los Barriles and 1.13 La Esclusa for each piece", "", "", "", ""]],
         "first": ["Every height in the table above except the mine's roof (which follows from the drop) and El Borde's (as today).",
-                  "The flume's length (32 m of water, 26.8 m of it the barrels' road, as today) and the quay's (7.5 m)."],
+                  "The flume's length (32 m of water, 26.8 m of it the barrels' road, as today) and the quay's (13.5 m)."],
         "notes": ["Note 146, the brief, and Parker's answers (11-14 15:30): the mine moved under the falls and 17 m down, not widened; the barrels thrown "
                   "back into the background; a climb beside the falls; 1.12 and 1.13.",
                   "Notes 142 and 143: the great falls all the way down; the frogs' slide pours into them. Note 147: a fall into them is a ride to the Sump.",
@@ -1369,10 +1421,10 @@ def page_salto():
            "An iron beam across the pool's west half, 2.6 m behind you, hung from the roof on two flat iron straps: what the barrel store's men slung "
            "their hoists from. Its two chains hang forward into your plane.",
            [R(-315.6, 121.65, -305.6, 121.95, "pale"), R(-314.15, 121.95, -313.85, 128.0, "pale"), R(-307.35, 121.95, -307.05, 128.0, "pale")], tag=[-311.0, 122.8]),
-        it("set", "The davit", [-1.5, -1.3],
-           "An iron davit on Q6's west end, its arm out over the falls' edge: where the barrel men stood to hook barrels off the old lip. Its chain is "
-           "the launch.",
-           [R(-296.35, 117.4, -296.05, 122.0, "pale"), R(-297.15, 121.75, -296.05, 122.0, "pale")], tag=[-295.4, 120.6]),
+        it("set", "The broken davit", [-1.6, -1.3],
+           "An iron davit on Q6's west end, behind you, its arm snapped off short: where the barrel men stood to hook barrels off the old lip. "
+           "Nothing hangs from it now: you leave from the ledge itself.",
+           [R(-296.0, 117.4, -295.7, 120.4, "pale"), R(-296.6, 120.2, -295.7, 120.45, "pale")], tag=[-294.9, 119.6]),
         it("things", "The great falls", [-1.2, 1.2],
            "The hero piece: the falls themselves, drawn as 3D water at full width (note 111), coming out of the well and through the hall and its "
            "floor, spray and mist filling the gap you leap. They do not push you sideways here (first guess): the leap decides. Whoever goes into "
@@ -1386,12 +1438,14 @@ def page_salto():
            "of rope. One thing from each place above where the well is crossed.",
            [P([[-319.0, 115.0], [-318.4, 115.5], [-309.0, 115.6], [-308.4, 115.0]], "solid"), R(-316.0, 115.6, -315.0, 116.4)], tag=[-312.0, 116.1]),
         it("climb", "Q6, longer", [-1.2, 1.2],
-           "Today's east ledge, carried on 5.6 m west to the falls' edge (x -296.6) on more iron beams out of the east flank. Its west end is the "
-           "launch. Under it, the east basin still runs to the old cascade and the lower river.",
+           "Today's east ledge, carried on 7 m west to the falls' edge (x -297.0) on more iron beams out of the east flank. Under it, the east "
+           "basin still runs to the old cascade and the lower river.",
            [R(-295.8, 116.45, -295.5, 116.7, "pale"), R(-291.0, 116.45, -290.7, 116.7, "pale"), R(-286.0, 116.45, -285.7, 116.7, "pale")], tag=[-293.0, 118.3]),
-        it("climb", "The davit's chain", [-0.3, 0.3],
-           "2.2 m of chain from the davit's arm, its tail at y 119.4: take it from Q6, swing, and let go west over the falls.",
-           [R(-297.15, 121.45, -296.65, 121.65, "pale")], tag=[-297.9, 120.4]),
+        it("climb", "The launch ledge", [-1.2, 1.2],
+           "Q6's west end, flush with the falls' east edge: a cut stone nose with an iron-shod edge, worn pale where hands have held it. Hang from "
+           "its edge, swing out over the falls and let go: the climber's own fling, nothing else (Parker, 11-14). Set flush with the falls so the "
+           "throw it needs stays inside F2.",
+           [R(-297.0, 116.95, -296.3, 117.4, "pale")], tag=[-296.6, 116.2]),
         it("climb", "The pool's lip", [-1.2, 1.2],
            "A worn stone sill where the pool's west half pours over into the falls, white water breaking on it. The current quickens to 1.6 m a "
            "second over its last 2 m.",
@@ -1406,9 +1460,9 @@ def page_salto():
     ]
     moves = [
         ["Down to Q6", "2.6's gallery, y 121.0", "Q6, y 117.4", "3.6 m down", "as today"],
-        ["To the launch", "x -287", "Q6's new west end, x -296.6", "9.6 m", "walk"],
-        ["The leap", "the davit's chain, x -296.9, tail y 119.4", "the pool beyond the falls, x -303.6 to -306", "6.7 to 9.1 m across, 4.4 m down",
-         "F2 fling: swing on the chain and let go. The falls are 6 m across."],
+        ["To the launch ledge", "x -287", "Q6's west edge, x -297.0", "10 m", "walk"],
+        ["The leap", "hanging from the launch ledge's edge, x -297.0, y 117.4", "the pool beyond the falls, x -303.6 to -306",
+         "6.6 to 9.0 m across, 2.4 m down", "a fling from the ledge: a throw of about 5 to 7.6 m on the level, F2 (up to 8 m). The falls are 6 m across."],
         ["Swim at once", "where you land", "C1, x -306.8, its tail 0.6 m over the water", "0 to 3 m, against 1.0 m a second (1.6 near the lip)",
          "swim; miss C1 and the current takes you back over the lip"],
         ["C1 to C2", "x -306.8", "x -310.6", "3.8 m against 1.0 m a second", "swim, like today's two swims (4.0 and 4.4 m)"],
@@ -1420,7 +1474,7 @@ def page_salto():
         "place": ("The foot of El Pozo del Diablo, the brick hall round the old reservoir, as today: but the great falls now come down the well and "
                   "straight through the hall. Where they hit, the reservoir's floor has broken, and they pour on down through the hole. The pool "
                   "is cut in two. Its west half, fed by the flume from 2.8, runs east and pours over a sill into the falls. Its east half is a basin "
-                  "under the ledge you start from. From the ledge's west end you swing out on the barrel men's old davit chain and let go, over "
+                  "under the ledge you start from. From the ledge's west end, hanging by your hands, you swing out and let go, over "
                   "the falling water, into the west half, and the moment you land you have to swim, because it is taking you back to the falls. "
                   "Behind the spray, the well goes up out of sight; under you, the falls go down out of sight."),
         "keep": ["The start on Q6 (the east ledge), the frog's door at its east end, and the step down from 2.6's gallery.",
@@ -1434,17 +1488,18 @@ def page_salto():
         "moves": moves,
         "figures": [{"win": win, "faint": faint_today("a2"), "bold": [(NEW_A2, PAL["a2"]), (NEW_CHARCO, PAL["a2"])], "marks": marks,
                      "screen": [-302.5, 119.0], "climbers": [(-295.8, 117.4)],
-                     "caption": "From the side. The climber is at Q6's new west end, under the davit. Faint underneath: today's pool and barrels."}],
+                     "caption": "From the side. The climber is at Q6's new west end, the launch ledge. Faint underneath: today's pool and barrels."}],
         "items": items,
-        "explains": [["Q6", "The barrel men's landing over the old lip", "The davit; the beam ends under it"],
-                     ["The davit's chain", "The chain off the davit's arm", "The davit on Q6's end"],
+        "explains": [["Q6", "The barrel men's landing over the old lip", "The broken davit; the beam ends under it"],
+                     ["The launch ledge", "The landing's worn stone nose", "The broken davit behind it"],
                      ["The pool", "The reservoir's west half, running into the falls", "The broken floor, the falls, the view down"],
                      ["C1 and C2", "The store's hoist chains", "The gantry beam and its straps"],
                      ["Q7 and its rungs", "The barrel store's landing", "The lantern on its post"]],
         "pieces": [["The great falls, 3D, through the hall", "6 m wide, 15 m tall here", "1", "Play space (hero)", "the 3D falling water of note 111"],
                    ["Broken floor edges with hanging brick lining", "6 m hole", "1", "Background (set)", "new"],
                    ["The view down through the floor", "far card", "1", "Backdrop", "part of the great falls' card"],
-                   ["Davit with its chain", "post 4.6 m, arm 1.1 m, chain 2.2 m", "1", "Background and play", "new davit; kit chain and shackle"],
+                   ["Broken davit", "post 3 m, arm stub 0.9 m", "1", "Background", "new"],
+                   ["Launch ledge: stone nose with an iron-shod edge", "0.7 m", "1", "Play space", "new, small"],
                    ["Gantry beam with two straps and two chains", "10 m beam, chains 6.2 m", "1", "Background and play", "new beam; kit chains"],
                    ["Q6, lengthened", "12.6 m", "1", "Play space", "kit: aguas_charco_landing_east, lengthened"],
                    ["Pool sill with white water", "0.4 m", "1", "Play space", "new, small"],
@@ -1454,14 +1509,14 @@ def page_salto():
                     "The roar of the falls, loudest here.", "White water on the pool's sill and where the falls hit the broken floor."],
         "first": ["No push from the falls in the hall; going into them is the ride (note 147). The mine's falls keep their push.",
                   "The pool's current 1.0, quickening to 1.6 m a second over its last 2 m.",
-                  "The davit chain's place and length; C1 and C2's places.", "Q6 lengthened to x -296.6."],
+                  "The launch ledge's place, flush with the falls' edge; C1 and C2's places.", "Q6 lengthened to x -297.0."],
         "notes": ["Note 146: a big jump to a pool on the other side that feeds the falls, so you swim the moment you land. The falls 6 m, the same shaft all the way down (Parker, 11-14 15:30).",
                   "Note 142: the great falls from the top of the well to the black waters; now on through.", "Note 111: 3D falling water.",
                   "Note 147 (settled): a fall into the great falls anywhere rides them all the way to the Sump.",
                   "Note 143: riders of the frogs' slide come down the falls through here, on to the Sump.",
                   "Note 114 and the barrels: they leave 2.7 for Los Barriles."],
         "ask": [
-                "The jump is a fling from a chain at the ledge's end, because the climber cannot run and jump 6 m. All right?"],
+],
     }
 
 
@@ -1683,8 +1738,9 @@ def index_html(built):
                                            "landing and quay to x -251 at 79.4; the lock x -250 to -228, y 75.7 to 86 and up the dry shaft to 88.5"],
            ["The barrels", "as today: eight, 0.55 m a second, the same gaps, 26.8 m of road, now from the tunnel at x -261.8 west to the kicker at "
                            "x -288.6, which throws them back into the waste chute (never into the falls)"],
-           ["The lock", "11.3 m in 6 s, held 3 s, drained in 5 s, 4 s at the bottom (added): 18 s"],
-           ["2.7's leap", "over the falls (6 m) from a chain at x -296.9 to the pool beyond: 6.7 to 9.1 m, 4.4 m down"]]
+           ["The lock", "x -244 to -228, y 75.7 to 89; 11.3 m in 6 s, held 3 s, drained in 5 s: 14 s, as pitched, no pause at the bottom"],
+           ["The whirlpool", "x -287.6 to -285.4 on the flume, 1 m east of the kicker; its pipe 3.1 m to the alcove at La Cortina's top (x -291 to -288)"],
+           ["2.7's leap", "a fling from the launch ledge (Q6's west edge, x -297.0) over the falls (6 m) to the pool: 6.6 to 9.0 m, 2.4 m down, F2"]]
     b.append("<h2>The layout's key numbers</h2>" + tbl(["", ""], key))
     rows = []
     for cid, name, old_at, new_at, note in STARTS:
@@ -1699,11 +1755,14 @@ def index_html(built):
                "The barrels are flung back into the waste chute by a kicker at the flume's west end (note 91's kind), never into the falls. So the way "
                "up from the mine is the keepers' ladder, 6.4 m, straight up beside the falls, with no barrel timing. (The first pages' passage east "
                "could not reach the flume's west end, and their crane's chain had to be timed between barrels; both are gone.)",
-               "A fall into the flume now puts you back at the platform, not down the falls (asked on Los Barriles' page).",
-               "The lock sits under the black waters' slot and the old dry shaft, where El Borde's water and lip ledge are: a 7.5 m quay joins it to "
+               "A fall into the flume: the current takes you into a small whirlpool by its west end, down a pipe, and out in the alcove at the top "
+               "of La Cortina's wet holds, to climb the ladder again (Parker, 11-14).",
+               "The lock sits under the black waters' slot and the old dry shaft, where El Borde's water and lip ledge are: a 13.5 m quay joins it to "
                "the flume's head.",
-               "The pitched 14 s lock cycle has no time at the bottom; 4 s added (18 s) so the wicket opens and you can cross before the fill.",
-               "2.7's running leap is a fling from a chain (the climber cannot run and jump 6 m; a fling is this game's jump).",
+               "The lock keeps the pitched 14 s (Parker). To work with no pause at the bottom, its chamber is 16 m with the slot at its west end, open "
+               "to y 89 all along, and the river comes down its back wall (no push): step in as it drains under the wicket's sill, catch the rise, "
+               "swim 10.3 m across as it lifts you (1.3 m a second), out at the top.",
+               "2.7's leap is a fling from a launch ledge (Parker), Q6's west edge set flush with the falls so the throw stays inside F2.",
                "The Charco's east half stays as a basin under Q6, so the old cascade and El Borde's river keep their water.",
                "A fall into the great falls anywhere rides them to the Sump (note 147). The two gentler falls are kept: from El Borde into the lock, "
                "and down the well beside the falls into 2.7's pool."]
@@ -1715,9 +1774,9 @@ def index_html(built):
               "a0.py and a0_dress.py: RIDE carried on to (-207.4, -28.55), the tunnel to the door at x -211; the end of the line's pieces moved; the "
               "new stretch's pieces; the dark zone to x -211.",
               "a new area file for La Esclusa (or a part of a2): the ladder, the platform, the flume, the barrels moved here and reversed, the kicker "
-              "(the mine's board made to throw a loose barrel), the landing, the quay, "
+              "(the mine's board made to throw a loose barrel), the whirlpool, its pipe and ride zone, the landing, the quay, "
               "the lock as a water level that cycles, the wicket and the flap as movers, its dress.",
-              "a2.py: the falls' shaft cut through the Charco's bed; the pool split; Q6 lengthened, the davit chain, C1, C2, Q7's rungs; the barrels "
+              "a2.py: the falls' shaft cut through the Charco's bed; the pool split; Q6 lengthened to its launch ledge, C1, C2, Q7's rungs; the barrels "
               "and their cove taken out; the slot's waterfall now ending on the lock's flap; the strip x -252 to -223, y 86 to 89.4 no longer the mine's.",
               "st.py: BODY_WINDOWS for the moved mine and the new section; _meta.json's frames for a0, a1 and the new section.",
               "The great falls as one 3D waterfall (notes 111, 142), from the well's top to the Sump."]
