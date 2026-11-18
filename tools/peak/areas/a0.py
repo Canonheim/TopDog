@@ -195,7 +195,7 @@ A.solid([(SEAM_X, -14.7), (-136.0, -14.7), (-136.0, -18.0), (SEAM_X, -18.0)], "r
 # The new stretch's back wall (quality run, MINE_PASS F-E3, reviewer 8.5, 11-18), in the game's numbers (not moved):
 # the mine's lagging in bays stepping down the 20 deg road, the two side galleries going back in the dark, the
 # winding house's recess, the burst at the run-in, the refuge with its pail, the check board at the end of the line.
-A.deco("mina_ride_lining", -211.0, -29.6, z=-2.12, size=(63.3, 23.21, 8.6), tone="back")  # 12 cm back: clear of the station tunnel's back wall's relief where they overlap at the join (sweeps)
+A.deco("mina_ride_lining", -211.0, -29.6, z=-2.12, size=(64.5, 23.21, 8.6), tone="back")  # 12 cm back: clear of the station tunnel's back wall's relief where they overlap at the join (sweeps)
 # THE NEW STRETCH'S SETS (MINE_PASS F-B6 / F-C10, 11-18): the mine's square sets every 2.6 m in its one scenery timber
 # (the mine_timber stock family, 0.35 m square, the nearest stock length stretched, as a1_dress lays it), posts plumb at
 # z -1.45 on the bed, each bay's cap level with its top at the roof's underside over the bay's west post, running from
