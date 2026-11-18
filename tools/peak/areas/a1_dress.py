@@ -223,14 +223,15 @@ def dress(A):
     A.deco("mina_backdrop_cavern", -229.0, -50.0, z=-15.0, size=(124.35, 150.34, 2.80), tone="back2")
     # The course's rock, each mass one painted piece made for its place (skins: they fill the
     # solids they dress, z -1.2 .. 1.2). Origin: the middle of each one's foot.
-    A.deco("mine_el_diente", -203.4, -25.5, z=0.0, size=(11.0, 65.2, 2.4), tone="rock2", skin=True)
+    # El Diente (quality run, reviewer 8.5, 11-18): the pillar, its body carried back, El Tio over the
+    # shoulder, the ore lenses of 1.6 in black clay, the hand-cut arch and its drowned sets in the Sump.
+    A.deco("mine_el_diente", -203.4, -25.5, z=0.0, size=(12.6, 74.2, 4.36), tone="rock2", skin=True)
     A.deco("mine_east_mass", -170.0, -37.0, z=0.0, size=(44.0, 58.3, 2.4), tone="rock2", skin=True)
     A.deco("mine_chamber_roof", -181.25, 21.3, z=0.0, size=(66.5, 37.7, 2.4), tone="rock2", skin=True)
     A.deco("mine_upper_works_mass", -226.25, 55.0, z=0.0, size=(23.5, 35.0, 2.4), tone="rock2", skin=True)
     A.deco("mine_throat_west", -248.0, -37.0, z=0.0, size=(8.0, 127.0, 2.4), tone="rock2", skin=True)
-    # Their bodies carried on behind (in place of today's flat cards). El Diente's flat top at
-    # y 40 is the ground the second cart and the back rail stand on (1.7).
-    A.deco("mine_el_diente_body", -203.4, -25.5, z=-2.225, size=(11.0, 65.5, 1.95), tone="back")
+    # Their bodies carried on behind (in place of today's flat cards). (El Diente's is part of it now;
+    # its flat top at y 40 is still the ground the second cart and the back rail stand on, 1.7.)
     A.deco("mine_upper_works_body", -222.25, 55.0, z=-3.0, size=(15.5, 35.0, 1.0), tone="back")
     # The cavern's own hand-cut wall, 1.7 m behind the walk (1.3, 1.4, 1.5, 1.6, 1.0b): three
     # pieces made to meet, low (the landing), middle (the walk) and high (the lift and the ribs).
@@ -283,14 +284,8 @@ def dress(A):
     # ============================================================ 1.0b The landing stage and the incline
     outcrop(-181.5, -20.0, CAVE_WALL_Z, "moss")
     outcrop(-194.5, -12.0, CAVE_WALL_Z, "moss", small=True)
-    # The tunnel through the pillar's foot: its back wall, four sets' back posts in the water,
-    # and the timber under the rock. (Their front posts would stand where you swim.)
-    A.deco("mine_tunnel_back", -203.4, SUMP_FLOOR, z=-2.2, size=(11.0, 7.5, 0.3), tone="back")
-    for x in (-207.6, -205.0, -202.4, -199.3):
-        post(x, SUMP_FLOOR, -25.9, -1.65)
-    hbeam(-208.9, -201.9, -25.9, -1.65)
-    hbeam(-201.9, -197.9, -25.9, -1.65)
-    mushrooms(-199.3, -26.6, -1.49)
+    # (The tunnel through the pillar's foot, its back wall and its drowned sets, are El Diente's now.)
+    mushrooms(-199.95, -26.6, -1.5)
     # The back rail, still spiked down from the water to the gallery's mouth (ten 2 m lengths),
     # and the grey cart a third of the way up, where the winch let it stop.
     a = math.atan2(-12.7 + 28.62, -176.2 + 188.6)
