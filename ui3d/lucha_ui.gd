@@ -1851,13 +1851,13 @@ func _fill_results() -> void:
 		figure.scale = Vector3.ONE * Feel.get_k("body_scale") / _podium.scale.x
 		figure.position.y = [1.0, 0.7, 0.5][i]
 		for side in [1, -1]:
-			var pivot := Vector3(side * 0.225, 1.582, 0)
+			var pivot: Vector3 = preload("res://climber/body_layout.gd").model_at("shoulder_l" if side == 1 else "shoulder_r")
 			var turn := Basis(Vector3.BACK, side * (0.82 if i == 0 else deg_to_rad(-42.0)))
 			var shoulder_pose := Transform3D(turn, pivot - turn * pivot)
 			var forearm_pose := shoulder_pose
 			if i > 0:
 				# Fold the forearm back toward the hip around the posed elbow.
-				var elbow := Vector3(side * 0.625, pivot.y, 0)
+				var elbow: Vector3 = preload("res://climber/body_layout.gd").model_at("elbow_l" if side == 1 else "elbow_r")
 				var forearm_turn := Basis(Vector3.BACK, side * deg_to_rad(-138.0))
 				forearm_pose = Transform3D(forearm_turn, shoulder_pose * elbow - forearm_turn * elbow)
 			for limb_name in ["Shoulder", "Wrist", "Hand"]:

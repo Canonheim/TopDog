@@ -1326,7 +1326,10 @@ func _tick_prying(dt: float) -> void:
 					if source == null or source == self or source.removed or source.state == State.FROZEN:
 						continue
 					var hit_name := str(other.get_meta("piece", ""))
-					var normal := piece.global_basis * physics.get_contact_local_normal(j)
+					# Already in world space (Jolt, Godot 4): turning it by the piece's own
+					# rotation misread every push from a turned hand (found 11-18, when the
+					# new climber's test pose turned the defending hand 128 degrees).
+					var normal := physics.get_contact_local_normal(j)
 					var pressure := maxf(0, -Vector3(command.x, command.y, 0).dot(normal))
 					for i in source.limbs.size():
 						var ld: Dictionary = source.limbs[i].def

@@ -171,10 +171,10 @@ func _rebuild_preview(direction: int) -> void:
 	preview.position.y = 0.5
 	# The same relaxed hands-on-hips display pose as the podium finishers.
 	for side in [1, -1]:
-		var pivot := Vector3(side * 0.225, 1.582, 0)
+		var pivot: Vector3 = preload("res://climber/body_layout.gd").model_at("shoulder_l" if side == 1 else "shoulder_r")
 		var rotation := Basis(Vector3.BACK, side * deg_to_rad(-42.0))
 		var shoulder := Transform3D(rotation, pivot - rotation * pivot)
-		var elbow := Vector3(side * 0.625, pivot.y, 0)
+		var elbow: Vector3 = preload("res://climber/body_layout.gd").model_at("elbow_l" if side == 1 else "elbow_r")
 		var fold := Basis(Vector3.BACK, side * deg_to_rad(-138.0))
 		var forearm := Transform3D(fold, shoulder * elbow - fold * elbow)
 		for limb_name in ["Shoulder", "Wrist", "Hand"]:

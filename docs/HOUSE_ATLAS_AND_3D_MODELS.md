@@ -203,22 +203,28 @@ The ink reads only opaque depth and normals, so anything drawn in the transparen
 
 ## The climber's model (skins)
 
-The default climber is **Defaultio**, `models/defaultio.glb` (`Game.KNIGHT`), with a plain white material. The Skeleton Knight and Metal Knight,
-`models/skeleton_knight.glb` and `models/metal_knight.glb`, are kept. All three are split into **16 pieces with fixed mesh names** (the "Defaultio"
-contract):
+The climber everyone wears is **the new climber**, `models/character_cufinalt.glb` (`Game.KNIGHT`, `Wardrobe.CLIMBER`; Parker
+2026-11-18: it replaces Defaultio, "it will have different proportions, that is fine"), in its own atlas colours. Defaultio
+(`models/defaultio.glb`, plain white, the wardrobe's pug and spiral heads and paints), the Skeleton Knight and the Metal Knight
+(`models/skeleton_knight.glb`, `models/metal_knight.glb`) are kept. All of them are split into **16 pieces with fixed mesh names** (the
+"Defaultio" contract):
 
 `Head`, `Chest`, `Navel`, `Pelvis`, `Shoulder`, `Wrist`, `Hand`, `L_Shoulder`, `L_Wrist`, `L_Hand`, `Thigh`,
 `Shin`, `Foot`, `L_Thigh`, `L_Shin`, `L_Foot`.
 
 - Each piece is one physics body (`climber/body_layout.gd` lists each with its shape and mass).
-- Any skin built on those 16 names drops in piece by piece.
+- **The joints and shapes are measured from the climber everyone wears** (now the new climber): each joint
+  where its two pieces overlap, each shape inside its piece, so every mesh turns about its own joint. A skin
+  on the 16 names drops in only if its joints sit where that body's do; a body of other proportions means
+  measuring the layout again (the knight's is in git before 2026-11-18). The podium and wardrobe poses read
+  the joints through `Layout.model_at()`.
 - **No colour wash:** every climber wears the model's own colours. Players will pick skins later; the player
   colour is only on name tags and cards.
 - **A skin that embeds its own atlas** (the Skeleton Knight came with Golemheim's) can point at the shared one
   instead, if every colour it uses is pixel-identical there: set its image to the uri
   `../palette/house_atlas.png` and its sampler to nearest.
-- The arm pieces render `shoulder_flare` further out and `shoulder_drop` lower than modelled
-  (`Layout.shift()`). Model to the contract; the game applies the offset.
+- The arm pieces can render `shoulder_flare` further out and `shoulder_drop` lower than modelled
+  (`Layout.shift()`, F1 knobs). Both are 0 for the new climber, whose shoulders are modelled wide.
 
 ## Checklist for a new model
 

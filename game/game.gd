@@ -40,7 +40,7 @@ const ClimberScript := preload("res://climber/climber.gd")
 const Drivers := preload("res://climber/drivers.gd")
 const Layout := preload("res://climber/body_layout.gd")
 const PRACTICE_PARTNER_MODEL := preload("res://models/practice_spiral_dog.glb")
-const KNIGHT := preload("res://models/defaultio.glb")  # the default 16-piece climber
+const KNIGHT := preload("res://models/character_cufinalt.glb")  # the climber everyone wears (Parker 11-18: it replaces Defaultio)
 
 const LOCK_MARGIN := 0.02  # metres above the line a lock-in must clear
 ## THE LOCK BUFFER (Parker 11-11: "make sure there is no delay that prevents you from

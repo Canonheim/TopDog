@@ -2,6 +2,11 @@ extends Node
 ## Saved cosmetic presets. Collision shapes and gameplay stats never change.
 const SavePaths = preload("res://core/save_paths.gd")
 const PUG = preload("res://models/defaultio.glb")
+## THE NEW CLIMBER (Parker 11-18: "the new character model that will replace
+## defaultio"). It wears its own colours from the atlas; the PUG and SPIRAL heads and
+## the skin and suit paints were made for Defaultio's plain white pieces, so they
+## wait for Parker's word on how they go onto this body.
+const CLIMBER = preload("res://models/character_cufinalt.glb")
 const SPIRAL = preload("res://models/practice_spiral_dog.glb")
 const SKIN_NAMES = ["Porcelain", "Sand", "Honey", "Tan", "Copper", "Brown", "Deep", "Blue", "Green", "Pink"]
 const SKINS = ["f6dfd1", "e5bb98", "c9905d", "af754a", "965936", "70432e", "422b25", "70cbe0", "99d06c", "ed9bc1"]
@@ -44,11 +49,13 @@ func save() -> bool:
 func for_slot(slot: int) -> Dictionary:
 	return profiles[posmod(selected + slot, profiles.size())].duplicate(true)
 
-func model(p: Dictionary) -> PackedScene:
-	return SPIRAL if int(p.get("head", 0)) == 1 else PUG
+func model(_p: Dictionary) -> PackedScene:
+	return CLIMBER
 
 func apply(root: Node, value: Dictionary) -> void:
 	var p := clean(value)
+	if model(p) == CLIMBER:
+		return  # its own colours (the paints below are Defaultio's: whole pieces, one colour each)
 	# THE ONE MATERIAL: the skin's and the suit's atlas cells go to each piece as its own
 	# per-instance texel (they were two materials per look).
 	var skin: Vector2 = AtlasPalette.swatch(Color(SKINS[p.skin])).uv

@@ -930,6 +930,47 @@ good, make sure that info on how you did it is written down".
   (section 7, after the far facades), and for the Peak in `docs\peak\PEAK_DESIGN.md`
   section 7 and `docs\peak\AUTHORING.md` under Looks on the `luchador-ui` branch.
 
+## The new climber replaces Defaultio (Parker, 2026-11-18)
+
+Parker: "this is the new character model that will replace defaultio. Lets get it in game and
+see how it looks", then "it will have different proportions, that is fine".
+
+- **The model** is `models/character_cufinalt.glb` (his `Desktop\Character_Cufinalt.glb`): the
+  moustached strongman in black trunks, on the 16-piece contract. It is now `Game.KNIGHT` and
+  `Wardrobe.CLIMBER`, so every climber, the podium and the wardrobe preview wear it. Defaultio
+  and both knights are kept.
+- **The game copy:** the file named its left hand `L_HAnd`; the copy says `L_Hand` (the artist's
+  file should too). Its six colours are pixel-identical on the house atlas, so it points at
+  `../palette/house_atlas.png` with nearest sampling, like the Skeleton Knight.
+- **The body layout is measured from it** (`climber/body_layout.gd`): each joint where its two
+  pieces overlap, each shape inside its piece, so every mesh turns about its own joint. It is a
+  different body from the knight: a bigger head, a longer torso, shorter shins, and wide hips
+  with the feet set 0.54 m apart (the knight's were 0.18 m). The arm span and arm length are
+  about the same. `shoulder_flare` and `shoulder_drop` are 0: its shoulders are modelled wide.
+  The podium and wardrobe poses read the joints through `Layout.model_at()`.
+- **The wardrobe waits:** HEAD (pug, spiral), SKIN and SPEEDO were made for Defaultio's plain
+  white pieces (whole pieces painted one colour). On the new climber they change nothing yet;
+  it wears its own colours. Effects still work.
+- **A pry bug found on the way:** the pry check turned each contact normal by the defending
+  piece's own rotation, but Jolt hands it over in world space already, so a push from a turned
+  hand was misread. It reads the normal as given now.
+- **Two tests followed the body, not the game:** `--swing` hangs the climber from a bar at its
+  hip, and the wide-set left foot hung right under it (the idle foot now passes through that
+  bar); `--prying` laid the defending hand straight above the upper arm, which the new
+  hands-on-hips pose slopes at 55 degrees (the hand now sits on the arm's upper side and pushes
+  along its normal).
+- **One feel change, left for Parker's hands:** standing on wide feet, the body leans less into a
+  reach, so a held hand overshoots its cursor and settles in about 1.5 s (the knight's took
+  about 0.8). `--feel`'s "within 12 cm in 0.6 s" fails at 17 cm.
+- **Checked:** lint 107; the batteries spike (signs), grab, frozen, groundlock, tower, scramble,
+  climb, bend, feel, recovery, freeflight, swing, horizontal, floor, pace, fullreach,
+  partialreach, neutral, selffold, chair, wrestling, chairwear, ring, roundchair, teamtoss,
+  spawnspacing, practicespacing, chairsolid, bell, plazafloor, delmar, lockline, grow,
+  startingbase, classicspawns, lockrecovery, personalcamera, korope, chairbodyhits, kostars,
+  donkey, ropesides, prying, grapple_stability, peak, peakride. All pass but `--feel`'s one
+  check above and `--selffold`'s eight "bends then stalls" checks, which fail the same way on
+  main with the knight. Frames of it posed and in play: `builds\new_climber_look.jpg`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
