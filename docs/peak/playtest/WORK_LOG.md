@@ -3069,6 +3069,10 @@ in. Nothing played by a person.
   aguas_inspection_gallery); a2 ZFIGHT 1.
 - Frames: `after/q27_a2_mists_before_after.jpg` (watch scene `mist27`: 1.12's and 1.13's cameras and the roof over
   each; before | after). **Checks:** lint; `--peak`. Clean.
+- a2's last z-fight: `aguas_culvert_barred` on `aguas_brazo_back_wall`'s face (front faces at z -4.38, 1.89 m2). The
+  build's parting sank the culvert 1.2 cm off the wall's underside, then nudged it 1.5 cm forward off one face of the
+  wall's relief (-4.40), which put its front in the next (-4.38); two passes left it there. The parting now runs till
+  no hit is left, four passes at most (`sweeps.resolve`); the culvert ends at z -2.795, clear of both. a2 ZFIGHT 0.
 
 ## To do: every note of 12 to 57 not done yet
 

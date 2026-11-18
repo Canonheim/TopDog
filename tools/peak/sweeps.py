@@ -439,9 +439,12 @@ def resolve(aid, c, grips, keep_decos=False):
             s = c["solids"][index(p)]
             did.append("drew %s itself again (its skin `%s` covers it nowhere)" % (p.where, s.pop("skin", "")))
     moved = set()
-    for _pass in range(2):
-        P = pieces_of(aid, c, grips)
-        for a, b, why in sweep_zfight(P):
+    for _pass in range(4):  # (till none is left, four at most: a part can land on a third piece's plane, as a2's culvert
+        P = pieces_of(aid, c, grips)  # did on its wall's relief, nudged off one face of it onto the next: 11-18)
+        hits = sweep_zfight(P)
+        if not hits:
+            break
+        for a, b, why in hits:
             movable = [p for p in (a, b) if p.kind in ("deco", "standin") and not keep_decos]
             cards = [p for p in (a, b) if p.kind == "card"]
             if movable:
