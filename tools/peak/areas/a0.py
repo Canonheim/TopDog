@@ -126,6 +126,15 @@ for i in range(len(floor), len(air) - 1):
 kinds[len(air) - 1] = None  # the east end: the mouth
 n_before = len(A.solids)
 A.cave(air, kinds, default="wet", thick=3.0)
+# THE BROW'S ONE LINE (the reviewer's q17, the Director 11-18): the station ends and the mine begins at x -148.4, the
+# bed's line, in the bed, the back wall, the roof and a set. The roof's line waits on the ride bed's maker:
+# mina_ride_roof_brow is being carried east to meet dsc_roof_d's planes there. Once the landed model reaches the seam,
+# roof slab 37 (x -148.4 .. -152.3, all of it west of the line) wears it and dsc_roof_d is cut at -148.4; till then
+# dsc_roof_d draws slab 37 whole, as before (a cut with nothing past it would leave the roof open).
+import sweeps as _sweeps
+_rb = _sweeps.model_bounds("mina_ride_roof_brow")
+ROOF_BROW_AT_SEAM = _rb is not None and -155.576 + _rb[1][0] >= -148.45  # (its origin x in a0_dress, plus its east end)
+SEAM_X = -148.4
 # The cave's slabs wear the dress's skins (a0_dress FOR THE AREA FILE, item 6), by where
 # each lies; the corner fillers go with the stretch the dress names for them.
 for s in A.solids[n_before:]:
@@ -133,8 +142,8 @@ for s in A.solids[n_before:]:
     if cx < -148.5:  # the new stretch (note 146; MINE_PASS F-C10): the mina_ride_bed family by place (quality run, reviewer 8.5, 11-18)
         if s["kind"] == "rock":  # the bed: slabs 18 .. 27, fillers 48 .. 50
             s["skin"] = "mina_ride_bed_brow" if cx > -158.0 else "mina_ride_bed_incline" if cx > -188.0 else "mina_ride_bed_foot"
-        elif s["kind"] == "rock2":  # the roof: slab 37 stays under dsc_roof_d, which draws it
-            s["skin"] = "dsc_roof_d" if cx > -152.5 else "mina_ride_roof_brow" if cx > -158.0 else "mina_ride_roof_incline" if cx > -188.0 else "mina_ride_roof_foot"
+        elif s["kind"] == "rock2":  # the roof: slab 37 under dsc_roof_d till the roof brow reaches the seam (above)
+            s["skin"] = ("mina_ride_roof_brow" if ROOF_BROW_AT_SEAM else "dsc_roof_d") if cx > -152.5 else "mina_ride_roof_brow" if cx > -158.0 else "mina_ride_roof_incline" if cx > -188.0 else "mina_ride_roof_foot"
         continue
     if s["kind"] == "rock":  # the bed
         s["skin"] = "dsc_bed_a" if cx > -62.3 else "dsc_bed_b" if cx > -104.5 else "dsc_bed_c" if cx > -136.0 else "dsc_bed_d"
@@ -159,11 +168,81 @@ for d in A.decos:
     # dsc_bed_d was made level to the old end of the line (x -152); the moved line drops away from x -148.4,
     # so its last 3.6 m stood 0.3 m over the bed with nothing under it: it ends there now (11-18).
     if d["model"] == "dsc_bed_d":
-        d["cut_west"] = -148.4
+        d["cut_west"] = SEAM_X
+    # The brow's one line: the station's tan back wall ends there (mina_ride_lining, behind it at z -2.12, runs east
+    # to -147.7, so the mine's lagging shows from the line west), and its roof once the roof brow meets it.
+    if d["model"] == "dsc_back_wall_d" or (d["model"] == "dsc_roof_d" and ROOF_BROW_AT_SEAM):
+        d["cut_west"] = SEAM_X
+    # The threshold's portal: the station's last grey set (k 43, x -147.8) moved onto the line, its cap out over the
+    # play space under the roof: the station's timber frames the mine's start. (No other station set stood between
+    # -152.6 and the line.)
+    if d["model"] == "dsc_set_grey" and abs(d["at"][0] - (-147.8)) < 0.05:
+        d["at"] = [SEAM_X, a0_dress.fy(SEAM_X)] + d["at"][2:]
+# The trough ends at the line too: its last length and its spout (x -147.85 .. -151.8) hung over the mine's lining;
+# the length before them takes the spout, its mouth at -147.85, by the portal's post.
+_tr = [d for d in A.decos if d["model"] in ("dsc_trough", "dsc_trough_spout") and d["at"][0] < -140.0]
+_tr.sort(key=lambda d: -d["at"][0])
+for d in _tr:
+    if d["at"][0] - 1.0 < SEAM_X:  # (a 2 m length's west end past the line)
+        A.decos.remove(d)
+_keep = [d for d in _tr if d in A.decos]
+if _keep:
+    _keep[-1]["model"] = "dsc_trough_spout"
+    _keep[-1]["size"] = [2.0, 0.25, 0.2]
+# Under the station's bed east of the line (x -148.4 .. -136): rock, down from the bed's foot (dsc_bed_d stops at
+# y -14.7). There the mountain's flat body showed through below the bed, beside the mine's dark rock under the brow.
+A.solid([(SEAM_X, -14.7), (-136.0, -14.7), (-136.0, -18.0), (SEAM_X, -18.0)], "rock")
 # The new stretch's back wall (quality run, MINE_PASS F-E3, reviewer 8.5, 11-18), in the game's numbers (not moved):
 # the mine's lagging in bays stepping down the 20 deg road, the two side galleries going back in the dark, the
 # winding house's recess, the burst at the run-in, the refuge with its pail, the check board at the end of the line.
 A.deco("mina_ride_lining", -211.0, -29.6, z=-2.12, size=(63.3, 23.21, 8.6), tone="back")  # 12 cm back: clear of the station tunnel's back wall's relief where they overlap at the join (sweeps)
+# THE NEW STRETCH'S SETS (MINE_PASS F-B6 / F-C10, 11-18): the mine's square sets every 2.6 m in its one scenery timber
+# (the mine_timber stock family, 0.35 m square, the nearest stock length stretched, as a1_dress lays it), posts plumb at
+# z -1.45 on the bed, each bay's cap level with its top at the roof's underside over the bay's west post, running from
+# the east post's face 0.4 m past the west post into the roof's socket: the caps step down the incline. Every socket
+# from mina_ride_bed_family.json (Top Dog Kit\source: k, the post's x, its foot and top, the cap's east and west ends
+# and its underside). Set 2 is left out (the brow sheave stands there). Every other set mirrored, so the stock's faces
+# don't read as a repeat.
+RIDE_SETS = [
+    (3, -156.2, -13.51, -8.86, -153.775, -156.6, -8.86),
+    (4, -158.8, -14.491, -9.841, -156.375, -159.2, -9.841),
+    (5, -161.4, -15.438, -10.788, -158.975, -161.8, -10.788),
+    (6, -164.0, -16.384, -11.734, -161.575, -164.4, -11.734),
+    (7, -166.6, -17.33, -12.68, -164.175, -167.0, -12.68),
+    (8, -169.2, -18.277, -13.627, -166.775, -169.6, -13.627),
+    (9, -171.8, -19.223, -14.573, -169.375, -172.2, -14.573),
+    (10, -174.4, -20.17, -15.52, -171.975, -174.8, -15.52),
+    (11, -177.0, -21.116, -16.466, -174.575, -177.4, -16.466),
+    (12, -179.6, -22.062, -17.412, -177.175, -180.0, -17.412),
+    (13, -182.2, -23.009, -18.359, -179.775, -182.6, -18.359),
+    (14, -184.8, -23.955, -19.305, -182.375, -185.2, -19.305),
+    (15, -187.4, -24.902, -20.252, -184.975, -187.8, -20.252),
+    (16, -190.0, -25.84, -21.19, -187.575, -190.4, -21.19),
+    (17, -192.6, -26.733, -22.083, -190.175, -193.0, -22.083),
+    (18, -195.2, -27.54, -22.89, -192.775, -195.6, -22.89),
+    (19, -197.8, -28.21, -23.56, -195.375, -198.2, -23.56),
+    (20, -200.4, -28.679, -24.029, -197.975, -200.8, -24.029),
+    (21, -203.0, -28.864, -24.214, -200.575, -203.4, -24.214),
+]
+_STOCK = (("mine_post_stub", 0.9), ("mine_post_short", 1.4), ("mine_post_mid", 2.0), ("mine_post", 3.0),
+          ("mine_post_tall", 4.75), ("mine_post_long", 6.5), ("mine_timber_long", 8.5), ("mine_beam", 4.0))
+
+
+def _timber(x0, y0, x1, y1, z, flip):
+    """One grey timber along its centre line (x0, y0) -> (x1, y1): plumb (a post, on its foot) or level (a cap)."""
+    L = math.hypot(x1 - x0, y1 - y0)
+    stem, made = min(_STOCK, key=lambda st: abs(math.log(L / st[1])))
+    sc = round(L / made, 3)
+    if stem == "mine_beam":  # (origin the middle of its underside)
+        A.deco(stem, round((x0 + x1) / 2, 3), round(min(y0, y1) - 0.175, 3), z=z, scale=sc, size=(made, 0.35, 0.35), tone="back", flip=flip)
+    else:  # (origin the middle of its foot; laid level, turned a quarter)
+        rot = 0.0 if abs(x1 - x0) < 1e-6 else (90.0 if x1 < x0 else -90.0)
+        A.deco(stem, round(x0, 3), round(y0, 3), z=z, rot=rot, scale=sc, size=(0.35, made, 0.35), tone="back", flip=flip)
+
+
+for k, px, foot, top, cx0, cx1, under in RIDE_SETS:
+    _timber(px, foot, px, top, -1.45, k % 2 == 1)  # the post
+    _timber(cx0, under + 0.175, cx1, under + 0.175, -1.45, k % 2 == 0)  # the cap
 # WHERE THE MINE WAS, over the ride (the Director, 11-18; moved here from a1 for the reviewer's q13): the mine's dark rock
 # carried east over the new stretch's roof and under its bed, a stand-in card in its back tone behind
 # mina_ride_lining's galleries (to z -10.06), a backstop behind it; the mountain's body is cut away there (st.py

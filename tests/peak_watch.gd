@@ -3289,6 +3289,19 @@ func _w_a0end(a: Array) -> void:
 		await shot("a0end_%s_%s" % [row[2], tag])
 
 
+## The new stretch's timber sets (caps in the roof's sockets) and the station bed's broken lower front east of its cut
+## (x -148.1 .. -144). ridesets:TAG
+func _w_ridesets(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.1")
+	await secs(3.0)
+	for row in [[Vector2(-146.5, -14.0), 2.6, "bedgap"], [Vector2(-147.0, -15.0), 4.6, "bedgapwide"], [Vector2(-156.0, -11.5), 4.6, "brow"], [Vector2(-170.0, -16.5), 4.6, "incline"],
+			[Vector2(-163.0, -10.5), 2.0, "socket"], [Vector2(-196.0, -25.0), 4.6, "foot"]]:
+		look(row[0], float(row[1]))
+		await secs(0.8)
+		await shot("ridesets_%s_%s" % [row[2], tag])
+
+
 ## The reviewer's q13: what shows above the cart ride's roof. The fixed views along the incline with the climber at
 ## the station (as q13's at: cameras), then the real ride with the game's own follow camera, and again with the zoom
 ## held (a Shift key event), a shot as the cart passes each x. ride13:TAG

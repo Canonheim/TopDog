@@ -2917,6 +2917,25 @@ in. Nothing played by a person.
 - The same commit places La Esclusa's crane (`esclusa_crane`) and moves its light under the lantern hook: the
   Director's edits to a1.py (11-18), built into a1.json with the card's move.
 
+## 11-18: the brow's one line, the new stretch's sets, rock under the station's bed
+
+- The reviewer's q17 (8 for 9): at the brow the station's tan wall gave way to the mine at x -152 but its tan bed at
+  -148.4, so the mine's dark bed ran 3.6 m under the station's wall. Now one line at -148.4 (the bed's, which cannot
+  move): `dsc_back_wall_d` cut there (`cut_west`; `mina_ride_lining` shows from the line west); the station's last
+  grey set (k 43, x -147.8) moved onto the line as the threshold's portal, its cap out over the play space; the trough
+  ends there (its last length and spout hung over the lining: the length before takes the spout). No other station
+  set, lantern or fitting stood between -152.6 and the line. The roof's line waits on `mina_ride_roof_brow` being
+  carried east to the seam: a0.py reads the landed model, and once it reaches -148.4 roof slab 37 (x -148.4 .. -152.3,
+  all of it west of the line) wears it and `dsc_roof_d` is cut there; until then `dsc_roof_d` draws slab 37 whole.
+- The new stretch's sets (MINE_PASS F-B6 / F-C10): the mine's square sets in its one scenery timber (the
+  `mine_timber` stock family, the nearest stock length stretched), at the 19 roof sockets of
+  `mina_ride_bed_family.json` (k 3 .. 21; set 2 left out for the brow sheave): posts plumb at z -1.45, each bay's cap
+  level, its top at the roof's underside over the bay's west post, 0.4 m into the socket. Every other set mirrored.
+- Under the station's bed east of the line (x -148.4 .. -136, y -14.7 .. -18; dsc_bed_d stops at -14.7) a rock solid:
+  the mountain's flat body showed through there, beside the mine's dark under the brow.
+- Frames: `after/brow_seam_sets_before_after.jpg` (ride13's follow camera at x -140, -152 and -165 and the zoom held at
+  -152; ridesets' bed gap and brow; before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
