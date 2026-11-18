@@ -3289,6 +3289,54 @@ func _w_a0end(a: Array) -> void:
 		await shot("a0end_%s_%s" % [row[2], tag])
 
 
+## The reviewer's q13: what shows above the cart ride's roof. The fixed views along the incline with the climber at
+## the station (as q13's at: cameras), then the real ride with the game's own follow camera, and again with the zoom
+## held (a Shift key event), a shot as the cart passes each x. ride13:TAG
+func _w_ride13(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("0.3")
+	await secs(1.5)
+	for row in [[Vector2(-165.0, -12.0), 6.0, "at_top"], [Vector2(-185.0, -19.0), 6.0, "at_mid"], [Vector2(-204.0, -25.0), 6.0, "at_end"]]:
+		look(row[0], float(row[1]))
+		await secs(0.8)
+		await shot("ride13_%s_%s" % [row[2], tag])
+	var cart: Dictionary = pk.things.movers["cart0"]
+	var c := me()
+	for wide in [false, true]:
+		var t_home := pk.clock
+		while (bool(cart.run) or float(cart.dist) > 0.0) and pk.clock - t_home < 45.0:
+			await get_tree().physics_frame  # (the last ride's cart on its way home)
+		pk.warp("0.3")
+		await secs(1.0)
+		stand(Vector2(-9.0, 2.76))
+		await secs(1.5)
+		c.attach(1, cart.nodes[0])
+		_free_cam = false
+		if wide:
+			_shift(true)
+		cart["pulled"] = true
+		var marks := [-140.0, -152.0, -165.0, -180.0, -195.0, -206.0]
+		var t0 := pk.clock
+		while pk.clock - t0 < 40.0 and not marks.is_empty():
+			var at: Vector2 = (cart.home as Vector2) + (cart.offset as Vector2)
+			if at.x <= float(marks[0]) or (float(cart.dist) > 0.0 and not bool(cart.run)):
+				await shot("ride13_%s_%d_%s" % ["wide" if wide else "follow", -int(marks[0]), tag])
+				marks.pop_front()
+			await ticks(1)
+		if wide:
+			_shift(false)
+	print("WATCH ride13: done")
+
+
+## The zoom's key (Shift) down or up, as the keyboard sends it.
+func _shift(down: bool) -> void:
+	var e := InputEventKey.new()
+	e.keycode = KEY_SHIFT
+	e.physical_keycode = KEY_SHIFT
+	e.pressed = down
+	Input.parse_input_event(e)
+
+
 ## La Esclusa's top: the lock's last rung and a2's pier and east wall over it, close and wide. locktop:TAG
 func _w_locktop(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""

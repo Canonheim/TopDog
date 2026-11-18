@@ -595,8 +595,8 @@ A.end_shift()  # (everything above is moved by MOVE at save; La Esclusa, below, 
 # on there: a stand-in card in its back tone at z -3, behind the incline tunnel's own back wall (a0, z -2.7) and
 # joined to it; the body cut away (st.py BODY_WINDOWS) and a backstop behind, as the mine's. MINE_PASS part F's
 # ride pieces replace the card.
-A.card([(-208.0, -42.0), (-148.0, -42.0), (-148.0, 25.0), (-208.0, 25.0)], z=-10.5, tone="back2", edge=False)  # behind mina_ride_lining's galleries (to z -10.06)
-A.card([(-208.0, -42.0), (-148.0, -42.0), (-148.0, 25.0), (-208.0, 25.0)], z=-18.0, tone="back3", edge=False)
+# (11-18, the reviewer's q13: the card and its backstop moved to a0, a0.py: a1 is drawn only with the climber
+# within 55 m of its region, west of about x -150, so from the station side the ride's roof had sky over it.)
 
 # ================================================================ LA ESCLUSA (note 146): the new section, x -303 .. -222, y 73 .. 90
 # Between the moved mine's roof (73) and the black waters' floor, under their east end: the keepers'
@@ -765,8 +765,8 @@ A.cam((-258.0, 75.0, -226.0, 89.6), 7.5, bias=(0.0, 1.0))     # the lock
 # its lantern now, behind the climb.)
 # (Off the two walls' faces, so they light them (the walls' makers, 11-17): the flume's at the lanterns' arms, z -1.7;
 # the booth's at its open front, z -1.75; by L1 and over L2 at the lanterns' own depth, z -1.45, behind the climb.)
-for x, y in ((-292.5, 81.5), (-277.9, 81.5), (-265.1, 81.5), (-259.5, 81.9)):  # the crane's post, two piers, the east landing
-    A.light(x, y, color="#9FD0FF", rng=10.0, energy=1.1, z=-1.7)
+for x, y, lz in ((-293.25, 81.53, -1.8), (-277.9, 81.5, -1.7), (-265.1, 81.5, -1.7), (-259.5, 81.9, -1.7)):  # the crane's hook, two piers, the east landing
+    A.light(x, y, color="#9FD0FF", rng=10.0, energy=1.1, z=lz)   # (the crane's: under the lantern hook on its post, esclusa_crane 11-18)
 for x, y, lz in ((-253.5, 81.3, -1.75), (-240.0, 84.7, -1.45), (-228.8, 83.5, -1.45)):  # the booth, by L1, over L2
     A.light(x, y, color="#6FE0D0", rng=8.0, energy=0.55, z=lz)   # the lock's three teal lanterns, steady (q8: about half as bright and a little shorter, so they light the lock wall and not the roof's face or the walk white)
 # The section's two painted sets (quality run, MINE_PASS F-E, landed 11-17), in place of the stand-in back wall and the
@@ -776,6 +776,11 @@ for x, y, lz in ((-253.5, 81.3, -1.75), (-240.0, 84.7, -1.45), (-228.8, 83.5, -1
 A.deco("esclusa_wall_flume", -277.75, 73.0, z=-2.2, size=(38.5, 13.6, 8.79), tone="brick")
 A.deco("esclusa_wall_lock", -240.25, 73.0, z=-1.9, size=(36.5, 16.4, 8.48), tone="back")
 A.deco("esclusa_mass_low", -255.0, 73.0, z=0.0, size=(73.0, 16.4, 2.4), tone="rock2", skin=True)  # the floors (F5)
+# Los Barriles' hero (quality run, MINE_PASS F-E5, reviewer 8.5, 11-18): the company's barrel crane on its stone seat at
+# the platform's back, dark riveted iron, the pug on its cast foot, the winch with its chain laid down, the back-stay
+# knee into the arcade; the jib snapped at its stub and hanging west behind the falls, a metre over the ladder's top
+# rung. Origin the post's foot. (Its lantern, aguas_works_lantern, hangs on the hook at (-293.25, 81.8): a later model.)
+A.deco("esclusa_crane", -292.5, 79.4, z=-1.8, size=(6.65, 3.6, 1.26), tone="back2")
 A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-18.0, tone="back3", edge=False)  # its own dark, behind the cavern's painted far wall (MINE_PASS F-C6)
 
 if __name__ == "__main__":

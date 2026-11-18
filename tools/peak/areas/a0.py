@@ -158,6 +158,16 @@ for d in A.decos:
 # the mine's lagging in bays stepping down the 20 deg road, the two side galleries going back in the dark, the
 # winding house's recess, the burst at the run-in, the refuge with its pail, the check board at the end of the line.
 A.deco("mina_ride_lining", -211.0, -29.6, z=-2.12, size=(63.3, 23.21, 8.6), tone="back")  # 12 cm back: clear of the station tunnel's back wall's relief where they overlap at the join (sweeps)
+# WHERE THE MINE WAS, over the ride (the Director, 11-18; moved here from a1 for the reviewer's q13): the mine's dark rock
+# carried east over the new stretch's roof and under its bed, a stand-in card in its back tone behind
+# mina_ride_lining's galleries (to z -10.06), a backstop behind it; the mountain's body is cut away there (st.py
+# BODY_WINDOWS). In a0 because a0 is drawn all the way along the ride, a1 only with the climber west of about x -150.
+# MINE_PASS part F's ride pieces replace the card.
+# Run west to the door (x -212), so the roof's end has rock past it too. (The mine palette's back2 and back3 by
+# number: a0's own palette is the town's, whose back tones are tan. The backstop at -18.1, off a1's own at -18,
+# which reaches x -201.)
+A.card([(-212.0, -42.0), (-148.0, -42.0), (-148.0, 25.0), (-212.0, 25.0)], z=-10.5, tone="#3B383F", edge=False)
+A.card([(-212.0, -42.0), (-148.0, -42.0), (-148.0, 25.0), (-212.0, 25.0)], z=-18.1, tone="#2A282D", edge=False)
 for x, y in a0_dress.LANTERNS:  # each light sits in its lantern, under the hook
     A.light(x, round(y - 0.27, 3), color="#FFB860", rng=10.0, energy=1.5, flicker=True)
 A.cam((-212, -34, -30, 9), half_h=4.6)

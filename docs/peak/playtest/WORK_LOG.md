@@ -2900,6 +2900,23 @@ in. Nothing played by a person.
 - Frames: `after/a0_end_of_line_before_after.jpg` (watch scene `a0end`: the bed's end wide and close, the buffer; before |
   after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the ride's back layer in a0 (the reviewer's q13)
+
+- q13's fixed cameras along the incline showed sky over the ride's roof. a1 is built with the rest but drawn only with
+  the climber within 55 m of its region (`ACTIVE_PAD`: west of about x -150), and those cameras had the climber at the
+  station, so a1's dark card over the ride (and its mine past the rock's west end) was hidden, and the mountain's body
+  is cut away there. The card and its backstop moved to a0, which is drawn all along the ride: x -212 (the door)
+  .. -148, y -42 .. 25, z -10.5 behind `mina_ride_lining`'s galleries, the backstop at -18.1 (off a1's own at -18), in
+  the mine's tones by number (a0's palette is the town's: its `back2` is tan).
+- The real ride, framed with the game's own follow camera and again with the zoom held: no sky at any point, before or
+  after (the climber is west of -150 by the incline, so a1 is drawn; and in the tunnel's camera zone the held zoom
+  widens only to the zone's own 4.6 m, so it adds nothing there). Past x -212 a fixed camera with the climber at the
+  station still sees sky: that is a1's mine, drawn whenever the climber is near it.
+- Frames: `after/ride_back_layer_before_after.jpg` (watch scene `ride13`: the three fixed views, the follow camera at
+  x -165, the zoom held at -195; before | after). **Checks:** lint; `--peak`. Clean.
+- The same commit places La Esclusa's crane (`esclusa_crane`) and moves its light under the lantern hook: the
+  Director's edits to a1.py (11-18), built into a1.json with the card's move.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
