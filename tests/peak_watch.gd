@@ -3330,6 +3330,35 @@ func _w_gate13(a: Array) -> void:
 			await shot("gate13_%s_%s_%s" % [row[2], when[1], tag])
 
 
+## 1.12's west end (the reviewer's q33): the falls' foot and the ladder, as the ladder's camera frames it; then with the far
+## backdrop hidden, then with the falls hidden, to find what draws the pale pane at the falls' foot. west33:TAG
+func _w_west33(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.12")
+	await secs(4.0)
+	look(Vector2(-297.5, 78.0), 5.5)
+	await secs(0.6)
+	await shot("west33_cam_%s" % tag)
+	look(Vector2(-297.0, 77.6), 2.2)
+	await secs(0.4)
+	await shot("west33_fern_%s" % tag)
+	if tag.begins_with("probe"):
+		look(Vector2(-297.5, 78.0), 5.5)
+		var area: Node = pk.get_node_or_null("Area_a1")
+		var bd: Node3D = area.find_child("mina_backdrop_cavern", true, false) as Node3D if area != null else null
+		if bd != null:
+			bd.visible = false
+		await secs(0.3)
+		await shot("west33_nobackdrop_%s" % tag)
+		if bd != null:
+			bd.visible = true
+		for f: Dictionary in pk.zones.fall_sheets:
+			if float(f.x) < -295.0 and float(f.x) > -305.0:
+				(f.node as Node3D).visible = false
+		await secs(0.3)
+		await shot("west33_nofalls_%s" % tag)
+
+
 ## MINE_PASS F-C11's whirlpool over esclusa_drain: the flume's camera and the ladder's, and close (two moments, to see it
 ## turn). whirl12:TAG
 func _w_whirl12(a: Array) -> void:

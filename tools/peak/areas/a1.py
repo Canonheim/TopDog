@@ -192,7 +192,7 @@ A.challenge("1.1", "La Galería", (-154.0, -12.6), 1, "S", moves=[
 RUNGS = [-11.6, -10.85, -10.1, -9.35, -7.85, -7.1, -6.35, -5.6, -3.72, -2.97, -2.22, -1.47,
          0.58, 1.33, 2.08, 2.83, 3.58, 4.33, 5.08]
 # A real ladder (Parker 11-12): rails drawn, only the rungs solid, rungs missing in three stretches.
-A.ladder(-171.55, RUNGS, w=0.9, kind="iron", crooked={2: -8.0, 6: 7.0, 9: -10.0, 13: 6.0})  # rusted iron, bracket rungs, some sagging
+A.ladder(-171.55, RUNGS, w=0.9, kind="iron", crooked={2: -8.0, 6: 7.0, 9: -10.0, 13: 6.0}, skin="mina_iron_ladder_1_2")  # rusted iron, bracket rungs, some sagging (its run model once landed: MINE_PASS C6)
 A.ledge(-176.0, -172.0, 6.0, "rock", t=0.5)  # the ladder's head: a rest, and the catwalk's east end
 A.statue(-167.0, -12.28, "sit", flip=True)  # the one who kept count, by his cold lantern
 # (his camp's things are a1_dress's, out of the play space)
@@ -762,7 +762,7 @@ _box(-297.0, MINE_TOP - 0.29, -295.0, MINE_TOP + 0.01, "stone", **_cope("esclusa
 # down onto the barrels coming at you from the east, barrel to barrel against the current, and up onto the
 # east landing and the quay. A fall in: the current takes you west into the whirlpool by the kicker, down
 # its pipe, and out in the alcove at La Cortina's top, 4 m from the ladder (Parker, 11-14).
-A.ladder(LADDER_X, LADDER_RUNGS, w=0.5, kind="iron")
+A.ladder(LADDER_X, LADDER_RUNGS, w=0.5, kind="iron", skin="mina_iron_ladder_1_12")  # (its run model once landed: MINE_PASS C6)
 _box(WEST_LANDING[0], LANDING - 0.3, WEST_LANDING[1], LANDING, "stone", **_cope("esclusa_coping_platform"))   # the platform's coping
 _hanging(EAST_LANDING[0], EAST_LANDING[1], LANDING, skin=_cope("esclusa_coping_quay").get("skin"))  # the east landing, over the flume's head
 _box(QUAY[0], LANDING - 0.3, QUAY[1], LANDING, "stone", **_cope("esclusa_coping_quay"))                     # the quay, on to the lock's gate

@@ -304,7 +304,7 @@ class Area:
         L = math.hypot(dx, dy)
         return self.box((p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2, L, t, kind, math.degrees(math.atan2(dy, dx)), **kw)
 
-    def ladder(self, x, ys, w=0.8, kind="iron", t=0.09, rail=0.11, rails=True, crooked=None):
+    def ladder(self, x, ys, w=0.8, kind="iron", t=0.09, rail=0.11, rails=True, crooked=None, skin=None):
         """A BROKEN IRON LADDER (Parker 11-12: "make it an actual ladder you climb on but
         only the sideways rungs have collision"; then: "an actual broken rusted ish ladder
         with rungs missing and some at angles ... a metal ladder with rungs that stick
@@ -315,12 +315,21 @@ class Area:
         where the rungs are gone the rails are gone too, and the first missing rung of
         each gap hangs broken from one foot (fit_ladder_rung_bent: nothing holds it).
         crooked: {index of a rung in the sorted ys: degrees}: rungs that sag at an angle
-        (still solid: they hold)."""
+        (still solid: they hold).
+        skin: one model for the whole run (MINE_PASS C6): once it has landed it is the ladder's look, its rails, rungs
+        and broken rungs, and the rungs' solids are only what the climb holds (the rails' drawn pieces and the bent
+        rungs' decos give way to it). Its contract: origin (x, the lowest rung's top), z 0, up +y; rung i (the sorted
+        ys) is a bar w wide whose top is at ys[i] - ys[0], t thick, turned crooked[i] degrees about z (counter-clockwise
+        as the camera sees it); the rails stand at x -/+ w / 2."""
         ys = sorted(ys)
         crooked = crooked or {}
+        skin_kw = {"skin": skin} if skin else {}
+        landed = bool(skin) and os.path.exists(os.path.join(ROOT, "kit", "models", skin + ".glb"))
         for i, y in enumerate(ys):
             pts = box_pts(x, y - t / 2, w, t, crooked.get(i, 0.0))
-            self.solid(pts, kind, fit="ladder_rung")
+            self.solid(pts, kind, fit="ladder_rung", **skin_kw)
+        if skin and ys:
+            self.deco(skin, x, ys[0], z=0.0, size=(w + 0.2, ys[-1] - ys[0] + 0.7, 0.45), tone=kind, skin=True)
         if not (rails and ys):
             return
         gaps = sorted(b - a for a, b in zip(ys, ys[1:]))
@@ -332,7 +341,8 @@ class Area:
             else:
                 runs[-1].append(b)
         for run in runs[:-1]:
-            self.deco("fit_ladder_rung_bent", x, run[-1] + step - t / 2, z=0.0)
+            if not landed:
+                self.deco("fit_ladder_rung_bent", x, run[-1] + step - t / 2, z=0.0)
         for ri, run in enumerate(runs):
             # (under a gap the rails run on far enough to carry the broken rung's foot)
             y0, y1 = run[0] - 0.4, run[-1] + (step + 0.32 if ri < len(runs) - 1 else 0.3)
@@ -342,7 +352,7 @@ class Area:
                 for k in range(n):
                     a, b = y0 + seg * k, y0 + seg * (k + 1)
                     self.solid([(rx - rail / 2, a), (rx + rail / 2, a), (rx + rail / 2, b), (rx - rail / 2, b)],
-                               kind, ghost=True, fit="ladder_rail")
+                               kind, ghost=True, fit="ladder_rail", **skin_kw)
 
     def hold(self, x, y, r=0.22, kind="rock", n=6, **kw):
         """A small nub to grab."""

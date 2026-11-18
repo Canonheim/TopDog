@@ -3141,6 +3141,23 @@ in. Nothing played by a person.
 - Frames: `after/q32_flap_matte_before_after.jpg` (watch scene `gate13`: the lock's camera shut, mid-fill and open;
   before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the reviewer's q33 at 1.12's west end; the ladders' run skin (MINE_PASS C6)
+
+- The pale pane at the falls' foot (x -303 .. -297, y 75.5 .. 78) is painted in `mina_backdrop_cavern`, the far
+  backdrop (z -15): hidden, the pane goes; with the falls hidden it shows whole, a flat pale-blue patch where the
+  backdrop paints the falls on behind. For its maker.
+- The fern in a box by the ladder is `esclusa_wall_flume`'s own fern card on one of its blocks (its shapes file: the
+  card at the wall's (-18.87, 3.2), the game's (-296.62, 76.2)): for the wall's maker.
+- `A.ladder(..., skin=)`: one model for a whole run. Once it has landed it is the ladder's look (its rails, rungs and
+  broken rungs: the rungs' solids and the rails' drawn pieces wear it, the bent rungs' decos give way), and the rungs'
+  solids are what the climb holds, as before. The contract: origin (x, the lowest rung's top), z 0, up +y; rung i of
+  the sorted rungs a bar w wide, its top at ys[i] - ys[0], 0.09 thick, turned by its crooked degrees about z (counter-
+  clockwise as the camera sees it); the rails at x -/+ w/2. a1's two: `mina_iron_ladder_1_12` (the keepers' ladder at
+  1.12, x -295.4, its lowest rung's top 73.8, w 0.5) and `mina_iron_ladder_1_2` (1.2's, game x -230.55, lowest top
+  -28.6, w 0.9, crooked 2: -8, 6: 7, 9: -10, 13: 6). Nothing changes till they land.
+- Frames: `after/q33_west_end_probe.jpg` (watch scene `west33`: the ladder's camera; the fern close; the backdrop
+  hidden; the falls hidden). **Checks:** lint; `--peak`. Clean.
+
 ## 11-18: 1.12's whirlpool drawn in the flume's water (MINE_PASS F-C11, the code half of the drain)
 
 - Over `esclusa_drain`'s eye (x -286.5, z 0) the flume's water turns down: a water rule's `whirl` (a1.py) makes the
