@@ -696,7 +696,7 @@ def dress(A):
     # middle), and the works' first arch standing straight on its cap, low, in flat courses of
     # colour, with a cast iron pug in its middle: the one object that is the join.
     A.deco("timber_set", -234.0, 87.95, z=-1.45, size=(3.6, 4.0, 0.36), tone="back")
-    A.deco("works_arch_low", -234.0, 89.9, z=-1.45, size=(3.9, 1.95, 0.4), tone="brick")
+    # (The works' first arch on its cap is esclusa_wall_flume's now, with its cast pug in the keystone.)
     side_lantern(-235.45, 88.6, -1.45)  # the mine's last amber, on the set's west post
     # Drawn on the lip ledge's front face: the works' stone coping on the miners' rock ledge,
     # and five courses of dry pale brick at its west end, where your hand first lands.

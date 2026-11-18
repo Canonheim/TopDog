@@ -747,19 +747,18 @@ A.cam((-290.0, 75.0, -258.0, 82.8), 6.0, bias=(0.0, 0.5))     # the flume
 A.cam((-258.0, 75.0, -226.0, 89.6), 7.5, bias=(0.0, 1.0))     # the lock
 # (MINE_PASS F-C7: the seven stood in front of the play space and glared white on the roof and the gate: each under
 # its lantern now, behind the climb.)
+# (Off the two walls' faces, so they light them (the walls' makers, 11-17): the flume's at the lanterns' arms, z -1.7;
+# the booth's at its open front, z -1.75; by L1 and over L2 at the lanterns' own depth, z -1.45, behind the climb.)
 for x, y in ((-292.5, 81.5), (-277.9, 81.5), (-265.1, 81.5), (-259.5, 81.9)):  # the crane's post, two piers, the east landing
-    A.light(x, y, color="#9FD0FF", rng=10.0, energy=1.1, z=-1.9)
-for x, y in ((-253.5, 81.3), (-240.0, 84.7), (-228.8, 83.5)):  # the booth, by L1, over L2
-    A.light(x, y, color="#6FE0D0", rng=9.0, energy=1.0, z=-1.9)   # the lock's three teal lanterns, steady
-# The section's back wall (stand-in), cut away behind the falls (MINE_PASS F-C6: nothing between the column and the
-# painted cavern far behind it).
-_bw = _Poly([(-307.0, MINE_TOP), (-222.0, MINE_TOP), (-222.0, 89.4), (-252.0, 89.4), (-252.0, CEIL_E), (-292.0, CEIL_E),
-             (-292.0, CEIL_W), (-307.0, CEIL_W)]).difference(_sbox(FALLS[0], MINE_TOP - 1.0, FALLS[1], CEIL_W + 1.0))
-for _g in getattr(_bw, "geoms", [_bw]):
-    A.card([(round(x, 3), round(y, 3)) for x, y in list(_g.exterior.coords)[:-1]], z=-2.4, tone="back", edge=False)
-A.card([(CHUTE[0], CHUTE[2]), (CHUTE[1], CHUTE[2]), (CHUTE[1], CHUTE[3]), (CHUTE[0], CHUTE[3])], z=-2.3, tone="back3", edge=False)  # the waste chute's mouth
-A.card([(ARCH[0], S - 0.1), (ARCH[1], S - 0.1), (ARCH[1], S + 2.6), ((ARCH[0] + ARCH[1]) / 2, S + 3.4), (ARCH[0], S + 2.6)],
-       z=-2.3, tone="back3", edge=False)                                                       # the barrels' tunnel mouth
+    A.light(x, y, color="#9FD0FF", rng=10.0, energy=1.1, z=-1.7)
+for x, y, lz in ((-253.5, 81.3, -1.75), (-240.0, 84.7, -1.45), (-228.8, 83.5, -1.45)):  # the booth, by L1, over L2
+    A.light(x, y, color="#6FE0D0", rng=9.0, energy=1.0, z=lz)   # the lock's three teal lanterns, steady
+# The section's two painted sets (quality run, MINE_PASS F-E, landed 11-17), in place of the stand-in back wall and the
+# chute's and the tunnel's black cards: the flume's arcade (x -297 .. -258.5, reviewer 9) and the lock's chamber and
+# quay (x -258.5 .. -222, reviewer 8.5). Origins the middle of each one's foot, on its face. Nothing between the falls'
+# column and the painted cavern far behind it (F-C6): the flume wall starts east of the column.
+A.deco("esclusa_wall_flume", -277.75, 73.0, z=-2.2, size=(38.5, 13.6, 8.79), tone="brick")
+A.deco("esclusa_wall_lock", -240.25, 73.0, z=-1.9, size=(36.5, 16.4, 8.48), tone="back")
 A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-18.0, tone="back3", edge=False)  # its own dark, behind the cavern's painted far wall (MINE_PASS F-C6)
 
 if __name__ == "__main__":
