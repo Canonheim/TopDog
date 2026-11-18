@@ -664,11 +664,8 @@ def dress(A):
     # shaft's plank lining on its frames and the mine's last square set, the works' first arch on its cap. (It takes the
     # jobs of mine_lining_dry_shaft, the outcrops, the 28 rust stains and the stand-in set at the shaft's mouth.)
     A.deco("mine_cortina_wall", -239.0, 60.0, z=round(THROAT_Z - 0.03, 3), size=(18.0, 30.21, 2.01), tone="slick")  # (3 cm back: at THROAT_Z its top lining met esclusa_wall_flume's arch foot in one plane at z -1.70, and 1.2 cm back its lower face met the water trough's at -1.81: sweeps)
-    # Drip boards over four of the five dry staples, nailed to the wall at a slant (grey): the
-    # drip runs down to each, along it and off its low end.
-    for r, s in _DRY[:4]:
-        x, y = _STAPLE(r, s)
-        A.deco("mine_drip_board", x, round(y + 0.51, 2), z=THROAT_Z + 0.04, rot=14.7 if s == 0 else -14.7, size=(0.85, 0.1, 0.08), tone="back")
+    # (The drip boards over four of the five dry staples are part of `mine_staple_bound` now: the iron staple family,
+    # 11-18.)
     A.deco("sign_pug_arrow", -224.6, DRIFT_Y, z=-1.4, flip=True, size=(0.76, 2.18, 0.15), tone="bone")  # moved back 0.4, in the drift
     # The empty camp against the drift's back wall: a bedroll, a cold lantern and a pickaxe, and nobody.
     A.deco("camp_bedroll", -227.75, DRIFT_Y, z=-2.0, size=(1.6, 0.25, 0.6), tone="wood2")

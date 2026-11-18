@@ -3330,6 +3330,51 @@ func _w_gate13(a: Array) -> void:
 			await shot("gate13_%s_%s_%s" % [row[2], when[1], tag])
 
 
+## The iron staple family in the game: 1.5 El Cubo's seven (straight on and from the side, the legs into El Diente's
+## east face) and 1.11 La Cortina's 28 (straight on, from the side, the legs into the throat's wall), and a climber
+## hanging on one. staples30:TAG
+func _w_staples30(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.5")
+	await secs(4.0)
+	for row in [[Vector2(-260.5, -6.4), 4.2, "cubo"], [Vector2(-262.6, -5.4), 1.6, "cubo_side"]]:
+		look(row[0], float(row[1]))
+		await secs(0.6)
+		await shot("staples30_%s_%s" % [row[2], tag])
+	pk.warp("1.11")
+	await secs(4.0)
+	for row in [[Vector2(-293.3, 63.0), 3.2, "cortina"], [Vector2(-295.6, 64.2), 1.5, "cortina_side"], [Vector2(-292.6, 70.6), 1.6, "bound"]]:
+		look(row[0], float(row[1]))
+		await secs(0.6)
+		await shot("staples30_%s_%s" % [row[2], tag])
+	# a climber hanging by its right hand from row 4's east staple (a dry rest: a wet one lets go)
+	var hold := Vector2(-293.3 + 0.11 * 4, 56.3 + 1.25 * 4)
+	for ar in pk.areas:
+		if str(ar.id) == "a1":
+			for sd in ar.solids:
+				if str(sd.get("skin", "")).begins_with("iron_staple") or str(sd.get("skin", "")).begins_with("mine_staple"):
+					var cc := Vector2.ZERO
+					for q in sd.pts:
+						cc += Vector2(float(q[0]), float(q[1]))
+					cc /= float(sd.pts.size())
+					if absf(cc.y - (56.3 + 1.25 * 4)) < 0.2 and cc.x > -293.6:
+						hold = cc
+	stand(hold + Vector2(0.15, -1.7))
+	await ticks(1)
+	var space := get_viewport().world_3d.direct_space_state
+	var q := PhysicsPointQueryParameters3D.new()
+	q.position = Vector3(hold.x + Peak.ORIGIN.x, hold.y + Peak.ORIGIN.y, 0.0)
+	for h in space.intersect_point(q, 4):
+		if h.collider is StaticBody3D:
+			me().attach(1, h.collider)
+	await secs(1.5)
+	print("WATCH staples30: a climber on the staple at %s, holding %s" % [hold, holds()])
+	for row in [[hold + Vector2(0.0, -0.6), 2.0, "held"], [hold + Vector2(-2.0, -0.4), 2.0, "held_side"]]:
+		look(row[0], float(row[1]))
+		await secs(0.4)
+		await shot("staples30_%s_%s" % [row[2], tag])
+
+
 ## La Cortina's rope (the reviewer's q28: it read as a thin pole): still, close and at La Cortina's camera, then with a
 ## climber hanging on it by a hand halfway down. rope28:TAG
 func _w_rope28(a: Array) -> void:

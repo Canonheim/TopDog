@@ -226,8 +226,10 @@ A.challenge("1.4", "La Cuerda del Minero", (-191.5, 6.0), 2, "A", moves=[
 # counterweight comes down to a step past its tip, waits 2.5 s, goes up 12 m (7.5 s),
 # waits 2.5 s at the top by the station deck, and comes back down. Step off west at the
 # top, or ride it down again. Fall off and you land on the catwalk, before the rope.
-for y in (7.1, 8.3, 9.5, 10.7, 11.9, 13.1, 14.3):
-    A.box(XF + 0.4, y - 0.07, 1.0, 0.14, "iron")
+for k, y in enumerate((7.1, 8.3, 9.5, 10.7, 11.9, 13.1, 14.3)):
+    _look = ("iron_staple_cubo", "iron_staple_cubo_b")[k % 2]
+    A.box(XF + 0.4, y - 0.07, 1.0, 0.14, "iron", skin=_look)
+    A.deco(_look, XF + 0.4, y - 0.07, z=0.0, size=(0.93, 0.18, 0.44), tone="iron", skin=True)  # (its legs 0.9 out of El Diente's east face, 3 cm in)
 # The arm: top y 14.2. Its west end stands 1.5 m off the wall (a beam built into the wall
 # would roof the staples in), so the staples pass it and you step across onto its end.
 A.beam((-200.4, 14.0), (-191.5, 14.0), 0.4, "wood")
@@ -485,14 +487,24 @@ STAPLE_BAR = (0.4, 0.12)  # a hold's bar, w x h
 # Their looks (a1_dress item 8): iron staples whose feet are in the throat's back wall (its face
 # at z -1.3, a1_dress THROAT_Z: MINE_PASS C7c), five of them bent; the five dry rests bound in pale cord. A wet one shows its wet
 # on the staple. (The five bent: my pick, spread up the climb.)
-BENT = {(2, 1), (5, 0), (8, 1), (11, 0), (12, 1)}
+BENT = {(2, 1), (3, 1), (5, 0), (8, 1), (11, 0), (12, 1)}
+# (The iron staple family, quality run, reviewer 8.5, 11-18: each hold's staple and whether it is mirrored.)
+STAPLE_LOOK = {
+    (0, 0): ("iron_staple", False), (0, 1): ("iron_staple_b", True), (1, 0): ("mine_staple_bound", False), (1, 1): ("iron_staple_c", False),
+    (2, 0): ("iron_staple_b", False), (2, 1): ("iron_staple_bent", False), (3, 0): ("iron_staple_c", True), (3, 1): ("iron_staple_bent_b", True),
+    (4, 0): ("iron_staple_b", True), (4, 1): ("mine_staple_bound", True), (5, 0): ("iron_staple_bent_b", False), (5, 1): ("iron_staple", False),
+    (6, 0): ("iron_staple_c", False), (6, 1): ("iron_staple_b", False), (7, 0): ("mine_staple_bound", False), (7, 1): ("iron_staple_c", True),
+    (8, 0): ("iron_staple", True), (8, 1): ("iron_staple_bent", True), (9, 0): ("iron_staple_b", False), (9, 1): ("iron_staple_c", False),
+    (10, 0): ("iron_staple_c", True), (10, 1): ("mine_staple_bound_b", True), (11, 0): ("iron_staple_bent_b", True), (11, 1): ("iron_staple_b", True),
+    (12, 0): ("iron_staple", False), (12, 1): ("iron_staple_bent_b", False), (13, 0): ("mine_staple_bound_b", False), (13, 1): ("iron_staple", True),
+}
 for side in (0, 1):
     _top = (_col_x(DRIP_TOP_Y, side), DRIP_TOP_Y)
     A.drips(_top, (_col_x(DRIP_FOOT_Y, side), DRIP_FOOT_Y), speed=DRIP_SPEED, gap=DRIP_GAP, phase=3.5 * side)
     for r in range(ROWS):
         y = ROW0_Y + ROW_DY * r
         x = _col_x(y, side)
-        look = "mine_staple_bound" if ALWAYS_DRY.get(r) == side else ("iron_staple_bent" if (r, side) in BENT else "iron_staple")
+        look, flip = STAPLE_LOOK[(r, side)]
         # (MINE_PASS C7a, 11-18: each hold is the staple's bar, 0.4 x 0.12, in place of a hexagon of r 0.24 (the rests
         # 0.26): the same middles, so the same reaches; a hand plants on it from about 0.13 above or below its middle.)
         if ALWAYS_DRY.get(r) == side:
@@ -501,7 +513,7 @@ for side in (0, 1):
             A.solid(box_pts(x, y, STAPLE_BAR[0], STAPLE_BAR[1]), "rock", skin=look, hold={
                 "type": "wet", "on": DRIP_WET, "off": DRIP_GAP / DRIP_SPEED - DRIP_WET, "look": "water",
                 "phase": Area.drip_phase(_top, (x, y), DRIP_SPEED, DRIP_GAP, 3.5 * side)})
-        A.deco(look, round(x, 3), round(y, 3), z=a1_dress.THROAT_Z, size=(0.4, 0.1, 0.25), tone="iron", skin=True)  # (its feet in the throat's back wall)
+        A.deco(look, round(x, 3), round(y, 3), z=0.0, flip=flip, size=(0.4, 0.12, 1.4), tone="iron", skin=True)  # (its grip the hold; its legs to the throat's wall face, z -1.33)
 for r in range(ROWS):
     y = ROW0_Y + ROW_DY * r
     CORTINA.append((_col_x(y, 0), _col_x(y, 1), y))

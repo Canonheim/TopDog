@@ -3109,6 +3109,18 @@ in. Nothing played by a person.
   drips' speed and timing as they were. Frames: `after/q29_rope_bands_drops_before_after.jpg` (the rope at La
   Cortina's camera, still and held; the staples close; before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the iron staple family placed (El Cubo 1.5, La Cortina 1.11)
+
+- Nine models (reviewer 8.5). El Cubo's seven rungs wear `iron_staple_cubo` / `_b` in turn, their legs 0.9 m out of
+  El Diente's east face and 3 cm into it. La Cortina's 28 holds wear a staple each by `STAPLE_LOOK` (a1.py: the plain,
+  `_b`, `_c`, the two bent and the two bound, some mirrored), drawn at the hold (z 0) with their legs back to the
+  throat's wall face, 6 cm into it at z -1.36; one more bent (row 3 east). The four drip boards over the dry rests are
+  out of a1_dress: the board is part of `mine_staple_bound` now (the drips are their own lines, not the boards).
+- SKIN 23 -> 12 (the staples fit their holds); ZFIGHT 0; DEPTH 42.
+- Frames: `after/staples_family_before_after.jpg` (watch scene `staples30`: El Cubo and from its side, La Cortina and
+  from its side, a bound rest, a climber hanging on one and from the side; before | after). **Checks:** lint;
+  `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
