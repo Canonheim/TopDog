@@ -235,7 +235,7 @@ def dress(A):
     # The cavern's own hand-cut wall, 1.7 m behind the walk (1.3, 1.4, 1.5, 1.6, 1.0b): three
     # pieces made to meet, low (the landing), middle (the walk) and high (the lift and the ribs).
     A.deco("mine_cavern_wall_low", -184.95, SUMP_FLOOR, z=-3.25, size=(25.9, 27.0, 0.7), tone="back")
-    A.deco("mine_cavern_wall_mid", -186.45, -6.0, z=CAVE_WALL_Z, size=(30.9, 24.0, 6.26), tone="back")  # (quality run, E2) origin on its face
+    A.deco("mine_cavern_wall_mid", -186.45, -6.0, z=CAVE_WALL_Z, size=(30.9, 24.0, 6.36), tone="back")  # (quality run, E2) origin on its face
     A.deco("mine_cavern_wall_high", -186.45, 18.0, z=-2.9, size=(30.9, 38.2, 3.25), tone="back")  # (quality run, E3) origin on its face
 
     # ============================================================ 1.0 The Sump and the frog's cave
