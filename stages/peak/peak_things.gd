@@ -297,7 +297,7 @@ func _build_body(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 ## 0.5 m piece), and at its foot a whipping of twine and a short frayed tuft. The drawing only: the piece's body,
 ## its length and its grip are a rope's as ever.
 const HEMP := Color("#C9903F")
-const HEMP_TWIST := Color("#8C5F27")
+const HEMP_TWIST := Color("#AB7221")  # (30 levels under the strand: #8C5F27 read as a hazard stripe at true size, q29)
 
 
 func _hemp_piece(mi: MeshInstance3D, rb: RigidBody3D, seg_len: float, last: bool) -> void:
@@ -314,7 +314,7 @@ func _hemp_piece(mi: MeshInstance3D, rb: RigidBody3D, seg_len: float, last: bool
 		var bm := CylinderMesh.new()
 		bm.top_radius = 0.06
 		bm.bottom_radius = 0.06
-		bm.height = 0.035
+		bm.height = 0.025
 		bm.radial_segments = 10
 		bm.rings = 1
 		band.mesh = bm
@@ -2779,8 +2779,8 @@ func _tick_holds(delta: float) -> void:
 						else:
 							h["dry_at"] = t
 				if near_me and wet and t >= float(h.get("drop_at", 0.0)):
-					h["drop_at"] = t + 0.3
-					peak.zones.burst(_hold_at(h) + Vector2(randf_range(-0.15, 0.15), -0.2), "drops", 0.35, Vector2.DOWN)
+					h["drop_at"] = t + 0.6  # (fewer and smaller, so the drip's streak is the tell, not a spray of dots: q29)
+					peak.zones.burst(_hold_at(h) + Vector2(randf_range(-0.15, 0.15), -0.2), "drops", 0.2, Vector2.DOWN)
 				if showy and h.has("dry_at"):
 					var f := clampf((t - float(h.dry_at)) / 0.45, 0.0, 1.0)
 					_hold_tint(h, Color(0.62, 0.8, 1.0).lerp(Color(1, 1, 1), f))

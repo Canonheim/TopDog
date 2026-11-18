@@ -3103,6 +3103,11 @@ in. Nothing played by a person.
   (`cuerda_cortina`, `cuerda_minero`); every other area's ropes as they were.
 - Frames: `after/q28_drips_rope_before_after.jpg` (watch scenes `rope28`: the rope still, its tip, a climber on it;
   `c7frames`: La Cortina's top, high, the staples close; before | after). **Checks:** lint; `--peak`. Clean.
+- q29's two touches: the hemp's twist bands a step softer (#AB7221, 30 levels under the strand, 2.5 cm wide: at true
+  size the old #8C5F27 read as a hazard stripe), on both of a1's ropes; and a wet staple's loose drops fewer and
+  smaller (one burst every 0.6 s at 0.2, not every 0.3 s at 0.35; only La Cortina's 23 wet holds have them), the
+  drips' speed and timing as they were. Frames: `after/q29_rope_bands_drops_before_after.jpg` (the rope at La
+  Cortina's camera, still and held; the staples close; before | after). **Checks:** lint; `--peak`. Clean.
 
 ## To do: every note of 12 to 57 not done yet
 
