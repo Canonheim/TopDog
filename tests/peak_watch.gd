@@ -3302,6 +3302,17 @@ func _w_ridesets(a: Array) -> void:
 		await shot("ridesets_%s_%s" % [row[2], tag])
 
 
+## The Sump's mist (MINE_PASS F-C11, as at 1.11 and 1.12): the Sump at the great falls' foot, wide and close. sump24:TAG
+func _w_sump24(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.2")
+	await secs(4.0)
+	for row in [[Vector2(-299.0, -40.0), 7.0, "wide"], [Vector2(-296.0, -38.5), 3.5, "close"]]:
+		look(row[0], float(row[1]))
+		await secs(1.0)
+		await shot("sump24_%s_%s" % [row[2], tag])
+
+
 ## MINE_PASS F-C11: the floating spray balls at 1.11 (La Cortina's camera, and the throat close) and 1.12 (the flume's
 ## camera at the whirlpool, the vault's west end). mist24:TAG
 func _w_mist24(a: Array) -> void:

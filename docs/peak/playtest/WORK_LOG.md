@@ -3002,6 +3002,12 @@ in. Nothing played by a person.
   the drain's funnel model is where it shows.
 - Frames: `after/fc11_spray_balls_before_after.jpg` (watch scene `mist24`: La Cortina's camera and its throat close,
   the flume's camera at the whirlpool and close; before | after). **Checks:** lint; `--peak`. Clean.
+- The Sump's mist out too (the Director, 11-18): the great falls' foam at its foot and the drips carry the wet. Frames:
+  `after/sump_mist_before_after.jpg` (watch scene `sump24`, wide and close). **Checks:** lint; `--peak`. Clean.
+- **The `mist` effect elsewhere, left for each biome's pass to decide:** a2 x3 (game -392 .. -380 x 134.5 .. 156; -292 ..
+  -280 x 89 .. 98; -250 .. -234 x 86 .. 94); a3 x2 (the well, -309 .. -304 and -300 .. -292 x 262 .. 280, lit violet and
+  green); a4 x2 (-291 .. -256 x 264 .. 267; -215 .. -190 x 318 .. 320.5); a9 x2 (ice, -331 .. -305.5 x 786 .. 792;
+  -303 .. -284.5 x 804 .. 809); a10 x1 (-330 .. -316 x 944 .. 954, z -1.4). a0, a5 .. a8 and a11 have none.
 
 ## To do: every note of 12 to 57 not done yet
 

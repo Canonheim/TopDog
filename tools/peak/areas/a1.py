@@ -142,7 +142,8 @@ A.wind((FALL_X0, -22.0, FALL_X1, 90.0), (0.0, -6.0))
 # to the column's full width and height (its top written 193, moved to 176), drawn just behind the climb.
 # (Note 111's 3D falls come later.)
 A.effect("waterfall", (FALL_X0, SUMP_Y, FALL_X1, 193.0), x=(FALL_X0 + FALL_X1) / 2, head=0.0, width=6.0, z=-0.6)
-A.effect("mist", (-250.0, -30.0, -230.0, -17.0), density=0.8)
+# (The Sump's mist, phase 0's floating spray balls at the great falls' foot, is out: MINE_PASS F-C11, 11-18, as at 1.11 and
+# 1.12; the falls' spray and the drips carry the wet.)
 # (La Cortina's throat had a mist here too: phase 0's floating spray balls, pale grey balls drifting over the staples.
 # Out, MINE_PASS F-C11, 11-18: the falls' own spray and the drips carry the wet.)
 
