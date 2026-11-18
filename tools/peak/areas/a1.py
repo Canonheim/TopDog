@@ -25,6 +25,12 @@ import math, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 from peaklib import Area, box_pts, ngon
 import a1_dress  # the mine's scenery (the modelling run's): decos only
+import sweeps as _sw
+
+
+def _cope(model):
+    """A skin once its model has landed (La Esclusa's stone family, MINE_PASS F7): {"skin": model}, or {} till then."""
+    return {"skin": model} if _sw.model_bounds(model) is not None else {}
 
 A = Area("a1", "mine")
 # THE MINE MOVED (note 146; Parker 11-14: "move the mine over to line up it's big fall with the falls"):
@@ -505,7 +511,7 @@ for r in range(ROWS - 1):  # the lint's line: up the right-hand holds (any zigza
 cortina_moves.append(["reach", [round(CORTINA[-1][1], 2), CORTINA[-1][2]], [-232.0, 89.7]])  # the lip
 # (MINE_PASS F-C5: moved under La Esclusa, its east 3.5 m ran on under the section's rock in a 0.3 m slot. Trimmed to
 # the alcove, x -291 .. -288 after the move.)
-A.ledge(-232.0, -229.0, 89.7, "rock", t=0.5)  # the alcove's floor at La Cortina's top (was the roof's grip under A2's lip ledge)
+A.ledge(-232.0, -229.0, 89.7, "rock", t=0.5, **_cope("esclusa_coping_alcove"))  # the alcove's floor at La Cortina's top (was the roof's grip under A2's lip ledge)
 # A ROPE FROM THE TOP, TO HALF WAY (Parker 11-12: "make a rope hanging about half way down
 # this challenge", and of a short rope in the middle or a long one from the lip: "b").
 # It hangs from an iron bracket under the lip, a hand east of the east column, 8 m long:
@@ -597,6 +603,16 @@ A.card([(-298, -42), (-142, -42), (-142, 96), (-298, 96)], z=-18.0, tone="back3"
 
 A.end_shift()  # (everything above is moved by MOVE at save; La Esclusa, below, stands where it is written)
 
+# LA ESCLUSA'S STONE (quality run, MINE_PASS F7, reviewer 8.5, 11-18): one family for every coped piece, each a drafted
+# stone edge on a dark body (the pale grip on top, the end and the underside dark): the pier's top at the ladder's foot,
+# the platform, the alcove's floor, the east landing, the quay and the sill as one run, and L1 and L2. Each wears its
+# solids (their lines below, and the alcove's in the mine's block) once landed.
+for _m, _at, _size in (("esclusa_coping_pier", (-296.0, 73.01), (2.0, 0.3, 2.46)), ("esclusa_coping_platform", (-292.75, 79.4), (4.5, 0.3, 2.46)),
+                       ("esclusa_coping_alcove", (-289.5, 72.7), (3.0, 0.3, 2.46)), ("esclusa_coping_quay", (-251.5, 79.4), (17.8, 1.35, 3.52)),
+                       ("esclusa_coping_l1", (-238.9, 83.0), (1.4, 1.7, 3.38)), ("esclusa_coping_l2", (-228.8, 81.0), (1.6, 1.7, 3.38))):
+    if _cope(_m):
+        A.deco(_m, _at[0], _at[1], z=0.0, size=_size, tone="stone", skin=True)
+
 # WHERE THE MINE WAS (the Director, 11-18): since note 146 the mountain's flat tan body showed east of the moved
 # mine, over and under the ride's new incline (game x -207 .. -148), at the widest view. The mine's dark rock carried
 # on there: a stand-in card in its back tone at z -3, behind the incline tunnel's own back wall (a0, z -2.7) and
@@ -660,10 +676,11 @@ def _box(x0, y0, x1, y1, kind, **kw):
     A.solid([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], kind, **kw)
 
 
-def _hanging(x0, x1, y, kind="stone", t=0.7):
-    """A slick body with a pale grip coping on top (a2's slab)."""
-    _box(x0, y - t, x1, y - 0.2, "wet")
-    _box(x0, y - 0.3, x1, y, kind)
+def _hanging(x0, x1, y, kind="stone", t=0.7, skin=None):
+    """A slick body with a pale grip coping on top (a2's slab). skin: one model for both."""
+    kw = {"skin": skin} if skin else {}
+    _box(x0, y - t, x1, y - 0.2, "wet", **kw)
+    _box(x0, y - 0.3, x1, y, kind, **kw)
 
 
 # THE ROOF'S VAULTS (MINE_PASS F-C3, 11-18): over the flume the roof's flat underside (y 83) becomes a row of transverse
@@ -727,16 +744,16 @@ VAULT_LANDED = _sweeps.model_bounds("esclusa_vault") is not None  # (the flume's
 GATE_LANDED = _sweeps.model_bounds("esclusa_lower_gate") is not None
 _section_rock()
 _box(PIER[0], LOCK_CEIL, PIER[1], 89.4, "wet")              # the pier's foot between the slot and the dry shaft
-_box(-297.0, MINE_TOP - 0.29, -295.0, MINE_TOP + 0.01, "stone")  # the pier's top, coped: the ladder's foot, 1.12's start (1 cm proud of the mine's roof: no shared plane)
+_box(-297.0, MINE_TOP - 0.29, -295.0, MINE_TOP + 0.01, "stone", **_cope("esclusa_coping_pier"))  # the pier's top, coped: the ladder's foot, 1.12's start (1 cm proud of the mine's roof: no shared plane)
 # ---------------------------------------------------------------- 1.12 Los Barriles
 # Up the keepers' ladder beside the falls (6.4 m, 1.6 m from their edge, in their spray) to the platform;
 # down onto the barrels coming at you from the east, barrel to barrel against the current, and up onto the
 # east landing and the quay. A fall in: the current takes you west into the whirlpool by the kicker, down
 # its pipe, and out in the alcove at La Cortina's top, 4 m from the ladder (Parker, 11-14).
 A.ladder(LADDER_X, LADDER_RUNGS, w=0.5, kind="iron")
-_box(WEST_LANDING[0], LANDING - 0.3, WEST_LANDING[1], LANDING, "stone")   # the platform's coping
-_hanging(EAST_LANDING[0], EAST_LANDING[1], LANDING)                         # the east landing, over the flume's head
-_box(QUAY[0], LANDING - 0.3, QUAY[1], LANDING, "stone")                     # the quay, on to the lock's gate
+_box(WEST_LANDING[0], LANDING - 0.3, WEST_LANDING[1], LANDING, "stone", **_cope("esclusa_coping_platform"))   # the platform's coping
+_hanging(EAST_LANDING[0], EAST_LANDING[1], LANDING, skin=_cope("esclusa_coping_quay").get("skin"))  # the east landing, over the flume's head
+_box(QUAY[0], LANDING - 0.3, QUAY[1], LANDING, "stone", **_cope("esclusa_coping_quay"))                     # the quay, on to the lock's gate
 A.water((FLUME[0], BED, FLUME[1], S), S, flow=(-1.0, 0.0), look="flume", back=-2.2)  # the flume: it runs WEST, 1 m a second
 # (its surface drawn back to the wall's face, z -2.2: it runs into the barrels' tunnel's mouth, where the bore's own
 # black water begins, and its edge is not drawn in the mouth: the reviewer's q20)
@@ -768,15 +785,15 @@ A.challenge("1.12", "Los Barriles", (-296.0, 73.0), 3, "B", moves=(
 # is under its sill (2.1 s of each cycle), catch the rise on the sill, swim across as it lifts you (10.3 m
 # in 8.1 s), out of the old dry shaft onto El Borde's lip ledge at the top. The river comes down the back
 # wall without pushing.
-_box(GATE[0], LANDING - 0.3, L0[1], LANDING, "stone")       # the wicket's sill, running in as the lowest ledge (L0)
+_box(GATE[0], LANDING - 0.3, L0[1], LANDING, "stone", **_cope("esclusa_coping_quay"))       # the wicket's sill, running in as the lowest ledge (L0)
 _gate_skin = {"skin": "esclusa_lower_gate"} if GATE_LANDED else {}
 _box(GATE[0], LANDING + 2.5, GATE[1], LOCK_CEIL, "grease", **_gate_skin)  # the lower gate above the wicket
 _box(GATE[0], LOCK_FLOOR, GATE[1], LANDING - 0.3, "grease", **_gate_skin) # and below it
 if GATE_LANDED:
     A.deco("esclusa_lower_gate", -244.5, 75.7, z=0.0, size=(1.0, 13.3, 2.4), tone="iron", skin=True)
-for x0, x1, y in (L1, L2):
-    _box(x0, y - 0.55, x1, y - 0.25, "wet")
-    _box(x0, y - 0.3, x1, y, "stone")
+for (x0, x1, y), _m in ((L1, "esclusa_coping_l1"), (L2, "esclusa_coping_l2")):
+    _box(x0, y - 0.55, x1, y - 0.25, "wet", **_cope(_m))
+    _box(x0, y - 0.3, x1, y, "stone", **_cope(_m))
 for x, y in DRY_RUNGS:
     _box(x - 0.25, y - 0.07, x + 0.25, y + 0.07, "iron")
 A.water((LOCK[0], LOCK_FLOOR, LOCK[1], LOCK_HIGH), LOCK_LOW, flow=(0.0, 0.0), look="lock")

@@ -3037,6 +3037,18 @@ in. Nothing played by a person.
 - Frames: `after/q25_lock_water_before_after.jpg` (watch scene `gate13`: the lock's camera and close, shut and open;
   before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: La Esclusa's stone family placed (`esclusa_coping`, MINE_PASS F7)
+
+- Six models, each a drafted stone edge on a dark body, on a1's coped solids: the pier's top (219), the platform
+  (234), the alcove's floor (205), the east landing (235, 236: `_hanging` takes a skin for both its boxes), the quay
+  (237) and the sill (238) as one run, L1 (241, 242) and L2 (243, 244). Each wears its solids once its model has
+  landed (a1.py `_cope`). The two faces drawn on the alcove's lip ledge (a1_dress) are out. The east landing's pale end
+  (q20, q22) is the family's dark drafted end now.
+- SKIN 14 -> 17: the quay's model reaches 0.65 m under its solids (its dark body), L1's and L2's 1.15 m (their
+  corbels): the models as made.
+- Frames: `after/esclusa_coping_before_after.jpg` (watch scene `cope`: the ladder's, the flume's and the lock's
+  cameras, the east landing's step-off, the alcove, L1 and L2; before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

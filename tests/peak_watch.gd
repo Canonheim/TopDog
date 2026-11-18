@@ -3302,6 +3302,19 @@ func _w_ridesets(a: Array) -> void:
 		await shot("ridesets_%s_%s" % [row[2], tag])
 
 
+## La Esclusa's stone family (MINE_PASS F7): the three zone cameras (the ladder, the flume, the lock), the east landing's
+## step-off close, and the alcove under the platform. cope:TAG
+func _w_cope(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.12")
+	await secs(5.0)
+	for row in [[Vector2(-294.5, 78.5), 5.5, "ladder"], [Vector2(-280.0, 80.4), 6.0, "flume"], [Vector2(-246.0, 81.5), 7.5, "lock"],
+			[Vector2(-260.2, 79.2), 1.6, "landing"], [Vector2(-289.8, 73.6), 2.6, "alcove"], [Vector2(-236.0, 83.0), 3.2, "l1l2"]]:
+		look(row[0], float(row[1]))
+		await secs(0.8)
+		await shot("cope_%s_%s" % [row[2], tag])
+
+
 ## 1.13's lower gate and its wicket (MINE_PASS F10): the lock's camera (its zone's 7.5 m, the climber on the quay) and
 ## close, with the wicket shut (lock t 6, the water high) and open (lock t 13.5, the water under the sill). gate13:TAG
 func _w_gate13(a: Array) -> void:

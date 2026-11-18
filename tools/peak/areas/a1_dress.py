@@ -702,10 +702,8 @@ def dress(A):
     hbeam(-235.8, -232.2, 89.6, -1.45)
     # (The works' first arch on its cap is esclusa_wall_flume's now, with its cast pug in the keystone.)
     side_lantern(-235.45, 88.6, -1.45)  # the mine's last amber, on the set's west post
-    # Drawn on the lip ledge's front face: the works' stone coping on the miners' rock ledge,
-    # and five courses of dry pale brick at its west end, where your hand first lands.
-    drawn("works_coping_face", -229.0, 89.7, (6.0, 0.3, 0.02), tone="stone")
-    drawn("works_brick_courses_face", -231.75, 89.2, (0.5, 0.5, 0.02), tone="brick")
+    # (The two faces drawn on the lip ledge's front, the works' coping and five courses of pale brick, are out: the alcove's
+    # floor wears esclusa_coping_alcove, MINE_PASS F7, 11-18.)
     # Foreground: one post, timber below and brick above, in front of the pier's rock.
     post(-237.025, 86.2, 89.3, 1.45)  # (0.36 deep: z 1.27 .. 1.63)
     A.deco("works_brick_pier_post", -237.025, 89.3, z=1.45, size=(0.55, 2.0, 0.35), tone="brick")
