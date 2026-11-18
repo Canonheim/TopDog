@@ -884,6 +884,10 @@ A.deco("esclusa_vault", -275.25, 83.0, z=0.0, size=(33.5, 3.0, 3.25), tone="rock
 # knee into the arcade; the jib snapped at its stub and hanging west behind the falls, a metre over the ladder's top
 # rung. Origin the post's foot. (Its lantern, aguas_works_lantern, hangs on the hook at (-293.25, 81.8): a later model.)
 A.deco("esclusa_crane", -292.5, 79.4, z=-1.8, size=(7.6, 3.6, 1.38), tone="back2")  # (the sheave slid 0.95 m along the girder into the falls' body, q15)
+# The flume's drain (quality run, MINE_PASS F13, reviewer 8.5, 11-18), one run: the whirlpool's foam arms lying in the
+# surface round a dark eye on the grating in the bed, the cast-iron pipe down through the rock (verdigris flanges, the pug
+# on its elbow), its riveted bell in the alcove's wall behind the climber's plane. Origin the eye's axis on the bed.
+A.deco("esclusa_drain", -286.5, 75.7, z=0.0, size=(2.73, 4.36, 2.63), tone="back2")
 A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-18.0, tone="back3", edge=False)  # its own dark, behind the cavern's painted far wall (MINE_PASS F-C6)
 
 if __name__ == "__main__":
