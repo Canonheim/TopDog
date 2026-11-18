@@ -851,6 +851,10 @@ A.deco("esclusa_wall_flume", -277.75, 73.0, z=-2.2, size=(38.5, 13.6, 8.79), ton
 # water the barrels rise out of (born 6 m back). Origin the middle of the opening's sill, on the wall's face.
 A.deco("esclusa_barrel_tunnel", -261.8, 76.8, z=-2.2, size=(5.75, 3.92, 6.8), tone="back")
 A.deco("esclusa_wall_lock", -240.25, 73.0, z=-1.9, size=(36.5, 16.4, 8.48), tone="back")
+# The lock's gauge at the chamber's east end (quality run, MINE_PASS F23, reviewer 8.5, 11-18): a riveted iron board on two
+# guide rails, a verdigris pug notch every metre (staggered, no numbers), a pug at its crest; its float (esclusa_gauge_float)
+# rides the level on the lock zone's GaugeFloat node, its teal index tip pointing into the scale.
+A.deco("esclusa_gauge_board", -230.8, 75.7, z=-1.75, size=(1.2, 13.3, 0.28), tone="back2")
 # The keeper's booth in the quay wall's recess (quality run, MINE_PASS F21, reviewer 8.5, 11-18): a little stone room,
 # its round head open, the lining warm under his lantern, a stool, the kettle shelf, the window turned to the chamber,
 # a spare navy oilskin on its peg, the lever's pit and the toothed quadrant his catch rides (the keeper, frog and lever,
