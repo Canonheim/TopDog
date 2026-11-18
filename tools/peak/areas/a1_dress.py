@@ -216,9 +216,11 @@ def dress(A):
         A.deco(stem, x, y, z=z, rot=rot, scale=scale, size=size, tone=tone)
 
     # ============================================================ the room: the far wall and the masses
-    # The cavern's far wall, cold grey-violet, behind everything (Camp and Escalera: "The
-    # cavern, first seen"). One flat painted card, as far backgrounds are.
-    A.deco("mine_cavern_far_wall", -201.0, -40.0, z=-6.25, size=(110.0, 134.0, 0.3), tone="back2")
+    # The cavern's far side, painted (quality run E1, reviewer 8.5, 11-17): galleries in tiers with
+    # their ladders, chutes and hoist frames, eight warm lantern pools on cold grey-violet, the far
+    # wheel and headframe small and hazed, the falls' glow the brightest thing, pale mist bands.
+    # Four flush cards; origin on the far card's face, the middle of its foot.
+    A.deco("mina_backdrop_cavern", -229.0, -50.0, z=-15.0, size=(124.35, 150.34, 2.80), tone="back2")
     # The course's rock, each mass one painted piece made for its place (skins: they fill the
     # solids they dress, z -1.2 .. 1.2). Origin: the middle of each one's foot.
     A.deco("mine_el_diente", -203.4, -25.5, z=0.0, size=(11.0, 65.2, 2.4), tone="rock2", skin=True)

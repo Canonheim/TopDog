@@ -538,9 +538,8 @@ for x, y in ((-241.0, -24.0), (-225.0, -26.0), (-212.0, -26.0), (-241.0, 40.0), 
     A.light(x, y, color="#9FD0FF", rng=14.0, energy=0.9, z=2.2)  # the water's own cold light: the drop is lit
 
 # ================================================================ the picture
-A.card([(-256, -40), (-146, -40), (-146, -8), (-178, 2), (-206, -6), (-232, 6), (-256, 0)], z=-14.0, tone="back3")
-A.card([(-150, 94), (-150, 26), (-168, 40), (-190, 44), (-204, 58), (-226, 62), (-226, 94)], z=-10.0, tone="back3")
-A.card([(-256, 94), (-256, 20), (-250, 34), (-247, 60), (-249, 94)], z=-4.0, tone="back")  # behind the fall
+# (The three far cards at z -14, -10 and -4 "behind the fall" are gone: the mine's painted far backdrop,
+# mina_backdrop_cavern at z -15 (quality run E1, reviewer 8.5, 11-17), is the cavern's far side now.)
 A.card([(-178, -8), (-150, -8), (-150, 8), (-170, 7), (-178, 4)], z=-3.0, tone="back")
 A.card([(-196, 56), (-190, 44), (-186, 49), (-181, 41), (-176, 43), (-170, 35), (-164, 38), (-158, 30), (-150, 32), (-150, 60)], z=3.0, tone="slick")  # stalactites, in front
 A.card([(-256, -40), (-146, -40), (-146, -33), (-200, -35), (-256, -33)], z=4.0, tone="slick")
@@ -585,7 +584,7 @@ A.line_pit(-232.20, -231.80, 52.30)
 # THE INSIDE'S OWN DARK (the Director, 11-14): the mountain's body card is cut away over this biome
 # (st.py BODY_WINDOWS); behind the far wall a backstop in this biome's darkest tone, so no gap shows
 # the body's grey-tan, or the sky.
-A.card([(-298, -42), (-142, -42), (-142, 96), (-298, 96)], z=-11.6, tone="back3", edge=False)
+A.card([(-298, -42), (-142, -42), (-142, 96), (-298, 96)], z=-18.0, tone="back3", edge=False)  # behind the backdrop (its braces reach -17.5)
 
 A.end_shift()  # (everything above is moved by MOVE at save; La Esclusa, below, stands where it is written)
 
