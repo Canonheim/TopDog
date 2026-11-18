@@ -588,10 +588,9 @@ def dress(A):
     # Drawn on the staging's face: two rows of nail heads where the hanging posts take it.
     for x in (-236.9, -232.5):
         drawn("mine_nail_row", x, 52.3, (0.08, 0.08, 0.01))
-    # Foreground: the mouth's front post, below the floor and above the roof (the upper
-    # length is also La Cortina's lowest).
-    front_post(-229.75, 55.1, 57.0)
-    front_post(-229.75, 62.3, 66.8)
+    # (Foreground: the mouth's broken front post lengths are out (the reviewer, q32, 11-18: broken at both ends, they
+    # floated as loose sticks beside the balcony and the staples). MINE_PASS group 7 places the foreground against the
+    # finished sets, each length standing on something.)
 
     # ============================================================ 1.10 El Derrumbe
     # The chimney the rocks fall out of: torn planking and snapped roof timbers hanging round
@@ -650,8 +649,7 @@ def dress(A):
         drawn("mine_socket_empty", -218.2, y - 0.15, (0.3, 0.3, 0.02), tone="back3")
     # Foreground: the shaft's two front posts in broken lengths, in front of the rock either
     # side, never in front of the shaft; and the low lip of rubble along the frame's foot.
-    for y0, y1 in ((62.0, 64.6), (65.9, 69.3), (70.3, 71.7)):
-        front_post(-222.27, y0, y1)
+    # (The west one's broken lengths are out, q32, as the mouth's above: group 7 re-places it.)
     for y0, y1 in ((61.9, 63.4), (65.0, 68.0), (70.6, 74.2), (75.2, 77.0)):
         front_post(-218.33, y0, y1)
     A.deco("mine_rubble_lip", -226.9, 54.4, z=LIP_Z, size=(10.0, 1.0, 0.7), tone="back2")
@@ -673,9 +671,7 @@ def dress(A):
     A.deco("pickaxe", -228.7, DRIFT_Y, z=-2.2, rot=80.0, size=(0.9, 0.6, 0.2), tone="iron")
     wall_lantern(-230.5, 79.87, THROAT_Z)  # moved east and back out of the play space: the last amber light
     A.deco("mine_iron_strap", -232.25, 89.25, z=-1.3, size=(0.4, 0.3, 0.05), tone="iron")  # the rope's bracket, strapped to the last set
-    # Foreground: a front post on the east wall in broken lengths (its lowest, 62.3..66.8, is 1.9's).
-    for y0, y1 in ((68.8, 71.4), (76.4, 80.0), (81.6, 85.4)):
-        front_post(-229.75, y0, y1)
+    # (The east wall's broken front post lengths are out, q32, as at 1.9's mouth: group 7 re-places them.)
 
     # ============================================================ 1 to 2: the lip
     # (The works' brick wall in bays over the roof, the weir's sill and the river, the works'
