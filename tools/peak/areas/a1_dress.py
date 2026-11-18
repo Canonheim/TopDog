@@ -404,11 +404,7 @@ def dress(A):
     hbeam(-172.5, -167.5, 8.4, -1.5)
     A.deco("pickaxe", -172.6, WALK_Y, z=-1.4, rot=70.0, size=(0.9, 0.6, 0.2), tone="iron")  # leans on the west post
     A.deco("sign_pug_arrow_west", -173.9, WALK_Y, z=-1.35, size=(1.24, 1.66, 0.16), tone="bone")  # along the catwalk
-    # On the ladder's drawn rails (z -0.2), at each gap: torn, rusted ends, above and below.
-    for g0, g1 in ((-9.35, -7.85), (-5.6, -3.72), (-1.47, 0.58)):
-        for rx in (-172.0, -171.1):
-            A.deco("mine_rail_end_torn", rx, g0 + 0.05, z=-0.2, size=(0.1, 0.25, 0.1), tone="iron")
-            A.deco("mine_rail_end_torn", rx, g1 - 0.05, z=-0.2, rot=180.0, size=(0.1, 0.25, 0.1), tone="iron")
+    # (The rails' torn ends at the gaps are mina_iron_ladder_1_2's own now: MINE_PASS row 142, 11-18.)
     # In the west wall's face beside the two upper gaps: the landings' empty sockets.
     for y in (-4.66, -0.45):
         drawn("mine_socket_empty", -172.17, y - 0.45, (0.3, 0.3, 0.02), tone="back3")
