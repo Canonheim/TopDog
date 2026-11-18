@@ -3009,6 +3009,20 @@ in. Nothing played by a person.
   green); a4 x2 (-291 .. -256 x 264 .. 267; -215 .. -190 x 318 .. 320.5); a9 x2 (ice, -331 .. -305.5 x 786 .. 792;
   -303 .. -284.5 x 804 .. 809); a10 x1 (-330 .. -316 x 944 .. 954, z -1.4). a0, a5 .. a8 and a11 have none.
 
+## 11-18: 1.13's lower gate and wicket placed (MINE_PASS F10)
+
+- `esclusa_lower_gate` and `esclusa_wicket` landed (reviewer 8.5). The gate's column above the wicket (x -245 .. -244,
+  y 81.9 .. 89) is cut out of the quay roof's rock (a1 solid 214, now x -252 .. -245 at 86 .. 89.4 and the strip over
+  the gate's top at 89 .. 89.4), which drew over it; the gate's two grease solids (239, 240) wear the gate; its deco at
+  (-244.5, 75.7); the portillo mover wears the wicket. a1.py places all of it once the gate's model has landed
+  (`GATE_LANDED`, as the vault). The cut changes no collision (the gate's own solid filled the same place). The play,
+  `esclusa` before | after: 5 barrels kicked in 34 s, none into the falls; the whirlpool's pipe to the alcove; the lock's
+  water 77.20 .. 88.50; the wicket open 1.86 s of 14 (13.07 to 0.93); a climber on the sill rose to 88.32 | 88.31.
+- One new SKIN row: the gate's model reaches 0.86 m west of its solid (x -245.9): its frame on the quay wall, to see
+  in the frame.
+- Frames: `after/gate13_shut_open.jpg` (watch scene `gate13`: the lock's camera and close; the wicket shut | open).
+  **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

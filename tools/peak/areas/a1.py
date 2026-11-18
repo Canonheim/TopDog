@@ -691,6 +691,7 @@ def _section_rock():
                   _sbox(WEST_LANDING[0], LANDING, FLUME[0], CEIL_W), _sbox(FLUME[0], BED, FLUME[1], CEIL_W),
                   _sbox(FLUME[1], LANDING, GATE[0], CEIL_E), _sbox(GATE[1], LOCK_FLOOR, LOCK[1], LOCK_CEIL),
                   _sbox(GATE[0], LANDING, GATE[1], LANDING + 2.5),
+                  *([_sbox(GATE[0], LANDING + 2.5, GATE[1], LOCK_CEIL)] if GATE_LANDED else []),
                   _sbox(SLOT[0], 84.0, SLOT[1], 89.4), _sbox(DRY[0], 84.0, DRY[1], 89.4), _Poly(PIPE)])
     shell = _Poly([(-307.0, MINE_TOP), (-222.0, MINE_TOP), (-222.0, 89.4), (-252.0, 89.4), (-252.0, CEIL_E),
                    (-292.0, CEIL_E), (-292.0, CEIL_W), (-307.0, CEIL_W)])
@@ -719,6 +720,11 @@ def _section_rock():
 
 import sweeps as _sweeps
 VAULT_LANDED = _sweeps.model_bounds("esclusa_vault") is not None  # (the flume's vaulted roof wears it once it lands: F6)
+# THE LOCK'S LOWER GATE (MINE_PASS F10, 11-18): once esclusa_lower_gate lands, the gate's column above the wicket
+# (x -245 .. -244, y 81.9 .. 89) is the gate's alone: cut out of the quay roof's rock, which drew over it, and the gate's
+# two solids wear it, its wicket esclusa_wicket. Till then all of it as it was. (The gate's solid filled the same place:
+# the cut changes no collision, only what is drawn there.) The rock over 89 stays, the gate's top under it.
+GATE_LANDED = _sweeps.model_bounds("esclusa_lower_gate") is not None
 _section_rock()
 _box(PIER[0], LOCK_CEIL, PIER[1], 89.4, "wet")              # the pier's foot between the slot and the dry shaft
 _box(-297.0, MINE_TOP - 0.29, -295.0, MINE_TOP + 0.01, "stone")  # the pier's top, coped: the ladder's foot, 1.12's start (1 cm proud of the mine's roof: no shared plane)
@@ -763,8 +769,11 @@ A.challenge("1.12", "Los Barriles", (-296.0, 73.0), 3, "B", moves=(
 # in 8.1 s), out of the old dry shaft onto El Borde's lip ledge at the top. The river comes down the back
 # wall without pushing.
 _box(GATE[0], LANDING - 0.3, L0[1], LANDING, "stone")       # the wicket's sill, running in as the lowest ledge (L0)
-_box(GATE[0], LANDING + 2.5, GATE[1], LOCK_CEIL, "grease")  # the lower gate above the wicket
-_box(GATE[0], LOCK_FLOOR, GATE[1], LANDING - 0.3, "grease") # and below it
+_gate_skin = {"skin": "esclusa_lower_gate"} if GATE_LANDED else {}
+_box(GATE[0], LANDING + 2.5, GATE[1], LOCK_CEIL, "grease", **_gate_skin)  # the lower gate above the wicket
+_box(GATE[0], LOCK_FLOOR, GATE[1], LANDING - 0.3, "grease", **_gate_skin) # and below it
+if GATE_LANDED:
+    A.deco("esclusa_lower_gate", -244.5, 75.7, z=0.0, size=(1.0, 13.3, 2.4), tone="iron", skin=True)
 for x0, x1, y in (L1, L2):
     _box(x0, y - 0.55, x1, y - 0.25, "wet")
     _box(x0, y - 0.3, x1, y, "stone")
@@ -781,7 +790,8 @@ _shut_at = (79.4 - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW) * RISE                    
 _open_for = CYCLE - _open_at + _shut_at
 A.mover("portillo", (-244.5, 80.65), [(box_pts(0.0, 0.0, 0.9, 2.5), "grease")],
         {"type": "cycle", "to": [0.0, 2.5], "t_out": 0.2, "hold_out": round(_open_for - 0.4, 3), "t_in": 0.2,
-         "hold_in": round(CYCLE - _open_for, 3), "phase": round(CYCLE - (_open_at - 0.1), 3)})
+         "hold_in": round(CYCLE - _open_for, 3), "phase": round(CYCLE - (_open_at - 0.1), 3)},
+        model="esclusa_wicket" if GATE_LANDED else None)
 # The flap gate across the slot's foot: shut it holds the river off (a slick plate: what falls from El Borde
 # waits on it), open through each rise it lets the river and whoever is in it down into the lock.
 A.mover("compuerta", (-241.0, 89.175), [(box_pts(0.0, 0.0, 6.0, 0.35), "grease")],

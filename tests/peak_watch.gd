@@ -3302,6 +3302,21 @@ func _w_ridesets(a: Array) -> void:
 		await shot("ridesets_%s_%s" % [row[2], tag])
 
 
+## 1.13's lower gate and its wicket (MINE_PASS F10): the lock's camera (its zone's 7.5 m, the climber on the quay) and
+## close, with the wicket shut (lock t 6, the water high) and open (lock t 13.5, the water under the sill). gate13:TAG
+func _w_gate13(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.13")
+	await secs(7.0)  # (the area's banner clears)
+	for when in [[6.0, "shut"], [13.5, "open"]]:
+		while absf(fposmod(pk.clock, 14.0) - float(when[0])) > 0.05:
+			await ticks(1)
+		for row in [[Vector2(-246.0, 81.5), 7.5, "cam"], [Vector2(-244.5, 81.0), 2.6, "close"]]:
+			look(row[0], float(row[1]))
+			await ticks(2)
+			await shot("gate13_%s_%s_%s" % [row[2], when[1], tag])
+
+
 ## The Sump's mist (MINE_PASS F-C11, as at 1.11 and 1.12): the Sump at the great falls' foot, wide and close. sump24:TAG
 func _w_sump24(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""
