@@ -497,7 +497,7 @@ def dress(A):
     # (skins of the rib solids; the two wide ones carry a row of old drill holes).
     for top, proud in ((27.0, 0.6), (28.6, 0.9), (30.2, 0.6), (32.15, 1.2), (33.75, 0.6), (35.35, 0.9), (37.3, 1.2), (38.8, 0.6)):
         stem = {0.6: "mine_rib_short", 0.9: "mine_rib", 1.2: "mine_rib_wide"}[proud]
-        A.deco(stem, round(XF + (proud - 0.3) / 2, 3), round(top - 0.42, 2), z=0.0, size=(proud + 0.3, 0.42, 2.4), tone="rock", skin=True)
+        A.deco(stem, round(XF + (proud - 0.3) / 2, 3), round(top - 0.42, 2), z=0.0, size=(proud + 0.3, 0.42, 0.9), tone="rock", skin=True)  # (0.9 m deep, as the solids: quality run 11-18)
 
     # ============================================================ 1.7 El Carrito Loco (note 103)
     # The chain rib (quality run, E4): one piece from the bench under the incline to the roof,
