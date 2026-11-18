@@ -3131,6 +3131,16 @@ in. Nothing played by a person.
 - Frames: `after/kick12_throw_before_after.jpg` (each kick at 0.6 s: x -0.6, -0.9, -1.2 top to bottom).
   **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the reviewer's q32: the bright mint panel at the lock's head
+
+- It was the flap across the slot's foot (the `compuerta` mover, a 6 m grease plate at y 89.0 .. 89.35, x -244 .. -238):
+  drawn in the slick sheen, its underside seen from below under the lock's teal lanterns, it read as a flat lit mint
+  panel. A mover can be drawn matte now (`look: "matte"`, peak_things `_shapes_mesh`): its slick shapes in their
+  kind's own dark tone, no sheen. The flap is matte till its model, `esclusa_flap` (MINE_PASS F11: a riveted plate
+  black with water), lands; a1.py then hangs it on the mover. Still grease: a slick plate.
+- Frames: `after/q32_flap_matte_before_after.jpg` (watch scene `gate13`: the lock's camera shut, mid-fill and open;
+  before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

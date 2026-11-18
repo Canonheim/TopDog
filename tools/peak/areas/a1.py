@@ -834,7 +834,10 @@ A.mover("compuerta", (-241.0, 89.175), [(box_pts(0.0, 0.0, 6.0, 0.35), "grease")
         # (it opens BACK, 3 m out of the play plane, not sideways: slid west it lay in the rock over the quay, its face in
         # the rock's own plane, and flickered white at the top of 1.13's frame each rise: the reviewer's q8)
         {"type": "cycle", "to": [0.0, 0.0], "zto": -3.0, "t_out": 0.4, "hold_out": RISE - 0.8, "t_in": 0.4,
-         "hold_in": HOLD + DRAIN, "phase": 0.0})
+         "hold_in": HOLD + DRAIN, "phase": 0.0}, model="esclusa_flap" if _cope("esclusa_flap") else None)
+# (Drawn matte in the grease's dark tone till `esclusa_flap` (F11) lands: its slick sheen, seen from below under the lock's
+# lanterns, read as a flat bright mint panel across the chamber's head: the reviewer's q32. Still grease: a slick plate.)
+A.movers[-1]["look"] = "matte"
 # The river into the lock, out of the cistern's barred mouth in the back wall (esclusa_wall_lock's `cistern`, x -241.52 ..
 # -238.98, its sill at 85.38) down to the low water. (Till 11-18 a sheet from the roof down the wall's river track beside
 # the gate, x -244 .. -242.2: it read as a fall down the gate's edge, its source above the frame: the reviewer's q25.)

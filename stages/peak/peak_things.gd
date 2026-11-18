@@ -115,7 +115,9 @@ func add_hold(body: CollisionObject3D, def: Dictionary, vis: Node3D, col: Color,
 	holds.append(h)
 
 
-func _shapes_mesh(a: Dictionary, shapes: Array) -> MeshInstance3D:
+## matte: its slick shapes drawn matte in their kind's own tone, not the slick sheen (a mover's `look: "matte"`: the
+## lock's flap at the chamber's head, seen from below, read as a bright lit panel under the lanterns: q32).
+func _shapes_mesh(a: Dictionary, shapes: Array, matte := false) -> MeshInstance3D:
 	var mb := PeakMesh.new()
 	var ms := {}  # slick kind -> PeakMesh
 	var rng := RandomNumberGenerator.new()
@@ -123,7 +125,7 @@ func _shapes_mesh(a: Dictionary, shapes: Array) -> MeshInstance3D:
 	for sh in shapes:
 		var kind := str(sh.kind)
 		var pts: PackedVector2Array = peak._pts(sh.pts)
-		if not peak.kind_grips(kind):
+		if not peak.kind_grips(kind) and not matte:
 			var cls := Peak.slick_class(kind)
 			if not ms.has(cls):
 				ms[cls] = PeakMesh.new()
@@ -184,7 +186,7 @@ func _build_mover(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 		return
 	var vis: Node3D = Peak.kit(str(def.model)) if def.has("model") else null
 	if vis == null:
-		vis = _shapes_mesh(a, def.shapes)
+		vis = _shapes_mesh(a, def.shapes, str(def.get("look", "")) == "matte")
 	elif def.has("model_scale"):
 		vis.scale = Vector3.ONE * float(def.model_scale)
 	elif bool(def.get("model_flip", false)):
