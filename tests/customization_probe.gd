@@ -43,7 +43,7 @@ func _ready() -> void:
 	check(Wardrobe.profiles[0].skin == 1, "Presets remain independent")
 	var clean: Array = Net._clean_players([{"name":"Test", "slot":0, "appearance":Wardrobe.for_slot(0)}])
 	check(clean[0].appearance.head == 1 and clean[0].appearance.skin == 5 and clean[0].appearance.effect == "roses", "Network preserves cosmetics")
-	check(Wardrobe.clean({"head":999,"skin":-1,"speedo":999,"effect":"invalid"}) == {"head":1,"skin":0,"speedo":9,"effect":"confetti"}, "Network clamps unknown cosmetics")
+	check(Wardrobe.clean({"head":999,"skin":-1,"speedo":999,"effect":"invalid"}) == {"head":Wardrobe.HEAD_NAMES.size() - 1,"skin":0,"speedo":9,"effect":"confetti"}, "Network clamps unknown cosmetics")
 	check(editor.menu.items[4].options == ["Confetti", "Roses", "Money", "Treasure", "Treats"] and editor.menu.items[4].index == 1, "Roses is selectable and restored")
 	editor._set_choice("effect", "bills")
 	Wardrobe.load_profiles()
@@ -115,12 +115,14 @@ func _ready() -> void:
 	if not climbers.is_empty():
 		var c: Climber = climbers[0]
 		check(c.bodies.size() == 16, "All physical body pieces retained")
+		# The new climber (11-18): his trunks and skin recoloured in the mesh, the head swapped.
 		var pelvis: MeshInstance3D = c.bodies.pelvis.find_child("Pelvis", true, false)
-		check((pelvis.get_instance_shader_parameter("swatch_uv") as Vector2).is_equal_approx(AtlasPalette.swatch(Color(Wardrobe.SUITS[3])).uv), "Match speedo color")
+		check(_has_uv(pelvis.mesh, AtlasPalette.swatch(Color(Wardrobe.SUITS[3])).uv), "Match speedo color")
 		var chest: MeshInstance3D = c.bodies.chest.find_child("Chest", true, false)
-		check((chest.get_instance_shader_parameter("swatch_uv") as Vector2).is_equal_approx(AtlasPalette.swatch(Color(Wardrobe.SKINS[5])).uv), "Match skin color")
-		var model: Node = Wardrobe.SPIRAL.instantiate()
-		check(c.bodies.head.find_child("Head", true, false).mesh == model.find_child("Head", true, false).mesh, "Match Spiral head")
+		check(_has_uv(chest.mesh, AtlasPalette.swatch(Color(Wardrobe.SKINS[5])).uv), "Match skin color")
+		check(not _has_uv(chest.mesh, AtlasPalette.swatch(Color(Wardrobe.SUITS[3])).uv), "The speedo stays off the chest")
+		var model: Node = Wardrobe.PUG.instantiate()
+		check(c.bodies.head.find_child("Head", true, false).mesh == model.find_child("Head", true, false).mesh, "Match Pug head on the new climber")
 		model.free()
 		var effects: Array = []
 		main.game.lock_effect.connect(func(effect): effects.append(effect))
@@ -167,3 +169,11 @@ func _ready() -> void:
 		DirAccess.remove_absolute(save_path)
 	print("CUSTOMIZATION CHECKS: ", "PASS" if failures == 0 else "FAIL")
 	get_tree().quit(failures)
+
+
+func _has_uv(mesh: Mesh, uv: Vector2) -> bool:
+	for si in mesh.get_surface_count():
+		for u in (mesh.surface_get_arrays(si)[Mesh.ARRAY_TEX_UV] as PackedVector2Array):
+			if u.is_equal_approx(uv):
+				return true
+	return false

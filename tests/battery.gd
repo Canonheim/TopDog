@@ -1439,6 +1439,10 @@ func _run_swing() -> void:
 	var c := spawn(Vector2(0, 5))
 	var anchor := bar_at(c.limb_end(0))
 	c.attach(0, anchor)
+	# The bar sits at the hand on the hip; the new climber's feet stand wide (11-18), so
+	# its idle left foot hangs right under that bar, touches it and holds the body up.
+	# The idle foot passes through it: the check is one anchored hand, one pumping foot.
+	c.bodies["foot_l"].add_collision_exception_with(anchor)
 	var d: Drivers.ScriptDriver = c.driver
 	await seconds(1.0)
 	var previous := c.centre_of_mass()
@@ -4374,19 +4378,28 @@ func _run_prying() -> void:
 	b.joints.erase("wrist_r")
 	hand.freeze = false
 	hand.gravity_scale = 0
-	var contact_at := arm.global_position + Vector3(0, 0.11, 0)
+	# On top of the upper arm, along its own upper side (its slant in the hands-on-hips
+	# pose is the body's: 35 deg on the knight, 55 on the new climber), pushing in and
+	# pulling away along that side's normal.
+	var arm_shape: Array = Layout.PIECES["arm_l_up"].shape
+	var axis := ((arm_shape[2] as Vector2) - (arm_shape[1] as Vector2)).normalized().rotated(Climber.angle_of(arm))
+	var up_side := axis.orthogonal()
+	if up_side.y < 0.0:
+		up_side = -up_side
+	var contact_at := arm.global_position + Vector3(up_side.x, up_side.y, 0.0) * 0.11
 	for tick in 12:
 		hand.global_position = contact_at
-		hand.linear_velocity = Vector3.DOWN
+		hand.linear_velocity = -Vector3(up_side.x, up_side.y, 0.0)
 		Climber.sync_server(hand)
 		await frames(1)
-	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y + 1))
+	var hand_at := Vector2(hand.global_position.x, hand.global_position.y)
+	b.driver.point_limb(1, true, hand_at + up_side)
 	b._tick_prying(0.1)
 	t("pry: real contact while pulling away does not count", b._pry_progress.is_empty())
 	b.driver.aims[1] = null
 	b._tick_prying(0.1)
 	t("pry: neutral active limb does not count", b._pry_progress.is_empty())
-	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y - 1))
+	b.driver.point_limb(1, true, hand_at - up_side)
 	b._tick_prying(0.1)
 	t("pry: real active-hand contact pushing into gripping arm counts", b._pry_progress.has(key), str(b._pry_progress))
 
