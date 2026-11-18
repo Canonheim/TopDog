@@ -3302,6 +3302,19 @@ func _w_ridesets(a: Array) -> void:
 		await shot("ridesets_%s_%s" % [row[2], tag])
 
 
+## MINE_PASS F-C3: the roof's vaults over the flume, as La Esclusa's three zone cameras frame it (the climber's middle
+## plus each zone's bias, at its height), and close over the arcade. vaults:TAG
+func _w_vaults(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.12")
+	await secs(4.0)
+	for row in [[Vector2(-293.0, 80.6), 5.5, "ladder"], [Vector2(-284.0, 80.4), 6.0, "flume_w"], [Vector2(-268.0, 80.4), 6.0, "flume_e"],
+			[Vector2(-250.0, 81.6), 7.5, "lock"], [Vector2(-275.0, 82.5), 3.2, "close"]]:
+		look(row[0], float(row[1]))
+		await secs(0.8)
+		await shot("vaults_%s_%s" % [row[2], tag])
+
+
 ## The reviewer's q13: what shows above the cart ride's roof. The fixed views along the incline with the climber at
 ## the station (as q13's at: cameras), then the real ride with the game's own follow camera, and again with the zoom
 ## held (a Shift key event), a shot as the cart passes each x. ride13:TAG

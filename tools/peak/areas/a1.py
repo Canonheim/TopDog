@@ -659,8 +659,28 @@ def _hanging(x0, x1, y, kind="stone", t=0.7):
     _box(x0, y - 0.3, x1, y, kind)
 
 
+# THE ROOF'S VAULTS (MINE_PASS F-C3, 11-18): over the flume the roof's flat underside (y 83) becomes a row of transverse
+# brick vaults, one per arcade bay, cut into its slab. Each springs at y 83 from the faces of esclusa_wall_flume's piers
+# as built (source\esclusa_wall_flume_shapes.json in the kit: its arches' openings at y 79), so it lands on the arch
+# below it, and crowns 1.2 m higher (84.2); the piers' tops between stay flat. Nothing reaches the roof (the highest
+# stand is a barrel's top, 78.05). Over the crane (x < -292) and the quay the roof is a2's slab: flat, for
+# esclusa_vault to paint (MINE_PASS's "could be wrong" 4).
+VAULTS = [(-291.35, -286.45), (-283.9, -278.4), (-277.4, -271.9), (-270.9, -265.6), (-264.34, -259.26)]
+VAULT_RISE = 1.2
+
+
+def _vault(xw, xe, y0, rise, n=14):
+    """A vault's air: the segmental arch over the chord (xw, y0) .. (xe, y0), its crown `rise` up, closed 0.1 below."""
+    c = xe - xw
+    r = (c * c / 4.0 + rise * rise) / (2.0 * rise)
+    mx, cy = (xw + xe) / 2.0, y0 + rise - r
+    a = math.asin((c / 2.0) / r)
+    pts = [(mx + r * math.sin(-a + 2.0 * a * i / n), cy + r * math.cos(-a + 2.0 * a * i / n)) for i in range(n + 1)]
+    return [(xw, y0 - 0.1)] + pts[:1] + pts[1:-1] + [(xe, y0), (xe, y0 - 0.1)]
+
+
 def _section_rock():
-    air = _union([_sbox(FALLS[0], MINE_TOP, STRIP_E, CEIL_W), _sbox(*LIP_ROOM),
+    air = _union([*[_Poly(_vault(xw, xe, CEIL_W, VAULT_RISE)) for xw, xe in VAULTS],_sbox(FALLS[0], MINE_TOP, STRIP_E, CEIL_W), _sbox(*LIP_ROOM),
                   _sbox(WEST_LANDING[0], LANDING, FLUME[0], CEIL_W), _sbox(FLUME[0], BED, FLUME[1], CEIL_W),
                   _sbox(FLUME[1], LANDING, GATE[0], CEIL_E), _sbox(GATE[1], LOCK_FLOOR, LOCK[1], LOCK_CEIL),
                   _sbox(GATE[0], LANDING, GATE[1], LANDING + 2.5),
@@ -685,9 +705,13 @@ def _section_rock():
         # lanterns' sheen and blew out to white across the top of the frame: the reviewer's q8.)
         # (The floors' skin, quality run F5, reviewer 8.5, 11-18: the flume's bed, the quay, the lock's floor and east wall.)
         low = min(q[0] for q in pts) > STRIP_E - 0.01 and min(q[1] for q in pts) < LANDING  # (with the platform west of the flume: q12)
-        A.solid(pts, "rock2" if min(q[1] for q in pts) >= 82.9 else "wet", skin="esclusa_mass_low" if low else None)
+        vaulted = min(q[0] for q in pts) >= -292.01 and min(q[1] for q in pts) >= 82.9 and max(q[0] for q in pts) <= FLUME[1] + 0.01
+        A.solid(pts, "rock2" if min(q[1] for q in pts) >= 82.9 else "wet",
+                skin="esclusa_mass_low" if low else ("esclusa_vault" if vaulted and VAULT_LANDED else None))
 
 
+import sweeps as _sweeps
+VAULT_LANDED = _sweeps.model_bounds("esclusa_vault") is not None  # (the flume's vaulted roof wears it once it lands: F6)
 _section_rock()
 _box(PIER[0], LOCK_CEIL, PIER[1], 89.4, "wet")              # the pier's foot between the slot and the dry shaft
 _box(-297.0, MINE_TOP - 0.29, -295.0, MINE_TOP + 0.01, "stone")  # the pier's top, coped: the ladder's foot, 1.12's start (1 cm proud of the mine's roof: no shared plane)

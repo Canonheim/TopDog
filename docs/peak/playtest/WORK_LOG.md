@@ -2936,6 +2936,20 @@ in. Nothing played by a person.
 - Frames: `after/brow_seam_sets_before_after.jpg` (ride13's follow camera at x -140, -152 and -165 and the zoom held at
   -152; ridesets' bed gap and brow; before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: La Esclusa's roof vaults over the flume (MINE_PASS F-C3)
+
+- The flume's roof slab (a1 solid 213, rock2, x -292 .. -258.5, y 83 .. 86) is cut into five transverse vaults, one per
+  arcade bay, each springing at y 83 from the faces of `esclusa_wall_flume`'s piers as built (its shapes file: the
+  arches' openings at y 79: -291.35 .. -286.45, -283.9 .. -278.4, -277.4 .. -271.9, -270.9 .. -265.6, -264.34 ..
+  -259.26) and crowning 1.2 m up at 84.2; the piers' tops stay flat between (the wide one -286.45 .. -283.9). The
+  brief's pier lines -290.5 and -284.4 were the flume's edge and the wide pier's: the built faces put each vault on its
+  arch. Nothing reaches the roof (a barrel's top, 78.05, is the highest stand): the play is unchanged. Solid 213 wears
+  `esclusa_vault` once it lands (a1.py reads the model). Over the crane (x < -292, a2 solid 109) and the quay (a2 solid
+  105, x -264 .. -244 at y 86, skinned `aguas_borde_bed`; then a1 solid 214 east of -252) the roof is a2's or the gate's:
+  left flat, for the vault model to paint (MINE_PASS's "could be wrong" 4).
+- Frames: `after/esclusa_vaults_before_after.jpg` (watch scene `vaults`: the three zone cameras' views, the flume's
+  west and east halves, and close; before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
