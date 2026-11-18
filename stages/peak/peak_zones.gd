@@ -968,6 +968,7 @@ static func _flat(c: Color, alpha: float) -> StandardMaterial3D:
 const WATER_TINTED := true
 const WATER_BODY := preload("res://stages/peak/peak_water_body.gdshader")
 const WATER_FALL := preload("res://stages/peak/peak_water_fall.gdshader")
+const WHIRL_SHADER := preload("res://stages/peak/peak_whirl.gdshader")
 const FALL_G := 7.0  # m/s2: the pull a fall is DRAWN under (a look, not a rule)
 const WATER_DEPTH := Peak.HALF * 2.4  # how far through the play plane a pool reaches
 
@@ -1028,6 +1029,60 @@ func _build_bodies(a: Dictionary, root: Node3D) -> Dictionary:
 	return out
 
 
+## The flat surface of a body as a grid of 0.25 m cells, those whose middle lies within `r` of `c` (the plane's own
+## x, z) left out: the hole the whirlpool's funnel fills (its collar reaches 0.3 past `r`, just under the surface).
+static func _surface_with_hole(w: float, d: float, c: Vector2, r: float) -> ArrayMesh:
+	var cell := 0.25
+	var nx := maxi(1, int(ceil(w / cell)))
+	var nz := maxi(1, int(ceil(d / cell)))
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	for ix in nx:
+		for iz in nz:
+			var x0 := -w * 0.5 + w * ix / nx
+			var x1 := -w * 0.5 + w * (ix + 1) / nx
+			var z0 := -d * 0.5 + d * iz / nz
+			var z1 := -d * 0.5 + d * (iz + 1) / nz
+			if Vector2((x0 + x1) * 0.5, (z0 + z1) * 0.5).distance_to(c) < r:
+				continue
+			for p: Vector2 in [Vector2(x0, z0), Vector2(x1, z0), Vector2(x1, z1), Vector2(x0, z0), Vector2(x1, z1), Vector2(x0, z1)]:
+				st.set_uv(Vector2((p.x + w * 0.5) / w, (p.y + d * 0.5) / d))
+				st.add_vertex(Vector3(p.x, 0.0, p.y))
+	return st.commit()
+
+
+## The whirlpool's funnel: rings from the eye out to `r` + 0.3, its surface going down from the flat (at `r`) to
+## `depth` at the middle (eased), a collar 4 mm under the surface beyond `r` (it shows only in the grid's hole).
+static func _whirl_mesh(r: float, depth: float, eye: float) -> ArrayMesh:
+	var rings: Array = []
+	var k := 0
+	while k <= 16:
+		rings.append(r * float(k) / 16.0)
+		k += 1
+	rings.append(r + 0.3)
+	var seg := 32
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var height := func(rr: float) -> float:
+		var s := clampf(rr / r, 0.0, 1.0)
+		return minf(-0.004, -depth * pow(1.0 - s, 2.0)) if rr <= r else -0.004
+	for i in rings.size() - 1:
+		var ra: float = rings[i]
+		var rb: float = rings[i + 1]
+		for j in seg:
+			var a0 := TAU * j / seg
+			var a1 := TAU * (j + 1) / seg
+			var p00 := Vector3(cos(a0) * ra, height.call(ra), sin(a0) * ra)
+			var p01 := Vector3(cos(a1) * ra, height.call(ra), sin(a1) * ra)
+			var p10 := Vector3(cos(a0) * rb, height.call(rb), sin(a0) * rb)
+			var p11 := Vector3(cos(a1) * rb, height.call(rb), sin(a1) * rb)
+			for p: Vector3 in [p00, p11, p10, p00, p01, p11]:
+				st.add_vertex(p)
+	st.generate_normals()
+	return st.commit()
+
+
 static func _water_touch(p: Dictionary, q: Dictionary) -> bool:
 	return is_equal_approx(float(p.surface), float(q.surface)) and float(p.rect[0]) <= float(q.rect[2]) + 0.05 and float(q.rect[0]) <= float(p.rect[2]) + 0.05
 
@@ -1078,12 +1133,32 @@ func _body_vis(a: Dictionary, zs: Array, root: Node3D) -> Dictionary:
 	# (its back edge at the play space's depth, or further back where a rule says: the flume's surface runs into its
 	# tunnel's mouth, on the wall's face, so its edge is not drawn in the mouth: the reviewer's q20)
 	var back := -WATER_DEPTH * 0.5
+	var whirl: Dictionary = {}
 	for z: Dictionary in zs:
 		if z.has("back"):
 			back = minf(back, float(z.back))
+		if z.has("whirl"):
+			whirl = z.whirl
 	pm.size = Vector2(w, WATER_DEPTH * 0.5 - back)
 	top.mesh = pm
 	top.position = Vector3(mid_x, surface, (WATER_DEPTH * 0.5 + back) * 0.5)
+	if not whirl.is_empty():
+		# A WHIRLPOOL (MINE_PASS F-C11): the surface with a hole at its eye, and a funnel turning down in it.
+		var wc := Vector2(float(whirl.x) - mid_x, float(whirl.get("z", 0.0)) - top.position.z)
+		top.mesh = _surface_with_hole(w, WATER_DEPTH * 0.5 - back, wc, float(whirl.r))
+		var fn := MeshInstance3D.new()
+		fn.mesh = _whirl_mesh(float(whirl.r), float(whirl.get("depth", 0.35)), float(whirl.get("eye", 0.44)))
+		var wm := ShaderMaterial.new()
+		wm.shader = WHIRL_SHADER
+		wm.set_shader_parameter("shallow_color", Color(cols[0].r, cols[0].g, cols[0].b, 1.0))
+		wm.set_shader_parameter("deep_color", Color(cols[1].r, cols[1].g, cols[1].b, 1.0))
+		wm.set_shader_parameter("radius", float(whirl.r))
+		wm.set_shader_parameter("eye", float(whirl.get("eye", 0.44)))
+		wm.set_shader_parameter("spin", float(whirl.get("spin", 0.25)))
+		fn.material_override = wm
+		fn.position = Vector3(float(whirl.x), surface, float(whirl.get("z", 0.0)))
+		fn.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		n.add_child(fn)
 	n.add_child(top)
 	var sea := DelMarSea.new()
 	n.add_child(sea)

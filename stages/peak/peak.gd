@@ -896,6 +896,12 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 	if d.has("cut_west") and not n.has_meta("standin"):
 		_cut_at(n, 0, float(d.cut_west))
 	n.name = str(d.model)
+	if d.has("spin") and not n.has_meta("standin"):
+		# A PART OF A MODEL THAT TURNS (`spin`: {node, rps}): about its own up, a whole turn every 1/rps s
+		# (esclusa_drain's funnel under the whirlpool, MINE_PASS F-C11)
+		var part: Node3D = n.find_child(str(d.spin.node), true, false) as Node3D
+		if part != null:
+			_spinners.append([part, float(d.spin.get("rps", 0.25)) * TAU])
 	if model.contains("torch") and not n.has_meta("standin"):
 		_light_torch(n)
 	return n
@@ -1165,9 +1171,15 @@ func tick(delta: float) -> void:
 			audio.play("new_best_chime", Vector2.INF, 2.0)
 
 
+var _spinners: Array = []  # [node, rad a second]: the decos' turning parts
+
+
 func frame(delta: float, cam: Camera3D) -> void:
 	if not active:
 		return
+	for row: Array in _spinners:
+		if is_instance_valid(row[0]):
+			(row[0] as Node3D).rotate_y(float(row[1]) * delta)
 	_tick_weights(delta, false)
 	audio.frame(delta, weights, _fall_speed(), _drop_under())
 	things.frame(delta)

@@ -767,6 +767,11 @@ _box(WEST_LANDING[0], LANDING - 0.3, WEST_LANDING[1], LANDING, "stone", **_cope(
 _hanging(EAST_LANDING[0], EAST_LANDING[1], LANDING, skin=_cope("esclusa_coping_quay").get("skin"))  # the east landing, over the flume's head
 _box(QUAY[0], LANDING - 0.3, QUAY[1], LANDING, "stone", **_cope("esclusa_coping_quay"))                     # the quay, on to the lock's gate
 A.water((FLUME[0], BED, FLUME[1], S), S, flow=(-1.0, 0.0), look="flume", back=-2.2)  # the flume: it runs WEST, 1 m a second
+# THE WHIRLPOOL DRAWN (MINE_PASS F-C11, 11-18): over esclusa_drain's eye (x -286.5, z 0) the flume's surface turns down,
+# a funnel 0.35 m deep at its middle easing out to the drain's foam (r 1.13), turning a quarter a second, its eye (r 0.44)
+# dark through the water. (The surface is seen near edge on from both cameras: the dip is what shows.) The pipe zone and
+# the play as they were.
+A.zones[-1]["whirl"] = {"x": -286.5, "z": 0.0, "r": 1.13, "eye": 0.44, "depth": 0.35, "spin": 0.25}
 # (its surface drawn back to the wall's face, z -2.2: it runs into the barrels' tunnel's mouth, where the bore's own
 # black water begins, and its edge is not drawn in the mouth: the reviewer's q20)
 _loop = sum(BARREL_GAPS)
@@ -888,6 +893,7 @@ A.deco("esclusa_crane", -292.5, 79.4, z=-1.8, size=(7.6, 3.6, 1.38), tone="back2
 # surface round a dark eye on the grating in the bed, the cast-iron pipe down through the rock (verdigris flanges, the pug
 # on its elbow), its riveted bell in the alcove's wall behind the climber's plane. Origin the eye's axis on the bed.
 A.deco("esclusa_drain", -286.5, 75.7, z=0.0, size=(2.73, 4.36, 2.63), tone="back2")
+A.decos[-1]["spin"] = {"node": "esclusa_drain_funnel", "rps": 0.25}  # (its funnel turns with the whirlpool's water: F-C11)
 A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-18.0, tone="back3", edge=False)  # its own dark, behind the cavern's painted far wall (MINE_PASS F-C6)
 
 if __name__ == "__main__":

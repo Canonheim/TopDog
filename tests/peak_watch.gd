@@ -3330,6 +3330,20 @@ func _w_gate13(a: Array) -> void:
 			await shot("gate13_%s_%s_%s" % [row[2], when[1], tag])
 
 
+## MINE_PASS F-C11's whirlpool over esclusa_drain: the flume's camera and the ladder's, and close (two moments, to see it
+## turn). whirl12:TAG
+func _w_whirl12(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.12")
+	await secs(4.0)
+	for row in [[Vector2(-284.0, 80.4), 6.0, "flume"], [Vector2(-293.0, 80.6), 5.5, "ladder"], [Vector2(-286.5, 77.6), 1.8, "close"]]:
+		look(row[0], float(row[1]))
+		await secs(0.6)
+		await shot("whirl12_%s_%s" % [row[2], tag])
+	await secs(1.0)
+	await shot("whirl12_close2_%s" % tag)
+
+
 ## 1.12's kicker: do kicked barrels clip the flume wall's east chute post in flight? Three kicks, each followed: where it
 ## crosses the wall's face (z -2.2) printed, and shot close at 0.2, 0.4 and 0.6 s, and once from the flume's camera.
 ## kick12:TAG

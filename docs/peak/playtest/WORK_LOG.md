@@ -3141,6 +3141,22 @@ in. Nothing played by a person.
 - Frames: `after/q32_flap_matte_before_after.jpg` (watch scene `gate13`: the lock's camera shut, mid-fill and open;
   before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: 1.12's whirlpool drawn in the flume's water (MINE_PASS F-C11, the code half of the drain)
+
+- Over `esclusa_drain`'s eye (x -286.5, z 0) the flume's water turns down: a water rule's `whirl` (a1.py) makes the
+  body's top a grid with a hole there (peak_zones `_surface_with_hole`, Del Mar's surface as before) and a funnel in
+  the hole (`_whirl_mesh`: the surface going down from r 1.13 to 0.35 m deep at the middle, eased), painted by
+  `peak_whirl.gdshader`: the water darkening inward, three flat foam arms turning on a slow spiral (a quarter turn a
+  second), a foam ring near the rim, the eye (r 0.44) dark. Flat on the water, no floating balls. The pipe zone and
+  the play as they were.
+- The drain's funnel (`esclusa_drain_funnel`, a node of its own in the model) turns with it, a quarter turn a second
+  about the eye's axis: a deco can name a part to `spin` (peak.gd).
+- Seen near edge on from both cameras, the dip shows as a sunken dark basin in the surface, its rim inked, the eye
+  dark at its middle.
+- Frames: `after/whirl12_before_after.jpg` (watch scene `whirl12`: the flume's camera, the ladder's, close, close a
+  second later; before | after) and `after/whirl12_eye_crop.jpg` (the eye from the flume's camera and the ladder's).
+  **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
