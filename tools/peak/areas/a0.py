@@ -67,8 +67,15 @@ A.mover("cart0", RIDE[0], cart_shapes,
 # degrees either side of upright.
 A.lever("palanca", (-7.6, 2.2), "cart0", length=1.7, rest=11.9, pull=-11.9, grip=0.4, z=0.65)
 # The rails (the Carpenter's rail_straight, 4 m a piece): their base 0.55 under the cart's road.
+# West of x -197 (the run-out after the incline) they are laid in three even pieces along the road
+# to the buffer stop's face (x -209.0, 1.6 m past the road's end), not one piece a segment: the
+# segments there are 3 m and less, and a piece shrunk to fit them is thinner (11-18).
 import math
+BUFFER_FACE = -209.0
+_TAIL = [p for p in RIDE if p[0] <= -197.0] + [(BUFFER_FACE, RIDE[-1][1])]
 for (x0, y0), (x1, y1) in zip([(-4.6, 2.65)] + RIDE[1:-1], RIDE[1:]):
+    if x1 < _TAIL[0][0]:
+        break  # (the tail, below)
     L = math.hypot(x1 - x0, y1 - y0)
     n = max(1, round(L / 4.0))
     ang = math.degrees(math.atan2(y1 - y0, x1 - x0))
@@ -80,6 +87,28 @@ for (x0, y0), (x1, y1) in zip([(-4.6, 2.65)] + RIDE[1:-1], RIDE[1:]):
         if any(abs(rx - c) < 0.2 for c in (-91.75, -98.75, -102.25)):
             continue  # (note 73's torn stretch: dsc_rail_torn, dsc_rail_landing, dsc_rail_banked take these places, in a0_dress)
         A.deco("rail_straight", rx, y0 + (y1 - y0) * f - 0.55, z=0.0, rot=ang, scale=L / n / 4.0, size=(4.0, 0.25, 1.2), tone="iron")
+
+
+def _along(pts, t):
+    """The point t metres along a line of points."""
+    for (ax, ay), (bx, by) in zip(pts, pts[1:]):
+        L = math.hypot(bx - ax, by - ay)
+        if t <= L or (bx, by) == pts[-1]:
+            f = min(1.0, t / L)
+            return (ax + (bx - ax) * f, ay + (by - ay) * f)
+        t -= L
+
+
+_len = sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(_TAIL, _TAIL[1:]))
+_n = max(1, round(_len / 4.0))
+for i in range(_n):
+    (x0, y0), (x1, y1) = _along(_TAIL, _len * i / _n), _along(_TAIL, _len * (i + 1) / _n)
+    L = math.hypot(x1 - x0, y1 - y0)
+    ang = math.degrees(math.atan2(y1 - y0, x1 - x0))
+    if abs(ang) > 90:
+        ang -= math.copysign(180, ang)
+    A.deco("rail_straight", round((x0 + x1) / 2, 3), round((y0 + y1) / 2 - 0.55, 3), z=0.0, rot=round(ang, 3), scale=round(L / 4.0, 3),
+           size=(4.0, 0.25, 1.2), tone="iron")
 A.challenge("0.2", "Súbete", (-6.2, 2.2), 1, "S")
 A.challenge("0.3", "El Descenso", (-9.0, 2.9), 1, "S")
 
@@ -101,8 +130,8 @@ A.cave(air, kinds, default="wet", thick=3.0)
 # each lies; the corner fillers go with the stretch the dress names for them.
 for s in A.solids[n_before:]:
     cx = sum(p[0] for p in s["pts"]) / len(s["pts"])
-    if cx < -152.5:
-        continue  # (the new stretch, note 146: plain rock until its pieces are made)
+    if cx < -148.5:
+        continue  # (the new stretch, note 146, from today's end of the old line, x -148.4: plain rock until its pieces are made)
     if s["kind"] == "rock":  # the bed
         s["skin"] = "dsc_bed_a" if cx > -62.3 else "dsc_bed_b" if cx > -104.5 else "dsc_bed_c" if cx > -136.0 else "dsc_bed_d"
     elif s["kind"] == "rock2":  # the roof
@@ -122,7 +151,10 @@ a0_dress.dress(A)  # the tunnel: its sets, back wall, lanterns, torn rail, troug
 for d in A.decos:
     if d["model"] in ("dsc_buffer_stop", "dsc_door_sill"):
         d["at"] = [round(d["at"][0] + MOVE[0], 3), round(d["at"][1] + MOVE[1], 3)] + d["at"][2:]
-# The new stretch's back wall (quality run, MINE_PASS F-E3, reviewer 8.5, 11-18), in the game's numbers (not moved):
+    # dsc_bed_d was made level to the old end of the line (x -152); the moved line drops away from x -148.4,
+    # so its last 3.6 m stood 0.3 m over the bed with nothing under it: it ends there now (11-18).
+    if d["model"] == "dsc_bed_d":
+        d["cut_west"] = -148.4# The new stretch's back wall (quality run, MINE_PASS F-E3, reviewer 8.5, 11-18), in the game's numbers (not moved):
 # the mine's lagging in bays stepping down the 20 deg road, the two side galleries going back in the dark, the
 # winding house's recess, the burst at the run-in, the refuge with its pail, the check board at the end of the line.
 A.deco("mina_ride_lining", -211.0, -29.6, z=-2.12, size=(63.3, 23.21, 8.6), tone="back")  # 12 cm back: clear of the station tunnel's back wall's relief where they overlap at the join (sweeps)

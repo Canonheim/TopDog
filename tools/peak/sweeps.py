@@ -188,7 +188,26 @@ def deco_piece(d, aid, i):
     x0, x1, y0, y1 = _rot_box(mx0, mx1, lo[1] * s, hi[1] * s, float(d.get("rot", 0.0)))
     pc = Piece("deco", d["model"], x + x0, x + x1, y + y0, y + y1, z + lo[2] * s, z + hi[2] * s, "%s deco %d" % (aid, i))
     _deco_faces(pc, d, s, x, y, z)
+    _cut(pc, d)
     return pc
+
+
+def _cut(pc, d):
+    """A model cut short in the game (peak.gd _cut_at): `cut_below` a height, `cut_west` an x. Its bounds and
+    faces end at the cut (the cut's own closing face is left out: it faces down, or west)."""
+    from shapely.geometry import box as sbox
+    BIG = 1e5
+    if "cut_west" in d:
+        c = float(d["cut_west"])
+        pc.x0 = max(pc.x0, c)
+        keep = sbox(c, -BIG, BIG, BIG)  # (x >= c, in both the (x, y) and the (x, z) planes)
+        pc.faces = [(a, pl, g.intersection(keep)) for a, pl, g in pc.faces]
+    if "cut_below" in d:
+        c = float(d["cut_below"])
+        pc.y0 = max(pc.y0, c)
+        keep = sbox(-BIG, c, BIG, BIG)
+        pc.faces = [(a, pl, g.intersection(keep) if a == "z" else g) for a, pl, g in pc.faces if a == "z" or pl >= c - 1e-6]
+    pc.faces = [f for f in pc.faces if f[2].area > 0.01]
 
 
 def _deco_faces(pc, d, s, x, y, z):
@@ -407,7 +426,8 @@ def sweep_card(aid, c):
 
 def resolve(aid, c, grips, keep_decos=False):
     """THE BUILD'S OWN FIXES (peaklib.Area.save calls this): two pieces flickering in one plane are parted, the
-    smaller deco moved 1.5 cm toward the camera (front faces) or up (tops), a card moved 2 cm back; a solid whose
+    smaller deco moved 1.5 cm toward the camera (front faces), up (tops) or down (undersides: it sinks 1.2 cm into
+    what it stands on, rather than leaving a gap under it; the q8 undersides went unparted till 11-18), a card moved 2 cm back; a solid whose
     landed skin has no deco to wear draws its own shape again. keep_decos: list the decos' hits, move none (the
     mine's scenery is landing remade models all night: its hits go to the Director). Returns what it did."""
     did = []
@@ -432,6 +452,8 @@ def resolve(aid, c, grips, keep_decos=False):
                 d = c["decos"][index(p)]
                 if why.startswith("tops"):
                     d["at"][1] = round(d["at"][1] + 0.012, 3)
+                elif why.startswith("undersides"):
+                    d["at"][1] = round(d["at"][1] - 0.012, 3)
                 else:
                     d["at"][2] = round((d["at"][2] if len(d["at"]) > 2 else -0.8) + 0.015, 3)
                 did.append("moved %s off %s (%s)" % (p.label(), (b if p is a else a).label(), why))

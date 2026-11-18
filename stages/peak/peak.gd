@@ -892,7 +892,9 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 		# it moves with its mover; its own place, turn and length are its rest
 		things.followers.append([n, d.follow, n.position, n.rotation.z, n.scale.y])
 	if d.has("cut_below") and not n.has_meta("standin"):
-		_cut_below(n, float(d.cut_below))
+		_cut_at(n, 1, float(d.cut_below))
+	if d.has("cut_west") and not n.has_meta("standin"):
+		_cut_at(n, 0, float(d.cut_west))
 	n.name = str(d.model)
 	if model.contains("torch") and not n.has_meta("standin"):
 		_light_torch(n)
@@ -902,8 +904,11 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 ## A MODEL CUT SHORT (`cut_below`, a height in the course's numbers): a model made to reach
 ## lower than its place now lets it (a2's pier and east wall, made down to the old mine's
 ## roof, hung 3.4 m into La Esclusa's lock) is cut level there, and the cut closed with a
-## flat underside in the colour of its front edge.
-func _cut_below(n: Node3D, cut: float) -> void:
+## flat underside in the colour of its front edge. `cut_west` (an x) cuts a model off level
+## at its west end the same way, closed with a flat end (the station tunnel's last bed slab,
+## dsc_bed_d, made level to the old end of the line, cut where the moved line drops away).
+## axis: 1 keeps what is at or above the height, 0 what is at or east of the x.
+func _cut_at(n: Node3D, axis: int, cut: float) -> void:
 	var found: Array = n.find_children("*", "MeshInstance3D", true, false)
 	if n is MeshInstance3D:
 		found.append(n)
@@ -948,8 +953,8 @@ func _cut_below(n: Node3D, cut: float) -> void:
 				for j in 3:
 					var a: Array = poly[j]
 					var b: Array = poly[(j + 1) % 3]
-					var da := (a[0] as Vector3).y - cut
-					var db := (b[0] as Vector3).y - cut
+					var da := (a[0] as Vector3)[axis] - cut
+					var db := (b[0] as Vector3)[axis] - cut
 					if da >= 0.0:
 						kept.append(a)
 					if (da >= 0.0) != (db >= 0.0):
@@ -972,13 +977,14 @@ func _cut_below(n: Node3D, cut: float) -> void:
 			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, na)
 			out.surface_set_material(out.get_surface_count() - 1, mi.mesh.surface_get_material(si))
 		if rim.size() >= 3 and out.get_surface_count() > 0:
-			# The underside: the cut's outline (its hull, seen from below), both ways round.
+			# The underside (or the end): the cut's outline (its hull, seen from outside), both ways round.
+			var other := 1 - axis  # (the plane's other axis beside z: x for a level cut, y for an end)
 			var flat := PackedVector2Array()
 			var cap_uv: Vector2 = rim[0][1]
 			var front := -INF
 			for r: Array in rim:
 				var w: Vector3 = r[0]
-				flat.append(Vector2(w.x, w.z))
+				flat.append(Vector2(w[other], w.z))
 				if w.z > front:
 					front = w.z
 					cap_uv = r[1]
@@ -987,11 +993,15 @@ func _cut_below(n: Node3D, cut: float) -> void:
 				var cv := PackedVector3Array()
 				var cn := PackedVector3Array()
 				var cu := PackedVector2Array()
-				var down := (xf.basis.transposed() * Vector3.DOWN).normalized()
+				var out_n := Vector3.DOWN if axis == 1 else Vector3.LEFT
+				var down := (xf.basis.transposed() * out_n).normalized()
 				for j in range(1, hull.size() - 2):
 					for tri: Array in [[0, j, j + 1], [0, j + 1, j]]:
 						for h: int in tri:
-							cv.append(back * Vector3(hull[h].x, cut, hull[h].y))
+							var q := Vector3(0.0, 0.0, hull[h].y)
+							q[axis] = cut
+							q[other] = hull[h].x
+							cv.append(back * q)
 							cn.append(down)
 							cu.append(cap_uv)
 				var ca := []

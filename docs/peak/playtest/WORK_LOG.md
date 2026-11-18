@@ -2882,6 +2882,24 @@ in. Nothing played by a person.
 - Frames: `after/east_void_before_after.jpg` (watch scene `eastvoid`, the view at 11 m: the incline's foot and over it;
   before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the station's z-fighting, the last bed slab, the rails to the buffer
+
+- The Director: a0's ZFIGHT had crept from 0 to 45. Nothing re-added pieces: the reviewer's q8 (3f2342a) taught the
+  sweep to see undersides, and the build's parting still moved every hit but a top 1.5 cm toward the camera, which
+  cannot part two faces in one level plane. All 45 were undersides (the yard floor's with everything standing on the
+  yard at y 0; each front post's with its set's at the bed). `sweeps.resolve` now parts an underside by sinking the
+  smaller piece 1.2 cm into what it stands on (no gap under it). a0: ZFIGHT 0 (SKIN 3 -> 2). The other areas' files
+  carry their undersides (a2 4, a3 7, a4 7, a5 6, a7 0, a9 3, a10 3, a11 1; a1 lists, never moves) until their next build.
+- `dsc_bed_d` was made level to the old end of the line (x -152); the moved line drops from x -148.4, so its last 3.6 m
+  stood 0.3 m over the bed with a hole under it. A deco can now be cut at its west end too (`cut_west`, an x: peak.gd
+  `_cut_at`, the same cut as `cut_below`, closed with a flat end); a0.py cuts it at -148.4, and the slab past it is plain
+  rock like the rest of the new stretch (its skin rule's edge -152.5 -> -148.5) until `mina_ride_bed_*` lands. The
+  sweeps read both cuts.
+- The rails stopped at the road's end (x -207.4), 1.6 m short of the buffer stop's face (-209.0). From x -197 they are
+  laid in three even pieces along the road to the face (scale 1.004 .. 1.006, not 0.77 .. 0.98 a segment).
+- Frames: `after/a0_end_of_line_before_after.jpg` (watch scene `a0end`: the bed's end wide and close, the buffer; before |
+  after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

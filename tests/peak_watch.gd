@@ -3276,6 +3276,19 @@ func _w_eastvoid(a: Array) -> void:
 		await shot("eastvoid_%s_%s" % [row[2], tag])
 
 
+## The station tunnel's end of the old line (dsc_bed_d where the new stretch begins) and the end of the moved line
+## (the rails at the buffer stop), close and at the play view. a0end:TAG
+func _w_a0end(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.1")
+	await secs(3.0)
+	for row in [[Vector2(-150.0, -11.0), 2.2, "bed"], [Vector2(-149.0, -10.0), 4.6, "bedwide"],
+			[Vector2(-208.0, -28.0), 2.0, "buffer"], [Vector2(-205.0, -26.5), 4.6, "bufferwide"]]:
+		look(row[0], float(row[1]))
+		await secs(0.8)
+		await shot("a0end_%s_%s" % [row[2], tag])
+
+
 ## La Esclusa's top: the lock's last rung and a2's pier and east wall over it, close and wide. locktop:TAG
 func _w_locktop(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""

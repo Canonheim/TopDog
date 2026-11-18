@@ -96,6 +96,13 @@ a1, the 1.10 slope (rock); La Esclusa's three slick masses (the wall west of the
 the quay at 1.13, the floor mass under the lock); a8, the black-ice wedge at (-268.6, 784.6). The skinned ones
 (`mine_upper_works_mass`, `mine_chamber_roof`, `mine_east_mass` x2, `tele_colmillo`, `tele_face_d`) keep their models.
 
+## Undersides parted on the build (11-18)
+
+Since q8 the ZFIGHT sweep also reads undersides (faces looking down), but the build's parting moved those hits toward
+the camera, which parts nothing in a level plane: a0 crept back to 45 (the table below predates it). The build now sinks
+the smaller piece 1.2 cm instead. a0 is 0 again; each other area's undersides part on its next build. A deco's
+`cut_below` and `cut_west` are swept as the game cuts them.
+
 ## a0 La Estación
 
 ### DEPTH (3)
