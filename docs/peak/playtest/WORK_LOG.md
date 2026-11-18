@@ -2849,6 +2849,20 @@ in. Nothing played by a person.
   plane). The sweeps check undersides too now.
 - Frames: `after/q8_fixes_before_after.jpg` (the reviewer's q8 | after). **Checks:** lint; `--peak`. Clean.
 
+## The quality run, 11-17: 1.10's pale wedge (masses of other shapes wear the panels)
+
+- **1.10's rubble slope** beside the camp (a1.py's three-sided rock solid) drew as one big flat pale shape: the game
+  fitted panels only to four-sided masses. Now a rock mass of three sides, or five and more, that no module fits wears
+  the kit's panels too (`PeakFit.clipped`): laid level and upright over it, each cut to the mass's outline by its own
+  triangles (edge-on faces cut along their own line), short of the band along an open top that `top_caps` lays its ground
+  on. Whichever `fit_<material>_panel` variants have landed are the ones cut, so the re-made `fit_rock_panel` drops in with
+  no change. The plain body stands behind the panels' faces and shows only at the cut sides; no flat facets or rim.
+- The other masses it reaches (all a1 but one): La Esclusa's three slick masses (the 1.12 wall west of the crane, the
+  ceiling block over the quay at 1.13, the long floor mass under the lock) and a8's small black-ice wedge at y 785.
+  The skinned masses (`mine_upper_works_mass`, `mine_chamber_roof`, `mine_east_mass` x2, `tele_colmillo`, `tele_face_d`)
+  are drawn by their models and are not touched.
+- Frames: `after/cut_panels_1_10_before_after.jpg` (1.10 and 1.13, before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

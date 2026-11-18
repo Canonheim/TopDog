@@ -87,6 +87,15 @@ hand-written pages, not quick, and the design folder is outside this session's f
 | a10 La Cresta de la Tormenta | 0 | 1 | 22 | 1 | 0 |
 | a11 La Cumbre | 1 | 3 | 3 | 0 | 0 |
 
+## Masses of other shapes wear the panels (11-17)
+
+The game fitted the kit's panels only to four-sided masses; a three-sided or many-sided rock mass drew as one flat shape
+(the 1.10 rubble slope, the loudest thing in the reviewer's q8 frame). `PeakFit.clipped` now dresses every such mass
+with whichever panels have landed, cut to its outline, so nothing waits on a maker. The unskinned masses it reaches:
+a1, the 1.10 slope (rock); La Esclusa's three slick masses (the wall west of the crane at 1.12, the ceiling block over
+the quay at 1.13, the floor mass under the lock); a8, the black-ice wedge at (-268.6, 784.6). The skinned ones
+(`mine_upper_works_mass`, `mine_chamber_roof`, `mine_east_mass` x2, `tele_colmillo`, `tele_face_d`) keep their models.
+
 ## a0 La Estación
 
 ### DEPTH (3)

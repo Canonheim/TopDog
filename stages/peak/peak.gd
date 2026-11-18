@@ -490,6 +490,13 @@ func _build_area(a: Dictionary) -> void:
 			fit.top_caps(pts, kind, vz0, vz1)
 		if rocky:
 			fit.top_caps(pts, kind, vz0, vz1)
+		# (A mass of three sides, or five and more, wears the panels cut to its outline; its
+		# plain body then stands behind them, seen only at the cut sides.)
+		var cut_front := fit.clipped(pts, kind, vz0, vz1) if rocky else INF
+		var cut := cut_front < INF
+		if cut:
+			rocky = false
+			front = cut_front
 		if not grips:
 			var cls := slick_class(kind)
 			if not ms.has(cls):
@@ -502,15 +509,16 @@ func _build_area(a: Dictionary) -> void:
 				(ms[cls] as PeakMesh).facets(pts, front, vz1, [], [ms[cls + "+"], ms[cls], ms[cls + "-"]])
 			# Painted wet: a paler band along its edges and runs of drips.
 			var look: Array = SLICK_LOOKS[cls]
-			mb.rim(pts, front + 0.006, 0.09, AtlasPalette.matte_uv(Color(str(look[3]))))
-			if str(look[4]) != "" and not rocky:
+			if not cut:
+				mb.rim(pts, front + 0.006, 0.09, AtlasPalette.matte_uv(Color(str(look[3]))))
+			if str(look[4]) != "" and not rocky and not cut:
 				_drips(mb, pts, vz1, AtlasPalette.matte_uv(Color(str(look[4]))), rng)
 			continue
 		var face_c: Color = kind_color(a, kind)
 		mb.prism(pts, vz0, front, AtlasPalette.matte_uv(face_c), AtlasPalette.matte_uv(tone(a, "edge")))
 		if rocky:
 			mb.facets(pts, front, vz1, [AtlasPalette.matte_uv(face_c.lightened(0.1)), AtlasPalette.matte_uv(face_c), AtlasPalette.matte_uv(face_c.darkened(0.12))], [], 0.04)
-		else:
+		elif not cut:
 			PeakDress.dress(mb, pts, vz1 + 0.007, kind, face_c, rng)
 	fit.commit()
 	fit_placed += fit.placed

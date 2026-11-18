@@ -50,6 +50,8 @@ var placed := 0  # solids dressed
 var tiles := 0
 var _others: Array = []  # [Rect2, PackedVector2Array] of every solid in the area
 var _batches := {}  # key -> {mesh, xf: Array[Transform3D], wet: String, tint: Color, tinted: bool}
+var _cut := {}  # "wet|tint" -> {v, n, uv, wet, tint, tinted}: panels cut to a mass's outline, one mesh
+static var _arrays := {}  # file name -> [[verts, normals, uvs, indices], ...] (a module's surfaces, to cut)
 var _n := 0
 
 
@@ -95,6 +97,27 @@ func top_caps(pts: PackedVector2Array, kind: String, z0: float, z1: float) -> vo
 	if mat == "" or _pick("fit_%s_cap" % mat) == "":
 		return
 	var out: Array = []
+	for e: Array in _cap_edges(pts):
+		var mid: Vector2 = e[0]
+		var dir: Vector2 = e[1]
+		var up: Vector2 = e[2]
+		_caps(out, mat, mid - up * 0.25, dir, up, dir.angle(), float(e[3]), 0.5, (z0 + z1) * 0.5, (z1 - z0) / 2.4, false)
+	if out.is_empty():
+		return
+	var wet := "" if peak.kind_grips(kind) else Peak.slick_class(kind)
+	var tinted := mat in TINTED and wet == ""
+	var tint := _tint(kind) if tinted else Color.WHITE
+	for t: Array in out:
+		var key := "%s|%s|%s" % [t[0], wet, tint.to_html(false)]
+		if not _batches.has(key):
+			_batches[key] = {"mesh": _mesh(str(t[0])), "xf": [], "wet": wet, "tint": tint, "tinted": tinted, "name": str(t[0])}
+		(_batches[key].xf as Array).append(t[1])
+	tiles += out.size()
+
+
+## The edges of a piece that top_caps lays its ground along: [[mid, dir, up, length], ...].
+func _cap_edges(pts: PackedVector2Array) -> Array:
+	var edges: Array = []
 	var n := pts.size()
 	var area := 0.0
 	for i in n:
@@ -115,18 +138,230 @@ func top_caps(pts: PackedVector2Array, kind: String, z0: float, z1: float) -> vo
 		var mid := (a + b) * 0.5
 		if not _open(mid + up * 0.2, dir, length):
 			continue
-		_caps(out, mat, mid - up * 0.25, dir, up, dir.angle(), length, 0.5, (z0 + z1) * 0.5, (z1 - z0) / 2.4, false)
-	if out.is_empty():
-		return
+		edges.append([mid, dir, up, length])
+	return edges
+
+
+## A MASS OF ANOTHER SHAPE (the Director, 11-17: the rubble slope at 1.10 drew as one big
+## flat pale shape, the loudest thing in its frame): a rock mass of three sides, or five
+## and more, that no module fits wears the kit's panels all the same, laid level and upright
+## over it, each one cut to the mass's outline (and short of the band along an open top,
+## which is top_caps' ground). Whichever panels have landed are the ones cut. Returns the z
+## the caller's plain body may come forward to (behind the panels' faces, so it shows only
+## at the cut sides), or INF when it is not dressed.
+func clipped(pts: PackedVector2Array, kind: String, z0: float, z1: float) -> float:
+	if pts.size() == 4 or pts.size() < 3:
+		return INF
+	var mat := str(MATERIAL.get(kind, ""))
+	var panel_base := "fit_%s_panel" % mat
+	if mat == "" or _pick(panel_base) == "":
+		return INF
+	# The outline the panels are cut to: the mass, less the band its top's ground covers.
+	var region: Array = [pts]
+	if _pick("fit_%s_cap" % mat) != "":
+		for e: Array in _cap_edges(pts):
+			var mid: Vector2 = e[0]
+			var half: Vector2 = (e[1] as Vector2) * (float(e[3]) * 0.5)
+			var inward: Vector2 = -(e[2] as Vector2) * 0.5
+			var band := PackedVector2Array([mid - half, mid + half, mid + half + inward, mid - half + inward])
+			var left: Array = []
+			for r: PackedVector2Array in region:
+				for piece: PackedVector2Array in Geometry2D.clip_polygons(r, band):
+					if Geometry2D.is_polygon_clockwise(piece) != Geometry2D.is_polygon_clockwise(r):
+						continue  # (a hole: never, at an edge)
+					left.append(piece)
+			region = left
+	var lo := pts[0]
+	var hi := pts[0]
+	for q in pts:
+		lo = lo.min(q)
+		hi = hi.max(q)
+	var size := hi - lo
+	var nx := maxi(1, roundi(size.x / 2.0))
+	var ny := maxi(1, roundi(size.y / 2.0))
+	var pw := size.x / nx
+	var ph := size.y / ny
+	var zc := (z0 + z1) * 0.5
+	var zs := (z1 - z0) / 2.4
 	var wet := "" if peak.kind_grips(kind) else Peak.slick_class(kind)
 	var tinted := mat in TINTED and wet == ""
 	var tint := _tint(kind) if tinted else Color.WHITE
-	for t: Array in out:
-		var key := "%s|%s|%s" % [t[0], wet, tint.to_html(false)]
-		if not _batches.has(key):
-			_batches[key] = {"mesh": _mesh(str(t[0])), "xf": [], "wet": wet, "tint": tint, "tinted": tinted, "name": str(t[0])}
-		(_batches[key].xf as Array).append(t[1])
-	tiles += out.size()
+	var front := z1
+	var laid := 0
+	for iy in ny:
+		for ix in nx:
+			var a := lo + Vector2(pw * ix, ph * iy)
+			var cell := PackedVector2Array([a, a + Vector2(pw, 0), a + Vector2(pw, ph), a + Vector2(0, ph)])
+			var pieces: Array = []
+			var got := 0.0
+			for r: PackedVector2Array in region:
+				for piece: PackedVector2Array in Geometry2D.intersect_polygons(cell, r):
+					pieces.append(piece)
+					got += _area(piece)
+			if got < pw * ph * 0.01:
+				continue
+			var file := _pick(panel_base, ix * 7 + iy * 13)
+			var xf := _xf(a + Vector2(pw, ph) * 0.5, 0.0, Vector3(pw / 2.0, ph / 2.0, zs), zc)
+			front = minf(front, _face_z(file, xf))
+			laid += 1
+			if got >= pw * ph * 0.995:
+				var key := "%s|%s|%s" % [file, wet, tint.to_html(false)]
+				if not _batches.has(key):
+					_batches[key] = {"mesh": _mesh(file), "xf": [], "wet": wet, "tint": tint, "tinted": tinted, "name": file}
+				(_batches[key].xf as Array).append(xf)
+			else:
+				_cut_into("%s|%s" % [wet, tint.to_html(false)], file, xf, pieces, wet, tint, tinted)
+	if laid == 0:
+		return INF
+	placed += 1
+	tiles += laid
+	return front - 0.02
+
+
+## A panel placed by `xf`, cut to `pieces` (its cell's share of the outline) by its own
+## triangles, seen face on: each is clipped in the play plane and its points read back
+## from the triangle it came from. A side triangle (edge on to the camera) stays whole
+## where its middle is inside, and goes where it is not.
+func _cut_into(key: String, file: String, xf: Transform3D, pieces: Array, wet: String, tint: Color, tinted: bool) -> void:
+	if not _cut.has(key):
+		_cut[key] = {"v": PackedVector3Array(), "n": PackedVector3Array(), "uv": PackedVector2Array(), "wet": wet, "tint": tint, "tinted": tinted, "name": file}
+	var into: Dictionary = _cut[key]
+	var nb := xf.basis.inverse().transposed()
+	for surf: Array in _surfaces(file):
+		var verts: PackedVector3Array = surf[0]
+		var norms: PackedVector3Array = surf[1]
+		var uvs: PackedVector2Array = surf[2]
+		var idx: PackedInt32Array = surf[3]
+		var has_n := norms.size() == verts.size()
+		var has_uv := uvs.size() == verts.size()
+		for t in range(0, idx.size() - 2, 3):
+			var k0 := idx[t]
+			var k1 := idx[t + 1]
+			var k2 := idx[t + 2]
+			var p0 := xf * verts[k0]
+			var p1 := xf * verts[k1]
+			var p2 := xf * verts[k2]
+			var q0 := Vector2(p0.x, p0.y)
+			var q1 := Vector2(p1.x, p1.y)
+			var q2 := Vector2(p2.x, p2.y)
+			var n0 := norms[k0] if has_n else Vector3.BACK
+			var n1 := norms[k1] if has_n else Vector3.BACK
+			var n2 := norms[k2] if has_n else Vector3.BACK
+			var u0 := uvs[k0] if has_uv else Vector2.ZERO
+			var u1 := uvs[k1] if has_uv else Vector2.ZERO
+			var u2 := uvs[k2] if has_uv else Vector2.ZERO
+			var d := (q1 - q0).cross(q2 - q0)
+			if absf(d) < 0.0004:
+				# Edge on (an underside, a side): it lies along a line in the play plane. Cut it in
+				# its own plane (along that line, and deep) to the stretches of the line inside.
+				var along := q1 - q0
+				if (q2 - q0).length() > along.length():
+					along = q2 - q0
+				if (q2 - q1).length() > along.length():
+					along = q2 - q1
+				if along.length() < 0.0001:
+					continue
+				along = along.normalized()
+				var s0 := q0.dot(along)
+				var s1 := q1.dot(along)
+				var s2 := q2.dot(along)
+				var e0 := Vector2(s0, p0.z)
+				var e1 := Vector2(s1, p1.z)
+				var e2 := Vector2(s2, p2.z)
+				var de := (e1 - e0).cross(e2 - e0)
+				if absf(de) < 0.000001:
+					continue
+				var smin := minf(s0, minf(s1, s2)) - 0.01
+				var smax := maxf(s0, maxf(s1, s2)) + 0.01
+				var base := q0 - along * s0  # (the line's point at s = 0)
+				var line := PackedVector2Array([base + along * smin, base + along * smax])
+				var zlo := minf(p0.z, minf(p1.z, p2.z)) - 1.0
+				var zhi := maxf(p0.z, maxf(p1.z, p2.z)) + 1.0
+				var etri := PackedVector2Array([e0, e1, e2])
+				for piece: PackedVector2Array in pieces:
+					for seg: PackedVector2Array in Geometry2D.intersect_polyline_with_polygon(line, piece):
+						var a0 := seg[0].dot(along)
+						var a1 := seg[seg.size() - 1].dot(along)
+						var strip := PackedVector2Array([Vector2(minf(a0, a1), zlo), Vector2(maxf(a0, a1), zlo), Vector2(maxf(a0, a1), zhi), Vector2(minf(a0, a1), zhi)])
+						for part: PackedVector2Array in Geometry2D.intersect_polygons(etri, strip):
+							var fan := Geometry2D.triangulate_polygon(part)
+							for f in range(0, fan.size() - 2, 3):
+								var ord := [fan[f], fan[f + 1], fan[f + 2]]
+								if signf((part[ord[1]] - part[ord[0]]).cross(part[ord[2]] - part[ord[0]])) != signf(de):
+									ord = [fan[f], fan[f + 2], fan[f + 1]]
+								for o: int in ord:
+									var x: Vector2 = part[o]
+									var w0 := (e1 - x).cross(e2 - x) / de
+									var w1 := (e2 - x).cross(e0 - x) / de
+									var w2 := 1.0 - w0 - w1
+									into.v.append(p0 * w0 + p1 * w1 + p2 * w2)
+									into.n.append((nb * (n0 * w0 + n1 * w1 + n2 * w2)).normalized())
+									into.uv.append(u0 * w0 + u1 * w1 + u2 * w2)
+				continue
+			var tri := PackedVector2Array([q0, q1, q2])
+			for piece: PackedVector2Array in pieces:
+				for part: PackedVector2Array in Geometry2D.intersect_polygons(tri, piece):
+					var fan := Geometry2D.triangulate_polygon(part)
+					for f in range(0, fan.size() - 2, 3):
+						var ord := [fan[f], fan[f + 1], fan[f + 2]]
+						if signf((part[ord[1]] - part[ord[0]]).cross(part[ord[2]] - part[ord[0]])) != signf(d):
+							ord = [fan[f], fan[f + 2], fan[f + 1]]  # (wound as the triangle it came from)
+						for o: int in ord:
+							var x: Vector2 = part[o]
+							var w0 := (q1 - x).cross(q2 - x) / d
+							var w1 := (q2 - x).cross(q0 - x) / d
+							var w2 := 1.0 - w0 - w1
+							into.v.append(p0 * w0 + p1 * w1 + p2 * w2)
+							into.n.append((nb * (n0 * w0 + n1 * w1 + n2 * w2)).normalized())
+							into.uv.append(u0 * w0 + u1 * w1 + u2 * w2)
+
+
+## The nearest a module's camera-facing faces come to the back, placed by `xf` (the plain
+## body behind a cut mass stops short of it).
+func _face_z(file: String, xf: Transform3D) -> float:
+	var z := INF
+	for surf: Array in _surfaces(file):
+		var verts: PackedVector3Array = surf[0]
+		var norms: PackedVector3Array = surf[1]
+		if norms.size() != verts.size():
+			continue
+		for i in verts.size():
+			if norms[i].z > 0.5:
+				z = minf(z, (xf * verts[i]).z)
+	return z if z < INF else xf.origin.z
+
+
+static func _surfaces(file: String) -> Array:
+	if _arrays.has(file):
+		return _arrays[file]
+	var out: Array = []
+	var mesh := _mesh(file)
+	if mesh != null:
+		for si in mesh.get_surface_count():
+			var arr := mesh.surface_get_arrays(si)
+			var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var idx := PackedInt32Array()
+			if arr[Mesh.ARRAY_INDEX] != null:
+				idx = arr[Mesh.ARRAY_INDEX]
+			if idx.is_empty():
+				for i in verts.size():
+					idx.append(i)
+			var norms := PackedVector3Array()
+			if arr[Mesh.ARRAY_NORMAL] != null:
+				norms = arr[Mesh.ARRAY_NORMAL]
+			var uvs := PackedVector2Array()
+			if arr[Mesh.ARRAY_TEX_UV] != null:
+				uvs = arr[Mesh.ARRAY_TEX_UV]
+			out.append([verts, norms, uvs, idx])
+	_arrays[file] = out
+	return out
+
+
+static func _area(poly: PackedVector2Array) -> float:
+	var s := 0.0
+	for i in poly.size():
+		s += poly[i].cross(poly[(i + 1) % poly.size()])
+	return absf(s) * 0.5
 
 
 ## The same for a solid that lives on its own (a hold that crumbles, wets or is tagged):
@@ -180,6 +415,24 @@ func commit() -> void:
 			mmi.set_instance_shader_parameter(&"tint", b.tint)
 		mmi.name = "Fit_" + str(b.name) + ("_" + str(b.wet) if str(b.wet) != "" else "")
 		root.add_child(mmi)
+	for key: String in _cut:
+		var c: Dictionary = _cut[key]
+		if (c.v as PackedVector3Array).is_empty():
+			continue
+		var arr := []
+		arr.resize(Mesh.ARRAY_MAX)
+		arr[Mesh.ARRAY_VERTEX] = c.v
+		arr[Mesh.ARRAY_NORMAL] = c.n
+		arr[Mesh.ARRAY_TEX_UV] = c.uv
+		var am := ArrayMesh.new()
+		am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arr)
+		var mi := MeshInstance3D.new()
+		mi.mesh = am
+		mi.material_override = _material(str(c.name), str(c.wet))
+		if bool(c.tinted):
+			mi.set_instance_shader_parameter(&"tint", c.tint)
+		mi.name = "FitCut" + ("_" + str(c.wet) if str(c.wet) != "" else "")
+		root.add_child(mi)
 
 
 func _tint(kind: String) -> Color:
