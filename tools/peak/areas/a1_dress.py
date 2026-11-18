@@ -658,24 +658,17 @@ def dress(A):
     A.deco("mine_rubble_lip", -216.6, 54.4, z=LIP_Z, size=(10.0, 1.0, 0.7), tone="back2")
 
     # ============================================================ 1.11 La Cortina
-    # The throat's back wall: black polished rock running with water, its drips lines of one
-    # even width, straight behind the staples (its mine-side top is also the lip's). Inside
-    # the dry shaft at the top: plank lining on three frames (also the lip's).
-    A.deco("mine_cortina_wall", -239.0, 60.0, z=THROAT_Z - 0.2, size=(18.0, 26.0, 0.4), tone="slick")
-    A.deco("mine_lining_dry_shaft", -234.0, 86.0, z=-1.8, size=(4.0, 4.0, 0.3), tone="back")
-    outcrop(-246.5, 64.5, THROAT_Z, "fern", small=True)
-    outcrop(-246.9, 75.0, THROAT_Z, "fern", small=True)
-    outcrop(-230.9, 66.2, THROAT_Z, "moss", small=True)
+    # The throat's back wall (quality run, MINE_PASS row 12, reviewer 8.5, 11-18): the black-wet bedded shaft behind the
+    # 28 staples, its face flat at THROAT_Z so every staple's legs meet it, the rust hand-set at each staple's feet, its
+    # seeps and sheen kept clear of the staple column, ferns rooted in the cracks of broken bosses; at its top the dry
+    # shaft's plank lining on its frames and the mine's last square set, the works' first arch on its cap. (It takes the
+    # jobs of mine_lining_dry_shaft, the outcrops, the 28 rust stains and the stand-in set at the shaft's mouth.)
+    A.deco("mine_cortina_wall", -239.0, 60.0, z=round(THROAT_Z - 0.03, 3), size=(18.0, 30.21, 2.01), tone="slick")  # (3 cm back: at THROAT_Z its top lining met esclusa_wall_flume's arch foot in one plane at z -1.70, and 1.2 cm back its lower face met the water trough's at -1.81: sweeps)
     # Drip boards over four of the five dry staples, nailed to the wall at a slant (grey): the
     # drip runs down to each, along it and off its low end.
     for r, s in _DRY[:4]:
         x, y = _STAPLE(r, s)
         A.deco("mine_drip_board", x, round(y + 0.51, 2), z=THROAT_Z + 0.04, rot=14.7 if s == 0 else -14.7, size=(0.85, 0.1, 0.08), tone="back")
-    # On the wall round each staple's feet: a small square rust stain, painted.
-    for r in range(14):
-        for s in (0, 1):
-            x, y = _STAPLE(r, s)
-            A.deco("mine_rust_stain", x, round(y - 0.15, 2), z=THROAT_Z + 0.01, size=(0.6, 0.3, 0.01), tone="rock2")
     A.deco("sign_pug_arrow", -224.6, DRIFT_Y, z=-1.4, flip=True, size=(0.76, 2.18, 0.15), tone="bone")  # moved back 0.4, in the drift
     # The empty camp against the drift's back wall: a bedroll, a cold lantern and a pickaxe, and nobody.
     A.deco("camp_bedroll", -227.75, DRIFT_Y, z=-2.0, size=(1.6, 0.25, 0.6), tone="wood2")
@@ -697,11 +690,9 @@ def dress(A):
     # 105), is the mine's own square set now, in its one scenery timber (the passed stock family): two posts either
     # side of the dry shaft's mouth and a cap with its top at 89.95 (72.95 moved), the works' first arch on it, until
     # mine_cortina_wall carries the set as its top frame.)
-    post(-235.625, 85.95, 89.6, -1.45)
-    post(-232.375, 85.95, 89.6, -1.45)
-    hbeam(-235.8, -232.2, 89.6, -1.45)
+    # (The stand-in set is gone: the set is mine_cortina_wall's top frame now, 11-18.)
     # (The works' first arch on its cap is esclusa_wall_flume's now, with its cast pug in the keystone.)
-    side_lantern(-235.45, 88.6, -1.45)  # the mine's last amber, on the set's west post
+    side_lantern(-235.8, 89.0, round(THROAT_Z - 0.03, 3))  # the mine's last amber, on the set's west post's front (mine_cortina_wall's, 3 cm back with it)
     # (The two faces drawn on the lip ledge's front, the works' coping and five courses of pale brick, are out: the alcove's
     # floor wears esclusa_coping_alcove, MINE_PASS F7, 11-18.)
     # Foreground: one post, timber below and brick above, in front of the pier's rock.
