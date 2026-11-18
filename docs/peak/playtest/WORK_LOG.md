@@ -2950,6 +2950,22 @@ in. Nothing played by a person.
 - Frames: `after/esclusa_vaults_before_after.jpg` (watch scene `vaults`: the three zone cameras' views, the flume's
   west and east halves, and close; before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the reviewer's q20 at the barrels' tunnel (1.12)
+
+- The inked box in the tunnel's mouth: a water's surface was drawn only through the play space (z -1.44 .. +1.44), so
+  the mouth's lowest 0.4 m (its sill at 76.8, under the flume's 77.2) showed dry and inked through the water. A water
+  rule can now say how far back its surface is drawn (`A.water(..., back=z)`, peak_zones `_body_vis`); the flume's runs
+  back to the wall's face, z -2.2, the mouth's plane, where the bore's own black water is to begin.
+- The pale block at the east landing's west end: not the light over it (it stayed pale with every light near it off):
+  the slick slab's open end showed its caps' raw cut face. A deck got its end piece only from 2 m long; the landing is
+  1.9. From 1 m now, so long as half a metre of cap is left between (6 decks on the mountain are 1 .. 2 m long). The
+  coping's 0.3 m end above stays the coping's pale (the kit has no stone end piece; it is the grip).
+- The same commit carries the Director's square set in the dry shaft's mouth (a1_dress: the mine's own posts and cap
+  for the kit timber_set, F-B7 row 105). a1's DEPTH 45 -> 48 is that set's: the lantern bracket and two rust stains
+  there touched the old timber_set and now touch nothing.
+- Frames: `after/q20_tunnel_mouth_landing_before_after.jpg` (watch scene `tunnel20`: the flume's camera, its west half,
+  the mouth close; before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

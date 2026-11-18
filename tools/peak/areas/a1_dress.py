@@ -690,7 +690,13 @@ def dress(A):
     # The mine's last timber set in the mouth of the dry shaft (the kit's set: origin its
     # middle), and the works' first arch standing straight on its cap, low, in flat courses of
     # colour, with a cast iron pug in its middle: the one object that is the join.
-    A.deco("timber_set", -234.0, 87.95, z=-1.45, size=(3.6, 4.0, 0.36), tone="back")
+    # (11-18: the kit's honey timber_set, its red sign read as a hold behind the climber at 1.12 (MINE_PASS F-B7 row
+    # 105), is the mine's own square set now, in its one scenery timber (the passed stock family): two posts either
+    # side of the dry shaft's mouth and a cap with its top at 89.95 (72.95 moved), the works' first arch on it, until
+    # mine_cortina_wall carries the set as its top frame.)
+    post(-235.625, 85.95, 89.6, -1.45)
+    post(-232.375, 85.95, 89.6, -1.45)
+    hbeam(-235.8, -232.2, 89.6, -1.45)
     # (The works' first arch on its cap is esclusa_wall_flume's now, with its cast pug in the keystone.)
     side_lantern(-235.45, 88.6, -1.45)  # the mine's last amber, on the set's west post
     # Drawn on the lip ledge's front face: the works' stone coping on the miners' rock ledge,

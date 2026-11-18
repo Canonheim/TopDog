@@ -529,9 +529,14 @@ class Area:
     def _rect(self, r):
         return [_f(min(r[0], r[2])), _f(min(r[1], r[3])), _f(max(r[0], r[2])), _f(max(r[1], r[3]))]
 
-    def water(self, rect, surface, flow=(0.0, 0.0), look="river"):
-        """Water in rect, its surface at y = surface, flowing at `flow` m/s."""
-        self.zones.append({"type": "water", "rect": self._rect(rect), "surface": _f(surface), "flow": _pt(flow), "look": look})
+    def water(self, rect, surface, flow=(0.0, 0.0), look="river", back=None):
+        """Water in rect, its surface at y = surface, flowing at `flow` m/s. back: how far back (a z) its surface is
+        drawn, when it runs into something behind the play space (the flume into its tunnel's mouth); the game's own
+        depth (z -1.44) otherwise."""
+        z = {"type": "water", "rect": self._rect(rect), "surface": _f(surface), "flow": _pt(flow), "look": look}
+        if back is not None:
+            z["back"] = _f(back)
+        self.zones.append(z)
 
     def wind(self, rect, accel, gust=None, look="wind"):
         """A push on climbers in rect: accel (ax, ay) m/s2 (gravity is 2.79: ay above that

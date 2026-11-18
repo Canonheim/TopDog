@@ -626,12 +626,14 @@ func _caps(out: Array, mat: String, c: Vector2, ax: Vector2, _ay: Vector2, ang: 
 	var x0 := -w * 0.5
 	var x1 := w * 0.5
 	var end_file := _pick("fit_%s_cap_end" % mat)
-	if ends and end_file != "" and w >= 2.0:
+	# (From 1 m long, so long as half a metre of cap is left between: a shorter deck's open end showed the cap's raw
+	# cut face, pale, at La Esclusa's east landing (1.9 m: the reviewer's q20, note 4).)
+	if ends and end_file != "" and w >= 1.0:
 		var ew := 0.5 * clampf(h / 0.5, 0.7, 1.4)
-		if _open(c + ax * (w * 0.5 + 0.2), Vector2.ZERO, 0.0):
+		if _open(c + ax * (w * 0.5 + 0.2), Vector2.ZERO, 0.0) and x1 - x0 - ew >= 0.5:
 			out.append([end_file, _xf(c + ax * (x1 - ew * 0.5), ang, Vector3(ew / 0.5, h / 0.5, zs), zc)])
 			x1 -= ew
-		if _open(c - ax * (w * 0.5 + 0.2), Vector2.ZERO, 0.0):
+		if _open(c - ax * (w * 0.5 + 0.2), Vector2.ZERO, 0.0) and x1 - x0 - ew >= 0.5:
 			# (turned round about its upright: the same piece, facing left)
 			out.append([end_file, _xf(c + ax * (x0 + ew * 0.5), ang, Vector3(ew / 0.5, h / 0.5, zs), zc, true)])
 			x0 += ew

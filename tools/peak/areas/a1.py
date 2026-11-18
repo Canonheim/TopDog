@@ -724,7 +724,9 @@ A.ladder(LADDER_X, LADDER_RUNGS, w=0.5, kind="iron")
 _box(WEST_LANDING[0], LANDING - 0.3, WEST_LANDING[1], LANDING, "stone")   # the platform's coping
 _hanging(EAST_LANDING[0], EAST_LANDING[1], LANDING)                         # the east landing, over the flume's head
 _box(QUAY[0], LANDING - 0.3, QUAY[1], LANDING, "stone")                     # the quay, on to the lock's gate
-A.water((FLUME[0], BED, FLUME[1], S), S, flow=(-1.0, 0.0), look="flume")    # the flume: it runs WEST, 1 m a second
+A.water((FLUME[0], BED, FLUME[1], S), S, flow=(-1.0, 0.0), look="flume", back=-2.2)  # the flume: it runs WEST, 1 m a second
+# (its surface drawn back to the wall's face, z -2.2: it runs into the barrels' tunnel's mouth, where the bore's own
+# black water begins, and its edge is not drawn in the mouth: the reviewer's q20)
 _loop = sum(BARREL_GAPS)
 _t = 0.0
 for i in range(8):

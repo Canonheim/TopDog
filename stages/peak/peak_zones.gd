@@ -946,9 +946,15 @@ func _body_vis(a: Dictionary, zs: Array, root: Node3D) -> Dictionary:
 	# the top: Del Mar's surface, once for the whole body
 	var top := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
-	pm.size = Vector2(w, WATER_DEPTH)
+	# (its back edge at the play space's depth, or further back where a rule says: the flume's surface runs into its
+	# tunnel's mouth, on the wall's face, so its edge is not drawn in the mouth: the reviewer's q20)
+	var back := -WATER_DEPTH * 0.5
+	for z: Dictionary in zs:
+		if z.has("back"):
+			back = minf(back, float(z.back))
+	pm.size = Vector2(w, WATER_DEPTH * 0.5 - back)
 	top.mesh = pm
-	top.position = Vector3(mid_x, surface, 0)
+	top.position = Vector3(mid_x, surface, (WATER_DEPTH * 0.5 + back) * 0.5)
 	n.add_child(top)
 	var sea := DelMarSea.new()
 	n.add_child(sea)

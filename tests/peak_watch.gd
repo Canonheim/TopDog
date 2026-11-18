@@ -3302,6 +3302,51 @@ func _w_ridesets(a: Array) -> void:
 		await shot("ridesets_%s_%s" % [row[2], tag])
 
 
+## The reviewer's q20 at the barrels' tunnel: the flume's water in the tunnel's mouth and the east landing's west end, as
+## the flume's camera frames them (the climber on the platform's east end and on the barrels), and close. tunnel20:TAG
+func _w_tunnel20(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.12")
+	await secs(4.0)
+	for row in [[Vector2(-262.0, 80.4), 6.0, "flume"], [Vector2(-266.0, 80.4), 6.0, "flume_w"], [Vector2(-261.8, 78.2), 2.6, "mouth"],
+			[Vector2(-260.3, 79.0), 1.2, "landing"]]:
+		look(row[0], float(row[1]))
+		await secs(0.8)
+		await shot("tunnel20_%s_%s" % [row[2], tag])
+	# (what lights the landing's west end: the light over the landing off, then every light near it off)
+	for row: Array in pk._lights:
+		var l: OmniLight3D = row[0]
+		var at := pk.local_of(Vector2(l.global_position.x, l.global_position.y))
+		if at.distance_to(Vector2(-259.5, 81.9)) < 0.3:
+			l.visible = false
+			print("WATCH tunnel20: the landing's light off at ", at)
+	look(Vector2(-262.0, 80.4), 6.0)
+	await secs(0.6)
+	await shot("tunnel20_flume_nolight_%s" % tag)
+	for row: Array in pk._lights:
+		var l: OmniLight3D = row[0]
+		var at := pk.local_of(Vector2(l.global_position.x, l.global_position.y))
+		if at.distance_to(Vector2(-260.4, 79.0)) < 9.0:
+			l.visible = false
+			print("WATCH tunnel20: off at ", at, " z ", l.position.z)
+	await secs(0.6)
+	await shot("tunnel20_flume_nolights_%s" % tag)
+	# (which meshes hold the end face's middle: the course's (-260.42, 79.0), z 0.9 .. -0.9)
+	for zz in [0.9, 0.0, -0.9]:
+		var w := Vector3(-260.42 + Peak.ORIGIN.x, 79.0 + Peak.ORIGIN.y, zz)
+		for mi: MeshInstance3D in pk.find_children("*", "MeshInstance3D", true, false):
+			if not mi.is_visible_in_tree() or mi.mesh == null:
+				continue
+			var box: AABB = mi.global_transform * mi.get_aabb()
+			if box.grow(0.03).has_point(w) and box.size.length() < 60.0:
+				var mat := mi.material_override if mi.material_override != null else (mi.mesh.surface_get_material(0) if mi.mesh.get_surface_count() > 0 else null)
+				print("WATCH tunnel20 mesh at z %.1f: %s (%s) box %s mat %s" % [zz, mi.get_path(), mi.mesh.get_class(), box, mat])
+		for mm: MultiMeshInstance3D in pk.find_children("*", "MultiMeshInstance3D", true, false):
+			var b2: AABB = mm.global_transform * mm.get_aabb()
+			if b2.grow(0.03).has_point(w) and b2.size.length() < 200.0:
+				print("WATCH tunnel20 multimesh at z %.1f: %s box %s" % [zz, mm.get_path(), b2])
+
+
 ## MINE_PASS F-C3: the roof's vaults over the flume, as La Esclusa's three zone cameras frame it (the climber's middle
 ## plus each zone's bias, at its height), and close over the arcade. vaults:TAG
 func _w_vaults(a: Array) -> void:
