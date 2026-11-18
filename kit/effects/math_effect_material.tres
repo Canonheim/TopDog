@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=3]
+
+[ext_resource type="Shader" path="res://shaders/math_overlay.gdshader" id="1"]
+[ext_resource type="Texture2D" path="res://kit/effects/math_atlas.png" id="2"]
+
+[resource]
+render_priority = 20
+shader = ExtResource("1")
+shader_parameter/glyph_atlas = ExtResource("2")

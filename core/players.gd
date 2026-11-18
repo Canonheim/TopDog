@@ -63,6 +63,8 @@ const DEFAULT_KBM := {
 	"pause": [{"key": KEY_ESCAPE}, {}],
 }
 const DEFAULT_PAD := {
+	"camera_players": [{"axis": JOY_AXIS_TRIGGER_LEFT}, {}],
+	"camera_loot": [{"axis": JOY_AXIS_TRIGGER_RIGHT}, {}],
 	"arm_l": [{"pad": JOY_BUTTON_X}, {}],
 	"arm_r": [{"pad": JOY_BUTTON_A}, {}],
 	"leg_l": [{"pad": JOY_BUTTON_Y}, {}],
@@ -803,3 +805,7 @@ func _on_joy_connection_changed(dev: int, connected: bool) -> void:
 		slot.erase("disconnected")
 		note("player %d has pad %d back" % [selected + 1, dev])
 		device_changed.emit(selected)
+
+## Camera controls use the same raw/Steam/device ownership path as locomotion.
+func camera_button(slot: int, action: String) -> bool:
+	return focused and action in ["camera_players", "camera_loot"] and _action(_dev(slot), action)

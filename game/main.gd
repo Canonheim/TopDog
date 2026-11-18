@@ -20,6 +20,13 @@ var cam: Camera3D
 var ui: CanvasLayer
 var screens := {}
 var screen := ""
+var dev_mode := false
+var _dev_label: Label
+var _dev_results_preview := false
+var _dev_previous_results: Dictionary = {}
+var _dev_payout: Dictionary = {}
+var dev_xp_save_path := "" # Optional isolated save for automated development checks.
+var _dev_grant_serial := 0
 var banner: Label
 var banner_t := 0.0
 var hud_clock: Label
@@ -35,6 +42,10 @@ const TOWER_PAN_SPEED := 0.35  # world metres per second
 var _results_elapsed := 0.0
 var _results_peak := Vector2.ZERO
 var _personal_camera := false
+var _camera_shared := true
+var _camera_loot := true
+var _camera_slot := 0
+var _camera_buttons := {}
 const PLAZA_CAM_X := 14.0  # the plaza camera's centre stays within this of the ring (x)
 var _cam_target := Vector3(0, 2, 14)
 var _cam_fov := 34.0
@@ -62,7 +73,6 @@ var _readout_t := 0.0
 var _glyphs_on := true
 var _glyphs_n := -1
 var _input_health: Label  # F2: what the input system knows right now (Players.health)
-var _focus_notice: Label  # OS window-focus loss only; not idle/disconnected input
 var _lobby_wait: Label  # the guest's "WAITING FOR ... TO START", top of the screen (Parker 11-12)
 ## COUCH PLAYERS IN AN ONLINE LOBBY are parked with Play Together (Parker 11-10:
 ## "first lets only focus on the online multiplayer"). It was also a trap: a host on a
@@ -113,6 +123,7 @@ func _ready() -> void:
 	game.host_left.connect(func(): _to_title("The host left the game."))
 	Players.camera = cam
 	_build_ui()
+	_build_dev_indicator()
 	Net.session_started.connect(_on_session_started)
 	Net.session_ended.connect(func(r): _to_title(r))
 	Net.status.connect(func(t):
@@ -131,6 +142,9 @@ func _ready() -> void:
 	lucha.name = "LuchaUI"
 	add_child(lucha)
 	lucha.setup(self)
+	var effect_preparation := preload("res://ui3d/lock_effect_preparation.gd").new()
+	effect_preparation.name = "LockEffectPreparation"
+	add_child(effect_preparation)
 	if _boot_wanted():
 		# THE BOOT SCREENS (Parker 11-11): the studio logo, the controller card, then the
 		# title waiting on PRESS ANY BUTTON TO START. Nothing plays under the black.
@@ -329,6 +343,7 @@ func _build_world() -> void:
 
 
 func _process(delta: float) -> void:
+	_tick_camera_controls()
 	_tick_camera(delta)
 	_tick_peak(delta)
 	# THE LINE AS SEEN (Parker 11-11): the game judges a lock-in by what this camera shows,
@@ -368,8 +383,6 @@ func _process(delta: float) -> void:
 	if _input_health != null and _input_health.visible:
 		_input_health.text = "INPUT (F2 hides)   log: %s
 %s" % [ProjectSettings.globalize_path(Players.LOG_PATH), Players.health()]
-	if _focus_notice != null:
-		_focus_notice.visible = not Players.focused
 	if _build_tag != null:
 		_build_tag.visible = screen == "title"
 	_readout_t -= delta
@@ -389,6 +402,103 @@ A pad is connected but nothing has arrived. If pressing changes nothing here, so
 		_pad_readout.text = pad_nav.readout() + hint
 
 
+func _build_dev_indicator() -> void:
+	var overlay := CanvasLayer.new()
+	overlay.layer = 100
+	add_child(overlay)
+	_dev_label = Label.new()
+	_dev_label.text = "DEV MODE"
+	_dev_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_dev_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_dev_label.add_theme_color_override("font_color", Color("ff2020"))
+	_dev_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_dev_label.add_theme_constant_override("outline_size", 4)
+	_dev_label.add_theme_font_size_override("font_size", 24)
+	overlay.add_child(_dev_label)
+	_dev_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	_dev_label.offset_top = -40
+	_dev_label.offset_bottom = -8
+	_dev_label.visible = dev_mode
+
+
+func _input(event: InputEvent) -> void:
+	if not event is InputEventKey or not event.pressed or event.echo: return
+	var key: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
+	if key == KEY_F4:
+		dev_mode = not dev_mode
+		_dev_label.visible = dev_mode
+		if game.peak != null: game.peak.dev_warp = dev_mode
+		if not dev_mode: close_dev_results()
+		get_viewport().set_input_as_handled()
+		return
+	if not dev_mode or not _rebind_wait.is_empty(): return
+	if not game.practice or game.peak_on or Net.online: return
+	if screen not in ["hud", "pause", "practice_ai", "results"]: return
+	if screen == "results" and not _dev_results_preview: return
+	if key == KEY_KP_ENTER:
+		if not close_dev_results(): _open_dev_results()
+		get_viewport().set_input_as_handled()
+	elif key == KEY_KP_ADD:
+		_grant_practice_dev_xp()
+		get_viewport().set_input_as_handled()
+
+
+func _dev_progression_path() -> String:
+	return dev_xp_save_path if not dev_xp_save_path.is_empty() else preload("res://core/save_paths.gd").settings("progression.cfg")
+
+
+func _grant_practice_dev_xp() -> void:
+	var progression = preload("res://core/player_progression.gd")
+	_dev_grant_serial += 1
+	var receipt: Dictionary = progression.grant("dev:%s:%s:%s" % [Time.get_unix_time_from_system(), Time.get_ticks_usec(), _dev_grant_serial], 4500, _dev_progression_path())
+	if not receipt.ok:
+		_on_announce("XP save failed", false)
+		return
+	var after := int(receipt.total)
+	var before := after - int(receipt.awarded)
+	if _dev_results_preview: before = mini(before, int(lucha.menus.results.xp_panel.belt._shown_total))
+	var rows := {}
+	var pending := after - before - int(receipt.awarded)
+	if pending > 0: rows["PENDING XP"] = pending
+	var remaining := int(receipt.awarded)
+	for reward in range(1, 4):
+		var burst := mini(1500, remaining)
+		rows["DEV REWARD %d" % reward] = burst
+		remaining -= burst
+	_dev_payout = {"match_id":"dev-preview-%d" % _dev_grant_serial, "before_total":before,
+		"after_total":after, "total":after-before, "awarded":after-before, "saved":true,
+		"eligible":true, "rows":rows}
+	lucha.xp_display.settle_total(after)
+	if _dev_results_preview:
+		game.results.local_xp = _dev_payout
+		lucha.menus.results.xp_panel.show_payout(_dev_payout)
+	else:
+		_on_announce("+%s XP - Numpad Enter: XP results" % progression.number(int(receipt.awarded)), false)
+
+
+func _open_dev_results() -> void:
+	_dev_previous_results = game.results.duplicate(true)
+	_dev_results_preview = true
+	if _dev_payout.is_empty():
+		var saved: Dictionary = preload("res://core/player_progression.gd").read_save(_dev_progression_path())
+		_dev_payout = {"match_id":"dev-preview-current", "before_total":int(saved.total),
+			"after_total":int(saved.total), "total":0, "awarded":0, "saved":saved.ok, "eligible":true, "rows":{}}
+	game.results = {"winner":-1, "best":{}, "tower":game.tower.size(), "top":game.tower_peak().y, "local_xp":_dev_payout}
+	lucha.menus.results.process_mode = Node.PROCESS_MODE_ALWAYS
+	show_screen("results")
+	get_tree().paused = true
+
+
+func close_dev_results() -> bool:
+	if not _dev_results_preview: return false
+	_dev_results_preview = false
+	game.results = _dev_previous_results
+	get_tree().paused = false
+	show_screen("hud")
+	lucha.menus.results.process_mode = Node.PROCESS_MODE_INHERIT
+	return true
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F1:
 		feel_panel.visible = not feel_panel.visible
@@ -403,10 +513,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# THE PEAK'S WARP KEYS (dev): F4 arms them; [ and ] step through the challenges. A
 	# warped run is never saved over the real climb.
 	if game.peak_on and game.peak != null and event is InputEventKey and event.pressed and not event.echo:
-		if event.physical_keycode == KEY_F4:
-			game.peak.dev_warp = not game.peak.dev_warp
-			_on_announce("Warp keys ON: [ and ] step through the challenges (this run isn't saved)" if game.peak.dev_warp else "Warp keys off", false)
-		elif game.peak.dev_warp and event.physical_keycode in [KEY_BRACKETLEFT, KEY_BRACKETRIGHT]:
+		if dev_mode and event.physical_keycode in [KEY_BRACKETLEFT, KEY_BRACKETRIGHT]:
 			var where: String = game.peak.warp("", -1 if event.physical_keycode == KEY_BRACKETLEFT else 1)
 			if where != "":
 				_on_announce(where, false)
@@ -426,6 +533,7 @@ func _start_peak() -> void:
 	s.practice_npc = false
 	_peak_over_t = 0.0
 	game.host_start(s, [{"pid": 0, "name": Players.slots[0].name, "random": Players.slots[0].get("random", false), "tint": Players.slots[0].tint, "peer": 1, "slot": 0, "appearance": Wardrobe.for_slot(0)}])
+	if game.peak != null and dev_mode: game.peak.dev_warp = true
 	if game.peak != null and not _peak_wired:
 		_peak_wired = true
 		game.peak.area_entered.connect(_on_peak_area)
@@ -749,21 +857,21 @@ func _tick_camera(delta: float) -> void:
 		for point in [Vector2(-2.0, maxf(0.0, line_y - 3.0)), Vector2(2.0, line_y + 0.8)]:
 			lo = lo.min(point)
 			hi = hi.max(point)
-	if follow and Net.online:
+	if follow and (Net.online or not _camera_shared):
 		var spread := hi - lo
 		var distance := maxf(spread.x / 1.6, spread.y)
-		_personal_camera = distance > (13.5 if _personal_camera else 18.0)
+		_personal_camera = not _camera_shared or distance > (13.5 if _personal_camera else 18.0)
 		if _personal_camera:
 			var target: Climber = null
 			for candidate: Climber in live:
-				if candidate.owner_peer == game.me():
+				if candidate.owner_peer == game.me() and (_camera_shared or candidate.local_slot == _camera_slot):
 					target = candidate
 					break
 			# Once locked in, follow the next active player in roster order.
 			if target == null:
 				var local_index := -1
 				for i in game.roster.size():
-					if int(game.roster[i].peer) == game.me():
+					if int(game.roster[i].peer) == game.me() and (_camera_shared or int(game.roster[i].get("slot",0)) == _camera_slot):
 						local_index = i
 						break
 				for offset in range(1, game.roster.size() + 1):
@@ -779,6 +887,16 @@ func _tick_camera(delta: float) -> void:
 				hi = lo
 	else:
 		_personal_camera = false
+	# Loot extends the chosen shared/personal view, but never triggers personal
+	# camera switching itself. Include the decorative stars as well as the hitbox.
+	var frame_loot := false
+	if follow and _camera_loot and is_instance_valid(game.pinata_director):
+		var loot = game.pinata_director.current
+		if is_instance_valid(loot) and not loot.taken:
+			var loot_point := Vector2(loot.global_position.x, loot.global_position.y)
+			lo = lo.min(loot_point - Vector2.ONE)
+			hi = hi.max(loot_point + Vector2.ONE)
+			frame_loot = true
 	var bodies_lo := lo.y  # the lowest live climber (before the frame's own points)
 	if follow and delmar:
 		# DEL MAR'S MATCH VIEW (the Environment Maker's plan): the climbers, the pier's
@@ -800,7 +918,7 @@ func _tick_camera(delta: float) -> void:
 	var half_h := maxf((hi.y - lo.y) * 0.5, (hi.x - lo.x) * 0.5 / aspect)
 	half_h = maxf(half_h, FOLLOW_HALF_H if follow else 3.2)
 	if delmar:
-		half_h = clampf(half_h, 4.0, 9.5)
+		half_h = maxf(half_h, 4.0) if frame_loot else clampf(half_h, 4.0, 9.5)
 	var dist := half_h / tan(deg_to_rad(_cam_fov * 0.5))
 	if delmar:
 		# Less sea: up by DELMAR_CAM_LIFT of the frame, never so far a climber's lowest
@@ -814,6 +932,11 @@ func _tick_camera(delta: float) -> void:
 	# can't swing it round to the beach town (Del Mar, off to the right).
 	if not delmar:
 		centre.x = clampf(centre.x, -PLAZA_CAM_X, PLAZA_CAM_X)
+	if frame_loot:
+		# Preserve coverage after the plaza centre clamp or Del Mar's upward lift.
+		half_h = maxf(half_h, maxf(centre.y - lo.y, hi.y - centre.y))
+		half_h = maxf(half_h, maxf(centre.x - lo.x, hi.x - centre.x) / aspect)
+		dist = half_h / tan(deg_to_rad(_cam_fov * 0.5))
 	_cam_target = Vector3(centre.x, centre.y + 0.3, dist)
 	cam.position = cam.position.lerp(_cam_target, 1.0 - exp(-delta * 2.5))
 	cam.look_at(Vector3(cam.position.x, cam.position.y - 0.3, 0.0), Vector3.UP)
@@ -915,6 +1038,25 @@ func _on_phase(p: String) -> void:
 
 
 func _on_over(res: Dictionary) -> void:
+	# One progression profile per machine: the first owned slot earns it, not every couch player.
+	var owned: Array = game.roster.filter(func(r): return int(r.peer)==game.me())
+	owned.sort_custom(func(a,b): return int(a.get("slot",0))<int(b.get("slot",0)))
+	var payout: Dictionary = {}
+	if not owned.is_empty():
+		payout=res.get("xp",{}).get(int(owned[0].pid),{}).duplicate(true)
+	if not payout.is_empty():
+		var progression := preload("res://core/player_progression.gd")
+		var before_total: int=lucha.xp_display.total_for(progression.load_snapshot())
+		var receipt := progression.grant(str(res.get("xp_match_id","")),int(payout.total))
+		payout.saved=receipt.ok
+		payout.awarded=int(receipt.get("awarded",0))
+		payout.after_total=int(receipt.get("total",before_total))
+		payout.before_total=int(payout.after_total)-int(payout.awarded)
+		payout.match_id=str(res.get("xp_match_id",""))
+		# Results now present the gain. Returning to the title must not tally it twice.
+		if receipt.ok and not lucha.xp_display.dev_xp_enabled:
+			lucha.xp_display.settle_total(int(payout.after_total))
+	res.local_xp=payout
 	Sound.play("win")
 	var w := int(res.get("winner", -1))
 	var lines := []
@@ -1003,6 +1145,13 @@ func _build_ui() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.theme = theme
 	ui.add_child(root)
+	var reward_notice := preload("res://ui/pinata_reward_notice.gd").new()
+	reward_notice.name="RewardNotices"
+	root.add_child(reward_notice)
+	reward_notice.z_index = 100
+	game.xp_achievement.connect(reward_notice.enqueue_xp)
+	game.pinata_director.reward_unlocked.connect(func(reward: Dictionary):
+		reward_notice.enqueue(str(reward.name), int(reward.rarity), str(reward.get("player", ""))))
 	screens.title = _screen_title()
 	screens.local = _screen_local()
 	screens.online = _screen_online()
@@ -1064,27 +1213,6 @@ func _build_ui() -> void:
 	_lobby_wait.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_lobby_wait.visible = false
 	root.add_child(_lobby_wait)
-	# Focus notifications in Players drive this in every screen, including paused
-	# submenus. Idle controllers and leaving a button's hover never trigger it.
-	_focus_notice = Label.new()
-	_focus_notice.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
-	_focus_notice.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	_focus_notice.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	_focus_notice.offset_right = -24
-	_focus_notice.offset_bottom = -24
-	_focus_notice.text = "Click Game Window to regain controls."
-	_focus_notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	var focus_font := SystemFont.new()
-	focus_font.font_names = PackedStringArray(["Arial"])
-	focus_font.font_weight = 700
-	_focus_notice.add_theme_font_override("font", focus_font)
-	_focus_notice.add_theme_font_size_override("font_size", 26)
-	_focus_notice.add_theme_color_override("font_color", Color("#FF3232"))
-	_focus_notice.add_theme_constant_override("outline_size", 4)
-	_focus_notice.add_theme_color_override("font_outline_color", Color(0.1, 0.03, 0.03))
-	_focus_notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_focus_notice.visible = false
-	root.add_child(_focus_notice)
 	_build_tag = Label.new()
 	_build_tag.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
 	_build_tag.grow_horizontal = Control.GROW_DIRECTION_BEGIN
@@ -1564,6 +1692,7 @@ func _toggle_pause() -> void:
 ## Back from the results: the title after a local match; online, the lobby with its
 ## waiting room (the host sends it again; a guest keeps the room the host already sent).
 func leave_results() -> void:
+	if close_dev_results(): return
 	if local_mode or Net.is_host() or game.phase != "lobby":
 		game.end_match()
 	show_screen("title" if local_mode else "lobby")
@@ -1571,6 +1700,9 @@ func leave_results() -> void:
 
 
 func _to_title(reason: String) -> void:
+	_camera_shared = true
+	_camera_loot = true
+	_camera_buttons.clear()
 	get_tree().paused = false
 	if screen == "title" and game.phase == "idle":
 		if reason != "":
@@ -1583,7 +1715,7 @@ func _to_title(reason: String) -> void:
 
 
 func _screen_controls() -> Control:
-	var c := UiKit.panel_screen("Controls", "Hold a limb button and steer with the stick or mouse. Release to plant it. Plant a hand or foot on another player to climb or pull together. Push an attached arm or leg with your active limb to pry its grip loose. Hard hits can knock you out. Grab the floating chair with a held limb and release to drop it. Lock in above the line while touching the stage or stack.")
+	var c := UiKit.panel_screen("Controls", "Hold a limb button and steer with the stick or mouse. Release to plant it. Plant a hand or foot on another player to climb or pull together. Hard tension breaks the contact. Push another player with your active limb to add tension. Hard hits can knock you out. Grab the floating chair with a held limb and release to drop it. Lock in above the line while touching the stage or stack.")
 	var box: VBoxContainer = c.get_meta("box")
 	var grid := GridContainer.new()
 	grid.columns = 5
@@ -1734,3 +1866,17 @@ func _feel_panel() -> Control:
 func _sync_waiting_room() -> void:
 	if screen == "lobby" and Net.is_host() and not Net.in_match:
 		game.sync_waiting_room.call_deferred()
+
+func _tick_camera_controls() -> void:
+	var enabled := screen == "hud" and game.phase in ["turn", "round", "between"] and not game.peak_on and Players.focused
+	for slot in Players.slots.size():
+		for action in ["camera_players", "camera_loot"]:
+			var key := Vector2i(slot, 0 if action == "camera_players" else 1)
+			var down := Players.camera_button(slot, action)
+			if enabled and down and not _camera_buttons.get(key, false):
+				if action == "camera_players":
+					_camera_shared = not _camera_shared
+					_camera_slot = slot
+				else:
+					_camera_loot = not _camera_loot
+			_camera_buttons[key] = down

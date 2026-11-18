@@ -19,13 +19,16 @@ extends Node
 
 signal announce(text: String, big: bool)
 signal lock_effect(effect: String)
+signal attached_lock_effect(effect: String, climber: Climber)
 signal phase_changed(phase: String)
 signal match_over(results: Dictionary)
+signal xp_achievement(title: String, amount: int, player: String)
 signal climber_spawned(c: Climber)
 signal host_left
 
 const ChairScript := preload("res://game/arena_chair.gd")
 const PartnerScript := preload("res://climber/practice_partner.gd")
+var pinata_director: Node
 var chair: ChairScript
 var chair_debris: Node3D
 var partner: PartnerScript
@@ -79,6 +82,14 @@ var _pair_i := 0
 var locked := {}  # scramble: pid -> true once locked this round
 var best := {}  # pid -> best locked height
 var results := {}
+var xp_tracker = preload("res://game/match_xp.gd").new()
+var _xp_airborne := {}
+var _xp_pending_ko := {}
+var _xp_tick := 0.0
+var _landing_trackers := {}
+var _landing_seq := {}
+var _landing_received := {}
+var _landing_received_at := {}
 var bot_drivers := {}  # pid -> driver (batteries, bots)
 var practice := false
 var peak: Peak = null  # the solo climb's mountain (stages/peak), built the first time it's played
@@ -117,6 +128,10 @@ var _now := 0.0
 
 
 func _ready() -> void:
+	xp_tracker.achievement.connect(_on_xp_achievement)
+	pinata_director = preload("res://game/pinata_director.gd").new()
+	pinata_director.name = "PinataDirector"
+	add_child(pinata_director)
 	Players.device_changed.connect(func(slot: int) -> void:
 		for c in climbers.values():
 			var cl: Climber = c
@@ -143,6 +158,7 @@ func host_start(p_settings: Dictionary, p_roster: Array) -> bool:
 		announce.emit("Classic needs at least two players. Use Practice to climb alone.", false)
 		return false
 	var match_settings := p_settings.duplicate(true)
+	match_settings.xp_match_id = Crypto.new().generate_random_bytes(16).hex_encode()
 	match_settings.seed = randi()  # one seed per match: Del Mar's floaties drift the same everywhere
 	var choice := str(match_settings.get("base", "random"))
 	match_settings.resolved_base = Modes.STARTING_BASES.pick_random() if choice == "random" else choice
@@ -173,6 +189,14 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	best.clear()
 	locked.clear()
 	results.clear()
+	xp_tracker.begin(roster,not practice and not peak_on and bot_drivers.is_empty())
+	_xp_airborne.clear()
+	_xp_pending_ko.clear()
+	_xp_tick=0.0
+	_landing_trackers.clear()
+	_landing_seq.clear()
+	_landing_received.clear()
+	_landing_received_at.clear()
 	for r in roster:
 		alive[int(r.pid)] = true
 		best[int(r.pid)] = 0.0
@@ -260,6 +284,7 @@ func _physics_process(delta: float) -> void:
 	_tick_owned(real_delta)
 	_tick_puppets()
 	_tick_chair(delta)
+	_tick_match_xp(real_delta)
 	if partner != null and stage.in_sea(partner):
 		# The practice partner sinks like anyone, then comes back.
 		if _partner_sink < 0.0:
@@ -507,6 +532,10 @@ func _spawn_side() -> int:
 
 @rpc("authority", "call_local", "reliable")
 func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
+	xp_tracker.samples.erase(pid)
+	_landing_trackers.erase(cid)
+	_xp_airborne.erase(cid)
+	_xp_pending_ko.erase(cid)
 	var r := roster_entry(pid)
 	if r.is_empty():
 		return
@@ -568,10 +597,10 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 				if randf() < DONKEY_CHANCE:
 					_rpc_donkey.rpc_id(1, cid, Sound.SFX["donkey"].pick_random()))
 		c.grab_lost.connect(_on_grab_lost)
-		c.pry_requested.connect(func(source_id: int, limb: int):
+		c.push_load_requested.connect(func(source_id: int, limb: int, pressure: float):
 			var source: Climber = climbers.get(source_id)
 			if source != null and source.owner_peer != me():
-				_rpc_pry_release.rpc_id(source.owner_peer, source_id, cid, limb))
+				_rpc_push_load.rpc_id(source.owner_peer, source_id, cid, limb, pressure))
 		c.rope_bounced.connect(func(at: Vector3, speed: float): _rpc_rope.rpc(cid, at, speed))
 		if chair != null and not is_host():
 			c.limb_selected.connect(func(i: int, velocity: Vector3): _rpc_chair_limb.rpc_id(1, cid, i, velocity))
@@ -593,6 +622,7 @@ func _drop_climber(cid: int) -> void:
 	var c: Climber = climbers[cid]
 	remote_chair_limbs.erase(cid)
 	climbers.erase(cid)
+	_landing_trackers.erase(cid)
 	# Anyone holding it lets go first: never leave a joint on a freed body.
 	for o in climbers.values():
 		var oc: Climber = o
@@ -726,6 +756,12 @@ func _tick_owned(real_delta: float) -> void:
 		var c: Climber = climbers[cid]
 		if c.state != Climber.State.LIVE or c.owner_peer != me():
 			continue
+		if xp_tracker.eligible and phase in ["turn","round"]:
+			if not _landing_trackers.has(cid):
+				_landing_trackers[cid]=preload("res://game/landing_tracker.gd").new()
+			if _landing_trackers[cid].observe(c,real_delta):
+				_landing_seq[cid]=int(_landing_seq.get(cid,0))+1
+				_rpc_stuck_landing.rpc_id(1,cid,int(_landing_seq[cid]))
 		var can_lock: bool = c.knockout_left <= 0 and not c.sinking and (phase == "turn" or phase == "round") and not peak_on
 		if c.driver != null and c.driver.lock_pressed() and can_lock:
 			_lock_want[cid] = LOCK_BUFFER_S
@@ -752,11 +788,12 @@ func _tick_owned(real_delta: float) -> void:
 			# was thousands of identical packets a second through the host).
 			var now_pose := c.pose()
 			var on_support := c.touches_solid()
+			var airborne := not c.is_attached()
 			var last: Array = _last_sent.get(cid, [])
-			if not last.is_empty() and bool(last[2]) == on_support and _now - float(last[1]) < STREAM_KEEPALIVE_S and _same_pose(last[0], now_pose):
+			if not last.is_empty() and bool(last[2]) == on_support and bool(last[3]) == airborne and _now - float(last[1]) < STREAM_KEEPALIVE_S and _same_pose(last[0], now_pose):
 				continue
-			_last_sent[cid] = [now_pose, _now, on_support]
-			_rpc_pose.rpc(cid, _seq, now_pose, on_support)
+			_last_sent[cid] = [now_pose, _now, on_support, airborne]
+			_rpc_pose.rpc(cid, _seq, now_pose, on_support, airborne)
 	# Remote pulls on my climbers that went stale stop pulling.
 	for cid in _pulls.keys():
 		if not climbers.has(cid):
@@ -937,6 +974,9 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded :
 		else:
 			_rpc_note.rpc_id(c.owner_peer, note)
 		return
+	# Failed dock-side players leave instead of becoming reusable supports.
+	if stage != null and stage.delmar and top <= stage.first_line:
+		grounded = false
 	var made := grounded and pose_gap(c, pose) > LOCK_MARGIN - _slack(c)
 	var verdict := "made" if made else "out"
 	if why == "left":
@@ -953,6 +993,7 @@ func _broadcast_freeze(cid: int, pose: PackedFloat32Array, why: String, welded :
 		alive[pid] = false
 		_round_fail_tops[pid] = top if grounded else 0.0
 	if made:
+		xp_tracker.lock_in(pid,round_n)
 		locked[pid] = true
 		best[pid] = maxf(float(best.get(pid, 0.0)), top)
 	if mode.live == "turns":
@@ -1005,7 +1046,11 @@ func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: Strin
 	var shown := top - Stage.PIER_END if stage != null and stage.delmar else top
 	match verdict:
 		"made":
-			lock_effect.emit(Wardrobe.clean(roster_entry(c.player_id).get("appearance", {})).effect)
+			var cosmetic: String = Wardrobe.clean(roster_entry(c.player_id).get("appearance", {})).effect
+			if cosmetic in Wardrobe.ATTACHED_EFFECTS:
+				if grounded and not c.removed: attached_lock_effect.emit(cosmetic,c)
+			else:
+				lock_effect.emit(cosmetic)
 			if stage != null and stage.delmar:
 				announce.emit("%s locked in %.2f m out!" % [who, shown] if why == "locked" else "%s made it: %.2f m out" % [who, shown], false)
 			else:
@@ -1070,16 +1115,25 @@ func _finish() -> void:
 				top = _round_fail_tops[pid]
 				winner = pid
 	var res := {"winner": winner, "best": best.duplicate(), "tower": tower.size(), "top": tower_top()}
+	res.xp = xp_tracker.payouts(winner)
+	res.xp_match_id = str(settings.get("xp_match_id",""))
 	_rpc_over.rpc(res)
 
 
 @rpc("authority", "call_local", "reliable")
 func _rpc_over(res: Dictionary) -> void:
+	if phase == "over": return
 	phase = "over"
 	results = res
 	phase_changed.emit(phase)
 	var w := int(res.get("winner", -1))
 	announce.emit(("%s tops their pals!" % player_name(w)) if w >= 0 else "Game over", true)
+	for entry in roster:
+		if int(entry.peer)!=me(): continue
+		var reward: Dictionary=res.get("xp",{}).get(int(entry.pid),{})
+		for title in ["MATCH COMPLETE","VICTORY"]:
+			var amount:int=reward.get("rows",{}).get(title,0)
+			if amount>0: xp_achievement.emit(title,amount,player_name(int(entry.pid)))
 	match_over.emit(res)
 
 
@@ -1149,11 +1203,15 @@ func lock_gap(points: Array) -> float:
 		var d := Vector2(1, 1) if delmar else Vector2(0, 1)
 		for p: Vector2 in points:
 			best = maxf(best, p.dot(d))
-		return best - lock_line()
+		return best - (maxf(lock_line(),stage.first_line) if delmar else lock_line())
 	if delmar:
 		var seen := _seen_rope()
+		var world_front := -INF
 		for p: Vector2 in points:
 			best = maxf(best, p.x + p.y - _seen_w(seen, p.x - p.y))
+			world_front = maxf(world_front,p.x+p.y-stage.first_line)
+		# Perspective cannot turn the launch dock into a valid tower-building area.
+		best = minf(best,world_front)
 	else:
 		for p: Vector2 in points:
 			best = maxf(best, p.y - _seen_bar_y(p.x))
@@ -1247,7 +1305,7 @@ func live_climbers() -> Array:
 # ================================================================ the stream and puppets
 
 @rpc("any_peer", "call_remote", "unreliable")
-func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool) -> void:
+func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool, airborne: bool = false) -> void:
 	var c: Climber = climbers.get(cid)
 	if c == null or c.state != Climber.State.PUPPET:
 		return
@@ -1258,6 +1316,7 @@ func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool) -
 	if seq <= int(_last_seq.get(cid, -1)) or not _valid_lock_pose(pose):
 		return  # stale or duplicate: unreliable lanes arrive out of order
 	c.puppet_on_support = on_support
+	_xp_airborne[cid] = airborne
 	_last_seq[cid] = seq
 	if not _puppet_buf.has(cid):
 		_puppet_buf[cid] = []
@@ -1332,6 +1391,11 @@ func _rpc_knockout_visual(cid: int, active: bool) -> void:
 func _rpc_knockout(cid: int, clip: String) -> void:
 	var c := _audio_climber(cid)
 	if c != null and clip in Sound.SFX["knockout"]:
+		if is_host() and phase in ["turn","round"] and _xp_pending_ko.has(cid):
+			var hit: Dictionary = _xp_pending_ko[cid]
+			_xp_pending_ko.erase(cid)
+			if _now-float(hit.at)<=2.0:
+				xp_tracker.knockout(int(hit.pid),c.player_id)
 		Sound.stop_exertion(c.bodies["head"])
 		Sound.play_at("knockout", c.bodies["head"].global_position, 0.0, world, clip)
 
@@ -1545,15 +1609,15 @@ func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vecto
 	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
 	_pulls[cid][key] = {"piece": piece, "offset": offset, "force": force.limit_length(cap), "supported": supported, "directly_supported": directly_supported, "time": _now}
 
-@rpc("any_peer", "call_remote", "reliable")
-func _rpc_pry_release(source_id: int, defender_id: int, limb: int) -> void:
+@rpc("any_peer", "call_remote", "unreliable")
+func _rpc_push_load(source_id: int, defender_id: int, limb: int, pressure: float) -> void:
 	var source: Climber = climbers.get(source_id)
 	var defender: Climber = climbers.get(defender_id)
 	if source == null or defender == null or source.owner_peer != me() or defender.owner_peer != multiplayer.get_remote_sender_id():
 		return
 	if source.state != Climber.State.LIVE or defender.removed:
 		return
-	source.pry_release(limb, defender)
+	source.set_push_load(limb, defender, pressure)
 
 # ================================================================ leaving
 
@@ -1642,6 +1706,7 @@ func _clear_chair() -> void:
 
 
 func _clear_arena_props() -> void:
+	if is_instance_valid(pinata_director): pinata_director.reset()
 	_clear_chair()
 	if is_instance_valid(partner):
 		_remove_partner()
@@ -1802,6 +1867,9 @@ func _apply_chair_hits(hits: Dictionary) -> void:
 		if victim == null:
 			continue
 		var hit: Dictionary = hits[id]
+		var source: Climber = climbers.get(chair.holder if chair.holder>=0 else chair.thrower)
+		if source != null and source != victim and hit.piece == "head" and hit.impulse.length()/victim.bodies["head"].mass>=4.5:
+			_xp_pending_ko[id]={"pid":source.player_id,"at":_now}
 		var heavy: bool = hit.speed > ChairScript.LIGHT_HIT_MAX_SPEED
 		if heavy:
 			chair.set_hit_count(chair.hit_count + 1)
@@ -1959,3 +2027,42 @@ func _rpc_waiting_room(guests: Array, snapshot: Dictionary) -> void:
 		_rpc_spawn(pid, pid, _open_spawn(Vector2(-6.5 + (i % 6) * 2.6, (i / 6) * 2.5)), str(r.name))
 		if snapshot.has(pid):
 			climbers[pid].apply_pose(snapshot[pid])
+
+
+func _tick_match_xp(dt: float) -> void:
+	if not is_host() or not xp_tracker.eligible or phase not in ["turn","round"]: return
+	xp_tracker.elapsed+=dt
+	_xp_tick+=dt
+	if _xp_tick<.1: return
+	var step := _xp_tick
+	_xp_tick=0.0
+	for pid in live:
+		var c: Climber = climbers.get(live[pid])
+		if c==null or c.state==Climber.State.FROZEN or c.growing() or c.sinking or _ring_out.has(c.climber_id):
+			xp_tracker.samples.erase(pid)
+			continue
+		var airborne: bool = not c.is_attached() if c.owner_peer==me() else bool(_xp_airborne.get(c.climber_id,false))
+		xp_tracker.sample(pid,c.climber_id,c.centre_of_mass(),step,airborne)
+
+
+@rpc("any_peer","call_local","reliable")
+func _rpc_stuck_landing(cid: int, sequence: int) -> void:
+	if not is_host() or phase not in ["turn","round"] or not xp_tracker.eligible: return
+	var c := _audio_climber(cid) # validates sender against the actual physics owner
+	if c==null or c.growing() or live.get(c.player_id,-1)!=cid: return
+	if sequence<=int(_landing_received.get(cid,0)): return
+	_landing_received[cid]=sequence
+	if _now-float(_landing_received_at.get(cid,-100.0))<.65: return
+	_landing_received_at[cid]=_now
+	xp_tracker.stuck_landing(c.player_id)
+
+func _on_xp_achievement(pid: int, title: String, amount: int) -> void:
+	if not is_host(): return
+	var entry := roster_entry(pid)
+	if entry.is_empty(): return
+	_rpc_xp_notice.rpc_id(int(entry.peer),pid,title,amount)
+
+@rpc("authority","call_local","reliable")
+func _rpc_xp_notice(pid: int, title: String, amount: int) -> void:
+	if int(roster_entry(pid).get("peer",-1))!=me() or amount<=0: return
+	xp_achievement.emit(title,amount,player_name(pid))

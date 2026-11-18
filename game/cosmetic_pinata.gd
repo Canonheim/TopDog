@@ -1,5 +1,5 @@
 extends Area3D
-## Preview-only collectible. No spawn policy or cosmetic rewards are assigned here.
+## Collectible visual and contact effect; the match director handles spawning and authority.
 signal collected(body: Node3D)
 enum Rarity { WHITE, GREEN, BLUE, PURPLE, RED }
 @export_enum("White", "Green", "Blue", "Purple", "Red") var rarity: int = Rarity.WHITE
@@ -7,6 +7,7 @@ const RarityStyle := preload("res://game/pinata_rarity.gd")
 const PICKUP_RADIUS := 0.4736 # Scaled body mesh: center to farthest branch tip, excluding tassels/rope.
 const PINATA := preload("res://kit/models/pinata.glb")
 const COLORS := [Color("ff365c"),Color("ffd533"),Color("22d9ce"),Color("a758ef"),Color("ff852e"),Color("70d94d")]
+var contact_enabled := true
 var taken := false
 var pulse_time := 0.0
 var visual: Node3D
@@ -63,11 +64,21 @@ static func _star(radius: float) -> ArrayMesh:
 
 func _process(delta: float) -> void:
 	if taken: return
+	_face_camera()
 	pulse_time += delta
 	_update_star_pulse()
 	spinner.rotation.y += delta*.85
 	stars[0].rotation.z += delta*.43
 	stars[1].rotation.z -= delta*.77
+
+func _face_camera() -> void:
+	var camera := get_viewport().get_camera_3d()
+	if camera == null: return
+	# Aim along this pickup's sightline, not just the camera's forward axis.
+	# This also keeps off-center pickups aligned in perspective views.
+	var direction := camera.global_basis.z if camera.projection == Camera3D.PROJECTION_ORTHOGONAL else camera.global_position - visual.global_position
+	if direction.length_squared() < .000001: return
+	visual.look_at(visual.global_position + direction, camera.global_basis.y, true)
 
 func _update_star_pulse() -> void:
 	# Closer base sizes, with a 30% overall reduction and opposite pulse phases.
@@ -78,14 +89,18 @@ func _update_star_pulse() -> void:
 
 
 func _touch(body: Node3D) -> void:
-	if taken or not body is CollisionObject3D: return
+	if not contact_enabled or taken or not body is CollisionObject3D: return
 	if not (body.collision_layer & collision_mask): return
+	collect()
+	collected.emit(body)
+
+func collect() -> void:
+	if taken: return
 	taken = true
 	visual.hide()
 	set_deferred("monitoring",false)
 	set_process(false)
 	_burst()
-	collected.emit(body)
 
 func _burst() -> void:
 	var rng := RandomNumberGenerator.new()
@@ -194,3 +209,4 @@ class Spark extends Node3D:
 
 func _exit_tree() -> void:
 	if is_instance_valid(burst_root): burst_root.queue_free()
+

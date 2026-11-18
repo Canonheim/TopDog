@@ -1,0 +1,62 @@
+[
+  {
+    "variant": 0,
+    "triangles": 392,
+    "family": "whole"
+  },
+  {
+    "variant": 1,
+    "triangles": 392,
+    "family": "whole"
+  },
+  {
+    "variant": 2,
+    "triangles": 392,
+    "family": "whole"
+  },
+  {
+    "variant": 3,
+    "triangles": 392,
+    "family": "whole"
+  },
+  {
+    "variant": 4,
+    "triangles": 228,
+    "family": "slice"
+  },
+  {
+    "variant": 5,
+    "triangles": 228,
+    "family": "slice"
+  },
+  {
+    "variant": 6,
+    "triangles": 228,
+    "family": "slice"
+  },
+  {
+    "variant": 7,
+    "triangles": 228,
+    "family": "slice"
+  },
+  {
+    "variant": 8,
+    "triangles": 12,
+    "family": "dice"
+  },
+  {
+    "variant": 9,
+    "triangles": 12,
+    "family": "dice"
+  },
+  {
+    "variant": 10,
+    "triangles": 12,
+    "family": "dice"
+  },
+  {
+    "variant": 11,
+    "triangles": 12,
+    "family": "dice"
+  }
+]

@@ -1,0 +1,4 @@
+[gd_scene load_steps=2 format=3]
+[ext_resource type="Script" path="res://tests/pinata_tower_photos.gd" id="1"]
+[node name="PinataTowerPhotos" type="Node"]
+script = ExtResource("1")

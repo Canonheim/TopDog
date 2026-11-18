@@ -57,7 +57,8 @@ func _build() -> void:
 	menu.add_choice("HEAD", ["PUG", "SPIRAL"], 0, func(i): _set_choice("head", i))
 	menu.add_choice("SKIN", Wardrobe.SKIN_NAMES, 0, func(i): _set_choice("skin", i))
 	menu.add_choice("SPEEDO", Wardrobe.SUIT_NAMES, 0, func(i): _set_choice("speedo", i))
-	menu.add_choice("EFFECT", Wardrobe.EFFECT_NAMES, 0, func(i): _set_choice("effect", Wardrobe.EFFECTS[i]))
+	menu.add_choice_button("EFFECT", Wardrobe.EFFECT_NAMES, 0, _replay_effect)
+	menu.items[4].on_change = func(i): _set_choice("effect", Wardrobe.EFFECTS[i])
 	for i in [1, 2, 3, 4]:
 		menu.items[i].value_only = true  # the value alone: the climber beside them shows what each changes
 	menu.add_button("NEW CLIMBER", _add_climber)
@@ -93,6 +94,14 @@ func _set_choice(field: String, value: Variant) -> void:
 	_refresh()
 	if field == "effect":
 		main.lucha.play_lock_effect(str(value))
+
+func _replay_effect(_index: int) -> void:
+	var effect: String = Wardrobe.profiles[Wardrobe.selected].effect
+	# Attached effects deduplicate per owner. A fresh display model intentionally
+	# clears that preview-only state so every press starts a fresh randomized flight.
+	if effect in Wardrobe.ATTACHED_EFFECTS:
+		_rebuild_preview(0)
+	main.lucha.play_lock_effect(effect)
 
 func _add_climber() -> void:
 	if Wardrobe.profiles.size() >= 100:

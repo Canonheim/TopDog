@@ -1,0 +1,92 @@
+[
+  {
+    "name": "bottle_0",
+    "triangles": 372,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "bottle_1",
+    "triangles": 372,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "bottle_2",
+    "triangles": 372,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "bottle_3",
+    "triangles": 372,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "bottle_4",
+    "triangles": 372,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "cap_0",
+    "triangles": 140,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "cap_1",
+    "triangles": 140,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "cap_2",
+    "triangles": 140,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "cap_3",
+    "triangles": 140,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "cap_4",
+    "triangles": 140,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "drop_0",
+    "triangles": 78,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "drop_1",
+    "triangles": 78,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "drop_2",
+    "triangles": 78,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "drop_3",
+    "triangles": 78,
+    "meshes": 1,
+    "materials": 1
+  },
+  {
+    "name": "drop_4",
+    "triangles": 78,
+    "meshes": 1,
+    "materials": 1
+  }
+]
