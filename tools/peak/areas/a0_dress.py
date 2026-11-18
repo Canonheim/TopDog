@@ -236,10 +236,10 @@ def dress(A):
     # ore bands, the snapped haulage rope from the brow sheave to the foot, the sprung runaway catch, spilled ore at the
     # foot; the roofs the mine's dark rock with the sets' cap sockets. The brow carries on east over the slabs past
     # dsc_bed_d's cut, flush with its planes. (Skins of the cave's slabs by place: a0.py.)
-    for model, mx, y0, w, h, d in (("mina_ride_bed_brow", -153.066, -17.01, 9.89, 5.6, 3.94),
+    for model, mx, y0, w, h, d in (("mina_ride_bed_brow", -153.066, -17.01, 10.22, 5.6, 3.94),
                                    ("mina_ride_bed_incline", -172.475, -27.941, 31.07, 13.8, 3.94),
                                    ("mina_ride_bed_foot", -198.999, -32.0, 24.05, 6.97, 4.05),
-                                   ("mina_ride_roof_brow", -155.576, -9.2, 6.95, 4.82, 3.89),
+                                   ("mina_ride_roof_brow", -155.576, -9.2, 10.65, 5.15, 3.89),
                                    ("mina_ride_roof_incline", -173.511, -20.12, 31.02, 13.73, 3.88),
                                    ("mina_ride_roof_foot", -199.53, -24.52, 23.06, 7.22, 3.9)):
         A.deco(model, mx, y0, z=0.0, size=(w, h, d), tone="rock2", skin=True)
