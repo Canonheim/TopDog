@@ -3121,6 +3121,16 @@ in. Nothing played by a person.
   from its side, a bound rest, a climber hanging on one and from the side; before | after). **Checks:** lint;
   `--peak`. Clean.
 
+## 11-18: 1.12's kicked barrels clear the chute frame's post
+
+- The tipping ramp's maker: barrels kicked at x -287.25 might clip `esclusa_wall_flume`'s chute frame in flight. Watch
+  scene `kick12` follows three kicks: at KICK_THROW x -0.6 they crossed the wall's face (z -2.2) at x -287.55 ..
+  -287.74 and touched the frame's east post on two of three; at -0.9, -287.72 .. -287.87, one still at the post; at
+  -1.2, -287.89 .. -288.06, all three clear by about 0.25 m. KICK_THROW is (-1.2, 4.5, -3.5). The `esclusa` probe:
+  5 barrels kicked in 34 s, none into the falls, no strays (none back on the platform or the ramp). The wall as it was.
+- Frames: `after/kick12_throw_before_after.jpg` (each kick at 0.6 s: x -0.6, -0.9, -1.2 top to bottom).
+  **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
