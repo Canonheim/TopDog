@@ -289,6 +289,7 @@ func _tick_locks() -> void:
 		var level := lock_level(z.lock, peak.clock)
 		z.surface = level
 		z["vy"] = (lock_level(z.lock, peak.clock + 0.05) - level) / 0.05  # its speed, up or down
+		_lock_falls(row, z, level)
 		var vis: Node3D = row.get("lock_vis")
 		if vis != null and is_instance_valid(vis) and vis.has_meta("front"):
 			var floor_y := float(z.rect[1])
@@ -296,6 +297,35 @@ func _tick_locks() -> void:
 			(vis.get_meta("top") as Node3D).position.y = level
 			(vis.get_meta("mat") as ShaderMaterial).set_shader_parameter("surface_y", level + Peak.ORIGIN.y)
 			(vis.get_meta("sea") as DelMarSea).water_y = level + Peak.ORIGIN.y
+
+
+## A FALL INTO A LOCK ENDS AT ITS SURFACE (the reviewer's q26, 11-18: the fill's white sheet was drawn on down through
+## the deep water under it). Every fall drawn inside the lock's chamber is clipped at the level each tick, broken white
+## where it meets it, with rings on the surface where it lands; once the level is over its mouth it is drowned: it
+## shows only a faint boil, a slow ring now and then on the surface over the mouth.
+var fall_sheets: Array = []  # every fall drawn: {area, x, top, foot, mat, node}
+
+
+func _lock_falls(row: Dictionary, z: Dictionary, level: float) -> void:
+	if not row.has("falls"):
+		var r: Array = z.rect
+		var mine: Array = []
+		for f: Dictionary in fall_sheets:
+			if str(f.area) == str(row.area) and float(f.x) >= float(r[0]) and float(f.x) <= float(r[2]) \
+					and float(f.foot) >= float(r[1]) - 0.5 and float(f.foot) <= float(r[3]):
+				mine.append(f)
+		row["falls"] = mine
+		row["ring_t"] = 0.0
+	var vis: Node3D = row.get("lock_vis")
+	var sea: DelMarSea = vis.get_meta("sea") if vis != null and is_instance_valid(vis) and vis.has_meta("sea") else null
+	for f: Dictionary in row.falls:
+		var drowned := level >= float(f.top) - 0.05
+		(f.mat as ShaderMaterial).set_shader_parameter("clip_y", level + Peak.ORIGIN.y)
+		(f.node as Node3D).visible = not drowned
+		if sea != null and peak.clock >= float(row.ring_t):
+			# where it lands, a ring as each slug of water hits; drowned, a slow faint boil over the mouth
+			row.ring_t = peak.clock + (1.1 if drowned else 0.35)
+			sea.ripple(Vector3(float(f.x) + Peak.ORIGIN.x, level + Peak.ORIGIN.y, 0.0), 0.45 if drowned else 0.8)
 
 
 ## THE KEEPER HAULS HIS LEVER (note 146, page 1.13: "one second before each fill he hauls it over: that is the
@@ -1226,6 +1256,7 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 	var through := bool(e.get("through", false))  # it carries on into the area below: no foot here
 	fm.set_shader_parameter("foot_white", 0.0 if through else 1.0)
 	sheet.material_override = fm
+	fall_sheets.append({"area": str(a.id), "x": xr, "top": top_y, "foot": foot_y, "mat": fm, "node": sheet})
 	# A fall that leaves a pool is drawn where the pool's front is, so the two are one
 	# piece of water (and it is in front of the climber, as the pool is). One that comes
 	# out of the rock stays behind the climb unless the data says "front".

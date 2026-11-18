@@ -3321,7 +3321,7 @@ func _w_gate13(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""
 	pk.warp("1.13")
 	await secs(7.0)  # (the area's banner clears)
-	for when in [[6.0, "shut"], [13.5, "open"]]:
+	for when in [[3.5, "fill"], [4.6, "fillpast"], [6.0, "shut"], [13.5, "open"]]:  # (mid-fill under and just over the cistern's sill)
 		while absf(fposmod(pk.clock, 14.0) - float(when[0])) > 0.05:
 			await ticks(1)
 		for row in [[Vector2(-246.0, 81.5), 7.5, "cam"], [Vector2(-244.5, 81.0), 2.6, "close"]]:

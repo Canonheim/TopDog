@@ -3049,6 +3049,16 @@ in. Nothing played by a person.
 - Frames: `after/esclusa_coping_before_after.jpg` (watch scene `cope`: the ladder's, the flume's and the lock's
   cameras, the east landing's step-off, the alcove, L1 and L2; before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the reviewer's q26: the lock's fill ends at its surface
+
+- With the chamber over the cistern's sill (85.38) the fill's white sheet was still drawn down through the deep water.
+  A fall drawn inside a lock's chamber is now clipped at the lock's level every tick (`peak_water_fall.gdshader`'s
+  `clip_y`; peak_zones `_lock_falls`), broken white over the last 0.4 m where it meets the surface, with a ring on the
+  surface where it lands; once the level is over its mouth it is drowned: not drawn, a faint slow ring over the mouth
+  now and then. The open state as it was. The rise and fall untouched.
+- Frames: `after/q26_lock_fall_clipped_before_after.jpg` (watch scene `gate13`: mid-fill under the sill and just over
+  it, shut, shut close, open; before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

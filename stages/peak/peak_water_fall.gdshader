@@ -15,12 +15,21 @@ uniform float v0 = 1.5;         // m/s as it leaves the lip
 uniform float fall_g = 7.0;     // the pull the streaks speed up under
 uniform float top_white = 1.0;  // 1 = it breaks over a lip; 0 = it comes out of the rock
 uniform float foot_white = 1.0; // 1 = it lands here; 0 = it carries on (into the area below)
+uniform float clip_y = -100000.0; // world y: nothing drawn under it (a fall into a lock ends at its moving surface)
+varying vec3 world_pos;
 
 float hash1(float n) {
 	return fract(sin(n * 127.1) * 43758.5453);
 }
 
+void vertex() {
+	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+}
+
 void fragment() {
+	if (world_pos.y < clip_y) {
+		discard;
+	}
 	float s = UV.y;
 	float across = UV.x;
 	// the time a drop took to get here: streaks drawn in it stretch as they fall
@@ -47,6 +56,9 @@ void fragment() {
 	float foot = smoothstep(length_m - 1.4, length_m - 0.1, s) * foot_white;
 	float falling = smoothstep(0.1, 1.3, s);
 	float white = max(max(head * (0.5 + 0.5 * lumps), foot * (0.5 + 0.5 * lumps)), dash * 0.75 * falling);
+	// broken white where it meets a lock's surface (clip_y), over its last 0.4 m
+	float entry = (1.0 - smoothstep(clip_y, clip_y + 0.4, world_pos.y)) * step(-99999.0, clip_y);
+	white = max(white, entry * (0.6 + 0.4 * lumps));
 	vec4 base = mix(head_color, water_color, falling);
 	ALBEDO = mix(base.rgb, white_color.rgb, white);
 	ALPHA = mix(base.a, white_color.a, white) * mix(1.0, edge, falling) * (1.0 - foot * 0.35 * (1.0 - lumps));
