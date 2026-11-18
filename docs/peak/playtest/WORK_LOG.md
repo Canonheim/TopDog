@@ -2981,6 +2981,12 @@ in. Nothing played by a person.
 - c. The throat's back wall face is at z -1.3 (a1_dress `THROAT_Z`, the Director's file; was -1.6): a staple's legs are
   1.3 m. The staple decos stand at THROAT_Z. The roof's posts moved to z -1.45 (their fronts had come into the wall's
   face plane: a new z-fight).
+- **La Cortina's bars: THE DIRECTOR'S CALL** (11-18), for Parker to reverse: the bars stay 0.4 x 0.12 on the hexagons'
+  middles (MINE_PASS asked for the staple's bar; the up-climb is unchanged). What changed: a low aim (0.15 m or more
+  below a hold's middle) or a catch while falling past now misses. cortina7: the hexagons took 81 of 81 aims from 0.3
+  below to 0.3 above; the bars take 32 of 32 at or above the middle and 1 of 17 low. To give the forgiveness back: a
+  0.4 x 0.2 collision bar, its top where it is (`STAPLE_BAR` in a1.py, the box raised so its top stays). The staple
+  models will be made to whichever solid stands.
 - With it: `esclusa_vault` placed over the flume (the Director's line, MINE_PASS F6); solid 213 wears it.
 - Frames: `after/c7_cortina_awning_throat_before_after.jpg` (watch scene `c7frames`: 1.10, the awning, La Cortina low
   and high, the staples close, La Cortina's camera; before | after). **Checks:** lint; `--peak`. Clean.
