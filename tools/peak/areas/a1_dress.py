@@ -234,7 +234,7 @@ def dress(A):
     # pieces made to meet, low (the landing), middle (the walk) and high (the lift and the ribs).
     A.deco("mine_cavern_wall_low", -184.95, SUMP_FLOOR, z=-3.25, size=(25.9, 27.0, 0.7), tone="back")
     A.deco("mine_cavern_wall_mid", -186.45, -6.0, z=-3.25, size=(30.9, 24.0, 0.7), tone="back")
-    A.deco("mine_cavern_wall_high", -192.95, 18.0, z=-3.25, size=(17.9, 26.0, 0.7), tone="back")
+    A.deco("mine_cavern_wall_high", -186.45, 18.0, z=-2.9, size=(30.9, 38.2, 3.25), tone="back")  # (quality run, E3) origin on its face
 
     # ============================================================ 1.0 The Sump and the frog's cave
     # The rock the cave is cut in, carried on west and back (black, running with spray), with
@@ -497,17 +497,12 @@ def dress(A):
         front_post(-202.6, y0, y1)
 
     # ============================================================ 1.6 Vetas de Lodo
-    # (The eight seams across the far wall, and the two old workings as darker painted bands,
-    # are painted on mine_cavern_wall_high; the seams across the pillar and the black mud
-    # between the ribs are painted on mine_el_diente.) Short props stand in each working.
-    rise = 0.179
-    for xa, xb, t in ((-197.0, -192.0, 32.15), (-198.5, -193.5, 37.3)):
-        for k in (0.16, 0.48, 0.8):
-            x = round(xa + (xb - xa) * k, 2)
-            A.deco("mine_prop_short", x, round(t + (x + 201.9) * rise, 2), z=-2.8, size=(0.18, 1.15, 0.18), tone="back")
-    outcrop(-189.0, 22.0, CAVE_WALL_Z, "moss")
-    outcrop(-195.5, 41.5, CAVE_WALL_Z, "moss", small=True)
-    wall_lantern(-194.4, 35.0, CAVE_WALL_Z)  # in the lower working: it lights the ribs from the side
+    # (The seams, the two old workings as real stopes with their six short props, the moss
+    # ledge, the boarded drift at 1.5's foot and the nicho are all in mine_cavern_wall_high (E3);
+    # the seams across the pillar and the black mud between the ribs are painted on mine_el_diente.)
+    # Waiting for their models (group 6): the powder box at (-195.3, 32.98), z -3.85, and the
+    # barrow at (-196.05, 38.02), z -4.0, each tilted 10.1 deg to the stopes' rising floors.
+    wall_lantern(-194.4, 35.0, CAVE_WALL_Z)  # in the lower working, on the iron seat of its middle prop
     # The ribs you climb, each a bed of the pillar in the pale hold colour with square ends
     # (skins of the rib solids; the two wide ones carry a row of old drill holes).
     for top, proud in ((27.0, 0.6), (28.6, 0.9), (30.2, 0.6), (32.15, 1.2), (33.75, 0.6), (35.35, 0.9), (37.3, 1.2), (38.8, 0.6)):
@@ -515,20 +510,19 @@ def dress(A):
         A.deco(stem, round(XF + (proud - 0.3) / 2, 3), round(top - 0.42, 2), z=0.0, size=(proud + 0.3, 0.42, 2.4), tone="rock", skin=True)
 
     # ============================================================ 1.7 El Carrito Loco (note 103)
-    # The chain rib: painted rock, one piece, its beds slanting the way it slants, one band of
-    # ore along it under the rings, an overhang along its lower edge. Its one outcrop, under
-    # the middle ring, with ferns kept green by the spray. The back wall behind it, 3 m back.
-    A.deco("mine_chain_rib", -224.85, 40.2, z=-2.5, size=(20.1, 13.2, 1.8), tone="back")
-    outcrop(-226.2, 44.9, RIB_Z, "fern", small=True)
-    A.deco("mine_chain_rib_body", -224.0, 38.0, z=-4.9, size=(24.0, 17.0, 1.0), tone="back2")
-    # The bench under the incline, 14 m under the track: the same rock, darker and wetter.
-    A.deco("mine_incline_bench", -219.15, 21.5, z=-2.35, size=(20.5, 4.9, 2.1), tone="back")
+    # The chain rib (quality run, E4): one piece from the bench under the incline to the roof,
+    # the rib's beds, the overhang, the ore vein under the rings, the drilled bosses round the
+    # pins, the wall stepping back behind, the stope behind Las Vigas, the heading at 1.8, the
+    # lantern niche by the chain, the fallen-in mouth behind the siding, the lit drift, the fern
+    # ledge, the wet west end and the bench with flat pads for the bents. Origin on the rib's face.
+    A.deco("mine_chain_rib", -221.0, 21.5, z=RIB_Z, size=(24.4, 35.0, 4.59), tone="back")
+    hang(-229.2, 28.48, -4.5)  # the drift's lantern, on its hook
     # The incline's timber on the bench: three bents, each a post at the back whose cap comes
     # forward under the rails to the play space's edge (origin: the post's foot, the middle of
     # the bent's depth), a tie and a brace between the first two, and the landing's two stumps.
-    A.deco("mine_incline_bent_tall", -216.7, 25.9, z=-2.025, size=(0.35, 7.8, 1.55), tone="back")
-    A.deco("mine_incline_bent_low", -220.5, 25.7, z=-2.025, size=(0.35, 1.9, 1.55), tone="back")
-    A.deco("mine_incline_bent", -222.7, 25.9, z=-2.025, size=(0.35, 2.95, 1.55), tone="back")
+    A.deco("mine_incline_bent_tall", -216.7, 25.88, z=-2.025, size=(0.35, 7.8, 1.55), tone="back")
+    A.deco("mine_incline_bent_low", -220.5, 25.68, z=-2.025, size=(0.35, 1.9, 1.55), tone="back")
+    A.deco("mine_incline_bent", -222.7, 25.88, z=-2.025, size=(0.35, 2.95, 1.55), tone="back")
     hbeam(-220.5, -216.7, 26.9, -2.6)
     timber((-220.4, 27.2), (-216.8, 31.8), -2.6)
     for x, y0, y1 in ((-225.6, 25.9, 27.3), (-227.4, 25.5, 26.7)):
