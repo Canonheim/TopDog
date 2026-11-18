@@ -2837,6 +2837,18 @@ in. Nothing played by a person.
   not hang on 0.3 m under the water.
 - Frames: `after/esclusa_fc_before_after.jpg` (1.12's start, the kicker, the lock, the life ring; before | after).
 
+## The quality run, 11-17: the reviewer's q8 at 1.6/1.7 and 1.13
+
+- **1.6's ribs** read as long pale rods across the wall behind you (their models run 2.4 m deep): each rib is its own solid
+  now, 0.9 m deep (z -0.45 .. 0.45), in the held rock's chalk, and the deep `mine_rib*` models are taken out after the dress
+  (a1.py; a1_dress unchanged). The models want re-making 0.9 m deep (a maker's job).
+- **1.13's white strip** across the top of the frame was La Esclusa's ceiling over the quay: slick rock, seen from below,
+  catching the lanterns' sheen. The ceiling (out of every reach) is matte `rock2` now; the lock's three teal lights are a
+  little more than half as bright (0.55) and shorter (8 m), so their washes are softer and stay on the lock wall. The flap
+  opens back 3 m out of the play plane instead of sliding into the rock over the quay (its face had lain in the rock's own
+  plane). The sweeps check undersides too now.
+- Frames: `after/q8_fixes_before_after.jpg` (the reviewer's q8 | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

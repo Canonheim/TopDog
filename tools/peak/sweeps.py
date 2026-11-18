@@ -13,7 +13,7 @@ Every drawn piece is placed in the course's metres (x, y) and depth (z) as the g
   - a deco whose model has not landed: its stand-in card (none in front of the play space or 10 m back);
   - a card: a plane at its z.
 The five sweeps:
-  1. ZFIGHT   two pieces' flat faces in one plane, facing the same way (both at the camera, or both up),
+  1. ZFIGHT   two pieces' flat faces in one plane, facing the same way (both at the camera, both up, or both down),
               overlapping: they flicker (notes 109, 119). Read from the meshes' own faces.
   2. DEPTH    a real thing near the climb (a model, z -2.6 .. 1.3, under 30 m2) that overlaps another piece
               on screen and comes within a metre of it in depth, but touches nothing there (note 115: drawn
@@ -128,6 +128,8 @@ def model_faces(name):
                             out.setdefault(("z", round(A[2] / 0.005) * 0.005), []).append(((A[0], A[1]), (B[0], B[1]), (C[0], C[1])))
                         elif ny / L > 0.995:
                             out.setdefault(("y", round(A[1] / 0.005) * 0.005), []).append(((A[0], A[2]), (B[0], B[2]), (C[0], C[2])))
+                        elif ny / L < -0.995:  # (an underside: seen from below, under a roof, it flickers too: q8 at 1.13)
+                            out.setdefault(("-y", round(A[1] / 0.005) * 0.005), []).append(((A[0], A[2]), (B[0], B[2]), (C[0], C[2])))
         except Exception:
             out = {}
     _faces[name] = out
@@ -250,6 +252,8 @@ def pieces_of(aid, c, grips):
                 (ax, ay), (bx, by) = pts[k], pts[(k + 1) % len(pts)]
                 if abs(ay - by) < 1e-3 and abs(ax - bx) > 0.05 and not poly.contains(Point((ax + bx) / 2, ay + 0.01)):
                     pc.faces.append(("y", round(ay, 3), sbox(min(ax, bx), z0, max(ax, bx), z1)))  # (an edge with air above it)
+                elif abs(ay - by) < 1e-3 and abs(ax - bx) > 0.05 and not poly.contains(Point((ax + bx) / 2, ay - 0.01)):
+                    pc.faces.append(("-y", round(ay, 3), sbox(min(ax, bx), z0, max(ax, bx), z1)))  # (an edge with air below it)
         out.append(pc)
     for i, d in enumerate(c.get("decos", [])):
         p = deco_piece(d, aid, i)
@@ -292,7 +296,7 @@ def sweep_zfight(P):
                         best = (fa, ov)
             if best:
                 (axis, plane, _), ov = best
-                hits.append((a, b, "%s both at %s %.2f, overlapping %.2f m2" % ("front faces" if axis == "z" else "tops", axis, plane, ov)))
+                hits.append((a, b, "%s both at %s %.2f, overlapping %.2f m2" % ({"z": "front faces", "y": "tops", "-y": "undersides"}[axis], axis.lstrip("-"), plane, ov)))
     return hits
 
 

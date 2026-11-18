@@ -3254,6 +3254,16 @@ func _w_esclusa(a: Array) -> void:
 	await shot("146_1_13_risen_" + tag)
 
 
+## 1.13 during a rise (the flap open), from the challenge's own camera. q8flap:TAG
+func _w_q8flap(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.13")
+	await secs(7.0)  # (the area's banner clears)
+	while absf(fposmod(pk.clock, 14.0) - 3.0) > 0.05:
+		await ticks(1)
+	await shot("q8_1_13_rising_" + tag)
+
+
 ## The storm ridge wired: the bolt from behind, a rusted rung swinging down and back, the kites' strings. g10:TAG
 func _w_g10(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""

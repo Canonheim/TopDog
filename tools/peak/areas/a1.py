@@ -255,9 +255,11 @@ A.challenge("1.5", "El Cubo", (-200.0, 6.0), 2, "B", moves=[
 # between deck and wall, past the arm's end, to the shoulder at the foot of the staples,
 # 20 m down (or catch a rib on the way).
 RIBS = [(27.0, 0.6), (28.6, 0.9), (30.2, 0.6), (32.15, 1.2), (33.75, 0.6), (35.35, 0.9), (37.3, 1.2), (38.8, 0.6)]
+# (The reviewer, q8, 11-17: the rib models run the full 2.4 m deep and read from the camera as long pale rods across
+# the wall behind you. Each rib is drawn as its own solid now, 0.9 m deep, in the held rock's chalk: only the part you
+# hold reads pale. The models want re-making that deep; until then they are taken out after the dress, below.)
 for top, proud in RIBS:
-    A.solid([(XF - 0.3, top - 0.42), (XF + proud, top - 0.34), (XF + proud, top), (XF - 0.3, top)], "rock",
-            skin={0.6: "mine_rib_short", 0.9: "mine_rib", 1.2: "mine_rib_wide"}[proud])
+    A.solid([(XF - 0.3, top - 0.42), (XF + proud, top - 0.34), (XF + proud, top), (XF - 0.3, top)], "rock", z=(-0.45, 0.45))
 A.ledge(-208.9, XF, 40.0, "rock", t=0.5)  # the pillar's top: the track
 A.challenge("1.6", "Vetas de Lodo", (-198.0, 26.2), 2, "B", moves=[
     ["reach", [-199.8, 26.2], [-201.3, 27.0]], ["reach", [-201.3, 27.0], [-201.0, 28.6]],
@@ -565,6 +567,7 @@ A.effect("drips", (-233.2, 72.0, -222.1, 76.0))
 
 # ================================================================ the dress (the modelling run's)
 a1_dress.dress(A)
+A.drop_decos({"mine_rib_short", "mine_rib", "mine_rib_wide"})  # (the 2.4 m deep ribs: see 1.6)
 # (MINE_PASS F-C4, the Director: the join's foreground post, timber below and brick above, stood in front of the
 # climber at 1.12's start once the mine moved: out. a1_dress places it; it is taken out here.)
 A.decos[:] = [d for d in A.decos if not (abs(d["at"][0] + 237.025) < 0.4 and d["at"][2] > 1.2 and 85.5 < d["at"][1] < 90.0)]
@@ -670,7 +673,10 @@ def _section_rock():
                 g = p.intersection(half)
                 todo.extend(getattr(g, "geoms", [g]))
             continue
-        A.solid([(round(x, 3), round(y, 3)) for x, y in list(p.simplify(0.005).exterior.coords)[:-1]], "wet")
+        pts = [(round(x, 3), round(y, 3)) for x, y in list(p.simplify(0.005).exterior.coords)[:-1]]
+        # (The ceiling, out of every reach: matte, not slick. Its slick underside, seen from below at 1.13, caught the
+        # lanterns' sheen and blew out to white across the top of the frame: the reviewer's q8.)
+        A.solid(pts, "rock2" if min(q[1] for q in pts) >= 82.9 else "wet")
 
 
 _section_rock()
@@ -736,7 +742,9 @@ A.mover("portillo", (-244.5, 80.65), [(box_pts(0.0, 0.0, 0.9, 2.5), "grease")],
 # The flap gate across the slot's foot: shut it holds the river off (a slick plate: what falls from El Borde
 # waits on it), open through each rise it lets the river and whoever is in it down into the lock.
 A.mover("compuerta", (-241.0, 89.175), [(box_pts(0.0, 0.0, 6.0, 0.35), "grease")],
-        {"type": "cycle", "to": [-6.2, 0.0], "t_out": 0.4, "hold_out": RISE - 0.8, "t_in": 0.4,
+        # (it opens BACK, 3 m out of the play plane, not sideways: slid west it lay in the rock over the quay, its face in
+        # the rock's own plane, and flickered white at the top of 1.13's frame each rise: the reviewer's q8)
+        {"type": "cycle", "to": [0.0, 0.0], "zto": -3.0, "t_out": 0.4, "hold_out": RISE - 0.8, "t_in": 0.4,
          "hold_in": HOLD + DRAIN, "phase": 0.0})
 A.effect("waterfall", (SLOT[0], LOCK_LOW, SLOT[0] + 1.8, LOCK_CEIL), z=-1.9, through=True)  # the river down the back wall
 A.challenge("1.13", "La Esclusa", (-249.3, 79.4), 3, "B", moves=[["reach", [-233.0, 88.6], [-232.0, 90.0]]])
@@ -751,7 +759,7 @@ A.cam((-258.0, 75.0, -226.0, 89.6), 7.5, bias=(0.0, 1.0))     # the lock
 for x, y in ((-292.5, 81.5), (-277.9, 81.5), (-265.1, 81.5), (-259.5, 81.9)):  # the crane's post, two piers, the east landing
     A.light(x, y, color="#9FD0FF", rng=10.0, energy=1.1, z=-1.7)
 for x, y, lz in ((-253.5, 81.3, -1.75), (-240.0, 84.7, -1.45), (-228.8, 83.5, -1.45)):  # the booth, by L1, over L2
-    A.light(x, y, color="#6FE0D0", rng=9.0, energy=1.0, z=lz)   # the lock's three teal lanterns, steady
+    A.light(x, y, color="#6FE0D0", rng=8.0, energy=0.55, z=lz)   # the lock's three teal lanterns, steady (q8: about half as bright and a little shorter, so they light the lock wall and not the roof's face or the walk white)
 # The section's two painted sets (quality run, MINE_PASS F-E, landed 11-17), in place of the stand-in back wall and the
 # chute's and the tunnel's black cards: the flume's arcade (x -297 .. -258.5, reviewer 9) and the lock's chamber and
 # quay (x -258.5 .. -222, reviewer 8.5). Origins the middle of each one's foot, on its face. Nothing between the falls'

@@ -1607,6 +1607,8 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 			elif cyc < t_out + h_out + t_in:
 				f = 1.0 - _ease((cyc - t_out - h_out) / maxf(t_in, 0.001))
 			m.offset = Peak.v2(mo.to) * f
+			if mo.has("zto"):
+				m["zoff"] = float(mo.zto) * f  # (it opens back, out of the play plane: La Esclusa's flap)
 		"sink":
 			var to := Peak.v2(mo.to)
 			var loaded := _player_limbs_on(m.nodes)
