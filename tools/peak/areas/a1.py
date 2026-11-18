@@ -804,7 +804,7 @@ A.deco("esclusa_wall_flume", -277.75, 73.0, z=-2.2, size=(38.5, 13.6, 8.79), ton
 # x -264.55 .. -259.05: its inner slate ring, the sluice leaf jammed half raised and tilted in its slots (the verdigris pug,
 # the bent rack, the seized pinion, the crank hanging), the bore narrowing past three darkening ribs to black, its black
 # water the barrels rise out of (born 6 m back). Origin the middle of the opening's sill, on the wall's face.
-A.deco("esclusa_barrel_tunnel", -261.8, 76.8, z=-2.2, size=(5.75, 3.88, 6.8), tone="back")
+A.deco("esclusa_barrel_tunnel", -261.8, 76.8, z=-2.2, size=(5.75, 3.92, 6.8), tone="back")
 A.deco("esclusa_wall_lock", -240.25, 73.0, z=-1.9, size=(36.5, 16.4, 8.48), tone="back")
 # The keeper's booth in the quay wall's recess (quality run, MINE_PASS F21, reviewer 8.5, 11-18): a little stone room,
 # its round head open, the lining warm under his lantern, a stool, the kettle shelf, the window turned to the chamber,
