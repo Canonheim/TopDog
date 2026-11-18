@@ -235,7 +235,7 @@ def dress(A):
     A.deco("mine_upper_works_body", -222.25, 55.0, z=-3.0, size=(15.5, 35.0, 1.0), tone="back")
     # The cavern's own hand-cut wall, 1.7 m behind the walk (1.3, 1.4, 1.5, 1.6, 1.0b): three
     # pieces made to meet, low (the landing), middle (the walk) and high (the lift and the ribs).
-    A.deco("mine_cavern_wall_low", -184.95, SUMP_FLOOR, z=-3.25, size=(25.9, 27.0, 0.7), tone="back")
+    A.deco("mine_cavern_wall_low", -184.95, SUMP_FLOOR, z=CAVE_WALL_Z, size=(25.9, 27.0, 4.18), tone="back")  # (quality run, reviewer 8.5) origin on its face
     A.deco("mine_cavern_wall_mid", -186.45, -6.0, z=CAVE_WALL_Z, size=(30.9, 24.0, 6.36), tone="back")  # (quality run, E2) origin on its face
     A.deco("mine_cavern_wall_high", -186.45, 18.0, z=-2.9, size=(30.9, 38.2, 3.25), tone="back")  # (quality run, E3) origin on its face
     # The cavern's east end over the ladder head (quality run, reviewer 8.5, 11-17): old stopes cut
@@ -282,8 +282,7 @@ def dress(A):
         drawn("mine_pile_band", x, SUMP_Y, (0.42, 0.8, 0.02))
 
     # ============================================================ 1.0b The landing stage and the incline
-    outcrop(-181.5, -20.0, CAVE_WALL_Z, "moss")
-    outcrop(-194.5, -12.0, CAVE_WALL_Z, "moss", small=True)
+    # (Its two moss knobs are out: the refuge niche and the high working stand there in mine_cavern_wall_low now.)
     # (The tunnel through the pillar's foot, its back wall and its drowned sets, are El Diente's now.)
     mushrooms(-199.95, -26.6, -1.5)
     # The back rail, still spiked down from the water to the gallery's mouth (ten 2 m lengths),
