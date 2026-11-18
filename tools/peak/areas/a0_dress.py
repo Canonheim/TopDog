@@ -243,6 +243,10 @@ def dress(A):
                                    ("mina_ride_roof_incline", -173.511, -20.12, 31.02, 13.73, 3.88),
                                    ("mina_ride_roof_foot", -199.53, -24.52, 23.06, 7.22, 3.9)):
         A.deco(model, mx, y0, z=0.0, size=(w, h, d), tone="rock2", skin=True)
+    # The new stretch's hero in the lining's recess at the brow (quality run, MINE_PASS F17, reviewer 8.5, 11-18): the
+    # hand-braked haulage drum on its A-trestles, the rope in fat coils with its run off the drum's bottom ending frayed by
+    # the bed's torn end, the brake band to its long lever, the brakeman's seat, the pug in the gear. In the game's numbers.
+    A.deco("mina_winding_house", -154.655, -13.0, z=-2.12, size=(4.11, 3.384, 1.603), tone="back")
 
     # ------------------------------------------------------------ the timber sets
     # A set's back piece is the back post (0.3 square, 4.7 tall, against the wall) and its cap
