@@ -3084,6 +3084,8 @@ in. Nothing played by a person.
   board is a plain deco, for its maker.
 - In the game: low (t 13.5) the wheel at 0 turns, the float at 78.42; rising, the flap open (t 3), 1.50 turns, 82.77;
   full (t 8), 0 turns, 88.50.
+- 2 turns, not 1.5 (the wheel's maker, 11-18: at 1.5 the hub's cast pug hung upside down all the while the flap is
+  open; a whole number keeps it upright, and reads as more motion at the lock's camera). The easing and timing as before.
 - Frames: `after/hooks13_wheel_float.jpg` (watch scene `hooks13`: the lock's camera, the wheel and the gauge, low |
   rising | full). **Checks:** lint; `--peak`. Clean.
 

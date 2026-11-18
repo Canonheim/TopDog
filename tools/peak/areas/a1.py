@@ -801,11 +801,11 @@ A.zones[-1]["lock"] = {"low": LOCK_LOW, "high": LOCK_HIGH, "rise": RISE, "hold":
                        "warn": 1.0, "lever": [-253.5, LANDING]}  # (the keeper hauls his lever 1 s before each fill: his booth on the quay;
                                                               # `esclusa_keeper_lever`, frog and lever, drops in when made: MINE_PASS F-C1)
 # The lock's two moving fittings (MINE_PASS F22, F23, 11-18): the gate wheel, an iron hand wheel 1.4 m across on the
-# chamber wall, turned 1.5 turns as the flap opens and back as it shuts (on the flap's own travel: `compuerta`, z 0 to
+# chamber wall, turned 2 turns as the flap opens and back as it shuts (on the flap's own travel: `compuerta`, z 0 to
 # -3); and the gauge board's float, riding the water (its board, `esclusa_gauge_board`, a plain deco). peak_zones
 # `_lock_vis` draws a stand-in for each till `esclusa_gate_wheel` (its origin the hub) and `esclusa_gauge_float` (its
 # origin its waterline) land.
-A.zones[-1]["lock"]["wheel"] = {"at": [-246.6, 82.1], "z": -1.6, "d": 1.4, "mover": "compuerta", "travel": -3.0, "turns": 1.5}
+A.zones[-1]["lock"]["wheel"] = {"at": [-246.6, 82.1], "z": -1.6, "d": 1.4, "mover": "compuerta", "travel": -3.0, "turns": 2.0}  # (a whole number: the hub's pug upright while open)
 A.zones[-1]["lock"]["gauge"] = {"x": -230.8, "z": -1.75}
 # The wicket: open (up into the gate) while the water is under its sill, from 13.03 s to 1.17 s of the
 # next cycle: shut 11.86 s, opening and shutting in 0.2 s.

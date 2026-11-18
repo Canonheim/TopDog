@@ -303,7 +303,7 @@ func _tick_locks() -> void:
 				var wd: Dictionary = z.lock.wheel
 				var m: Dictionary = peak.things.movers.get(str(wd.mover), {})
 				var f := clampf(float(m.get("zoff", 0.0)) / float(wd.get("travel", -3.0)), 0.0, 1.0)  # (the flap's travel, already eased)
-				(vis.get_meta("wheel") as Node3D).rotation.z = -f * float(wd.get("turns", 1.5)) * TAU  # (clockwise as it opens)
+				(vis.get_meta("wheel") as Node3D).rotation.z = -f * float(wd.get("turns", 2.0)) * TAU  # (clockwise as it opens)
 
 
 ## A FALL INTO A LOCK ENDS AT ITS SURFACE (the reviewer's q26, 11-18: the fill's white sheet was drawn on down through
