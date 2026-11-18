@@ -3156,6 +3156,13 @@ in. Nothing played by a person.
 - Frames: `after/whirl12_before_after.jpg` (watch scene `whirl12`: the flume's camera, the ladder's, close, close a
   second later; before | after) and `after/whirl12_eye_crop.jpg` (the eye from the flume's camera and the ladder's).
   **Checks:** lint; `--peak`. Clean.
+- Two touches (the reviewer, 11-18): the whirl's inner ring and arms are broken by gaps that turn with the water (it
+  read a little like a target); the outer inked ellipse is the dip's rim against the flat and the drain model's own
+  foam disc. And the pale balls under the flume's front face were Del Mar's splash blobs (each kick's splash at the
+  kicker, the barrels into the water): a water rule can splash flat now (`splash: "flat"`, peak_zones `splash_at` and
+  the churns: rings on the surface and the sound, no thrown blobs), on for the flume. Frames:
+  `after/whirl_rings_flat_splash_before_after.jpg` (the eye from the flume's and the ladder's cameras, close; before |
+  after). **Checks:** lint; `--peak`. Clean.
 
 ## To do: every note of 12 to 57 not done yet
 

@@ -27,8 +27,12 @@ void fragment() {
 	// three arms on a log spiral, drawn in toward the eye as they turn
 	float arm = sin(3.0 * a + 5.5 * log(max(r, 0.05)) + TIME * spin * 6.2831853);
 	float foam = smoothstep(0.6, 0.95, arm) * smoothstep(eye * 1.05, eye * 1.7, r) * (1.0 - smoothstep(radius * 0.8, radius * 0.98, r));
-	// the ring where the surface starts to go down
-	foam = max(foam, (1.0 - smoothstep(0.0, 0.07, abs(r - radius * 0.88))) * 0.55);
+	// the ring where the surface starts to go down, broken: two turning gaps, so it reads as water going round, not a
+	// drawn ring (the reviewer, 11-18: "a target or a drawn manhole")
+	float gaps = smoothstep(-0.2, 0.45, sin(2.0 * a - TIME * spin * 6.2831853 * 1.3 + 0.7));
+	foam = max(foam, (1.0 - smoothstep(0.0, 0.07, abs(r - radius * 0.88))) * 0.55 * gaps);
+	// the arms broken along their length too, the gaps turning a little slower than the water
+	foam *= mix(0.35, 1.0, smoothstep(-0.3, 0.5, sin(5.0 * a + 2.0 * log(max(r, 0.05)) - TIME * spin * 6.2831853 * 0.6)));
 	float eyed = 1.0 - smoothstep(eye * 0.8, eye * 1.08, r);
 	col = mix(col, foam_color.rgb, foam * 0.8);
 	col = mix(col, eye_color.rgb, eyed);

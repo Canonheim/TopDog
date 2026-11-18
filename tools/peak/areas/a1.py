@@ -772,6 +772,7 @@ A.water((FLUME[0], BED, FLUME[1], S), S, flow=(-1.0, 0.0), look="flume", back=-2
 # dark through the water. (The surface is seen near edge on from both cameras: the dip is what shows.) The pipe zone and
 # the play as they were.
 A.zones[-1]["whirl"] = {"x": -286.5, "z": 0.0, "r": 1.13, "eye": 0.44, "depth": 0.35, "spin": 0.25}
+A.zones[-1]["splash"] = "flat"  # (its splashes rings on the surface, no thrown blobs: the floating-balls fault, 11-18)
 # (its surface drawn back to the wall's face, z -2.2: it runs into the barrels' tunnel's mouth, where the bore's own
 # black water begins, and its edge is not drawn in the mouth: the reviewer's q20)
 _loop = sum(BARREL_GAPS)

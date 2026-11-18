@@ -171,6 +171,14 @@ func splash_at(p: Vector2, size: float, _speed := 3.0) -> void:
 		return
 	row["splashed"] = peak.clock
 	var sea: DelMarSea = row.sea
+	if str((row.def as Dictionary).get("splash", "")) == "flat":
+		# (a water whose splash is flat (`splash: "flat"`): its rings on the surface and its sound, no thrown blobs: the
+		# flume's kicks and barrels threw pale balls under its front face, the floating-balls fault: the reviewer, 11-18)
+		var at := Vector3(p.x + Peak.ORIGIN.x, sea.water_y + 0.02, 0.0)
+		sea.ripple(at, size * 1.2)
+		sea.ripple(at + Vector3(0.3, 0, 0), size * 0.7)
+		Sound.play_at("splash" if size >= 0.7 else "splash_small", at, 0.0)
+		return
 	sea.splash(p.x + Peak.ORIGIN.x, size, 0.0)
 	_pale(sea)
 
@@ -926,9 +934,10 @@ func frame(_delta: float, _cam: Camera3D) -> void:
 			continue
 		var sea: DelMarSea = (ch[0] as Dictionary).sea
 		var world := Vector3(at.x + Peak.ORIGIN.x, at.y + Peak.ORIGIN.y, randf_range(-0.9, 0.9))
-		sea.spray(world, randf_range(0.9, 1.5))
-		_pale(sea)
-		if randf() < 0.35:
+		if str(z.get("splash", "")) != "flat":  # (a flat water churns in rings only)
+			sea.spray(world, randf_range(0.9, 1.5))
+			_pale(sea)
+		if randf() < (0.6 if str(z.get("splash", "")) == "flat" else 0.35):
 			sea.ripple(world, randf_range(0.6, 1.1))
 	for row in winds:
 		var fx: MeshInstance3D = row.get("fx")
