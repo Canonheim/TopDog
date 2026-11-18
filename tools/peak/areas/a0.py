@@ -111,10 +111,7 @@ A.opening(-212, -30, -210, -23)  # the door to A1 (moved: note 146)
 A.opening(-37, 2, -35, 8)  # the mouth
 A.box(-150.3 + MOVE[0], -11.6 + MOVE[1], 0.6, 0.8, "iron", skin="dsc_buffer_stop")  # the buffer the cart stops against (moved with the end of the line)
 A.dark((-212, -34, -40, 9), level=0.8)  # inside the mountain: the light goes
-# The new stretch's back wall: a plain dark card behind the road from today's end to the door, until its
-# pieces are made (note 146: the haulage incline, the winding house and the ore bins are the makers').
-_f = [p for p in floor if p[0] <= -148.0]
-A.card([(x, y - 0.6) for x, y in _f] + [(x, y + 5.6) for x, y in reversed(_f)], z=-2.7, tone="#33291F", edge=False)  # (the tunnel's own dark: the palette's back is the sky's tan)
+# (The new stretch's plain dark back-wall card is gone: its back wall is mina_ride_lining, placed below.)
 
 # ---------------------------------------------------------------- the picture
 # (The tunnel's back-wall card, the mouth's mine_frame and the seven lantern_mine decos are
@@ -125,6 +122,10 @@ a0_dress.dress(A)  # the tunnel: its sets, back wall, lanterns, torn rail, troug
 for d in A.decos:
     if d["model"] in ("dsc_buffer_stop", "dsc_door_sill"):
         d["at"] = [round(d["at"][0] + MOVE[0], 3), round(d["at"][1] + MOVE[1], 3)] + d["at"][2:]
+# The new stretch's back wall (quality run, MINE_PASS F-E3, reviewer 8.5, 11-18), in the game's numbers (not moved):
+# the mine's lagging in bays stepping down the 20 deg road, the two side galleries going back in the dark, the
+# winding house's recess, the burst at the run-in, the refuge with its pail, the check board at the end of the line.
+A.deco("mina_ride_lining", -211.0, -29.6, z=-2.12, size=(63.3, 23.21, 8.6), tone="back")  # 12 cm back: clear of the station tunnel's back wall's relief where they overlap at the join (sweeps)
 for x, y in a0_dress.LANTERNS:  # each light sits in its lantern, under the hook
     A.light(x, round(y - 0.27, 3), color="#FFB860", rng=10.0, energy=1.5, flicker=True)
 A.cam((-212, -34, -30, 9), half_h=4.6)

@@ -594,7 +594,7 @@ A.end_shift()  # (everything above is moved by MOVE at save; La Esclusa, below, 
 # on there: a stand-in card in its back tone at z -3, behind the incline tunnel's own back wall (a0, z -2.7) and
 # joined to it; the body cut away (st.py BODY_WINDOWS) and a backstop behind, as the mine's. MINE_PASS part F's
 # ride pieces replace the card.
-A.card([(-208.0, -42.0), (-148.0, -42.0), (-148.0, 25.0), (-208.0, 25.0)], z=-3.0, tone="back2", edge=False)
+A.card([(-208.0, -42.0), (-148.0, -42.0), (-148.0, 25.0), (-208.0, 25.0)], z=-10.5, tone="back2", edge=False)  # behind mina_ride_lining's galleries (to z -10.06)
 A.card([(-208.0, -42.0), (-148.0, -42.0), (-148.0, 25.0), (-208.0, 25.0)], z=-18.0, tone="back3", edge=False)
 
 # ================================================================ LA ESCLUSA (note 146): the new section, x -303 .. -222, y 73 .. 90
