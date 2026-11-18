@@ -2966,6 +2966,25 @@ in. Nothing played by a person.
 - Frames: `after/q20_tunnel_mouth_landing_before_after.jpg` (watch scene `tunnel20`: the flume's camera, its west half,
   the mouth close; before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: MINE_PASS C7 a, b, c: La Cortina's staples, the wheel's awning, the throat's wall face
+
+- a. La Cortina's 28 holds are the staple's bar, 0.4 x 0.12, on the hexagons' middles (r 0.24, the rests 0.26): the
+  same reaches. The play, measured (watch scene `cortina7`: the climber held by its right hand beside each of the five
+  dry rests, its left hand steered at the rest's middle and above and below it, then let go): the hexagons took every
+  aim from 0.3 below to 0.3 above (81 of 81); the bars take every aim at or above the middle, to 0.3 above (32 of 32,
+  the hand let go settles onto the bar), and miss aims 0.15 or more below it (1 of 17). Climbing up, the aim is at or
+  over the next hold: that is as before. A low aim, or a catch from above in a fall past, now misses. SKIN 23 -> 13
+  (the staples fit their bars). The outlines: side-session notes, `cortina_hold_outlines.md`.
+- b. The awning over the wheel is a plank roof 0.15 thick with an eave lip hanging 0.45 at its tip (x -296.8 in game
+  numbers), its top line, and so the slide off its tip onto the ring, exactly as before. The roof's two posts (a1_dress)
+  run up to its new underside (62.75 and 65.70, the shifted numbers before the move), at z -1.45.
+- c. The throat's back wall face is at z -1.3 (a1_dress `THROAT_Z`, the Director's file; was -1.6): a staple's legs are
+  1.3 m. The staple decos stand at THROAT_Z. The roof's posts moved to z -1.45 (their fronts had come into the wall's
+  face plane: a new z-fight).
+- With it: `esclusa_vault` placed over the flume (the Director's line, MINE_PASS F6); solid 213 wears it.
+- Frames: `after/c7_cortina_awning_throat_before_after.jpg` (watch scene `c7frames`: 1.10, the awning, La Cortina low
+  and high, the staples close, La Cortina's camera; before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

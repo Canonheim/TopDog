@@ -390,7 +390,9 @@ A.ledge(-230.6, -229.6, 57.4, "plank", t=0.4)  # the porch, half a metre clear o
 A.ledge(-230.0, -218.5, 57.4, "rock", t=0.5)  # the upper gallery's floor
 # The awning: a slick roof over the wheel. Whoever comes off La Cortina lands on it and is
 # slid west off its tip (x -237.8) into the fall, and so to the Sump.
-A.solid([(-229.9, 68.2), (-237.8, 62.22), (-237.8, 61.67), (-229.9, 67.65)], "wet")
+# (MINE_PASS C7b, 11-18: a plank roof, 0.15 thick, with an eave lip hanging 0.45 at its tip, in place of the 0.55 slab;
+# its top, the slide, exactly as it was. The awning's model, row 38, wears it.)
+A.solid([(-229.9, 68.2), (-237.8, 62.22), (-237.8, 61.77), (-237.62, 61.77), (-237.62, 62.206), (-229.9, 68.05)], "wet")
 A.challenge("1.9", "La Polea Grande", (-232.6, 52.45), 2, "B", moves=[
     ["reach", [-234.2, 52.45], [-234.2, 54.31]]])
 
@@ -471,8 +473,9 @@ def _col_x(y, side):
 
 
 CORTINA = []
+STAPLE_BAR = (0.4, 0.12)  # a hold's bar, w x h
 # Their looks (a1_dress item 8): iron staples whose feet are in the throat's back wall (its face
-# at z -1.6), five of them bent; the five dry rests bound in pale cord. A wet one shows its wet
+# at z -1.3, a1_dress THROAT_Z: MINE_PASS C7c), five of them bent; the five dry rests bound in pale cord. A wet one shows its wet
 # on the staple. (The five bent: my pick, spread up the climb.)
 BENT = {(2, 1), (5, 0), (8, 1), (11, 0), (12, 1)}
 for side in (0, 1):
@@ -482,13 +485,15 @@ for side in (0, 1):
         y = ROW0_Y + ROW_DY * r
         x = _col_x(y, side)
         look = "mine_staple_bound" if ALWAYS_DRY.get(r) == side else ("iron_staple_bent" if (r, side) in BENT else "iron_staple")
+        # (MINE_PASS C7a, 11-18: each hold is the staple's bar, 0.4 x 0.12, in place of a hexagon of r 0.24 (the rests
+        # 0.26): the same middles, so the same reaches; a hand plants on it from about 0.13 above or below its middle.)
         if ALWAYS_DRY.get(r) == side:
-            A.hold(x, y, r=0.26, kind="bone", skin=look)
+            A.solid(box_pts(x, y, STAPLE_BAR[0], STAPLE_BAR[1]), "bone", skin=look)
         else:
-            A.hold(x, y, r=0.24, kind="rock", skin=look, hold={
+            A.solid(box_pts(x, y, STAPLE_BAR[0], STAPLE_BAR[1]), "rock", skin=look, hold={
                 "type": "wet", "on": DRIP_WET, "off": DRIP_GAP / DRIP_SPEED - DRIP_WET, "look": "water",
                 "phase": Area.drip_phase(_top, (x, y), DRIP_SPEED, DRIP_GAP, 3.5 * side)})
-        A.deco(look, round(x, 3), round(y, 3), z=-1.6, size=(0.4, 0.1, 0.25), tone="iron", skin=True)
+        A.deco(look, round(x, 3), round(y, 3), z=a1_dress.THROAT_Z, size=(0.4, 0.1, 0.25), tone="iron", skin=True)  # (its feet in the throat's back wall)
 for r in range(ROWS):
     y = ROW0_Y + ROW_DY * r
     CORTINA.append((_col_x(y, 0), _col_x(y, 1), y))
@@ -812,6 +817,9 @@ A.deco("esclusa_wall_lock", -240.25, 73.0, z=-1.9, size=(36.5, 16.4, 8.48), tone
 # is esclusa_keeper_lever, hung at the lock's pivot by peak_zones.gd). Origin the floor's back edge; the floor at 79.40.
 A.deco("esclusa_keeper_booth", -253.5, 79.4, z=-2.6, size=(3.96, 3.68, 1.25), tone="back")
 A.deco("esclusa_mass_low", -255.0, 73.0, z=0.0, size=(73.0, 16.4, 2.4), tone="rock2", skin=True)  # the floors (F5)
+# The roof over the flume (quality run, MINE_PASS F6, reviewer 8.5, 11-18): five brick vaults springing from the arcade's
+# piers, their crowns cracked and crusted, a sunk springer stone, the tie plate's pug; the dark wet quoin at x -292.
+A.deco("esclusa_vault", -275.25, 83.0, z=0.0, size=(33.5, 3.0, 3.25), tone="rock2", skin=True)
 # Los Barriles' hero (quality run, MINE_PASS F-E5, reviewer 8.5, 11-18): the company's barrel crane on its stone seat at
 # the platform's back, dark riveted iron, the pug on its cast foot, the winch with its chain laid down, the back-stay
 # knee into the arcade; the jib snapped at its stub and hanging west behind the falls, a metre over the ladder's top

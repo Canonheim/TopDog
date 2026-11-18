@@ -3302,6 +3302,125 @@ func _w_ridesets(a: Array) -> void:
 		await shot("ridesets_%s_%s" % [row[2], tag])
 
 
+## MINE_PASS C7's frames: 1.10 El Derrumbe and 1.11 La Cortina, its awning over the wheel, the staples' wall low and high,
+## and the staples close and from the side of the shaft. c7frames:TAG
+func _w_c7frames(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.11")
+	await secs(3.0)
+	for row in [[Vector2(-279.0, 48.0), 6.0, "1_10"], [Vector2(-292.5, 48.5), 4.0, "awning"], [Vector2(-293.3, 59.5), 4.5, "cortina_low"],
+			[Vector2(-292.8, 68.0), 4.5, "cortina_high"], [Vector2(-293.9, 61.3), 1.6, "staples_close"], [Vector2(-292.0, 64.0), 9.0, "cortina_cam"]]:
+		look(row[0], float(row[1]))
+		await secs(0.8)
+		await shot("c7_%s_%s" % [row[2], tag])
+
+
+## MINE_PASS C7: La Cortina's holds as a hand meets them. The climber's right hand is held at a point beside and below
+## each of the five always-dry rests (a short reach: 0.3 east and 0.15 down), and its left hand is aimed at the
+## rest's middle and 0.1, 0.2 and 0.3 m above and below it: does it stick on the rest, and how soon (2 s each). The
+## always-dry five, so a drip never decides it. (Steered 1.2 s, then let go: a hand plants when let go.) Then a still
+## frame of the wall. cortina7:TAG
+func _w_cortina7(a: Array) -> void:
+	const Drivers := preload("res://climber/drivers.gd")
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.11")
+	await secs(2.0)
+	var rests: Array = []
+	var all_at: Array = []
+	for ar in pk.areas:
+		if str(ar.id) != "a1":
+			continue
+		for sd in ar.solids:
+			var sk := str(sd.get("skin", ""))
+			if sk.begins_with("iron_staple") or sk == "mine_staple_bound":
+				var cc := Vector2.ZERO
+				for q in sd.pts:
+					cc += Vector2(float(q[0]), float(q[1]))
+				cc /= float(sd.pts.size())
+				all_at.append(cc)
+				if sk == "mine_staple_bound":
+					rests.append(cc)
+	all_at.sort_custom(func(p, q): return p.y < q.y - 0.3 or (absf(p.y - q.y) <= 0.3 and p.x < q.x))
+	print("WATCH cortina7: %d holds, %d rests" % [all_at.size(), rests.size()])
+	var c := me()
+	var old_driver = c.driver
+	var d := Drivers.ScriptDriver.new()
+	var space := get_viewport().world_3d.direct_space_state
+	var took := {}
+	var times := {}
+	var valid := {}
+	for dy in [0.0, 0.1, -0.1, 0.15, -0.15, 0.2, -0.2, 0.3, -0.3]:
+		took[dy] = 0
+		times[dy] = 0.0
+		valid[dy] = 0
+		for hold: Vector2 in rests + rests:
+			c.driver = old_driver
+			c.release_all()
+			var anchor: Vector2 = hold + Vector2(0.3, -0.15)
+			stand(hold + Vector2(0.0, -1.9))
+			var hr: RigidBody3D = c.bodies["hand_r"]
+			var off := anchor - pk.local_of(Vector2(hr.global_position.x, hr.global_position.y))
+			stand(hold + Vector2(0.0, -1.9) + off)
+			await ticks(1)
+			# (the anchor is welded to ANOTHER hold's body, the row's other one: a held body is not touched)
+			var other: Vector2 = hold
+			for o: Vector2 in all_at:
+				if absf(o.y - hold.y) < 0.3 and o.distance_to(hold) > 0.5:
+					other = o
+			var q := PhysicsPointQueryParameters3D.new()
+			q.position = Vector3(other.x + Peak.ORIGIN.x, other.y + Peak.ORIGIN.y, 0.0)
+			var body: Object = null
+			for h in space.intersect_point(q, 4):
+				if h.collider is StaticBody3D:
+					body = h.collider
+			var tq := PhysicsPointQueryParameters3D.new()
+			tq.position = Vector3(hold.x + Peak.ORIGIN.x, hold.y + Peak.ORIGIN.y, 0.0)
+			var target: Object = null
+			for h in space.intersect_point(tq, 4):
+				if h.collider is StaticBody3D:
+					target = h.collider
+			if body == null or other == hold or target == null:
+				continue
+			d.clear()
+			c.driver = d
+			c.attach(1, body)
+			for l in c.limbs:
+				l.regrip = 0.0  # (no "just come off" pause: the hand catches what it meets)
+			# (a hand is steered with its button held and plants when let go, on what it touches: steer 1.2 s, let go)
+			var t0 := pk.clock
+			var ok := false
+			while pk.clock - t0 < 1.2:
+				d.point_limb(0, true, pk.world_of(hold + Vector2(0.0, dy)))
+				await ticks(1)
+			d.set_limb(0, false)
+			var t1 := pk.clock
+			while pk.clock - t1 < 0.3:
+				await ticks(1)
+				if c.limbs[0].grab_other != null:
+					ok = c.limbs[0].grab_other == target  # (on the rest itself)
+					break
+			if c.limbs[1].grab_other == null:
+				continue  # (the anchor slipped: not a trial)
+			valid[dy] += 1
+			if ok:
+				took[dy] += 1
+				times[dy] += pk.clock - t0
+			if false:
+				var hl2: RigidBody3D = c.bodies["hand_l"]
+				print("WATCH cortina7 dbg hold %s anchor %s: hand_r %s stuck %s, hand_l %s stuck %s, me %s, driver %s" % [hold, anchor,
+					pk.local_of(Vector2(hr.global_position.x, hr.global_position.y)), c.limbs[1].grab_other != null,
+					pk.local_of(Vector2(hl2.global_position.x, hl2.global_position.y)), c.limbs[0].grab_other != null, where(), c.driver == d])
+		print("WATCH cortina7 %s aim %+.2f m: %d of %d taken" % [tag, dy, took[dy], valid[dy]])
+	c.driver = old_driver
+	c.release_all()
+	look(all_at[12] + Vector2(0.6, 0.0), 4.0)
+	await secs(0.6)
+	await shot("cortina7_wall_%s" % tag)
+	look(all_at[12] + Vector2(0.6, 0.0), 1.4)
+	await secs(0.3)
+	await shot("cortina7_close_%s" % tag)
+
+
 ## The reviewer's q20 at the barrels' tunnel: the flume's water in the tunnel's mouth and the east landing's west end, as
 ## the flume's camera frames them (the climber on the platform's east end and on the barrels), and close. tunnel20:TAG
 func _w_tunnel20(a: Array) -> void:

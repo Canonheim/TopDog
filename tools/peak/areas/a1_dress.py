@@ -81,7 +81,7 @@ FOR THE AREA FILE (tools/peak/areas/a1.py; the fix thread's):
   8. Holds' looks (the area file's): La Cortina's 28 holds wear `iron_staple` (18),
      `iron_staple_bent` (5) and, for the five always-dry ones, `mine_staple_bound` (new: the
      staple bound in pale cord), their feet on the throat's back wall, whose face this file
-     puts at z -1.6. El Cubo's seven pillar rungs are "the same staples" (1.5 explains):
+     puts at z -1.3 (THROAT_Z; -1.6 till 11-18). El Cubo's seven pillar rungs are "the same staples" (1.5 explains):
      they could wear `rung_iron`. The lift's weight could wear `lift_counterweight` (it has
      the lifting eye the page asks for).
   9. Things that would move: the water wheel behind La Polea Grande turns with the winding
@@ -106,7 +106,8 @@ RIB_Z = -1.6           # the chain rib's face (1.7, 1.8)
 UPPER_Y = 57.4         # the upper gallery's floor (1.9, 1.10)
 UPPER_WALL_Z = -2.5    # the upper works' face behind the upper gallery and the top drift
 DRIFT_Y = 72.0         # the top drift's floor (1.10, 1.11)
-THROAT_Z = -1.6        # the throat's back wall face (1.11, the lip)
+THROAT_Z = -1.3        # the throat's back wall face (1.11, the lip). (-1.6 till 11-18: MINE_PASS C7c, so a staple's legs are 1.3 m
+                       # and it meets its hold from every angle; it was drawn 1.6 m behind its hold.)
 FRONT_Z = 1.41         # the foreground's broken front posts (0.3 deep: z 1.26 .. 1.56)
 LIP_Z = 1.65           # the low lips of rubble along the bottom of a frame
 FACE = 1.2             # a course solid's front face: things drawn on it
@@ -574,8 +575,10 @@ def dress(A):
     timber((-230.0, 54.3), (-233.7, 56.95), -1.56)  # 6 cm behind the post it crosses (sweeps: z-fight)
     for x in (-236.9, -232.5):
         post(x, 52.45, 56.95, -1.5)
-    post(-236.9, 57.3, 62.3, -1.5)
-    post(-233.0, 57.3, 65.2, -1.5)
+    # (the roof's posts to the plank roof's underside, 0.15 under its top (MINE_PASS C7b, 11-18: they stood under the
+    # old 0.55 slab), at z -1.45, their fronts 6 cm clear of the throat's wall face at THROAT_Z: sweeps)
+    post(-236.9, 57.3, 62.75, -1.45)
+    post(-233.0, 57.3, 65.70, -1.45)
     # The upper gallery's mouth: its timber set keeps its back post and its cap (the front
     # post's two outer lengths are foreground, below). The lantern on its back post.
     A.deco("mine_frame_open", -230.0, UPPER_Y, z=0.0, size=(0.6, 4.5, 3.2), tone="back")
