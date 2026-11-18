@@ -3141,6 +3141,19 @@ in. Nothing played by a person.
 - Frames: `after/q32_flap_matte_before_after.jpg` (watch scene `gate13`: the lock's camera shut, mid-fill and open;
   before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the lock's roof placed (`esclusa_vault_lock`); a2's bed notched out of it
+
+- a1 solid 214 (the lock's roof over the quay, x -252 .. -244 at 86 .. 89.4) wears `esclusa_vault_lock`, its deco at
+  (-248.5, 86.0), both once the model has landed (a1.py `_cope`).
+- a2's `aguas_borde_bed` was made as a box to x -244 and filled solid 214 (its underside at 86 over the new ceiling,
+  its front through the brick field), though a2's solid 105 east of -252 is only its strip over the roof, 89.4 .. 90.
+  A deco can be notched now (`cut_notch: [x, y]`, peak.gd `_cut_notch`: its lower east corner, east of x and under y,
+  cut away, the notch's two faces closed; the sweeps read it): the bed is notched at (-252, 89.4). The vault lock's
+  ceiling can go back to y 86.0 and its brick field back from z 1.16 (its maker's).
+- Frames: `after/vault_lock_notch_before_after.jpg` (watch scene `gate13`: the lock's camera from the quay, shut and
+  open, and close; before | after). (The small black cross and the dark patch on the lock's back wall in the after
+  frames are the re-landed `esclusa_wall_lock`, imported with this.) **Checks:** lint; `--peak`. Clean.
+
 ## 11-18: the reviewer's q33 at 1.12's west end; the ladders' run skin (MINE_PASS C6)
 
 - The pale pane at the falls' foot (x -303 .. -297, y 75.5 .. 78) is painted in `mina_backdrop_cavern`, the far

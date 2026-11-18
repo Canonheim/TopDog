@@ -454,6 +454,10 @@ A.drop_decos({"aguas_beam_end", "aguas_beam_end_long"})
 for _d in A.decos:
     if _d["model"] in ("aguas_borde_pier", "aguas_east_wall"):
         _d["cut_below"] = 89.4
+    # (aguas_borde_bed was made as a box to x -244: east of -252 a2's solid 105 is only its strip over La Esclusa's lock
+    # roof, 89.4 .. 90, and the box under it filled a1's roof (solid 214, under 89.4): notched out there, 11-18)
+    if _d["model"] == "aguas_borde_bed":
+        _d["cut_notch"] = [-252.0, 89.4]
 # (a2_dress item 8: the grey wheel behind La Rueda turns with it on the same axle; each gate's
 # leaf rides with its ram)
 A.follow("aguas_mill_wheel_grey", WHEEL, "rueda", "spin")

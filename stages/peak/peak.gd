@@ -895,6 +895,8 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 		_cut_at(n, 1, float(d.cut_below))
 	if d.has("cut_west") and not n.has_meta("standin"):
 		_cut_at(n, 0, float(d.cut_west))
+	if d.has("cut_notch") and not n.has_meta("standin"):
+		_cut_notch(n, float(d.cut_notch[0]), float(d.cut_notch[1]))
 	n.name = str(d.model)
 	if d.has("spin") and not n.has_meta("standin"):
 		# A PART OF A MODEL THAT TURNS (`spin`: {node, rps}): about its own up, a whole turn every 1/rps s
@@ -1020,6 +1022,121 @@ func _cut_at(n: Node3D, axis: int, cut: float) -> void:
 		var keep_override := mi.material_override
 		mi.mesh = out
 		mi.material_override = keep_override
+
+
+## A MODEL NOTCHED (`cut_notch`: [x, y]): its lower east corner, east of x and under y, cut away and the notch's two
+## faces closed (an upright face at x, facing east; a level one at y, facing down). a2's aguas_borde_bed was made as a
+## box to x -244 and filled the lock's roof (a1 solid 214, x -252 .. -244 under 89.4), which a2's own solid there no
+## longer is: only its strip over the roof, 89.4 .. 90, is a2's (11-18).
+func _cut_notch(n: Node3D, nx: float, ny: float) -> void:
+	var found: Array = n.find_children("*", "MeshInstance3D", true, false)
+	if n is MeshInstance3D:
+		found.append(n)
+	for mi: MeshInstance3D in found:
+		if mi.mesh == null:
+			continue
+		var xf := Transform3D()
+		var p: Node = mi
+		while p != null and p != n:
+			xf = (p as Node3D).transform * xf
+			p = p.get_parent()
+		xf = n.transform * xf
+		var back := xf.affine_inverse()
+		var out := ArrayMesh.new()
+		var lo := Vector3(INF, INF, INF)
+		var hi := Vector3(-INF, -INF, -INF)
+		var edge_uv := Vector2.ZERO
+		var edge_d := INF
+		for si in mi.mesh.get_surface_count():
+			var arr := mi.mesh.surface_get_arrays(si)
+			var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var norms := PackedVector3Array()
+			if arr[Mesh.ARRAY_NORMAL] != null:
+				norms = arr[Mesh.ARRAY_NORMAL]
+			var uvs := PackedVector2Array()
+			if arr[Mesh.ARRAY_TEX_UV] != null:
+				uvs = arr[Mesh.ARRAY_TEX_UV]
+			var idx := PackedInt32Array()
+			if arr[Mesh.ARRAY_INDEX] != null:
+				idx = arr[Mesh.ARRAY_INDEX]
+			if idx.is_empty():
+				for i in verts.size():
+					idx.append(i)
+			var has_n := norms.size() == verts.size()
+			var has_uv := uvs.size() == verts.size()
+			var ov := PackedVector3Array()
+			var on := PackedVector3Array()
+			var ouv := PackedVector2Array()
+			for t in range(0, idx.size() - 2, 3):
+				var tri: Array = []
+				for j in 3:
+					var k := idx[t + j]
+					var w: Vector3 = xf * verts[k]
+					tri.append([w, norms[k] if has_n else Vector3.BACK, uvs[k] if has_uv else Vector2.ZERO])
+					lo = lo.min(w)
+					hi = hi.max(w)
+					var dd := Vector2(w.x - nx, w.y - ny).length() + absf(w.z - 1.2) * 0.1
+					if has_uv and dd < edge_d:
+						edge_d = dd
+						edge_uv = uvs[k]
+				var west := _clip_half(tri, 0, nx, false)
+				var up := _clip_half(_clip_half(tri, 0, nx, true), 1, ny, true)
+				for poly: Array in [west, up]:
+					for j in range(1, poly.size() - 1):
+						for e: Array in [poly[0], poly[j], poly[j + 1]]:
+							ov.append(back * (e[0] as Vector3))
+							on.append((e[1] as Vector3).normalized())
+							ouv.append(e[2])
+			if ov.is_empty():
+				continue
+			var na := []
+			na.resize(Mesh.ARRAY_MAX)
+			na[Mesh.ARRAY_VERTEX] = ov
+			na[Mesh.ARRAY_NORMAL] = on
+			na[Mesh.ARRAY_TEX_UV] = ouv
+			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, na)
+			out.surface_set_material(out.get_surface_count() - 1, mi.mesh.surface_get_material(si))
+		if out.get_surface_count() > 0 and hi.x > nx and lo.y < ny:
+			# the notch's two faces, both ways round: upright at nx (y lo .. ny), level at ny (x nx .. hi)
+			var cv := PackedVector3Array()
+			var cn := PackedVector3Array()
+			var cu := PackedVector2Array()
+			var faces := [[Vector3(nx, lo.y, lo.z), Vector3(nx, ny, lo.z), Vector3(nx, ny, hi.z), Vector3(nx, lo.y, hi.z), Vector3.RIGHT],
+				[Vector3(nx, ny, lo.z), Vector3(hi.x, ny, lo.z), Vector3(hi.x, ny, hi.z), Vector3(nx, ny, hi.z), Vector3.DOWN]]
+			for f: Array in faces:
+				var nrm := (xf.basis.transposed() * (f[4] as Vector3)).normalized()
+				for tri: Array in [[0, 1, 2], [0, 2, 3], [0, 2, 1], [0, 3, 2]]:
+					for h: int in tri:
+						cv.append(back * (f[h] as Vector3))
+						cn.append(nrm)
+						cu.append(edge_uv)
+			var ca := []
+			ca.resize(Mesh.ARRAY_MAX)
+			ca[Mesh.ARRAY_VERTEX] = cv
+			ca[Mesh.ARRAY_NORMAL] = cn
+			ca[Mesh.ARRAY_TEX_UV] = cu
+			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, ca)
+			out.surface_set_material(out.get_surface_count() - 1, out.surface_get_material(0))
+		var keep_override := mi.material_override
+		mi.mesh = out
+		mi.material_override = keep_override
+
+
+## A polygon of [world point, normal, uv] clipped to one side of a plane on `axis` at `cut` (keep_high: the side over it).
+static func _clip_half(poly: Array, axis: int, cut: float, keep_high: bool) -> Array:
+	var out: Array = []
+	var sgn := 1.0 if keep_high else -1.0
+	for j in poly.size():
+		var a: Array = poly[j]
+		var b: Array = poly[(j + 1) % poly.size()]
+		var da := ((a[0] as Vector3)[axis] - cut) * sgn
+		var db := ((b[0] as Vector3)[axis] - cut) * sgn
+		if da >= 0.0:
+			out.append(a)
+		if (da >= 0.0) != (db >= 0.0):
+			var f := da / (da - db)
+			out.append([(a[0] as Vector3).lerp(b[0], f), (a[1] as Vector3).lerp(b[1], f), (a[2] as Vector2).lerp(b[2], f)])
+	return out
 
 
 ## A TORCH BURNS with Golemheim's 3D metaball fire (Parker 11-12: "for torches and fires,

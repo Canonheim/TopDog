@@ -743,8 +743,10 @@ def _section_rock():
         # (The floors' skin, quality run F5, reviewer 8.5, 11-18: the flume's bed, the quay, the lock's floor and east wall.)
         low = min(q[0] for q in pts) > STRIP_E - 0.01 and min(q[1] for q in pts) < LANDING  # (with the platform west of the flume: q12)
         vaulted = min(q[0] for q in pts) >= -292.01 and min(q[1] for q in pts) >= 82.9 and max(q[0] for q in pts) <= FLUME[1] + 0.01
+        lock_roof = min(q[0] for q in pts) >= -252.01 and max(q[0] for q in pts) <= -243.99 and min(q[1] for q in pts) >= 85.9  # (solid 214)
         A.solid(pts, "rock2" if min(q[1] for q in pts) >= 82.9 else "wet",
-                skin="esclusa_mass_low" if low else ("esclusa_vault" if vaulted and VAULT_LANDED else None))
+                skin="esclusa_mass_low" if low else ("esclusa_vault" if vaulted and VAULT_LANDED else
+                                                     ("esclusa_vault_lock" if lock_roof and _cope("esclusa_vault_lock") else None)))
 
 
 import sweeps as _sweeps
@@ -885,6 +887,9 @@ A.deco("esclusa_mass_low", -255.0, 73.0, z=0.0, size=(73.0, 16.4, 2.4), tone="ro
 # The roof over the flume (quality run, MINE_PASS F6, reviewer 8.5, 11-18): five brick vaults springing from the arcade's
 # piers, their crowns cracked and crusted, a sunk springer stone, the tie plate's pug; the dark wet quoin at x -292.
 A.deco("esclusa_vault", -275.25, 83.0, z=0.0, size=(33.5, 3.0, 3.25), tone="rock2", skin=True)
+# The lock's roof (quality run, MINE_PASS F6's lid, reviewer 8.5, 11-18): solid 214 wears it once landed.
+if _cope("esclusa_vault_lock"):
+    A.deco("esclusa_vault_lock", -248.5, 86.0, z=0.0, size=(8.0, 3.4, 3.35), tone="rock2", skin=True)
 # Los Barriles' hero (quality run, MINE_PASS F-E5, reviewer 8.5, 11-18): the company's barrel crane on its stone seat at
 # the platform's back, dark riveted iron, the pug on its cast foot, the winch with its chain laid down, the back-stay
 # knee into the arcade; the jib snapped at its stub and hanging west behind the falls, a metre over the ladder's top

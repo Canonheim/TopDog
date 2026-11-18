@@ -202,6 +202,11 @@ def _cut(pc, d):
         pc.x0 = max(pc.x0, c)
         keep = sbox(c, -BIG, BIG, BIG)  # (x >= c, in both the (x, y) and the (x, z) planes)
         pc.faces = [(a, pl, g.intersection(keep)) for a, pl, g in pc.faces]
+    if "cut_notch" in d:
+        cx, cy = float(d["cut_notch"][0]), float(d["cut_notch"][1])
+        notch = sbox(cx, -BIG, BIG, cy)
+        pc.faces = [(a, pl, g.difference(notch) if a == "z" else (g.intersection(sbox(-BIG, -BIG, cx, BIG)) if pl < cy - 1e-6 else g))
+                    for a, pl, g in pc.faces]
     if "cut_below" in d:
         c = float(d["cut_below"])
         pc.y0 = max(pc.y0, c)
