@@ -2991,6 +2991,18 @@ in. Nothing played by a person.
 - Frames: `after/c7_cortina_awning_throat_before_after.jpg` (watch scene `c7frames`: 1.10, the awning, La Cortina low
   and high, the staples close, La Cortina's camera; before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: MINE_PASS F-C11's code: the floating spray balls out at 1.11 and 1.12
+
+- The pale grey balls were two of a1's `mist` effects (peak_zones' particle mist: soft 0.25 m balls, spread wide):
+  one over La Cortina's whole throat, one over the whirlpool on the flume. Both are out; the falls' own spray, the
+  drips down the staples and the barrels' splashes carry the wet. The Sump's own mist (a1.py, game x -309 .. -289,
+  y -47 .. -34) is the same effect and stays for now (not in this brief).
+- The whirlpool's turning foam ring and dark eye: left for `esclusa_drain` (F13), not made yet. The camera sees the
+  flume's surface nearly edge on (some 8 degrees from above), so a ring painted on the surface would read as a thin line;
+  the drain's funnel model is where it shows.
+- Frames: `after/fc11_spray_balls_before_after.jpg` (watch scene `mist24`: La Cortina's camera and its throat close,
+  the flume's camera at the whirlpool and close; before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

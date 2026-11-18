@@ -143,7 +143,8 @@ A.wind((FALL_X0, -22.0, FALL_X1, 90.0), (0.0, -6.0))
 # (Note 111's 3D falls come later.)
 A.effect("waterfall", (FALL_X0, SUMP_Y, FALL_X1, 193.0), x=(FALL_X0 + FALL_X1) / 2, head=0.0, width=6.0, z=-0.6)
 A.effect("mist", (-250.0, -30.0, -230.0, -17.0), density=0.8)
-A.effect("mist", (-240.0, 62.0, -230.5, 90.0), density=0.4)
+# (La Cortina's throat had a mist here too: phase 0's floating spray balls, pale grey balls drifting over the staples.
+# Out, MINE_PASS F-C11, 11-18: the falls' own spray and the drips carry the wet.)
 
 # The walk of shame: a grip incline with sleepers, from the landing stage up to the gallery.
 A.patch((-175.8, -12.64), (-189.4, -30.1), "rock", t=0.7)
@@ -750,7 +751,8 @@ A.board(KICKER[0], KICKER[1], throw=KICK_THROW, depth=-3.0, gone=79.6, t=0.22, m
 # alcove's east wall (x -288, y 73.1 .. 74.2), onto the alcove's floor, as a ride, not a fall.
 A.zones.append({"type": "pipe", "rect": [WHIRL[0], BED, WHIRL[1], S + 0.3], "to": [-289.2, 73.75], "vel": [-1.4, 0.4]})  # (a floating body's middle rides at the surface)
 A.ride((-291.0, 72.6, WHIRL[1], S + 0.4))
-A.effect("mist", (WHIRL[0], S - 0.2, WHIRL[1], S + 0.5), density=0.6)
+# (The whirlpool's mist, phase 0's floating spray balls over the flume, is out: MINE_PASS F-C11, 11-18. Its ring and eye
+# come with esclusa_drain, F13.)
 A.challenge("1.12", "Los Barriles", (-296.0, 73.0), 3, "B", moves=(
     [["reach", [LADDER_X, LADDER_RUNGS[i]], [LADDER_X, LADDER_RUNGS[i + 1]]] for i in range(len(LADDER_RUNGS) - 1)]
     + [["reach", [LADDER_X, LADDER_RUNGS[-1]], [WEST_LANDING[0], LANDING]]]))

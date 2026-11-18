@@ -3302,6 +3302,24 @@ func _w_ridesets(a: Array) -> void:
 		await shot("ridesets_%s_%s" % [row[2], tag])
 
 
+## MINE_PASS F-C11: the floating spray balls at 1.11 (La Cortina's camera, and the throat close) and 1.12 (the flume's
+## camera at the whirlpool, the vault's west end). mist24:TAG
+func _w_mist24(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.11")
+	await secs(4.0)
+	for row in [[Vector2(-292.0, 64.0), 9.0, "1_11_cam"], [Vector2(-293.0, 60.0), 4.5, "1_11_throat"]]:
+		look(row[0], float(row[1]))
+		await secs(1.0)
+		await shot("mist24_%s_%s" % [row[2], tag])
+	pk.warp("1.12")
+	await secs(4.0)
+	for row in [[Vector2(-284.0, 80.4), 6.0, "1_12_cam"], [Vector2(-288.5, 80.0), 3.5, "1_12_whirl"]]:
+		look(row[0], float(row[1]))
+		await secs(1.0)
+		await shot("mist24_%s_%s" % [row[2], tag])
+
+
 ## MINE_PASS C7's frames: 1.10 El Derrumbe and 1.11 La Cortina, its awning over the wheel, the staples' wall low and high,
 ## and the staples close and from the side of the shaft. c7frames:TAG
 func _w_c7frames(a: Array) -> void:
