@@ -322,7 +322,7 @@ def dress(A):
     # and the winch's cut (1.1b).
     A.deco("mine_lining_gallery", -164.0, GAL_Y, z=-1.65, size=(24.0, 5.32, 1.59), tone="back")  # (quality run E5, 8.5 PASS: the tally marks, the winch's cut and the rack's bay are in it)
     PZ = -1.45  # the back posts and the long timbers, between the lining and the play space
-    for x in (-152.12, -155.4, -165.9):
+    for x in (-155.4, -165.9):  # (the door's own post is mine_frame's back post, 11-18)
         post(x, GAL_Y, -7.85, PZ)  # full height
     for x in (-156.7, -158.0, -164.6):
         A.deco("mine_post_broken", x, -10.42, z=PZ, scale=0.988, size=(0.3, 2.6, 0.3), tone="back")  # upper halves: each beam hangs from one
@@ -334,7 +334,7 @@ def dress(A):
     hbeam(-166.6, -164.4, -10.78, PZ)
     for x in (-155.4, -156.7, -158.0, -164.6, -165.9):
         A.deco("mine_iron_strap", x, -10.75, z=-1.28, size=(0.4, 0.3, 0.05), tone="iron")  # where each beam is let into its post
-    mushrooms(-152.12, -12.25, -1.3)
+    mushrooms(-152.0, -12.25, -1.25)
     # The slump: a tongue of black mud out of the burst wall, the cart half sunk in it, and the
     # rails' ends bent down over both brinks.
     A.deco("mine_mud_tongue", -160.5, -17.2, z=-2.15, size=(10.0, 4.5, 1.7), tone="slick")
@@ -364,7 +364,7 @@ def dress(A):
 
     # ============================================================ 1.1b The frozen climber's camp
     # (The lining, the roof timber, the post at x -165.9 and the lit lantern are 1.1's, above.)
-    for x in (-167.75, -170.3, -173.6, -175.95):
+    for x in (-167.75, -170.3, -173.6):  # (the mouth's own post is mine_frame_mouth's back post, 11-18)
         post(x, GAL_Y, -7.85, PZ)
     mushrooms(-170.3, -12.0, -1.3)
     # The miners' waiting room cut in the back wall: its plank bench and its peg rail are part
@@ -581,7 +581,7 @@ def dress(A):
     post(-233.0, 57.3, 65.70, -1.45)
     # The upper gallery's mouth: its timber set keeps its back post and its cap (the front
     # post's two outer lengths are foreground, below). The lantern on its back post.
-    A.deco("mine_frame_open", -230.0, UPPER_Y, z=0.0, size=(0.6, 4.5, 3.2), tone="back")
+    A.deco("mine_frame_open", -230.0, UPPER_Y, z=0.0, size=(0.72, 4.965, 3.46), tone="back")  # (remade, reviewer 8.5, 11-18)
     side_lantern(-229.7, 60.85, -1.425)
     # The ore crate that stood like a step on the gallery floor, back against the wall.
     A.deco("crate_ore", -230.9, UPPER_Y, z=-1.9, scale=0.917, size=(1.2, 1.1, 1.2), tone="back")  # (west of the post: the tool rack shows)

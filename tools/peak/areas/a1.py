@@ -578,9 +578,11 @@ for x, y, m in ((-209.0, 55.0, "stalactite_a"), (-203.0, 55.0, "stalactite_b"),
                 (-190.0, 50.9, "stalactite_a"), (-172.0, 40.0, "stalactite_b"), (-160.0, 34.0, "stalactite_a")):
     A.deco(m, x, y, z=-1.7, size=(0.8, 3.0, 0.8) if m.endswith("_a") else (1.5, 6.0, 1.5), tone="slick")
 A.deco("papel_tatters", -226.0, 74.6, z=-1.4, scale=0.85, size=(8.0, 1.0, 0.05), tone="accent")
-A.deco("mine_frame", -152.0, -12.6, z=0.0, size=(0.6, 5.0, 2.6), tone="wood")  # the door's timber set (a0_dress item 9: mine_frame_broken when it lands)
-A.deco("mine_frame", -176.0, -12.6, z=0.0, size=(0.6, 5.0, 2.6), tone="wood")  # the gallery's mouth
-A.deco("mine_frame", -230.0, 72.0, z=0.0, scale=0.8, size=(0.6, 5.0, 2.6), tone="wood")  # the top drift's mouth
+# The mouth sets (quality run, MINE_PASS rows 60/61, reviewer 8.5, 11-18): the mine's square sets in its one scenery timber,
+# a back post, a sill and the cap overhanging, the front post gone to a sawn stump on the sill (note 40: you walk through).
+A.deco("mine_frame", -152.0, -12.6, z=0.0, size=(0.72, 5.465, 3.46), tone="back")  # the door's set
+A.deco("mine_frame_mouth", -176.0, -12.6, z=0.0, size=(0.72, 5.465, 3.46), tone="back")  # the gallery's mouth
+A.deco("mine_frame_drift", -230.0, 72.0, z=0.0, size=(0.73, 4.365, 3.46), tone="back")  # the top drift's mouth (1.11's start)
 for x in (-150.0, -153.6):
     A.deco("rail_straight", x, -12.7, z=0.0, scale=0.9, size=(4.0, 0.25, 1.2), tone="iron")  # the rails end at the mud
 A.effect("drips", (-176.0, 6.0, -172.0, 12.0))  # every rest has its unease
