@@ -589,6 +589,14 @@ A.card([(-298, -42), (-142, -42), (-142, 96), (-298, 96)], z=-18.0, tone="back3"
 
 A.end_shift()  # (everything above is moved by MOVE at save; La Esclusa, below, stands where it is written)
 
+# WHERE THE MINE WAS (the Director, 11-18): since note 146 the mountain's flat tan body showed east of the moved
+# mine, over and under the ride's new incline (game x -207 .. -148), at the widest view. The mine's dark rock carried
+# on there: a stand-in card in its back tone at z -3, behind the incline tunnel's own back wall (a0, z -2.7) and
+# joined to it; the body cut away (st.py BODY_WINDOWS) and a backstop behind, as the mine's. MINE_PASS part F's
+# ride pieces replace the card.
+A.card([(-208.0, -42.0), (-148.0, -42.0), (-148.0, 25.0), (-208.0, 25.0)], z=-3.0, tone="back2", edge=False)
+A.card([(-208.0, -42.0), (-148.0, -42.0), (-148.0, 25.0), (-208.0, 25.0)], z=-18.0, tone="back3", edge=False)
+
 # ================================================================ LA ESCLUSA (note 146): the new section, x -303 .. -222, y 73 .. 90
 # Between the moved mine's roof (73) and the black waters' floor, under their east end: the keepers'
 # ladder straight up beside the great falls, 1.12 Los Barriles (the flume, the barrels running west to a

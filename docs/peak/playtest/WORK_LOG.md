@@ -2871,6 +2871,17 @@ in. Nothing played by a person.
   the dress (a2_dress unchanged). The lock's top, its back wall and its last rung read clear.
 - Frames: `after/locktop_cut_before_after.jpg` (watch scene `locktop`). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: where the mine was, east of it over the ride's incline
+
+- The Director: since note 146 the mountain's flat tan body showed east of the moved mine (x -207 .. -148), over the
+  incline tunnel's roof and under its bed, at the widest view (the zoom held). The mine's dark carried on there: a
+  stand-in card in the mine's `back2` at z -3 (x -208 .. -148, y -42 .. 25), behind the incline tunnel's own back wall
+  (a0, z -2.7) and meeting it; the body card cut away over the same box (st.py BODY_WINDOWS) and a `back3` backstop at
+  z -18 behind, as the mine's. MINE_PASS part F's ride pieces replace the card. East of x -148 the station tunnel keeps
+  its own tan body, as before the move.
+- Frames: `after/east_void_before_after.jpg` (watch scene `eastvoid`, the view at 11 m: the incline's foot and over it;
+  before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

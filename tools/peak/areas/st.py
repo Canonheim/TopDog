@@ -154,6 +154,7 @@ def _open_cut():
 BODY_WINDOWS = [((-134.0, -13.0, -122.5, -4.0), -128.0),   # a0, 0.3c's gap
                 ((-351.0, -53.0, -207.0, 73.0), -279.0),    # a1, the mine (moved 59 m west and 17 m down: note 146)
                 ((-307.0, 73.0, -222.0, 90.0), -265.0),     # a1, La Esclusa above it (note 146)
+                ((-207.0, -42.0, -148.0, 25.0), -178.0),    # a1, where the mine was, over the ride's incline (11-18)
                 ((-466.0, 82.0, -222.0, 188.0), -344.0),    # a2, the black waters (its far wall's span)
                 ((-466.0, 168.0, -300.0, 284.0), -383.0),   # a3, the crystal cave
                 ((-294.0, 258.0, -186.0, 384.0), -240.0),   # a4, the garden (its far wall's span)
