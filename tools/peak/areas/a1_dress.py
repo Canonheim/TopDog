@@ -233,7 +233,7 @@ def dress(A):
     # The cavern's own hand-cut wall, 1.7 m behind the walk (1.3, 1.4, 1.5, 1.6, 1.0b): three
     # pieces made to meet, low (the landing), middle (the walk) and high (the lift and the ribs).
     A.deco("mine_cavern_wall_low", -184.95, SUMP_FLOOR, z=-3.25, size=(25.9, 27.0, 0.7), tone="back")
-    A.deco("mine_cavern_wall_mid", -186.45, -6.0, z=-3.25, size=(30.9, 24.0, 0.7), tone="back")
+    A.deco("mine_cavern_wall_mid", -186.45, -6.0, z=CAVE_WALL_Z, size=(30.9, 24.0, 6.26), tone="back")  # (quality run, E2) origin on its face
     A.deco("mine_cavern_wall_high", -186.45, 18.0, z=-2.9, size=(30.9, 38.2, 3.25), tone="back")  # (quality run, E3) origin on its face
 
     # ============================================================ 1.0 The Sump and the frog's cave
@@ -417,30 +417,25 @@ def dress(A):
         front_post(-167.75, y0, y1)
 
     # ============================================================ 1.3 Los Tablones
-    # (The wall is mine_cavern_wall_mid: dry above the planks, dark with wet below.)
-    outcrop(-180.0, 1.5, CAVE_WALL_Z, "moss")
-    outcrop(-191.5, -2.2, CAVE_WALL_Z, "fern", small=True)
+    # (The wall is mine_cavern_wall_mid, E2: the portal's ragged cut, the stope at 1.4 with its
+    # gallery and cart, the old working under 1.3, the walk's sockets (empty ones with pale
+    # scars), the fallen lower walk's sockets and its surviving length, the outcrops grown out
+    # of the face, the boarded hole and stull up high, the wet streaks under the walk.)
+    # Ferns on its three outcrops (the reviewer: one a size up, so they show).
+    for x, y, z, k in ((-190.85, 2.55, -2.66, 1.0), (-194.0, 3.0, -2.67, 1.0), (-178.6, 12.15, -2.66, 1.35)):
+        A.deco("mine_fern_pale", x, y, z=z, size=(round(0.6 * k, 2), round(0.5 * k, 2), 0.04), tone="bone")
     # The bearers: a square timber out of a socket in the wall under each end of each nailed
     # length, with its strut under it (origin: the middle of the bearer's top; it runs from
     # the wall to the walk's back edge).
     for x, top in ((-177.95, 6.0), (-181.35, 5.9), (-179.85, 5.9), (-186.05, 5.8), (-184.55, 5.8),
                    (-189.85, 5.95), (-187.95, 5.95), (-192.55, 6.0), (-190.45, 6.0)):
         A.deco("mine_walk_bearer", x, round(top - 0.22, 2), z=-2.075, size=(0.4, 1.3, 1.65), tone="back")
-    # Under each loose board: the empty socket where its bearer was, a pale scar under it.
-    for x in (-178.9, -182.3, -183.6, -187.0):
-        drawn("mine_socket_scarred", x, 4.8, (0.3, 0.7, 0.02), tone="back3", z=CAVE_WALL_Z + 0.01)
     # THE DRIFT PORTAL (quality run, E7: reviewer 8.5 PASS, 11-14): the side drift the walk was built to reach,
     # timbered, boarded, its gangway on the walk's own bearers (x -186.05 and -184.55), a cart left on its rail stub.
     # In place of the old boarded tunnel and gangway stub. Origin: the middle of its foot.
     A.deco("mina_drift_portal", -185.3, 5.65, z=-2.35, size=(4.09, 3.93, 2.10), tone="back")
-    # The lower walk that fell, 6 m down: a row of empty sockets, two bearers, one length left.
-    for x in (-178.6, -181.1, -183.6, -186.1):
-        drawn("mine_socket_empty", x, -0.15, (0.3, 0.3, 0.02), tone="back3", z=CAVE_WALL_Z + 0.01)
-    for x in (-188.6, -191.1):
-        A.deco("mine_walk_bearer", x, 0.15, z=-2.075, size=(0.4, 1.3, 1.65), tone="back")
-    for x, y in ((-190.6, 0.15), (-189.1, 0.19)):  # the second lies over the first (sweeps: z-fight)
-        A.deco("plank", x, y, z=-2.4, size=(2.0, 0.13, 0.9), tone="back")
-    mushrooms(-189.6, 0.28, -2.0)
+    # (The lower walk that fell, 6 m down, its sockets and surviving length: in E2.)
+    mushrooms(-189.6, 0.216, -2.2)  # on its surviving length
     # Two lanterns on iron brackets in the wall, 3 m over the planks.
     wall_lantern(-174.6, 9.47, CAVE_WALL_Z)
     hang(-183.85, 8.70, -2.30)  # (on the drift portal's own bracket, quality run E7)
@@ -452,10 +447,7 @@ def dress(A):
             drawn("mine_nail_row", round(x, 2), round(top - 0.15, 2), (0.08, 0.08, 0.01))
 
     # ============================================================ 1.4 La Cuerda del Minero
-    # Across the gap in the wall at the walk's height: three empty sockets and one bearer snapped short.
-    for x in (-194.0, -195.3, -196.6):
-        drawn("mine_socket_empty", x, 5.2, (0.3, 0.3, 0.02), tone="back3", z=CAVE_WALL_Z + 0.01)
-    A.deco("mine_bearer_snapped", -197.6, 5.2, z=-2.65, size=(0.3, 0.3, 0.5), tone="back")
+    # (Across the gap at the walk's height, the sockets, the three snapped bearers and the stump: in E2.)
     # The arm's back half: its twin straight behind it, the slanting brace that carries the
     # pair from the pillar, and the cross timber that ties them to the rock (also 1.5's).
     timber((-200.4, 14.0), (-191.5, 14.0), -1.6)
@@ -465,11 +457,10 @@ def dress(A):
     stand(-196.5, 14.2, -1.6)  # standing on the arm's twin (also 1.5's)
     A.deco("sign_pug_skull", -191.4, WALK_Y, z=-1.35, size=(0.95, 2.16, 0.13), tone="bone")  # where the walk stops
     # Drawn: the rod's eye at its foot and the strap round the arm; the walk's last plank's
-    # splintered end; the socket and stump in the shoulder's face.
+    # splintered end.
     drawn("mine_iron_eye", -194.1, 11.25, (0.3, 0.3, 0.02))
     drawn("mine_iron_strap", -194.1, 13.7, (0.4, 0.3, 0.05), scale=1.0)
     drawn("mine_side_splintered", -192.95, 5.78, (0.3, 0.36, 0.02), tone="wood", scale=0.611)
-    drawn("mine_socket_stump", -198.05, 5.2, (0.3, 0.3, 0.08), tone="back3")
 
     # ============================================================ 1.5 El Cubo
     # The pulley set back against the hoistway, grey.
