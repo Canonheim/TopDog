@@ -130,8 +130,12 @@ A.cave(air, kinds, default="wet", thick=3.0)
 # each lies; the corner fillers go with the stretch the dress names for them.
 for s in A.solids[n_before:]:
     cx = sum(p[0] for p in s["pts"]) / len(s["pts"])
-    if cx < -148.5:
-        continue  # (the new stretch, note 146, from today's end of the old line, x -148.4: plain rock until its pieces are made)
+    if cx < -148.5:  # the new stretch (note 146; MINE_PASS F-C10): the mina_ride_bed family by place (quality run, reviewer 8.5, 11-18)
+        if s["kind"] == "rock":  # the bed: slabs 18 .. 27, fillers 48 .. 50
+            s["skin"] = "mina_ride_bed_brow" if cx > -158.0 else "mina_ride_bed_incline" if cx > -188.0 else "mina_ride_bed_foot"
+        elif s["kind"] == "rock2":  # the roof: slab 37 stays under dsc_roof_d, which draws it
+            s["skin"] = "dsc_roof_d" if cx > -152.5 else "mina_ride_roof_brow" if cx > -158.0 else "mina_ride_roof_incline" if cx > -188.0 else "mina_ride_roof_foot"
+        continue
     if s["kind"] == "rock":  # the bed
         s["skin"] = "dsc_bed_a" if cx > -62.3 else "dsc_bed_b" if cx > -104.5 else "dsc_bed_c" if cx > -136.0 else "dsc_bed_d"
     elif s["kind"] == "rock2":  # the roof
@@ -147,14 +151,16 @@ A.dark((-212, -34, -40, 9), level=0.8)  # inside the mountain: the light goes
 # gone: a0_dress places the back wall's pieces, the whitewashed mouth set and the lanterns.)
 a0_station.dress(A)  # the yard wall, the station house, the posters, the frog, the bunting, the foreground
 a0_dress.dress(A)  # the tunnel: its sets, back wall, lanterns, torn rail, trough, the mouth
-# (note 146: the end of the line moves with the mine: the buffer stop and the door's sill, by MOVE)
+# (note 146: the end of the line moves with the mine: the buffer stop, by MOVE. The door's sill is gone, F-C10:
+# its top lay on mina_ride_bed_foot's shoulder in another colour; the mine's door set carries its own sill.)
 for d in A.decos:
-    if d["model"] in ("dsc_buffer_stop", "dsc_door_sill"):
+    if d["model"] == "dsc_buffer_stop":
         d["at"] = [round(d["at"][0] + MOVE[0], 3), round(d["at"][1] + MOVE[1], 3)] + d["at"][2:]
     # dsc_bed_d was made level to the old end of the line (x -152); the moved line drops away from x -148.4,
     # so its last 3.6 m stood 0.3 m over the bed with nothing under it: it ends there now (11-18).
     if d["model"] == "dsc_bed_d":
-        d["cut_west"] = -148.4# The new stretch's back wall (quality run, MINE_PASS F-E3, reviewer 8.5, 11-18), in the game's numbers (not moved):
+        d["cut_west"] = -148.4
+# The new stretch's back wall (quality run, MINE_PASS F-E3, reviewer 8.5, 11-18), in the game's numbers (not moved):
 # the mine's lagging in bays stepping down the 20 deg road, the two side galleries going back in the dark, the
 # winding house's recess, the burst at the run-in, the refuge with its pail, the check board at the end of the line.
 A.deco("mina_ride_lining", -211.0, -29.6, z=-2.12, size=(63.3, 23.21, 8.6), tone="back")  # 12 cm back: clear of the station tunnel's back wall's relief where they overlap at the join (sweeps)

@@ -231,6 +231,18 @@ def dress(A):
                                 ("dsc_roof_a", -49.38, 1.54, 26.8, 8.63), ("dsc_roof_b", -83.44, -1.96, 42.92, 7.27),
                                 ("dsc_roof_c", -120.15, -6.65, 32.34, 7.65), ("dsc_roof_d", -144.03, -7.0, 16.11, 3.35)):
         A.deco(model, mx, y0, z=0.0, size=(w, h, 4.0), tone="rock", skin=True)
+    # The new stretch's bed and roof (quality run, MINE_PASS F14, reviewer 8.5, 11-18), in the game's numbers (not moved):
+    # dark mine rock in beds and hand-cut facets, ballast in clumps between the sleepers with the odd sawn tie end, broken
+    # ore bands, the snapped haulage rope from the brow sheave to the foot, the sprung runaway catch, spilled ore at the
+    # foot; the roofs the mine's dark rock with the sets' cap sockets. The brow carries on east over the slabs past
+    # dsc_bed_d's cut, flush with its planes. (Skins of the cave's slabs by place: a0.py.)
+    for model, mx, y0, w, h, d in (("mina_ride_bed_brow", -153.066, -17.01, 9.89, 5.6, 3.94),
+                                   ("mina_ride_bed_incline", -172.475, -27.941, 31.07, 13.8, 3.94),
+                                   ("mina_ride_bed_foot", -198.999, -32.0, 24.05, 6.97, 4.05),
+                                   ("mina_ride_roof_brow", -155.576, -9.2, 6.95, 4.82, 3.89),
+                                   ("mina_ride_roof_incline", -173.511, -20.12, 31.02, 13.73, 3.88),
+                                   ("mina_ride_roof_foot", -199.53, -24.52, 23.06, 7.22, 3.9)):
+        A.deco(model, mx, y0, z=0.0, size=(w, h, d), tone="rock2", skin=True)
 
     # ------------------------------------------------------------ the timber sets
     # A set's back piece is the back post (0.3 square, 4.7 tall, against the wall) and its cap
@@ -313,8 +325,7 @@ def dress(A):
     # braces raking back to the floor against the back wall. Origin: the middle of the
     # baulk's foot (x -150.3); the braces reach 1.3 m west of it, behind the play space.
     A.deco("dsc_buffer_stop", -150.3, -12.0, z=0.0, size=(1.7, 0.8, 3.4), tone="wood", skin=True)
-    # The worn timber sill along the edge of the 0.6 m step at the door.
-    A.deco("dsc_door_sill", -151.96, -12.22, z=0.0, size=(0.32, 0.22, 2.4), tone="wood")
+    # (The worn timber sill at the door is gone, MINE_PASS F-C10: the mine's door set carries its own.)
 
     # ================================================================ the foreground: the front post of every fourth set
     # Posts 0.3 square, 4.7 tall to the cap's underside. One sweeps past about every 1.2 s.
