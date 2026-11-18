@@ -775,6 +775,11 @@ for x, y, lz in ((-253.5, 81.3, -1.75), (-240.0, 84.7, -1.45), (-228.8, 83.5, -1
 # column and the painted cavern far behind it (F-C6): the flume wall starts east of the column.
 A.deco("esclusa_wall_flume", -277.75, 73.0, z=-2.2, size=(38.5, 13.6, 8.79), tone="brick")
 A.deco("esclusa_wall_lock", -240.25, 73.0, z=-1.9, size=(36.5, 16.4, 8.48), tone="back")
+# The keeper's booth in the quay wall's recess (quality run, MINE_PASS F21, reviewer 8.5, 11-18): a little stone room,
+# its round head open, the lining warm under his lantern, a stool, the kettle shelf, the window turned to the chamber,
+# a spare navy oilskin on its peg, the lever's pit and the toothed quadrant his catch rides (the keeper, frog and lever,
+# is esclusa_keeper_lever, hung at the lock's pivot by peak_zones.gd). Origin the floor's back edge; the floor at 79.40.
+A.deco("esclusa_keeper_booth", -253.5, 79.4, z=-2.6, size=(3.96, 3.68, 1.25), tone="back")
 A.deco("esclusa_mass_low", -255.0, 73.0, z=0.0, size=(73.0, 16.4, 2.4), tone="rock2", skin=True)  # the floors (F5)
 # Los Barriles' hero (quality run, MINE_PASS F-E5, reviewer 8.5, 11-18): the company's barrel crane on its stone seat at
 # the platform's back, dark riveted iron, the pug on its cast foot, the winch with its chain laid down, the back-stay
