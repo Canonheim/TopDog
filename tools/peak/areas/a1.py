@@ -683,7 +683,7 @@ def _section_rock():
         # (The ceiling, out of every reach: matte, not slick. Its slick underside, seen from below at 1.13, caught the
         # lanterns' sheen and blew out to white across the top of the frame: the reviewer's q8.)
         # (The floors' skin, quality run F5, reviewer 8.5, 11-18: the flume's bed, the quay, the lock's floor and east wall.)
-        low = min(q[1] for q in pts) <= MINE_TOP and min(q[0] for q in pts) > FLUME[0]
+        low = min(q[0] for q in pts) > STRIP_E - 0.01 and min(q[1] for q in pts) < LANDING  # (with the platform west of the flume: q12)
         A.solid(pts, "rock2" if min(q[1] for q in pts) >= 82.9 else "wet", skin="esclusa_mass_low" if low else None)
 
 
@@ -774,7 +774,7 @@ for x, y, lz in ((-253.5, 81.3, -1.75), (-240.0, 84.7, -1.45), (-228.8, 83.5, -1
 # column and the painted cavern far behind it (F-C6): the flume wall starts east of the column.
 A.deco("esclusa_wall_flume", -277.75, 73.0, z=-2.2, size=(38.5, 13.6, 8.79), tone="brick")
 A.deco("esclusa_wall_lock", -240.25, 73.0, z=-1.9, size=(36.5, 16.4, 8.48), tone="back")
-A.deco("esclusa_mass_low", -255.0, 73.0, z=0.0, size=(66.0, 16.4, 2.4), tone="rock2", skin=True)  # the floors (F5)
+A.deco("esclusa_mass_low", -255.0, 73.0, z=0.0, size=(73.0, 16.4, 2.4), tone="rock2", skin=True)  # the floors (F5)
 A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-18.0, tone="back3", edge=False)  # its own dark, behind the cavern's painted far wall (MINE_PASS F-C6)
 
 if __name__ == "__main__":
