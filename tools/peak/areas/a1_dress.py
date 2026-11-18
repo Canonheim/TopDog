@@ -237,6 +237,11 @@ def dress(A):
     A.deco("mine_cavern_wall_low", -184.95, SUMP_FLOOR, z=-3.25, size=(25.9, 27.0, 0.7), tone="back")
     A.deco("mine_cavern_wall_mid", -186.45, -6.0, z=CAVE_WALL_Z, size=(30.9, 24.0, 6.36), tone="back")  # (quality run, E2) origin on its face
     A.deco("mine_cavern_wall_high", -186.45, 18.0, z=-2.9, size=(30.9, 38.2, 3.25), tone="back")  # (quality run, E3) origin on its face
+    # The cavern's east end over the ladder head (quality run, reviewer 8.5, 11-17): old stopes cut
+    # along their beds, the lagged raise to the high gallery (sets, rails, a cart, papel, a lit drift),
+    # flush with E2 and E3 at x -171; its lantern hangs on the mid stope's iron seat.
+    A.deco("mina_set_stopes_east", -160.5, 4.0, z=CAVE_WALL_Z, size=(21.0, 36.7, 5.3), tone="back")
+    wall_lantern(-159.4, 17.95, -3.11)
 
     # ============================================================ 1.0 The Sump and the frog's cave
     # The rock the cave is cut in, carried on west and back (black, running with spray), with

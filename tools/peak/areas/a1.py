@@ -542,13 +542,11 @@ for x, y in ((-241.0, -24.0), (-225.0, -26.0), (-212.0, -26.0), (-241.0, 40.0), 
 # ================================================================ the picture
 # (The three far cards at z -14, -10 and -4 "behind the fall" are gone: the mine's painted far backdrop,
 # mina_backdrop_cavern at z -15 (quality run E1, reviewer 8.5, 11-17), is the cavern's far side now.)
-A.card([(-178, -8), (-150, -8), (-150, 8), (-170, 7), (-178, 4)], z=-3.0, tone="back")
 A.card([(-196, 56), (-190, 44), (-186, 49), (-181, 41), (-176, 43), (-170, 35), (-164, 38), (-158, 30), (-150, 32), (-150, 60)], z=3.0, tone="slick")  # stalactites, in front
 A.card([(-256, -40), (-146, -40), (-146, -33), (-200, -35), (-256, -33)], z=4.0, tone="slick")
-A.card([(-150, 6), (-150, 30), (-158, 26), (-160, 14), (-166, 12), (-168, 6)], z=-4.0, tone="back")  # old stopes, far side
-A.deco("station_scaffold", -160.0, 12.5, z=-4.6, scale=1.5, size=(4.0, 6.0, 2.0), tone="wood")  # workings nobody reaches now
-A.deco("lantern_hang", -162.0, 19.4, z=-4.4, size=(0.3, 0.5, 0.3), tone="gold")
-A.light(-162.0, 18.9, color="#FFB860", rng=8.0, energy=0.9, z=-3.0, flicker=True)
+# (The east end's two stand-in cards, the orange station scaffold, its lantern and its light are gone: the
+# cavern's east end is mina_set_stopes_east now (quality run, reviewer 8.5, 11-17), placed in a1_dress, with
+# its lantern on the mid stope's iron seat.)
 for x, y, m in ((-209.0, 55.0, "stalactite_a"), (-203.0, 55.0, "stalactite_b"),
                 (-190.0, 50.9, "stalactite_a"), (-172.0, 40.0, "stalactite_b"), (-160.0, 34.0, "stalactite_a")):
     A.deco(m, x, y, z=-1.7, size=(0.8, 3.0, 0.8) if m.endswith("_a") else (1.5, 6.0, 1.5), tone="slick")
