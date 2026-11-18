@@ -891,10 +891,119 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 	if d.has("follow"):
 		# it moves with its mover; its own place, turn and length are its rest
 		things.followers.append([n, d.follow, n.position, n.rotation.z, n.scale.y])
+	if d.has("cut_below") and not n.has_meta("standin"):
+		_cut_below(n, float(d.cut_below))
 	n.name = str(d.model)
 	if model.contains("torch") and not n.has_meta("standin"):
 		_light_torch(n)
 	return n
+
+
+## A MODEL CUT SHORT (`cut_below`, a height in the course's numbers): a model made to reach
+## lower than its place now lets it (a2's pier and east wall, made down to the old mine's
+## roof, hung 3.4 m into La Esclusa's lock) is cut level there, and the cut closed with a
+## flat underside in the colour of its front edge.
+func _cut_below(n: Node3D, cut: float) -> void:
+	var found: Array = n.find_children("*", "MeshInstance3D", true, false)
+	if n is MeshInstance3D:
+		found.append(n)
+	for mi: MeshInstance3D in found:
+		if mi.mesh == null:
+			continue
+		var xf := Transform3D()
+		var p: Node = mi
+		while p != null and p != n:
+			xf = (p as Node3D).transform * xf
+			p = p.get_parent()
+		xf = n.transform * xf  # (the deco's root stands in the area's own frame)
+		var back := xf.affine_inverse()
+		var out := ArrayMesh.new()
+		var rim: Array = []  # [world point, uv] where the cut crosses
+		for si in mi.mesh.get_surface_count():
+			var arr := mi.mesh.surface_get_arrays(si)
+			var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var norms := PackedVector3Array()
+			if arr[Mesh.ARRAY_NORMAL] != null:
+				norms = arr[Mesh.ARRAY_NORMAL]
+			var uvs := PackedVector2Array()
+			if arr[Mesh.ARRAY_TEX_UV] != null:
+				uvs = arr[Mesh.ARRAY_TEX_UV]
+			var idx := PackedInt32Array()
+			if arr[Mesh.ARRAY_INDEX] != null:
+				idx = arr[Mesh.ARRAY_INDEX]
+			if idx.is_empty():
+				for i in verts.size():
+					idx.append(i)
+			var has_n := norms.size() == verts.size()
+			var has_uv := uvs.size() == verts.size()
+			var ov := PackedVector3Array()
+			var on := PackedVector3Array()
+			var ouv := PackedVector2Array()
+			for t in range(0, idx.size() - 2, 3):
+				var poly: Array = []  # [world, local normal, uv]
+				for j in 3:
+					var k := idx[t + j]
+					poly.append([xf * verts[k], norms[k] if has_n else Vector3.BACK, uvs[k] if has_uv else Vector2.ZERO])
+				var kept: Array = []
+				for j in 3:
+					var a: Array = poly[j]
+					var b: Array = poly[(j + 1) % 3]
+					var da := (a[0] as Vector3).y - cut
+					var db := (b[0] as Vector3).y - cut
+					if da >= 0.0:
+						kept.append(a)
+					if (da >= 0.0) != (db >= 0.0):
+						var f := da / (da - db)
+						var c := [(a[0] as Vector3).lerp(b[0], f), (a[1] as Vector3).lerp(b[1], f), (a[2] as Vector2).lerp(b[2], f)]
+						kept.append(c)
+						rim.append([c[0], c[2]])
+				for j in range(1, kept.size() - 1):
+					for e: Array in [kept[0], kept[j], kept[j + 1]]:
+						ov.append(back * (e[0] as Vector3))
+						on.append((e[1] as Vector3).normalized())
+						ouv.append(e[2])
+			if ov.is_empty():
+				continue
+			var na := []
+			na.resize(Mesh.ARRAY_MAX)
+			na[Mesh.ARRAY_VERTEX] = ov
+			na[Mesh.ARRAY_NORMAL] = on
+			na[Mesh.ARRAY_TEX_UV] = ouv
+			out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, na)
+			out.surface_set_material(out.get_surface_count() - 1, mi.mesh.surface_get_material(si))
+		if rim.size() >= 3 and out.get_surface_count() > 0:
+			# The underside: the cut's outline (its hull, seen from below), both ways round.
+			var flat := PackedVector2Array()
+			var cap_uv: Vector2 = rim[0][1]
+			var front := -INF
+			for r: Array in rim:
+				var w: Vector3 = r[0]
+				flat.append(Vector2(w.x, w.z))
+				if w.z > front:
+					front = w.z
+					cap_uv = r[1]
+			var hull := Geometry2D.convex_hull(flat)
+			if hull.size() >= 4:
+				var cv := PackedVector3Array()
+				var cn := PackedVector3Array()
+				var cu := PackedVector2Array()
+				var down := (xf.basis.transposed() * Vector3.DOWN).normalized()
+				for j in range(1, hull.size() - 2):
+					for tri: Array in [[0, j, j + 1], [0, j + 1, j]]:
+						for h: int in tri:
+							cv.append(back * Vector3(hull[h].x, cut, hull[h].y))
+							cn.append(down)
+							cu.append(cap_uv)
+				var ca := []
+				ca.resize(Mesh.ARRAY_MAX)
+				ca[Mesh.ARRAY_VERTEX] = cv
+				ca[Mesh.ARRAY_NORMAL] = cn
+				ca[Mesh.ARRAY_TEX_UV] = cu
+				out.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, ca)
+				out.surface_set_material(out.get_surface_count() - 1, out.surface_get_material(0))
+		var keep_override := mi.material_override
+		mi.mesh = out
+		mi.material_override = keep_override
 
 
 ## A TORCH BURNS with Golemheim's 3D metaball fire (Parker 11-12: "for torches and fires,

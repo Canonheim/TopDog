@@ -449,6 +449,11 @@ a2_dress.dress(A)
 A.decos[:] = [d for d in A.decos if d["model"] not in ("aguas_barrel_cove", "aguas_charco_landing_east")]
 # (the quality run's clean-up: the worst 30's plain beam ends, nothing needs them)
 A.drop_decos({"aguas_beam_end", "aguas_beam_end_long"})
+# (11-18, La Esclusa's floor maker: the pier and the east wall were made down to y 86, the old mine's roof; since note
+# 146 their last 3.4 m hung into the lock under them and hid its top rung. Cut level at their solids' foot, y 89.4.)
+for _d in A.decos:
+    if _d["model"] in ("aguas_borde_pier", "aguas_east_wall"):
+        _d["cut_below"] = 89.4
 # (a2_dress item 8: the grey wheel behind La Rueda turns with it on the same axle; each gate's
 # leaf rides with its ram)
 A.follow("aguas_mill_wheel_grey", WHEEL, "rueda", "spin")

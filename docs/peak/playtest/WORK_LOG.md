@@ -2863,6 +2863,14 @@ in. Nothing played by a person.
   are drawn by their models and are not touched.
 - Frames: `after/cut_panels_1_10_before_after.jpg` (1.10 and 1.13, before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: a2's pier and east wall out of La Esclusa's lock
+
+- La Esclusa's floor maker: `aguas_borde_pier` and `aguas_east_wall` were made down to y 86 (the old mine's roof); since
+  note 146 their last 3.4 m hung into the lock and hid its top. A deco can now be cut level (`cut_below`, a height: the
+  model's mesh is cut there and closed with a flat underside); a2.py cuts the two at their solids' foot, y 89.4, after
+  the dress (a2_dress unchanged). The lock's top, its back wall and its last rung read clear.
+- Frames: `after/locktop_cut_before_after.jpg` (watch scene `locktop`). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

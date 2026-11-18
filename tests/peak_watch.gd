@@ -3264,6 +3264,17 @@ func _w_q8flap(a: Array) -> void:
 	await shot("q8_1_13_rising_" + tag)
 
 
+## La Esclusa's top: the lock's last rung and a2's pier and east wall over it, close and wide. locktop:TAG
+func _w_locktop(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.13")
+	await secs(7.0)
+	for row in [[Vector2(-236.0, 86.5), 7.0, "close"], [Vector2(-236.0, 85.0), 14.0, "wide"]]:
+		look(row[0], float(row[1]))
+		await secs(0.6)
+		await shot("locktop_%s_%s" % [row[2], tag])
+
+
 ## The storm ridge wired: the bolt from behind, a rusted rung swinging down and back, the kites' strings. g10:TAG
 func _w_g10(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""
