@@ -780,7 +780,7 @@ A.deco("esclusa_mass_low", -255.0, 73.0, z=0.0, size=(73.0, 16.4, 2.4), tone="ro
 # the platform's back, dark riveted iron, the pug on its cast foot, the winch with its chain laid down, the back-stay
 # knee into the arcade; the jib snapped at its stub and hanging west behind the falls, a metre over the ladder's top
 # rung. Origin the post's foot. (Its lantern, aguas_works_lantern, hangs on the hook at (-293.25, 81.8): a later model.)
-A.deco("esclusa_crane", -292.5, 79.4, z=-1.8, size=(6.65, 3.6, 1.26), tone="back2")
+A.deco("esclusa_crane", -292.5, 79.4, z=-1.8, size=(7.6, 3.6, 1.38), tone="back2")  # (the sheave slid 0.95 m along the girder into the falls' body, q15)
 A.card([(-308.0, 72.0), (-221.0, 72.0), (-221.0, 90.5), (-308.0, 90.5)], z=-18.0, tone="back3", edge=False)  # its own dark, behind the cavern's painted far wall (MINE_PASS F-C6)
 
 if __name__ == "__main__":
