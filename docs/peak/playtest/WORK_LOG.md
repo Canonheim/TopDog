@@ -3074,6 +3074,19 @@ in. Nothing played by a person.
   wall's relief (-4.40), which put its front in the next (-4.38); two passes left it there. The parting now runs till
   no hit is left, four passes at most (`sweeps.resolve`); the culvert ends at z -2.795, clear of both. a2 ZFIGHT 0.
 
+## 11-18: 1.13's gate wheel and gauge float hooked up (MINE_PASS F22, F23)
+
+- The lock's zone (a1.py) carries `wheel` (hub (-246.6, 82.1), z -1.6, 1.4 m across, on `compuerta`'s travel to z -3,
+  1.5 turns) and `gauge` (x -230.8, z -1.75). peak_zones `_lock_vis` makes `Area_a1/GateWheel` (origin the hub; turned
+  clockwise 1.5 turns as the flap opens, back as it shuts, on the flap's own eased travel) and `Area_a1/GaugeFloat`
+  (origin its waterline; set to the lock's level each tick). Each loads `esclusa_gate_wheel` / `esclusa_gauge_float`
+  as its child when landed; till then a stand-in (an iron rim, two spokes and a brass boss; a pale float). The gauge's
+  board is a plain deco, for its maker.
+- In the game: low (t 13.5) the wheel at 0 turns, the float at 78.42; rising, the flap open (t 3), 1.50 turns, 82.77;
+  full (t 8), 0 turns, 88.50.
+- Frames: `after/hooks13_wheel_float.jpg` (watch scene `hooks13`: the lock's camera, the wheel and the gauge, low |
+  rising | full). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

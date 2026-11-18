@@ -297,6 +297,13 @@ func _tick_locks() -> void:
 			(vis.get_meta("top") as Node3D).position.y = level
 			(vis.get_meta("mat") as ShaderMaterial).set_shader_parameter("surface_y", level + Peak.ORIGIN.y)
 			(vis.get_meta("sea") as DelMarSea).water_y = level + Peak.ORIGIN.y
+			if vis.has_meta("float"):
+				(vis.get_meta("float") as Node3D).position.y = level
+			if vis.has_meta("wheel"):
+				var wd: Dictionary = z.lock.wheel
+				var m: Dictionary = peak.things.movers.get(str(wd.mover), {})
+				var f := clampf(float(m.get("zoff", 0.0)) / float(wd.get("travel", -3.0)), 0.0, 1.0)  # (the flap's travel, already eased)
+				(vis.get_meta("wheel") as Node3D).rotation.z = -f * float(wd.get("turns", 1.5)) * TAU  # (clockwise as it opens)
 
 
 ## A FALL INTO A LOCK ENDS AT ITS SURFACE (the reviewer's q26, 11-18: the fill's white sheet was drawn on down through
@@ -436,6 +443,50 @@ func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 			root.add_child(LuchaKit.box(Vector3(0.5, 0.25, 0.3), Color("#3A3532"), Vector3(at.x, at.y + 0.12, -1.5)))
 		root.add_child(pivot)
 		n.set_meta("lever", pivot)
+	var lk: Dictionary = z.lock
+	if lk.has("wheel"):
+		# THE GATE WHEEL (MINE_PASS F22): turned on the flap's own travel (_tick_locks). Its model's origin is the hub.
+		var wd: Dictionary = lk.wheel
+		var hub := Node3D.new()
+		hub.name = "GateWheel"
+		var wat := Peak.v2(wd.at)
+		hub.position = Vector3(wat.x, wat.y, float(wd.z))
+		var wheel: Node3D = Peak.kit("esclusa_gate_wheel")
+		if wheel != null:
+			hub.add_child(wheel)
+		else:
+			# (a stand-in: an iron rim of twelve lengths, two spokes across, the boss)
+			var r := float(wd.get("d", 1.4)) * 0.5
+			var iron := Color("#3A3532")
+			for k in 12:
+				var ang := TAU * k / 12.0
+				var seg := LuchaKit.box(Vector3(TAU * r / 12.0 + 0.02, 0.07, 0.07), iron, Vector3(cos(ang) * r, sin(ang) * r, 0))
+				seg.rotation.z = ang + PI * 0.5
+				seg.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				hub.add_child(seg)
+			for ang: float in [0.0, PI * 0.5]:
+				var spoke := LuchaKit.box(Vector3(r * 2.0, 0.05, 0.05), iron, Vector3.ZERO)
+				spoke.rotation.z = ang
+				spoke.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				hub.add_child(spoke)
+			hub.add_child(LuchaKit.ball(0.09, Color("#C9A24A"), Vector3(0, 0, 0.04)))
+		root.add_child(hub)
+		n.set_meta("wheel", hub)
+	if lk.has("gauge"):
+		# THE GAUGE BOARD'S FLOAT (MINE_PASS F23): it rides the water (_tick_locks). Its model's origin is its waterline.
+		var gd: Dictionary = lk.gauge
+		var fl := Node3D.new()
+		fl.name = "GaugeFloat"
+		fl.position = Vector3(float(gd.x), float(z.surface), float(gd.z))
+		var made_f: Node3D = Peak.kit("esclusa_gauge_float")
+		if made_f != null:
+			fl.add_child(made_f)
+		else:
+			var cork := LuchaKit.box(Vector3(0.7, 0.22, 0.18), Color("#C9B48E"), Vector3(0, 0.03, 0))  # (a stand-in: a pale float, a third under)
+			cork.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			fl.add_child(cork)
+		root.add_child(fl)
+		n.set_meta("float", fl)
 	return n
 
 

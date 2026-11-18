@@ -3330,6 +3330,26 @@ func _w_gate13(a: Array) -> void:
 			await shot("gate13_%s_%s_%s" % [row[2], when[1], tag])
 
 
+## 1.13's gate wheel and gauge float (MINE_PASS F22, F23): low (lock t 13.5), the flap open mid-rise (t 3) and full (t 8),
+## the lock's camera, the wheel close and the gauge close; the wheel's turn and the float's height printed. hooks13:TAG
+func _w_hooks13(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.13")
+	await secs(7.0)
+	var area: Node = pk.get_node_or_null("Area_a1")
+	for when in [[13.5, "low"], [3.0, "rising"], [8.0, "full"]]:
+		while absf(fposmod(pk.clock, 14.0) - float(when[0])) > 0.05:
+			await ticks(1)
+		var wh: Node3D = area.get_node_or_null("GateWheel") if area != null else null
+		var fl: Node3D = area.get_node_or_null("GaugeFloat") if area != null else null
+		print("WATCH hooks13 %s: wheel %s turned %.2f turns; float %s at y %.2f" % [when[1], wh != null, (-wh.rotation.z / TAU) if wh != null else 0.0,
+			fl != null, (fl.position.y if fl != null else 0.0)])
+		for row in [[Vector2(-238.0, 82.0), 7.5, "cam"], [Vector2(-246.6, 82.1), 1.4, "wheel"], [Vector2(-230.8, 82.3), 4.0, "gauge"]]:
+			look(row[0], float(row[1]))
+			await ticks(2)
+			await shot("hooks13_%s_%s_%s" % [row[2], when[1], tag])
+
+
 ## a2's two mists over La Esclusa (the reviewer's q27): 1.12's flume camera and 1.13's lock camera, and the roof over
 ## each. mist27:TAG
 func _w_mist27(a: Array) -> void:
