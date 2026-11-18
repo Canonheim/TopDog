@@ -483,11 +483,9 @@ def dress(A):
     A.deco("mine_bucket_side", -194.6, DECK_Y, z=-2.0, size=(1.0, 0.9, 0.9), tone="back")
     stand(-196.85, DECK_Y + 1.46, -2.0)  # on the top crate
     drawn("mine_trimmer_end", -199.7, DECK_Y - 0.3, (0.25, 0.3, 0.02), tone="wood")  # the hatch's finished edge
-    # Foreground: the lift frame's front post in four broken lengths, in front of the pillar's
-    # rock beside the rungs (also 1.4's), stopping below the station. (The third length is
-    # 5.5 m: the long stock stretched by 1.45, the one stretch past a quarter.)
-    for y0, y1 in ((6.3, 9.2), (10.6, 13.6), (15.0, 20.5), (22.0, 25.6)):
-        front_post(-202.6, y0, y1)
+    # (Foreground: the lift frame's four broken front lengths are out (the reviewer, q8, 11-17:
+    # jagged at both ends, they floated in the air); MINE_PASS group 7 places the foreground
+    # against the finished sets, each length standing on something.)
 
     # ============================================================ 1.6 Vetas de Lodo
     # (The seams, the two old workings as real stopes with their six short props, the moss
@@ -546,9 +544,7 @@ def dress(A):
     # stub's end over the crest, down the drop, round the dip and up to the lip, with the
     # snapped boards and bent rail ends of its broken stop at the lip (a skin of the road solid).
     A.deco("mine_cart_road", -218.1, 27.6, z=0.0, size=(10.1, 12.4, 1.3), tone="wood", skin=True)
-    # Foreground: the front strut's foot, in two lengths, in front of the pillar's rock.
-    front_post(-208.45, 33.2, 35.6)
-    front_post(-208.45, 36.6, 38.2)
+    # (Foreground: the front strut's two floating lengths are out, as at 1.5; group 7.)
 
     # ============================================================ 1.8 Las Vigas (note 103)
     # (The chain rib, the back beam and the hanger posts are 1.7's, above.)
