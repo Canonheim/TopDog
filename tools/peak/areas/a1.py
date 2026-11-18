@@ -146,7 +146,7 @@ A.effect("mist", (-250.0, -30.0, -230.0, -17.0), density=0.8)
 A.effect("mist", (-240.0, 62.0, -230.5, 90.0), density=0.4)
 
 # The walk of shame: a grip incline with sleepers, from the landing stage up to the gallery.
-A.patch((-175.8, -12.64), (-189.4, -30.1), "rock2", t=0.7)
+A.patch((-175.8, -12.64), (-189.4, -30.1), "rock", t=0.7)
 for y in (-14.8, -17.0, -19.2, -21.4, -23.6, -25.8):
     x = -176.0 - (-12.9 - y) / 1.2833
     A.box(x - 0.25, y + 0.42, 1.1, 0.3, "wood")
@@ -162,9 +162,9 @@ for x in (-228.5, -219.0, -211.0, -194.5):
 # Grip floor from the door; then the floor falls away into black mud. Over it: three low
 # roof beams, four posts standing in the mud, two more beams. Slip and you are in the pit
 # (grip bottom, 4.3 m down); the two posts that stand in it climb back out.
-A.ledge(-148.0, -155.5, -12.6, "rock2", t=0.5)  # (it runs through the door frame to meet A0's floor)
-A.ledge(-165.5, -176.0, -12.6, "rock2", t=0.5)
-A.ledge(-160.0, -162.0, -16.9, "rock2", t=0.5)  # the pit's bottom
+A.ledge(-148.0, -155.5, -12.6, "rock", t=0.5)  # (it runs through the door frame to meet A0's floor)
+A.ledge(-165.5, -176.0, -12.6, "rock", t=0.5)
+A.ledge(-160.0, -162.0, -16.9, "rock", t=0.5)  # the pit's bottom
 BEAM_Y = -10.6
 for x in (-155.4, -156.7, -158.0, -164.6, -165.9):
     A.box(x, BEAM_Y, 0.36, 0.36, "wood")  # roof beams, seen end-on, hung low on posts from the roof
@@ -383,7 +383,7 @@ A.ledge(-237.2, -232.2, 52.25, "wet", t=0.1)  # its underside slick too (Parker'
 _w = A.wheel("polea_grande", WHEEL, 3.0, -3.0, spokes=6, kind="wood", rim=0.18, model="winding_wheel")
 _w["model_scale"] = 6.0 / 3.2  # (the Carpenter's wheel is 3.2 across; this one is 6)
 A.ledge(-230.6, -229.6, 57.4, "plank", t=0.4)  # the porch, half a metre clear of the rim
-A.ledge(-230.0, -218.5, 57.4, "rock2", t=0.5)  # the upper gallery's floor
+A.ledge(-230.0, -218.5, 57.4, "rock", t=0.5)  # the upper gallery's floor
 # The awning: a slick roof over the wheel. Whoever comes off La Cortina lands on it and is
 # slid west off its tip (x -237.8) into the fall, and so to the Sump.
 A.solid([(-229.9, 68.2), (-237.8, 62.22), (-237.8, 61.67), (-229.9, 67.65)], "wet")
@@ -395,7 +395,7 @@ A.challenge("1.9", "La Polea Grande", (-232.6, 52.45), 2, "B", moves=[
 # (y 72). Stubs of broken timber on the two walls; the route changes wall three times,
 # each time a 2.3 m lunge across the middle, and the middle is where the rocks come down
 # (two sources on one written rhythm; they leave by the broken board at the beam's foot).
-A.solid([(-223.2, 57.4), (-218.4, 57.4), (-218.4, 61.7)], "rock2")  # the rubble slope
+A.solid([(-223.2, 57.4), (-218.4, 57.4), (-218.4, 61.7)], "rock")  # the rubble slope
 A.beam((-222.9, 57.75), (-218.75, 61.75), 0.36, "wood")  # a fallen cap beam lying on it
 STUBS = [("E", 63.0, 0.75), ("E", 64.3, 0.75), ("W", 65.2, 0.75), ("W", 66.5, 0.6), ("W", 67.8, 0.75),
          ("E", 68.7, 0.75), ("E", 70.0, 0.6), ("W", 70.9, 0.75)]
@@ -433,7 +433,7 @@ A.spawner("rock", (-220.2, 76.3), times=_rock_times["B"], loop=_rock_loop, r=0.4
 A.board((-223.25, 57.47), (-224.6, 58.03), p2=(-225.15, 57.93), throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=56.5)
 A.deco("rubble_pile", -224.55, 57.4, z=0.1, size=(1.1, 0.58, 0.36), tone="rock2")  # its prop (the size sets its scale)
 A.effect("dust", (-222.1, 61.0, -218.5, 77.0), density=0.5)
-A.ledge(-230.0, -222.1, 72.0, "rock2", t=0.5)  # the top drift
+A.ledge(-230.0, -222.1, 72.0, "rock", t=0.5)  # the top drift
 A.ledge(-233.2, -229.6, 72.0, "plank", t=0.35)  # its balcony into the throat
 A.challenge("1.10", "El Derrumbe", (-225.5, 57.4), 3, "B", moves=[
     ["reach", [-218.9, 61.4], [-219.25, 63.0]], ["reach", [-219.25, 63.0], [-219.25, 64.3]],

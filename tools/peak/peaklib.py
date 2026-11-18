@@ -102,7 +102,7 @@ _COMMON = {"wood": "#C9903F", "wood2": "#B07A32", "iron": "#B5532A", "root": "#A
 PALETTES = {
     "town": {"rock": "#D9C7A2", "rock2": "#C7A77A", "slick": "#3A2616", "accent": "#D8262E",
              "back": "#C9B48E", "back2": "#B29A72", "back3": "#9C8460", "sky": "#8FD0FF", "sun": 1.25, "amb": "#D9D7DA", "inside": 0.0},
-    "mine": {"rock": "#B98F5E", "rock2": "#A37747", "slick": "#3A2616", "accent": "#E0B040",
+    "mine": {"rock": "#A3B0BA", "rock2": "#A37747", "slick": "#3A2616", "accent": "#E0B040",
              "back": "#4E4A52", "back2": "#3B383F", "back3": "#2A282D", "sky": "#120C08", "sun": 0.34, "amb": "#8F7050", "inside": 1.0},
     "river": {"rock": "#9FB0A8", "rock2": "#86988F", "slick": "#3A2616", "accent": "#4FB7A6", "brick": "#8C7B6C",
               "back": "#3F5A63", "back2": "#2E454D", "back3": "#1F3138", "sky": "#0A1216", "sun": 0.30, "amb": "#5E8690", "inside": 1.0},
