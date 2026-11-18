@@ -1845,7 +1845,10 @@ func _fill_results() -> void:
 			old.queue_free()
 		if i >= order.size():
 			continue
-		var figure := Game.KNIGHT.instantiate() as Node3D
+		# Each finisher in their own look (Parker 11-18: the skin, suit and head on the new climber).
+		var look: Dictionary = Wardrobe.clean(g.roster_entry(int(order[i])).get("appearance", {}))
+		var figure := Wardrobe.model(look).instantiate() as Node3D
+		Wardrobe.apply(figure, look)
 		figure.name = "Finisher"
 		figure.rotation.y = PI
 		figure.scale = Vector3.ONE * Feel.get_k("body_scale") / _podium.scale.x

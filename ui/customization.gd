@@ -54,7 +54,7 @@ func _build() -> void:
 	var banner := LuchaKit.banner("CREATE YOUR CLIMBERS", 1.1 * k)
 	menu.set_header(banner, Vector3(0, 3.2 * k, 0))
 	menu.add_choice("CLIMBER", _climber_names(), Wardrobe.selected, _select_climber)
-	menu.add_choice("HEAD", ["PUG", "SPIRAL"], 0, func(i): _set_choice("head", i))
+	menu.add_choice("HEAD", Wardrobe.HEAD_NAMES, 0, func(i): _set_choice("head", i))
 	menu.add_choice("SKIN", Wardrobe.SKIN_NAMES, 0, func(i): _set_choice("skin", i))
 	menu.add_choice("SPEEDO", Wardrobe.SUIT_NAMES, 0, func(i): _set_choice("speedo", i))
 	menu.add_choice("EFFECT", Wardrobe.EFFECT_NAMES, 0, func(i): _set_choice("effect", Wardrobe.EFFECTS[i]))

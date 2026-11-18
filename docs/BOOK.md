@@ -948,9 +948,20 @@ see how it looks", then "it will have different proportions, that is fine".
   with the feet set 0.54 m apart (the knight's were 0.18 m). The arm span and arm length are
   about the same. `shoulder_flare` and `shoulder_drop` are 0: its shoulders are modelled wide.
   The podium and wardrobe poses read the joints through `Layout.model_at()`.
-- **The wardrobe waits:** HEAD (pug, spiral), SKIN and SPEEDO were made for Defaultio's plain
-  white pieces (whole pieces painted one colour). On the new climber they change nothing yet;
-  it wears its own colours. Effects still work.
+- **The wardrobe, tuned for him** (Parker: "yes make the skin customization tuned for this
+  model. There will be may more heads coming in for him in the future, so you can use the place
+  holder pug and spiral heads for now too, those are also place holder though"):
+  - SKIN recolours his skin and its darker muscle lines; SPEEDO his trunks and their shade. Each
+    shade keeps the model's own ratio to its colour; his hair and moustache keep their browns.
+    `Wardrobe` sorts each piece's vertices once by the atlas colour under them (his four:
+    `CLIMBER_SKIN`, `_SKIN_SHADE`, `_SUIT`, `_SUIT_SHADE`) and makes one recoloured copy of the
+    mesh per look, shared by everyone wearing it. Pieces, poses and collision never change.
+  - HEAD is `HEAD_NAMES`: MOUSTACHE (his own), then Defaultio's PUG and SPIRAL heads worn on his
+    neck as placeholders, in their own colours. A new head is a glb with a `Head` piece modelled
+    on his neck (its top at 1.70 m), added to `HEAD_NAMES` and `HEAD_SCENES`.
+  - The podium shows each finisher in their own look.
+  - Saved climbers keep their numbers, so a saved PUG head (0) is now his own head, and a saved
+    SPIRAL (1) is the pug.
 - **A pry bug found on the way:** the pry check turned each contact normal by the defending
   piece's own rotation, but Jolt hands it over in world space already, so a push from a turned
   hand was misread. It reads the normal as given now.

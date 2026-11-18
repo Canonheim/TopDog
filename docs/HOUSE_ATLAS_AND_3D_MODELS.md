@@ -205,7 +205,7 @@ The ink reads only opaque depth and normals, so anything drawn in the transparen
 
 The climber everyone wears is **the new climber**, `models/character_cufinalt.glb` (`Game.KNIGHT`, `Wardrobe.CLIMBER`; Parker
 2026-11-18: it replaces Defaultio, "it will have different proportions, that is fine"), in its own atlas colours. Defaultio
-(`models/defaultio.glb`, plain white, the wardrobe's pug and spiral heads and paints), the Skeleton Knight and the Metal Knight
+(`models/defaultio.glb`, whose pug head and the spiral dog's are the wardrobe's placeholder heads on the new climber), the Skeleton Knight and the Metal Knight
 (`models/skeleton_knight.glb`, `models/metal_knight.glb`) are kept. All of them are split into **16 pieces with fixed mesh names** (the
 "Defaultio" contract):
 
