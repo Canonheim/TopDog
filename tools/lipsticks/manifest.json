@@ -1,0 +1,74 @@
+[
+  {
+    "variant": 0,
+    "triangles": 284,
+    "family": "red",
+    "base": "black"
+  },
+  {
+    "variant": 1,
+    "triangles": 284,
+    "family": "red",
+    "base": "gold"
+  },
+  {
+    "variant": 2,
+    "triangles": 284,
+    "family": "red",
+    "base": "silver"
+  },
+  {
+    "variant": 3,
+    "triangles": 284,
+    "family": "red",
+    "base": "black"
+  },
+  {
+    "variant": 4,
+    "triangles": 284,
+    "family": "pink",
+    "base": "gold"
+  },
+  {
+    "variant": 5,
+    "triangles": 284,
+    "family": "pink",
+    "base": "silver"
+  },
+  {
+    "variant": 6,
+    "triangles": 284,
+    "family": "pink",
+    "base": "black"
+  },
+  {
+    "variant": 7,
+    "triangles": 284,
+    "family": "pink",
+    "base": "gold"
+  },
+  {
+    "variant": 8,
+    "triangles": 284,
+    "family": "nude",
+    "base": "silver"
+  },
+  {
+    "variant": 9,
+    "triangles": 284,
+    "family": "nude",
+    "base": "black"
+  },
+  {
+    "variant": 10,
+    "triangles": 284,
+    "family": "nude",
+    "base": "gold"
+  },
+  {
+    "variant": 11,
+    "triangles": 284,
+    "family": "nude",
+    "base": "silver"
+  }
+]

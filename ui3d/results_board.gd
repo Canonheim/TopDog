@@ -41,6 +41,7 @@ const FLIP_BUSY := 0.97  # the whole ripple, lift to land: the roll waits it out
 
 var lucha: Node = null  # LuchaUI (half_w, the camera numbers)
 var _hang: Node3D  # the pivot on the straps' line
+var xp_panel: Node3D
 var _space: Node3D  # the board's own space (its centre), under the pivot
 var _board: Node3D
 var _roll: Node3D
@@ -526,12 +527,25 @@ func open() -> void:
 	_fit_screen()
 
 
+## Share the actual hanging parent so entrance and sway cannot drift by a frame.
+func attach_xp(panel: Node3D) -> void:
+	xp_panel = panel
+	if LuchaUI.COMPACT_RESULTS_XP:
+		_space.add_child(panel)
+		panel.position = Vector3(3.28, -.50, .04)
+	else:
+		add_child(panel)
+		panel.position = Vector3(3.35, -1.65, .3)
+
+
 ## Hung by its left rim at every window shape; narrow windows take it at 0.9.
 func _fit_screen() -> void:
 	if lucha == null or cam == null:
 		return
 	# In the UI's own space (narrow windows shrink the whole UI: LuchaUI._tick_narrow).
 	var half_w: float = lucha.virtual_half_w
+	if xp_panel != null and not LuchaUI.COMPACT_RESULTS_XP:
+		xp_panel.position.x = half_w + .95
 	set_meta("ui_code_home", true)
 	set_meta("ui_home_p", Vector3((-half_w + 0.30 + 2.10) * LuchaUI.UI_SCALE, 0, -LuchaUI.MENU_DIST))
 	set_meta("ui_home_s", Vector3.ONE * LuchaUI.UI_SCALE)

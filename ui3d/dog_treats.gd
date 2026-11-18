@@ -22,7 +22,8 @@ static func _disc(st: SurfaceTool, at: Vector3, radius: float, color: Color, sid
 		_face(st,pts,color)
 
 static func treat_mesh(kind: int) -> ArrayMesh:
-	while meshes.size() < TYPES.size(): meshes.append(_build(meshes.size()))
+	if meshes.is_empty(): meshes.resize(TYPES.size())
+	if meshes[kind] == null: meshes[kind] = _build(kind)
 	return meshes[kind]
 
 static func _build(kind: int) -> ArrayMesh:

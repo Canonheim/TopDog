@@ -11,6 +11,12 @@ static func bill_mesh(color_index: int, form: int) -> ArrayMesh:
 	var key := color_index * 3 + form
 	if meshes.has(key):
 		return meshes[key]
+	# BAKED_LOOKUP_BEGIN
+	var baked := preload("res://ui3d/effect_mesh_cache.gd").get_mesh("bills",key)
+	if baked != null:
+		meshes[key] = baked
+		return baked
+	# BAKED_LOOKUP_END
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var base: Color = COLORS[color_index]

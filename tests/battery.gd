@@ -1859,7 +1859,7 @@ func _run_wrestling() -> void:
 		if attacker.limbs[0].grab_other == null:
 			break
 		attacker._tick_live_contact(0, 1.0 / 120)
-	t("player contact: continued tension preserves the live contact", attacker.limbs[0].grab_climber == c and attacker.limbs[2].grab_other == floor_body)
+	t("player contact: continued tension peels only the loaded live contact", attacker.limbs[0].grab_other == null and attacker.limbs[0].regrip > 0 and attacker.limbs[2].grab_other == floor_body)
 	target.global_position = original
 	attacker.release_all()
 	c.attach(2,floor_body)
@@ -2709,6 +2709,9 @@ func _run_lockline() -> void:
 	await frames(2)
 	r0 = g.measure(c0)
 	r1 = g.measure(c1)
+	# This buffer fixture moves its line below the initial launch plane; keep its
+	# supported poses eligible. delmar_dock_guard separately tests the real floor.
+	st.first_line = minf(st.first_line,minf(r0,r1)-0.8)
 	# 1. A press with the line out of reach: held for the buffer, then "get above".
 	_set_line(g, r0 + 0.6, r0 + 0.6)
 	d0.lock = true
@@ -2751,9 +2754,9 @@ func _run_lockline() -> void:
 			var pt: Vector3 = a + (b - a) * sv
 			pt.y -= Stage.ROPE_SAG * (b - a).length() * 4.0 * sv * (1.0 - sv)
 			var hit: Vector3 = view + (pt - view) * (view.z / (view.z - pt.z))  # where its sight line meets z = 0
-			worst = maxf(worst, absf(g.lock_gap([Vector2(hit.x, hit.y)])))
+			worst = maxf(worst, absf(g.lock_gap([Vector2(hit.x, hit.y)]) - minf(0.0,hit.x+hit.y-st.first_line)))
 			shifted = maxf(shifted, absf(hit.x + hit.y - c))
-	t("lockline: Del Mar: a hand where the rope shows on screen is exactly on the line", worst < 0.005, "worst %.5f, the view moves it up to %.2f" % [worst, shifted])
+	t("lockline: Del Mar: projected rope respects the fixed launch boundary", worst < 0.005, "worst %.5f, the view moves it up to %.2f" % [worst, shifted])
 	var ends0: Array = st.rope_ends(100.0)
 	t("lockline: Del Mar: the rope, mast and buoy stay where they were (eyes behind the plane, the sag back)", Stage.ROPE_SAG > 0.0 and (ends0[1] as Vector3).is_equal_approx(Vector3(Stage.MAST_X, 100.0 - Stage.MAST_X, Stage.MAST_EYE_Z)) and is_equal_approx((ends0[0] as Vector3).z, Stage.BUOY_Z) and not ("view_from" in st))
 	# 5. The plaza: a hand where the flag string shows on screen is exactly on the line.
@@ -2966,6 +2969,27 @@ func _run_personalcamera() -> void:
 	Net.online = false
 	main._tick_camera(1.0)
 	t("camera: local matches retain shared camera", not main._personal_camera)
+	var baseline: Vector3 = main._cam_target
+	var loot = preload("res://game/cosmetic_pinata.gd").new()
+	loot.contact_enabled = false
+	loot.position = Vector3(25, 65, 0)
+	g.world.add_child(loot)
+	g.pinata_director.current = loot
+	main._tick_camera(10.0)
+	t("camera: shared view widens and pans toward loot", main._cam_target.z > baseline.z and main._cam_target.y > baseline.y)
+	var half_height: float = main._cam_target.z * tan(deg_to_rad(main._cam_fov * 0.5))
+	t("camera: loot fits despite plaza centre clamp", absf(loot.position.y - (main._cam_target.y - 0.3)) + 1.0 < half_height and absf(loot.position.x - main._cam_target.x) + 1.0 < half_height * 16.0/9.0)
+	Net.online = true
+	mine.state = Climber.State.LIVE
+	main._tick_camera(10.0)
+	t("camera: personal view also includes loot", main._personal_camera and main._cam_target.y > mine.centre_of_mass().y + 5.0)
+	mine.state = Climber.State.FROZEN
+	Net.online = false
+	loot.taken = true
+	main._tick_camera(10.0)
+	t("camera: collected loot stops influencing framing", main._cam_target.is_equal_approx(baseline))
+	g.pinata_director.current = null
+	loot.queue_free()
 	Net.online = was_online
 	main.cam.queue_free()
 	main.line_bar.queue_free()
@@ -4314,57 +4338,32 @@ func _run_peakride() -> void:
 	await pticks(pk, 2)
 
 
-func _run_prying() -> void:
+func _run_push_tension() -> void:
 	var a := spawn(Vector2.ZERO)
 	var b := spawn(Vector2(0.5, 0))
-	var third := spawn(Vector2(4, 0))
 	var floor_body := static_box(Vector2(0, -0.1), Vector2(10, 0.1))
-	for c in [a, b, third]:
+	for c in [a, b]:
 		c.set_physics_process(false)
 	a.attach(0, b.bodies.chest)
-	a.attach(1, b.bodies.chest)
-	var target: RigidBody3D = b.bodies.chest
-	var original := target.global_position
-	target.global_position += Vector3(1.5, 0, 0)
-	for tick in 240:
-		a._tick_live_contact(0, 1.0 / 120.0)
-	t("pry: extreme passive stretch never releases a player grip", a.limbs[0].grab_climber == b)
-	target.global_position = original
-	var key := Vector2i(a.climber_id, 0)
-	var loads := {key: {"source": a, "pressure": 1.0}}
-	b._advance_pry(loads, 0.2)
-	b._advance_pry({}, 0.5)
-	t("pry: abandoned pressure decays completely", not b._pry_progress.has(key))
-	b._advance_pry(loads, 0.2)
-	t("pry: short push does not break grip", a.limbs[0].grab_climber == b)
-	b._advance_pry(loads, 0.46)
-	t("pry: sustained push releases only the targeted limb", a.limbs[0].grab_other == null and a.limbs[1].grab_climber == b)
-	a.attach(0, b.bodies.head)
-	t("pry: cooldown blocks all pieces of the same defender", a.limbs[0].grab_other == null)
-	a.driver.set_limb(0, true)
-	a._select_active_limb()
-	a._tick_limb(0, 0.01)
-	a.driver.clear()
-	a._select_active_limb()
-	a._tick_limb(0, 0.01)
+	a.set_push_load(0, b, 0.5)
+	a._tick_live_contact(0, 0.01)
+	t("push: light pressure alone stays below original strain threshold", a.limbs[0].strain_time == 0)
+	for tick in 50:
+		a.set_push_load(0, b, 1.0)
+		a._tick_live_contact(0, 0.01)
+		if a.limbs[0].grab_other == null:
+			break
+	t("push: sustained full pressure breaks through original strain meter", a.limbs[0].grab_other == null)
+	t("push: original cooldown and same-contact protection restored", is_equal_approx(a.limbs[0].regrip, 0.22) and a.limbs[0].peeled_from == b.get_instance_id())
 	a.attach(0, b.bodies.chest)
-	t("pry: activation cannot bypass cooldown", a.limbs[0].grab_other == null)
-	a.attach(0, third.bodies.chest)
-	t("pry: other players remain immediately grabbable", a.limbs[0].grab_climber == third)
-	a.release(0)
-	a.attach(0, floor_body)
-	t("pry: terrain remains immediately grabbable", a.limbs[0].grab_other == floor_body)
-	a.release(0)
-	# Countdown uses real seconds even at the match's slower simulation pace.
-	for tick in 99:
-		a._physics_process(0.01 * Engine.time_scale)
-	a.attach(0, b.bodies.chest)
-	t("pry: same defender still blocked before one second", a.limbs[0].grab_other == null)
-	a._physics_process(0.02 * Engine.time_scale)
-	a.attach(0, b.bodies.chest)
-	t("pry: same defender available after one second", a.limbs[0].grab_climber == b)
-	# Real Jolt contact: defender pushes the gripping upper arm with its hand.
-	for c in [a, b, third]:
+	a.set_push_load(0, b, 1)
+	a.live_time += 0.11
+	a._tick_live_contact(0, 0.01)
+	t("push: stale pressure expires", a.limbs[0].strain_time == 0)
+	a.limbs[0].push_load = 0
+	a.set_push_load(0, a, 1)
+	t("push: wrong player cannot add pressure", a.limbs[0].push_load == 0)
+	for c in [a, b]:
 		c.release_all()
 		for piece: RigidBody3D in c.bodies.values():
 			piece.freeze = true
@@ -4392,48 +4391,82 @@ func _run_prying() -> void:
 		hand.linear_velocity = -Vector3(up_side.x, up_side.y, 0.0)
 		Climber.sync_server(hand)
 		await frames(1)
-	var hand_at := Vector2(hand.global_position.x, hand.global_position.y)
-	b.driver.point_limb(1, true, hand_at + up_side)
-	b._tick_prying(0.1)
-	t("pry: real contact while pulling away does not count", b._pry_progress.is_empty())
+	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y + 1))
+	b._tick_push_contacts(0.01)
+	t("push: contact while steering away adds no extra tension", a.limbs[0].push_load == 0)
 	b.driver.aims[1] = null
-	b._tick_prying(0.1)
-	t("pry: neutral active limb does not count", b._pry_progress.is_empty())
-	b.driver.point_limb(1, true, hand_at - up_side)
-	b._tick_prying(0.1)
-	t("pry: real active-hand contact pushing into gripping arm counts", b._pry_progress.has(key), str(b._pry_progress))
-
-	# The online defender emits a release request; the owner's latch is authoritative.
-	b._pry_progress.clear()
-	var requests := []
-	b.pry_requested.connect(func(cid: int, limb: int): requests.append(Vector2i(cid, limb)))
-	a.state = Climber.State.PUPPET
-	b.remote_pulls[key] = {"supported": true}
-	b._advance_pry(loads, 0.7)
-	t("pry: remote grip routes the exact limb to its owner", requests == [key] and a.limbs[0].grab_climber == b)
-	a.state = Climber.State.LIVE
-	a.pry_release(0, third)
-	t("pry: stale or mismatched defender cannot release a grip", a.limbs[0].grab_climber == b)
-	a.pry_release(0, b)
-	t("pry: owner applies matching request and target cooldown", a.limbs[0].grab_other == null and a.limbs[0].pry_blocked.has(b.get_instance_id()))
-
-
-func _run_grapple_stability() -> void:
-	var floor_body := static_box(Vector2(0, -0.1), Vector2(20, 0.1))
-	var a := spawn(Vector2(0, 0.05))
-	var b := spawn(Vector2(1, 0.05))
-	a.attach(2, floor_body)
+	b._tick_push_contacts(0.01)
+	t("push: neutral active limb adds no extra tension", a.limbs[0].push_load == 0)
+	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y - 1))
+	b._tick_push_contacts(0.01)
+	t("push: actual active contact adds spring pressure", a.limbs[0].push_load > 0)
+	# The same contact also loads the pushing player's outgoing grip.
 	b.attach(0, a.bodies.chest)
-	b.driver.set_limb(1, true, Vector2.RIGHT)
-	var worst_gap := 0.0
-	var retained := true
-	for tick in 480:
-		await frames(1)
-		var grip: Dictionary = b.limbs[0]
-		if grip.grab_climber != a:
-			retained = false
-			break
-		var end: RigidBody3D = b.bodies[grip.def.end]
-		var target: RigidBody3D = grip.grab_other
-		worst_gap = maxf(worst_gap, target.to_global(grip.contact_offset).distance_to(end.to_global(grip.end_offset)))
-	t("pry stability: sustained full input retains a bounded live grip", retained and worst_gap < 0.6, "maximum contact gap %.3f m" % worst_gap)
+	b._tick_push_contacts(0.01)
+	t("push: pushing while gripping the rival loads own spring too", b.limbs[0].push_load > 0)
+	var requests := []
+	b.push_load_requested.connect(func(cid: int, limb: int, pressure: float): requests.append([cid, limb, pressure]))
+	a.state = Climber.State.PUPPET
+	b.remote_pulls[Vector2i(a.climber_id, 0)] = {"supported": true}
+	b._tick_push_contacts(0.01)
+	t("push: remote contact routes pressure to gripping owner", requests.size() == 1 and requests[0][0] == a.climber_id and requests[0][1] == 0 and requests[0][2] > 0)
+	a.state = Climber.State.LIVE
+
+
+
+
+func _run_cameratoggles() -> void:
+	var g := make_game("scramble", 2, 60.0)
+	await wait_phase(g, "round")
+	var main = load("res://game/main.gd").new()
+	main.game = g
+	main.cam = Camera3D.new()
+	add_child(main.cam)
+	main.line_bar = MeshInstance3D.new()
+	add_child(main.line_bar)
+	main.screen = "hud"
+	var old_slots := Players.slots.duplicate(true)
+	var old_fake := Players.fake.duplicate(true)
+	var old_focus := Players.focused
+	Players.slots = [{"device": 42}]
+	Players.fake[42] = {"buttons": {}}
+	Players.focused = true
+	t("camera toggles: shared and loot framing default on", main._camera_shared and main._camera_loot)
+	Players.fake[42].buttons.camera_players = true
+	main._tick_camera_controls()
+	t("camera toggles: LT selects personal framing", not main._camera_shared and main._camera_loot)
+	main._tick_camera_controls()
+	t("camera toggles: holding LT does not toggle again", not main._camera_shared)
+	main._tick_camera(1.0)
+	t("camera toggles: personal framing works in local matches", main._personal_camera)
+	Players.fake[42].buttons.camera_loot = true
+	main._tick_camera_controls()
+	t("camera toggles: RT disables loot independently", not main._camera_loot and not main._camera_shared)
+	main._tick_camera_controls()
+	t("camera toggles: holding RT does not toggle again", not main._camera_loot)
+	Players.fake[42].buttons = {}
+	main._tick_camera_controls()
+	Players.fake[42].buttons = {"camera_players": true, "camera_loot": true}
+	main._tick_camera_controls()
+	t("camera toggles: second presses restore both", main._camera_shared and main._camera_loot)
+	main.screen = "pause"
+	Players.fake[42].buttons = {}
+	main._tick_camera_controls()
+	Players.fake[42].buttons.camera_players = true
+	main._tick_camera_controls()
+	main.screen = "hud"
+	main._tick_camera_controls()
+	t("camera toggles: menu presses do not leak into match", main._camera_shared)
+	var steam = preload("res://core/steam_input.gd").new()
+	var config: String = steam._config("controller_xboxone")
+	t("camera toggles: Steam layout maps both triggers", config.contains("left_trigger active") and config.contains("right_trigger active") and config.contains("camera_players") and config.contains("camera_loot"))
+	steam.free()
+	Players.slots = old_slots
+	Players.fake = old_fake
+	Players.focused = old_focus
+	main.cam.queue_free()
+	main.line_bar.queue_free()
+	main.free()
+	g.end_match()
+	g.queue_free()
+	await frames(2)

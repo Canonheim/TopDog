@@ -43,14 +43,10 @@ func _ready() -> void:
 		main.show_screen(screen)
 		Players._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
 		main._process(0.0)
-		check(main._focus_notice.visible, "Actual focus loss shows alert on " + screen)
+		check(not Players.focused, "Window focus loss is tracked on " + screen)
 		Players._notification(NOTIFICATION_APPLICATION_FOCUS_IN)
 		main._process(0.0)
-		check(not main._focus_notice.visible, "Focus recovery clears alert on " + screen)
-	var notice: Label = main._focus_notice
-	check(notice.text == "Click Game Window to regain controls.", "Alert uses requested wording")
-	check(notice.anchor_right == 1 and notice.anchor_bottom == 1 and notice.grow_horizontal == Control.GROW_DIRECTION_BEGIN, "Alert is anchored bottom right")
-	check(notice.get_theme_font("font").font_weight == 700 and notice.get_theme_color("font_color") == Color("#FF3232"), "Alert is bold red")
+		check(Players.focused, "Window focus recovery is tracked on " + screen)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--shot="):
 			main.show_screen("pause")

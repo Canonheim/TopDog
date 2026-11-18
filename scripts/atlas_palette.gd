@@ -10,11 +10,15 @@ static func swatch(color: Color) -> Dictionary:
 		return _matches[key]
 	if _cells.is_empty():
 		var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string("res://palette/house_atlas_map.json"))
-		var image := CelPass.ATLAS.get_image()
+		# The atlas metadata stores these exact sRGB bytes (audited against the
+		# PNG). Avoid decoding/readback of the 2048-square texture just to read
+		# 364 named texels. Preserve original order, Color8 precision and UVs.
+		var size := float(data["size"])
 		for cell in data.cells.values():
 			var x := int(cell.col) * 32 + 16
 			var y := int(cell.row) * 32 + 16
-			_cells.append({"color": image.get_pixel(x, y), "uv": Vector2((x + 0.5) / image.get_width(), (y + 0.5) / image.get_height())})
+			var rgb: Array = cell.srgb
+			_cells.append({"color": Color8(rgb[0],rgb[1],rgb[2]), "uv": Vector2((x + 0.5) / size, (y + 0.5) / size)})
 	var closest: Dictionary = _cells[0]
 	var distance := INF
 	for cell: Dictionary in _cells:

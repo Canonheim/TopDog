@@ -1,0 +1,62 @@
+[
+  {
+    "variant": 0,
+    "family": "clipping",
+    "triangles": 52
+  },
+  {
+    "variant": 1,
+    "family": "clipping",
+    "triangles": 52
+  },
+  {
+    "variant": 2,
+    "family": "clipping",
+    "triangles": 52
+  },
+  {
+    "variant": 3,
+    "family": "clipping",
+    "triangles": 52
+  },
+  {
+    "variant": 4,
+    "family": "clipping",
+    "triangles": 52
+  },
+  {
+    "variant": 5,
+    "family": "clipping",
+    "triangles": 52
+  },
+  {
+    "variant": 6,
+    "family": "blade",
+    "triangles": 52
+  },
+  {
+    "variant": 7,
+    "family": "blade",
+    "triangles": 52
+  },
+  {
+    "variant": 8,
+    "family": "blade",
+    "triangles": 52
+  },
+  {
+    "variant": 9,
+    "family": "blade",
+    "triangles": 52
+  },
+  {
+    "variant": 10,
+    "family": "seed_head",
+    "triangles": 428
+  },
+  {
+    "variant": 11,
+    "family": "seed_head",
+    "triangles": 428
+  }
+]

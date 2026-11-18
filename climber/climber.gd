@@ -70,8 +70,7 @@ enum State { LIVE, PUPPET, FROZEN }
 signal froze(climber: Climber)
 signal limb_selected(index: int, release_velocity: Vector3)
 signal grab_lost(climber: Climber, limb: int)
-signal pry_requested(source_id: int, limb: int)
-var _pry_progress := {}
+signal push_load_requested(source_id: int, limb: int, pressure: float)
 signal rope_bounced(at: Vector3, speed: float)
 signal grab_made(climber: Climber, limb: int, other: Object)
 signal release_contact(position: Vector3)
@@ -485,7 +484,7 @@ func _build_limbs() -> void:
 			"grab_climber": null,  # its climber, if it is one
 			"grab_piece": "",
 			"end_offset": Vector3.ZERO, "contact_offset": Vector3.ZERO, "last_anchor": Vector3.ZERO,
-			"contact_force": Vector3.ZERO, "pry_blocked": {},
+			"contact_force": Vector3.ZERO, "strain_time": 0.0, "peeled_from": 0, "push_load": 0.0, "push_until": 0.0,
 			"regrip": 0.0,
 			"end_joint": ("wrist" if ld.arm else "ankle") + (ld.id as String).substr((ld.id as String).length() - 2),
 			"grab_rel0": 0.0,  # the end's angle against its hold when it stuck (rad)
@@ -720,11 +719,6 @@ func _physics_process(delta: float) -> void:
 	if removed or state != State.LIVE:
 		return
 	live_time += delta
-	for grip in limbs:
-		for target_id in grip.pry_blocked.keys():
-			grip.pry_blocked[target_id] -= delta / Engine.time_scale
-			if grip.pry_blocked[target_id] <= 0:
-				grip.pry_blocked.erase(target_id)
 	if sinking:
 		_tick_sink(delta)
 		return
@@ -759,7 +753,7 @@ func _physics_process(delta: float) -> void:
 			body.gravity_scale = gravity
 		_gravity_scale = gravity
 	_tick_joints(attached, delta)
-	_tick_prying(delta)
+	_tick_push_contacts(delta)
 	# Opposed pulls have to persist through several physics ticks to peel a grip.
 	var load_ratio := _incoming_pull / maxf(1, total_mass * 9.8 * 2.0)
 	_pull_load = maxf(0, _pull_load + (load_ratio - 0.9) * delta)
@@ -1247,8 +1241,10 @@ func _try_grab(i: int) -> void:
 	# a list read, not a shape query: every unheld limb checks every tick.
 	var hits := end.get_colliding_bodies()
 	if hits.is_empty():
+		l.peeled_from = 0
 		return
 	# Prefer the arena and frozen stack when the same end touches both.
+	var still_touching_peeled := false
 	var best: Object = null
 	var best_score := INF
 	for o in hits:
@@ -1260,7 +1256,8 @@ func _try_grab(i: int) -> void:
 			if oc == null or oc == self or oc.removed:
 				continue  # (null: a ghost piece, its climber gone)
 			if oc.state != State.FROZEN:
-				if l.pry_blocked.has(oc.get_instance_id()):
+				if oc.get_instance_id() == l.peeled_from:
+					still_touching_peeled = true
 					continue
 				score += 1.0
 		if o is Node3D:
@@ -1268,14 +1265,15 @@ func _try_grab(i: int) -> void:
 		if score < best_score:
 			best_score = score
 			best = o
+	if not still_touching_peeled:
 		l.peeled_from = 0
 	if best != null:
 		attach(i, best)
 
 
 ## A live contact has no angular weld. A damped spring transfers opposite forces
-## at the two original contact points. Passive load never peels this connection;
-## the defender must actively push the gripping limb to pry it loose.
+## at the two original contact points. A short overload allowance lets a catch
+## or toss transfer momentum before the contact peels.
 func _tick_live_contact(i: int, dt: float) -> void:
 	var l: Dictionary = limbs[i]
 	var other: RigidBody3D = l.grab_other
@@ -1295,20 +1293,25 @@ func _tick_live_contact(i: int, dt: float) -> void:
 	var hand_speed := end.linear_velocity + end.angular_velocity.cross(hand_lever)
 	var gap := point - (end.global_position + hand_lever)
 	var weight := total_mass * 9.8
-	var stiffness := weight * (24.0 + 96.0 * smoothstep(0.20, 0.60, gap.length()))
+	var stiffness := weight * 24.0
 	var damping := 1.6 * sqrt(stiffness * end.mass)
 	var force := (gap * stiffness + (speed - hand_speed) * damping) / (1.0 + damping * dt / end.mass)
-	# Passive load never peels a live grip. A bounded implicit spring opposes
-	# full limb drive without releasing due to a transient stretch.
-	force = force.limit_length(weight * Feel.get_k("live_grip_force_cap"))
+	var push: float = l.push_load if live_time < l.push_until else 0.0
+	var ratio := force.length() / (weight * 2.0) + push * Feel.get_k("grapple_push_load")
+	l.strain_time = maxf(0, float(l.strain_time) + dt * (ratio - 1.45))
+	if l.strain_time > 0.055 or gap.length() > 0.60:
+		l.peeled_from = rival.get_instance_id()
+		release(i)
+		l.regrip = 0.22
+		return
+	force = force.limit_length(weight * 3.0)
 	end.apply_force(force, hand_lever)
 	l.contact_force = -force
 	if rival.state == State.LIVE:
 		other.apply_force(-force, lever)
 		rival._incoming_pull = maxf(rival._incoming_pull, force.length() * (1.0 if touches_solid() else 0.2))
 
-## Only deliberate pressure from the defender's active limb pries incoming grips.
-func _tick_prying(dt: float) -> void:
+func _tick_push_contacts(_dt: float) -> void:
 	var loads := {}
 	if _active_limb >= 0 and driver != null and is_attached():
 		var aim = driver.aim(self, _active_limb)
@@ -1326,47 +1329,41 @@ func _tick_prying(dt: float) -> void:
 					var source := climber_of(other)
 					if source == null or source == self or source.removed or source.state == State.FROZEN:
 						continue
-					var hit_name := str(other.get_meta("piece", ""))
 					# Already in world space (Jolt, Godot 4): turning it by the piece's own
 					# rotation misread every push from a turned hand (found 11-18, when the
 					# new climber's test pose turned the defending hand 128 degrees).
 					var normal := physics.get_contact_local_normal(j)
 					var pressure := maxf(0, -Vector3(command.x, command.y, 0).dot(normal))
 					for i in source.limbs.size():
-						var ld: Dictionary = source.limbs[i].def
-						if hit_name not in [ld.up, ld.lo, ld.end]:
-							continue
 						var key := Vector2i(source.climber_id, i)
 						var connected: bool = source.limbs[i].grab_climber == self if source.state == State.LIVE else remote_pulls.has(key)
 						if connected and pressure > 0.03:
 							loads[key] = {"source": source, "pressure": maxf(pressure, loads.get(key, {}).get("pressure", 0.0))}
-	_advance_pry(loads, dt / Engine.time_scale)
-
-func _advance_pry(loads: Dictionary, seconds: float) -> void:
-	for key in _pry_progress.keys():
-		if not loads.has(key):
-			_pry_progress[key] = maxf(0, _pry_progress[key] - seconds * Feel.get_k("pry_decay"))
-			if _pry_progress[key] <= 0:
-				_pry_progress.erase(key)
+					# Pushing the player we hold also loads our own connections.
+					for i in limbs.size():
+						if limbs[i].grab_climber == source and pressure > 0.03:
+							var key := Vector2i(climber_id, i)
+							loads[key] = {"source": self, "target": source, "pressure": maxf(pressure, loads.get(key, {}).get("pressure", 0.0))}
 	for key in loads:
 		var source: Climber = loads[key].source
-		_pry_progress[key] = _pry_progress.get(key, 0.0) + seconds * clampf(loads[key].pressure * 3.0, 0.0, 1.0)
-		if _pry_progress[key] >= Feel.get_k("pry_hold_seconds"):
-			_pry_progress.erase(key)
-			if source.state == State.PUPPET:
-				pry_requested.emit(source.climber_id, key.y)
-			else:
-				source.pry_release(key.y, self)
+		var pressure: float = loads[key].pressure
+		if source.state == State.PUPPET:
+			push_load_requested.emit(source.climber_id, key.y, pressure)
+		else:
+			source.set_push_load(key.y, loads[key].get("target", self), pressure)
 
-func pry_release(i: int, defender: Climber) -> void:
-	if i < 0 or i >= limbs.size() or limbs[i].grab_climber != defender:
+## A pressure sample adds to spring strain, never independently releases a grip.
+## Expiration prevents a dropped network packet from leaving permanent pressure.
+func set_push_load(i: int, target: Climber, pressure: float) -> void:
+	if i < 0 or i >= limbs.size() or limbs[i].grab_climber != target or not is_finite(pressure):
 		return
 	var l: Dictionary = limbs[i]
-	l.pry_blocked[defender.get_instance_id()] = Feel.get_k("pry_regrab_seconds")
-	release(i)
-	l.regrip = 0.0  # Other players and terrain remain immediately available.
+	l.push_load = clampf(pressure, 0.0, 1.0)
+	l.push_until = live_time + 0.10
 
-## Stick limb i's end to the other body right where it is.
+
+
+## Stick limb i's end to `other` (a PhysicsBody3D) right where it is.
 func attach(i: int, other: Object) -> void:
 	if other == null or not is_instance_valid(other) or is_ghost(other):
 		return
@@ -1377,9 +1374,6 @@ func attach(i: int, other: Object) -> void:
 	if climber_of(other) == self:
 		return
 	var l: Dictionary = limbs[i]
-	var blocked_target := climber_of(other)
-	if blocked_target != null and l.pry_blocked.has(blocked_target.get_instance_id()):
-		return
 	if l.grab_other != null:
 		release(i)
 	var end: RigidBody3D = bodies[l.def.end]
@@ -1398,6 +1392,9 @@ func attach(i: int, other: Object) -> void:
 		l.contact_offset = ob.to_local(at)
 		l.last_anchor = at
 		l.contact_force = Vector3.ZERO
+		l.strain_time = 0.0
+		l.push_load = 0.0
+		l.push_until = 0.0
 	else:
 		# A WELD, as the reference game's grabs are: a hinge on z locked at its current
 		# angle, so a stuck hand or foot can't turn on what it holds (a free pin let the

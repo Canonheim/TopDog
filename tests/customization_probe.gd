@@ -44,7 +44,7 @@ func _ready() -> void:
 	var clean: Array = Net._clean_players([{"name":"Test", "slot":0, "appearance":Wardrobe.for_slot(0)}])
 	check(clean[0].appearance.head == 1 and clean[0].appearance.skin == 5 and clean[0].appearance.effect == "roses", "Network preserves cosmetics")
 	check(Wardrobe.clean({"head":999,"skin":-1,"speedo":999,"effect":"invalid"}) == {"head":Wardrobe.HEAD_NAMES.size() - 1,"skin":0,"speedo":9,"effect":"confetti"}, "Network clamps unknown cosmetics")
-	check(editor.menu.items[4].options == ["Confetti", "Roses", "Money", "Treasure", "Treats"] and editor.menu.items[4].index == 1, "Roses is selectable and restored")
+	check(editor.menu.items[4].options == Wardrobe.EFFECT_NAMES and editor.menu.items[4].index == 1, "Roses is selectable and restored")
 	editor._set_choice("effect", "bills")
 	Wardrobe.load_profiles()
 	check(Wardrobe.profiles[Wardrobe.selected].effect == "bills", "Money choice persists")
@@ -108,6 +108,142 @@ func _ready() -> void:
 		check(regions[0] == regions[1] and regions[1] == regions[2], "Every treasure type balanced left center right")
 		check(sizes.all(func(row): return row == {0:10,1:10,2:10}), "All three size classes balanced by screen third")
 		treasure.queue_free()
+	editor._set_choice("effect", "underwear")
+	Wardrobe.load_profiles()
+	check(Wardrobe.profiles[Wardrobe.selected].effect == "underwear", "Underwear saves per climber")
+	check(Net._clean_players([{"name":"Test","slot":0,"appearance":Wardrobe.for_slot(0)}])[0].appearance.effect == "underwear", "Network preserves Underwear")
+	var underwear_profiles := {}
+	for attempt in 3:
+		var fx := preload("res://ui3d/underwear_effect.gd").burst(main.cam)
+		check(fx.get_child_count() == 84, "Underwear bounded particle count")
+		var signature := str(fx.get_meta("burst_profile"))
+		check(not underwear_profiles.has(signature), "Underwear fresh randomization")
+		underwear_profiles[signature] = true
+		var shapes := [{},{},{}]
+		var cups := [{},{},{}]
+		for piece in fx.get_children():
+			var region: int = piece.get_meta("coverage_region")
+			var shape: int = piece.get_meta("shape")
+			shapes[region][shape] = shapes[region].get(shape,0)+1
+			if piece.has_meta("cup_size"):
+				var cup: int = piece.get_meta("cup_size")
+				cups[region][cup] = cups[region].get(cup,0)+1
+		check(shapes.all(func(row): return row == {0:4,1:4,2:4,3:4,4:4,5:4,6:4}), "All seven garment shapes balanced by region")
+		check(cups.all(func(row): return row == {0:3,1:3,2:3,3:3}), "B C D DD balanced by region")
+		fx.queue_free()
+	editor._set_choice("effect", "bullets")
+	Wardrobe.load_profiles()
+	check(Wardrobe.profiles[Wardrobe.selected].effect == "bullets", "Bullets saves per climber")
+	check(Net._clean_players([{"name":"Test","slot":0,"appearance":Wardrobe.for_slot(0)}])[0].appearance.effect == "bullets", "Network preserves Bullets")
+	var bullet_profiles := {}
+	for attempt in 3:
+		var fx := preload("res://ui3d/bullet_effect.gd").burst(main.cam)
+		check(fx.get_child_count() == 72, "Bullets bounded particle count")
+		var signature := str(fx.get_meta("burst_profile"))
+		check(not bullet_profiles.has(signature), "Bullets fresh randomization")
+		bullet_profiles[signature] = true
+		var shapes := [{},{},{}]
+		var sizes := [{},{},{}]
+		for piece in fx.get_children():
+			var region: int = piece.get_meta("coverage_region")
+			var shape: int = piece.get_meta("shape")
+			var size: int = piece.get_meta("size_class")
+			shapes[region][shape] = shapes[region].get(shape,0)+1
+			sizes[region][size] = sizes[region].get(size,0)+1
+		check(shapes[0] == shapes[1] and shapes[1] == shapes[2] and shapes[0].size() == 12 and shapes[0].values().all(func(n): return n == 2), "Every cartridge variant balanced by region")
+		check(sizes.all(func(row): return row == {0:8,1:8,2:8}), "Bullet sizes balanced by region")
+		fx.queue_free()
+	editor._set_choice("effect", "pan")
+	Wardrobe.load_profiles()
+	check(Wardrobe.profiles[Wardrobe.selected].effect == "pan", "Pan saves per climber")
+	check(Net._clean_players([{"name":"Test","slot":0,"appearance":Wardrobe.for_slot(0)}])[0].appearance.effect == "pan", "Network preserves Pan")
+	var pan_profiles := {}
+	for attempt in 3:
+		var fx := preload("res://ui3d/pan_effect.gd").burst(main.cam)
+		check(fx.get_child_count() == 72, "Pan bounded particle count")
+		var signature := str(fx.get_meta("burst_profile"))
+		check(not pan_profiles.has(signature), "Pan fresh randomization")
+		pan_profiles[signature] = true
+		var shapes := [{},{},{}]
+		var sizes := [{},{},{}]
+		for piece in fx.get_children():
+			var region: int = piece.get_meta("coverage_region")
+			var shape: int = piece.get_meta("shape")
+			var size: int = piece.get_meta("size_class")
+			shapes[region][shape] = shapes[region].get(shape,0)+1
+			sizes[region][size] = sizes[region].get(size,0)+1
+		check(shapes[0] == shapes[1] and shapes[1] == shapes[2], "Pan types balanced across screen")
+		for shape in 15:
+			check(shapes[0].get(shape,0) == (1 if shape<12 else 4), "Pan preserves extra sprinkle cookies")
+		check(sizes.all(func(row): return row == {0:8,1:8,2:8}), "Pan sizes balanced across screen")
+		fx.queue_free()
+	editor._set_choice("effect", "food")
+	Wardrobe.load_profiles()
+	check(Wardrobe.profiles[Wardrobe.selected].effect == "food", "Food saves per climber")
+	check(Net._clean_players([{"name":"Test","slot":0,"appearance":Wardrobe.for_slot(0)}])[0].appearance.effect == "food", "Network preserves Food")
+	var food_profiles := {}
+	for attempt in 3:
+		var fx := preload("res://ui3d/food_effect.gd").burst(main.cam)
+		check(fx.get_child_count() == 90, "Food bounded particle count")
+		var signature := str(fx.get_meta("burst_profile"))
+		check(not food_profiles.has(signature), "Food fresh randomization")
+		food_profiles[signature] = true
+		var shapes := [{},{},{}]
+		var sizes := [{},{},{}]
+		for piece in fx.get_children():
+			var region: int = piece.get_meta("coverage_region")
+			var shape: int = piece.get_meta("shape")
+			var size: int = piece.get_meta("size_class")
+			shapes[region][shape] = shapes[region].get(shape,0)+1
+			sizes[region][size] = sizes[region].get(size,0)+1
+		check(shapes.all(func(row): return row == {0:2,1:2,2:2,3:2,4:2,5:2,6:2,7:3,8:3,9:5,10:5}), "Food and garnish quotas balanced by region")
+		check(sizes.all(func(row): return row == {0:10,1:10,2:10}), "Food sizes balanced by region")
+		fx.queue_free()
+	editor._set_choice("effect", "watermelon")
+	Wardrobe.load_profiles()
+	check(Wardrobe.profiles[Wardrobe.selected].effect == "watermelon", "Watermelon saves per climber")
+	check(Net._clean_players([{"name":"Test","slot":0,"appearance":Wardrobe.for_slot(0)}])[0].appearance.effect == "watermelon", "Network preserves Watermelon")
+	var melon_profiles := {}
+	for attempt in 3:
+		var fx := preload("res://ui3d/watermelon_effect.gd").burst(main.cam)
+		check(fx.get_child_count() == 90, "Watermelon bounded particle count")
+		var signature := str(fx.get_meta("burst_profile"))
+		check(not melon_profiles.has(signature), "Watermelon fresh randomization")
+		melon_profiles[signature] = true
+		var shapes := [{},{},{}]
+		var sizes := [{},{},{}]
+		for piece in fx.get_children():
+			var region: int = piece.get_meta("coverage_region")
+			var shape: int = piece.get_meta("shape")
+			var size: int = piece.get_meta("size_class")
+			shapes[region][shape] = shapes[region].get(shape,0)+1
+			sizes[region][size] = sizes[region].get(size,0)+1
+		check(shapes.all(func(row): return row == {0:2,1:2,2:6,3:6,4:7,5:7}), "Whole melons slices and seeds balanced by region")
+		check(sizes.all(func(row): return row == {0:10,1:10,2:10}), "Watermelon sizes balanced by region")
+		fx.queue_free()
+	editor._set_choice("effect", "luck")
+	Wardrobe.load_profiles()
+	check(Wardrobe.profiles[Wardrobe.selected].effect == "luck", "Luck saves per climber")
+	check(Wardrobe.EFFECT_NAMES[Wardrobe.EFFECTS.find("luck")] == "Luck", "Luck menu label")
+	check(Net._clean_players([{"name":"Test","slot":0,"appearance":Wardrobe.for_slot(0)}])[0].appearance.effect == "luck", "Network preserves Luck")
+	var luck_profiles := {}
+	for attempt in 3:
+		var fx := preload("res://ui3d/luck_effect.gd").burst(main.cam)
+		check(fx.get_child_count() == 72, "Luck bounded particle count")
+		var signature := str(fx.get_meta("burst_profile"))
+		check(not luck_profiles.has(signature), "Luck fresh randomization")
+		luck_profiles[signature] = true
+		var shapes := [{},{},{}]
+		var sizes := [{},{},{}]
+		for piece in fx.get_children():
+			var region: int = piece.get_meta("coverage_region")
+			var shape: int = piece.get_meta("shape")
+			var size: int = piece.get_meta("size_class")
+			shapes[region][shape] = shapes[region].get(shape,0)+1
+			sizes[region][size] = sizes[region].get(size,0)+1
+		check(shapes[0] == shapes[1] and shapes[1] == shapes[2] and shapes[0].size() == 12 and shapes[0].values().all(func(n): return n == 2), "Every luck charm balanced by region")
+		check(sizes.all(func(row): return row == {0:8,1:8,2:8}), "Luck sizes balanced by region")
+		fx.queue_free()
 	main._start_practice()
 	await get_tree().create_timer(0.8).timeout
 	var climbers: Array = main.game.live_climbers()
@@ -127,8 +263,8 @@ func _ready() -> void:
 		var effects: Array = []
 		main.game.lock_effect.connect(func(effect): effects.append(effect))
 		main.game._rpc_freeze(c.climber_id, c.pose(), "made", "locked", 2.0, 2.0, true)
-		check(effects == ["treats"], "Successful lock uses the locking climber's Treats preset")
-		check(main.cam.find_children("DogTreatBurst", "Node3D", false, false).size() > 0, "Lock emits Treats in game")
+		check(effects == ["luck"], "Successful lock uses the locking climber's Luck preset")
+		check(main.cam.find_children("LuckyCharmBurst", "Node3D", false, false).size() > 0, "Lock emits Luck in game")
 		main.lucha.play_lock_effect("confetti")
 		check(main.cam.find_children("ConfettiBurst", "Node3D", false, false).size() > 0 and main.cam.find_children("ConfettiBurst", "Node3D", false, false)[0].get_child_count() == 90, "Original confetti remains available")
 	main.show_screen("customize")

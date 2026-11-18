@@ -9,8 +9,15 @@ static var rose_meshes: Array[ArrayMesh] = []
 static var meshes: Array[ArrayMesh] = []
 
 static func petal_mesh(variant: int) -> ArrayMesh:
-	while meshes.size() < VARIANTS:
-		meshes.append(_build_petal(meshes.size()))
+	if meshes.is_empty(): meshes.resize(VARIANTS)
+	variant %= VARIANTS
+	# BAKED_LOOKUP_BEGIN
+	var baked := preload("res://ui3d/effect_mesh_cache.gd").get_mesh("roses",variant+0)
+	if baked != null:
+		meshes[variant] = baked
+		return baked
+	# BAKED_LOOKUP_END
+	if meshes[variant] == null: meshes[variant] = _build_petal(variant)
 	return meshes[variant % VARIANTS]
 
 static func _build_petal(variant: int) -> ArrayMesh:
@@ -46,8 +53,15 @@ static func _build_petal(variant: int) -> ArrayMesh:
 	return mesh
 
 static func rose_mesh(variant := 0) -> ArrayMesh:
-	while rose_meshes.size() < VARIANTS:
-		rose_meshes.append(_build_rose(rose_meshes.size()))
+	if rose_meshes.is_empty(): rose_meshes.resize(VARIANTS)
+	variant %= VARIANTS
+	# BAKED_LOOKUP_BEGIN
+	var baked := preload("res://ui3d/effect_mesh_cache.gd").get_mesh("roses",variant+6)
+	if baked != null:
+		rose_meshes[variant] = baked
+		return baked
+	# BAKED_LOOKUP_END
+	if rose_meshes[variant] == null: rose_meshes[variant] = _build_rose(variant)
 	return rose_meshes[variant % VARIANTS]
 
 static func _build_rose(variant: int) -> ArrayMesh:

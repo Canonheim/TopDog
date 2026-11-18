@@ -22,7 +22,7 @@ extends Node
 
 const STEAM_DEV_BASE := 3000
 const ACTION_SET := "Game"
-const DIGITAL := ["fart", "arm_l", "arm_r", "leg_l", "leg_r", "lock", "pause", "menu_up", "menu_down", "menu_left", "menu_right", "menu_select", "menu_back", "zoom"]
+const DIGITAL := ["camera_players", "camera_loot", "fart", "arm_l", "arm_r", "leg_l", "leg_r", "lock", "pause", "menu_up", "menu_down", "menu_left", "menu_right", "menu_select", "menu_back", "zoom"]
 const DIR := "user://steam_input"
 
 var ok := false  # Steam Input initialised with our manifest
@@ -296,7 +296,7 @@ func _manifest(configurations: String) -> String:
 	for a in DIGITAL:
 		buttons += '\t\t\t\t"%s"\t\t"#Action_%s"\n' % [a, a]
 	var loc := '\t\t\t"Set_Game"\t\t"Top Dog"\n\t\t\t"Action_steer"\t\t"Steer the held limb"\n\t\t\t"Action_look"\t\t"Look around (the solo climb)"\n'
-	var names := {"fart": "Fart", "arm_l": "Left hand", "arm_r": "Right hand", "leg_l": "Left foot", "leg_r": "Right foot", "lock": "Lock in", "pause": "Pause",
+	var names := {"camera_players": "Shared / personal camera", "camera_loot": "Include pinata", "fart": "Fart", "arm_l": "Left hand", "arm_r": "Right hand", "leg_l": "Left foot", "leg_r": "Right foot", "lock": "Lock in", "pause": "Pause",
 		"menu_up": "Menu up", "menu_down": "Menu down", "menu_left": "Menu left", "menu_right": "Menu right", "menu_select": "Menu select", "menu_back": "Menu back",
 		"zoom": "Zoom out (the solo climb)"}
 	for a in DIGITAL:
@@ -341,8 +341,10 @@ func _config(controller_type: String) -> String:
 		'\t"localization"\n\t{\n\t\t"english"\n\t\t{\n\t\t\t"Set_Game"\t\t"Top Dog"\n\t\t}\n\t}\n' + \
 		_group(0, "four_buttons", diamond) + _group(1, "dpad", dpad) + \
 		_group(2, "joystick_move", "", "steer") + _group(3, "switches", switches) + \
-		_group(4, "joystick_move", "", "look") + _group(5, "trigger", _press("click", ["zoom"]) + _press("edge", ["zoom"])) + \
+		_group(4, "joystick_move", "", "look") + \
+		_group(5, "trigger", _press("soft_pull", ["camera_players"]) + _press("click", ["zoom"]) + _press("edge", ["zoom"])) + \
+		_group(6, "trigger", _press("soft_pull", ["camera_loot"])) + \
 		'\t"preset"\n\t{\n\t\t"id"\t\t"0"\n\t\t"name"\t\t"Game"\n\t\t"group_source_bindings"\n\t\t{\n' + \
 		'\t\t\t"0"\t\t"button_diamond active"\n\t\t\t"1"\t\t"dpad active"\n\t\t\t"2"\t\t"joystick active"\n\t\t\t"3"\t\t"switch active"\n' + \
-		'\t\t\t"4"\t\t"right_joystick active"\n\t\t\t"5"\t\t"left_trigger active"\n' + \
+		'\t\t\t"4"\t\t"right_joystick active"\n\t\t\t"5"\t\t"left_trigger active"\n\t\t\t"6"\t\t"right_trigger active"\n' + \
 		'\t\t}\n\t}\n\t"settings"\n\t{\n\t}\n}\n'

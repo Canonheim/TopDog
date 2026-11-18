@@ -990,3 +990,10 @@ see how it looks", then "it will have different proportions, that is fine".
   - A release export boots.
 - **2026-11-07, 0.1.1:** pads drive the menus, Steam starts late, the house cel and ink look is in.
   - The random crowd and tower tests are now seeded, so runs repeat. An unseeded run once reached 11.4 cm in the crowd test.
+
+## Lock-in preparation and performance gates (2026-11-13)
+All registered cosmetic effects now route through ui3d/lock_effect_preparation.gd. Background preparation prioritizes the selected effect and fairly advances other variants in bounded menu batches; early requests still play immediately. Bills, Dog Toys and Roses use 48 lossless baked meshes verified against original arrays. Math's identical material is explicitly preloaded during scene loading, and Math/Autumn prepare individual variants. Atlas swatches use exact existing metadata bytes, audited against every named PNG texel. Visuals, quotas, shadows and motion are unchanged. See docs/LOCK_IN_PERFORMANCE.md for mandatory cold/prepared CPU, geometry/resource, cleanup, overlap and rendered gates, memory tradeoffs and startup/GPU limitations. This work was not exported, versioned, committed or pushed.
+
+
+## Approved common lock-in effects (2026-11-15)
+35 approved common cosmetics integrated into saved customization, network appearance validation and real match dispatch. Names, exact budgets and measured cold/prepared/cleanup results documented in LOCK_IN_EFFECTS.md. Latest reviewed artwork retained; cancelled effects excluded.

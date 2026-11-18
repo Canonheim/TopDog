@@ -25,6 +25,8 @@ const LINE_SAG := 0.12  # the flag string's sag at its middle (the lock-in judge
 const BANNER_KIT_SCALE := 2.0  # the kit's hud_banner at HUD size (notes x0.85)
 const BANNER_Y := 2.55  # the turn / announcement banner, high on the HUD (its flags reach the top)
 const UI_SCALE := 0.48  # the 3D menus at this size leave the stage and the plaza in view
+## Set false to restore the preserved full-size finish-screen belt.
+const COMPACT_RESULTS_XP := true
 const OWNED := ["practice_ai", "practice_settings", "customize", "title", "local", "pause", "results", "online", "friends", "browse", "lobby", "online_flat", "controls", "options"]
 const CARD_DX := 1.75  # the kit card is 1.6 m with its ribbon tails
 const CARD_DY := 2.3  # and 2.05 m with its mask crest
@@ -38,6 +40,7 @@ var menus := {}  # id -> Menu3D
 var current := ""
 ## The next title opens on PRESS ANY BUTTON TO START (main sets it after the boot screens).
 var title_attract := false
+var xp_display: Node3D
 var _title_press: AnyPress = null
 var _clouds: Array = []
 var _flags: Array = []
@@ -78,6 +81,7 @@ var settings: LuchaSettings  # Controls and Options in 3D (Parker 11-10)
 func setup(p_main: Node) -> void:
 	main = p_main
 	cam = main.cam
+	preload("res://ui3d/lightning_foreground.gd").ensure(cam)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	# No bloom anywhere (Parker 11-07): the matte cel look.
 	for ch in main.get_children():
@@ -95,6 +99,7 @@ func setup(p_main: Node) -> void:
 	_restyle_line()
 	main.game.announce.connect(_on_announce)
 	main.game.lock_effect.connect(play_lock_effect)
+	main.game.attached_lock_effect.connect(play_attached_lock_effect)
 	no_shadows(cam)  # UI never casts shadows into the world (the menus' words ghosted on the apron)
 	Players.joined.connect(func(_s): _refresh_cards())
 	Players.left.connect(func(_s): _refresh_cards())
@@ -104,6 +109,10 @@ func setup(p_main: Node) -> void:
 ## (main then hides its flat screen for it).
 func show_screen(id: String) -> bool:
 	current = id
+	if xp_display != null:
+		xp_display.visible = id == "title" and not title_attract
+		if id == "title":
+			xp_display.refresh()
 	if id == "pause":
 		_fill_pause()
 	if _title_press != null and id != "title":
@@ -153,6 +162,7 @@ func _wait_title_press() -> void:
 		Players.mute_edges()
 		if current == "title":
 			menus.title.leave_attract()
+			xp_display.show()
 			Sound.play("lock", -4.0))
 	add_child(_title_press)
 
@@ -1505,6 +1515,10 @@ func _build_menus() -> void:
 	t.attract_plate = press_holder
 	t.attract_tilt = deg_to_rad(LuchaKit.LOGO_TILT_DEG)  # level on the press screen; the menu keeps its tilt
 	menus.title = t
+	xp_display = preload("res://ui3d/xp_championship.gd").new()
+	t.add_child(xp_display)
+	xp_display.position = Vector3(3.85, -2.17, 0.12)
+	xp_display.scale = Vector3.ONE * .81
 	# Practice choices are independent of multiplayer settings.
 	var training := _menu()
 	training.set_header(LuchaKit.banner("PRACTICE"), Vector3(0, 3.2, 0))
@@ -1571,6 +1585,7 @@ func _build_menus() -> void:
 	r.position = Vector3(0, 0, -MENU_DIST)
 	r.scale = Vector3.ONE * UI_SCALE
 	r.set_buttons(func():
+		if main.close_dev_results(): return
 		if main.local_mode:
 			main.game.host_start(Net.settings.duplicate() if main.game.settings.mode != "practice" else main.game.settings, main.game.roster)
 			main.show_screen("hud")
@@ -1580,6 +1595,11 @@ func _build_menus() -> void:
 		else:
 			main._on_announce("The host starts the next game.", false), main.leave_results)
 	menus.results = r
+	var xp_script = preload("res://ui3d/xp_match_summary.gd") if COMPACT_RESULTS_XP else preload("res://ui3d/xp_match_summary_full_backup.gd")
+	var xp_summary: Node3D = xp_script.new()
+	xp_summary.name="MatchXP"
+	r.attach_xp(xp_summary)
+	xp_summary.scale=Vector3.ONE*(1.0 if COMPACT_RESULTS_XP else .85)
 	# Player cards (Play together) and the podium (results) hang in the same frame.
 	_cards = Node3D.new()
 	_cards.add_to_group(UI_ROOT)
@@ -1791,7 +1811,7 @@ static func _capture_home(n: Node3D) -> void:
 ## Where the free space right of the results board is centred, in NDC x (the camera
 ## shifts the podium there). 2.25 is the board's right edge (4.5) halved, in menu units.
 func board_free_centre_ndc() -> float:
-	return 2.25 / maxf(virtual_half_w, 0.01)
+	return (3.35 if COMPACT_RESULTS_XP else 2.25) / maxf(virtual_half_w, 0.01)
 
 
 ## Everything under `n` stops casting shadows (UI pieces hang in the sun's light).
@@ -1821,6 +1841,7 @@ func _raise_podium() -> void:
 
 
 func _fill_results() -> void:
+	menus.results.xp_panel.show_payout(main.game.results.get("local_xp",{}))
 	_podium.position.x = main.results_podium_focus().x
 	var res: Dictionary = main.game.results
 	var g: Game = main.game
@@ -2066,25 +2087,22 @@ func _on_announce(text: String, big: bool) -> void:
 ## A burst of confetti and streamers from the top of the frame (a lock-in, or a
 ## bigger, longer one for the winner). Kit confetti pieces replace the paper when
 ## delivered.
+func play_attached_lock_effect(effect: String, climber: Climber) -> void:
+	preload("res://ui3d/lock_effect_preparation.gd").attach(effect,climber,cam)
+
 func play_lock_effect(effect: String) -> void:
-	if effect == "treats":
-		preload("res://ui3d/dog_treats.gd").burst(cam)
-		Sound.play("clap", -4.0)
-	elif effect == "treasure":
-		preload("res://ui3d/treasure_effect.gd").burst(cam)
-		Sound.play("clap", -4.0)
-	elif effect == "bills":
-		preload("res://ui3d/peso_bills.gd").burst(cam)
-		Sound.play("clap", -4.0)
-	elif effect == "roses":
-		preload("res://ui3d/rose_petals.gd").burst(cam)
-		Sound.play("clap", -4.0)
-	else:
-		confetti()
+	var prep = preload("res://ui3d/lock_effect_preparation.gd")
+	if prep.is_attached(effect):
+		if main.screen == "customize":
+			var model: Node3D = main.screens.customize.preview
+			if is_instance_valid(model): prep.effect_script(effect).preview(model,cam)
+		return
+	prep.burst(effect,cam)
+	Sound.play("clap", -4.0)
 
 
 func confetti(big := false) -> void:
-	preload("res://ui3d/confetti_effect.gd").burst(cam, big)
+	preload("res://ui3d/lock_effect_preparation.gd").burst("confetti", cam, big)
 	Sound.play("clap", -4.0)
 
 
