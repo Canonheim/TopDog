@@ -290,10 +290,12 @@ func _tick_locks() -> void:
 		z.surface = level
 		z["vy"] = (lock_level(z.lock, peak.clock + 0.05) - level) / 0.05  # its speed, up or down
 		var vis: Node3D = row.get("lock_vis")
-		if vis != null and is_instance_valid(vis):
+		if vis != null and is_instance_valid(vis) and vis.has_meta("front"):
 			var floor_y := float(z.rect[1])
-			vis.scale.y = maxf(0.02, level - floor_y)
-			vis.position.y = floor_y
+			(vis.get_meta("front") as Node3D).scale.y = maxf(0.02, level + 0.16 - floor_y)  # (its top 0.16 over, as a body's: the waterline's wave)
+			(vis.get_meta("top") as Node3D).position.y = level
+			(vis.get_meta("mat") as ShaderMaterial).set_shader_parameter("surface_y", level + Peak.ORIGIN.y)
+			(vis.get_meta("sea") as DelMarSea).water_y = level + Peak.ORIGIN.y
 
 
 ## THE KEEPER HAULS HIS LEVER (note 146, page 1.13: "one second before each fill he hauls it over: that is the
@@ -324,20 +326,66 @@ func _lock_warn(row: Dictionary, lk: Dictionary) -> void:
 		tw.tween_property(lever, "rotation:z", 0.0, 0.4).set_trans(Tween.TRANS_SINE)
 
 
-## The lock's water, drawn: a panel of the river's colour behind the climb from the chamber's floor to the
-## water, its top a pale line (a stand-in until the lock's water is drawn as water). It is scaled every tick.
+## The lock's water, drawn as the rest of the mountain's water is (a body's: _body_vis): Del Mar's surface on top
+## and one front across the play space carrying the waterline, the depth (shallow and see-through near the top,
+## darker down) and the still water's ripple. Its level moves: every tick the front is stretched to it and the
+## surface set on it (_tick_locks). (Till 11-18 a flat panel of the river's colour behind the climb with a pale line
+## on top: it read as a painted card, not deep water: the reviewer's q25.)
 func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 	var x0 := float(z.rect[0])
 	var x1 := float(z.rect[2])
+	var floor_y := float(z.rect[1])
+	var level := float(z.surface)
 	var cols: Array = water_colors(a)
 	var n := Node3D.new()
-	var body := LuchaKit.box(Vector3(x1 - x0, 1.0, 0.1), (cols[0] as Color).darkened(0.15), Vector3(0, 0.5, 0))
-	body.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	n.add_child(body)
-	var top := LuchaKit.box(Vector3(x1 - x0, 0.04, 0.12), (cols[0] as Color).lerp(Color("#DDF2FB"), 0.6), Vector3(0, 1.0, 0.01))
-	top.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# the front: x0 .. x1, 0 .. 1 high, stretched to the level every tick
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var still := Color(0.5, 1.0, 0.0, 1.0)  # (no current, a still patch: the body shader's vertex colour)
+	var steps := maxi(1, int(ceil((x1 - x0) / 0.5)))
+	for i in steps:
+		var xl := lerpf(x0, x1, float(i) / steps)
+		var xr := lerpf(x0, x1, float(i + 1) / steps)
+		for v: Vector3 in [Vector3(xl, 1, 0), Vector3(xr, 1, 0), Vector3(xr, 0, 0), Vector3(xl, 1, 0), Vector3(xr, 0, 0), Vector3(xl, 0, 0)]:
+			st.set_color(still)
+			st.add_vertex(v)
+	var front := MeshInstance3D.new()
+	front.mesh = st.commit()
+	var fm := ShaderMaterial.new()
+	fm.shader = WATER_BODY
+	fm.set_shader_parameter("shallow_color", cols[0])
+	fm.set_shader_parameter("deep_color", cols[1])
+	fm.set_shader_parameter("surface_y", level + Peak.ORIGIN.y)
+	fm.set_shader_parameter("mean_flow", 0.0)
+	fm.render_priority = 1
+	front.material_override = fm
+	front.position = Vector3(0, floor_y, WATER_DEPTH * 0.5)
+	front.scale.y = maxf(0.02, level + 0.16 - floor_y)
+	front.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	front.extra_cull_margin = 16.0  # (stretched every tick: never culled by its first size)
+	n.add_child(front)
+	# the top: Del Mar's surface, riding the level
+	var top := MeshInstance3D.new()
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(x1 - x0, WATER_DEPTH)
+	top.mesh = pm
+	top.position = Vector3((x0 + x1) * 0.5, level, 0)
 	n.add_child(top)
-	n.position = Vector3((x0 + x1) * 0.5, float(z.rect[1]), -1.35)
+	var sea := DelMarSea.new()
+	n.add_child(sea)
+	sea.dress(top, level + Peak.ORIGIN.y)
+	var tm := top.material_override as ShaderMaterial
+	if tm != null:
+		tm.set_shader_parameter("shallow_color", cols[0])
+		tm.set_shader_parameter("deep_color", cols[1])
+		tm.set_shader_parameter("foam_tile_m", 7.0)
+		tm.set_shader_parameter("foam_edge_m", 0.3)
+		tm.set_shader_parameter("murk_min", 0.8)
+		tm.set_shader_parameter("murk_max", 0.97)
+	n.set_meta("front", front)
+	n.set_meta("top", top)
+	n.set_meta("mat", fm)
+	n.set_meta("sea", sea)
 	root.add_child(n)
 	if (z.lock as Dictionary).has("lever"):
 		# the keeper's lever by his booth (a stand-in until the booth is made): an iron arm with a brass knob

@@ -799,7 +799,10 @@ A.mover("compuerta", (-241.0, 89.175), [(box_pts(0.0, 0.0, 6.0, 0.35), "grease")
         # the rock's own plane, and flickered white at the top of 1.13's frame each rise: the reviewer's q8)
         {"type": "cycle", "to": [0.0, 0.0], "zto": -3.0, "t_out": 0.4, "hold_out": RISE - 0.8, "t_in": 0.4,
          "hold_in": HOLD + DRAIN, "phase": 0.0})
-A.effect("waterfall", (SLOT[0], LOCK_LOW, SLOT[0] + 1.8, LOCK_CEIL), z=-1.9, through=True)  # the river down the back wall
+# The river into the lock, out of the cistern's barred mouth in the back wall (esclusa_wall_lock's `cistern`, x -241.52 ..
+# -238.98, its sill at 85.38) down to the low water. (Till 11-18 a sheet from the roof down the wall's river track beside
+# the gate, x -244 .. -242.2: it read as a fall down the gate's edge, its source above the frame: the reviewer's q25.)
+A.effect("waterfall", (-241.2, LOCK_LOW, -239.3, 85.38), x=-240.25, width=1.2, z=-1.9, through=True)
 A.challenge("1.13", "La Esclusa", (-249.3, 79.4), 3, "B", moves=[["reach", [-233.0, 88.6], [-232.0, 90.0]]])
 # ---------------------------------------------------------------- the section's cameras, light and stand-ins
 A.cam((-297.5, 72.5, -290.0, 80.5), 5.5, bias=(1.0, 1.0))     # the ladder beside the falls

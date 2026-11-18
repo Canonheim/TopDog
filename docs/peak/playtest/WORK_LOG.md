@@ -3023,6 +3023,20 @@ in. Nothing played by a person.
 - Frames: `after/gate13_shut_open.jpg` (watch scene `gate13`: the lock's camera and close; the wicket shut | open).
   **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the reviewer's q25 at the lock: the river's source, the chamber's water
+
+- The white sheet down the gate's edge was the lock's fill: a1's waterfall from the roof (y 89) down the lock wall's
+  painted river track, x -244 .. -242.2, beside the gate, its source above the lock camera's frame. It pours now out of
+  the back wall's cistern (`esclusa_wall_lock`'s barred mouth, x -241.52 .. -238.98, its sill at 85.38), 1.2 m wide at
+  x -240.25, down to the low water: 3 m off the gate, its source in the frame. The wall's river track is left dry.
+- The chamber's water was a flat panel of the river's colour behind the climb with a pale line on top (`_lock_vis`, a
+  stand-in). It is drawn now as the mountain's other water is (`_body_vis`): Del Mar's surface on top, riding the level,
+  and one front across the play space with the body shader (the waterline and its ripple, see-through near the top,
+  darker down). The rise and fall are the lock's own, untouched: each tick stretches the front to the level and sets
+  the surface on it.
+- Frames: `after/q25_lock_water_before_after.jpg` (watch scene `gate13`: the lock's camera and close, shut and open;
+  before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.
