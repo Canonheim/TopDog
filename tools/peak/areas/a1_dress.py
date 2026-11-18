@@ -518,11 +518,9 @@ def dress(A):
     timber((-220.4, 27.2), (-216.8, 31.8), -2.6)
     for x, y0, y1 in ((-225.6, 25.9, 27.3), (-227.4, 25.5, 26.7)):
         A.deco("mine_post_broken_short", x, y0, z=-2.6, scale=round((y1 - y0) / 1.6, 3), size=(0.3, 1.6, 0.3), tone="back")
-    # Three slanting struts from the pillar's west face: two to the level stub, one long one to
-    # the head of the drop (they take the trestle's place).
-    timber((-208.9, 35.3), (-212.8, 39.6), -1.5)
-    timber((-208.9, 37.475), (-210.75, 39.6), -1.5)
-    timber((-208.9, 31.6), (-215.1, 37.28), -1.5)
+    # (The three slanting struts from the pillar's west face are out: from 1.7's angled camera
+    # they read as long pale rods across El Diente (the reviewer, q9, 11-17). The road's own
+    # trestle under mine_cart_road carries it.)
     # The beam under the roof (Las Vigas's back beam, whole, 18.5 m, with the three iron
     # rollers the haul chain ran over) and its four hanger posts, one behind each piece (also 1.8's).
     A.deco("mine_beam_roof", -222.75, 54.25, z=-1.7, size=(18.5, 0.35, 0.35), tone="back")
