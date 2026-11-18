@@ -3330,6 +3330,47 @@ func _w_gate13(a: Array) -> void:
 			await shot("gate13_%s_%s_%s" % [row[2], when[1], tag])
 
 
+## 1.12's kicker: do kicked barrels clip the flume wall's east chute post in flight? Three kicks, each followed: where it
+## crosses the wall's face (z -2.2) printed, and shot close at 0.2, 0.4 and 0.6 s, and once from the flume's camera.
+## kick12:TAG
+func _w_kick12(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.12")
+	await secs(3.0)
+	var seen := {}
+	var done := 0
+	var t0 := pk.clock
+	while pk.clock - t0 < 60.0 and done < 3:
+		var rb: Node3D = null
+		for row: Array in pk.things._kicked:
+			var o: Object = row[0]
+			if is_instance_valid(o) and not seen.has(o.get_instance_id()):
+				seen[o.get_instance_id()] = true
+				rb = o as Node3D
+		if rb == null:
+			await ticks(1)
+			continue
+		done += 1
+		var k0 := pk.clock
+		var crossed := false
+		var shots := [0.2, 0.4, 0.6]
+		print("WATCH kick12 kick %d: from %s" % [done, rb.position])
+		look(Vector2(-287.6, 79.6), 2.4)
+		while pk.clock - k0 < 1.6 and is_instance_valid(rb):
+			if not crossed and rb.position.z <= -2.2:
+				crossed = true
+				print("WATCH kick12 kick %d: crosses the wall's face (z -2.2) at x %.2f y %.2f, %.2f s after the kick" % [done, rb.position.x, rb.position.y, pk.clock - k0])
+			if not shots.is_empty() and pk.clock - k0 >= float(shots[0]):
+				await shot("kick12_k%d_%d_%s" % [done, int(float(shots[0]) * 10), tag])
+				shots.pop_front()
+			await ticks(1)
+		if is_instance_valid(rb):
+			print("WATCH kick12 kick %d: at 1.6 s at %s" % [done, rb.position])
+		if done == 1:
+			look(Vector2(-284.0, 80.4), 6.0)
+	print("WATCH kick12: %d kicks followed" % done)
+
+
 ## The iron staple family in the game: 1.5 El Cubo's seven (straight on and from the side, the legs into El Diente's
 ## east face) and 1.11 La Cortina's 28 (straight on, from the side, the legs into the throat's wall), and a climber
 ## hanging on one. staples30:TAG
