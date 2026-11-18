@@ -3330,6 +3330,19 @@ func _w_gate13(a: Array) -> void:
 			await shot("gate13_%s_%s_%s" % [row[2], when[1], tag])
 
 
+## a2's two mists over La Esclusa (the reviewer's q27): 1.12's flume camera and 1.13's lock camera, and the roof over
+## each. mist27:TAG
+func _w_mist27(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.13")
+	await secs(7.0)
+	for row in [[Vector2(-284.0, 80.4), 6.0, "1_12_cam"], [Vector2(-286.0, 86.0), 5.0, "1_12_roof"], [Vector2(-246.0, 81.5), 7.5, "1_13_cam"],
+			[Vector2(-242.0, 88.0), 5.0, "1_13_roof"]]:
+		look(row[0], float(row[1]))
+		await secs(1.0)
+		await shot("mist27_%s_%s" % [row[2], tag])
+
+
 ## The Sump's mist (MINE_PASS F-C11, as at 1.11 and 1.12): the Sump at the great falls' foot, wide and close. sump24:TAG
 func _w_sump24(a: Array) -> void:
 	var tag := str(a[0]) if a.size() > 0 else ""

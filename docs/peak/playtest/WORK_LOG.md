@@ -3059,6 +3059,17 @@ in. Nothing played by a person.
 - Frames: `after/q26_lock_fall_clipped_before_after.jpg` (watch scene `gate13`: mid-fill under the sill and just over
   it, shut, shut close, open; before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the reviewer's q27: a2's two mists over La Esclusa out
+
+- Two of a2's `mist` effects sat just over La Esclusa and floated their spray balls into 1.12's and 1.13's frames:
+  x -292 .. -280 at 89 .. 98 and -250 .. -234 at 86 .. 94. Out. a2's third (x -392 .. -380) and the other biomes' stay
+  for their own passes.
+- a2's first build since the parting learned undersides (11-18, above): five of its decos part by sinking 1.2 cm now,
+  not by the old 1.5 cm nudges toward the camera (aguas_culvert_barred, flume_pillar x2, aguas_boiler_pier_low,
+  aguas_inspection_gallery); a2 ZFIGHT 1.
+- Frames: `after/q27_a2_mists_before_after.jpg` (watch scene `mist27`: 1.12's and 1.13's cameras and the roof over
+  each; before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

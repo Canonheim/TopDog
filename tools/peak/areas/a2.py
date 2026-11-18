@@ -378,8 +378,8 @@ A.effect("waterfall", (-380.6, 116, -379, 136))  # the spill into the pipe hall
 A.effect("waterfall", (-392, 136, -389.5, 151))  # LA CASCADA CHICA
 A.effect("waterfall", (-430, 152, -425.5, 166), density=0.4)  # the dam's leak
 A.effect("mist", (-392, 134.5, -380, 156))
-A.effect("mist", (-292, 89, -280, 98))
-A.effect("mist", (-250, 86, -234, 94))
+# (Two mists over La Esclusa, x -292 .. -280 at 89 .. 98 and -250 .. -234 at 86 .. 94, are out: phase 0's floating spray
+# balls, seen in the mine's frames over the flume and the lock: the reviewer's q27, 11-18, as MINE_PASS F-C11 did in a1.)
 A.effect("drips", (-232, 90, -226, T0C))  # the race's drain drips on the lip ledge
 A.effect("drips", (-320, 115, -286, 128))
 A.effect("steam", (-378, 118, -348, 140), density=0.5)
