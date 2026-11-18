@@ -1550,30 +1550,24 @@ func _drips_vis(z: Dictionary, root: Node3D, row: Dictionary) -> void:
 	var count := int(ceil(length / maxf(1.0, float(z.gap)))) + 1
 	var nodes: Array = []
 	for i in count:
+		# (A thin running streak, no ball: its head a bright sliver where the wet is, a short fainter trail over it.
+		# The fat ball and its 1.5 m tail read as floating pale balls beside the staples: the reviewer's q28, note 4.)
 		var drop := Node3D.new()
-		var ball := MeshInstance3D.new()
-		var sm := SphereMesh.new()
-		sm.radius = 0.17
-		sm.height = 0.34
-		ball.mesh = sm
-		ball.scale = Vector3(1.0, 1.45, 1.0)
-		ball.material_override = _flat(Color("#CFEFFF"), 0.92)
-		ball.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		drop.add_child(ball)
-		var shine := MeshInstance3D.new()
-		var hm := SphereMesh.new()
-		hm.radius = 0.055
-		hm.height = 0.11
-		shine.mesh = hm
-		shine.material_override = _flat(Color("#FFFFFF"), 1.0)
-		shine.position = Vector3(-0.05, 0.08, 0.14)
-		drop.add_child(shine)
+		var head := MeshInstance3D.new()
+		var hq := QuadMesh.new()
+		hq.size = Vector2(0.05, 0.2)
+		head.mesh = hq
+		head.material_override = _flat(Color("#CFEFFF"), 0.7)
+		head.position = Vector3(0, 0.1, 0)
+		head.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		drop.add_child(head)
 		var tail := MeshInstance3D.new()  # the wet it leaves behind it
 		var qm := QuadMesh.new()
-		qm.size = Vector2(0.1, 1.5)
+		qm.size = Vector2(0.03, 0.7)
 		tail.mesh = qm
-		tail.material_override = _flat(Color("#9FD0F0"), 0.45)
-		tail.position = Vector3(0, 0.95, -0.02)
+		tail.material_override = _flat(Color("#9FD0F0"), 0.28)
+		tail.position = Vector3(0, 0.55, -0.01)
+		tail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		drop.add_child(tail)
 		drop.visible = false
 		root.add_child(drop)
@@ -1599,7 +1593,7 @@ func _frame_drips() -> void:
 			n.visible = on and s <= length
 			if n.visible:
 				var p := a.lerp(b, s / length)
-				n.position = Vector3(p.x, p.y, 0.42)
+				n.position = Vector3(p.x, p.y, -0.25)  # (behind the climber's plane, in front of the staples' wall)
 				n.rotation.z = (b - a).angle() + PI * 0.5
 
 

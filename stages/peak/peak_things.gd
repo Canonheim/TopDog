@@ -292,6 +292,55 @@ func _build_body(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	bodies[str(def.id)] = {"rb": rb, "last": 0.0, "turned": 0.0, "area": str(a.id), "home": rb.transform}
 
 
+## A ROPE OF LAID HEMP (a rope's `look: "hemp"`; the reviewer's q28, La Cortina's rope read as a thin pole): each piece a
+## round strand 11 cm across in the held honey, three darker twist bands slanting round it (one every 17 cm on a
+## 0.5 m piece), and at its foot a whipping of twine and a short frayed tuft. The drawing only: the piece's body,
+## its length and its grip are a rope's as ever.
+const HEMP := Color("#C9903F")
+const HEMP_TWIST := Color("#8C5F27")
+
+
+func _hemp_piece(mi: MeshInstance3D, rb: RigidBody3D, seg_len: float, last: bool) -> void:
+	var cm := CylinderMesh.new()
+	cm.top_radius = 0.055
+	cm.bottom_radius = 0.055
+	cm.height = seg_len + 0.02
+	cm.radial_segments = 10
+	cm.rings = 1
+	mi.mesh = cm
+	CelPass.paint(mi, HEMP)
+	for k in 3:
+		var band := MeshInstance3D.new()
+		var bm := CylinderMesh.new()
+		bm.top_radius = 0.06
+		bm.bottom_radius = 0.06
+		bm.height = 0.035
+		bm.radial_segments = 10
+		bm.rings = 1
+		band.mesh = bm
+		band.position = Vector3(0, -seg_len * 0.5 + (k + 0.5) * seg_len / 3.0, 0)
+		band.rotation.z = 0.38  # (slanted: the lay's spiral, seen from the front)
+		CelPass.paint(band, HEMP_TWIST)
+		rb.add_child(band)
+	if last:
+		var whip := MeshInstance3D.new()
+		var wm := CylinderMesh.new()
+		wm.top_radius = 0.062
+		wm.bottom_radius = 0.062
+		wm.height = 0.07
+		wm.radial_segments = 10
+		wm.rings = 1
+		whip.mesh = wm
+		whip.position = Vector3(0, -seg_len * 0.5 + 0.09, 0)
+		CelPass.paint(whip, HEMP_TWIST)
+		rb.add_child(whip)
+		for f: float in [-0.5, -0.2, 0.15, 0.45]:
+			var strand := LuchaKit.box(Vector3(0.018, 0.13, 0.018), HEMP, Vector3.ZERO)
+			strand.rotation.z = f
+			strand.position = Vector3(sin(f) * 0.06, -seg_len * 0.5 - 0.055, 0)
+			rb.add_child(strand)
+
+
 func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 	var top := Peak.v2(def.at)
 	var kind := str(def.kind)
@@ -350,11 +399,14 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 			cap.radius = SEG_R
 			cap.height = seg_len + SEG_R * 2.0
 			cs.shape = cap
-			var bm := BoxMesh.new()
-			var wide := 0.085 if kind != "chain" else (0.11 if i % 2 == 0 else 0.07)
-			bm.size = Vector3(wide, seg_len + 0.02, wide)
-			mi.mesh = bm
-			CelPass.paint(mi, col)
+			if str(def.get("look", "")) == "hemp":
+				_hemp_piece(mi, rb, seg_len, i == n - 1)
+			else:
+				var bm := BoxMesh.new()
+				var wide := 0.085 if kind != "chain" else (0.11 if i % 2 == 0 else 0.07)
+				bm.size = Vector3(wide, seg_len + 0.02, wide)
+				mi.mesh = bm
+				CelPass.paint(mi, col)
 			if def.has("ladder"):
 				# A HANGING HALF OF A ROPE BRIDGE (page 7.4): two side ropes 0.3 m apart as the camera
 				# sees them, a honey board across every piece but the missing ones (plain boards

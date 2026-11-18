@@ -492,13 +492,16 @@ class Area:
                  [(box_pts(0, -length, bob[0], bob[1]), kind)]
         return self.mover(mid, pivot, shapes, {"type": "swing", "amp": _f(amp), "period": _f(period), "phase": _f(phase)}, **kw)
 
-    def rope(self, rid, at, length, kind="rope", seg=0.5, bob=None, to=None, planks=0, anchor=None, slack=1.03):
+    def rope(self, rid, at, length, kind="rope", seg=0.5, bob=None, to=None, planks=0, anchor=None, slack=1.03, look=None):
         """A physics rope hung from `at`. kind: rope | chain | vine | cable | banner.
         bob: {"w":, "h":, "mass":, "kind":, "model":, "model_scale":} a weight on its end (a
         chandelier, a bell); a model's origin is its hanging point.
         to: its other end, if both ends are tied (a bridge; planks > 0 lays boards on it).
-        anchor: a mover's id, if its top rides a mover (a chair, a kite, a balloon)."""
+        anchor: a mover's id, if its top rides a mover (a chair, a kite, a balloon).
+        look: how it is drawn, if not as its kind is ("hemp": a round laid rope with its twist, whipped and frayed at the foot)."""
         r = {"id": self._id(rid), "at": _pt(at), "len": _f(length), "kind": kind, "seg": _f(seg), "slack": _f(slack)}
+        if look:
+            r["look"] = look
         if bob:
             r["bob"] = bob
         if to is not None:

@@ -216,7 +216,7 @@ A.challenge("1.3", "Los Tablones", (-174.5, 6.0), 2, "A", moves=[
 # The gap: x -192.8 .. -197.9, 34 m over the water. The rope hangs 1.3 m out, from a
 # greased iron rod under the hoist's arm (the rod is why the rope can't be climbed to the arm).
 A.box(-194.1, 12.6, 0.12, 2.4, "grease")
-A.rope("cuerda_minero", (-194.1, 11.4), 4.8, kind="rope")
+A.rope("cuerda_minero", (-194.1, 11.4), 4.8, kind="rope", look="hemp")  # (laid hemp, not a thin pole: the reviewer's q28)
 A.ledge(-201.9, -197.9, 6.0, "rock", t=0.5)  # the landing on the pillar's shoulder: 4 m
 A.challenge("1.4", "La Cuerda del Minero", (-191.5, 6.0), 2, "A", moves=[
     ["reach", [-192.8, 6.0], [-194.1, 7.3]], ["fling", [-196.0, 7.6], [-199.4, 6.0], "F1"]])
@@ -519,7 +519,7 @@ A.ledge(-232.0, -229.0, 89.7, "rock", t=0.5, **_cope("esclusa_coping_alcove"))  
 # never gets wet, and the lip is a short step from its top.
 ROPE_X = -232.42
 A.box(ROPE_X + 0.2, 89.52, 0.5, 0.12, "iron")   # the bracket, out of the shaft's east wall
-A.rope("cuerda_cortina", (ROPE_X, 89.4), 8.0, kind="rope")
+A.rope("cuerda_cortina", (ROPE_X, 89.4), 8.0, kind="rope", look="hemp")  # (laid hemp, not a thin pole: the reviewer's q28)
 A.challenge("1.11", "La Cortina", (-231.4, 72.0), 3, "A", moves=cortina_moves)
 # A LIFE RING AT THE FOOT OF THE WET SLAB (Parker 11-12: "add a bouncy lifesaver here that
 # lunches you back at least to the ledge on the right"). Whoever comes off the balcony or

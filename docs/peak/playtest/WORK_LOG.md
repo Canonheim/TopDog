@@ -3089,6 +3089,21 @@ in. Nothing played by a person.
 - Frames: `after/hooks13_wheel_float.jpg` (watch scene `hooks13`: the lock's camera, the wheel and the gauge, low |
   rising | full). **Checks:** lint; `--peak`. Clean.
 
+## 11-18: the reviewer's q28 at La Cortina: the drips, the rope
+
+- The staples' drips (peak_zones `_drips_vis`) were each a fat pale ball with a shine and a 1.5 m tail, drawn in front
+  of the climber: floating pale balls and spoons in the staple column (note 4). Now a thin running streak, no ball: a
+  bright sliver 0.2 m long at its head where the wet is, a fainter 0.7 m trail over it, drawn behind the climber's plane
+  (z -0.25). Their speed, gap and timing as they were: Parker's slow drip you can watch (11-12) is the holds' tell, and
+  each hold's wet clock is set from it. The drip boards stay.
+- La Cortina's rope read as a thin honey pole (a plain box, one flat colour). A rope can be drawn as laid hemp now
+  (`A.rope(..., look="hemp")`, peak_things `_hemp_piece`; the default unchanged): a round strand 11 cm across in the
+  held honey #C9903F, three darker twist bands slanting round each 0.5 m piece (one every 17 cm), and at its foot a
+  whipping and a frayed tuft. The drawing only: its body, length and grip as before. On for a1's two ropes
+  (`cuerda_cortina`, `cuerda_minero`); every other area's ropes as they were.
+- Frames: `after/q28_drips_rope_before_after.jpg` (watch scenes `rope28`: the rope still, its tip, a climber on it;
+  `c7frames`: La Cortina's top, high, the staples close; before | after). **Checks:** lint; `--peak`. Clean.
+
 ## To do: every note of 12 to 57 not done yet
 
 Kept here so nothing is lost (Parker 11-13). The page has the same list.

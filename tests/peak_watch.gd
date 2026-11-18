@@ -3330,6 +3330,38 @@ func _w_gate13(a: Array) -> void:
 			await shot("gate13_%s_%s_%s" % [row[2], when[1], tag])
 
 
+## La Cortina's rope (the reviewer's q28: it read as a thin pole): still, close and at La Cortina's camera, then with a
+## climber hanging on it by a hand halfway down. rope28:TAG
+func _w_rope28(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	pk.warp("1.11")
+	await secs(4.0)
+	var rope: Dictionary = {}
+	for r in pk.things.ropes:
+		if str(r.id) == "cuerda_cortina":
+			rope = r
+	if rope.is_empty():
+		print("WATCH rope28: no rope")
+		return
+	var top: RigidBody3D = rope.segs[0]
+	var at := pk.local_of(Vector2(top.global_position.x, top.global_position.y))
+	for row in [[at + Vector2(0.0, -3.0), 3.2, "still"], [at + Vector2(0.0, -7.6), 1.0, "tip"], [Vector2(-292.0, 64.0), 9.0, "cam"]]:
+		look(row[0], float(row[1]))
+		await secs(0.6)
+		await shot("rope28_%s_%s" % [row[2], tag])
+	var seg: RigidBody3D = rope.segs[8]
+	var sp := pk.local_of(Vector2(seg.global_position.x, seg.global_position.y))
+	stand(sp + Vector2(0.15, -1.6))
+	await ticks(1)
+	me().attach(1, seg)
+	await secs(2.0)
+	print("WATCH rope28: a climber on the rope, holding %s" % holds())
+	for row in [[sp + Vector2(0.0, -0.6), 2.6, "held"], [Vector2(-292.0, 64.0), 9.0, "held_cam"]]:
+		look(row[0], float(row[1]))
+		await secs(0.6)
+		await shot("rope28_%s_%s" % [row[2], tag])
+
+
 ## 1.13's gate wheel and gauge float (MINE_PASS F22, F23): low (lock t 13.5), the flap open mid-rise (t 3) and full (t 8),
 ## the lock's camera, the wheel close and the gauge close; the wheel's turn and the float's height printed. hooks13:TAG
 func _w_hooks13(a: Array) -> void:
@@ -3399,7 +3431,8 @@ func _w_c7frames(a: Array) -> void:
 	pk.warp("1.11")
 	await secs(3.0)
 	for row in [[Vector2(-279.0, 48.0), 6.0, "1_10"], [Vector2(-292.5, 48.5), 4.0, "awning"], [Vector2(-293.3, 59.5), 4.5, "cortina_low"],
-			[Vector2(-292.8, 68.0), 4.5, "cortina_high"], [Vector2(-293.9, 61.3), 1.6, "staples_close"], [Vector2(-292.0, 64.0), 9.0, "cortina_cam"]]:
+			[Vector2(-292.8, 68.0), 4.5, "cortina_high"], [Vector2(-293.9, 61.3), 1.6, "staples_close"], [Vector2(-292.0, 64.0), 9.0, "cortina_cam"],
+			[Vector2(-292.6, 70.0), 4.0, "cortina_top"]]:
 		look(row[0], float(row[1]))
 		await secs(0.8)
 		await shot("c7_%s_%s" % [row[2], tag])
