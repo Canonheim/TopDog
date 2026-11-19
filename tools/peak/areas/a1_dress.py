@@ -361,9 +361,11 @@ def dress(A):
     if not _beams:
         for x in (-155.4, -156.7, -158.0, -164.6, -165.9):
             drawn("mine_end_splintered", x, -10.78, (0.36, 0.36, 0.02), tone="wood")
-    for x, yb, yt in ((-158.9, -16.6, -12.0), (-160.3, -17.3, -12.2), (-161.9, -17.3, -12.0), (-163.5, -16.0, -12.2)):
-        drawn("mine_post_tongue", x, yt - 0.15, (0.45, 0.15, 0.02), tone="wood")
-        drawn("mine_mud_tideline", x, yb, (0.45, 1.5, 0.02), tone="slick")
+    _posts = all(_sw.model_bounds("mina_gallery_post_sunk_" + k) is not None for k in "abcd")  # (the posts' own, C4, 11-19)
+    if not _posts:
+        for x, yb, yt in ((-158.9, -16.6, -12.0), (-160.3, -17.3, -12.2), (-161.9, -17.3, -12.0), (-163.5, -16.0, -12.2)):
+            drawn("mine_post_tongue", x, yt - 0.15, (0.45, 0.15, 0.02), tone="wood")
+            drawn("mine_mud_tideline", x, yb, (0.45, 1.5, 0.02), tone="slick")
     # Foreground: the low lip of mud-caked rubble, in two heaps under the floor, with a bent rail.
     A.deco("mine_rubble_lip", -164.5, -16.6, z=LIP_Z, scale=0.42, size=(10.0, 1.0, 0.7), tone="back2")
     A.deco("mine_rubble_lip", -151.85, -16.5, z=LIP_Z, scale=1.07, size=(10.0, 1.0, 0.7), tone="back2")

@@ -190,9 +190,15 @@ for k, x in enumerate((-155.4, -156.7, -158.0, -164.6, -165.9)):
     A.box(x, BEAM_Y, 0.36, 0.36, "wood", **_cope("mina_gallery_beam_end"))  # roof beams, seen end-on, hung low on posts from the roof
     if _cope("mina_gallery_beam_end"):
         A.deco("mina_gallery_beam_end", x, BEAM_Y, z=0.0, flip=k in (1, 3), size=(0.394, 3.085, 2.797), tone="wood", skin=True)
+# THE PIT POSTS (quality run, MINE_PASS row 23 / C4, reviewer 8.5, 11-19): square-sawn honey posts sunk in the black mud to
+# one tide line, each broken its own way at the head (they read as sharpened, banded pickets). One stem a post: skins are
+# never stretched. Each deco stands at its box's foot.
 POSTS = [(-158.9, -16.6, -12.0), (-160.3, -17.3, -12.2), (-161.9, -17.3, -12.0), (-163.5, -16.0, -12.2)]
-for x, yb, yt in POSTS:
-    A.box(x, (yb + yt) / 2, 0.45, yt - yb, "wood")
+_POST_SIZES = {"a": (0.77, 4.654, 0.726), "b": (0.731, 5.157, 0.729), "c": (0.696, 5.351, 0.736), "d": (0.713, 3.863, 0.72)}
+for k, (x, yb, yt) in zip("abcd", POSTS):
+    A.box(x, (yb + yt) / 2, 0.45, yt - yb, "wood", **_cope("mina_gallery_post_sunk_" + k))
+    if _cope("mina_gallery_post_sunk_" + k):
+        A.deco("mina_gallery_post_sunk_" + k, x, yb, z=0.0, size=_POST_SIZES[k], tone="wood", skin=True)
 A.challenge("1.1", "La Galería", (-154.0, -12.6), 1, "S", moves=[
     ["reach", [-155.5, -12.6], [-155.4, -10.78]], ["reach", [-155.4, -10.78], [-156.7, -10.78]],
     ["reach", [-156.7, -10.78], [-158.0, -10.78]], ["reach", [-158.0, -10.78], [-158.9, -12.0]],
