@@ -85,7 +85,7 @@ const RANGE_SQUASH := 0.8
 ## The mountain's east face from the summit down: [local x, local y] (tools/peak/areas/st.py).
 const EAST := [[-350, 1000], [-334, 962], [-307, 884], [-281, 784], [-251, 684], [-230, 578], [-177, 400],
 	[-150, 322], [-130, 260], [-90, 150], [-60, 60], [-34, 5.5], [-16, -40]]
-const WEST := [[-372, 950], [-430, 800], [-520, 550], [-620, 250], [-700, 0], [-714, -40]]
+const WEST := [[-372, 958], [-505, 958], [-512, 900], [-525, 800], [-545, 700], [-520, 550], [-620, 250], [-700, 0], [-714, -40]]
 
 ## (Albedos: the scene's sun draws a card about 1.3x brighter and bluer than its colour.)
 const HAZE_FAR := Color("#A0A6B8")

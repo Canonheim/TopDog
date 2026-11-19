@@ -3337,3 +3337,42 @@ over it whole and no darkening reached them. Now its front is back at the play s
 piles), with fade 0.6 and dark 0.3 kept, and a new water rule key, `murk` (peak_zones.gd `_body_vis`: the deep colour's
 alpha, 0.74 by default), set to 0.93: under 0.6 m the piles and ladder sink into the water; near the surface they show.
 Python and GDScript only; a1 rebuilt, ZFIGHT 0. The Director frames it.
+
+## THE SUMMIT v2 and THE FROGS' GROTTO, part one (note 148; Parker 11-19 before bed: "build the new summit ... stylized first pass")
+A new `tools/peak/areas/a11.py` from `docs/peak/playtest/design/summit_148/SUMMIT_V2.md` and its layout script: the
+course's own kinds, the fitted kit, plain stand-ins. No new kit models; `a11_dress.py` (the v1 summit's dress) is not
+called. Challenges 11.1 .. 11.11 (the warp keys are new: old watch scenes that warp to 11.x go to the new places).
+- The mountain is one slick mass, x -330 .. -496, cut with the rooms (shapely, convex pieces), and every hole has a back
+  card cut to the mountain's outline.
+- 11.1 the gate in the alcove under the prow and the kitchen inside (frog on the counter, the stove's glow); 11.2 the
+  monks' stair over the kitchen and up its tunnel to the door at 980; 11.3 three hanging arches off a beam; 11.4 three
+  prayer wheels (`A.wheel`, 4 spokes, 9 rpm, counter-clockwise); 11.5 the terrace lip in east gusts, to the library's
+  door; 11.6 the library: four switchback galleries, ladders in the end shafts (only the next one there), three gaps
+  with a written rhythm of books and scrolls (new spawner kinds `book` and `scroll` in peak_things.gd: boxes and
+  rolls of the course's own), four lamp-lit niches, the hatch onto the court; 11.7 the ring (red apron, canvas, two
+  corner posts you climb over, a throwing rope on each post's inner face); 11.8 the iron ring on the broken arch and the
+  20 m leap; 11.9 the bell tower (the old summit bell and its rope, the belfry's beams, iron rungs out to the roof);
+  11.10 the belt on the spire; 11.11 the cable trolley (a `path` mover, `once`, `trigger grab`, home 8 s later) to the
+  mouth on the shoulder, the frogs' pool inside, its slide out of the west face.
+- st.py: FROG_SLIDE starts at the west flank's foot (a funnel between the flank's last lip and a tall slick wall) and
+  runs east under the summit at 12 degrees to the old line at 920 m, on to the storm ridge's first ledge; the lid
+  raised to 1078, the west void wall moved to x -508; the mountain card's WEST line carried out under the summit (and
+  peak_backdrop.gd's copy). peaklib FRAME a11: (-500, 962, -317, 1072), its exit the spire. peak.gd `out_of_world`: to
+  y 1090 and x -520.
+- The checks: every move within the reach and fling rules (no errors); sweeps ZFIGHT 0; the gallery gaps lined slick
+  (checks.py pits: lined); lint 259/0; `--peak` fails 0. The drop probe (tests/peak_drop.tscn --at=...): a missed leap
+  goes down the cleft's chute, out of the east face over the arches and the prow, and lands on the storm ridge
+  (10.4, 929 m); misses off the arches, the wheels and the terrace go off the prow into a10 (one onto the balloon);
+  the spring's slide reaches the storm ridge's first ledge in 56 s; the cable's mouth drops into the pool.
+- Decided (Parker asleep): THE DOORS' SILLS STAND UNDER THE ROCK. The stair's door and the library's door have their
+  sill back under the lintel and a slick floor sloping out beyond it, so a body sliding down the face drops past the
+  sill and slides on (a sill out on the face caught every slow miss from 984 to 1007 m in the probe).
+- Decided (Parker asleep): the cleft's chute has a cold draught down it (two wind zones, 1.8 m/s2) so a faller comes
+  out flat at about 7 m/s, clear over the arches and the prow (without it, 4 m/s, and the third arch caught him). It
+  carries him a little past the balloon: he lands on the storm ridge at about 929 m, not on the balloon's rope.
+- Decided (Parker asleep): the arches stand 4 to 4.9 m off the face and the wheels 3.4 m (at 2.6 a limp slider caught
+  the third arch), the terrace lip 2.4 m off it with its root a layer back.
+- Known: a body thrown off the court's east edge slides down to the library's door, is thrown out over its sloping
+  floor and lands on the terrace lip below it (the lip has to stand just under the door to be the way in).
+- Known: the frogs' slide still ends on the storm ridge's first ledge (886 m), as the old one did; part two carries it
+  to the great falls.

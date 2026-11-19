@@ -13,7 +13,8 @@ A = Area("st", "cliffs")
 # The east face: (x, y) from the trailhead to the summit, and the west face back down.
 EAST = [(-34, 5.5), (-60, 60), (-90, 150), (-130, 260), (-150, 322), (-174, 400), (-180, 400), (-230, 578),
         (-251, 684), (-281, 784), (-307, 884), (-334, 962), (-350, 1000)]
-WEST = [(-372, 950), (-430, 800), (-520, 550), (-620, 250), (-700, 0)]
+WEST = [(-372, 958), (-505, 958), (-512, 900), (-525, 800), (-545, 700), (-520, 550), (-620, 250), (-700, 0)]
+# (the summit v2, note 148: the mountain's west side carried out under the monastery's west flank, x -496)
 
 
 def tube(centre, width, kind="scree"):
@@ -33,26 +34,28 @@ def tube(centre, width, kind="scree"):
     A.cave(air, kinds, default=kind, thick=3.0)
 
 
-# ---------------------------------------------------------------- the frogs' slide (note 102)
-# The hot spring's slide (a11, page 11.0) leaves the summit through its floor at 962 m between
-# x -379.2 and -377.0. Where it joins the fall line below is not designed yet; for now (the
-# Second Director, 11-14: "end it on the glacier's slide or the gap at 886 m, whichever the
-# course makes simplest") it drops down the mountain's west side, turns east at 887 m through
-# the storm ridge's foot (a10 cuts its mass there) and lets you out on the ridge's first
-# ledge at 886 m (a9's), where the start of 10.1 is. A 2.2 m slick pipe.
-FROG_SLIDE = [(-378.1, 963.5), (-378.1, 955.0), (-376.5, 944.0), (-372.5, 930.0), (-369.0, 916.0), (-367.0, 904.0),
-              (-366.2, 896.0), (-365.4, 891.0), (-363.8, 888.2), (-361.0, 887.4), (-345.0, 887.4), (-330.0, 887.4),
-              (-312.6, 887.4)]
+# ---------------------------------------------------------------- the frogs' slide (note 102; the summit v2, note 148)
+# THE SUMMIT v2 (11-19): the hot spring is inside the west shoulder (a11), and its slide leaves through the west
+# face at 1000 m and pours down the west flank. At the flank's foot (x -496 .. -498, y 957) this pipe takes it, and
+# everything else that slides off the west side: its mouth is between the flank's last lip and a tall slick wall
+# 2.6 m west of it, which stops a body thrown west off the flank. It runs east under the summit's mass, joins the
+# old line down the mountain's west side at 944 m, turns east at 887 m through the storm ridge's foot (a10 cuts its
+# mass there) and lets you out on the ridge's first ledge at 886 m (a9's), where the start of 10.1 is.
+# (Part two of the night's job carries it to the great falls instead.)
+FROG_SLIDE = [(-499.3, 957.0), (-499.3, 953.0), (-497.2, 949.4), (-490.0, 946.4), (-385.0, 923.6), (-375.2, 920.2),
+              (-370.0, 914.0), (-367.6, 906.0), (-367.0, 904.0), (-366.2, 896.0), (-365.4, 891.0), (-363.8, 888.2), (-361.0, 887.4), (-345.0, 887.4),
+              (-330.0, 887.4), (-312.6, 887.4)]
+FROG_W = 2.6
 _n0 = len(A.solids)
-tube(FROG_SLIDE, 2.2)
+tube(FROG_SLIDE, FROG_W)
+A.solid([(-503.6, 957.02), (-500.6, 957.02), (-500.6, 1003.0), (-503.6, 1003.0)], "wet")  # the catch wall west of the mouth
 # (Its slabs through the storm ridge's foot lie inside the ridge's mass, their fronts on the mass's front:
 # they wear the mass's skin, which is made with the tunnel in it. a10_dress 7b.)
 for _s in A.solids[_n0:]:
     if min(p[0] for p in _s["pts"]) >= -361.5 and max(p[1] for p in _s["pts"]) <= 892.0:
         _s["skin"] = "tormenta_ridge_mass"
-    elif min(p[1] for p in _s["pts"]) >= 961.0:
-        _s["skin"] = "cumbre_shoulder"  # (its first 1.5 m lie in the summit's shoulder, made with the slide's mouth in it: a11_dress 7b)
 # ("the celebratory drop all the way down": a ride, not a fall, wherever it lands)
+A.ride((-505.0, 905.0, -360.0, 1004.0))  # down the summit's west flank and under it (12 degrees: the drop probe, 11-19)
 A.ride((-381.0, 886.0, -360.0, 964.0))  # down the mountain's west side
 A.ride((-366.5, 885.5, -313.0, 890.0))  # east through the storm ridge's foot
 
@@ -120,8 +123,8 @@ tube([(-177, 399), (-177, 380), (-174, 330), (-171, 280), (-172, 252), (-262, 17
 
 # ---------------------------------------------------------------- the world's edges (unseen)
 A.box(-116.0, 675.0, 4.0, 690.0, "void")  # the sky's east wall, above the slope
-A.box(-240.0, 1032.0, 300.0, 4.0, "void")  # the lid
-A.box(-392.0, 950.0, 4.0, 200.0, "void")  # behind the summit
+A.box(-300.0, 1080.0, 420.0, 4.0, "void")  # the lid (over the summit v2's spire, 1069)
+A.box(-508.0, 990.0, 4.0, 260.0, "void")  # behind the summit (west of its catch wall)
 
 # ---------------------------------------------------------------- the mountain itself, as one great card
 body = EAST + WEST + [(-700, -40), (-34, -40)]

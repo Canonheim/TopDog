@@ -3977,3 +3977,32 @@ func _w_beetle(a: Array) -> void:
 		spot, face, hits, v_after, top_y, fy, (x1 - x0) * face, ko, st.ghost, pk.things.last_bump])
 	look(pk.local_of(c.centre_of_mass()) + Vector2(0, 1.0), 3.2)
 	await shot(pre + "_passed_" + tag)
+
+
+## THE SUMMIT v2's FIRST PASS (note 148, 11-19): every place, from the gate to the frogs' spring, and the whole of it.
+## (Never warped to 11.10: its anchor is the belt, and the summit's card would cover the frames after it.)
+## summit2:TAG
+func _w_summit2(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	var rows := [
+		["11.1", Vector2(-346.0, 967.0), 7.0, "1_kitchen"],
+		["11.2", Vector2(-352.0, 974.0), 8.0, "2_stair"],
+		["11.3", Vector2(-350.0, 986.0), 9.0, "3_claustro"],
+		["11.4", Vector2(-360.0, 1000.0), 9.0, "4_molinos"],
+		["11.5", Vector2(-369.0, 1010.0), 7.0, "5_terrazas"],
+		["11.6", Vector2(-391.5, 1021.5), 11.0, "6_biblioteca"],
+		["11.6", Vector2(-391.5, 1018.0), 5.5, "6_biblioteca_close"],
+		["11.7", Vector2(-394.0, 1035.0), 9.0, "7_ring"],
+		["11.8", Vector2(-421.0, 1030.0), 14.0, "8_salto"],
+		["11.9", Vector2(-436.0, 1050.0), 12.0, "9_campanario"],
+		["11.9", Vector2(-440.0, 1064.0), 7.0, "10_belt"],
+		["11.9", Vector2(-458.0, 1036.0), 18.0, "11_cable"],
+		["11.9", Vector2(-462.0, 1012.0), 8.0, "11_spring"],
+		["11.9", Vector2(-412.0, 1012.0), 62.0, "0_whole"],
+	]
+	for row in rows:
+		pk.warp(str(row[0]))
+		await secs(3.0)
+		look(row[1], float(row[2]))
+		await secs(1.5)
+		await shot("summit2_%s_%s" % [row[3], tag])

@@ -3514,6 +3514,10 @@ func _break_faller(rb: RigidBody3D, r: float) -> void:
 	peak.audio.play("rock_crumble", Vector2(at.x, at.y), 0.0)
 
 
+## The library's books (spawner kind "book"): their covers, old leather and cloth.
+const BOOK_COVERS := [Color("#7A2E24"), Color("#2F4A6B"), Color("#3E5E3A"), Color("#8A5A22"), Color("#5B3A5E"), Color("#9C7A3C")]
+
+
 func _spawn_faller(sp: Dictionary, def: Dictionary, at: Vector2) -> void:
 	var kind := str(def.kind)
 	var r := float(def.get("r", 0.45))
@@ -3545,6 +3549,29 @@ func _spawn_faller(sp: Dictionary, def: Dictionary, at: Vector2) -> void:
 			col = Color("#F4F7FA")
 			vis = _slab_look(r)
 			rb.mass *= 4.0
+		"book":
+			# THE LIBRARY'S FALLING BOOKS (note 148, the summit v2's first pass): a closed book, its coloured cover
+			# round a block of pale pages, tumbling as it falls. Stand-ins of the course's own: no kit model.
+			var bs := Vector3(r * 1.7, r * 1.25, r * 0.7)
+			var bx := BoxShape3D.new()
+			bx.size = bs
+			cs.shape = bx
+			vis = Node3D.new()
+			vis.add_child(LuchaKit.box(bs, BOOK_COVERS[randi() % BOOK_COVERS.size()]))
+			vis.add_child(LuchaKit.box(Vector3(bs.x * 0.88, bs.y * 0.84, bs.z * 1.06), Color("#EFE4C8"), Vector3(bs.x * 0.07, 0, 0)))
+			rb.angular_velocity = Vector3(0, 0, randf_range(-5.0, 5.0))
+		"scroll":
+			# ...and its scrolls: a rolled parchment with its two red wooden ends, turning end over end.
+			var cap := CapsuleShape3D.new()
+			cap.radius = r * 0.4
+			cap.height = r * 2.6
+			cs.shape = cap
+			cs.rotation.z = PI * 0.5
+			vis = Node3D.new()
+			vis.add_child(LuchaKit.cyl(r * 0.36, r * 2.2, Color("#E8D9B0"), Vector3.ZERO, Vector3.RIGHT))
+			vis.add_child(LuchaKit.cyl(r * 0.2, r * 0.5, Color("#A8342A"), Vector3(-r * 1.25, 0, 0), Vector3.RIGHT))
+			vis.add_child(LuchaKit.cyl(r * 0.2, r * 0.5, Color("#A8342A"), Vector3(r * 1.25, 0, 0), Vector3.RIGHT))
+			rb.angular_velocity = Vector3(0, 0, randf_range(-6.0, 6.0))
 		_:
 			var sph := SphereShape3D.new()
 			sph.radius = r
@@ -3564,4 +3591,5 @@ func _spawn_faller(sp: Dictionary, def: Dictionary, at: Vector2) -> void:
 	rb.linear_velocity = Vector3(v.x, v.y, 0)
 	(sp.root as Node3D).add_child(rb)
 	sp.live.append([rb, peak.clock + float(def.get("life", 8.0)), -1.0, Vector3.ZERO, Vector3.ZERO, 0.0, 0.0, 0.0])
-	peak.audio.play("icicle_drop" if kind == "icicle" else ("snow_whump" if kind == "slab" else "rock_crumble"), at, 1.0)
+	if kind != "book" and kind != "scroll":  # (a book makes no crash as it leaves its shelf; its warning was the rustle)
+		peak.audio.play("icicle_drop" if kind == "icicle" else ("snow_whump" if kind == "slab" else "rock_crumble"), at, 1.0)

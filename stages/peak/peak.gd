@@ -1404,7 +1404,7 @@ func _tick_softlock(delta: float) -> void:
 ## Outside the world (a bug, never a design): back to the last firm hold.
 func out_of_world(world_p: Vector2) -> bool:
 	var p := local_of(world_p)
-	return p.y < -60.0 or p.y > 1060.0 or p.x < -480.0 or p.x > 30.0
+	return p.y < -60.0 or p.y > 1090.0 or p.x < -520.0 or p.x > 30.0  # (the summit v2 reaches 1069 m and x -504: note 148)
 
 
 func rescue() -> void:
