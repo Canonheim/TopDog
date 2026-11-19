@@ -721,9 +721,12 @@ func _peak_camera(delta: float) -> void:
 	var fr: Array = peak.cam_frame()
 	var half := float(fr[0])
 	var bias: Vector2 = fr[1]
-	if half > PEAK_CAM_HALF_MAX:
-		bias *= PEAK_CAM_HALF_MAX / half
-		half = PEAK_CAM_HALF_MAX
+	var cap := PEAK_CAM_HALF_MAX
+	if fr.size() > 3 and float(fr[3]) > 0.0:
+		cap = float(fr[3])  # (a spot's own close cap: the summit's leap, whose target is 20 m off)
+	if half > cap:
+		bias *= cap / half
+		half = cap
 	bias.y = maxf(bias.y, -PEAK_CAM_DOWN_MAX)
 	var com := peak.player.centre_of_mass()
 	var v := _cam_v

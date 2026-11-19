@@ -762,10 +762,15 @@ class Area:
     def light(self, x, y, color="#FFC070", rng=9.0, energy=1.6, z=1.6, flicker=False):
         self.lights.append({"at": [_f(x), _f(y), _f(z)], "color": color, "range": _f(rng), "energy": _f(energy), "flicker": bool(flicker)})
 
-    def cam(self, rect, half_h, bias=(0.0, 0.0)):
+    def cam(self, rect, half_h, bias=(0.0, 0.0), close=None):
         """Inside rect the camera shows half_h metres above and below (default 4.2) and
-        leans `bias` metres toward what matters."""
-        self.cams.append({"rect": self._rect(rect), "half_h": _f(half_h), "bias": _pt(bias)})
+        leans `bias` metres toward what matters. The close camera shows at most 5.5 (game/main.gd
+        PEAK_CAM_HALF_MAX; the full frame is the hold-to-zoom one): `close` lets this spot's close
+        camera show up to that much instead (a leap whose target is 20 m off: the summit's 11.8)."""
+        c = {"rect": self._rect(rect), "half_h": _f(half_h), "bias": _pt(bias)}
+        if close:
+            c["close"] = _f(close)
+        self.cams.append(c)
 
     def effect(self, kind, rect, **params):
         """A drawn effect in rect: waterfall | mist | drips | spores | snow | steam | embers |

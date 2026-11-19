@@ -42,7 +42,9 @@ GHOST_BACK = (-1.15, -0.75)  # a drawn-only piece standing behind the climber (a
 # ================================================================ the mountain: one slick skin
 # The east face, from the prow's lip to the court's east edge (the design's EAST).
 EAST = [(-330.0, 968.6), (-338.0, 974.5), (-346.0, 981.0), (-354.0, 988.5), (-361.0, 996.5), (-367.0, 1005.0),
-        (-372.0, 1013.0), (-375.5, 1022.0), (-377.0, 1031.0)]
+        (-372.0, 1013.0), (-371.2, 1022.0), (-370.6, 1031.0)]
+# (The face over the library's door stands up nearly sheer to the court, x -372 .. -370.6, so the hall is INSIDE the
+# mountain with 7 m of rock east of it: the reviewer's first-pass note, 11-19, "a box of shelves proud on the face".)
 
 
 def face_x(y):
@@ -90,19 +92,20 @@ air_box(-362.0, 963.0, -339.5, 971.0)   # the kitchen
 A.ledge(-362.0, -340.0, FLOOR, "stone", t=1.0)  # its floor, one floor with a10's ledge
 A.box(-357.25, FLOOR + 0.6, 1.5, 1.2, "wood")   # the tea frog's counter
 A.deco("frog_sit", -357.25, FLOOR + 1.2, z=-0.3, scale=2.4, size=(0.62, 0.62, 0.65), tone="accent")  # the tea frog
-A.solid(box_pts(-350.0, FLOOR + 1.2, 2.6, 2.4), "brick", ghost=True, z=(-1.2, -0.5))  # the great stove, at the back
-A.solid(box_pts(-350.0, FLOOR + 0.7, 1.2, 0.7), "hot", ghost=True, z=(-0.55, -0.45))  # its fire door
+A.solid(box_pts(-349.0, FLOOR + 0.8, 1.6, 1.6), "wet", ghost=True, z=(-1.2, -0.55))  # the great stove, black iron, at the back
+A.solid(box_pts(-349.6, FLOOR + 2.9, 0.3, 2.6), "wet", ghost=True, z=(-1.0, -0.8))   # its flue
+A.solid(box_pts(-349.0, FLOOR + 0.7, 0.7, 0.35), "hot", ghost=True, z=(-0.56, -0.5))  # its fire door, glowing
 A.solid(box_pts(-341.2, 967.0, 0.5, 6.0), "stone", ghost=True, z=GHOST_BACK)      # the gate's jamb (cut in the rock)
 A.solid(box_pts(-338.0, 967.9, 6.0, 0.6), "stone", ghost=True, z=GHOST_BACK)      # and its lintel under the prow
-A.light(-350.0, 966.0, color="#FF9A4A", rng=8.0, energy=2.2, z=0.6, flicker=True)   # the stove's glow
+A.light(-349.0, 965.0, color="#FF9A4A", rng=6.0, energy=1.6, z=0.2, flicker=True)   # the stove's glow
 A.light(-357.0, 968.5, color="#FFC070", rng=6.0, energy=1.2, z=0.8, flicker=True)   # the frog's lamp
 A.dark((-362.0, 963.0, -340.5, 971.0), level=0.35)
-A.challenge("11.1", "La Casa de Té", (-345.0, FLOOR), 1, "X", moves=[
+A.challenge("11.1", "La Casa de Té", (-351.5, FLOOR), 1, "X", moves=[
     ["reach", [-336.0, FLOOR], [-337.8, FLOOR]],
     ["reach", [-337.8, FLOOR], [-339.6, FLOOR]],
 ])
 A.cam((-342.0, 962.0, -328.0, 970.0), half_h=5.5, bias=(-2.0, 1.0))   # the gate, from the balloon's side
-A.cam((-362.0, 962.0, -342.0, 971.0), half_h=5.0, bias=(0.0, 0.5))    # the kitchen
+A.cam((-362.0, 962.0, -342.0, 971.0), half_h=5.0, bias=(-3.5, 0.8))    # the kitchen (the counter, the frog, the stove)
 
 # ================================================================ 11.2 La Escalera de los Monjes
 # From the kitchen's west end the stair climbs east, free stone steps over the kitchen, then up its own tunnel to a
@@ -148,11 +151,20 @@ for y in (984.3, 987.8, 991.2):
     x = round(face_x(y) + {984.3: 4.9, 987.8: 4.0, 991.2: 4.4}[y], 2)  # (the first swung to from the sill, out of the door)
     ARCHES.append((x, y))
     A.solid(box_pts(x, y - 0.25, 1.6, 0.5), "stone")                       # the arch's broken crown
-    A.solid(box_pts(x, y + 0.6, 0.09, 1.2), "iron", ghost=True, z=(-0.35, -0.25))  # its chain (on up to the beam)
-A.beam((ARCHES[0][0] + 0.9, ARCHES[0][1] + 1.6), (ARCHES[2][0] - 1.2, ARCHES[2][1] + 3.6), t=0.35, kind="wood", ghost=True,
-       z=GHOST_BACK)  # the cloister's roof beam
-A.solid(box_pts((ARCHES[2][0] - 1.2 + face_x(ARCHES[2][1] + 3.6)) / 2, ARCHES[2][1] + 3.6,
-                abs(ARCHES[2][0] - 1.2 - face_x(ARCHES[2][1] + 3.6)) + 0.4, 0.3), "iron", ghost=True, z=GHOST_BACK)  # its bracket
+    for dx in (-0.6, 0.6):  # its two chains, up to the beam, and the arch's broken legs under its ends
+        A.solid(box_pts(x + dx, y + 1.2, 0.13, 2.4), "iron", ghost=True, z=(-0.4, -0.25))
+        A.solid(box_pts(x + dx * 1.15, y - 1.05, 0.3, 1.1), "stone", ghost=True, z=(-0.7, -0.4))
+_b0 = (ARCHES[0][0] + 1.2, ARCHES[0][1] + 2.4)
+_b1 = (ARCHES[2][0], ARCHES[2][1] + 2.4)
+_k = (_b1[1] - _b0[1]) / (_b1[0] - _b0[0])
+_bx = _b1[0]
+while _bx > face_x(_b0[1] + _k * (_bx - _b0[0])) - 0.6:  # (on up its own slope until it is set into the face)
+    _bx -= 0.1
+A.beam(_b0, (_bx, _b0[1] + _k * (_bx - _b0[0])), t=0.4, kind="wood", ghost=True, z=GHOST_BACK)  # the cloister's roof beam
+A.solid(box_pts(_bx + 0.3, _b0[1] + _k * (_bx - _b0[0]), 1.2, 0.9), "stone", ghost=True, z=GHOST_BACK)  # its socket in the face
+# The stair's door: its lintel and jamb under the rock (the black in the notch is the doorway, not a hole in the skin).
+A.solid(box_pts(-347.9, 982.2, 1.4, 0.4), "stone", ghost=True, z=GHOST_BACK)
+A.solid(box_pts(-348.75, 981.25, 0.3, 1.9), "stone", ghost=True, z=GHOST_BACK)
 SILL = (-348.0, DOOR_Y)
 A.challenge("11.3", "El Claustro Colgante", SILL, 3, "X", moves=[
     ["fling", list(SILL), list(ARCHES[0]), "F3"],
@@ -237,7 +249,7 @@ for x, y0, y1 in LADDERS:
 # The court's floor (the hall's roof) has its hatch over the east shaft.
 COURT = 1032.0
 A.ledge(-408.0, -380.9, COURT, "stone", t=1.0)
-A.ledge(-378.5, -377.0, COURT, "stone", t=1.0)
+A.ledge(-378.5, -370.6, COURT, "stone", t=1.0)
 # The niches: west at the first and third galleries, east at the second and fourth.
 NICHES = [(-406.4, LIB[0], GALS[0]), (LIB[2], -377.3, GALS[1]), (-406.4, LIB[0], GALS[2]), (LIB[2], -377.3, GALS[3])]
 for x0, x1, y in NICHES:
@@ -297,8 +309,8 @@ for li, (x, y0, y1) in enumerate(LADDERS):
         LIB_MOVES.append(["reach", [walk[-1], y], [nxt, y]])
 LIB_MOVES.append(["reach", [E_SHAFT, rungs(*LADDERS[-1][1:])[-1]], [-380.6, COURT]])
 A.challenge("11.6", "La Biblioteca", (-375.0, LIB_FLOOR), 4, "X", moves=LIB_MOVES)
-A.cam((LIB[0] - 1.6, LIB[1], LIB[2], LIB[3]), half_h=7.5, bias=(0.0, 1.0))
-A.cam((-379.0, 1010.0, -368.0, 1016.0), half_h=6.0, bias=(-3.0, 1.0))  # the door
+A.cam((LIB[0] - 1.6, LIB[1], LIB[2], LIB[3]), half_h=10.5, bias=(0.0, 0.0))  # the whole hall, its galleries and its falls
+A.cam((-379.0, 1010.0, -366.0, 1016.0), half_h=9.5, bias=(-12.0, 7.0))  # the door: looking in and up the hall
 
 # ================================================================ 11.7 El Ring
 # The old championship ring on the high court: a red apron, its canvas, a corner post at each end you climb over (as
@@ -317,7 +329,7 @@ for y in (1034.3, 1034.95, 1035.6):  # the ring's ropes, post to post, a layer b
 # the ropes that throw: on each post's inner face, leaning 28 degrees, so a body flung into one goes back up and over
 A.bounce((WPOST[1], POST_T - 0.2), (WPOST[1] + 1.0, CANVAS + 0.3), power=1.6, gain=0.7, look="rope", model="ring_rope_red", model_scale=0.5)
 A.bounce((EPOST[0] - 1.0, CANVAS + 0.3), (EPOST[0], POST_T - 0.2), power=1.6, gain=0.7, look="rope", model="ring_rope_red", model_scale=0.5)
-for x in (-406.0, -402.6, -386.0, -383.4):  # the stone seats round it, a layer back
+for x in (-406.0, -402.6):  # the stone seats west of it, a layer back (those by the hatch read as crates)
     A.solid(box_pts(x, COURT + 0.5, 2.0, 1.0), "stone", ghost=True, z=(-1.2, -0.9))
 A.challenge("11.7", "El Ring", (-380.0, COURT), 2, "X", moves=[
     ["reach", [-380.6, COURT], [-382.4, COURT]], ["reach", [-382.4, COURT], [-384.2, COURT]],
@@ -331,7 +343,8 @@ A.challenge("11.7", "El Ring", (-380.0, COURT), 2, "X", moves=[
     ["reach", [-398.3, CANVAS + 1.2], [-398.7, POST_T]],
 ])
 A.light(-394.0, 1038.0, color="#FFE9A8", rng=14.0, energy=1.4)
-A.cam((-410.0, 1031.0, -376.0, 1040.0), half_h=7.5, bias=(-1.0, 2.0))
+A.cam((-407.5, 1031.0, -382.0, 1041.0), half_h=7.5, bias=(0.0, 2.0))   # on the court: the ring whole
+A.cam((-382.0, 1031.0, -370.0, 1041.0), half_h=7.5, bias=(-10.0, 2.0))  # out of the hatch: looking west at the ring
 
 # ================================================================ 11.8 El Ultimo Salto
 # Off the west post (or along the broken arch out of the court's west edge) to the iron ring on the arch's broken end,
@@ -341,6 +354,11 @@ A.solid(box_pts(-408.3, COURT + 1.3, 0.6, 2.6), "stone")  # the arch's last pier
 A.ledge(-411.9, -408.0, COURT + 3.0, "stone", t=0.4)    # its broken span, out over the cleft
 L4 = (-412.15, COURT + 2.8)  # (hung off the span's broken end, in clear air)
 A.hold(L4[0], L4[1], r=0.22, kind="iron")
+for k in range(12):  # the ring itself, 0.9 m across, hung on its pin (drawn: the hold is its top)
+    _a0, _a1 = k * math.tau / 12, (k + 1) * math.tau / 12
+    A.beam((L4[0] + 0.45 * math.cos(_a0), L4[1] - 0.25 + 0.45 * math.sin(_a0)),
+           (L4[0] + 0.45 * math.cos(_a1), L4[1] - 0.25 + 0.45 * math.sin(_a1)), t=0.1, kind="iron", ghost=True, z=(-0.15, 0.0))
+A.solid(box_pts(L4[0], L4[1] + 0.15, 0.12, 0.45), "iron", ghost=True, z=(-0.15, 0.0))  # its pin, into the span
 air_line([(-421.0, 1017.0), (-420.0, 1014.0), (-414.0, 1008.0), (-400.0, 1004.6), (-385.0, 999.4), (-372.0, 994.6),
           (-364.0, 993.4), (-350.0, 993.4)], 1.2)  # the cleft's chute: out of the face level at 993.4, over the arches
 # (the cold draught drawn up through the mountain blows the other way: down the chute it carries a faller out flat at
@@ -356,7 +374,8 @@ A.challenge("11.8", "El Último Salto", (-408.3, COURT), 5, "X", moves=[
     ["fling", [-398.7, POST_T], list(L4), "F3"],  # (or off the post's top: 12.9 m across)
     ["fling", list(L4), [ROPE_X, COURT + 0.7], "F4"],  # 20 m across, 2.7 m down
 ])
-A.cam((-436.0, 1018.0, -408.0, 1044.0), half_h=12.0, bias=(-6.0, 0.0))
+A.cam((-436.0, 1018.0, -407.5, 1044.0), half_h=12.5, bias=(-13.0, -1.0), close=8.5)  # the leap: the ring, the cleft and the
+# rope 20 m west, all in the close camera (17 m of view: the reviewer's first-pass note 3, 11-19)
 
 # ================================================================ 11.9 El Campanario / 11.10 Top Dog
 # The bell tower on the west spur. Its lower walls are wet stone (a miss off the leap that meets the east wall slides
@@ -368,6 +387,18 @@ A.solid([(TW[0], 1020.6), (TE[1], 1020.6), (TE[1], 1051.0), (TW[0], 1051.0)], "w
 A.solid([(TW[0], 1052.0), (TW[1], 1052.0), (TW[1], 1063.5), (TW[0], 1063.5)], "stone")  # the belfry's walls
 A.solid([(TE[0], 1054.5), (TE[1], 1054.5), (TE[1], 1061.5), (TE[0], 1061.5)], "stone")
 A.ledge(TW[0], TE[1], 1052.0, "wood", t=1.0)  # the belfry's floor
+# The base's masonry, drawn on its face (no climber is ever in front of it): courses in running bond, slit windows.
+for _c in range(16):
+    _y = 1021.2 + 1.9 * _c
+    _x = TW[0] - (0.0 if _c % 2 == 0 else 1.6)
+    while _x < TE[1] - 0.05:
+        _xa, _xb = max(_x, TW[0]), min(_x + 3.2, TE[1])
+        if _xb - _xa > 0.5 and _y + 1.85 <= 1051.0:
+            A.solid([(_xa + 0.04, _y + 0.05), (_xb - 0.04, _y + 0.05), (_xb - 0.04, _y + 1.85), (_xa + 0.04, _y + 1.85)],
+                    "stone", ghost=True, z=(1.2, 1.28))
+        _x += 3.2
+for _y in (1027.0, 1036.0, 1045.0):
+    A.card(box_pts(-440.0, _y, 0.5, 1.8), z=1.3, tone="#1A1412", edge=False)
 A.ledge(TE[1], -430.6, 1051.7, "wood", t=0.4)  # the beam out to the bell
 BELL_PIN = (ROPE_X, 1051.1)
 A.box(ROPE_X, 1051.1, 0.5, 0.4, "iron")  # the bell's hanger, under the beam
@@ -406,7 +437,7 @@ A.deco("champion_belt", SPIRE[0], SPIRE[1] + 0.3, z=0.0, size=(1.2, 0.6, 0.2), t
 A.light(ROPE_X, 1049.0, color="#FFE9A8", rng=12.0, energy=1.6)
 A.light(-440.0, 1066.0, color="#FFD98A", rng=12.0, energy=1.4)
 A.light(-440.0, 1056.0, color="#FFC070", rng=8.0, energy=1.0, z=0.6)
-A.cam((-438.0, 1030.0, -426.0, 1051.5), half_h=8.0, bias=(0.0, 2.0))   # the rope and the bell
+A.cam((-438.0, 1030.0, -426.0, 1051.5), half_h=12.0, bias=(-3.0, 8.0))   # the rope, the bell, the beam and the belfry above
 A.cam((-447.0, 1050.0, -429.0, 1072.0), half_h=8.0, bias=(0.0, 1.5))   # the belfry, the roof, the belt
 
 # ================================================================ after the belt: the cable down to the frogs' hot spring
@@ -437,7 +468,7 @@ for x in (-469.0, -461.5, -454.0):
     A.deco("frog_sit", x, 1008.4 if x != -461.5 else POOL_Y - 0.1, z=-1.0, scale=1.6, size=(0.42, 0.42, 0.43), tone="accent")
 A.light(-463.6, 1016.5, color="#FFE6B0", rng=9.0, energy=1.8, z=0.5)  # the daylight down the crack
 A.light(-459.0, 1010.0, color="#FFB070", rng=8.0, energy=1.6, z=0.8, flicker=True)  # warm
-A.effect("steam", (-466.0, 1008.0, -455.0, 1014.0), density=0.8)
+# (No steam: its pale grey balls floated in the dark, the reviewer's first-pass note 7, 11-19, as the mine's old spray.)
 A.dark((GROTTO[0], GROTTO[1], GROTTO[2], GROTTO[3]), level=0.25)
 A.ride((-504.0, 956.0, -444.0, 1066.5))  # the cable, the drop, the pool, the slide (st.py's ride carries on below)
 A.challenge("11.11", "Los Baños de las Ranas", (-467.0, 1008.4), 1, "", moves=[])

@@ -3388,3 +3388,22 @@ as a separate curtain with a hard top, so it went.
   crossings is a ride too: no card, no fall counted, no cry; the climb it costs is the same.)
 - Lint 259/0, `--peak` 0. Frames: tests/peak_watch.gd `falls142:TAG` (the top, the temple, the well's foot, the black
   waters, the Sump).
+
+## The summit's first-pass readability fixes (the reviewer's note on 291d34a8, REVIEW_LOG 27afebf5; 11-19)
+1. 11.6: the library sunk into the mass (the face over its door stands up nearly sheer to the court, x -372 ..
+   -370.6, 7 m of rock east of the hall; the court runs on to it). The door's camera looks in and up the hall
+   (bias -12, 7); the hall's own frame is the whole hall (half 10.5, the zoom-out).
+2. 11.9: the tower's base wears drawn masonry (courses in running bond, slit windows, on its face where no climber
+   can be) and the rope's camera leans up to the bell, the beam and the belfry (bias -3, 8).
+3. 11.8: the iron ring is a ring (12 iron links, 0.9 m across, on a pin into the span, the hold its top). NEW: a
+   camera zone may say `close` (peaklib `A.cam(..., close=)`, peak.gd `cam_frame()` returns it fourth, game/main.gd
+   uses it in place of PEAK_CAM_HALF_MAX, 5.5): the leap's close camera shows 17 m (close 8.5), so the ring, the drop
+   and the rope 20 m west are in one frame. (No other spot uses it.)
+4. 11.7: two cameras on the court, one out of the hatch looking west at the ring, one over it; the two seats by the
+   hatch (read as crates) are out.
+5. 11.1: the stove black iron (a slick ghost, its flue, a small glowing fire door) and the rest's anchor and camera
+   moved west so the counter and the frog are in its frame.
+6. 11.3: the beam runs up its own slope until it is set into the face (a stone socket); each arch has two chains and
+   two broken legs; the stair's door has a stone lintel and jamb in its notch (the black there is the doorway).
+7. 11.11: the grotto's steam is out (its pale grey balls).
+Lint 259/0, `--peak` 0, ZFIGHT 0. Frames: `cam:11.1:11.3:11.6:11.7:11.8:11.9:11.11`.

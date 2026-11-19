@@ -1612,6 +1612,7 @@ func cam_frame() -> Array:
 	var p := player_at()
 	var half := 4.2
 	var bias := Vector2.ZERO
+	var close := 0.0  # (the most this spot's close camera may show, if its author says: 0 = the game's own cap)
 	var best_area := INF
 	for a in areas:
 		if not rect_has(a.region, p, 30.0):
@@ -1624,7 +1625,8 @@ func cam_frame() -> Array:
 					best_area = size
 					half = float(c.half_h)
 					bias = v2(c.bias)
-	return [half, bias, best_area < INF]
+					close = float(c.get("close", 0.0))
+	return [half, bias, best_area < INF, close]
 
 
 # ---------------------------------------------------------------- the ending
