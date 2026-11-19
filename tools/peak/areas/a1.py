@@ -154,7 +154,8 @@ A.wind((FALL_X0, -22.0, FALL_X1, 90.0), (0.0, -6.0))
 # (y 176) down through the black waters, La Esclusa and the mine to the Sump: for now this waterfall, stretched
 # to the column's full width and height (its top written 193, moved to 176), drawn just behind the climb.
 # (Note 111's 3D falls come later.)
-A.effect("waterfall", (FALL_X0, SUMP_Y, FALL_X1, 193.0), x=(FALL_X0 + FALL_X1) / 2, head=0.0, width=6.0, z=-0.6)
+# (Note 142, 11-19: the great falls are st.py's now, drawn from the well's top (494) down to this Sump by the always-on
+# area, so they show from every area they pass. This file draws none of them.)
 # (The Sump's mist, phase 0's floating spray balls at the great falls' foot, is out: MINE_PASS F-C11, 11-18, as at 1.11 and
 # 1.12; the falls' spray and the drips carry the wet.)
 # (La Cortina's throat had a mist here too: phase 0's floating spray balls, pale grey balls drifting over the staples.

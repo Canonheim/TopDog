@@ -4006,3 +4006,16 @@ func _w_summit2(a: Array) -> void:
 		look(row[1], float(row[2]))
 		await secs(1.5)
 		await shot("summit2_%s_%s" % [row[3], tag])
+
+
+## THE GREAT FALLS from the well's top to the Sump (note 142, 11-19): st's column at five heights. falls142:TAG
+func _w_falls142(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	for row in [["6.1", Vector2(-300.0, 484.0), 12.0, "top"], ["5.1", Vector2(-300.0, 380.0), 16.0, "temple"],
+			["3.1", Vector2(-300.0, 200.0), 14.0, "foot_of_well"], ["2.1", Vector2(-300.0, 100.0), 14.0, "aguas"],
+			["1.1", Vector2(-300.0, -36.0), 10.0, "sump"]]:
+		pk.warp(str(row[0]))
+		await secs(3.0)
+		look(row[1], float(row[2]))
+		await secs(1.5)
+		await shot("falls142_%s_%s" % [row[3], tag])

@@ -334,6 +334,7 @@ func setup(p_game) -> void:
 			var row: Dictionary = (c as Dictionary).duplicate()
 			row["area"] = a.id
 			challenges.append(row)
+	zones.build_late()  # (the effects that need every area built: st's great falls)
 	challenges.sort_custom(func(x, y): return _cid_key(str(x.id)) < _cid_key(str(y.id)))
 	backdrop = PeakBackdrop.build(self, ORIGIN)  # the far layers: the valley, the ranges, the sea of cloud (the Environment Maker's)
 	_lamp = OmniLight3D.new()

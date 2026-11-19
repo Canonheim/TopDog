@@ -59,6 +59,20 @@ A.ride((-505.0, 905.0, -360.0, 1004.0))  # down the summit's west flank and unde
 A.ride((-381.0, 886.0, -360.0, 964.0))  # down the mountain's west side
 A.ride((-366.5, 885.5, -313.0, 890.0))  # east through the storm ridge's foot
 
+# ---------------------------------------------------------------- THE GREAT FALLS (notes 142 and 146)
+# "The well (El Pozo del Diablo): a waterfall all the way from its top down to the black waters at the bottom" (note
+# 142): one 6 m column, x -303 .. -297 (middle -300, the well's), out of the rock under the well's cap at 494 m, down the
+# well, through the black waters, La Esclusa and the mine to the Sump. Drawn here, by the always-on area, so it shows
+# from every area it passes, to its foot in the Sump (its surface -45, a1's water). `late`: the game builds it after
+# every area, so it finds the Sump's water at its foot and churns it (st is built first).
+FALLS_X = (-303.0, -297.0)
+FALLS_TOP = 494.0
+FALLS_FOOT = -45.0   # the Sump's surface
+A.effect("waterfall", (FALLS_X[0], FALLS_FOOT, FALLS_X[1], FALLS_TOP), x=sum(FALLS_X) / 2, head=0.0, width=6.0, z=-0.6, late=True)
+# A FALL DOWN THE COLUMN IS A RIDE (the Second Director, 11-19, on note 147's "ride down the falls"): whoever drops into
+# it rides it to the bottom: no card, no fall counted, no cry. (So a miss at the well's crossings is a ride too.)
+A.ride((FALLS_X[0], FALLS_FOOT, FALLS_X[1], FALLS_TOP))
+
 # ---------------------------------------------------------------- El Pozo del Diablo
 # Its walls where no area stands beside it, with the six doors left open.
 for x0, x1, spans in (

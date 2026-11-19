@@ -45,6 +45,17 @@ func tag(name: String, body: Object) -> void:
 	(_tags[name] as Array).append(body)
 
 
+## LATE EFFECTS: an effect marked `late` is built after every area, so it can find what the areas built after its own
+## lay (st's great falls, note 142: built first, it found no water at its foot in the Sump, a1's, and had no churn).
+var _late_fx: Array = []
+
+
+func build_late() -> void:
+	for row: Array in _late_fx:
+		_effect(row[0], row[1], row[2])
+	_late_fx.clear()
+
+
 func build_area(a: Dictionary, root: Node3D) -> void:
 	var body_of := _build_bodies(a, root)
 	var zi := -1
@@ -119,6 +130,9 @@ func build_area(a: Dictionary, root: Node3D) -> void:
 			"ride":
 				rides.append(row)
 	for e in a.get("fx", []):
+		if bool(e.get("late", false)):
+			_late_fx.append([a, e, root])  # (built once every area is: build_late)
+			continue
 		_effect(a, e, root)
 	_finish_bodies(str(a.id))
 	_find_sheds(a, root)

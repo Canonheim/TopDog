@@ -3376,3 +3376,15 @@ called. Challenges 11.1 .. 11.11 (the warp keys are new: old watch scenes that w
   floor and lands on the terrace lip below it (the lip has to stand just under the door to be the way in).
 - Known: the frogs' slide still ends on the storm ridge's first ledge (886 m), as the old one did; part two carries it
   to the great falls.
+
+## THE GREAT FALLS FROM THE WELL'S TOP, part two a (note 142; the Second Director, 11-19)
+The great falls are st.py's now: one 6 m column, x -303 .. -297, from under the well's cap at 494 m down the well,
+the black waters, La Esclusa and the mine into the Sump (-45), drawn by the always-on area so they show from every
+area they pass (a1 drew -45 .. 176 only, and only while the mine was built in). New: an effect marked `late` is built
+once every area is (`PeakZones.build_late`, called by peak.gd after the areas): st is built first, and its falls must
+find the Sump's water (a1's) to churn it and whiten their foot. A first try kept a1's last 6 m for the foot: it drew
+as a separate curtain with a hard top, so it went.
+- A FALL DOWN THE COLUMN IS A RIDE: st's ride zone over the column, 494 to the Sump. (So a miss at the well's
+  crossings is a ride too: no card, no fall counted, no cry; the climb it costs is the same.)
+- Lint 259/0, `--peak` 0. Frames: tests/peak_watch.gd `falls142:TAG` (the top, the temple, the well's foot, the black
+  waters, the Sump).
