@@ -613,8 +613,9 @@ def dress(A):
     stand(-221.75, 67.6, -1.75)  # left on a landing: it lights the back wall, so a falling rock shows dark
     # The foot of the fall: the big rubble heap carried on back behind the slope, the hoist's
     # crushed bucket and its cable in a heap half buried in it.
-    A.deco("mine_rubble_heap_big", -222.5, UPPER_Y, z=-2.45, size=(5.0, 2.5, 2.4), tone="back")
-    A.deco("mine_bucket_crushed", -222.9, 57.9, z=-2.0, size=(1.0, 0.7, 1.0), tone="back")
+    if _sw.model_bounds("mina_derrumbe_foot") is None:  # (both are mina_derrumbe_foot's own once it lands, 11-19)
+        A.deco("mine_rubble_heap_big", -222.5, UPPER_Y, z=-2.45, size=(5.0, 2.5, 2.4), tone="back")
+        A.deco("mine_bucket_crushed", -222.9, 57.9, z=-2.0, size=(1.0, 0.7, 1.0), tone="back")
     A.deco("rope_coil", -224.6, UPPER_Y, z=-1.6, scale=1.2, size=(0.5, 0.2, 0.5), tone="iron")
     # The lower level's back wall (also La Polea Grande's upper gallery): timber frames along
     # the gallery and a side tunnel boarded shut, on the upper works' face.

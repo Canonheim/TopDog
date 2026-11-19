@@ -425,8 +425,13 @@ A.challenge("1.9", "La Polea Grande", (-232.6, 52.45), 2, "B", moves=[
 # (y 72). Stubs of broken timber on the two walls; the route changes wall three times,
 # each time a 2.3 m lunge across the middle, and the middle is where the rocks come down
 # (two sources on one written rhythm; they leave by the broken board at the beam's foot).
-A.solid([(-223.2, 57.4), (-218.4, 57.4), (-218.4, 61.7)], "rock")  # the rubble slope
-A.beam((-222.9, 57.75), (-218.75, 61.75), 0.36, "wood")  # a fallen cap beam lying on it
+# THE FOOT OF THE FALL (quality run, MINE_PASS row 40, reviewer 9, 11-19): the slope as broken blocks of the mine's dark
+# rock on tilted beds (it was a pale mass of level stripes), the fallen cap beam in held honey along its walked line, the
+# heap behind into the back wall, the crushed bucket and its cable. Origin the middle of the slope's foot.
+A.solid([(-223.2, 57.4), (-218.4, 57.4), (-218.4, 61.7)], "rock", **_cope("mina_derrumbe_foot"))  # the rubble slope
+A.beam((-222.9, 57.75), (-218.75, 61.75), 0.36, "wood", **_cope("mina_derrumbe_foot"))  # a fallen cap beam lying on it
+if _cope("mina_derrumbe_foot"):
+    A.deco("mina_derrumbe_foot", -220.8, 57.4, z=0.0, size=(7.023, 5.53, 4.35), tone="rock2", skin=True)
 STUBS = [("E", 63.0, 0.75), ("E", 64.3, 0.75), ("W", 65.2, 0.75), ("W", 66.5, 0.6), ("W", 67.8, 0.75),
          ("E", 68.7, 0.75), ("E", 70.0, 0.6), ("W", 70.9, 0.75)]
 for side, top, length in STUBS:
@@ -461,7 +466,8 @@ A.spawner("rock", (-220.2, 76.3), times=_rock_times["B"], loop=_rock_loop, r=0.4
 # gallery's own floor and is gone there (the floor's top is y 57.4, the rock under it 2 m
 # deep). They used to blink out 3 s after they fell, wherever they were.
 A.board((-223.25, 57.47), (-224.6, 58.03), p2=(-225.15, 57.93), throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=56.5)
-A.deco("rubble_pile", -224.55, 57.4, z=0.1, size=(1.1, 0.58, 0.36), tone="rock2")  # its prop (the size sets its scale)
+if not _cope("mina_derrumbe_foot"):  # (the board rests on the foot's own prop once it lands)
+    A.deco("rubble_pile", -224.55, 57.4, z=0.1, size=(1.1, 0.58, 0.36), tone="rock2")  # its prop (the size sets its scale)
 A.effect("dust", (-222.1, 61.0, -218.5, 77.0), density=0.5)
 # The top drift's floor (quality run, MINE_PASS row 44's answer at 1.11, reviewer 8.5, 11-19): El Diente's grey-violet in place
 # of the fitted kit's pale flagged caps, its top carried back to the works body's face (z -2.53) under the camp, a trodden
