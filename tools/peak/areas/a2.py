@@ -206,6 +206,9 @@ airbox(FALLS[0], 83.0, FALLS[1], 113.2)  # the falls' shaft through the floor (t
 A.water((-320.5, 113, -306.0, CS), CS, flow=(1.0, 0.0), look="pool")       # the west pool, running east
 A.water((-306.0, 113, -303.0, CS), CS, flow=(1.6, 0.0), look="pool")       # quicker at the sill (FIRST GUESS), on over it to the falls
 A.water((-297.0, 113, -288, CS), CS, flow=(1.0, 0.0), look="pool")         # the east basin, on to the old cascade; from the falls, over its sill
+for _z in A.zones[-3:]:  # (the three pool rules: the front face set back behind the channel's solid faces, and darker with
+    _z["front"] = 1.1      # depth over 0.9 m, so the 2 m pool reads as water in its channel, not a glass tank standing
+    _z["fade"] = 0.9       # before the ledge: the reviewer's q35, 11-19)
 # (Both pools drawn on over their slick sills to the falls' edge, 11-19: aguas_launch_ledge's maker took out its water
 # tongues, the game draws the water. Each current runs over its sill too, 0.4 m further: nothing stands there.)
 # (The two sills are slick: the pool is meant to make you swim at once, not hang on 0.3 m under the water. THE

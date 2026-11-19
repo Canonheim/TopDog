@@ -3200,6 +3200,13 @@ only be held when you were holding the button ... making rope grabs like levers.
   surface at 115.0; each current runs over its sill too, 0.4 m further (nothing stands there).
 - a2: ZFIGHT 0; SKIN 16 -> 17 (the model reaches 0.5 m under the sills, its foot in the water: as made). Python only;
   the Director runs the import, the battery and the frames.
+- The reviewer's q35 at 2.7: the pool read as a glass tank before the ledge (its front face at the play space's front,
+  z 1.44, before the sills and the floor, and the 2 m pool never darkening: the body shader turned deep over 2.4 m). A
+  water rule can now set its front face back (`front`) and darken over less depth (`fade`; peak_zones `_body_vis`; a
+  fall over its lip follows the front). a2's three pool rules: front 1.1 (behind the channel's solid faces at 1.2),
+  fade 0.9. The ribbon off the east basin's east end is the first cascade going over its lip (as meant), now at the
+  basin's front. Python and GDScript only: the Director frames it, runs the lint and the battery.
+
 
 ## 11-18: the lock's roof placed (`esclusa_vault_lock`); a2's bed notched out of it
 

@@ -1143,18 +1143,27 @@ func _body_vis(a: Dictionary, zs: Array, root: Node3D) -> Dictionary:
 	# tunnel's mouth, on the wall's face, so its edge is not drawn in the mouth: the reviewer's q20)
 	var back := -WATER_DEPTH * 0.5
 	var whirl: Dictionary = {}
+	# (`front`: its front face set back from the play space's front, behind the solids' faces (z 1.2), so a pool
+	# in a channel reads as in it, not as a glass tank before it; `fade`: the metres over which it turns deep, for a
+	# shallow pool to darken with depth as a deep one does: the reviewer's q35 at 2.7)
+	var front_z := WATER_DEPTH * 0.5
+	var fade := 2.4
 	for z: Dictionary in zs:
 		if z.has("back"):
 			back = minf(back, float(z.back))
 		if z.has("whirl"):
 			whirl = z.whirl
-	pm.size = Vector2(w, WATER_DEPTH * 0.5 - back)
+		if z.has("front"):
+			front_z = minf(front_z, float(z.front))
+		if z.has("fade"):
+			fade = minf(fade, float(z.fade))
+	pm.size = Vector2(w, front_z - back)
 	top.mesh = pm
-	top.position = Vector3(mid_x, surface, (WATER_DEPTH * 0.5 + back) * 0.5)
+	top.position = Vector3(mid_x, surface, (front_z + back) * 0.5)
 	if not whirl.is_empty():
 		# A WHIRLPOOL (MINE_PASS F-C11): the surface with a hole at its eye, and a funnel turning down in it.
 		var wc := Vector2(float(whirl.x) - mid_x, float(whirl.get("z", 0.0)) - top.position.z)
-		top.mesh = _surface_with_hole(w, WATER_DEPTH * 0.5 - back, wc, float(whirl.r))
+		top.mesh = _surface_with_hole(w, front_z - back, wc, float(whirl.r))
 		var fn := MeshInstance3D.new()
 		fn.mesh = _whirl_mesh(float(whirl.r), float(whirl.get("depth", 0.35)), float(whirl.get("eye", 0.44)))
 		var wm := ShaderMaterial.new()
@@ -1224,14 +1233,15 @@ func _body_vis(a: Dictionary, zs: Array, root: Node3D) -> Dictionary:
 	fm.set_shader_parameter("deep_color", cols[1])
 	fm.set_shader_parameter("surface_y", surface + Peak.ORIGIN.y)
 	fm.set_shader_parameter("mean_flow", sum_flow / maxf(sum_w, 0.01))
+	fm.set_shader_parameter("fade_m", fade)
 	fm.render_priority = 1  # (over the surface's underside, seen from below the waterline)
 	front.material_override = fm
-	front.position = Vector3(0, 0, WATER_DEPTH * 0.5)
+	front.position = Vector3(0, 0, front_z)
 	front.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	front.extra_cull_margin = 1.0
 	n.add_child(front)
 	root.add_child(n)
-	var body := {"area": str(a.id), "x0": x0, "x1": x1, "surface": surface, "zs": zs, "sea": sea, "mat": fm, "node": n, "foams": [], "first": []}
+	var body := {"area": str(a.id), "x0": x0, "x1": x1, "surface": surface, "zs": zs, "sea": sea, "mat": fm, "node": n, "foams": [], "first": [], "front": front_z}
 	# FOAM WHERE THE WATER MEETS SOMETHING: its two ends, and every pile or pillar that
 	# stands through the waterline. (A lip and the foot of a fall add theirs: _fall_vis.)
 	var area := str(a.id)
@@ -1396,7 +1406,8 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 	# piece of water (and it is in front of the climber, as the pool is). One that comes
 	# out of the rock stays behind the climb unless the data says "front".
 	var in_front := not lip.is_empty() or bool(e.get("front", false))
-	sheet.position = Vector3(0, 0, WATER_DEPTH * 0.5 - 0.01 if in_front else float(e.get("z", -0.4)))
+	var lip_front := float((lip.body as Dictionary).get("front", WATER_DEPTH * 0.5)) if lip.has("body") else WATER_DEPTH * 0.5
+	sheet.position = Vector3(0, 0, lip_front - 0.01 if in_front else float(e.get("z", -0.4)))  # (at its pool's front)
 	sheet.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	sheet.extra_cull_margin = 1.0
 	root.add_child(sheet)
