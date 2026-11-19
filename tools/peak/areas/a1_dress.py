@@ -279,9 +279,8 @@ def dress(A):
     for x in (-228.5, -219.0):
         A.deco("mine_pile_twin", x + 0.75, SUMP_FLOOR, z=-2.3, size=(0.95, 5.7, 0.4), tone="back")  # origin: the post's foot
     A.deco("sign_pug_arrow_east", -218.25, -27.9, z=-2.05, size=(1.24, 1.66, 0.16), tone="bone")  # the way out, east along the piles
-    # Drawn on the four piles you hold: a dark stain to the old high water and a rusted band at the head.
-    for x in (-228.5, -219.0, -211.0, -194.5):
-        drawn("mine_pile_band", x, SUMP_Y, (0.42, 0.8, 0.02))
+    # (The four piles' drawn bands at the waterline are out, Parker 11-20: flat brown cards on the piles' fronts,
+    # "weird place holder looking foreground cards in front of play space objects".)
 
     # ============================================================ 1.0b The landing stage and the incline
     # (Its two moss knobs are out: the refuge niche and the high working stand there in mine_cavern_wall_low now.)

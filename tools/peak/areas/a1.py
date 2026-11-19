@@ -144,6 +144,10 @@ A.water((-248.0, -33.0, -187.4, SUMP_Y), SUMP_Y, flow=(0.0, 0.0))
 A.zones[-1]["fade"] = 0.6
 A.zones[-1]["dark"] = 0.3
 A.zones[-1]["murk"] = 0.93
+# THE SUMP IS A LAKE (Parker 11-20: "the water in the sump should extend into the background like a lake, instead of
+# just being a rectangle in the playspace"): its surface runs back from the play space to the cavern's far wall (the
+# backdrop's own painted water stands at z -15), so the black water lies under everything in the cavern.
+A.zones[-1]["back"] = -14.6
 # The falling water beats a climber down (2.2 g; a floating body's lift tops out at 2.2 g
 # too). It stops 6 m over the pool, so nobody who lands under it is held under.
 A.wind((FALL_X0, -22.0, FALL_X1, 90.0), (0.0, -6.0))
