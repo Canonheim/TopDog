@@ -449,7 +449,12 @@ A.spawner("rock", (-220.2, 76.3), times=_rock_times["B"], loop=_rock_loop, r=0.4
 A.board((-223.25, 57.47), (-224.6, 58.03), p2=(-225.15, 57.93), throw=(-1.4, 5.2, -3.3), depth=-2.3, gone=56.5)
 A.deco("rubble_pile", -224.55, 57.4, z=0.1, size=(1.1, 0.58, 0.36), tone="rock2")  # its prop (the size sets its scale)
 A.effect("dust", (-222.1, 61.0, -218.5, 77.0), density=0.5)
-A.ledge(-230.0, -222.1, 72.0, "rock", t=0.5)  # the top drift
+# The top drift's floor (quality run, MINE_PASS row 44's answer at 1.11, reviewer 8.5, 11-19): El Diente's grey-violet in place
+# of the fitted kit's pale flagged caps, its top carried back to the works body's face (z -2.53) under the camp, a trodden
+# path, rotten sleepers, ore heaps, a broken lip over the shaft. Origin the middle of the solid's foot.
+A.ledge(-230.0, -222.1, 72.0, "rock", t=0.5, **_cope("mina_drift_floor"))  # the top drift
+if _cope("mina_drift_floor"):
+    A.deco("mina_drift_floor", -226.05, 71.5, z=0.0, size=(7.9, 0.635, 3.82), tone="rock2", skin=True)
 A.ledge(-233.2, -229.6, 72.0, "plank", t=0.35)  # its balcony into the throat
 A.challenge("1.10", "El Derrumbe", (-225.5, 57.4), 3, "B", moves=[
     ["reach", [-218.9, 61.4], [-219.25, 63.0]], ["reach", [-219.25, 63.0], [-219.25, 64.3]],
@@ -746,9 +751,13 @@ def _section_rock():
         low = min(q[0] for q in pts) > STRIP_E - 0.01 and min(q[1] for q in pts) < LANDING  # (with the platform west of the flume: q12)
         vaulted = min(q[0] for q in pts) >= -292.01 and min(q[1] for q in pts) >= 82.9 and max(q[0] for q in pts) <= FLUME[1] + 0.01
         lock_roof = min(q[0] for q in pts) >= -252.01 and max(q[0] for q in pts) <= -243.99 and min(q[1] for q in pts) >= 85.9  # (solid 214)
+        # (The falls' west bank, x -307 .. -303 under the black waters' rock: quality run F4, reviewer 8.5, 11-19. It was
+        # drawn as the code's own wet rock, the "big brown slab with tan cracks" at the west edge of every ladder frame.)
+        west_bank = max(q[0] for q in pts) <= -302.99 and min(q[1] for q in pts) >= MINE_TOP - 0.01
         A.solid(pts, "rock2" if min(q[1] for q in pts) >= 82.9 else "wet",
                 skin="esclusa_mass_low" if low else ("esclusa_vault" if vaulted and VAULT_LANDED else
-                                                     ("esclusa_vault_lock" if lock_roof and _cope("esclusa_vault_lock") else None)))
+                                                     ("esclusa_vault_lock" if lock_roof and _cope("esclusa_vault_lock") else
+                                                      ("esclusa_mass_west" if west_bank and _cope("esclusa_mass_west") else None))))
 
 
 import sweeps as _sweeps
@@ -886,6 +895,8 @@ A.deco("esclusa_gauge_board", -230.8, 75.7, z=-1.75, size=(1.2, 13.3, 0.28), ton
 # is esclusa_keeper_lever, hung at the lock's pivot by peak_zones.gd). Origin the floor's back edge; the floor at 79.40.
 A.deco("esclusa_keeper_booth", -253.5, 79.4, z=-2.6, size=(3.96, 3.68, 1.25), tone="back")
 A.deco("esclusa_mass_low", -255.0, 73.0, z=0.0, size=(73.0, 16.4, 2.4), tone="rock2", skin=True)  # the floors (F5)
+if _cope("esclusa_mass_west"):
+    A.deco("esclusa_mass_west", -305.0, 73.0, z=0.0, size=(4.0, 10.0, 2.35), tone="rock2", skin=True)  # the falls' west bank (F4)
 # The roof over the flume (quality run, MINE_PASS F6, reviewer 8.5, 11-18): five brick vaults springing from the arcade's
 # piers, their crowns cracked and crusted, a sunk springer stone, the tie plate's pug; the dark wet quoin at x -292.
 A.deco("esclusa_vault", -275.25, 83.0, z=0.0, size=(33.5, 3.0, 3.25), tone="rock2", skin=True)

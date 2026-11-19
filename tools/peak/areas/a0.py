@@ -54,7 +54,13 @@ A.mover("cart0", RIDE[0], cart_shapes,
          # lands"): it leaves the rails at the crest (x -90) at its own speed and flies the
          # broken stretch, as the design page's real throw (g 8.9: 0.9 s, about 0.9 m clear,
          # down near x -98). A first guess, to tune by riding it.
-         "hop": {"x": -90.0, "g": 8.9}},
+         "hop": {"x": -90.0, "g": 8.9},
+         # THE SLAM (Parker 11-19: "make it so when the minecart hits the end there, it slams into it
+         # and launches you out, with dust coming off where it slams and a small amount of camera
+         # shake"): it stops dead against the buffer, dust off its nose and wheels, a small jolt of
+         # the view, and the rider is thrown on at 0.65 of its speed and 3 m/s up, over the buffer
+         # into the mine's door (peak_things.gd _slam). First guesses, to tune by riding it.
+         "slam": {"v": 0.65, "up": 3.0, "kick": 0.2}},
         model="minecart")
 # THE STATION'S LEVER (Parker 11-13, note 72: "make it so you have to pull the lever to start
 # the cart, regardless of if you are in the cart. If you pull the lever it goes"). Its foot

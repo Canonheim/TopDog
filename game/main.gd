@@ -666,6 +666,21 @@ var _peak_mouse_last := Vector2.ZERO
 var _peak_alt := false
 var _peak_alt_at := Vector2.ZERO  # where the pointer was when Alt went down
 var _peak_mouse_held := false  # the mouse is the camera's: it aims no limb
+# THE FOLLOW, SMOOTH (Parker 11-19: "when on the minecart and some other times when moving, the
+# whole world is super weirdly shaky ... the camera does not feel smooth at these parts. It's
+# nauseating"). The climber moves on the physics tick (120 a second) and the screen draws at its
+# own rate, so the follow read a position that jumped in uneven steps between frames, and led
+# the climber by the chest's raw velocity, which rattles from tick to tick (the cart's wheels on
+# the rails, every contact): the lead, the follow's speed and the step back while flying all
+# shook with it, and the whole world shook on screen. Now both are sampled on the tick
+# (_physics_process): the position is drawn between the last two ticks by how far into the next
+# the frame falls (Engine's interpolation fraction), and the velocity is eased over
+# PEAK_CAM_V_EASE.
+const PEAK_CAM_V_EASE := 0.2  # s
+var _cam_com_prev := Vector2.INF
+var _cam_com_now := Vector2.INF
+var _cam_v := Vector2.ZERO
+var _cam_shake_t := 0.0
 
 
 ## Where the climber is, in the course's metres (for the long jumps' tool tip).
@@ -684,6 +699,20 @@ func _zoom_bind_name(slot: int) -> String:
 	return "the zoom button"
 
 
+func _physics_process(delta: float) -> void:
+	var peak: Peak = game.peak if game != null and game.peak_on else null
+	if peak == null or peak.player == null or not is_instance_valid(peak.player):
+		_cam_com_now = Vector2.INF
+		return
+	var com := peak.player.centre_of_mass()
+	var fresh := _cam_com_now == Vector2.INF or com.distance_to(_cam_com_now) > 20.0  # (the first tick, or a warp)
+	_cam_com_prev = com if fresh else _cam_com_now
+	_cam_com_now = com
+	var chest: RigidBody3D = peak.player.bodies.get("chest")
+	var raw := Vector2(chest.linear_velocity.x, chest.linear_velocity.y) if chest != null else Vector2.ZERO
+	_cam_v = raw if fresh else _cam_v.lerp(raw, 1.0 - exp(-delta / PEAK_CAM_V_EASE))
+
+
 func _peak_camera(delta: float) -> void:
 	var peak: Peak = game.peak
 	line_bar.visible = false
@@ -697,8 +726,12 @@ func _peak_camera(delta: float) -> void:
 		half = PEAK_CAM_HALF_MAX
 	bias.y = maxf(bias.y, -PEAK_CAM_DOWN_MAX)
 	var com := peak.player.centre_of_mass()
-	var chest: RigidBody3D = peak.player.bodies.get("chest")
-	var v := Vector2(chest.linear_velocity.x, chest.linear_velocity.y) if chest != null else Vector2.ZERO
+	var v := _cam_v
+	if _cam_com_now != Vector2.INF:
+		com = _cam_com_prev.lerp(_cam_com_now, clampf(Engine.get_physics_interpolation_fraction(), 0.0, 1.0))
+	else:
+		var chest: RigidBody3D = peak.player.bodies.get("chest")
+		v = Vector2(chest.linear_velocity.x, chest.linear_velocity.y) if chest != null else Vector2.ZERO
 	var loose := 0.0 if peak.player.is_attached() else 1.0
 	half += clampf((v.length() - 5.0) * 0.35, 0.0, 6.0) * loose  # falling and flying: step back
 	var vs := get_viewport().get_visible_rect().size
@@ -731,7 +764,10 @@ func _peak_camera(delta: float) -> void:
 	_peak_zoom = lerpf(_peak_zoom, zoom_want, 1.0 - exp(-delta * PEAK_ZOOM_RATE))
 	if absf(_peak_zoom - zoom_want) < 0.002:
 		_peak_zoom = zoom_want
-	var wide_half := maxf(float(fr[0]), half) if bool(fr[2]) else half * 2.0
+	# (Anywhere, Parker 11-19: "make sure holding L trigger can zoom out the camera whenever you
+	# want, not only on the designated parts". Where a spot's author drew a frame no wider than
+	# the close camera, holding it widened nothing; now it is always at least twice the view.)
+	var wide_half := maxf(float(fr[0]) if bool(fr[2]) else 0.0, half * 2.0)
 	var wide_bias: Vector2 = fr[1]
 	var z := smoothstep(0.0, 1.0, _peak_zoom)
 	var half_now := lerpf(_peak_cam_base.z * tan_half, wide_half, z)
@@ -771,9 +807,17 @@ func _peak_camera(delta: float) -> void:
 	var look_off := Vector2(_peak_pan.x * half_now * aspect, _peak_pan.y * half_now) * PEAK_LOOK_REACH
 	cam.position = Vector3(_peak_cam_base.x + shift.x + look_off.x, _peak_cam_base.y + shift.y + look_off.y, half_now / tan_half)
 	if peak.cam_kick > 0.001:
-		# a hard landing jolts the view (the cart's hop, note 73)
-		cam.position += Vector3(randf_range(-0.4, 0.4), -1.0, 0.0) * peak.cam_kick
+		# a hard landing jolts the view (the cart's hop, note 73; the end of the line's slam), the
+		# way cam_kick_dir says, with a quick wobble that dies with it (a smooth one: the old
+		# random jump every frame was a judder of its own)
+		_cam_shake_t += delta
+		var d: Vector2 = peak.cam_kick_dir
+		var wob := Vector2(sin(_cam_shake_t * 43.0) * 0.35, sin(_cam_shake_t * 57.0 + 1.3) * 0.2)
+		cam.position += Vector3(d.x + wob.x, d.y + wob.y, 0.0) * peak.cam_kick
 		peak.cam_kick *= exp(-delta * 9.0)
+	else:
+		_cam_shake_t = 0.0
+		peak.cam_kick_dir = Vector2(0.0, -1.0)
 	cam.look_at(Vector3(cam.position.x, cam.position.y, 0.0), Vector3.UP)
 
 

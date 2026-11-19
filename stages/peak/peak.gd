@@ -1565,8 +1565,11 @@ func _tick_respects(p: Vector2) -> void:
 
 
 ## A jolt of the camera (m), set by a hard landing (the cart's hop); main.gd shakes the view
-## by it and lets it die away.
+## by it and lets it die away. cam_kick_dir: which way the jolt throws the view (down for a
+## landing; the cart's way at the end of the line's slam). main.gd puts it back to down once
+## the jolt has died.
 var cam_kick := 0.0
+var cam_kick_dir := Vector2(0.0, -1.0)
 
 
 ## THE NINE LONG JUMPS (playtest note 7): the written flings whose landing is out of the

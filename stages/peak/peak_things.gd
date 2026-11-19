@@ -22,7 +22,8 @@ const ROPE_MASS := {"rope": 0.3, "chain": 0.5, "vine": 0.3, "cable": 0.5, "banne
 const PLANK_MASS := 7.2  # a bridge's planks are stood on, not swung on: as they were
 const ROPE_DAMP := 0.03
 const ROPE_SPIN_DAMP := 0.15
-const ROPE_REACH := 0.17  # a free hand or foot this near a rope takes it
+const ROPE_REACH := 0.3  # m: a hand or foot whose button is held, this near a rope, takes it (as LEVER_TAKE)
+const ROPE_LET_GO_S := 0.25  # s after letting go of a rope before that hand takes anything again
 const ROPE_TONE := {"rope": "#C9A36A", "chain": "#B5532A", "vine": "#7FA04A", "cable": "#B9B2A6", "banner": "#C9A36A",
 	"thread": "#C3A6EE"}  # (thread: the crystal cave's grown threads of lilac crystal, page 3.3; a chain's weight)
 const BOARD_S := 0.7  # in the cart this long and it rolls
@@ -1243,8 +1244,13 @@ func _frame_glyphs() -> void:
 			_shivered[i] = false
 
 
-## A free hand or foot (not held, holding nothing, past its regrip wait) within reach of
-## a rope takes it, as it would stick to anything it touched.
+## ROPES ARE HELD LIKE LEVERS (Parker 11-19: "I thought we changed ropes to only be held when
+## you were holding the button instead of the opposite normal rope being held when you are not
+## touching a button, making rope grabs like levers"). A hand or foot takes a rope only while its
+## button is down and it comes within reach, and lets go the moment the button comes up. (It
+## was the other way: any free limb, its button up, took a rope it touched, as it sticks to
+## rock.) The button, not the press stack's one active limb: a hand hanging on a rope keeps it
+## while another button is pressed to move another limb.
 func _tick_rope_grabs() -> void:
 	var c := peak.player
 	if c == null or c.state != Climber.State.LIVE or c.knockout_left > 0.0 or c.sinking:
@@ -1252,7 +1258,13 @@ func _tick_rope_grabs() -> void:
 	var com := peak.local_of(c.centre_of_mass())
 	for i in c.limbs.size():
 		var l: Dictionary = c.limbs[i]
-		if bool(l.held) or l.grab_other != null or float(l.regrip) > 0.0:
+		var down: bool = c.driver != null and c.driver.held(i)
+		if l.grab_other != null:
+			if not down and _is_rope_seg(l.grab_other):
+				c.release(i)  # the button came up: let go
+				l.regrip = ROPE_LET_GO_S
+			continue
+		if not down or float(l.regrip) > 0.0:
 			continue
 		var end: RigidBody3D = c.bodies[l.def.end]
 		var p := Vector2(end.global_position.x, end.global_position.y)
@@ -1280,6 +1292,66 @@ func _tick_rope_grabs() -> void:
 		if best != null:
 			c.attach(i, best)
 			peak.audio.play("rope_creak", peak.local_of(p), -4.0)
+
+
+## THE SLAM AT THE END OF THE LINE (Parker 11-19: "make it so when the minecart hits the end
+## there, it slams into it and launches you out, with dust coming off where it slams and a small
+## amount of camera shake"). A mover whose motion has `slam` stops dead against its buffer at the
+## end of its road: dust bursts off its leading end and its wheels, the view jolts a little the
+## way it was going, and a rider (aboard, or holding on) lets go and is thrown on and up, out
+## over the buffer. slam: {"v": share of the cart's speed carried on, "up": m/s added upward,
+## "kick": the camera's jolt}. First-try numbers, Parker's to tune by riding it.
+const SLAM_GHOST_S := 0.45  # s the slammed cart lets its rider pass through it
+
+
+func _slam(m: Dictionary, mo: Dictionary, hit_v: float, total: float) -> void:
+	var sl: Dictionary = mo.slam
+	var at: Array = _along(m, total)
+	var pos: Vector2 = at[0]
+	var dir: Vector2 = (at[1] as Vector2).normalized()
+	var half := maxf(absf((m.lo as Vector2).x), absf((m.hi as Vector2).x))
+	var nose := pos + dir * half
+	peak.zones.burst(nose + Vector2(0.0, 0.3), "dust", 2.4, -dir + Vector2(0.0, 0.8))
+	peak.zones.burst(nose + Vector2(0.0, -0.3), "dust", 1.6, Vector2(0.0, 1.0))
+	for e: float in [-0.9, 0.9]:
+		peak.zones.burst(pos + dir * e + Vector2(0.0, -0.35), "dust", 1.2, Vector2(-dir.x * 0.5, 1.0))
+	peak.audio.play("cart_crash", nose, 6.0, 0.85)
+	peak.cam_kick = maxf(peak.cam_kick, float(sl.get("kick", 0.2)))
+	peak.cam_kick_dir = dir
+	var c := peak.player
+	if c == null or c.state != Climber.State.LIVE or not (_player_aboard(m) or _player_limbs_on(m.nodes)):
+		return
+	# The cart steps out of the way for a moment (SLAM_GHOST_S), so the rider's legs are not caught
+	# on its own front end and it sails out over it, rather than folding over the lip.
+	var layers: Array = []
+	for node: Node in m.nodes:
+		layers.append((node as CollisionObject3D).collision_layer if node is CollisionObject3D else 0)
+		if node is CollisionObject3D:
+			(node as CollisionObject3D).collision_layer = 0
+	m["slam_layers"] = layers
+	m["slam_until"] = peak.clock + SLAM_GHOST_S
+	# (the rider's whole body set going at the throw, whatever it had: it was carried at the
+	# cart's speed, and adding the throw to that sent it at 15 m/s)
+	var throw := dir * hit_v * float(sl.get("v", 0.65)) + Vector2(0.0, float(sl.get("up", 3.0)))
+	var com_v := Vector2.ZERO
+	for b: RigidBody3D in c.bodies.values():
+		com_v += Vector2(b.linear_velocity.x, b.linear_velocity.y)
+	com_v /= maxf(1.0, float(c.bodies.size()))
+	c.release_all()
+	for l in c.limbs:
+		l.regrip = 0.35
+	for b: RigidBody3D in c.bodies.values():
+		b.linear_velocity += Vector3(throw.x - com_v.x, throw.y - com_v.y, 0.0)
+
+
+## Whether a held thing is one of the swinging ropes' segments (not a bridge's planks).
+func _is_rope_seg(o: Object) -> bool:
+	if not (o is RigidBody3D):
+		return false
+	for r in ropes:
+		if not bool(r.planks) and (r.segs as Array).has(o):
+			return true
+	return false
 
 
 ## THE BELL RINGS (playtest note 100; Parker 11-13: "make it so you can actually ring the bell
@@ -1618,11 +1690,21 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 							_let_loose(m)
 							return
 						if float(m.dist) >= total:
+							var hit_v := float(m.v)
 							m.dist = total
 							m.run = false
 							m.arrived = t
 							peak.audio.play("cart_crash" if m.id.begins_with("cart") else "gondola_clunk", _mover_at(m))
+							if mo.has("slam"):
+								_slam(m, mo, hit_v, total)
 					elif float(m.arrived) >= 0.0:
+						if m.has("slam_layers") and peak.clock >= float(m.slam_until):
+							# (the slam's moment is over: the cart is solid again)
+							var layers: Array = m.slam_layers
+							for k in mini(layers.size(), (m.nodes as Array).size()):
+								if m.nodes[k] is CollisionObject3D:
+									(m.nodes[k] as CollisionObject3D).collision_layer = int(layers[k])
+							m.erase("slam_layers")
 						# Home again once nobody is near (or the wait is long over).
 						var away := peak.player == null or peak.player_at().distance_to((m.home as Vector2) + (m.offset as Vector2)) > 22.0
 						var reset := float(mo.get("reset", 10.0))

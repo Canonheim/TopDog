@@ -3141,6 +3141,56 @@ in. Nothing played by a person.
 - Frames: `after/q32_flap_matte_before_after.jpg` (watch scene `gate13`: the lock's camera shut, mid-fill and open;
   before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-19: Parker's four (the cart's slam, the shaky camera, zoom anywhere, ropes held like levers)
+
+Parker 11-19: "make it so when the minecart hits the end there, it slams into it and launches you out, with
+dust coming off where it slams and a small amount of camera shake. Also for some reason, when on the
+minecart and some other times when moving, the whole world is super weirdly shaky ... It's nauseating.
+See if you can diagnose and fix that, it might be all through the game. Also make sure holding L trigger can
+zoom out the camera whenever you want, not only on the designated parts. Also I thought we changed ropes to
+only be held when you were holding the button ... making rope grabs like levers. Did we not do that?"
+
+- **The slam** (`peak_things.gd` `_slam`, a0.py cart0's `slam`). Against the buffer the cart stops dead: dust off
+  its nose and both wheels, the crash louder, the view jolted 0.2 the way it was going, and a rider (aboard or
+  holding on) let go and set going at 0.65 of the cart's speed west and 3 m/s up. The cart lets its rider pass
+  through it for 0.45 s (`SLAM_GHOST_S`), so the legs are not caught on its front end. Watched (`--peakride`):
+  thrown at (-5.8, 2.8) m/s, out over the buffer and 5.8 m on into the gallery (x -215.4). First guesses.
+- **The shaky camera: two causes, both fixed.**
+  1. *The bodies were drawn at the physics rate.* Physics runs 120 times a second; on a 144 or 165 Hz screen
+     every moving body (the climber, the cart, the ropes) moved five frames and stood still the sixth, a shudder
+     about 24 times a second against everything else. New autoload `core/smooth_motion.gd`: Godot's physics
+     interpolation, for the bodies physics moves (RigidBody3D, AnimatableBody3D, CharacterBody3D) and what hangs
+     off them only; everything else (cameras, menus, effects moved every frame) keeps its mode OFF from the root.
+     A respawn or a warp is drawn where it lands (`apply_pose`). Feel `smooth_motion` (F1) turns it off to compare.
+  2. *The Peak's follow read raw numbers.* It led the climber by the chest's raw velocity, which rattles tick to
+     tick (the cart's wheels, every contact), and read a position that jumped in uneven steps between frames.
+     Now `main.gd` samples both on the physics tick: the position drawn between the last two ticks (as the bodies
+     are), the velocity eased over 0.2 s. Measured on a logged ride (old vs new, the camera's frame-to-frame
+     change of velocity in screen pixels, RMS): 60 fps 0.97 -> 0.42, 144 fps 0.28 -> 0.10, 165 fps 0.25 -> 0.08,
+     240 fps 0.16 -> 0.05.
+  - The camera's jolt (the hop's landing, the slam) is a smooth wobble now, not a random jump every frame.
+- **Zoom anywhere** (`main.gd`). Holding L (Shift) always widens to at least twice the view; where a spot's author
+  drew a frame no wider than the close camera, it used to widen nothing.
+- **Ropes held like levers** (`peak_things.gd` `_tick_rope_grabs`). It had NOT been done: ropes were still taken by
+  any free limb (button up) that touched them. Now a hand or foot takes a rope only while its button is down and
+  it comes within 0.3 m (as a lever's grip), and lets go the moment the button comes up (0.25 s before it takes
+  anything again). The button, not the press stack's one active limb: a hand hanging on a rope keeps it while
+  another button moves another limb. The rope-hang test holds its button now.
+- **Checks:** lint; `--peak`, `--peakride`, `--peakrope` (new: button up does not take a rope; held takes it,
+  keeps it; up lets go), `--peakrules`.
+
+## 11-19: three of the mine's quality pieces placed (the Director)
+
+- **`mina_drift_floor`** (new, reviewer 8.5): the top drift's floor (a1 solid 175) in El Diente's grey-violet, in place of
+  the fitted kit's pale flagged caps (1.11's last item, q34). a1.py's ledge wears it (`_cope`), its deco at the
+  solid's foot. Re-landed once: its below-lip rock shared the works mass's front plane (the course sweep's ZFIGHT 1).
+- **`esclusa_mass_west`** (F4, reviewer 8.5): the falls' west bank (a1 solid 217, x -307 .. -303, y 73 .. 83), the
+  "brown slab with tan cracks" at 1.12's west edge (q33/q34; the code's own wet rock, not a2's). `_section_rock()`
+  gives that piece the skin once landed.
+- **`dsc_buffer_stop`** (F15, remade, reviewer 8.5; it was a 4): a heavy scenery-timber baulk, an iron-shod dented
+  face, a pug casting, two braces behind the climber's line. Same placement.
+- Frames `docs/peak/quality/mine/frames/q35_*.jpg` sent to the reviewer.
+
 ## 11-19: THE LAUNCH LEDGE placed (`aguas_launch_ledge`, MINE_PASS F16)
 
 - a2's four solids wear it once the model has landed (a2.py `_cope`, as a1's): 36 (the west pool's sill), 37 (the

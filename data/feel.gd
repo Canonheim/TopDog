@@ -43,6 +43,7 @@ const SPEC := {
 	"rope_bounce": [1.875, 1.0, 3.0, "The side ropes throw you back at this many times the speed you hit them"],
 	"rope_bounce_up": [1.25, 0.0, 2.0, "Falling into the ropes throws you (or the chair) back up at this many times the fall; rising into them, you keep rising"],
 	"puppet_delay": [0.1, 0.0, 0.4, "Online: seconds of buffer behind a remote climber"],
+	"smooth_motion": [1.0, 0.0, 1.0, "Draw moving bodies between physics ticks (1 on, 0 off: the old stepped look, core/smooth_motion.gd)"],
 	"pull_cap": [4.0, 0.0, 6.0, "Online: cap on a rival's pull, in body-weights"],
 	"rope_pull": [2.4, 0.5, 8.0, "The Peak, hanging by ropes only: the pull budget of the limb you steer, in body-weights at the climber's OWN gravity (on rock it is drag_strength at full gravity, about seven times this)"],
 	"rope_pump": [0.16, 0.0, 0.5, "The Peak, hanging by ropes only: the push along the swing while you steer a limb that way, in body-weights at the climber's own gravity. Each push adds about twice this, in radians, to the swing"],

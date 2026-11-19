@@ -1973,7 +1973,11 @@ func apply_pose(p: PackedFloat32Array) -> void:
 	var k := 0
 	for pname in Layout.ORDER:
 		var b: RigidBody3D = bodies[pname]
-		b.global_transform = Transform3D(Basis(Vector3.BACK, p[k + 2]), Vector3(p[k], p[k + 1], 0.0))
+		var to := Vector3(p[k], p[k + 1], 0.0)
+		var jumped := b.global_position.distance_to(to) > 1.0
+		b.global_transform = Transform3D(Basis(Vector3.BACK, p[k + 2]), to)
+		if jumped:
+			b.reset_physics_interpolation()  # (a respawn or a warp is drawn where it lands, not slid to: core/smooth_motion.gd)
 		if state != State.PUPPET:
 			sync_server(b)
 		k += 3

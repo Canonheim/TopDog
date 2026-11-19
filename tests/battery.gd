@@ -4088,6 +4088,10 @@ func _run_peak() -> void:
 	var seg: RigidBody3D = rope.segs[rope.segs.size() - 2]
 	var c := _peak_climber(pk, -70, 6)
 	_free(c)
+	# (Ropes are held like levers, Parker 11-19: the hand keeps the rope only while its button is
+	# down. Pressed first, then put on the rope, so the press does not let go of it.)
+	(c.driver as Drivers.ScriptDriver).set_limb(0, true)
+	await pticks(pk, 1)
 	_put_hand(c, 0, Vector2(seg.global_position.x, seg.global_position.y))
 	c.attach(0, seg)
 	await psec(pk, 4.0)
@@ -4318,7 +4322,7 @@ func _run_peakride() -> void:
 	t("peak ride: drawn all the way it drops into its second notch and the cart rolls", pulled_at >= 0.0 and bool(cart.run),
 		"in %.2f s; the handle went %.2f m east" % [pulled_at, pk.things.lever_handle(lv).x - rest_handle.x])
 	var worst := 0.0
-	for i in int(24.0 * Engine.physics_ticks_per_second):
+	for i in int(32.0 * Engine.physics_ticks_per_second):  # (the longer ride, note 146: 203 m of road, about 25 s)
 		pk.tick(1.0 / Engine.physics_ticks_per_second)
 		await get_tree().physics_frame
 		if bool(cart.run):
@@ -4329,11 +4333,71 @@ func _run_peakride() -> void:
 	t("peak ride: the cart reaches the buffer in the mine", float(cart.arrived) >= 0.0 and ((cart.home as Vector2) + (cart.offset as Vector2)).x < -147.0)
 	t("peak ride: the climber rode it all the way (never more than 2.5 m from it)", worst < 2.5 and at.x < -140.0, "worst %.2f m, now at %s" % [worst, at])
 	t("peak ride: the lever stays in its second notch while the cart is away", bool(lv.thrown))
+	# THE SLAM (Parker 11-19): against the buffer the cart stops dead and throws the rider on,
+	# out over the buffer (its west face at x -209.6) toward the mine's door.
+	var thrown_v := Vector2(c.bodies["chest"].linear_velocity.x, c.bodies["chest"].linear_velocity.y)
+	var past := INF
+	for i in int(1.5 * Engine.physics_ticks_per_second):
+		pk.tick(1.0 / Engine.physics_ticks_per_second)
+		await get_tree().physics_frame
+		past = minf(past, pk.local_of(c.centre_of_mass()).x)
+	t("peak ride: at the buffer the cart slams and throws the rider out over it, west and up (Parker 11-19)",
+		thrown_v.x < -3.0 and thrown_v.y > 1.0 and past < -209.6,
+		"thrown at (%.1f, %.1f) m/s, got to x %.1f" % [thrown_v.x, thrown_v.y, past])
 	# the cart home again (its own rule: 25 s after it stops, once the climber is 22 m from it)
 	c.remove()
 	await psec(pk, 26.5)
 	t("peak ride: the cart comes home and the lever goes back to its first notch", float(cart.dist) == 0.0 and not bool(lv.thrown) and absf(pk.things.lever_handle(lv).x - rest_handle.x) < 0.05,
 		"cart at %.1f m along, lever thrown %s" % [float(cart.dist), lv.thrown])
+	pk.leave()
+	await pticks(pk, 2)
+
+
+## ROPES ARE HELD LIKE LEVERS (Parker 11-19): a hand takes a rope only while its button is held,
+## and lets go when the button comes up; a free hand (button up) at a rope does not take it.
+func _run_peakrope() -> void:
+	var pk := _peak()
+	var r: Dictionary = {}
+	for rr in pk.things.ropes:
+		if not bool(rr.planks) and str(rr.area) == "a1":
+			r = rr
+			break
+	if r.is_empty():
+		t("peak rope: the mine has a rope", false)
+		return
+	var segs: Array = r.segs
+	var seg: RigidBody3D = segs[segs.size() / 2]
+	var spot := pk.local_of(Climber.pos2(seg))
+	var c := _peak_climber(pk, spot.x + 0.6, spot.y - 0.6)
+	var d: Drivers.ScriptDriver = c.driver
+	await pticks(pk, 2)
+	_free(c)
+	for l in c.limbs:
+		l.regrip = 0.0
+	var free_took := false
+	for i in int(0.4 * Engine.physics_ticks_per_second):
+		_put_hand(c, 1, Climber.pos2(seg))
+		await pticks(pk, 1)
+		free_took = free_took or c.limbs[1].grab_other == seg or (segs.has(c.limbs[1].grab_other))
+	t("peak rope: a hand whose button is up does not take the rope it touches", not free_took)
+	var held_took := false
+	for i in int(0.6 * Engine.physics_ticks_per_second):
+		d.point_limb(1, true, Climber.pos2(seg))
+		_put_hand(c, 1, Climber.pos2(seg))
+		await pticks(pk, 1)
+		if segs.has(c.limbs[1].grab_other):
+			held_took = true
+			break
+	t("peak rope: a hand whose button is held takes the rope", held_took, "the hand %.2f m from the rope" % Climber.pos2(seg).distance_to(c.limb_end(1)))
+	await pticks(pk, 30)
+	var kept: bool = segs.has(c.limbs[1].grab_other)
+	t("peak rope: it keeps the rope while the button stays held", kept)
+	d.set_limb(1, false)
+	await pticks(pk, 3)
+	var let_go: bool = not segs.has(c.limbs[1].grab_other)
+	await pticks(pk, 12)
+	t("peak rope: the button up, it lets go (and does not take it straight back)", let_go and not segs.has(c.limbs[1].grab_other))
+	c.remove()
 	pk.leave()
 	await pticks(pk, 2)
 
