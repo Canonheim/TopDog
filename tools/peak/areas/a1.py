@@ -880,11 +880,12 @@ A.deco("aguas_works_lantern_wall", -277.9, 81.914, z=-2.2, size=(0.6, 0.74, 0.45
 A.deco("aguas_works_lantern_wall", -265.1, 81.914, z=-2.2, size=(0.6, 0.74, 0.45), tone="iron")   # pier
 A.deco("aguas_works_lantern_wall", -259.5, 82.314, z=-2.2, size=(0.6, 0.74, 0.45), tone="iron")   # the east landing
 A.deco("aguas_works_lantern", -253.5, 82.36, z=-2.40, size=(0.34, 0.58, 0.34), tone="iron")       # the booth's hanger knob
-A.deco("aguas_works_lantern_wall", -240.0, 85.114, z=-1.9, size=(0.6, 0.74, 0.45), tone="iron")   # by L1
+A.deco("aguas_works_lantern_wall", -241.3, 85.114, z=-1.9, size=(0.6, 0.74, 0.45), tone="iron")   # by L1 (west of the cistern's fill, x -240.85 .. -239.65: in it, it read as a lantern in a waterfall, q38)
 A.deco("aguas_works_lantern_wall", -228.8, 83.914, z=-1.9, size=(0.6, 0.74, 0.45), tone="iron")   # over L2
 for x, y, lz in ((-293.25, 81.3, -1.6), (-277.9, 81.5, -1.72), (-265.1, 81.5, -1.72), (-259.5, 81.9, -1.72)):  # the crane's, two piers, the east landing
-    A.light(x, y, color="#6FE0D0", rng=10.0, energy=1.1, z=lz)
-for x, y, lz in ((-253.5, 81.95, -2.2), (-240.0, 84.7, -1.42), (-228.8, 83.5, -1.42)):  # the booth, by L1, over L2
+    A.light(x, y, color="#6FE0D0", rng=10.0, energy=1.5, z=lz)   # (1.5: at 1.1 the circles were faint halos on the flume's dark masonry, q38)
+# (At full water L1's and L2's lanterns are under and still lit: the company's sealed lamps; the Director, 11-19, q38.)
+for x, y, lz in ((-253.5, 81.95, -2.2), (-241.3, 84.7, -1.42), (-228.8, 83.5, -1.42)):  # the booth, by L1, over L2
     A.light(x, y, color="#6FE0D0", rng=8.0, energy=0.55, z=lz)   # the lock's three, steady (q8: about half as bright and a little shorter, so they light the lock wall and not the roof's face or the walk white)
 # The section's two painted sets (quality run, MINE_PASS F-E, landed 11-17), in place of the stand-in back wall and the
 # chute's and the tunnel's black cards: the flume's arcade (x -297 .. -258.5, reviewer 9) and the lock's chamber and
