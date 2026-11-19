@@ -640,7 +640,8 @@ for x, y in a1_dress.LANTERN_LIGHTS:
 
 # THE PITS' INSIDES CAN'T BE HELD (note 52; Parker 11-13: all the slots the check finds,
 # `python tools/peak/checks.py pits`): each inside face lined slick under its lip.
-A.line_pit(-201.00, -200.40, 14.20)
+# (Out, Parker 11-20: the slot between El Diente's staples and the hoist arm's west end is no pit, and its two
+# liners stood in the air there as "weird floating rocks that get in the way".)
 A.line_pit(-232.20, -231.80, 52.30)
 
 
