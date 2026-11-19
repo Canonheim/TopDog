@@ -63,7 +63,7 @@ FOR THE AREA FILE (tools/peak/areas/a2.py; the fix thread's). Line numbers are a
   2. Lanterns (note 17: nothing in this biome's light pulses): lamp() (line 48) stops placing
      `lantern_hang` (this file places every lantern, on the walls, out of the play space), and
      the lamp loop (lines 375-380) becomes one steady light per entry of
-     `a2_dress.LANTERN_LIGHTS` (x, y of each flame, 23 of them): TEAL, range 10, energy 1.5,
+     `a2_dress.LANTERN_LIGHTS` (x, y, z of each flame's light, 0.2 in front of it: 11-19), TEAL, range 10, energy 1.5,
      flicker False. The well's daylight (line 381) stays. The join asks for two more lights,
      steady: a soft violet one down the exit shaft at (-452.5, 175.0) and a white one at the
      bright crystal over the crest, (-442.0, 172.6).
@@ -244,15 +244,14 @@ def dress(A):
     LANTERN_LIGHTS.clear()
 
     # ------------------------------------------------------------ helpers
-    def lantern(x, y_mid, wall_z):
-        """A works lantern on its cast wall arm (KIT_MORE: the lantern on a 0.6 m arm). y_mid is
-        the lantern's middle as the pages draw it; the hook is 0.25 over it. The arm's origin is
-        the middle of its wall plate's back, on the wall, at the hook's height; its hook is
-        0.5 out. The lantern's origin is its hook (as lantern_hang); its flame 0.27 under."""
-        hook = round(y_mid + 0.25, 2)
-        A.deco("aguas_lantern_arm", x, hook, z=wall_z, size=(0.12, 0.35, 0.55), tone="iron")
-        A.deco("aguas_works_lantern", x, hook, z=round(wall_z + 0.5, 3), size=(0.3, 0.5, 0.3), tone="accent")
-        LANTERN_LIGHTS.append((x, round(hook - 0.27, 2)))
+    def lantern(x, y_mid, wall_z, flip=False):
+        """A works lantern on its own bracket and plate on the wall (`aguas_works_lantern_wall`, MINE_PASS F24, reviewer
+        9, 11-19: the old 0.55 m arm pointed straight at the camera and the lantern seemed to float). y_mid is the
+        lantern's middle as the pages draw it; its flame stays where the old one was, 0.02 under it. The model's origin
+        is on the wall, 0.414 over the flame. flip: its plate to the east."""
+        flame = round(y_mid - 0.02, 2)
+        A.deco("aguas_works_lantern_wall", x, round(flame + 0.414, 3), z=wall_z, flip=flip, size=(0.6, 0.74, 0.45), tone="iron")
+        LANTERN_LIGHTS.append((x, flame, round(wall_z + 0.48, 3)))
 
     def side_lantern(x, y, z, flip=False):
         """A works lantern on the mine's strap bracket, out of a pier's side in the wall's plane
@@ -260,8 +259,8 @@ def dress(A):
         fixed end; its hook is 0.42 along it (west if flip) and 0.03 down."""
         A.deco("mine_lantern_bracket", x, y, z=z, flip=flip, size=(0.48, 0.15, 0.06), tone="iron")
         hx, hy = round(x - 0.42 if flip else x + 0.42, 3), round(y - 0.03, 3)
-        A.deco("aguas_works_lantern", hx, hy, z=z, size=(0.3, 0.5, 0.3), tone="accent")
-        LANTERN_LIGHTS.append((hx, round(hy - 0.27, 2)))
+        A.deco("aguas_works_lantern", hx, hy, z=z, size=(0.34, 0.58, 0.34), tone="accent")
+        LANTERN_LIGHTS.append((hx, round(hy - 0.414, 2), round(z + 0.2, 3)))
 
     def wall(stem, x0, x1, y0, y1, face, depth, tone="brick"):
         """A painted wall piece standing back from its face (origin: the middle of its foot)."""
@@ -490,8 +489,8 @@ def dress(A):
     A.deco("mine_bucket_upturned", -283.1, 117.4, z=-1.75, scale=0.83, size=(0.6, 0.45, 0.6), tone="iron")
     A.deco("frog_rain_hat", -283.1, 117.77, z=-1.75, size=(0.34, 0.33, 0.35), tone="accent")
     # The keeper's lantern, lit, on its hook in the vault: its light falls out of the door.
-    A.deco("aguas_works_lantern", -282.6, 119.3, z=-1.9, size=(0.3, 0.5, 0.3), tone="accent")
-    LANTERN_LIGHTS.append((-282.6, 119.03))
+    A.deco("aguas_works_lantern", -282.6, 119.3, z=-1.9, size=(0.34, 0.58, 0.34), tone="accent")
+    LANTERN_LIGHTS.append((-282.6, 118.89, -1.7))
 
     # ============================================================ 2.7 El Charco del Pozo
     # The hall's two brick flanks, 15 m tall, each ending in a brick pier against the well's

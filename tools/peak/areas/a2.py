@@ -481,8 +481,8 @@ for _d in A.decos:
 A.follow("aguas_mill_wheel_grey", WHEEL, "rueda", "spin")
 for i, (cx, low) in enumerate(GATES):
     A.follow("aguas_gate_leaf", (cx, low - GH), "compuerta%d" % (i + 1), "ride")
-for x, y in a2_dress.LANTERN_LIGHTS:  # every lantern's steady light (note 17)
-    A.light(x, y, color=TEAL, rng=10.0, energy=1.5, flicker=False)
+for x, y, z in a2_dress.LANTERN_LIGHTS:  # every lantern's steady light (note 17), 0.2 m in front of its flame (11-19: it stood
+    A.light(x, y, color=TEAL, rng=10.0, energy=1.5, z=z, flicker=False)  # at z 1.6, in front of everything; the circle on the masonry is the look)
 A.light(-452.5, 175.0, color="#B6A2E6", rng=8.0, energy=0.9)  # the join: soft violet, down the exit shaft
 A.light(-442.0, 172.6, color="#F2F6FF", rng=6.0, energy=1.0)  # the bright crystal over the crest
 

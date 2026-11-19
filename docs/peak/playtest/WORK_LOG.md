@@ -3191,6 +3191,16 @@ only be held when you were holding the button ... making rope grabs like levers.
   face, a pug casting, two braces behind the climber's line. Same placement.
 - Frames `docs/peak/quality/mine/frames/q35_*.jpg` sent to the reviewer.
 
+## 11-19: a2's works lanterns on their own wall bracket (`aguas_works_lantern_wall`, MINE_PASS F24)
+
+- Seven of a2's lanterns floated (their 0.55 m arm pointed straight at the camera): a2_dress `lantern()` now hangs the
+  `_wall` variant, its own bracket and plate on the wall, its flame where the old one was (`aguas_lantern_arm` out;
+  `flip` for a plate to the east). The lantern at x -433.5 on the inspection gallery's back wall: no ceiling over the
+  back wall there, so the wall variant (no cut). `side_lantern()` and the frog room's keep the body (0.34 x 0.58 x 0.34).
+- Every light now 0.2 m in front of its flame (LANTERN_LIGHTS carries z; it stood at z 1.6 in front of everything);
+  range and energy kept: the circle on the masonry is the look.
+- a2: 20 wall lanterns, 3 bodies, 2 brackets; ZFIGHT 0, DEPTH 23 -> 18. Python only: the Director frames them.
+
 ## 11-19: THE LAUNCH LEDGE placed (`aguas_launch_ledge`, MINE_PASS F16)
 
 - a2's four solids wear it once the model has landed (a2.py `_cope`, as a1's): 36 (the west pool's sill), 37 (the
