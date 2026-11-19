@@ -870,10 +870,22 @@ A.cam((-258.0, 75.0, -226.0, 89.6), 7.5, bias=(0.0, 1.0))     # the lock
 # its lantern now, behind the climb.)
 # (Off the two walls' faces, so they light them (the walls' makers, 11-17): the flume's at the lanterns' arms, z -1.7;
 # the booth's at its open front, z -1.75; by L1 and over L2 at the lanterns' own depth, z -1.45, behind the climb.)
-for x, y, lz in ((-293.25, 81.53, -1.8), (-277.9, 81.5, -1.7), (-265.1, 81.5, -1.7), (-259.5, 81.9, -1.7)):  # the crane's hook, two piers, the east landing
-    A.light(x, y, color="#9FD0FF", rng=10.0, energy=1.1, z=lz)   # (the crane's: under the lantern hook on its post, esclusa_crane 11-18)
-for x, y, lz in ((-253.5, 81.3, -1.75), (-240.0, 84.7, -1.45), (-228.8, 83.5, -1.45)):  # the booth, by L1, over L2
-    A.light(x, y, color="#6FE0D0", rng=8.0, energy=0.55, z=lz)   # the lock's three teal lanterns, steady (q8: about half as bright and a little shorter, so they light the lock wall and not the roof's face or the walk white)
+# THE WORKS LANTERNS (quality run, MINE_PASS F24, reviewer 9, 11-19): the company's lantern (hood, chimney, guard wires,
+# mid-teal glass, one small flame) at each of the seven lights, on its mount: the crane's bracket (_post), the flume's
+# piers and the east landing and the lock wall (_wall, its plate on the wall's face), the booth's hanger knob (the body).
+# Each light 0.2 m in front of its flame, so the house's circle lands on the masonry (never dimmed). All teal now, the
+# works' one colour (the Director, 11-19): the flume's four were the falls' blue-white #9FD0FF, which stays the water's own.
+A.deco("aguas_works_lantern_post", -293.25, 81.8, z=-1.8, size=(0.34, 0.68, 0.34), tone="iron")   # the crane's bracket
+A.deco("aguas_works_lantern_wall", -277.9, 81.914, z=-2.2, size=(0.6, 0.74, 0.45), tone="iron")   # pier
+A.deco("aguas_works_lantern_wall", -265.1, 81.914, z=-2.2, size=(0.6, 0.74, 0.45), tone="iron")   # pier
+A.deco("aguas_works_lantern_wall", -259.5, 82.314, z=-2.2, size=(0.6, 0.74, 0.45), tone="iron")   # the east landing
+A.deco("aguas_works_lantern", -253.5, 82.36, z=-2.40, size=(0.34, 0.58, 0.34), tone="iron")       # the booth's hanger knob
+A.deco("aguas_works_lantern_wall", -240.0, 85.114, z=-1.9, size=(0.6, 0.74, 0.45), tone="iron")   # by L1
+A.deco("aguas_works_lantern_wall", -228.8, 83.914, z=-1.9, size=(0.6, 0.74, 0.45), tone="iron")   # over L2
+for x, y, lz in ((-293.25, 81.3, -1.6), (-277.9, 81.5, -1.72), (-265.1, 81.5, -1.72), (-259.5, 81.9, -1.72)):  # the crane's, two piers, the east landing
+    A.light(x, y, color="#6FE0D0", rng=10.0, energy=1.1, z=lz)
+for x, y, lz in ((-253.5, 81.95, -2.2), (-240.0, 84.7, -1.42), (-228.8, 83.5, -1.42)):  # the booth, by L1, over L2
+    A.light(x, y, color="#6FE0D0", rng=8.0, energy=0.55, z=lz)   # the lock's three, steady (q8: about half as bright and a little shorter, so they light the lock wall and not the roof's face or the walk white)
 # The section's two painted sets (quality run, MINE_PASS F-E, landed 11-17), in place of the stand-in back wall and the
 # chute's and the tunnel's black cards: the flume's arcade (x -297 .. -258.5, reviewer 9) and the lock's chamber and
 # quay (x -258.5 .. -222, reviewer 8.5). Origins the middle of each one's foot, on its face. Nothing between the falls'
