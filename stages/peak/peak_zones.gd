@@ -1161,6 +1161,10 @@ func _body_vis(a: Dictionary, zs: Array, root: Node3D) -> Dictionary:
 			# (`dark`: its two colours darkened, so a pool in a lit channel is no brighter than its neighbours: q36)
 			var dk := float(z.dark)
 			cols = [Color((cols[0] as Color).darkened(dk), (cols[0] as Color).a), Color((cols[1] as Color).darkened(dk), (cols[1] as Color).a)]
+		if z.has("murk"):
+			# (`murk`: the deep colour's alpha (0.74 by default), so what stands in deep water sinks into it and only
+			# the part near the surface shows: the Sump's piles and sunk ladder, the reviewer's q45)
+			cols[1] = Color((cols[1] as Color).r, (cols[1] as Color).g, (cols[1] as Color).b, float(z.murk))
 	pm.size = Vector2(w, front_z - back)
 	top.mesh = pm
 	top.position = Vector3(mid_x, surface, (front_z + back) * 0.5)

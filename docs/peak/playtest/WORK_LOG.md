@@ -3329,3 +3329,11 @@ built most of them from the redone pages; what each now is:
   bellows' base kept still while its pleats stretch).
 - The model requests still to be written into `MODEL_REQUESTS.md`: 19, 26/30/33, 32,
   37, 41, 42, 46, and the four cracked pieces of group E.
+
+## q45, the Sump's water (11-19)
+The reviewer on q45 (after 852976f2): the Sump still a translucent light-teal body, the piles and a sunk ladder full
+length. The cause: the water's front set back to 1.1 put it BEHIND the staging piles' faces (1.2), so they were drawn
+over it whole and no darkening reached them. Now its front is back at the play space's front (1.44, in front of the
+piles), with fade 0.6 and dark 0.3 kept, and a new water rule key, `murk` (peak_zones.gd `_body_vis`: the deep colour's
+alpha, 0.74 by default), set to 0.93: under 0.6 m the piles and ladder sink into the water; near the surface they show.
+Python and GDScript only; a1 rebuilt, ZFIGHT 0. The Director frames it.
