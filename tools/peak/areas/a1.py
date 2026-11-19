@@ -137,6 +137,11 @@ A.opening(-236, 85, -232, 91)  # the dry shaft out (A2's lip ledge is at its top
 
 # ================================================================ the fall and the Sump
 A.water((-248.0, -33.0, -187.4, SUMP_Y), SUMP_Y, flow=(0.0, 0.0))
+# (Darker with depth and its front set back, as 2.7's pools: under its translucent water the posts and a ladder showed
+# their whole length, and the Sump read shallow and glassy: the reviewer's q43, 11-19.)
+A.zones[-1]["front"] = 1.1
+A.zones[-1]["fade"] = 0.6
+A.zones[-1]["dark"] = 0.3
 # The falling water beats a climber down (2.2 g; a floating body's lift tops out at 2.2 g
 # too). It stops 6 m over the pool, so nobody who lands under it is held under.
 A.wind((FALL_X0, -22.0, FALL_X1, 90.0), (0.0, -6.0))

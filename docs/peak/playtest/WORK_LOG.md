@@ -3191,6 +3191,14 @@ only be held when you were holding the button ... making rope grabs like levers.
   face, a pug casting, two braces behind the climber's line. Same placement.
 - Frames `docs/peak/quality/mine/frames/q35_*.jpg` sent to the reviewer.
 
+## 11-19: the reviewer's q43 at the Sump (1.0)
+
+- The Sump's water darker with depth and its front set back (a1's water rule: front 1.1, fade 0.6, dark 0.3, as 2.7's
+  pools): the posts and the ladder showed their whole length under it, shallow and glassy.
+- The flat pale-blue lens behind the spawn sign is `mina_backdrop_cavern`'s painted `water` layer: its top at the
+  Sump's own surface (y -45) but 15 m back, so from the camera (y -42) it shows 1.6 m over the near water, a pale strip
+  between the docks and the rock. The backdrop maker's; not changed.
+
 ## 11-19: the reviewer's q41 mine course sweep (1.1 .. 1.12), and the gallery floor at the door
 
 - A deco's `tone` colours only its stand-in; a landed model keeps its own colours. So the honey and orange items were
