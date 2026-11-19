@@ -80,9 +80,11 @@ func place(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 	var tinted := mat in TINTED and wet == ""
 	var tint := _tint(kind) if tinted else Color.WHITE
 	for t: Array in plan:
-		var key := "%s|%s|%s" % [t[0], wet, tint.to_html(false)]
+		var baked := str(t[0]).contains(BAKED_TAG)  # (an area's own painted variant: drawn in its own colours)
+		var t_tint := Color.WHITE if baked else tint
+		var key := "%s|%s|%s" % [t[0], wet, t_tint.to_html(false)]
 		if not _batches.has(key):
-			_batches[key] = {"mesh": _mesh(str(t[0])), "xf": [], "wet": wet, "tint": tint, "tinted": tinted, "name": str(t[0])}
+			_batches[key] = {"mesh": _mesh(str(t[0])), "xf": [], "wet": wet, "tint": t_tint, "tinted": tinted and not baked, "name": str(t[0])}
 		(_batches[key].xf as Array).append(t[1])
 	placed += 1
 	tiles += plan.size()
@@ -108,9 +110,11 @@ func top_caps(pts: PackedVector2Array, kind: String, z0: float, z1: float) -> vo
 	var tinted := mat in TINTED and wet == ""
 	var tint := _tint(kind) if tinted else Color.WHITE
 	for t: Array in out:
-		var key := "%s|%s|%s" % [t[0], wet, tint.to_html(false)]
+		var baked := str(t[0]).contains(BAKED_TAG)  # (an area's own painted variant: drawn in its own colours)
+		var t_tint := Color.WHITE if baked else tint
+		var key := "%s|%s|%s" % [t[0], wet, t_tint.to_html(false)]
 		if not _batches.has(key):
-			_batches[key] = {"mesh": _mesh(str(t[0])), "xf": [], "wet": wet, "tint": tint, "tinted": tinted, "name": str(t[0])}
+			_batches[key] = {"mesh": _mesh(str(t[0])), "xf": [], "wet": wet, "tint": t_tint, "tinted": tinted and not baked, "name": str(t[0])}
 		(_batches[key].xf as Array).append(t[1])
 	tiles += out.size()
 
@@ -625,7 +629,7 @@ func _plan(s: Dictionary, pts: PackedVector2Array, kind: String, z0: float, z1: 
 func _caps(out: Array, mat: String, c: Vector2, ax: Vector2, _ay: Vector2, ang: float, w: float, h: float, zc: float, zs: float, ends: bool, module := "cap", made_h := 0.5) -> void:
 	var x0 := -w * 0.5
 	var x1 := w * 0.5
-	var end_file := _pick("fit_%s_cap_end" % mat)
+	var end_file := _area_pick("fit_%s_cap_end" % mat)
 	# (From 1 m long, so long as half a metre of cap is left between: a shorter deck's open end showed the cap's raw
 	# cut face, pale, at La Esclusa's east landing (1.9 m: the reviewer's q20, note 4).)
 	if ends and end_file != "" and w >= 1.0:
@@ -644,7 +648,7 @@ func _caps(out: Array, mat: String, c: Vector2, ax: Vector2, _ay: Vector2, ang: 
 	var seg := run / n
 	for i in n:
 		var at := c + ax * (x0 + seg * (i + 0.5))
-		out.append([_pick("fit_%s_%s" % [mat, module], i), _xf(at, ang, Vector3(seg / 2.0, h / made_h, zs), zc)])
+		out.append([_area_pick("fit_%s_%s" % [mat, module], i), _xf(at, ang, Vector3(seg / 2.0, h / made_h, zs), zc)])
 
 
 ## A tile's place: at `at` in the play plane, turned `ang`, scaled. `about_face`: turned
@@ -760,6 +764,24 @@ static func _near_rect(pts: PackedVector2Array) -> Dictionary:
 # ================================================================ the kit's files
 
 ## One of the variants of a module that have landed ("" when none has).
+## THE MINE'S OWN CAPS (the reviewer's q41, 11-19: the fitted rock caps held 8 of the mine's 10 scenes under 9). The
+## caps are painted neutral and tinted by the area's palette, and the mine's held rock (#D9C7A2) made every floor and
+## landing in it the brightest flat in its frames, a different stone from the mine round it. In an area named here a
+## module has its own counterpart, painted in its own colours (BAKED_TAG in its name: drawn untinted), used once it has
+## landed; until then, and everywhere else, the tinted original.
+const AREA_SWAP := {"a1": {"fit_rock_cap": "fit_rock_cap_mine", "fit_rock_cap_end": "fit_rock_cap_mine_end"}}
+const BAKED_TAG := "_mine"
+
+
+func _area_pick(base: String, salt := 0) -> String:
+	var swap := str((AREA_SWAP.get(str(area.get("id", "")), {}) as Dictionary).get(base, ""))
+	if swap != "":
+		var f := _pick(swap, salt)
+		if f != "":
+			return f
+	return _pick(base, salt)
+
+
 static func _pick(base: String, salt := 0) -> String:
 	if not _variants.has(base):
 		var have: Array = []
