@@ -3417,3 +3417,77 @@ Lint 259/0, `--peak` 0, ZFIGHT 0. Frames: `cam:11.1:11.3:11.6:11.7:11.8:11.9:11.
 3. 11.6: the niches' lamps are low and dim (energy 0.45, range 2.6, behind the plane): at 1.4 the east niche's cut faces
    lit up into a bright cream 7-shaped block over the library's door.
 Lint 259/0, `--peak` 0, ZFIGHT 0.
+
+## THE GLACIER'S FOOT, THE FALLS' SHAFT and THE FROGS' SLIDE TO THE FALLS (notes 147 and 143; part two b, 11-19)
+A stylized first pass, as the night's brief asked: the course's own kinds, the fitted kit and kit models already landed
+(`ice_block`, `riscos_bridge_post`, `aguas_hand_rail(_bent)`, `icicle_row`, `sign_warn_bang`, `rope_coil_frozen`, the
+tunnel's back wall again); no new models.
+- THE FALLS START AT THE GLACIER (st.py): the great falls' column (x -303 .. -297) runs from the meltwater pool's
+  surface, 784 m (`FALLS_HEAD`), to the Sump, white at its head; its ride zone with it, to 785.4 (under the bridge's
+  boards). From the well's cap (498) to the glacier's bed (780) it has a shaft of its own: two slick walls 3 m thick,
+  the column's width apart, west of the forge, the cliffs and the cableway (no area had anything there). Behind it a
+  black slot at z -1.21 (from 690 up the cableway's face body, a8_dress's, stands at -1.25 behind the shaft and
+  showed tan through the falls); either side of its walls the shaft's dark rock (`_dark_rock`: a dark card painted
+  with long wavy bands, z -6.6; from 690 up the face body stands in front of it, tan, as at the cableway).
+- THE SHAFT'S FOOT. The cap is open through a THROAT, x -299.8 .. -297.8, 10 m deep (494 .. 504), with a slick chamfer
+  down to it from each wall, and the throat's last 3 m are a pipe zone (the flume whirlpool's kind) that sets the
+  rider at its foot, x -298.8, falling straight down at 16 m/s, with a burst of spray (it moves him 4.4 m at most):
+  the well's one clear band, between the temple's banner beam (its tip x -300.9 at 380) and the garden's root ledge
+  (x -296.5 at 279). Then a ride zone over the well's top names 5.11's two censers (`through`, new): a body falling
+  faster than 8 m/s into it passes through them; 5.11's own climbers, slow, meet them as ever. (The probes before
+  these: riders lay on a censer's bowl, on the banner beam and on the root ledge.)
+- THE WELL'S FLAT GREY (the reviewer on `design/summit_148/frames/s2_well.jpg`): it was the mountain's own card
+  (#8C8273, z -9) showing where no area stands beside the well: west between the crystal cave and the temple (284 ..
+  362), east between the black waters and the garden (188 .. 258) and between the garden and the forge (384 .. 470).
+  The same dark rock covers all three now (frame `glacier147_11_well_300`).
+- THE GLACIER'S FOOT (a9.py, a9_dress.py). The lower crack's floor is the MELTWATER POOL: x -331 .. -303, its bed
+  781.4, its surface 784, running east at 0.45 m/s and over its last 4 m (the race) at 1.2, over its east end (the lip,
+  x -303) into the falls. A miss from 9.1, 9.2 or 9.3 lands in it. Six ICE BLOCKS (path movers, `wrap`, the kit's
+  `ice_block` at 1.6 m, kind `ice`: 2 s a hand) come forward out of the meltwater cave (a dark arch in the far wall at
+  the pool's west end) and drift east on the current, 0.5 m of each above the water; you climb onto one, ride it east
+  and get onto the bridge's west landing (its snow 1.5 m over a block's top) before the landing sweeps you off; the
+  block goes on under the landing and the bridge (1 m clear), over the lip, tips into the falls and melts away 7 m
+  down (`melt`, new). The bed and the floor are drawn in their kinds (their skins, `glaciar_bed` and
+  `glaciar_floor_crack`, were made whole and are out until re-made); the shelf's fallen half lies in the pool; the
+  pool's far wall and the falls' head are the tunnel's back wall model again (the second one just behind the play
+  space: the cableway's face body stood there).
+- LA PASARELA HELADA (9.0, D3, miss X): the old footbridge over the falls' head, in the tunnel, from its floor
+  (x -297) to the west landing (x -305.3 .. -308.4, firm snow: 9.1's foot, its anchor unchanged). Five boards, 0.3 m,
+  their tops at 786: three of cold ice (B1, B3, B4), two glazed black and sagged toward the gap beside them (B2, B5);
+  three gaps, 0.8, 1.7 (straight over the middle of the falls) and 0.7 m. Every move a plain reach (1.2 to 1.8 m). Its
+  posts, broken railing, icicles, warning sign and a frozen coil of lashing rope are scenery behind it; a camera over
+  the bridge (half 6, leaning down so the falls are in the frame; 9.1 keeps the close camera).
+- THE FROGS' SLIDE TO THE FALLS (note 143, st.py `FROG_SLIDE`): from under the summit (920 m) it drops straight down
+  the mountain's west side at x -372 (its slabs 5.7 m west of the storm ridge's mass, 26 m west of the glacier's wall:
+  through neither's play space), turns east at 780 m, runs under the pool (its roof under the pool's bed, falling 5
+  degrees: run level, a limp rider came to rest in its mouth) and pours its rider out of the shaft's west wall at
+  771.5 m, 12.5 m under the falls' head. Its inside is dark (a back card). Rides: down the west side (771 .. 964) and
+  under the pool (769 .. 779.8). THE OLD WAY OUT IS FROZEN SHUT: the
+  old last leg through the storm ridge's foot keeps its slabs (a10's mass is cut for it and its skin is made with the
+  tunnel), and a plug of black ice fills it 2.6 m in from its mouth by the cabin; its ride zone is gone.
+- New in the engine: a `wrap` mover's `melt` (peak_things: its loose double melts away under that y, with a burst of
+  frost); a loose double keeps its mover's `model_scale`; a ride zone's `through` (peak_zones). AUTHORING.md has
+  `melt`.
+- Measured (tests/peak_watch.gd `glacier147:TAG:follow`, limp climbers in the real game): from the pool's middle,
+  carried east, over the lip at 44 s, down the falls into the Sump at 93 s; through the bridge's middle gap into the
+  Sump in 50 s; down the frogs' slide from 900 m: the west side in 12 s, under the pool by 24 s, the Sump at 71 s. All
+  three straight down x -298.8 below the cap: rides, no fall counted. The drop probe (tests/peak_drop.tscn --at=...):
+  from the summit's slide mouth (-499, 955) into the Sump in 116 s, 1000 m; from the slide at 905 and 880, 80 s; into
+  the shaft at 770 (west and east halves) and 700, 55 to 59 s.
+- Checks: lint 259/0; `--peak` fails 0; every move within the reach rules (no errors); a9's sweeps as before the
+  change (ZFIGHT 0, DEPTH 12, SKIN 45, STANDIN 0, CARD 0).
+- Frames: `glacier147:TAG` (the bridge, the pool, the head, 9.1's foot, the shaft at 760 and 640, the cap, the old
+  mouth shut, the slide's drop and its run under the pool, the well at 300; then the three climbers followed).
+- Decided (Parker asleep): THE BRIDGE IS 9.0, La Pasarela Helada, before 9.1 (its id sorts it there; the design
+  sheet's 9.0 was the frog's snow hole, a rest with no challenge of its own). No board breaks; the cold rule is the ice
+  boards' 2 s hold, and the glazed ones take no hand.
+- Decided (Parker asleep): THE POOL IS A CATCH, NOT A CHALLENGE: no card of its own; its way out is the blocks to the
+  bridge's west landing, the foot of 9.1. A miss into it from 15 m or more counts as a fall (water is a landing), and
+  being carried over the lip is the falls' ride.
+- Decided (Parker asleep): THE OLD SLIDE'S MOUTH BY THE CABIN IS FROZEN SHUT (not removed): a10's mass and its skin
+  are made with that tunnel in them.
+- Decided (Parker asleep): THE FALLS' RIDERS PASS THROUGH 5.11's CENSERS, and are set straight at the shaft's foot
+  (the pipe), so the ride goes on to the Sump.
+- Known: the frogs' slide's drop down the west side has the snow cap's white card behind it (stark, as the old slide's
+  was). The bridge and the pool are plain stand-ins (ice boxes, the kit's ice cube); the pool's water reads, the
+  blocks read as blocks.

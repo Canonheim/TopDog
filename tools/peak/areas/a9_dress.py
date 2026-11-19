@@ -241,7 +241,8 @@ chute's kicker board).
 import math
 
 # ------------------------------------------------------------------ the course's own numbers (a9.py)
-FLOOR = 786.0           # the crevasse's snow floor, the tunnel, the alcove (8 to 9, 9.1)
+FLOOR = 786.0           # the tunnel's snow floor, the alcove, La Pasarela Helada and its west landing (8 to 9, 9.0, 9.1)
+POOL_BED, POOL_S = 781.4, 784.0  # the meltwater pool in the lower crack: its bed and its surface (note 147; a9.py)
 R1 = 798.5              # the corner ledge (9.1, 9.2)
 SH_Y = 802.6            # the shelf's underside (9.2)
 R2 = 804.0              # the shelf's top, the bridges, the door's sill, the cave's floor (9.2, 9.3, 9.4, 9.0)
@@ -448,13 +449,14 @@ def dress(A):
     # ============================================================ 8 to 9: under the lip
     # The bed under the floors (skin, line 52): blue-black ice glazed over rock, its front painted in long
     # bands; its east end (x -282 .. -281) meets the deck's planks broken off under the snow's edge.
-    skin("glaciar_bed", -335.0, -281.0, 780.0, 785.4)
+    # (NOTE 147, 11-19: the bed and the floor are cut for the meltwater pool and the falls' head; their two skins,
+    # glaciar_bed and glaciar_floor_crack, were made whole, so they are out until re-made to the new shape, and the
+    # solids are drawn in their kinds. Below: the pool, the falls' head and La Pasarela Helada.)
     # The floor of the tunnel and the crack (skin, line 54): firm snow 0.7 m thick, white and matte with a square
     # front edge and the ice plain under it, carried back to the far wall; painted on it: a line of old boot
     # prints going west from the deck to the first knuckle, a blue hollow every few metres, low ridges the
     # draught has combed, and a ring of ice splinters 1 m across under each of the four falling icicles (x -326.2,
     # -324.8, -322.0, -320.65). Never 4 m blank.
-    skin("glaciar_floor_crack", -331.0, -282.0, 785.3, FLOOR, tone=SNOW, z_back=WALL)
     # The lower tongue and THE LIP (skin, line 58): one piece made for its place. Outside, the slide's last
     # ramps (52 then 34 degrees) to the tip that throws a body clear of the deck, dark, glossy, polished by
     # everything that has come down it, a few big planes, the bands long wavy lines; its underside the alcove's
@@ -485,6 +487,35 @@ def dress(A):
     # The tunnel's lantern, 1.5 m inside its mouth, above head height, on the side you go through: the first
     # lit lamp since the frog's car (light: item 2).
     lantern_hook(-286.1, 789.7)
+
+    # ============================================================ 9.0 the falls' head, the pool, La Pasarela Helada (note 147)
+    # A stylized first pass: kit models already landed, no new ones.
+    # The pool's far wall under the crack's (from its bed to the crack's wall's foot at 786): the kit's tunnel back
+    # wall again, the old water's scooped dishes in banded mid blue, here at the pool's back.
+    back("glaciar_tunnel_back_wall", -330.25, -303.75, 780.9, 785.9, -2.35, WALL_FAR)  # (its own size: 26.5 x 5)
+    # And again just behind the play space over the falls' head and the pool's east end (its face 2 cm behind the
+    # solids' backs): the cableway's face body (a8_dress tele_face_body_b, x -310 .. -266 up to 786, z -1.25) stands
+    # there, and with the bed cut it showed tan between the water and the bridge.
+    back("glaciar_tunnel_back_wall", -312.15, -285.65, 781.05, 786.05, -1.22, -2.87)  # (clear of the fallen shelf, x -312.4; to just over the floor: the face body's top showed over it)
+    # The meltwater cave, where the ice blocks come out: a dark arch in the far wall at the pool's west end, from under
+    # the water to 1.9 m over it (the blocks come forward out of it, from z -3.4).
+    A.card([(-329.9, POOL_S - 0.4), (-327.3, POOL_S - 0.4), (-327.3, POOL_S + 0.9), (-327.7, POOL_S + 1.45),
+            (-328.6, POOL_S + 1.8), (-329.5, POOL_S + 1.45), (-329.9, POOL_S + 0.9)], z=-2.3, tone="#0E1626", edge=False)
+    # The shelf's other half (9.1's page): its two blocks lie in the pool now, under the shelf's broken end, behind
+    # where you swim, their tops out of the water.
+    back("glaciar_shelf_fallen", -317.7, -312.4, POOL_S - 1.4, POOL_S + 0.5, -1.43, -2.45)  # (into the far wall)
+    # The bridge's posts, one at each end on the side away from you, their brackets reaching over the boards.
+    A.deco("riscos_bridge_post", -296.75, FLOOR, z=-1.45, size=(0.89, 1.6, 0.24), tone=WOOD, flip=True)
+    A.deco("riscos_bridge_post", -305.55, FLOOR, z=-1.45, size=(0.89, 1.6, 0.24), tone=WOOD)
+    # Its broken railing, behind the boards: a bent length off the east post, a straight stub off the west one.
+    A.deco("aguas_hand_rail_bent", -298.6, FLOOR + 0.85, z=-1.55, size=(2.6, 0.7, 0.44), tone=IRON)
+    A.deco("aguas_hand_rail", -304.6, FLOOR + 1.05, z=-1.55, size=(2.0, 0.3, 0.44), tone=IRON)
+    # Icicles under the boards' back edge, hanging into the falls (never in front of the climb).
+    A.deco("icicle_row", -300.9, FLOOR - 0.5, z=-1.45, scale=0.55, size=(6.6, 0.63, 0.22), tone=PALE)  # (under every board)
+    # The warning sign on the tunnel's back wall before the bridge, and a frozen coil of the bridge's lashing rope
+    # left on the west landing.
+    A.deco("sign_warn_bang", -295.9, FLOOR + 1.9, z=-2.3, size=(1.62, 1.58, 0.14), tone=ACCENT)
+    A.deco("rope_coil_frozen", -307.8, FLOOR, z=-2.11, size=(0.65, 0.25, 0.58), tone=WOOD)  # (against the far wall)
     # Foreground: the snow fringe along the lip's top edge, 0.5 m in from today's strip, in front of the lip's own
     # ice only (not over the ramp a sliding body comes down), along its two slopes (made in place:
     # (-280.5, 799.9), (-276.5, 794.7), (-271.6, 791.35), 0.35 deep: under 0.3 m above the ice's face).
@@ -525,7 +556,6 @@ def dress(A):
     arrow(-307.2, 789.9, 151.0)
     # The shelf's other half: two blocks of ice on the floor under its broken end, behind where you walk (made as
     # one piece: (-317.7 .. -314.6, to 787.9) and (-314.2 .. -312.4, to 786.9)), frosted on their broken faces.
-    back("glaciar_shelf_fallen", -317.7, -312.4, FLOOR, 787.9, -1.3, -2.3)
     # One who fell: deep in the far wall, head down, under the middle bridge, 5 m from any hold.
     deep(-312.5, 798.6, 160.0)
 

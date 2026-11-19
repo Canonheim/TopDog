@@ -2244,6 +2244,8 @@ func _let_stray(m: Dictionary, d: float) -> void:
 	var look: Node3D = Peak.kit(str(def.model)) if def.has("model") else null
 	if look == null:
 		look = _shapes_mesh(peak.areas[0], def.shapes)
+	elif def.has("model_scale"):
+		look.scale = Vector3.ONE * float(def.model_scale)  # (drawn at the size the piece on the line was: note 147's ice blocks)
 	rb.add_child(look)
 	for r in ropes:
 		if r.area == m.area:
@@ -2256,7 +2258,9 @@ func _let_stray(m: Dictionary, d: float) -> void:
 				c.release(i)
 				c.limbs[i].regrip = 0.0
 				c.attach(i, rb)
-	_strays.append([rb, peak.clock, -1.0])
+	# (`melt`: a y. Once the stray has fallen under it, it melts away: note 147, the glacier's ice blocks go over the
+	# meltwater pool's lip into the great falls "where they will melt away as they fall", never 300 m down the well.)
+	_strays.append([rb, peak.clock, -1.0, float(mo.get("melt", -INF))])
 
 
 func _tick_strays() -> void:
@@ -2282,7 +2286,11 @@ func _tick_strays() -> void:
 			rb.gravity_scale *= 0.4
 			peak.zones.splash_at(here, 1.3, rb.linear_velocity.length())
 		# Gone once it has lain in the water a while, or long after it left, and nobody has it.
-		var done := (float(row[2]) >= 0.0 and t - float(row[2]) > 5.0) or t - float(row[1]) > 20.0 or here.y < -70.0
+		var melting := row.size() > 3 and here.y < float(row[3])
+		if melting and row.size() == 4:
+			row.append(true)
+			peak.zones.burst(here, "frost", 1.6)  # (it goes to spray in the falls)
+		var done := melting or (float(row[2]) >= 0.0 and t - float(row[2]) > 5.0) or t - float(row[1]) > 20.0 or here.y < -70.0
 		if done and not _player_limbs_on([rb]):
 			if rb.scale.x > 0.12:
 				rb.scale *= 0.9  # (it shrinks away, as a broken plank's pieces do)

@@ -4019,3 +4019,56 @@ func _w_falls142(a: Array) -> void:
 		look(row[1], float(row[2]))
 		await secs(1.5)
 		await shot("falls142_%s_%s" % [row[3], tag])
+
+
+## THE GLACIER'S FOOT (note 147, 11-19): La Pasarela Helada over the great falls' head, the meltwater pool and its
+## ice blocks, the falls' shaft down to the well's cap, and the frogs' slide (note 143) down the west side to the
+## falls. Then a climber dropped in the pool, followed. glacier147:TAG
+func _w_glacier147(a: Array) -> void:
+	var tag := str(a[0]) if a.size() > 0 else ""
+	var frames := not (a.size() > 1 and str(a[1]) == "follow")  # (glacier147:TAG:follow: the three climbers only)
+	for row in ([] if not frames else [["9.0", Vector2(-301.5, 786.6), 5.5, "1_pasarela"], ["9.0", Vector2(-316.0, 786.5), 9.0, "2_pool"],
+			["9.0", Vector2(-302.0, 783.0), 4.5, "3_head"], ["9.1", Vector2(-310.0, 790.0), 7.0, "4_foot_of_9_1"],
+			["9.0", Vector2(-300.0, 760.0), 14.0, "5_shaft_760"], ["8.1", Vector2(-300.0, 640.0), 14.0, "6_shaft_640"],
+			["6.1", Vector2(-300.0, 500.0), 12.0, "7_cap"], ["10.1", Vector2(-310.0, 887.5), 5.5, "8_old_mouth_shut"],
+			["9.1", Vector2(-372.0, 850.0), 12.0, "9_slide_west"], ["9.0", Vector2(-322.0, 777.0), 9.0, "10_slide_under_pool"],
+			["3.10", Vector2(-300.0, 300.0), 30.0, "11_well_300"]]):
+		pk.warp(str(row[0]))
+		await secs(3.0)
+		look(row[1], float(row[2]))
+		await secs(1.5)
+		await shot("glacier147_%s_%s" % [row[3], tag])
+	# Three climbers let go, limp, and followed (the game's own camera): in the pool, through the bridge's widest gap
+	# over the falls, and in the frogs' slide's drop down the west side. Where each goes, whether it was a ride.
+	for row in [[Vector2(-320.0, 784.6), "13_pool"], [Vector2(-301.75, 787.2), "14_gap"], [Vector2(-372.0, 900.0), "15_slide"]]:
+		pk.warp("9.0")
+		await secs(2.0)
+		await _follow_147(row[0], str(row[1]), tag)
+
+
+func _follow_147(at: Vector2, label: String, tag: String) -> void:
+	var falls0 := pk.falls
+	stand(at)
+	_free_cam = false
+	var t0 := pk.clock
+	var log: Array = []
+	var next_log := 0.0
+	var shots := [2.0, 8.0, 16.0, 30.0]
+	var low := INF
+	var rode := false
+	while pk.clock - t0 < 110.0:
+		var p := where()
+		low = minf(low, p.y)
+		rode = rode or pk._riding
+		if not shots.is_empty() and pk.clock - t0 >= float(shots[0]):
+			await shot("glacier147_%s_%ds_%s" % [label, int(shots[0]), tag])
+			shots.pop_front()
+		if pk.clock - t0 >= next_log:
+			next_log += 4.0
+			log.append("%ds (%.1f, %.1f)%s" % [int(pk.clock - t0), p.x, p.y, " in water" if pk.zones.in_water(me()) else ""])
+		if p.y < -40.0:
+			break
+		await ticks(1)
+	var end := where()
+	print("WATCH glacier147 %s: from (%.1f, %.1f) to (%.1f, %.1f) after %.0f s, lowest %.1f, falls counted %d, rode %s; %s" % [
+		label, at.x, at.y, end.x, end.y, pk.clock - t0, low, pk.falls - falls0, rode, " > ".join(log)])

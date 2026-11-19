@@ -7,8 +7,10 @@ east face is a cliff at about x -281 (the slide: whatever comes off the upper ro
 down from the storm ridge falls along it, hits the lower lip's ramps and is thrown off
 the lip's tip at (-271.5, 791.4), clear of the high station's deck, into the throat).
 Inside the ice, west of that skin, is the crevasse system:
-  the alcove under the lip -> the passage -> THE LOWER CREVASSE (9.1, 9.2, 9.3: a miss
-  drops to its snow floor at 786, the foot of 9.1) -> a door -> LA CUEVA DE HIELO (9.4:
+  the alcove under the lip -> the passage, where the great falls' head pours down its
+  shaft and LA PASARELA HELADA crosses it (9.0) -> THE LOWER CREVASSE (9.1, 9.2, 9.3: a
+  miss drops into its meltwater pool, which runs east to the falls; its drifting ice
+  blocks are the way out, to the foot of 9.1) -> a door -> LA CUEVA DE HIELO (9.4:
   its floor at 804, its balcony at 812, the statue chimney up to 832) -> the upper
   level (9.5 the serac, 9.6 the toboggan, both OVER the cave: a miss lands on the cave's
   snow, at the foot of 9.4) -> the rope -> the window in the skin at 830.
@@ -51,9 +53,19 @@ def climber(x, y, pose, flip=False, rot=0.0, grips=True, card=False):
 
 # ================================================================ THE ICE (the big masses)
 # The mountain side and the bed.
-A.solid([(-335, 780), (-281, 780), (-281, 784), (-282, 784), (-282, 785.4), (-335, 785.4)], ICE, skin="glaciar_bed")
+# THE GLACIER'S FOOT (note 147, Parker: "the great falls start at the glacier"; 11-19, a stylized first pass): the
+# lower crack's floor is the MELTWATER POOL now (x -331 .. -303, its surface POOL_S), and the tunnel's floor stops at
+# x -297: between them, x -303 .. -297, the great falls' head pours down its shaft (st.py's), and LA PASARELA HELADA
+# crosses it (9.0, below). The bed and the floor wear plain ice and snow until they are re-made to the new shape
+# (their skins, glaciar_bed and glaciar_floor_crack, were one piece each from x -335 to -281).
+POOL_X = (-331.0, -303.0)
+POOL_BED, POOL_S = 781.4, 784.0     # the pool's bed and its surface (st.py FALLS_HEAD)
+FLOOR = 786.0                       # the tunnel's floor, the bridge's boards and its west landing
+A.solid([(POOL_X[0], 780), (POOL_X[1], 780), (POOL_X[1], POOL_BED), (POOL_X[0], POOL_BED)], ICE)  # the pool's bed
+A.solid([(-297, 780), (-289, 780), (-289, 785.4), (-297, 785.4)], ICE)  # the tunnel's bed (east of x -289 the
+# cableway's face, a8's tele_face_d, is the rock under the floor: the old bed's model lay over it)
 A.solid([(-341, 780), (-331, 780), (-331, 886), (-341, 886)], ICE, skin="glaciar_west_wall")  # the west wall (rock under ice)
-A.ledge(-331.0, -282.0, 786.0, "snow", t=0.7, skin="glaciar_floor_crack")  # the crevasse floor: firm snow, all of it
+A.ledge(-297.0, -282.0, FLOOR, "snow", t=0.6)  # the tunnel's floor: firm snow (on the face's top, 785.4)
 
 # The skin of the lower tongue and THE LIP (the slide's last ramp: 52 then 34 degrees).
 LIP_TIP = (-271.5, 791.4)
@@ -111,6 +123,65 @@ A.solid([(-280, 859.2), (-280, 870.53), TIP, (-295.9, 880.7), (-295.9, 877.3), (
 A.ledge(-286.5, -283.5, 867.8, "snow", t=0.4, skin="glaciar_niche_snow")  # R8: the niche in the stem
 A.ledge(-295.9, -293.2, 873.3, "snow", t=0.4, skin="glaciar_niche_snow_short")  # R9: the niche under the tip
 A.ledge(-285.5, -282.5, 846.0, "snow", t=0.4, skin="glaciar_niche_snow")  # R7: the niche under the chute's mouth
+
+# ================================================================ 9.0 La Pasarela Helada, and the meltwater pool
+# (Note 147, Parker 11-14: "a new challenge at the entrance to the glacier that is getting over the top of the falls.
+# Glacier melt is what feeds the falls so make the area on the left of the climb up water and have those ice blocks
+# floating into it and feeding into the falls where they will melt away as they fall. Those iceblocks are things you
+# can climb on ... blocks use cold rule ... The ice blocks and water is in an area that catches you if you mess up the
+# glacier challenge, then it is another challenge to get out of that before you fall"; and of the crossing: "I like
+# La Pasarela Helada". A stylized first pass: the course's own kinds, the kit's ice_block, plain stand-ins.)
+#
+# THE POOL. The lower crack's floor is water: x -331 .. -303, 2.6 m deep, running east at 0.45 m/s and over its last
+# 4 m (the race) at 1.2, over its east end (the lip, x -303) into the great falls. A miss from 9.1, 9.2 or 9.3 lands in
+# it. Its ice blocks come out of the meltwater cave in the crack's far wall at its west end and drift east on the
+# current: cubes of 1.6 m, a third of each out of the water, of cold ice (2 s a hand). Climb onto one, ride it east,
+# and get onto the bridge's west landing (its snow 1.5 m over a block's top) before the landing sweeps you off it:
+# the block goes on under the landing and the bridge (1 m clear of its top), over the lip, and melts away in the falls
+# 7 m down. Missed: the race takes you over the lip, and the falls take you down the mountain (st.py's ride).
+POOL_FLOW, RACE_FLOW = 0.45, 1.2
+RACE_X = -307.0
+A.water((POOL_X[0], POOL_BED, POOL_X[1], POOL_S), POOL_S, flow=(POOL_FLOW, 0.0), look="river", back=-2.4)
+A.water((RACE_X, POOL_BED, POOL_X[1], POOL_S), POOL_S, flow=(RACE_FLOW, 0.0), look="river", back=-2.4)
+BLOCK = 1.6                             # the kit's ice_block (2 m, its origin the middle of its foot) at 0.8
+BLOCK_Y = round(POOL_S - 1.1, 2)        # a block's foot: 0.5 m of it over the water
+BLOCK_X0, BLOCK_X1 = -328.6, -301.6     # out of the cave .. over the falls
+BLOCK_GAPS = [4.6, 6.2, 4.2, 5.8, 4.8, 6.4]   # metres from each block to the next, round the loop
+_road, _loop, _t = BLOCK_X1 - BLOCK_X0, sum(BLOCK_GAPS), 0.0
+for _i, _g in enumerate(BLOCK_GAPS):
+    A.mover("glaciar_floe%d" % (_i + 1), (BLOCK_X0, BLOCK_Y), [(box_pts(0.0, BLOCK / 2, BLOCK, BLOCK), "ice")],
+            {"type": "path", "pts": [[BLOCK_X0, BLOCK_Y], [BLOCK_X1, BLOCK_Y]], "speed": POOL_FLOW, "mode": "wrap",
+             "wait": round((_loop - _road) / POOL_FLOW, 3), "phase": round(_t / POOL_FLOW, 3), "trigger": "none",
+             # over the lip: at 26.4 m its middle is 0.8 m past it; it tips into the falls and melts 7 m down
+             "loose": round(_road - 0.6, 3), "mass": 40.0, "push": 0.9, "tip": 1.2, "melt": POOL_S - 7.0,
+             "emerge": {"depth": -3.4, "over": 2.0}},   # (out of the meltwater cave in the far wall)
+            model="ice_block", model_scale=BLOCK / 2.0)
+    _t += _g
+
+# LA PASARELA HELADA (9.0). The remains of an old footbridge over the falls' head, iced by their spray, from the
+# tunnel's floor (x -297) to its west landing (x -305.3 .. -308.4, firm snow: the foot of 9.1). Five boards are left,
+# 0.3 m thick, their tops at the floor's height: three of cold ice (a hand lets go after 2 s), two glazed black (no
+# hand holds them, and each has sagged toward the gap beside it, so it slides you in); three gaps, the widest (1.7 m)
+# straight over the middle of the falls. A slip is the falls, to the Sump. Its posts, its broken railing, its
+# icicles and the warning sign are scenery behind it (a9_dress).
+LANDING = (-308.4, -305.3)
+PASARELA = [(-298.2, -297.0, "ice", 0.0, 0.0),        # B1, off the tunnel's floor
+            (-299.8, -299.0, ICE, 0.0, 0.18),         # B2, glazed, its east end sagged into the first gap
+            (-300.9, -299.8, "ice", 0.0, 0.0),        # B3
+            (-303.8, -302.6, "ice", 0.0, 0.0),        # B4, over the lip (after the 1.7 m gap over the falls)
+            (-304.6, -303.8, ICE, 0.18, 0.0)]         # B5, glazed, its west end sagged into the last gap
+for _xw, _xe, _k, _dw, _de in PASARELA:
+    A.solid([(_xw, FLOOR - 0.3 - _dw), (_xe, FLOOR - 0.3 - _de), (_xe, FLOOR - _de), (_xw, FLOOR - _dw)], _k)
+A.ledge(LANDING[0], LANDING[1], FLOOR, "snow", t=0.5)  # the west landing (its underside 1 m over a block's top)
+A.challenge("9.0", "La Pasarela Helada", (-295.4, FLOOR), 3, "X",
+            moves=[["reach", [-296.95, FLOOR], [-298.15, FLOOR]],     # onto B1
+                   ["reach", [-298.15, FLOOR], [-299.85, FLOOR]],     # over the first gap and the glazed B2, to B3
+                   ["reach", [-299.85, FLOOR], [-300.85, FLOOR]],
+                   ["reach", [-300.85, FLOOR], [-302.65, FLOOR]],     # over the falls
+                   ["reach", [-302.65, FLOOR], [-303.75, FLOOR]],
+                   ["reach", [-303.75, FLOOR], [-305.35, FLOOR]],     # over the glazed B5 and the last gap, to the landing
+                   ["reach", [-305.35, FLOOR], [-306.6, FLOOR]]])     # the foot of 9.1
+A.cam((-305.4, 784.5, -294.0, 790.5), half_h=6.0, bias=(0.0, -1.5))  # (the falls under you in the frame; 9.1 keeps the close camera)
 
 # ================================================================ 9.1 Hielo Azul
 # The blue wall of the lower crevasse: a rising line of holds from the passage's mouth
@@ -416,10 +487,13 @@ A.light(-291.0, 866.0, color="#BFE3FF", rng=10.0, energy=1.1)  # under the corni
 # and the last climber's (on the last cane: it takes the place of the light on his reaching arm).
 for x, y, z in a9_dress.LANTERN_LIGHTS:
     A.light(x, y, color="#FFB860", rng=3.5, energy=0.9, z=z, flicker=True)
-A.dark((-331, 786, -284.5, 842), level=0.3)  # inside the ice: blue shadow
+A.dark((-331, 780, -284.5, 842), level=0.3)  # inside the ice: blue shadow (to the pool's bed: note 147)
 
 A.effect("snow", (-300, 830, -250, 888), density=0.5)
-A.effect("mist", (-331, 786, -305.5, 792), density=0.5, tone="ice")
+A.effect("mist", (-331, POOL_S, -305.5, 790), density=0.5, tone="ice")  # (over the meltwater pool: note 147)
+# (No mist of our own at the falls' head: a mist's pale balls are the floating-balls fault, MINE_PASS F-C11.)
+A.effect("drips", (-303.8, POOL_S, -297.0, 785.6), density=0.6)  # off the bridge's ice into the falls
+A.light(-322.0, 785.6, color="#9FD8FF", rng=9.0, energy=1.0)  # low over the pool's west end
 A.effect("mist", (-303, 804, -284.5, 809), density=0.4, tone="ice")
 A.effect("drips", (-290, 786, -272, 791), density=0.5)
 A.effect("snow", (-302, 862, -286, 884), density=0.9, speed=2.0)  # spindrift down the rimaye
