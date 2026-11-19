@@ -123,7 +123,7 @@ def dress(A):
     # them: in front of the dock (the climber is up on the deck there) and past the east wall.
     A.deco("agave_clump", -11.6, 0.0, z=3.0, size=(1.7, 1.3, 1.3), tone="back2")
     A.deco("stone_cluster_a", -15.2, 0.0, z=3.6, size=(1.6, 0.6, 1.0), tone="back2")
-    A.deco("fence_post_bunting", 15.6, 0.0, z=1.9, size=(0.18, 1.4, 0.18), tone="wood2")
+    A.deco("fence_post_bunting", 20.3, 0.0, z=1.9, size=(0.18, 1.4, 0.18), tone="wood2")  # (out to the town's new edge, 11-20: at 15.6 it stood in front of the walk to the donkey)
     A.deco("grass_tuft_dry", 2.4, 0.0, z=6.4, size=(0.7, 0.55, 0.4), tone="back2")
     A.deco("grass_tuft_dry", 9.2, 0.0, z=7.0, size=(0.7, 0.55, 0.4), tone="back2")
     A.deco("grass_tuft_dry", -8.2, 0.0, z=6.6, size=(0.7, 0.55, 0.4), tone="back2")

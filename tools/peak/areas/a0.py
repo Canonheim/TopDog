@@ -11,8 +11,16 @@ import a0_dress  # the tunnel's scenery past the first screen (the modelling run
 A = Area("a0", "town")
 
 # ---------------------------------------------------------------- the ground at the edge of town
-A.solid([(16, -3), (16, 0), (-36, 0), (-36, -3)], "rock")  # the road (grip: you stand on it)
-A.box(15.0, 30.0, 2.0, 66.0, "void")  # the world's east edge, unseen: the town is that way
+A.solid([(22, -3), (22, 0), (-36, 0), (-36, -3)], "rock")  # the road (grip: you stand on it)
+# The world's east edge, unseen: the town is that way. (Parker 11-20: moved out past the yellow house, to where
+# he drew it, x 19.5; it was at x 14, short of the house.)
+A.box(20.5, 30.0, 2.0, 66.0, "void")
+# THE TOWN'S DONKEY (Parker 11-20: "where I drew the circle, put a donkey that kicks you to the left towards the
+# station"): a burro in front of the yellow house's blue door, its rump to the station. Touch it and it bucks,
+# and throws you west and up, back toward the station (the burros' kick, 7.7's: a hold that throws). It faces
+# east, so its solid's head end is east (the a7 burros face west and are mirrored).
+TOWN_BURRO = [(box_pts(0.25, 0.85, 1.8, 0.7), "wood"), (box_pts(-0.45, 0.25, 0.2, 0.5), "wood"), (box_pts(0.45, 0.25, 0.2, 0.5), "wood")]
+A.mover("burro_town", (17.4, 0.0), TOWN_BURRO, {"type": "still"}, hold={"type": "kick", "v": [-8.0, 6.0]}, model="burro")  # (about 10 m back: a free climber falls faster than the 7.7 burros' sums assume)
 
 # ---------------------------------------------------------------- 0.1 El Primer Paso: crates up to the platform
 # The three steps are plain boxes to the body. Their looks are kit models once those land

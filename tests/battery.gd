@@ -4353,6 +4353,51 @@ func _run_peakride() -> void:
 	await pticks(pk, 2)
 
 
+## THE TOWN'S DONKEY AND THE TOWN'S EDGE (Parker 11-20): the burro in front of the yellow house kicks a climber
+## who touches it back west toward the station, and the world's east edge stands out past the house (x 19.5).
+func _run_peakdonkey() -> void:
+	var pk := _peak()
+	var m: Dictionary = pk.things.movers.get("burro_town", {})
+	if m.is_empty():
+		t("peak donkey: the town's burro exists", false)
+		return
+	var c := _peak_climber(pk, 15.8, 1.2)
+	await psec(pk, 0.5)
+	# its rump: put the right hand on it (button up, so it sticks as a hand does)
+	var rump: Vector2 = pk.world_of(Vector2(17.4 - 0.6, 0.9))
+	_free(c)
+	for l in c.limbs:
+		l.regrip = 0.0
+	var kicked := false
+	var v := Vector2.ZERO
+	for i in int(1.5 * Engine.physics_ticks_per_second):
+		_put_hand(c, 1, rump)
+		await pticks(pk, 1)
+		var chest: RigidBody3D = c.bodies["chest"]
+		v = Vector2(chest.linear_velocity.x, chest.linear_velocity.y)
+		if v.x < -3.0 and v.y > 2.0:
+			kicked = true
+			break
+	t("peak donkey: touch the burro and it kicks you west and up, toward the station", kicked, "the chest at (%.1f, %.1f) m/s" % [v.x, v.y])
+	await psec(pk, 3.0)
+	var landed := pk.local_of(c.centre_of_mass())
+	t("peak donkey: the kick lands you back toward the station (west of x 10)", landed.x < 10.0, "at %s" % landed)
+	c.remove()
+	await pticks(pk, 2)
+	# the edge: a climber walked east is stopped short of x 19.5
+	var c2 := _peak_climber(pk, 19.0, 1.2)
+	for b: RigidBody3D in c2.bodies.values():
+		b.linear_velocity = Vector3(4.0, 0.0, 0.0)
+	await psec(pk, 1.5)
+	var east := -INF
+	for b: RigidBody3D in c2.bodies.values():
+		east = maxf(east, pk.local_of(Vector2(b.global_position.x, b.global_position.y)).x)
+	t("peak donkey: the town's east edge holds at x 19.5", east < 19.6, "the climber's east-most piece at x %.2f" % east)
+	c2.remove()
+	pk.leave()
+	await pticks(pk, 2)
+
+
 ## ROPES ARE HELD LIKE LEVERS (Parker 11-19): a hand takes a rope only while its button is held,
 ## and lets go when the button comes up; a free hand (button up) at a rope does not take it.
 func _run_peakrope() -> void:

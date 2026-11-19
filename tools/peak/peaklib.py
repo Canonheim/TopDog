@@ -21,7 +21,7 @@ FLING_SPEED = {"F1": 3.4, "F2": 4.8, "F3": 6.1, "F4": 7.6, "F5": 8.9}  # release
 # ---------------------------------------------------------------- the frame every area fits
 # id: (name, region (x0, y0, x1, y1), entry, exit)
 FRAME = {
-    "a0": ("La Estación", (-212, -34, 12, 10), (6, 0), (-211, -29.6)),  # (note 146: the ride 59 m longer, to the mine's moved door)
+    "a0": ("La Estación", (-212, -34, 24, 10), (6, 0), (-211, -29.6)),  # (x to 24: the town's edge out past the yellow house, Parker 11-20)  # (note 146: the ride 59 m longer, to the mine's moved door)
     "a1": ("La Mina Vieja", (-351, -53, -205, 90), (-211, -29.6), (-232, 90)),  # (note 146: moved 59 m west and 17 m down; La Esclusa above it to y 90)
     "a2": ("Las Aguas Negras", (-462, 86, -226, 176), (-232, 90), (-452, 176)),
     "a3": ("La Gruta de Cristal", (-462, 176, -306, 276), (-452, 178), (-306, 270)),
