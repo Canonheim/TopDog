@@ -402,26 +402,24 @@ def dress(A):
     post(-172.2, WALK_Y, 8.4, -1.5)
     post(-167.8, 5.95, 8.4, -1.5)
     hbeam(-172.5, -167.5, 8.4, -1.5)
-    A.deco("pickaxe", -172.6, WALK_Y, z=-1.4, rot=70.0, size=(0.9, 0.6, 0.2), tone="iron")  # leans on the west post
+    # (The pickaxe that leaned on the west post is out: its bright orange head read as a pickup by the sign, and a
+    # deco's tone does not colour a landed model: the reviewer's q41, 11-19.)
     A.deco("sign_pug_arrow_west", -173.9, WALK_Y, z=-1.35, size=(1.24, 1.66, 0.16), tone="bone")  # along the catwalk
     # (The rails' torn ends at the gaps are mina_iron_ladder_1_2's own now: MINE_PASS row 142, 11-18.)
     # In the west wall's face beside the two upper gaps: the landings' empty sockets.
     for y in (-4.66, -0.45):
         drawn("mine_socket_empty", -172.17, y - 0.45, (0.3, 0.3, 0.02), tone="back3")
-    # Foreground: the shaft's two front posts, each in three broken lengths, in front of rock.
-    for y0, y1 in ((-7.3, -5.4), (-3.9, -1.3), (1.6, 5.4)):
-        front_post(-172.3, y0, y1)
-    for y0, y1 in ((-7.4, -5.0), (-3.4, 1.4), (2.8, 5.4)):
-        front_post(-167.75, y0, y1)
+    # (The shaft's two front posts, each in three broken lengths, are out: the broken posts' honey, close to the camera,
+    # read as sharpened honey stakes at 1.1 and a bright broken post at 1.2 (the reviewer's q41, 11-19); a deco's tone
+    # does not colour a landed model, so they wait on the broken post family in the one scenery timber.)
 
     # ============================================================ 1.3 Los Tablones
     # (The wall is mine_cavern_wall_mid, E2: the portal's ragged cut, the stope at 1.4 with its
     # gallery and cart, the old working under 1.3, the walk's sockets (empty ones with pale
     # scars), the fallen lower walk's sockets and its surviving length, the outcrops grown out
     # of the face, the boarded hole and stull up high, the wet streaks under the walk.)
-    # Ferns on its three outcrops (the reviewer: one a size up, so they show).
-    for x, y, z, k in ((-190.85, 2.55, -2.66, 1.0), (-194.0, 3.0, -2.67, 1.0), (-178.6, 12.15, -2.66, 1.35)):
-        A.deco("mine_fern_pale", x, y, z=z, size=(round(0.6 * k, 2), round(0.5 * k, 2), 0.04), tone="bone")
+    # (The ferns on its three outcrops are out: in the black, fern on outcrop read as a planter hung on the wall, the
+    # reviewer's q41, 11-19. The outcrops are the wall model's own.)
     # The bearers: a square timber out of a socket in the wall under each end of each nailed
     # length, with its strut under it (origin: the middle of the bearer's top; it runs from
     # the wall to the walk's back edge).

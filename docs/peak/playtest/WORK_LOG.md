@@ -3191,6 +3191,22 @@ only be held when you were holding the button ... making rope grabs like levers.
   face, a pug casting, two braces behind the climber's line. Same placement.
 - Frames `docs/peak/quality/mine/frames/q35_*.jpg` sent to the reviewer.
 
+## 11-19: the reviewer's q41 mine course sweep (1.1 .. 1.12), and the gallery floor at the door
+
+- A deco's `tone` colours only its stand-in; a landed model keeps its own colours. So the honey and orange items were
+  dropped or are the makers'.
+- Dropped: the three ferns on mine_cavern_wall_mid's outcrops at 1.3/1.4 (they read as hung planters; the outcrops,
+  the "dishes", are the model's own); the shaft's six broken front-post lengths at 1.1/1.2 (the honey stakes and the
+  bright broken post: the mine_post_broken family's own honey); the pickaxe by 1.3's sign (its orange head); the two
+  red rail lengths on the gallery floor's front edge at the door (the rail model's red, trim at the climber's feet).
+- Not the course's: 1.5's four sawn beam ends at walkway height (no deco or solid there: mine_cavern_wall_mid's walk
+  sockets); 1.1/1.2's honey crinkle-tops in red clamps (mine_end_splintered in mine_iron_strap: both models' own
+  colours); the fern low on 1.11's throat wall (mine_cortina_wall's own) and beside 1.12's ladder (esclusa_wall_flume's
+  card). 1.8's red rings are holds (challenge 1.7's flings): left. 1.3's red ladder below the landing is 1.2's climbed
+  `A.ladder`, already skinned `mina_iron_ladder_1_2`, waiting on its run model.
+- `mina_gallery_floor` (reviewer 8.5) on solid 47 at the door, its deco at (-151.75, -13.1) unshifted, once landed.
+- a1: ZFIGHT 0. Python only: the Director frames it.
+
 ## 11-19: a2's works lanterns on their own wall bracket (`aguas_works_lantern_wall`, MINE_PASS F24)
 
 - Seven of a2's lanterns floated (their 0.55 m arm pointed straight at the camera): a2_dress `lantern()` now hangs the

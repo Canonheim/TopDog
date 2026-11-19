@@ -170,7 +170,11 @@ for x in (-228.5, -219.0, -211.0, -194.5):
 # Grip floor from the door; then the floor falls away into black mud. Over it: three low
 # roof beams, four posts standing in the mud, two more beams. Slip and you are in the pit
 # (grip bottom, 4.3 m down); the two posts that stand in it climb back out.
-A.ledge(-148.0, -155.5, -12.6, "rock", t=0.5)  # (it runs through the door frame to meet A0's floor)
+# THE GALLERY FLOOR AT THE DOOR (quality run, `mina_gallery_floor`, reviewer 8.5, 11-19): the drift floor's stone in place
+# of the fitted kit's pale caps, solid 47's skin once landed. Origin the middle of the solid's foot.
+A.ledge(-148.0, -155.5, -12.6, "rock", t=0.5, **_cope("mina_gallery_floor"))  # (it runs through the door frame to meet A0's floor)
+if _cope("mina_gallery_floor"):
+    A.deco("mina_gallery_floor", -151.75, -13.1, z=0.0, size=(7.5, 0.673, 2.96), tone="rock2", skin=True)
 A.ledge(-165.5, -176.0, -12.6, "rock", t=0.5)
 A.ledge(-160.0, -162.0, -16.9, "rock", t=0.5)  # the pit's bottom
 BEAM_Y = -10.6
@@ -588,8 +592,8 @@ A.deco("papel_tatters", -226.0, 74.6, z=-1.4, scale=0.85, size=(8.0, 1.0, 0.05),
 A.deco("mine_frame", -152.0, -12.6, z=0.0, size=(0.72, 5.465, 3.46), tone="back")  # the door's set
 A.deco("mine_frame_mouth", -176.0, -12.6, z=0.0, size=(0.72, 5.465, 3.46), tone="back")  # the gallery's mouth
 A.deco("mine_frame_drift", -230.0, 72.0, z=0.0, size=(0.73, 4.365, 3.46), tone="back")  # the top drift's mouth (1.11's start)
-for x in (-150.0, -153.6):
-    A.deco("rail_straight", x, -12.7, z=0.0, scale=0.9, size=(4.0, 0.25, 1.2), tone="iron")  # the rails end at the mud
+# (The two rail lengths along the gallery floor's front edge at the door are out: the rail model's red read as trim at
+# the climber's feet, the brightest lines in the lower frame; the ride's rails already end at the buffer: q41, 11-19.)
 A.effect("drips", (-176.0, 6.0, -172.0, 12.0))  # every rest has its unease
 A.effect("drips", (-201.9, 6.0, -197.9, 13.0))
 A.effect("drips", (-199.8, 26.2, -191.9, 32.0))
