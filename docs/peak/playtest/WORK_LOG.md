@@ -3206,6 +3206,10 @@ only be held when you were holding the button ... making rope grabs like levers.
   fall over its lip follows the front). a2's three pool rules: front 1.1 (behind the channel's solid faces at 1.2),
   fade 0.9. The ribbon off the east basin's east end is the first cascade going over its lip (as meant), now at the
   basin's front. Python and GDScript only: the Director frames it, runs the lint and the battery.
+- q36: the brink met; the east basin under the ledge still a lit box. It is darker still and sooner now (a water rule's
+  `dark`, its colours darkened: 0.3; fade 0.4), and the first cascade pours only the top 0.35 m over the basin's lip
+  (a fall's `lip_depth`, as a weir) instead of a ribbon the pool's whole 2 m deep curling off its corner. The ink on
+  the surface's front edge is the outline pass's (a depth edge): the darker basin quiets it.
 
 
 ## 11-18: the lock's roof placed (`esclusa_vault_lock`); a2's bed notched out of it

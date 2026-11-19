@@ -1157,6 +1157,10 @@ func _body_vis(a: Dictionary, zs: Array, root: Node3D) -> Dictionary:
 			front_z = minf(front_z, float(z.front))
 		if z.has("fade"):
 			fade = minf(fade, float(z.fade))
+		if z.has("dark"):
+			# (`dark`: its two colours darkened, so a pool in a lit channel is no brighter than its neighbours: q36)
+			var dk := float(z.dark)
+			cols = [Color((cols[0] as Color).darkened(dk), (cols[0] as Color).a), Color((cols[1] as Color).darkened(dk), (cols[1] as Color).a)]
 	pm.size = Vector2(w, front_z - back)
 	top.mesh = pm
 	top.position = Vector3(mid_x, surface, (front_z + back) * 0.5)
@@ -1345,7 +1349,9 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 		# speeds up, as falling water does (thickness x speed stays the same). So the
 		# pool has no end wall: its end IS the fall.
 		var dir := float(lip.dir)
-		var depth := float(lip.depth)
+		# (`lip_depth`: only the water's top pours over the lip, as over a weir, not the pool's whole depth: a 2 m ribbon
+		# curled off the east basin's corner like a sheet of glass: the reviewer's q36)
+		var depth := minf(float(lip.depth), float(e.get("lip_depth", 1000.0)))
 		v0 = maxf(float(lip.flow), 1.0)
 		var out := clampf(v0 * 0.9, 0.5, maxf(0.5, w - 0.3))  # how far out from the lip it ends up
 		var c0 := Vector2(float(lip.x), float(lip.surface) - depth * 0.5)

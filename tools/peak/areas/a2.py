@@ -209,6 +209,8 @@ A.water((-297.0, 113, -288, CS), CS, flow=(1.0, 0.0), look="pool")         # the
 for _z in A.zones[-3:]:  # (the three pool rules: the front face set back behind the channel's solid faces, and darker with
     _z["front"] = 1.1      # depth over 0.9 m, so the 2 m pool reads as water in its channel, not a glass tank standing
     _z["fade"] = 0.9       # before the ledge: the reviewer's q35, 11-19)
+A.zones[-1]["fade"] = 0.4  # (the east basin, lit under the ledge, darker still and sooner: it read as a lit box, q36)
+A.zones[-1]["dark"] = 0.3
 # (Both pools drawn on over their slick sills to the falls' edge, 11-19: aguas_launch_ledge's maker took out its water
 # tongues, the game draws the water. Each current runs over its sill too, 0.4 m further: nothing stands there.)
 # (The two sills are slick: the pool is meant to make you swim at once, not hang on 0.3 m under the water. THE
@@ -389,7 +391,7 @@ A.effect("waterfall", (-244, 89.4, -238, RIV_S), through=True)  # over the lip, 
 A.effect("waterfall", (-232.6, RS, -230.8, MS), density=0.6)  # the mill channel's drain, into the race (note 22)
 A.effect("waterfall", (-229.0, 90.0, -226.0, RS), density=0.5)  # the race's drain, onto the lip ledge
 A.effect("waterfall", (-320.5, 115.0, -318.6, 116.0))  # the flume spills a metre into the pool (El Charco del Pozo)
-A.effect("waterfall", (-288, RIV_S, -284.5, 115))  # the first cascade
+A.effect("waterfall", (-288, RIV_S, -284.5, 115), lip_depth=0.35)  # the first cascade (its top 0.35 m over the basin's lip, as a weir: q36)
 A.effect("waterfall", (-380.6, 116, -379, 136))  # the spill into the pipe hall
 A.effect("waterfall", (-392, 136, -389.5, 151))  # LA CASCADA CHICA
 A.effect("waterfall", (-430, 152, -425.5, 166), density=0.4)  # the dam's leak
