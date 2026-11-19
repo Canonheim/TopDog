@@ -522,6 +522,73 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ---------------------------------------------------------------- the Peak of DeGayo (the solo climb)
 
+## THE STAR WIPE INTO THE CLIMB (Parker 11-20: "When you press the solo the peak button, I want the screen to
+## star swipe inwards ... then star swipe back out to the peak start, instead of the game just freezing while
+## it loads ... with the little in and out swipe noise"). The menu closes into a shrinking, turning star with
+## its swoosh; once the screen is black the climb is built behind it (the old freeze, now hidden); then the
+## star opens back out on the station with its swoosh back. shaders/star_wipe.gdshader draws it, on a layer
+## over everything; the sounds are tools/make_star_wipe_sfx.py's. (`--peak` and the tests start it directly.)
+const WIPE_IN_S := 0.55
+const WIPE_OUT_S := 0.6
+const WIPE_SPIN := 1.1  # radians the star turns as it closes (and back as it opens)
+var _wipe: ColorRect
+var _wiping := false
+
+
+func start_peak_wiped() -> void:
+	if _wiping:
+		return
+	_wiping = true
+	if _wipe == null:
+		var layer := CanvasLayer.new()
+		layer.layer = 128  # (over the HUD and the dev label's 100)
+		add_child(layer)
+		_wipe = ColorRect.new()
+		_wipe.set_anchors_preset(Control.PRESET_FULL_RECT)
+		_wipe.mouse_filter = Control.MOUSE_FILTER_STOP  # (nothing under it is pressed while it runs)
+		var mat := ShaderMaterial.new()
+		mat.shader = load("res://shaders/star_wipe.gdshader")
+		_wipe.material = mat
+		layer.add_child(_wipe)
+	var vs := get_viewport().get_visible_rect().size
+	var mat2 := _wipe.material as ShaderMaterial
+	mat2.set_shader_parameter("aspect", vs.x / maxf(1.0, vs.y))
+	_wipe_set(1.0)
+	_wipe.visible = true
+	Sound.play("star_wipe_in", -3.0)
+	await _wipe_tween(1.0, 0.0, WIPE_IN_S, Tween.EASE_IN_OUT)
+	# Black: let two frames be drawn so the black is what stays on screen while the climb is built.
+	await get_tree().process_frame
+	await get_tree().process_frame
+	_start_peak()
+	# Open on the climber standing at the station: wait until he is in and settled (the camera snaps to him
+	# then), as the watch scenes do, and past the climb's first hitching frames.
+	for i in 900:
+		await get_tree().process_frame
+		var pk: Peak = game.peak
+		if pk != null and pk.player != null and is_instance_valid(pk.player) and pk.player.live_time > 0.4:
+			break
+	for i in 3:
+		await get_tree().process_frame
+	Sound.play("star_wipe_out", -3.0)
+	await _wipe_tween(0.0, 1.0, WIPE_OUT_S, Tween.EASE_OUT)
+	_wipe.visible = false
+	_wiping = false
+
+
+func _wipe_set(v: float) -> void:
+	var mat := _wipe.material as ShaderMaterial
+	mat.set_shader_parameter("open", v)
+	mat.set_shader_parameter("spin", (1.0 - v) * WIPE_SPIN)
+
+
+func _wipe_tween(from: float, to: float, secs: float, ease_kind: Tween.EaseType) -> void:
+	var tw := create_tween()
+	tw.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	tw.tween_method(_wipe_set, from, to, secs).set_trans(Tween.TRANS_SINE).set_ease(ease_kind)
+	await tw.finished
+
+
 ## SOLO: THE PEAK. Picks the climb up where it was left (the pose is saved), or starts at
 ## the trailhead.
 func _start_peak() -> void:

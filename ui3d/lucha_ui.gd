@@ -1496,7 +1496,7 @@ func _build_menus() -> void:
 	# together as a mode... first lets only focus on the online multiplayer"). Its
 	# screen below stays built for when local play comes back.
 	t.add_button("PLAY ONLINE", func(): main.show_screen("online"))
-	t.add_button("SOLO: THE PEAK", main._start_peak)  # the Peak of DeGayo (Parker 11-11)
+	t.add_button("SOLO: THE PEAK", main.start_peak_wiped)  # the Peak of DeGayo (Parker 11-11), through the star wipe (11-20)
 	t.add_button("PRACTICE", main._open_practice)
 	t.add_button("CUSTOMIZE", func(): main.show_screen("customize"))
 	t.add_button("CONTROLS", func(): main._controls_back = "title"; main.show_screen("controls"))

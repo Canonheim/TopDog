@@ -5,6 +5,8 @@ extends Node
 const RARE_GRAB := "grab_slap_10"
 const SFX := {
 	"donkey": ["donkey_natural_02", "donkey_natural_03"],
+	"star_wipe_in": ["star_wipe_in"],  # the star wipe closing into the climb (tools/make_star_wipe_sfx.py)
+	"star_wipe_out": ["star_wipe_out"],  # and opening on it
 	"knockout": ["knockout_grunt_01", "knockout_oof_01", "knockout_oof_02", "knockout_oof_03", "knockout_oof_04"],
 	"bubble_pop": ["bubble_pop_01", "bubble_pop_02", "bubble_pop_03"],
 	"chair_light": ["big_slam_01", "big_slam_02"],
