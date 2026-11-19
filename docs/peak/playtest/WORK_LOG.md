@@ -3407,3 +3407,13 @@ as a separate curtain with a hard top, so it went.
    two broken legs; the stair's door has a stone lintel and jamb in its notch (the black there is the doorway).
 7. 11.11: the grotto's steam is out (its pale grey balls).
 Lint 259/0, `--peak` 0, ZFIGHT 0. Frames: `cam:11.1:11.3:11.6:11.7:11.8:11.9:11.11`.
+
+## The summit's second look (the reviewer, REVIEW_LOG 8bfa20c4; 11-19)
+1. 11.9: the rope has two camera zones (its foot, and up it), each with a close cap of 10.5 (21 m of view), leaning up:
+   from the rope's foot the bell and its beam are in frame, and from up the rope the beam, the belfry and its beams.
+2. The tower base's masonry is cards in the mountain's dark stone (#4C4954 / #45424C, inked), not pale stone pieces
+   (pale dressed stone is a held edge: the pale wall by the rope read as climbable); the cards run 0.35 m over the
+   base's sides, so its side faces no longer show as pale lines beside the rope.
+3. 11.6: the niches' lamps are low and dim (energy 0.45, range 2.6, behind the plane): at 1.4 the east niche's cut faces
+   lit up into a bright cream 7-shaped block over the library's door.
+Lint 259/0, `--peak` 0, ZFIGHT 0.

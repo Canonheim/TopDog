@@ -255,7 +255,8 @@ NICHES = [(-406.4, LIB[0], GALS[0]), (LIB[2], -377.3, GALS[1]), (-406.4, LIB[0],
 for x0, x1, y in NICHES:
     air_box(x0, y - 0.4, x1, y + 2.4)
     A.ledge(x0, x1, y, "stone", t=0.4)
-    A.light((x0 + x1) / 2, y + 1.6, color="#FFC070", rng=5.0, energy=1.4, z=0.3, flicker=True)
+    A.light((x0 + x1) / 2, y + 0.6, color="#FFB060", rng=2.6, energy=0.45, z=-0.6, flicker=True)  # (dim and low: at 1.4 its
+    # cut faces lit up into a bright cream block over the library's door, the reviewer's second look, 11-19)
     A.deco("cold_lantern", (x0 + x1) / 2, y, z=-0.9, size=(0.3, 0.5, 0.3), tone="gold")
 # THE FALLING BOOKS: a written rhythm over the three gaps, west (A), middle (B), east (C), as the mine's cave-in.
 # Wave one sweeps west to east, wave two east to west, wave three the middle twice and the ends together; a rest of
@@ -388,15 +389,20 @@ A.solid([(TW[0], 1052.0), (TW[1], 1052.0), (TW[1], 1063.5), (TW[0], 1063.5)], "s
 A.solid([(TE[0], 1054.5), (TE[1], 1054.5), (TE[1], 1061.5), (TE[0], 1061.5)], "stone")
 A.ledge(TW[0], TE[1], 1052.0, "wood", t=1.0)  # the belfry's floor
 # The base's masonry, drawn on its face (no climber is ever in front of it): courses in running bond, slit windows.
+# (Cards in the mountain's dark stone, not pale stone pieces: pale dressed stone is a held edge in the house language,
+# and the pale wall by the rope read as climbable, the brightest surface on the summit: the reviewer, 11-19.)
 for _c in range(16):
     _y = 1021.2 + 1.9 * _c
-    _x = TW[0] - (0.0 if _c % 2 == 0 else 1.6)
-    while _x < TE[1] - 0.05:
-        _xa, _xb = max(_x, TW[0]), min(_x + 3.2, TE[1])
+    _x = TW[0] - 0.35 - (0.0 if _c % 2 == 0 else 1.6)
+    _n = 0
+    while _x < TE[1] + 0.3:
+        _xa, _xb = max(_x, TW[0] - 0.35), min(_x + 3.2, TE[1] + 0.35)  # (0.35 m over each side: the base's side faces
+        # showed as thin pale lines beside the rope in perspective, the reviewer's note 4)
         if _xb - _xa > 0.5 and _y + 1.85 <= 1051.0:
-            A.solid([(_xa + 0.04, _y + 0.05), (_xb - 0.04, _y + 0.05), (_xb - 0.04, _y + 1.85), (_xa + 0.04, _y + 1.85)],
-                    "stone", ghost=True, z=(1.2, 1.28))
+            A.card([(_xa + 0.05, _y + 0.06), (_xb - 0.05, _y + 0.06), (_xb - 0.05, _y + 1.84), (_xa + 0.05, _y + 1.84)],
+                   z=1.24, tone="#4C4954" if (_c + _n) % 2 == 0 else "#45424C", edge=True)
         _x += 3.2
+        _n += 1
 for _y in (1027.0, 1036.0, 1045.0):
     A.card(box_pts(-440.0, _y, 0.5, 1.8), z=1.3, tone="#1A1412", edge=False)
 A.ledge(TE[1], -430.6, 1051.7, "wood", t=0.4)  # the beam out to the bell
@@ -437,7 +443,10 @@ A.deco("champion_belt", SPIRE[0], SPIRE[1] + 0.3, z=0.0, size=(1.2, 0.6, 0.2), t
 A.light(ROPE_X, 1049.0, color="#FFE9A8", rng=12.0, energy=1.6)
 A.light(-440.0, 1066.0, color="#FFD98A", rng=12.0, energy=1.4)
 A.light(-440.0, 1056.0, color="#FFC070", rng=8.0, energy=1.0, z=0.6)
-A.cam((-438.0, 1030.0, -426.0, 1051.5), half_h=12.0, bias=(-3.0, 8.0))   # the rope, the bell, the beam and the belfry above
+# (Two zones up the rope, each with a wider close camera, so the way up is in frame from the rope: the reviewer's
+# second look, 11-19, the bell and the beams were still above the frame.)
+A.cam((-438.0, 1030.0, -426.0, 1041.0), half_h=12.0, bias=(-2.5, 9.3), close=10.5)   # the rope's foot: the bell over you
+A.cam((-438.0, 1041.0, -426.0, 1051.5), half_h=12.0, bias=(-4.5, 9.3), close=10.5)   # up it: the bell, the beam, the belfry
 A.cam((-447.0, 1050.0, -429.0, 1072.0), half_h=8.0, bias=(0.0, 1.5))   # the belfry, the roof, the belt
 
 # ================================================================ after the belt: the cable down to the frogs' hot spring
