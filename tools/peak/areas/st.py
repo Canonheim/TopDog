@@ -1,7 +1,8 @@
 """
-ST: the mountain's shared structure. The well (El Pozo), the outer slope below the
-cliffs, El Colmillo's lower half, La Garganta and La Boca, El Tobogan (the slide tube to
-the river), the world's edges, and the mountain's own card.
+ST: the mountain's shared structure. The well (El Pozo), the great falls and their shaft up
+to the glacier, the frogs' slide, the outer slope below the cliffs, El Colmillo's lower half,
+La Garganta and La Boca, El Tobogan (the slide tube to the river), the world's edges, and the
+mountain's own card.
   python tools/peak/areas/st.py
 """
 import math, os, sys
@@ -34,44 +35,126 @@ def tube(centre, width, kind="scree"):
     A.cave(air, kinds, default=kind, thick=3.0)
 
 
-# ---------------------------------------------------------------- the frogs' slide (note 102; the summit v2, note 148)
+# ---------------------------------------------------------------- the frogs' slide (notes 102, 148 and 143)
 # THE SUMMIT v2 (11-19): the hot spring is inside the west shoulder (a11), and its slide leaves through the west
 # face at 1000 m and pours down the west flank. At the flank's foot (x -496 .. -498, y 957) this pipe takes it, and
 # everything else that slides off the west side: its mouth is between the flank's last lip and a tall slick wall
-# 2.6 m west of it, which stops a body thrown west off the flank. It runs east under the summit's mass, joins the
-# old line down the mountain's west side at 944 m, turns east at 887 m through the storm ridge's foot (a10 cuts its
-# mass there) and lets you out on the ridge's first ledge at 886 m (a9's), where the start of 10.1 is.
-# (Part two of the night's job carries it to the great falls instead.)
+# 2.6 m west of it, which stops a body thrown west off the flank. It runs east under the summit's mass to 920 m.
+# NOTE 143 (Parker: "the frog waterslide should connect to the great falls"; part two of 11-19's night): from there it
+# drops straight down the mountain's west side, x -372 (its slabs 5.7 m west of the storm ridge's mass and 26 m west
+# of the glacier's wall: it crosses neither's play space), turns east at 780 m and runs under the glacier's meltwater
+# pool (its roof under the pool's bed, a9's, 780), and pours its rider out of the great falls' shaft's west wall,
+# 12.5 m under the falls' head (FALLS_HEAD): the celebratory drop, all the way down the falls to the Sump.
 FROG_SLIDE = [(-499.3, 957.0), (-499.3, 953.0), (-497.2, 949.4), (-490.0, 946.4), (-385.0, 923.6), (-375.2, 920.2),
-              (-370.0, 914.0), (-367.6, 906.0), (-367.0, 904.0), (-366.2, 896.0), (-365.4, 891.0), (-363.8, 888.2), (-361.0, 887.4), (-345.0, 887.4),
-              (-330.0, 887.4), (-312.6, 887.4)]
+              (-373.0, 917.0), (-372.2, 913.0), (-372.0, 908.0), (-372.0, 850.0), (-372.0, 792.0), (-371.6, 787.0),
+              (-370.4, 782.6), (-368.0, 779.2), (-364.5, 776.9), (-360.0, 775.7), (-345.0, 774.6), (-310.0, 771.5), (-306.02, 771.5)]
+# (Under the pool it falls 5 degrees to the mouth, its last 4 m level: run flat, a limp rider came to rest in the mouth,
+# the probe, 11-19.)
 FROG_W = 2.6
+FROG_MOUTH = (FROG_SLIDE[-1][1] - FROG_W / 2, FROG_SLIDE[-1][1] + FROG_W / 2)  # its mouth in the shaft's west wall
 _n0 = len(A.solids)
 tube(FROG_SLIDE, FROG_W)
+# (its corner filler at the mouth's top corner stood 0.27 m into the shaft's wall, two faces in one place: out)
+A.solids[_n0:] = [_s for _s in A.solids[_n0:] if min(p[0] for p in _s["pts"]) < -306.05]
 A.solid([(-503.6, 957.02), (-500.6, 957.02), (-500.6, 1003.0), (-503.6, 1003.0)], "wet")  # the catch wall west of the mouth
-# (Its slabs through the storm ridge's foot lie inside the ridge's mass, their fronts on the mass's front:
-# they wear the mass's skin, which is made with the tunnel in it. a10_dress 7b.)
+
+
+def _tube_air(centre, width):
+    """The outline of a tube's air (as tube() lays it)."""
+    left, right = [], []
+    n = len(centre)
+    for i, p in enumerate(centre):
+        a, b = centre[max(0, i - 1)], centre[min(n - 1, i + 1)]
+        L = math.hypot(b[0] - a[0], b[1] - a[1])
+        nx, ny = -(b[1] - a[1]) / L, (b[0] - a[0]) / L
+        left.append((round(p[0] + nx * width / 2, 3), round(p[1] + ny * width / 2, 3)))
+        right.append((round(p[0] - nx * width / 2, 3), round(p[1] - ny * width / 2, 3)))
+    return left + right[::-1]
+
+
+# Its inside is dark (the tube's own back, 3 m behind the climb: the snow cap's white card stood behind its air).
+A.card(_tube_air(FROG_SLIDE[3:], FROG_W + 0.4), z=-3.0, tone="#120F17", edge=False)
+# THE OLD WAY OUT, FROZEN SHUT (note 143): the slide's old last leg, east through the storm ridge's foot (y 886.1 ..
+# 888.7) onto the ridge's first ledge, is kept as it was where it lies inside the ridge's mass (a10 cuts its mass for it,
+# and the mass's skin is made with the tunnel in it: a10_dress 7b; its slabs wear that skin), and a plug of black ice
+# fills it 2.6 m in from its mouth. Nothing comes out of it any more, and nobody gets into it.
+_OLD_LINE = [(-375.2, 920.2), (-370.0, 914.0), (-367.6, 906.0), (-367.0, 904.0), (-366.2, 896.0), (-365.4, 891.0),
+             (-363.8, 888.2), (-361.0, 887.4), (-345.0, 887.4), (-330.0, 887.4), (-312.6, 887.4)]
+_n0 = len(A.solids)
+tube(_OLD_LINE, FROG_W)
+A.solids[_n0:] = [_s for _s in A.solids[_n0:]
+                  if min(p[0] for p in _s["pts"]) >= -361.5 and max(p[1] for p in _s["pts"]) <= 892.0]
 for _s in A.solids[_n0:]:
-    if min(p[0] for p in _s["pts"]) >= -361.5 and max(p[1] for p in _s["pts"]) <= 892.0:
-        _s["skin"] = "tormenta_ridge_mass"
+    _s["skin"] = "tormenta_ridge_mass"
+A.solid([(-318.0, 886.22), (-315.2, 886.22), (-315.2, 888.68), (-318.0, 888.68)], "blackice")  # the plug
 # ("the celebratory drop all the way down": a ride, not a fall, wherever it lands)
 A.ride((-505.0, 905.0, -360.0, 1004.0))  # down the summit's west flank and under it (12 degrees: the drop probe, 11-19)
-A.ride((-381.0, 886.0, -360.0, 964.0))  # down the mountain's west side
-A.ride((-366.5, 885.5, -313.0, 890.0))  # east through the storm ridge's foot
+A.ride((-381.0, 771.0, -360.0, 964.0))  # down the mountain's west side, behind the storm ridge and the glacier
+A.ride((-372.0, 769.0, -303.0, 779.8))  # east under the glacier's pool, into the falls' shaft
 
-# ---------------------------------------------------------------- THE GREAT FALLS (notes 142 and 146)
+# ---------------------------------------------------------------- THE GREAT FALLS (notes 142, 146 and 147)
 # "The well (El Pozo del Diablo): a waterfall all the way from its top down to the black waters at the bottom" (note
-# 142): one 6 m column, x -303 .. -297 (middle -300, the well's), out of the rock under the well's cap at 494 m, down the
-# well, through the black waters, La Esclusa and the mine to the Sump. Drawn here, by the always-on area, so it shows
-# from every area it passes, to its foot in the Sump (its surface -45, a1's water). `late`: the game builds it after
-# every area, so it finds the Sump's water at its foot and churns it (st is built first).
+# 142): one 6 m column, x -303 .. -297 (middle -300, the well's), down the well, through the black waters, La Esclusa
+# and the mine to the Sump. NOTE 147 ("the great falls start at the glacier"; 11-19): its head is the glacier's
+# meltwater pool (a9), which pours over its lip at x -303 into the column at 784 m; from there a shaft of its own,
+# 6 m wide, carries it 286 m down through the mountain, west of the forge, the cliffs and the cableway, and through the
+# well's cap at 494 m into the well. Drawn here, by the always-on area, so it shows from every area it passes, to its
+# foot in the Sump (its surface -45, a1's water). `late`: the game builds it after every area, so it finds the Sump's
+# water at its foot and churns it (st is built first).
 FALLS_X = (-303.0, -297.0)
-FALLS_TOP = 494.0
+FALLS_HEAD = 784.0   # the meltwater pool's surface (a9.py POOL_S): the falls' head
 FALLS_FOOT = -45.0   # the Sump's surface
-A.effect("waterfall", (FALLS_X[0], FALLS_FOOT, FALLS_X[1], FALLS_TOP), x=sum(FALLS_X) / 2, head=0.0, width=6.0, z=-0.6, late=True)
+A.effect("waterfall", (FALLS_X[0], FALLS_FOOT, FALLS_X[1], FALLS_HEAD), x=sum(FALLS_X) / 2, head=0.7, width=6.0, z=-0.6, late=True)
 # A FALL DOWN THE COLUMN IS A RIDE (the Second Director, 11-19, on note 147's "ride down the falls"): whoever drops into
-# it rides it to the bottom: no card, no fall counted, no cry. (So a miss at the well's crossings is a ride too.)
-A.ride((FALLS_X[0], FALLS_FOOT, FALLS_X[1], FALLS_TOP))
+# it rides it to the bottom: no card, no fall counted, no cry. (So a miss at the well's crossings is a ride too, and so
+# is a slip off La Pasarela Helada, or being carried over the pool's lip.) To 1.4 m over the head: under the bridge's
+# boards (785.7), so whoever lands on the bridge has not passed through it.
+A.ride((FALLS_X[0], FALLS_FOOT, FALLS_X[1], FALLS_HEAD + 1.4))
+# AND IT PASSES THE CENSERS (a5's 5.11 swings them across the column under the well's cap): a rider coming down the
+# shaft fast goes through them (peak_zones `through`; one in three lay on a bowl, the probes of 11-19). Slow bodies,
+# 5.11's own climbers, meet them as ever.
+A.zones.append({"type": "ride", "rect": [-303.5, 477.0, -296.5, 497.5], "through": ["sacrifice1", "sacrifice2"]})
+
+# ---------------------------------------------------------------- THE FALLS' SHAFT (note 147)
+# From the well's cap (498) up to the glacier's bed (780, a9's from there): two slick walls, each 3 m thick, the
+# column's own width apart; the frogs' slide comes in through the west wall. Nothing in it grips, so nobody climbs it
+# from the well. Behind it the well's black slot, and the shaft's dark rock either side of its walls, where the
+# mountain's flat card stood (it showed between the areas, grey: the reviewer on the well's frames, 11-19).
+SHAFT_TOP = 780.0
+for (x0, x1), spans in (((-306.0, -303.0), [(498.0, FROG_MOUTH[0]), (FROG_MOUTH[1], SHAFT_TOP)]),
+                        ((-297.0, -294.0), [(498.0, SHAFT_TOP)])):
+    for y0, y1 in spans:
+        A.solid([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], "wet")
+# (its back at z -1.21, just behind the play space: from 690 up the cableway's face body, a8_dress's, stands at z -1.25
+# behind the shaft and showed through the falls, tan)
+A.card([(-306.0, 499.5), (-294.0, 499.5), (-294.0, 781.1), (-306.0, 781.1)], z=-1.21, tone="#0B0A10", edge=False)
+
+
+def _dark_rock(x0, y0, x1, y1, seed):
+    """The well's and the shaft's dark rock, painted: a dark card with long wavy bands across it, a step lighter and a
+    step darker by turns (in place of the mountain's flat card where no area stands beside the well)."""
+    import random as _r
+    rr = _r.Random(seed)
+    A.card([(x0, y0), (x1, y0), (x1, y1), (x0, y1)], z=-6.6, tone="#1C1823", edge=False)
+    y, k = y0 + rr.uniform(1.0, 3.0), 0
+    while y < y1 - 1.5:
+        h = rr.uniform(0.5, 1.2)
+        tilt = rr.uniform(-1.2, 1.2) / (x1 - x0)  # (at most 1.2 m of fall across the card)
+        n = max(2, int((x1 - x0) / 6.0))
+        xs = [x0 + (x1 - x0) * i / n for i in range(n + 1)]
+        bot = [(x, max(y0, y + tilt * (x - x0) + rr.uniform(-0.15, 0.15))) for x in xs]
+        top = [(x, min(y1, y + h + tilt * (x - x0) + rr.uniform(-0.15, 0.15))) for x in xs[::-1]]
+        A.card([(round(a, 3), round(b, 3)) for a, b in bot + top], z=-6.55,
+               tone=("#262030" if k % 2 == 0 else "#15121A"), edge=False)
+        y, k = y + h + rr.uniform(2.5, 6.0), k + 1
+
+
+_dark_rock(-345.0, 498.0, -306.0, SHAFT_TOP, 21)    # west of the shaft
+_dark_rock(-294.0, 544.5, -280.3, 701.5, 22)        # east of it, over the forge's roof, to the mountain card's open edge
+_dark_rock(-294.0, 702.0, -282.0, SHAFT_TOP, 26)    # and on up beside the cableway (its face body stands in front)
+_dark_rock(-380.0, 284.5, -311.0, 361.5, 23)        # beside the well: west, between the crystal cave and the temple
+_dark_rock(-289.0, 188.5, -232.0, 257.5, 24)        # east, between the black waters and the garden
+_dark_rock(-289.0, 384.5, -238.0, 469.5, 25)        # east, between the garden and the forge
 
 # ---------------------------------------------------------------- El Pozo del Diablo
 # Its walls where no area stands beside it, with the six doors left open.
@@ -93,7 +176,24 @@ for x0, x1, spans in (
         if (x0, y0) == (-294.0, 488):
             continue
         A.solid([(x0, y0), (xe, y0), (xe, y1), (x0, y1)], "wet")
-A.solid([(-310, 494), (-291, 494), (-291, 498), (-310, 498)], "wet")  # the cap over the well room (to the forge's wall line, x -291)
+# The cap over the well room (to the forge's wall line, x -291), open for the falls' shaft (note 147) through a THROAT,
+# x -299.8 .. -297.8, 10 m deep (494 .. 504), with a slick chamfer down to it from each of the shaft's walls. A body
+# sliding down a wall is turned into it, meets one of its sides and leaves it falling straight down, its middle at
+# x -299.5 .. -298.1: the well's one clear band (the temple's banner beam reaches x -300.9 at 380, the garden's root
+# ledge x -296.5 at 279), between the censers' pivots (a5's 5.11, under the cap at x -303 and -297.1). (The probes of
+# 11-19: down the east wall a rider landed on censer 2's chain; turned in by a short chamfer he went on west across the
+# well and lay on the banner beam; leaving along the shaft's east wall he drifted onto the root ledge.)
+A.solid([(-310, 494), (-299.8, 494), (-299.8, 498), (-310, 498)], "wet")
+A.solid([(-297.8, 494), (-291, 494), (-291, 498), (-297.8, 498)], "wet")
+A.solid([(-303.0, 498.0), (-299.8, 498.0), (-299.8, 504.0), (-303.0, 504.0)], "wet")  # the throat's sides
+A.solid([(-297.8, 498.0), (-297.0, 498.0), (-297.0, 504.0), (-297.8, 504.0)], "wet")
+A.solid([(-303.0, 504.0), (-299.8, 504.0), (-303.0, 510.0)], "wet")  # the chamfers
+A.solid([(-297.8, 504.0), (-297.0, 504.0), (-297.0, 506.0)], "wet")
+# AND IT LEAVES STRAIGHT: whoever reaches the throat's last 3 m leaves it at its foot, in the middle of the clear band,
+# falling straight down at 16 m/s, with a burst of spray (peak_zones' pipe, as the flume's whirlpool takes a body; here
+# it moves him 4.4 m at most). Bodies bounce in a slick throat: one went in at the east side and left it moving west
+# onto the banner beam (the watch, 11-19).
+A.zones.append({"type": "pipe", "rect": [-299.8, 494.0, -297.8, 497.0], "to": [-298.8, 492.6], "vel": [0.0, -16.0]})
 A.card([(-312, 170), (-288, 170), (-288, 500), (-312, 500)], z=-5.0, tone="#0B0A10")
 # THE WELL'S DARK IS MEANT, AND LOOKS IT (Parker 11-12, of flat black beside the garden's
 # great cap: "another one of those weird black spots"). The well had one flat near-black

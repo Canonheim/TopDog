@@ -270,8 +270,10 @@ func tick(delta: float) -> void:
 	_tick_puffs()
 	_tick_locks()
 	if c == null or c.state != Climber.State.LIVE:
+		_clear_through()
 		return
 	_tick_pipes(c)
+	_tick_ride_through(c)
 	_tick_water(c, delta)
 	_tick_wind(c)
 	_tick_geysers(c)
@@ -510,6 +512,45 @@ func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 		root.add_child(fl)
 		n.set_meta("float", fl)
 	return n
+
+
+## A FAST RIDE PASSES THROUGH (note 147): the great falls' riders come down their shaft into the well's top at 15 to
+## 25 m/s, where 5.11's two censers swing across the column; one rider in three landed on a bowl and lay there (the
+## drop probes, 11-19). A ride zone may name movers (`through`): a climber falling faster than THROUGH_V into it
+## passes through them for as long as he is in it. A slower one (5.11's own climbers, a miss off a censer) meets
+## them as ever.
+const THROUGH_V := 8.0
+var _through: Array = []  # [climber body, mover node] pairs that do not collide now
+
+
+func _tick_ride_through(c: Climber) -> void:
+	var com := peak.local_of(c.centre_of_mass())
+	var nodes: Array = []
+	for row in rides:
+		var z: Dictionary = row.def
+		if not z.has("through") or not Peak.rect_has(z.rect, com):
+			continue
+		for id in z.through:
+			var m = peak.things.movers.get(str(id))
+			if m != null:
+				nodes.append_array((m as Dictionary).nodes)
+	if nodes.is_empty():
+		_clear_through()
+		return
+	if not _through.is_empty() or c.velocity().y > -THROUGH_V:
+		return  # (passing already, or too slow to start)
+	for b: RigidBody3D in c.bodies.values():
+		for n in nodes:
+			if n is PhysicsBody3D and is_instance_valid(n):
+				b.add_collision_exception_with(n)
+				_through.append([b, n])
+
+
+func _clear_through() -> void:
+	for pair: Array in _through:
+		if is_instance_valid(pair[0]) and is_instance_valid(pair[1]):
+			(pair[0] as PhysicsBody3D).remove_collision_exception_with(pair[1])
+	_through.clear()
 
 
 ## A WHIRLPOOL AND ITS PIPE (note 146; Parker 11-14: "Put a little whirl pool that goes to a pipe. If you get
