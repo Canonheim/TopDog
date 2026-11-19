@@ -183,8 +183,13 @@ if _cope("mina_gallery_floor"):
 A.ledge(-165.5, -176.0, -12.6, "rock", t=0.5)
 A.ledge(-160.0, -162.0, -16.9, "rock", t=0.5)  # the pit's bottom
 BEAM_Y = -10.6
-for x in (-155.4, -156.7, -158.0, -164.6, -165.9):
-    A.box(x, BEAM_Y, 0.36, 0.36, "wood")  # roof beams, seen end-on, hung low on posts from the roof
+# THE PEGS (quality run, MINE_PASS row 22 / C4, reviewer 8.5, 11-19): each a broken cap end-on in held honey, hung by a
+# dark-iron strap up its scenery post into the roof timber, in place of the drawn crinkle-top in its red clamp. One model;
+# pegs 2 and 4 flipped so the break changes corner (the same hold, a varied break).
+for k, x in enumerate((-155.4, -156.7, -158.0, -164.6, -165.9)):
+    A.box(x, BEAM_Y, 0.36, 0.36, "wood", **_cope("mina_gallery_beam_end"))  # roof beams, seen end-on, hung low on posts from the roof
+    if _cope("mina_gallery_beam_end"):
+        A.deco("mina_gallery_beam_end", x, BEAM_Y, z=0.0, flip=k in (1, 3), size=(0.394, 3.085, 2.797), tone="wood", skin=True)
 POSTS = [(-158.9, -16.6, -12.0), (-160.3, -17.3, -12.2), (-161.9, -17.3, -12.0), (-163.5, -16.0, -12.2)]
 for x, yb, yt in POSTS:
     A.box(x, (yb + yt) / 2, 0.45, yt - yb, "wood")

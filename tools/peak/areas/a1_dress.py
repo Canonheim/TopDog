@@ -89,6 +89,7 @@ FOR THE AREA FILE (tools/peak/areas/a1.py; the fix thread's):
      they are still decos; give each a mover to make them turn.
 """
 import math
+import sweeps as _sw  # (model_bounds: what has landed in kit/models)
 
 # ------------------------------------------------------------------ the lines things stand on
 XF = -201.9            # El Diente's east face (the lift, the banded wall)
@@ -322,18 +323,23 @@ def dress(A):
     # and the winch's cut (1.1b).
     A.deco("mine_lining_gallery", -164.0, GAL_Y, z=-1.65, size=(24.0, 5.32, 1.59), tone="back")  # (quality run E5, 8.5 PASS: the tally marks, the winch's cut and the rack's bay are in it)
     PZ = -1.45  # the back posts and the long timbers, between the lining and the play space
-    for x in (-155.4, -165.9):  # (the door's own post is mine_frame's back post, 11-18)
-        post(x, GAL_Y, -7.85, PZ)  # full height
-    for x in (-156.7, -158.0, -164.6):
-        A.deco("mine_post_broken", x, -10.42, z=PZ, scale=0.988, size=(0.3, 2.6, 0.3), tone="back")  # upper halves: each beam hangs from one
+    # (The pegs' posts and straps are mina_gallery_beam_end's own once it lands, C4, 11-19: the brink posts, the three
+    # broken upper halves, the straps and the drawn torn ends go then.)
+    _beams = _sw.model_bounds("mina_gallery_beam_end") is not None
+    if not _beams:
+        for x in (-155.4, -165.9):  # (the door's own post is mine_frame's back post, 11-18)
+            post(x, GAL_Y, -7.85, PZ)  # full height
+        for x in (-156.7, -158.0, -164.6):
+            A.deco("mine_post_broken", x, -10.42, z=PZ, scale=0.988, size=(0.3, 2.6, 0.3), tone="back")  # upper halves: each beam hangs from one
     for x in (-159.3, -163.2):
         post(x, -8.7, -7.85, PZ)  # the two stubs left of the four sets that went down
     for k in range(6):
         hbeam(-176.0 + 4.0 * k, -172.0 + 4.0 * k, -7.85, PZ)  # the roof timber, door to mouth
-    hbeam(-158.2, -152.0, -10.78, PZ)  # the tie timber at the height of the beams you hold
-    hbeam(-166.6, -164.4, -10.78, PZ)
-    for x in (-155.4, -156.7, -158.0, -164.6, -165.9):
-        A.deco("mine_iron_strap", x, -10.75, z=-1.28, size=(0.4, 0.3, 0.05), tone="iron")  # where each beam is let into its post
+    hbeam(-158.2, -152.0, -10.78, PZ - 0.03)  # the tie timber at the height of the beams you hold
+    hbeam(-166.6, -164.4, -10.78, PZ - 0.03)  # (3 cm back: the pegs' straps share the old front plane, z -1.26, 11-19)
+    if not _beams:
+        for x in (-155.4, -156.7, -158.0, -164.6, -165.9):
+            A.deco("mine_iron_strap", x, -10.75, z=-1.28, size=(0.4, 0.3, 0.05), tone="iron")  # where each beam is let into its post
     mushrooms(-152.0, -12.25, -1.25)
     # The slump: a tongue of black mud out of the burst wall, the cart half sunk in it, and the
     # rails' ends bent down over both brinks.
@@ -352,8 +358,9 @@ def dress(A):
         hang(x - 0.03, -8.27, -1.42)
     # Drawn on the course's faces: each beam's torn end (end-on), each sunk post's cut tongue
     # and its mud up to a tide line.
-    for x in (-155.4, -156.7, -158.0, -164.6, -165.9):
-        drawn("mine_end_splintered", x, -10.78, (0.36, 0.36, 0.02), tone="wood")
+    if not _beams:
+        for x in (-155.4, -156.7, -158.0, -164.6, -165.9):
+            drawn("mine_end_splintered", x, -10.78, (0.36, 0.36, 0.02), tone="wood")
     for x, yb, yt in ((-158.9, -16.6, -12.0), (-160.3, -17.3, -12.2), (-161.9, -17.3, -12.0), (-163.5, -16.0, -12.2)):
         drawn("mine_post_tongue", x, yt - 0.15, (0.45, 0.15, 0.02), tone="wood")
         drawn("mine_mud_tideline", x, yb, (0.45, 1.5, 0.02), tone="slick")
