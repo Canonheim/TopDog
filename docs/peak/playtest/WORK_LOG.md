@@ -3141,6 +3141,16 @@ in. Nothing played by a person.
 - Frames: `after/q32_flap_matte_before_after.jpg` (watch scene `gate13`: the lock's camera shut, mid-fill and open;
   before | after). **Checks:** lint; `--peak`. Clean.
 
+## 11-19: THE LAUNCH LEDGE placed (`aguas_launch_ledge`, MINE_PASS F16)
+
+- a2's four solids wear it once the model has landed (a2.py `_cope`, as a1's): 36 (the west pool's sill), 37 (the
+  east basin's sill), 38 and 39 (Q6's body and grip: Q6 written out in slab()'s order so the indices hold, the stone
+  grip skinned too); its deco at (-290.5, 117.4). The maker took out its water tongues: both pools are drawn on over
+  their slick sills to the falls' edge (the west pool's quick rule to x -303.0, the east basin from -297.0), the
+  surface at 115.0; each current runs over its sill too, 0.4 m further (nothing stands there).
+- a2: ZFIGHT 0; SKIN 16 -> 17 (the model reaches 0.5 m under the sills, its foot in the water: as made). Python only;
+  the Director runs the import, the battery and the frames.
+
 ## 11-18: the lock's roof placed (`esclusa_vault_lock`); a2's bed notched out of it
 
 - a1 solid 214 (the lock's roof over the quay, x -252 .. -244 at 86 .. 89.4) wears `esclusa_vault_lock`, its deco at

@@ -40,6 +40,12 @@ def cap(x0, x1, y, kind="stone", t=0.5):
     A.ledge(x0, x1, y, kind, t=t)
 
 
+def _cope(model):
+    """A skin once its model has landed (as a1.py's): {"skin": model}, or {} till then."""
+    import sweeps
+    return {"skin": model} if sweeps.model_bounds(model) is not None else {}
+
+
 def slab(x0, x1, y, kind="stone", t=0.7, skin=None):
     """A hanging platform: a slick body with a grip top (a pale stone coping, like every
     place you stand in the works). Water runs under it. skin: the body's painted piece."""
@@ -198,15 +204,22 @@ A.opening(-306, 175, -294, 181)
 FALLS = (-303.0, -297.0)
 airbox(FALLS[0], 83.0, FALLS[1], 113.2)  # the falls' shaft through the floor (the rock there is cut on purpose)
 A.water((-320.5, 113, -306.0, CS), CS, flow=(1.0, 0.0), look="pool")       # the west pool, running east
-A.water((-306.0, 113, -303.4, CS), CS, flow=(1.6, 0.0), look="pool")       # quicker at the sill (FIRST GUESS)
-A.water((-296.6, 113, -288, CS), CS, flow=(1.0, 0.0), look="pool")         # the east basin, on to the old cascade
+A.water((-306.0, 113, -303.0, CS), CS, flow=(1.6, 0.0), look="pool")       # quicker at the sill (FIRST GUESS), on over it to the falls
+A.water((-297.0, 113, -288, CS), CS, flow=(1.0, 0.0), look="pool")         # the east basin, on to the old cascade; from the falls, over its sill
+# (Both pools drawn on over their slick sills to the falls' edge, 11-19: aguas_launch_ledge's maker took out its water
+# tongues, the game draws the water. Each current runs over its sill too, 0.4 m further: nothing stands there.)
 # (The two sills are slick: the pool is meant to make you swim at once, not hang on 0.3 m under the water. THE
 # DIRECTOR'S CALL, 11-15, for Parker to reverse if he wants a last catch there.)
-A.solid([(-303.4, 113.0), (-303.0, 113.0), (-303.0, CS - 0.3), (-303.4, CS - 0.3)], "wet")  # the pool's lip sill, on the falls
-A.solid([(-297.0, 113.0), (-296.6, 113.0), (-296.6, CS - 0.3), (-297.0, CS - 0.3)], "wet")  # the east basin's sill
+A.solid([(-303.4, 113.0), (-303.0, 113.0), (-303.0, CS - 0.3), (-303.4, CS - 0.3)], "wet", **_cope("aguas_launch_ledge"))  # the pool's lip sill, on the falls
+A.solid([(-297.0, 113.0), (-296.6, 113.0), (-296.6, CS - 0.3), (-297.0, CS - 0.3)], "wet", **_cope("aguas_launch_ledge"))  # the east basin's sill
 # Q6, carried 6 m west to the falls' edge on more iron beams: its west end THE LAUNCH LEDGE, flush with the
 # falls (so the throw stays inside F2). Plain until its re-made skin: the old one was 7 m.
-slab(-297.0, -284, 117.4)  # Q6, over the cascade's lip and the east basin
+# (Q6 written out as slab() lays it, body then grip, so the solids' order holds; both wear THE LAUNCH LEDGE's model,
+# `aguas_launch_ledge` (MINE_PASS F16, reviewer 8.5, 11-19), with the two sills, once it has landed.)
+A.solid([(-297.0, 116.7), (-284.0, 116.7), (-284.0, 117.2), (-297.0, 117.2)], "wet", **_cope("aguas_launch_ledge"))  # Q6's body
+A.ledge(-297.0, -284.0, 117.4, "stone", t=0.3, **_cope("aguas_launch_ledge"))  # Q6, over the cascade's lip and the east basin
+if _cope("aguas_launch_ledge"):
+    A.deco("aguas_launch_ledge", -290.5, 117.4, z=0.0, size=(19.4, 4.9, 7.06), tone="stone", skin=True)
 slab(-320.5, -314, 117.2, t=0.7, skin="aguas_charco_landing_west")  # Q7, the west bank (as today)
 for _y in (115.45, 116.25):  # Q7's two rungs up out of the pool (the swim's end)
     A.solid([(-314.45, _y - 0.07), (-313.95, _y - 0.07), (-313.95, _y + 0.07), (-314.45, _y + 0.07)], "iron")
