@@ -1,5 +1,7 @@
 extends Control
 ## The wardrobe shares the ring, lighting, atlas and Menu3D controls.
+const MAX_CLIMBERS := 10
+
 var main: Node
 var menu: Menu3D
 var stage: Node3D
@@ -104,7 +106,7 @@ func _replay_effect(_index: int) -> void:
 	main.lucha.play_lock_effect(effect)
 
 func _add_climber() -> void:
-	if Wardrobe.profiles.size() >= 100:
+	if Wardrobe.profiles.size() >= MAX_CLIMBERS:
 		return
 	Wardrobe.profiles.append(Wardrobe.clean({}))
 	Wardrobe.selected = Wardrobe.profiles.size()-1
@@ -156,7 +158,7 @@ func _refresh(direction := 0) -> void:
 	menu.items[4].index = Wardrobe.EFFECTS.find(p.effect)
 	for i in 5:
 		menu._relabel(i)
-	menu.set_label(5, "NEW CLIMBER" if Wardrobe.profiles.size() < 100 else "CLIMBER LIMIT REACHED")
+	menu.set_label(5, "NEW CLIMBER" if Wardrobe.profiles.size() < MAX_CLIMBERS else "10 CLIMBER LIMIT")
 	menu.refresh()
 	if status != null:
 		status.free()

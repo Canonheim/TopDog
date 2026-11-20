@@ -15,10 +15,10 @@ func _ready() -> void:
 	var mesh_ids := {}
 	for sample in 3:
 		var root: Node3D = FX.burst(camera)
-		assert(root.get_child_count() == 90)
+		assert(root.get_child_count() == 81)
 		var quotas := [{},{},{}]
 		var sizes := [{},{},{}]
-		var families := [0,0,0]
+		var families := [0,0,0,0]
 		
 		for piece in root.get_children():
 			var region: int = piece.get_meta("coverage_region")
@@ -30,19 +30,21 @@ func _ready() -> void:
 			for visual in piece.find_children("*","MeshInstance3D",true,false):
 				assert(visual.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF)
 				mesh_ids[visual.mesh.get_instance_id()] = true
-		assert(families == [18,36,36])
-		assert(quotas[0] == quotas[1] and quotas[1] == quotas[2])
-		assert(quotas[0].size() == 12 and quotas[0][10] == 3 and quotas[0][11] == 3)
-		assert(sizes[0] == sizes[1] and sizes[1] == sizes[2])
-		assert(sizes[0].values().all(func(n): return n == 10))
+		assert(families == [9,27,27,18])
+		for region in quotas:
+			assert(region.values().reduce(func(a,b): return a+b,0)==27)
+			assert(region.get(12,0)+region.get(13,0)==6)
+		assert(quotas[0].get(10,0)+quotas[0].get(11,0)+quotas[0].get(8,0)+quotas[0].get(9,0)==9)
+		assert(sizes.size()==3)
+		assert(sizes[0].values().reduce(func(a,b): return a+b,0)==27)
 		var signature := str(root.get_meta("burst_profile"))
 		assert(not signatures.has(signature))
 		signatures[signature] = true
-	assert(mesh_ids.size() == 12)
+	assert(mesh_ids.size() == 14)
 	assert(camera.get_child_count() == 3)
 	await get_tree().create_timer(3.5).timeout
 	assert(camera.get_child_count() == 0)
-	print("ONIONS PASS: 90 pieces, 18 bulbs / 36 slices / 36 dice, 12 reused meshes, balanced variant/size quotas, 3 overlapping bursts and cleanup")
+	print("ONIONS PASS: 81 pieces, 9 bulbs / 18 halves / 27 slices / 27 dice, 14 reused meshes, bounded quotas, 3 overlapping bursts and cleanup")
 	camera.queue_free()
 	var main = load("res://game/main.tscn").instantiate()
 	add_child(main)
@@ -136,7 +138,7 @@ func gallery() -> void:
 	camera.size = 2.45
 	camera.current = true
 	CelPass.add_outline_pass(world)
-	for variant in 12:
+	for variant in 14:
 		var model: Node3D = load("res://kit/models/onion_"+str(variant)+".glb").instantiate()
 		world.add_child(model)
 		CelPass.celify(model)
@@ -144,7 +146,7 @@ func gallery() -> void:
 		model.rotation = Vector3(.14,-.45,-.05)
 		model.scale = Vector3.ONE*1.0
 		var label := Label3D.new()
-		label.text = ["BULB","SLICE","DICE"][variant/4]+" "+str(variant+1)
+		label.text = ["BULB","SLICE","DICE","HALF"][variant/4]+" "+str(variant+1)
 		label.font_size = 28
 		label.pixel_size = .002
 		label.position = model.position+Vector3(0,-.37,0)

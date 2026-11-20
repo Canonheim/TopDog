@@ -173,3 +173,8 @@ Four Strawberry Fields fruit meshes replaced; six variants/36 pieces unchanged. 
 
 
 Banana Bonanza approved model revision (2026-11-18): whole, peeled and slice replaced; enclosed lower peel sleeve and three attached broad folded strips. Original36-piece quota and emitter unchanged. Imported48,204 burst triangles, triangle limit50,615; cached arrays 716592bytes, limit752422bytes. Cold/prepared audits and saved selection/network/actual-match dispatch passed. Source-only install; no export/version change.
+
+
+### Approved Food and Onions revision (2026-11-19)
+
+Installed ten revised non-elote Food meshes, including the open husk-wrapped tamale; elote remains byte-identical. Food retains90pieces/11cachedmeshes/one shared atlas material. Added two onion half meshes with concentric cut faces; Onions now81pieces (9whole,18halves,27crescents,27dice),14cachedmeshes. Whole bulbs reduced by50percent from the reviewed18; omitted slots still consume their original random samples to preserve other trajectories. Food/Onions scoped preparation, triangle, mesh-array and node budgets updated from measured costs. Four fresh cold/prepared audits passed; actual match freeze dispatch validated90/81pieces and catalog IDs. Prepared maximum CPU3.369ms Food/2.222ms Onions; CPU figures do not measure GPU cost. No export or version change. Review/installation records: C:/Users/growi/Documents/ChatGPT/Top Dog/effect-reviews/tamale-onion-revision/handoff.json.

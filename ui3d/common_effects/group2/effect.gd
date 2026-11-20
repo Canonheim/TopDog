@@ -37,9 +37,9 @@ static func burst(camera: Camera3D,id: String) -> Node3D:
 	root.name=id+"_review_burst"
 	root.set_meta("burst_profile",[rng.randi(),rng.randf_range(-.18,.18),rng.randf_range(.92,1.08)])
 	camera.add_child(root)
-	Launch.align(root, .4 if id in ["nuts_acorns","tea_time","coffee_break","ice_cream_social"] else -.525)
+	Launch.align(root, .4 if id in ["nuts_acorns","tea_time","coffee_break","ice_cream_social","strawberry_fields","citrus_splash","banana_bonanza","pineapple_express","mushroom_mix"] else -.525)
 	var gentle := id in ["tea_time","coffee_break"]
-	var compact_toss := gentle or id in ["nuts_acorns","ice_cream_social"]
+	var compact_toss := gentle or id in ["nuts_acorns","ice_cream_social","strawberry_fields","citrus_splash","banana_bonanza","pineapple_express","mushroom_mix"]
 	var n := quota.size()
 	for region in 3:
 		var choices := quota.duplicate()

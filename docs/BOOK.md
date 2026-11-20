@@ -997,3 +997,8 @@ All registered cosmetic effects now route through ui3d/lock_effect_preparation.g
 
 ## Approved common lock-in effects (2026-11-15)
 35 approved common cosmetics integrated into saved customization, network appearance validation and real match dispatch. Names, exact budgets and measured cold/prepared/cleanup results documented in LOCK_IN_EFFECTS.md. Latest reviewed artwork retained; cancelled effects excluded.
+
+
+### Approved Food and Onions revision (2026-11-19)
+
+Installed ten revised non-elote Food meshes, including the open husk-wrapped tamale; elote remains byte-identical. Food retains90pieces/11cachedmeshes/one shared atlas material. Added two onion half meshes with concentric cut faces; Onions now81pieces (9whole,18halves,27crescents,27dice),14cachedmeshes. Whole bulbs reduced by50percent from the reviewed18; omitted slots still consume their original random samples to preserve other trajectories. Food/Onions scoped preparation, triangle, mesh-array and node budgets updated from measured costs. Four fresh cold/prepared audits passed; actual match freeze dispatch validated90/81pieces and catalog IDs. Prepared maximum CPU3.369ms Food/2.222ms Onions; CPU figures do not measure GPU cost. No export or version change. Review/installation records: C:/Users/growi/Documents/ChatGPT/Top Dog/effect-reviews/tamale-onion-revision/handoff.json.

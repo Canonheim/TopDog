@@ -4590,3 +4590,57 @@ func _run_cameratoggles() -> void:
 	g.end_match()
 	g.queue_free()
 	await frames(2)
+
+
+func _run_neutralgrapple() -> void:
+	for held in [false, true]:
+		var floor_body := static_box(Vector2(0,-0.1),Vector2(10,0.1))
+		var a := spawn(Vector2(-1,0.1))
+		var b := spawn(Vector2(1,0.1))
+		var hand: RigidBody3D = a.bodies.hand_r
+		var target: RigidBody3D = b.bodies.hand_l
+		var shift := target.global_position - hand.global_position
+		for body: RigidBody3D in a.bodies.values():
+			body.global_position += shift
+			Climber.sync_server(body)
+		a.attach(2,floor_body)
+		b.attach(2,floor_body)
+		if held: b.driver.set_limb(0,true)
+		a.attach(1,target)
+		var peak := 0.0
+		var turns := 0
+		var previous := 0.0
+		var push := 0.0
+		for tick in 480:
+			await frames(1)
+			if tick > 180:
+				peak = maxf(peak,absf(target.angular_velocity.z))
+				if previous * target.angular_velocity.z < 0 and absf(target.angular_velocity.z)>2: turns+=1
+				previous = target.angular_velocity.z
+			push = maxf(push,a.limbs[1].push_load)
+		print("NEUTRAL held=",held," peak_spin=",peak," reversals=",turns," push=",push," attached=",a.limbs[1].grab_climber==b)
+		t("neutral grapple has no deliberate push load",push == 0)
+		t("neutral grapple settles without runaway wrist spin", peak < 5.0 and a.limbs[1].grab_climber == b)
+		if held:
+			var at := b.limb_end(0)
+			b.driver.point_limb(0,true,at + Vector2(0.04,0.02))
+			var kept := true
+			for tick in 24:
+				await frames(1)
+				kept = kept and a.limbs[1].grab_climber == b
+			t("neutral grapple: small steering input does not instantly shed holder",kept)
+		a.set_physics_process(false)
+		b.set_physics_process(false)
+		# Reciprocal hand grips share collision suppression until the final release.
+		b.driver.clear()
+		b.attach(0,hand)
+		a.attach(1,target)
+		b.release(0)
+		t("neutral grapple: releasing reciprocal grip preserves collision suppression", target in hand.get_collision_exceptions() or hand in target.get_collision_exceptions())
+		a.release(1)
+		await frames(2)
+		t("neutral grapple: final release restores both collision directions", target not in hand.get_collision_exceptions() and hand not in target.get_collision_exceptions())
+		a.remove()
+		b.remove()
+		floor_body.queue_free()
+		await frames(2)

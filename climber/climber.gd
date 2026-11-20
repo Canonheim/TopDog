@@ -1424,7 +1424,8 @@ func attach(i: int, other: Object) -> void:
 		l.grab = rid
 		l.grab_rel0 = angle_of(end) - angle_of(ob)
 		l.slipping = false
-	end.add_collision_exception_with(ob)
+	if ob not in end.get_collision_exceptions():
+		end.add_collision_exception_with(ob)
 	_solid_frame = -1
 	l.grab_other = other
 	l.grab_climber = null
@@ -1460,7 +1461,8 @@ func _tick_slip(dt: float) -> void:
 			continue
 		var wj: Dictionary = joints[l.end_joint]
 		var stop: float = wj.hi
-		if l.held:
+		var grabbed_limb := _limb_has_incoming_grip(l)
+		if l.held and not grabbed_limb:
 			if wj.stop_on:
 				wj.stop_on = false
 				PhysicsServer3D.hinge_joint_set_flag(wj.rid, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, false)
@@ -1511,7 +1513,19 @@ func release(i: int) -> void:
 		l.grab = RID()
 	var end: RigidBody3D = bodies[l.def.end]
 	if l.grab_other != null and is_instance_valid(l.grab_other) and l.grab_other is CollisionObject3D:
-		end.remove_collision_exception_with(l.grab_other)
+		# Inactive hands can latch each other in both directions. Releasing one
+		# side must not restore collisions while the opposite grip still holds.
+		var reciprocal := false
+		var holder := climber_of(l.grab_other)
+		if holder != null and holder != self:
+			for grip in holder.limbs:
+				if grip.grab_other == end and holder.bodies[grip.def.end] == l.grab_other:
+					reciprocal = true
+					break
+		if not reciprocal:
+			end.remove_collision_exception_with(l.grab_other)
+			if holder != null and l.grab_other is PhysicsBody3D:
+				l.grab_other.remove_collision_exception_with(end)
 	var oc = l.grab_climber
 	if oc != null and is_instance_valid(oc) and oc.state != State.FROZEN:
 		oc.grabbed_by = maxi(0, oc.grabbed_by - 1)
@@ -1551,9 +1565,11 @@ func _tick_joints(attached: bool, dt: float) -> void:
 	var weight := total_mass * g
 	var settling := not attached and _touching_solid()
 	var aim = driver.aim(self, _active_limb) if attached and _active_limb >= 0 and driver != null else null
+	# A neutral limb being held by another player yields to their grip rather
+	# than servoing back to a stale pose. Actual steering still gets normal drive.
 	var held_joints := {}
 	for l in limbs:
-		if l.held and attached:
+		if l.held and attached and not (aim == null and _limb_has_incoming_grip(l)):
 			held_joints[l.def.root] = true
 			held_joints[l.def.mid] = true
 			held_joints["wrist_l" if l.def.end == "hand_l" else ("wrist_r" if l.def.end == "hand_r" else ("ankle_l" if l.def.end == "foot_l" else "ankle_r"))] = true
@@ -2227,3 +2243,14 @@ func remove() -> void:
 		b.queue_free()
 	bodies.clear()
 	queue_free()
+
+## Incoming live grips on any segment of this limb, local or remotely simulated.
+func _limb_has_incoming_grip(limb: Dictionary) -> bool:
+	var names: Array = [limb.def.up, limb.def.lo, limb.def.end]
+	for holder in held_by:
+		if not is_instance_valid(holder): continue
+		for grip in holder.limbs:
+			if grip.grab_climber == self and grip.grab_piece in names: return true
+	for sample in remote_pulls.values():
+		if sample.get("piece", "") in names: return true
+	return false

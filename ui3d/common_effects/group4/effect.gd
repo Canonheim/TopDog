@@ -46,6 +46,7 @@ static func burst(camera: Node3D, effect: String) -> Node3D:
 		flight.rotation = Vector3(rng.randf_range(-.7,.7),rng.randf_range(-.8,.8),rng.randf_range(-PI,PI))
 		flight.spin = Vector3(rng.randf_range(-1.8,1.8),rng.randf_range(-2.0,2.0),rng.randf_range(-3.0,3.0))
 		flight.base_size = rng.randf_range(.65,1.05) if effect=="bats" else rng.randf_range(.8,1.25)
+		if effect=="bats":flight.base_size*=.8
 		flight.scale = Vector3.ONE*flight.base_size
 		flight.delay = rng.randf_range(0,.3)
 		flight.hide()

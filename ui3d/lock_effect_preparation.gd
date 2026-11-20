@@ -105,7 +105,7 @@ const REGISTRY := {
 	"autumn_harvest":["common_effects/autumn_harvest", "common", 8, 59, 45988],
 	"birthday_bash":["common_effects/birthday_bash", "common", 9, 42, 12323],
 
-	"onions":["onions_effect","scene:onion_",12,90,16500],
+	"onions":["onions_effect","scene:onion_",14,81,41769],
 	"grass":["grass_effect","scene:grass_",12,90,7300],
 	"lightning":["lightning_effect", "lightning", 40, 3, 9350],
 	"railroad_spikes":["railroad_spikes_effect","scene:railroad_",1,4,370],
@@ -121,7 +121,7 @@ const REGISTRY := {
 	"underwear": ["underwear_effect", "scene:underwear_", 128, 84, 42000],
 	"bullets": ["bullet_effect", "scene:bullet_", 12, 72, 43200],
 	"pan": ["pan_effect", "scene:pan_", 15, 72, 121500],
-	"food": ["food_effect", "scene:food_", 11, 90, 39987],
+	"food": ["food_effect", "scene:food_", 11, 90, 63807],
 	"dog_toys": ["dog_toys", "baked:dog_toys", 18, 90, 153100],
 	"watermelon": ["watermelon_effect", "scene:watermelon_", 6, 90, 59300],
 	"luck": ["luck_effect", "scene:luck_", 12, 72, 70200],
@@ -175,7 +175,7 @@ const CACHE_MESH_LIMITS := {
 	"autumn_harvest":7,
 	"birthday_bash":8,
 
-	"onions":12,
+	"onions":14,
 	"grass":12,
 	"lightning":8,
 	"railroad_spikes":1,
@@ -227,7 +227,7 @@ const CACHE_ARRAY_BYTE_LIMITS := {
 	"autumn_harvest":1231709,
 	"birthday_bash":360050,
 
-	"onions":420000,
+	"onions":957113,
 	"grass":230000,
 	"lightning":825615,
 	"railroad_spikes":15000,
@@ -237,7 +237,7 @@ const CACHE_ARRAY_BYTE_LIMITS := {
 	"sodas":485000,
 	"confetti":206000,"roses":427000,"bills":4880000,"treasure":1376000,
 	"treats":184000,"underwear":12540000,"bullets":1123000,"pan":2791000,
-	"food":1011079,"dog_toys":4411000,"watermelon":679000,"luck":1827000,
+	"food":1562266,"dog_toys":4411000,"watermelon":679000,"luck":1827000,
 	"autumn_leaves":198000,"math":10000,
 	"chocolates":600000,
 	"salt":51000,
@@ -280,7 +280,7 @@ const NORMAL_NODE_LIMITS := {
 	"autumn_harvest":119,
 	"birthday_bash":85,
 
-	"onions":271,
+	"onions":244,
 	"grass":271,
 	"lightning":10,
 	"railroad_spikes":5,
