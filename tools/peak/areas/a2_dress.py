@@ -544,7 +544,8 @@ def dress(A):
     for x in (-326.6, -332.1, -337.6):
         A.deco("flume_pillar", x, 114.5, z=-6.0, size=(0.9, 7.0, 0.9), tone="back2")
     # A depth gauge painted on the middle pillar's face, the water over the company's red line.
-    A.deco("aguas_depth_gauge", -330.1, 115.2, z=-1.27, size=(0.5, 3.4, 0.03), tone="bone")
+    # (z -1.344, 11-20: it floated 8.4 cm off the remade pillar's shaft; now 1 cm proud of it.)
+    A.deco("aguas_depth_gauge", -330.1, 115.2, z=-1.344, size=(0.5, 3.4, 0.03), tone="bone")
     # What the ledge and the grating hang from.
     for x in (-348.45, -345.15, -323.85, -321.25):
         beam_end(x, 117.3 if x < -340 else 117.1, FLUME_WALL)
