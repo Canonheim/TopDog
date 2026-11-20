@@ -2097,7 +2097,12 @@ func play_lock_effect(effect: String) -> void:
 			var model: Node3D = main.screens.customize.preview
 			if is_instance_valid(model): prep.effect_script(effect).preview(model,cam)
 		return
-	prep.burst(effect,cam)
+	var root: Node3D = prep.burst(effect,cam)
+	# A lock-in in a match bursts from the climber and stays in the world (THE WORLD
+	# BURST); the wardrobe's preview stays on the camera.
+	var g: Game = main.game
+	if main.screen != "customize" and g != null and g.lock_effect_at.is_finite():
+		prep.into_world(root, cam, main.world, g.lock_effect_at)
 	Sound.play("clap", -4.0)
 
 

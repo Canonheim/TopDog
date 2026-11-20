@@ -982,6 +982,23 @@ see how it looks", then "it will have different proportions, that is fine".
   check above and `--selffold`'s eight "bends then stalls" checks, which fail the same way on
   main with the knight. Frames of it posed and in play: `builds\new_climber_look.jpg`.
 
+## The lock-in burst comes from the climber, in the world (Parker, 2026-11-14 and 11-19)
+
+Parker: "when you lock in in the vs modes, the confetti explosion should stay where the character locked
+in, not change with the camera, so it should be worldspace not screen space", then "my lock in confetti
+is not coming out of me, it is sill coming out of screen space".
+- Every lock-in effect still builds its burst under the camera (each lays its pieces out by screen
+  thirds). For a match lock-in, `lucha_ui.play_lock_effect` then calls
+  `lock_effect_preparation.into_world()`: the root moves to `main.world`, scaled about the camera so
+  the first frame looks the size it was made at, centred on the climber's centre
+  (`Game.lock_effect_at`, set as the "made" freeze fires), 0.8 m toward the camera so the body and
+  the stage don't hide it. It stays there while the camera moves on. All 60-odd effects take it,
+  because every piece moves in its root's own frame.
+- The wardrobe's preview and the winner's big confetti stay on the camera. The rule is in
+  `docs/LOCK_IN_EFFECTS.md`.
+- Checked: lint 281; customization_probe (the match burst leaves the camera and comes from the
+  climber); rendered match lock-ins of confetti, bills and popcorn with the camera panning away.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

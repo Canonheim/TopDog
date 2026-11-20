@@ -19,6 +19,9 @@ extends Node
 
 signal announce(text: String, big: bool)
 signal lock_effect(effect: String)
+## Where the lock-in effect being fired bursts: the climber's centre, world metres
+## (THE WORLD BURST, lucha_ui.play_lock_effect). INF when none is firing.
+var lock_effect_at := Vector3.INF
 signal attached_lock_effect(effect: String, climber: Climber)
 signal phase_changed(phase: String)
 signal match_over(results: Dictionary)
@@ -1050,7 +1053,11 @@ func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: Strin
 			if cosmetic in Wardrobe.ATTACHED_EFFECTS:
 				if grounded and not c.removed: attached_lock_effect.emit(cosmetic,c)
 			else:
+				if is_instance_valid(c) and not c.removed:
+					var com := c.centre_of_mass()
+					lock_effect_at = Vector3(com.x, com.y, 0.0)
 				lock_effect.emit(cosmetic)
+				lock_effect_at = Vector3.INF
 			if stage != null and stage.delmar:
 				announce.emit("%s locked in %.2f m out!" % [who, shown] if why == "locked" else "%s made it: %.2f m out" % [who, shown], false)
 			else:
