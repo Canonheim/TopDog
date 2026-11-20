@@ -261,7 +261,7 @@ def dress(A):
     A.deco("mine_frog_shelf", -251.2, -25.75, z=-3.5, size=(2.2, 0.45, 0.3), tone="wood2")
     A.deco("mine_towel_peg", -249.9, -26.9, z=-3.5, size=(0.4, 0.6, 0.1), tone="accent")
     hang(-249.7, -25.03, -2.4)  # the only warm light at the bottom of the mine
-    A.deco("mine_water_marks", -248.95, -27.4, z=-1.3, size=(0.3, 0.9, 0.02), tone="bone")  # the watchman's marks, on the door post
+    # (The watchman's marks on the door post, `mine_water_marks`, are out: 11-20, `mine_frog_cave` scratches them up its own post.)
     # The drowned level, 3 to 4 m behind: six sets under water to their caps, a boarded
     # tunnel seen through the water, a barrel wedged against a cap.
     for x in (-236.6, -234.0, -231.4, -226.2, -223.6, -221.0):
