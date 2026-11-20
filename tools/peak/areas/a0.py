@@ -58,6 +58,9 @@ cart_shapes = [
 A.mover("cart0", RIDE[0], cart_shapes,
         {"type": "path", "pts": [list(p) for p in RIDE], "speed": 9.0, "mode": "once", "trigger": "lever",
          "reset": 25.0, "tilt": True, "accel": 3.0,
+         # GRAVITY ALONG THE ROAD (Parker 11-20: "make them gain speed as they go downhill"): once it has gathered its
+         # 9 m/s it gains down the slopes and loses up them, never under 4 m/s nor over 13 (peak_things.gd).
+         "gravity": {"g": 4.0, "drag": 0.3, "min": 4.0, "max": 13.0},
          # THE HOP (note 73, Parker 11-13: "real hop and make dust come off the wheels when it
          # lands"): it leaves the rails at the crest (x -90) at its own speed and flies the
          # broken stretch, as the design page's real throw (g 8.9: 0.9 s, about 0.9 m clear,
@@ -68,7 +71,7 @@ A.mover("cart0", RIDE[0], cart_shapes,
          # shake"): it stops dead against the buffer, dust off its nose and wheels, a small jolt of
          # the view, and the rider is thrown on at 0.65 of its speed and 3 m/s up, over the buffer
          # into the mine's door (peak_things.gd _slam). First guesses, to tune by riding it.
-         "slam": {"v": 0.65, "up": 3.0, "kick": 0.2}},
+         "slam": {"v": 0.65, "up": 3.0, "kick": 0.2, "cap": 10.0}},  # (cap: the throw takes at most 10 m/s of the cart's speed)
         model="minecart")
 # THE STATION'S LEVER (Parker 11-13, note 72: "make it so you have to pull the lever to start
 # the cart, regardless of if you are in the cart. If you pull the lever it goes"). Its foot

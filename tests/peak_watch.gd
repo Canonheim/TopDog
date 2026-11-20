@@ -4072,3 +4072,19 @@ func _follow_147(at: Vector2, label: String, tag: String) -> void:
 	var end := where()
 	print("WATCH glacier147 %s: from (%.1f, %.1f) to (%.1f, %.1f) after %.0f s, lowest %.1f, falls counted %d, rode %s; %s" % [
 		label, at.x, at.y, end.x, end.y, pk.clock - t0, low, pk.falls - falls0, rode, " > ".join(log)])
+
+
+## THE CART'S SPEED ALONG THE RIDE (Parker 11-20: it gains downhill): cart0 started by its lever, empty, its speed
+## logged every second to the buffer. cartv
+func _w_cartv(_a: Array) -> void:
+	pk.warp("0.1")
+	await secs(2.0)
+	var m: Dictionary = pk.things.movers["cart0"]
+	m["pulled"] = true
+	for i in 40:
+		await secs(1.0)
+		var at: Vector2 = (m.home as Vector2) + (m.offset as Vector2)
+		print("WATCH cartv %2d s: x %.1f y %.1f  v %.1f m/s%s" % [i + 1, at.x, at.y, float(m.v), "  (flying)" if m.has("fly") else ""])
+		if float(m.arrived) >= 0.0:
+			print("WATCH cartv: at the buffer after %d s" % (i + 1))
+			break

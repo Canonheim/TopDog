@@ -1332,7 +1332,7 @@ func _slam(m: Dictionary, mo: Dictionary, hit_v: float, total: float) -> void:
 	m["slam_until"] = peak.clock + SLAM_GHOST_S
 	# (the rider's whole body set going at the throw, whatever it had: it was carried at the
 	# cart's speed, and adding the throw to that sent it at 15 m/s)
-	var throw := dir * hit_v * float(sl.get("v", 0.65)) + Vector2(0.0, float(sl.get("up", 3.0)))
+	var throw := dir * minf(hit_v, float(sl.get("cap", INF))) * float(sl.get("v", 0.65)) + Vector2(0.0, float(sl.get("up", 3.0)))  # (`cap`: the most of the cart's speed the throw takes)
 	var com_v := Vector2.ZERO
 	for b: RigidBody3D in c.bodies.values():
 		com_v += Vector2(b.linear_velocity.x, b.linear_velocity.y)
@@ -1662,6 +1662,7 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 						if go:
 							m.run = true
 							m.v = 0.0
+							m["rolling"] = false  # (it gathers its speed again before gravity has it)
 							peak.audio.play("cart_start" if m.id.begins_with("cart") else "zip_whirr", _mover_at(m))
 							_kick_chock(m)
 					if m.run and m.has("fly"):
@@ -1670,7 +1671,18 @@ func _tick_mover(m: Dictionary, delta: float) -> void:
 							return
 					elif m.run:
 						var acc := float(mo.get("accel", 0.0))
-						m.v = speed if acc <= 0.0 else minf(speed, float(m.v) + acc * delta)
+						if mo.has("gravity") and bool(m.get("rolling", false)):
+							# GRAVITY ALONG THE ROAD (Parker 11-20: "make them gain speed as they go downhill"): once it
+							# has gathered its speed it gains down a slope and loses up one, `g` m/s2 times the slope's
+							# fall, less a little `drag`, never under `min` (it never stalls) nor over `max`.
+							var gr: Dictionary = mo.gravity
+							var along: Vector2 = (_along(m, float(m.dist))[1] as Vector2)
+							m.v = clampf(float(m.v) + (-float(gr.get("g", 6.0)) * along.y - float(gr.get("drag", 0.15))) * delta,
+									float(gr.get("min", 4.0)), float(gr.get("max", 13.0)))
+						else:
+							m.v = speed if acc <= 0.0 else minf(speed, float(m.v) + acc * delta)
+							if mo.has("gravity") and float(m.v) >= speed - 0.01:
+								m["rolling"] = true  # (from here gravity has it)
 						if mo.has("speeds"):
 							# a speed for each stretch of its road (note 103's cart): it gathers to
 							# its first speed at `accel`, then takes the road's speed where it is
@@ -1857,7 +1869,9 @@ func _tick_hop(m: Dictionary, mo: Dictionary, delta: float) -> bool:
 		m.erase("fly")
 		m.dist = _road_dist(m, p.x)
 		var at: Array = _along(m, float(m.dist))
-		m.v = clampf(v.dot(at[1]), 1.0, float(mo.get("speed", 9.0)))
+		var top := float((mo.gravity as Dictionary).get("max", 13.0)) if mo.has("gravity") else float(mo.get("speed", 9.0))
+		var low := float((mo.gravity as Dictionary).get("min", 4.0)) if mo.has("gravity") else 1.0
+		m.v = clampf(v.dot(at[1]), low, top)
 		m.offset = (at[0] as Vector2) - (m.home as Vector2)
 		var c := (at[0] as Vector2)
 		for e: float in [-0.9, 0.9]:
