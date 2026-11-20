@@ -3529,3 +3529,12 @@ tunnel's back wall again); no new models.
 5. 2.6's chains are physics ropes, kind "chain" (cadena1..3; also cadena_salto1/2, last_chance, flume_out): their
    drawing is the rope code in peak_things.gd, the Second Director's tonight. Left.
 Lint 260/0, `--peak` 0. Frames: `cam:2.1:2.4:2.9:2.10:2.11`.
+
+## The black waters' second look (the reviewer's w2, REVIEW_LOG 782cd567; 11-20)
+1. a1's lock seen from 2.1: not darkened any more (dark 0.25 took its waterline and foam and left a green brick wall);
+   fade 1.6, murk 0.85, no rings.
+2. A fall's `width` is now the least its ribbon thins to over a lip (it followed the lip's water and thinned to a line);
+   2.1's two falls (the race's drain 0.8, the mill's 0.6) are spouts.
+3. A FOAM BAND where a fall lands on a floor (`_fall_vis`): a soft white band across its width and past it, with a lump,
+   just in front of the sheet and clear of the floor. 2.1's falls on the coping and 2.11's spout (0.85) on the walkway.
+Lint 260/0, `--peak` 0. Frames: `cam:2.1:2.11`.

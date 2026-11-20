@@ -1446,6 +1446,7 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 			var tan := Vector2(dir * v0 * exp(-v0 * tt / out), -FALL_G * tt).normalized()
 			var nrm := Vector2(-tan.y, tan.x) * dir
 			var thick := clampf(depth * v0 / sqrt(v0 * v0 + FALL_G * FALL_G * tt * tt), 0.13, depth)
+			thick = maxf(thick, float(e.get("width", 0.0)))  # (an author's `width` is the least it thins to: a spout, not a thin line)
 			mid.append([c, nrm, thick])
 		xr = (mid[mid.size() - 1][0] as Vector2).x
 		width = float(mid[mid.size() - 1][2])
@@ -1531,6 +1532,27 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 		mist.gravity = Vector3.ZERO
 		mist.position = Vector3(xr, foot_y + 0.3, 0.9)
 		root.add_child(mist)
+	if foot.is_empty():
+		# A FOAM BAND WHERE IT LANDS ON A FLOOR (the black waters' second look, 11-20: "a foam band at its foot"): a soft
+		# white band across its width and a little past, low on the floor, just in front of the sheet.
+		var band := MeshInstance3D.new()
+		var qm := QuadMesh.new()
+		qm.size = Vector2(hw * 2.0 + 0.9, 0.55)
+		band.mesh = qm
+		var bm := StandardMaterial3D.new()
+		bm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		bm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		bm.albedo_texture = _dot()
+		bm.albedo_color = Color(0.93, 0.97, 1.0, 0.85)
+		bm.cull_mode = BaseMaterial3D.CULL_DISABLED
+		band.material_override = bm
+		band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		band.position = Vector3(xr, foot_y + 0.3, sheet.position.z + 0.04)  # (clear of a floor a little over the fall's foot)
+		root.add_child(band)
+		var lump := band.duplicate() as MeshInstance3D  # (a second, narrower and higher: the band is lumpy, not one ellipse)
+		lump.scale = Vector3(0.6, 1.25, 1.0)
+		lump.position = Vector3(xr + hw * 0.25, foot_y + 0.4, sheet.position.z + 0.05)
+		root.add_child(lump)
 	if foot.is_empty() and spray:
 		# it lands on a floor: it spatters
 		var sp := _drops(int(clampf(10.0 * density, 5.0, 14.0)), 0.55)

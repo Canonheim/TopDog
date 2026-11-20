@@ -392,13 +392,13 @@ A.effect("waterfall", (-244, 89.4, -238, RIV_S), through=True)  # over the lip, 
 # (`mist=False` on every one: no mist balls at their feet and no spatter, the floating white spray balls at 2.1, 2.9 and
 # 2.10, as the mine's went (F-C11; the black waters' first look, 11-20). Where they land in water they still churn and
 # foam. The cascade's mist effect over 2.10 is out for the same reason.)
-A.effect("waterfall", (-232.6, RS, -230.8, MS), density=0.6, mist=False)  # the mill channel's drain, into the race (note 22)
-A.effect("waterfall", (-229.0, 90.0, -226.0, RS), density=1.0, width=0.55, mist=False)  # the race's drain, onto the lip ledge (a spout, not a thin line by 2.1's climber)
+A.effect("waterfall", (-232.6, RS, -230.8, MS), density=1.0, width=0.6, mist=False)  # the mill channel's drain, into the race (note 22)
+A.effect("waterfall", (-229.0, 90.0, -226.0, RS), density=1.0, width=0.8, mist=False)  # the race's drain, onto the lip ledge (a spout, not a thin line by 2.1's climber)
 A.effect("waterfall", (-320.5, 115.0, -318.6, 116.0), mist=False)  # the flume spills a metre into the pool (El Charco del Pozo)
 A.effect("waterfall", (-288, RIV_S, -284.5, 115), lip_depth=0.35, mist=False)  # the first cascade (its top 0.35 m over the basin's lip, as a weir: q36)
 A.effect("waterfall", (-380.6, 116, -379, 136), mist=False)  # the spill into the pipe hall
 A.effect("waterfall", (-392, 136, -389.5, 151), mist=False)  # LA CASCADA CHICA
-A.effect("waterfall", (-430, 152, -425.5, 166), density=1.0, width=0.65, mist=False)  # the dam's leak (a spout, not a thin line by the climb: 2.11)
+A.effect("waterfall", (-430, 152, -425.5, 166), density=1.0, width=0.85, mist=False)  # the dam's leak (a spout, not a thin line by the climb: 2.11)
 # (Two mists over La Esclusa, x -292 .. -280 at 89 .. 98 and -250 .. -234 at 86 .. 94, are out: phase 0's floating spray
 # balls, seen in the mine's frames over the flume and the lock: the reviewer's q27, 11-18, as MINE_PASS F-C11 did in a1.)
 A.effect("drips", (-232, 90, -226, T0C))  # the race's drain drips on the lip ledge

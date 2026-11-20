@@ -876,7 +876,8 @@ A.zones[-1]["lock"]["wheel"] = {"at": [-246.6, 82.1], "z": -1.6, "d": 1.4, "move
 A.zones[-1]["lock"]["gauge"] = {"x": -230.8, "z": -1.75}
 # (Darker down and murkier, no still-water rings: seen from 2.1 above it, the lock read as a glass tank, its tiled floor
 # at full depth and round rings on its front: the black waters' first look, 11-20.)
-A.zones[-1].update({"fade": 1.2, "dark": 0.25, "murk": 0.9, "rings": False})
+A.zones[-1].update({"fade": 1.6, "murk": 0.85, "rings": False})  # (not darkened: at dark 0.25 its waterline and
+# foam went with it and the lower third read as a green brick wall, the reviewer's w2)
 # The wicket: open (up into the gate) while the water is under its sill, from 13.03 s to 1.17 s of the
 # next cycle: shut 11.86 s, opening and shutting in 0.2 s.
 _open_at = CYCLE - (79.4 - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW) * DRAIN    # 13.03 s: the drain under the sill
