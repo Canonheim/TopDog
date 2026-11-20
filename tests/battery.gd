@@ -4437,6 +4437,17 @@ func _run_peakrope() -> void:
 	await pticks(pk, 30)
 	var kept: bool = segs.has(c.limbs[1].grab_other)
 	t("peak rope: it keeps the rope while the button stays held", kept)
+	# STILL IN CONTROL (Parker 11-20: "you seem to lose all power with the hand that grabbed it"): the hand on the
+	# rope, steered down, pulls the body up past it.
+	var hand: RigidBody3D = c.bodies[c.limbs[1].def.end]
+	var chest: RigidBody3D = c.bodies["chest"]
+	var d0 := chest.global_position.y - hand.global_position.y
+	var moved := 0.0
+	for i in int(0.8 * Engine.physics_ticks_per_second):
+		d.point_limb(1, true, Climber.pos2(chest) + Vector2(0.0, -1.2))
+		await pticks(pk, 1)
+		moved = maxf(moved, absf((chest.global_position.y - hand.global_position.y) - d0))
+	t("peak rope: the hand on the rope still has its power (steered, it moves the body about it)", moved > 0.25 and segs.has(c.limbs[1].grab_other), "the chest moved %.2f m against the hand" % moved)
 	d.set_limb(1, false)
 	await pticks(pk, 3)
 	var let_go: bool = not segs.has(c.limbs[1].grab_other)

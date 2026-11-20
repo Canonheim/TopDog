@@ -1250,6 +1250,8 @@ func _try_grab(i: int) -> void:
 	for o in hits:
 		if o == null or not is_instance_valid(o) or o == end or (o.collision_layer & SOLID_MASK) == 0 or o.has_meta("no_weld"):
 			continue
+		if o.has_meta("peak_rope"):
+			continue  # (a rope is taken only by a hand whose button is held, like a lever: peak_things' _tick_rope_grabs, Parker 11-20)
 		var score := 0.0
 		if o is RigidBody3D and o.has_meta("climber"):
 			var oc := climber_of(o)
@@ -1683,10 +1685,20 @@ func _tick_joints(attached: bool, dt: float) -> void:
 		# through the air. Holding anything fixed, the pull is as it always was.
 		if on_ropes:
 			var through := f.y * rope_lift if f.y > 0.0 else f.y  # (the part the rope answers)
-			for grip: Dictionary in limbs:
-				if grip.grab_other != null:
-					(bodies[grip.def.end] as RigidBody3D).apply_central_force(Vector3(-f.x, -through, 0.0) / float(loose.size()))
-			(bodies["chest"] as RigidBody3D).apply_central_force(Vector3(0.0, through - f.y, 0.0))
+			# (Paid by the OTHER gripping hands. Since ropes are held like levers (11-19) the hand moving is often the
+			# one on the rope: counted among the payers its own pull cancelled itself, and "you seem to lose all
+			# power with the hand that grabbed it" (Parker 11-20). With no other grip it is the anchor, and its pull
+			# moves the body about it: paid by the chest, the whole of it, so the body is never thrown.)
+			var payers: Array = []
+			for gi in limbs.size():
+				if gi != i and limbs[gi].grab_other != null:
+					payers.append(bodies[limbs[gi].def.end])
+			if payers.is_empty():
+				(bodies["chest"] as RigidBody3D).apply_central_force(Vector3(-f.x, -f.y, 0.0))
+			else:
+				for pb: RigidBody3D in payers:
+					pb.apply_central_force(Vector3(-f.x, -through, 0.0) / float(payers.size()))
+				(bodies["chest"] as RigidBody3D).apply_central_force(Vector3(0.0, through - f.y, 0.0))
 		else:
 			for o: RigidBody3D in loose:
 				o.apply_central_force(Vector3(-f.x, -f.y, 0.0) / float(loose.size()))
