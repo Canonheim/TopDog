@@ -3491,3 +3491,26 @@ tunnel's back wall again); no new models.
 - Known: the frogs' slide's drop down the west side has the snow cap's white card behind it (stark, as the old slide's
   was). The bridge and the pool are plain stand-ins (ice boxes, the kit's ice cube); the pool's water reads, the
   blocks read as blocks.
+
+## Parker's playtest 11-20: invisible grip, the falls' foam, the carts downhill
+1. INVISIBLE GRIP. A new check (the session's scratchpad `invis.py`): for every grip solid whose skin has landed, the
+   skin decos' camera-facing triangles (all of them, not only the flat ones the sweeps read) are projected and the
+   share of the solid they cover is measured. (The sweeps' STANDIN test asks only whether the solid's middle is
+   inside a deco's bounding box, so a big model's box hid it.) a0, a1 (with La Esclusa) and a11:
+   - a1 solid 42, the frog cave's doorstep at the Sump's west edge (x -307 .. -306.2, y -45.3 .. -44.5): skin
+     `mine_throat_west`, 0% covered: Parker's grip. FIXED: it draws itself (plain rock, the fitted kit).
+   - a0 solid 50 (`mina_ride_bed_brow`, 7%) and 55 (`mina_ride_roof_foot`, 0%): the ride tunnel's corner fillers,
+     thin wedges behind the slabs' corners on the rock side, which no climber can reach. Left.
+   - Not faults: a1 150-152 (the iron rings, 39%: the ring model is a ring round its hold) and 47, 175, 205 (floor
+     ledges, 60%: their models' fronts cover the faces you see).
+2. THE FALLS' FOAM: a fall's foot churns its whole width: Del Mar's spray at random along the landing, more often the
+   broader the fall (up to 4x), a row of up to four foam spots on the waterline, the mist box as wide (peak_zones.gd
+   `_fall_vis`). The great falls (6 m) now foam across their landing in the Sump; `build_late` hands the bodies their
+   foam lists again after the late falls are built. The Charco's spill at 2.7 is a narrow ribbon: its foot is as wide
+   as it lands, as before. The glacier's pool is part two b's.
+3. THE CARTS: a path mover may have `gravity` {g, drag, min, max} (peak_things.gd): once it has gathered its speed it
+   gains down slopes and loses up them, within min .. max; the hop lands within them too. cart0: g 4, drag 0.3, 4 ..
+   13 m/s: 9 on the flat, 10 down to the dip, 9 at the crest's hop, 11.6 down to the brow, 13 on the incline; 21 s to
+   the buffer (was 25). The slam takes at most 10 m/s of it (`cap`), so the rider is thrown at 6.5 as the test wants.
+   cart1 (1.7) is left on its authored `speeds`: its leap at the lip is tuned to them.
+   `--peakride` 0 fails; lint 260/0; `--peak` 0. Watch: `cartv` logs the cart's speed each second.

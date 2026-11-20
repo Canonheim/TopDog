@@ -174,7 +174,9 @@ A.ledge(-190.4, -187.0, -27.7, "plank", t=0.3)  # the landing stage, a hand abov
 # (note 109: these two drew their own dark boxes with their tops in the throat skin's plane, and flickered.
 # They wear the throat's skin now: its top is the floor.)
 A.ledge(-253.4, -248.0, -27.5, "rock", t=0.5, skin="mine_throat_west")  # the frog's cave's floor (grip; page 1.0)
-A.solid([(-248.0, -28.3), (-247.2, -28.3), (-247.2, -27.5), (-248.0, -27.5)], "rock", skin="mine_throat_west")  # its doorstep, out of the water
+# (The doorstep draws itself: the throat's skin was meant to be its look, but the model draws nothing there (0% of it
+# covered), so it was grip nobody could see, held at the Sump's west edge: Parker's playtest, 11-20.)
+A.solid([(-248.0, -28.3), (-247.2, -28.3), (-247.2, -27.5), (-248.0, -27.5)], "rock")  # its doorstep, out of the water
 for x in (-228.5, -219.0, -211.0, -194.5):
     A.box(x, -30.1, 0.4, 5.8, "wood")  # old staging piles: something to hold on the long swim east
 

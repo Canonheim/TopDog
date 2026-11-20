@@ -51,9 +51,16 @@ var _late_fx: Array = []
 
 
 func build_late() -> void:
+	if _late_fx.is_empty():
+		return
 	for row: Array in _late_fx:
 		_effect(row[0], row[1], row[2])
 	_late_fx.clear()
+	var done := {}
+	for body: Dictionary in water_bodies:  # (a late fall's foam goes to bodies already finished: hand them their lists again)
+		if not done.has(str(body.area)):
+			done[str(body.area)] = true
+			_finish_bodies(str(body.area))
 
 
 func build_area(a: Dictionary, root: Node3D) -> void:
@@ -982,7 +989,7 @@ func frame(_delta: float, _cam: Camera3D) -> void:
 	for ch in _churns:
 		if peak.clock < float(ch[3]) or not bool(peak._area_active.get(ch[4], true)):
 			continue
-		ch[3] = peak.clock + randf_range(0.12, 0.22)
+		ch[3] = peak.clock + randf_range(0.12, 0.22) / clampf((float(ch[2]) - float(ch[1])) / 0.9, 1.0, 4.0)  # (a broad foot sprays more often)
 		var z: Dictionary = (ch[0] as Dictionary).def
 		var at := Vector2(randf_range(float(ch[1]), float(ch[2])), float(z.surface))
 		if peak.player == null or peak.player_at().distance_to(at) > 40.0:
@@ -1488,16 +1495,24 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 		return
 	# Where it lands in a pool it churns it: foam on the waterline, Del Mar's spray and
 	# rings for as long as the climber is near enough to see, and a mist over it.
+	# (THE WHOLE WIDTH CHURNS, Parker 11-20: "make it foam like that all over where the waterfall is landing, not just at
+	# one spot": a broad fall, the great falls' 6 m, sprays at random all along its landing, more often the broader it
+	# is, and lays a row of foam on the waterline, a broken band and not one blob.)
+	var hw := maxf(0.45, width * 0.5)
 	var foot := _water_row(Vector2(xr, foot_y))
 	if not foot.is_empty():
-		_churns.append([foot, xr - 0.45, xr + 0.45, 0.0, str(a.id)])
+		_churns.append([foot, xr - hw, xr + hw, 0.0, str(a.id)])
 		if foot.has("body"):
-			((foot.body as Dictionary).first as Array).append(Vector3(xr, 1.3, 1.6))
+			var n_foam := clampi(int(round(hw / 0.9)), 1, 4)
+			for k in n_foam:
+				var fx := xr - hw + (float(k) + 0.5) * (2.0 * hw / float(n_foam))
+				((foot.body as Dictionary).first as Array).append(Vector3(fx, maxf(1.3, hw / float(n_foam) * 1.3), 1.6))
 	if top_y - foot_y > 2.5:
 		var mist := _particles(Color("#EAF6FC"), 5.0, int(clampf(7.0 * density + 4.0, 5.0, 14.0)), 2.6)
 		(mist.material_override as StandardMaterial3D).albedo_color.a = 0.26
 		mist.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-		mist.emission_box_extents = Vector3(0.55, 0.12, 0.4)
+		mist.emission_box_extents = Vector3(hw + 0.1, 0.12, 0.4)
+		mist.amount = int(clampf(float(mist.amount) * hw / 0.45, float(mist.amount), 40.0))
 		mist.direction = Vector3.UP
 		mist.spread = 35.0
 		mist.initial_velocity_min = 0.25
