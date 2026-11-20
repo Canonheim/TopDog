@@ -3547,3 +3547,9 @@ Fix: a deco may say `turn` (degrees about the model's up, peak.gd `_deco`); the 
 either way round, its depth even about its middle), so it draws where a2_dress places it. The model itself is
 untouched: its maker can turn it to face +z, and then the `turn` comes out. (The sweeps don't read `turn`.)
 Lint 260/0, `--peak` 0. New watch scenes: `decoinfo:MODEL[:CHALLENGE]`, `hidelook:MODEL:CHALLENGE:X:Y:HALF`.
+
+## 2.9's pipe steam (the reviewer, REVIEW_LOG 0f035132, watch 3; 11-20)
+The pale balls along 2.9's pipe were the hot holds' resting wisp (peak_things.gd, the timed-hold tell: a steam burst
+every 1 to 2.4 s at rest). It is out, for every hot hold (the chimney's hot rock too): at rest a hot hold pulses hot
+in colour and spits a spark now and then; held, the hand smokes, it shudders, and it lets go with its burst, as
+Parker asked on 11-12. Lint 260/0, `--peak` 0. Frame: `cam:2.9`.

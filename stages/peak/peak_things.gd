@@ -3031,7 +3031,9 @@ func _tick_tell(h: Dictionary, delta: float) -> void:
 		h["shook"] = false
 	if t >= float(h.get("wisp_at", 0.0)):
 		h["wisp_at"] = t + randf_range(1.0, 2.4)
-		peak.zones.burst(at + Vector2(0, 0.15), str(tell.wisp), 0.5)
+		# (At rest a hot hold no longer breathes its steam wisp: those pale balls floated along 2.9's pipe, the F-C11
+		# fault the falls' spray had (the reviewer, 11-20). It still pulses hot in colour and spits a spark now and
+		# then; held, the hand still smokes, it shudders, and it lets go with its burst.)
 		if randf() < 0.35:
 			peak.zones.burst(at, str(tell.spit), 0.3)
 
