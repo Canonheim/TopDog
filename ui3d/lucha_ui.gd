@@ -1517,7 +1517,8 @@ func _build_menus() -> void:
 	menus.title = t
 	xp_display = preload("res://ui3d/xp_championship.gd").new()
 	t.add_child(xp_display)
-	xp_display.position = Vector3(3.85, -2.17, 0.12)
+	# The kit belt's right wing reaches 0.18 further: it keeps 0.25 inside the edge at 16:10.
+	xp_display.position = Vector3(3.60 if LuchaKit.kit_model_exists("xp_title_belt") else 3.85, -2.17, 0.12)
 	xp_display.scale = Vector3.ONE * .81
 	# Practice choices are independent of multiplayer settings.
 	var training := _menu()
@@ -2097,7 +2098,12 @@ func play_lock_effect(effect: String) -> void:
 			var model: Node3D = main.screens.customize.preview
 			if is_instance_valid(model): prep.effect_script(effect).preview(model,cam)
 		return
-	prep.burst(effect,cam)
+	var root: Node3D = prep.burst(effect,cam)
+	# A lock-in in a match bursts from the climber and stays in the world (THE WORLD
+	# BURST); the wardrobe's preview stays on the camera.
+	var g: Game = main.game
+	if main.screen != "customize" and g != null and g.lock_effect_at.is_finite():
+		prep.into_world(root, cam, main.world, g.lock_effect_at)
 	Sound.play("clap", -4.0)
 
 

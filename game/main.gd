@@ -143,6 +143,10 @@ func _ready() -> void:
 	lucha.name = "LuchaUI"
 	add_child(lucha)
 	lucha.setup(self)
+	# The reward notices are kit pieces on the 3D UI's camera once it exists.
+	var reward_notice := find_child("RewardNotices", true, false)
+	if reward_notice != null:
+		reward_notice.set("lucha", lucha)
 	var effect_preparation := preload("res://ui3d/lock_effect_preparation.gd").new()
 	effect_preparation.name = "LockEffectPreparation"
 	add_child(effect_preparation)

@@ -982,6 +982,48 @@ see how it looks", then "it will have different proportions, that is fine".
   check above and `--selffold`'s eight "bends then stalls" checks, which fail the same way on
   main with the knight. Frames of it posed and in play: `builds\new_climber_look.jpg`.
 
+## The lock-in burst comes from the climber, in the world (Parker, 2026-11-14 and 11-19)
+
+Parker: "when you lock in in the vs modes, the confetti explosion should stay where the character locked
+in, not change with the camera, so it should be worldspace not screen space", then "my lock in confetti
+is not coming out of me, it is sill coming out of screen space".
+- Every lock-in effect still builds its burst under the camera (each lays its pieces out by screen
+  thirds). For a match lock-in, `lucha_ui.play_lock_effect` then calls
+  `lock_effect_preparation.into_world()`: the root moves to `main.world`, scaled about the camera so
+  the first frame looks the size it was made at, centred on the climber's centre
+  (`Game.lock_effect_at`, set as the "made" freeze fires), 0.8 m toward the camera so the body and
+  the stage don't hide it. It stays there while the camera moves on. All 60-odd effects take it,
+  because every piece moves in its root's own frame.
+- The wardrobe's preview and the winner's big confetti stay on the camera. The rule is in
+  `docs/LOCK_IN_EFFECTS.md`.
+- Checked: lint 281; customization_probe (the match burst leaves the camera and comes from the
+  climber); rendered match lock-ins of confetti, bills and popcorn with the camera panning away.
+
+## Dan's XP screens in the kit look (Parker, 2026-11-19)
+
+Parker: "Dan added a bunch of XP stuff and the UI is a little different than ours. Have our UI guy
+redo the new UI things so they are in our UI style. It already looks good, but it's a different style
+with outlines and stuff".
+- The UI creator's kit models (Top Dog Kit `docs\PARTS.md`, X) replace Dan's built looks; the code
+  writes the numbers on their faces, and Dan's look stays as the stand-in when a model is missing:
+  - `xp_title_belt`, the title's PLAYER XP belt (`ui3d/xp_championship.gd`): the level on the
+    medallion, the amount and the next reward on cream faces, the fill only stretches. It hangs
+    0.25 further left (3.60) so its wing keeps inside the edge at 16:10.
+  - `xp_match_panel`, the results' MATCH XP panel (`ui3d/xp_results_compact.gd`): the category and
+    its XP in the cream window (`window_top/bottom/width`, `feed_top`, read by the summary), hung at
+    x 3.42 from the board's middle, its straps under the board's rim.
+  - Lit stars no longer glow (the kit is matte): they grow 1.3 and turn the title's gold.
+  - `reward_card` and `xp_notice`, the in-match notices (`ui/pinata_reward_notice.gd`): 3D pieces on
+    the camera with the other UI, top left, at 0.9 of the UI's scale. The gem and the stars carry the
+    rarity's colour (pips one to five); the two top rarities give off a puff of `xp_burst_star`.
+    They slide in from the left edge and out the same way. Without the 3D UI (a unit test) the 2D
+    cards stand in.
+- Left as Dan made them: the level-up fireworks (glow sprites; Parker asked the UI creator for a video
+  of a solid version, not a game change), and the layouts that aren't live.
+- Checked: lint 283; customization_probe, match_xp_probe, xp_star_tail_probe, landing_xp_probe pass.
+  xp_display_probe (still on the old 500 XP curve), xp_tally_probe and xp_gain_probe (both time out)
+  fail the same way on main before this. Frames: `builds\xp_kit_look.jpg`, `builds\xp_kit_notices.jpg`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

@@ -9,6 +9,56 @@ var _lit_star: ShaderMaterial
 var dev_xp_enabled := false
 var _dev_hint: Label3D
 const DEV_XP_STEP := 2000
+## THE KIT LOOK (Parker 11-19: "Dan added a bunch of XP stuff and the UI is a little different
+## than ours. Have our UI guy redo the new UI things so they are in our UI style. It already
+## looks good, but it's a different style with outlines and stuff"). The UI creator's kit
+## models (Top Dog Kit\docs\PARTS.md, X) carry the plates, the stars, the meter's fill and the
+## faces; the code writes the numbers on them. Dan's built look stays as the stand-in.
+const KIT_BELT := "xp_title_belt"
+var kit: Node3D = null  # the kit model, when delivered
+var level_cap := .26
+
+
+func build_display() -> void:
+	kit = LuchaKit.kit_model(KIT_BELT)
+	if kit == null:
+		super.build_display()
+		return
+	add_child(kit)
+	_kit_parts()
+	meter_width = 3.16  # xp_fill: 1 long, origin at its left end on the track's start
+	level_text = label("1", level_cap, LuchaKit.CREAM, Vector3(0, 1.00, .12))
+	amount_text = label("", .16, LuchaKit.INK, Vector3(0, -.38, .089))
+	next_text = label("", .12, LuchaKit.INK, Vector3(0, -.95, -.002))
+	refresh()
+	LuchaUI.no_shadows(self)
+
+
+## The kit's side stars and fill (the same names on the belt and the match panel).
+func _kit_parts() -> void:
+	side_stars.clear()
+	for part in ["xp_star_l", "xp_star_r"]:
+		var star := kit.find_child(part, true, false) as MeshInstance3D
+		if star != null:
+			side_stars.append(star)
+	fill = kit.find_child("xp_fill", true, false) as MeshInstance3D
+
+
+func set_progress(state: Dictionary) -> void:
+	if kit == null:
+		super.set_progress(state)
+		return
+	# The kit's fill only stretches: its origin is already the track's start.
+	var ratio := clampf(float(state.fraction), 0, 1)
+	fill.visible = ratio > 0
+	fill.scale.x = maxf(.0001, meter_width * ratio)
+	if level_text.text != str(state.level):
+		level_text.text = str(state.level)
+		level_text.pixel_size = level_cap * (.8 if state.level >= 100 else 1.0) / 96.0
+		center_visible_text(level_text)
+	amount_text.text = "MAX LEVEL" if state.level >= Progression.MAX_LEVEL else "%s / %s" % [Progression.number(int(state.xp)), Progression.number(int(state.needed))]
+	center_visible_text(amount_text)
+	next_text.text = "ALL LEVELS COMPLETE" if state.level >= Progression.MAX_LEVEL else "Next Level Up Reward:\nComing soon."
 
 func _init() -> void:
 	style = 1
@@ -73,6 +123,13 @@ func draw_gain(value: float, level: int) -> void:
 	_shown_total = total_for(state)
 
 func stars(lit: bool) -> void:
+	if kit != null:
+		# Lit without glow (the kit is matte): a size up and the title's gold.
+		for star in side_stars:
+			if is_instance_valid(star):
+				star.set_instance_shader_parameter(&"swatch_uv", AtlasPalette.matte_uv(LuchaKit.GOLD) if lit else Vector2(-1, -1))
+				star.scale = Vector3.ONE * (1.3 if lit else 1.0)
+		return
 	for star in side_stars:
 		if is_instance_valid(star):
 			CelPass.paint(star,LuchaKit.TURQUOISE)

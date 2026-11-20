@@ -479,6 +479,43 @@ static func prepare_step(id: String) -> bool:
 	if finished: progress[id] = index+1
 	return is_prepared(id)
 
+## THE WORLD BURST (Parker 11-14: "when you lock in in the vs modes, the confetti
+## explosion should stay where the character locked in, not change with the camera, so
+## it should be worldspace not screen space"; 11-19: "my lock in confetti is not coming
+## out of me, it is sill coming out of screen space"). Every effect builds its burst
+## under the camera, its pieces moving in the burst's own frame. For a lock-in the burst
+## then leaves the camera for the world: scaled about the camera so in that first frame
+## it looks the size it was made at, moved so it bursts from the climber (a little in
+## front, so the body and the stage don't hide it), and left there as the camera moves.
+const WORLD_BURST_FRONT := 0.8  # metres toward the camera from the climber's centre
+
+
+static func into_world(root: Node3D, camera: Node3D, parent: Node3D, at: Vector3) -> void:
+	if root == null or not is_instance_valid(root) or not root.is_inside_tree() or parent == null or not at.is_finite():
+		return
+	# The burst's own centre: where its pieces start, in its frame.
+	var centre := Vector3.ZERO
+	var n := 0
+	for child in root.get_children():
+		if child is Node3D:
+			centre += (child as Node3D).position
+			n += 1
+	if n > 0:
+		centre /= float(n)
+	var from: Transform3D = root.global_transform  # the camera's frame, as built
+	var eye: Vector3 = camera.global_position
+	var forward: Vector3 = -(camera.global_basis.z.normalized())
+	var made_depth: float = (from * centre - eye).dot(forward)
+	if made_depth < 0.5:
+		made_depth = 5.0
+	var spot := at - forward * WORLD_BURST_FRONT
+	var k := clampf((spot - eye).dot(forward) / made_depth, 0.5, 20.0)
+	var basis := from.basis.scaled(Vector3.ONE * k)
+	root.reparent(parent, false)
+	root.global_transform = Transform3D(basis, spot - basis * centre)
+	root.set_meta("world_burst", spot)  # where it bursts from
+
+
 static func burst(id: String, camera: Node3D, big := false) -> Node3D:
 	if not is_instance_valid(camera) or not camera.is_inside_tree(): return null
 	if not REGISTRY.has(id): id = "confetti"

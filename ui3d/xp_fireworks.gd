@@ -52,7 +52,7 @@ void fragment() {
 			var angle := TAU*(j+rng.randf_range(-.3,.3))/RAYS
 			var speed := rng.randf_range(2.8,4.7)*(1.0 if j%3 else .55)
 			rays.append({"velocity":Vector2(cos(angle),sin(angle))*speed,"life":rng.randf_range(1.2,1.7),"phase":rng.randf()*TAU})
-		bursts.append({"mesh":mm,"rays":rays,"delay":0.0 if simultaneous else i*.22,
+		bursts.append({"mesh":mm,"rays":rays,"delay":rng.randf_range(0.0, 0.4) if simultaneous else i*.22,  # (Parker 11-19: "stagger the shots a little so they don't all go off at once")
 			"target":Vector2([-1.4,0.0,1.4][i],[1.3,2.0,1.3][i])})
 
 func point(mm: MultiMesh, index: int, at: Vector2, size: Vector2, light: float) -> void:

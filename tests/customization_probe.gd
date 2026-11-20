@@ -44,7 +44,7 @@ func _ready() -> void:
 	var clean: Array = Net._clean_players([{"name":"Test", "slot":0, "appearance":Wardrobe.for_slot(0)}])
 	check(clean[0].appearance.head == 1 and clean[0].appearance.skin == 5 and clean[0].appearance.effect == "roses", "Network preserves cosmetics")
 	check(Wardrobe.clean({"head":999,"skin":-1,"speedo":999,"effect":"invalid"}) == {"head":Wardrobe.HEAD_NAMES.size() - 1,"skin":0,"speedo":9,"effect":"confetti"}, "Network clamps unknown cosmetics")
-	check(editor.menu.items[4].options == Wardrobe.EFFECT_NAMES and editor.menu.items[4].index == 1, "Roses is selectable and restored")
+	check(editor.menu.items[4].options == Wardrobe.EFFECT_NAMES and editor.menu.items[4].index == Wardrobe.EFFECTS.find("roses"), "Roses is selectable and restored")
 	editor._set_choice("effect", "bills")
 	Wardrobe.load_profiles()
 	check(Wardrobe.profiles[Wardrobe.selected].effect == "bills", "Money choice persists")
@@ -264,7 +264,14 @@ func _ready() -> void:
 		main.game.lock_effect.connect(func(effect): effects.append(effect))
 		main.game._rpc_freeze(c.climber_id, c.pose(), "made", "locked", 2.0, 2.0, true)
 		check(effects == ["luck"], "Successful lock uses the locking climber's Luck preset")
-		check(main.cam.find_children("LuckyCharmBurst", "Node3D", false, false).size() > 0, "Lock emits Luck in game")
+		# THE WORLD BURST: the match's burst leaves the camera for the world, at the climber
+		# (found by its mark: the preview bursts still on the camera share its name).
+		var world_bursts: Array = main.world.get_children().filter(func(n): return n.has_meta("world_burst"))
+		check(world_bursts.size() == 1, "Lock emits Luck in game, in the world")
+		if world_bursts.size() == 1:
+			var com: Vector2 = c.centre_of_mass()
+			var spot: Vector3 = (world_bursts[0] as Node3D).get_meta("world_burst")
+			check(Vector2(spot.x, spot.y).distance_to(com) < 0.5, "The lock-in burst comes from the climber")
 		main.lucha.play_lock_effect("confetti")
 		check(main.cam.find_children("ConfettiBurst", "Node3D", false, false).size() > 0 and main.cam.find_children("ConfettiBurst", "Node3D", false, false)[0].get_child_count() == 90, "Original confetti remains available")
 	main.show_screen("customize")

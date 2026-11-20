@@ -532,7 +532,8 @@ func attach_xp(panel: Node3D) -> void:
 	xp_panel = panel
 	if LuchaUI.COMPACT_RESULTS_XP:
 		_space.add_child(panel)
-		panel.position = Vector3(3.28, -.50, .04)
+		# The kit panel is 0.16 wider: hung further out, its straps reach under the board's rim.
+		panel.position = Vector3(3.42 if LuchaKit.kit_model_exists("xp_match_panel") else 3.28, -.50, .04)
 	else:
 		add_child(panel)
 		panel.position = Vector3(3.35, -1.65, .3)
