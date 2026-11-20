@@ -457,6 +457,10 @@ def dress(A):
     # The hopper's back half: riveted plates, dull green-black and wet, sloping to the lower
     # pipe; two plates missing, the back wall's brick showing through.
     A.deco("aguas_hopper_back", -264.7, 114.0, z=-2.43, size=(13.0, 6.7, 2.34), tone="iron")
+    # (THE MODEL FACES AWAY: all its faces and normals point to -z, so from the front the game drew none of it. It is
+    # turned half round about its up (`turn`, peak.gd _deco): it is a V, the same either way round, and its depth is
+    # even about its middle (z -1.17 .. 1.17), so it stands where it was placed. The model's own fix is its maker's.)
+    A.decos[-1]["turn"] = 180.0
     # The upper pipe's mouth: the back half of a heavy bolted flange round the hole in the roof,
     # the pug cast in it, and the riveted pipe's back half going on up (a pipe 5 m across round
     # the play plane: its back half runs from the play space to z -2.9).

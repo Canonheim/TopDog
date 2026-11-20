@@ -3538,3 +3538,12 @@ Lint 260/0, `--peak` 0. Frames: `cam:2.1:2.4:2.9:2.10:2.11`.
 3. A FOAM BAND where a fall lands on a floor (`_fall_vis`): a soft white band across its width and past it, with a lump,
    just in front of the sheet and clear of the floor. 2.1's falls on the coping and 2.11's spout (0.85) on the walkway.
 Lint 260/0, `--peak` 0. Frames: `cam:2.1:2.11`.
+
+## 2.6's hopper that did not show (the Second Director, 11-20)
+Cause: `aguas_hopper_back` is built facing away from the camera: all 768 of its faces and all its normals point to
+-z, so the game (back faces culled) drew none of it from the front. The node was built, visible and in place
+(watch `decoinfo:aguas_hopper_back:2.6`); nothing stood in front of it (`hidelook:` with the back wall hidden).
+Fix: a deco may say `turn` (degrees about the model's up, peak.gd `_deco`); the hopper is turned 180 (a V, the same
+either way round, its depth even about its middle), so it draws where a2_dress places it. The model itself is
+untouched: its maker can turn it to face +z, and then the `turn` comes out. (The sweeps don't read `turn`.)
+Lint 260/0, `--peak` 0. New watch scenes: `decoinfo:MODEL[:CHALLENGE]`, `hidelook:MODEL:CHALLENGE:X:Y:HALF`.
