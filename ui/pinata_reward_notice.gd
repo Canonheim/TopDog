@@ -19,11 +19,14 @@ var _xp_font: Font
 ## model) the 2D cards below stand in.
 var lucha: Node = null
 var _layer: Node3D = null
-const CARD_SCALE := .9
-const CARD_STEP := 1.2  # menu units between loot cards
-const XP_STEP := .8  # and between XP notices
+## The compact cut (the UI creator's X5b, 11-19): the stack stays left of the turn banner's
+## tail (its right edge under about 340 px at 1080p) with the gem's rosette fully on screen.
+const CARD_SCALE := .85
+const CARD_STEP := 1.3  # menu units from one loot card's top to the next
+const XP_STEP := .75  # and from an XP notice's
 const SLIDE_IN := .32
-const EDGE := .3  # from the screen's edges, menu units
+const EDGE := .06  # from the screen's left edge, menu units (about 8 px at 1080p)
+const EDGE_TOP := .14  # from its top
 const BURST_STAR := "xp_burst_star"
 
 func _ready() -> void:
@@ -279,13 +282,13 @@ func _process_3d(dt: float) -> void:
 	if lucha != null and is_instance_valid(lucha):
 		hw = float(lucha.get("virtual_half_w"))
 		hh = float(lucha.get("virtual_half_h"))
-	var top := hh - EDGE
+	var top := hh - EDGE_TOP
 	for entry in active:
 		if not entry.has("card"): _mount(entry)
 		var node: Node3D = entry.card
 		var step: float = node.get_meta("step")
 		var home_x := -hw + EDGE + float(node.get_meta("left"))
-		var home_y := top - step * .5
+		var home_y := top - float(node.get_meta("top"))
 		top -= step
 		var t := clampf(float(entry.age) / SLIDE_IN, 0.0, 1.0)
 		var c1 := 1.0  # a small overshoot
@@ -313,9 +316,10 @@ func _make_card_3d(entry: Dictionary) -> Node3D:
 	var model := LuchaKit.kit_model("reward_card" if loot else "xp_notice")
 	node.add_child(model)
 	node.scale = Vector3.ONE * CARD_SCALE
-	# Its left edge (the gem's rosette, the star's ring) and its width, at CARD_SCALE.
-	node.set_meta("left", (2.26 if loot else 1.74) * CARD_SCALE)
-	node.set_meta("width", (4.58 if loot else 3.26) * CARD_SCALE)
+	# Its left edge (the gem's rosette, the star's ring), top and width, at CARD_SCALE.
+	node.set_meta("left", (1.424 if loot else 1.22) * CARD_SCALE)
+	node.set_meta("top", (.448 if loot else .30) * CARD_SCALE)
+	node.set_meta("width", (2.744 if loot else 2.72) * CARD_SCALE)
 	node.set_meta("step", CARD_STEP if loot else XP_STEP)
 	if loot:
 		var tier: int = entry.rarity
@@ -327,14 +331,14 @@ func _make_card_3d(entry: Dictionary) -> Node3D:
 				pip.visible = i <= tier
 				LuchaKit.tint_part(model, "reward_pip_%d" % i, colour)
 		var who: String = str(entry.player)
-		var head := LuchaKit.text3d((who.to_upper() + ": UNLOCKED") if who != "" else "UNLOCKED", .13, LuchaKit.CREAM)
+		var head := LuchaKit.text3d((who.to_upper() + ": UNLOCKED") if who != "" else "UNLOCKED", .12, LuchaKit.CREAM)
 		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		head.position = Vector3(-1.08, .175, .066)
-		_fit(head, .13, 2.8)
+		head.position = Vector3(-.44, .165, .066)
+		_fit(head, .12, 1.6)
 		model.add_child(head)
-		var title := LuchaKit.text3d(str(entry.name), .19, LuchaKit.INK)
-		title.position = Vector3(.32, -.14, .068)
-		_fit(title, .19, 2.8)
+		var title := LuchaKit.text3d(str(entry.name), .17, LuchaKit.INK)
+		title.position = Vector3(.35, -.135, .068)
+		_fit(title, .17, 1.6)
 		LuchaKit.center_digits(title)
 		model.add_child(title)
 		if tier >= 3:
@@ -342,11 +346,11 @@ func _make_card_3d(entry: Dictionary) -> Node3D:
 	else:
 		var what := LuchaKit.text3d("", .105, LuchaKit.CREAM)
 		what.name = "XpWhat"
-		what.position = Vector3(-.2, 0, .06)
+		what.position = Vector3(.07, 0, .06)
 		model.add_child(what)
 		var amount := LuchaKit.text3d("", .14, LuchaKit.RED)
 		amount.name = "XpAmount"
-		amount.position = Vector3(1.02, 0, .062)
+		amount.position = Vector3(1.1, 0, .062)
 		model.add_child(amount)
 		_write_xp_3d(node, entry)
 	LuchaUI.no_shadows(node)
@@ -360,10 +364,10 @@ func _write_xp_3d(node: Node3D, entry: Dictionary) -> void:
 	if what == null or amount == null:
 		return
 	what.text = str(entry.name).to_upper()
-	_fit(what, .105, 1.4)
+	_fit(what, .095, 1.18)
 	LuchaKit.center_digits(what)
 	amount.text = "+%s XP" % preload("res://core/player_progression.gd").number(int(entry.amount))
-	_fit(amount, .14, .66)
+	_fit(amount, .12, .56)
 	LuchaKit.center_digits(amount)
 
 
@@ -384,7 +388,7 @@ func _puff(node: Node3D, colour: Color) -> void:
 		if star == null:
 			return
 		LuchaKit.tint_part(star, BURST_STAR, colour)
-		star.position = Vector3(-1.72, 0, .25)
+		star.position = Vector3(-.98, 0, .2)  # from the gem
 		node.add_child(star)
 		var a := TAU * (i + randf() * .5) / 10.0
 		stars.append({"node": star, "v": Vector3(cos(a), sin(a), 0) * randf_range(1.6, 2.6), "spin": randf_range(-8, 8), "age": -SLIDE_IN})
@@ -407,7 +411,7 @@ func _tick_puff(node: Node3D, dt: float) -> void:
 		star.position += (st.v as Vector3) * dt
 		st.v = (st.v as Vector3) * exp(-3.0 * dt) + Vector3(0, -2.0 * dt, 0)
 		star.rotation.z += float(st.spin) * dt
-		star.scale = Vector3.ONE * maxf(0.0, 1.0 - life) * 1.4
+		star.scale = Vector3.ONE * maxf(0.0, 1.0 - life)  # the re-cut star is twice the old
 		if life >= 1.0:
 			star.queue_free()
 	if stars.all(func(st): return not is_instance_valid(st.node)):
