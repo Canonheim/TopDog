@@ -405,11 +405,19 @@ func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 	var floor_y := float(z.rect[1])
 	var level := float(z.surface)
 	var cols: Array = water_colors(a)
+	# (A lock may take a body's `dark`, `murk` and `fade` (_body_vis), and `rings: false`: no still-water rings drawn on
+	# its front. The black waters' first look, 11-20: seen from 2.1 the lock read as a glass tank, its tiled floor at
+	# full depth and round "bubble" rings on it.)
+	if z.has("dark"):
+		var dk := float(z.dark)
+		cols = [Color((cols[0] as Color).darkened(dk), (cols[0] as Color).a), Color((cols[1] as Color).darkened(dk), (cols[1] as Color).a)]
+	if z.has("murk"):
+		cols[1] = Color((cols[1] as Color).r, (cols[1] as Color).g, (cols[1] as Color).b, float(z.murk))
 	var n := Node3D.new()
 	# the front: x0 .. x1, 0 .. 1 high, stretched to the level every tick
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var still := Color(0.5, 1.0, 0.0, 1.0)  # (no current, a still patch: the body shader's vertex colour)
+	var still := Color(0.5, 1.0 if bool(z.get("rings", true)) else 0.0, 0.0, 1.0)  # (no current, a still patch: the body shader's vertex colour)
 	var steps := maxi(1, int(ceil((x1 - x0) / 0.5)))
 	for i in steps:
 		var xl := lerpf(x0, x1, float(i) / steps)
@@ -425,6 +433,8 @@ func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 	fm.set_shader_parameter("deep_color", cols[1])
 	fm.set_shader_parameter("surface_y", level + Peak.ORIGIN.y)
 	fm.set_shader_parameter("mean_flow", 0.0)
+	if z.has("fade"):
+		fm.set_shader_parameter("fade_m", float(z.fade))
 	fm.render_priority = 1
 	front.material_override = fm
 	front.position = Vector3(0, floor_y, WATER_DEPTH * 0.5)
@@ -1507,7 +1517,8 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 			for k in n_foam:
 				var fx := xr - hw + (float(k) + 0.5) * (2.0 * hw / float(n_foam))
 				((foot.body as Dictionary).first as Array).append(Vector3(fx, maxf(1.3, hw / float(n_foam) * 1.3), 1.6))
-	if top_y - foot_y > 2.5:
+	var spray := bool(e.get("mist", true))  # (`mist: false`: no mist balls at its foot, no spatter: F-C11, the black waters' first look)
+	if top_y - foot_y > 2.5 and spray:
 		var mist := _particles(Color("#EAF6FC"), 5.0, int(clampf(7.0 * density + 4.0, 5.0, 14.0)), 2.6)
 		(mist.material_override as StandardMaterial3D).albedo_color.a = 0.26
 		mist.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
@@ -1520,7 +1531,7 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 		mist.gravity = Vector3.ZERO
 		mist.position = Vector3(xr, foot_y + 0.3, 0.9)
 		root.add_child(mist)
-	if foot.is_empty():
+	if foot.is_empty() and spray:
 		# it lands on a floor: it spatters
 		var sp := _drops(int(clampf(10.0 * density, 5.0, 14.0)), 0.55)
 		sp.direction = Vector3.UP

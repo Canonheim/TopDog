@@ -874,6 +874,9 @@ A.zones[-1]["lock"] = {"low": LOCK_LOW, "high": LOCK_HIGH, "rise": RISE, "hold":
 # origin its waterline) land.
 A.zones[-1]["lock"]["wheel"] = {"at": [-246.6, 82.1], "z": -1.6, "d": 1.4, "mover": "compuerta", "travel": -3.0, "turns": 2.0}  # (a whole number: the hub's pug upright while open)
 A.zones[-1]["lock"]["gauge"] = {"x": -230.8, "z": -1.75}
+# (Darker down and murkier, no still-water rings: seen from 2.1 above it, the lock read as a glass tank, its tiled floor
+# at full depth and round rings on its front: the black waters' first look, 11-20.)
+A.zones[-1].update({"fade": 1.2, "dark": 0.25, "murk": 0.9, "rings": False})
 # The wicket: open (up into the gate) while the water is under its sill, from 13.03 s to 1.17 s of the
 # next cycle: shut 11.86 s, opening and shutting in 0.2 s.
 _open_at = CYCLE - (79.4 - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW) * DRAIN    # 13.03 s: the drain under the sill

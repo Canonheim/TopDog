@@ -3514,3 +3514,18 @@ tunnel's back wall again); no new models.
    the buffer (was 25). The slam takes at most 10 m/s of it (`cap`), so the rider is thrown at 6.5 as the test wants.
    cart1 (1.7) is left on its authored `speeds`: its leap at the lip is tuned to them.
    `--peakride` 0 fails; lint 260/0; `--peak` 0. Watch: `cartv` logs the cart's speed each second.
+
+## The black waters' first look (the reviewer's w1, REVIEW_LOG c04d4f0e; 11-20)
+1. Spray balls: a waterfall effect may say `mist: false` (peak_zones.gd `_fall_vis`: no mist at its foot, no
+   spatter); every a2 fall says it, and the cascade's mist effect over 2.10 and the pipe hall's steam are out. Falls
+   landing in water still churn and foam. NOT taken out: the puffs along the pipe at 2.9's top are the hot pipe
+   joints' own tell (peak_things.gd TELLS.hot: a hot hold breathes a wisp at rest), Parker's 11-12 call.
+2. The pools: 2.1's "glass tank with bubble rings" is a1's lock (La Esclusa) seen from above. A lock may now take a
+   body's `dark`, `murk`, `fade` and `rings: false` (`_lock_vis`); a1's lock: fade 1.2, dark 0.25, murk 0.9, no
+   rings. 2.10's pool: front 1.1, fade 0.8, dark 0.25, murk 0.9.
+3. 2.4's east edge: st's body card (z -9, grey-tan) stood uncut past x -222; a2 lays its own dark (back3) in front of
+   it, x -222.6 .. -212, y 88 .. 194, z -8.8. (st.py's BODY_WINDOWS is part two b's file.)
+4. 2.11: the dam's leak is a spout (density 1, width 0.65); the race's drain by 2.1's climber the same (0.55).
+5. 2.6's chains are physics ropes, kind "chain" (cadena1..3; also cadena_salto1/2, last_chance, flume_out): their
+   drawing is the rope code in peak_things.gd, the Second Director's tonight. Left.
+Lint 260/0, `--peak` 0. Frames: `cam:2.1:2.4:2.9:2.10:2.11`.
