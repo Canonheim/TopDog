@@ -1517,7 +1517,8 @@ func _build_menus() -> void:
 	menus.title = t
 	xp_display = preload("res://ui3d/xp_championship.gd").new()
 	t.add_child(xp_display)
-	xp_display.position = Vector3(3.85, -2.17, 0.12)
+	# The kit belt's right wing reaches 0.18 further: it keeps 0.25 inside the edge at 16:10.
+	xp_display.position = Vector3(3.60 if LuchaKit.kit_model_exists("xp_title_belt") else 3.85, -2.17, 0.12)
 	xp_display.scale = Vector3.ONE * .81
 	# Practice choices are independent of multiplayer settings.
 	var training := _menu()

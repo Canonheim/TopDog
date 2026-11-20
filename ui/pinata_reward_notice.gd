@@ -9,6 +9,22 @@ var active: Array[Dictionary] = []
 var showing := false
 var card: Control
 var _xp_font: Font
+## THE KIT CARDS (Parker 11-19: "Have our UI guy redo the new UI things so they are in our
+## UI style"; the UI creator's reward_card and xp_notice, Top Dog Kit\docs\PARTS.md X3-X4).
+## With the 3D UI up (Main sets `lucha`) and the models delivered, each notice is a kit
+## piece hung on the camera with the rest of the UI, top left, at 0.9 of the UI's scale:
+## a loot card's gem and stars take the rarity's colour, the XP notice writes what was done
+## and its XP on two faces. The kit is opaque, so a notice slides in from the left edge
+## (a small overshoot) and leaves the same way. Without them (a unit test, a missing
+## model) the 2D cards below stand in.
+var lucha: Node = null
+var _layer: Node3D = null
+const CARD_SCALE := .9
+const CARD_STEP := 1.2  # menu units between loot cards
+const XP_STEP := .8  # and between XP notices
+const SLIDE_IN := .32
+const EDGE := .3  # from the screen's edges, menu units
+const BURST_STAR := "xp_burst_star"
 
 func _ready() -> void:
 	mouse_filter=Control.MOUSE_FILTER_IGNORE
@@ -26,7 +42,9 @@ func enqueue_xp(title: String, amount: int, player_name := "") -> void:
 		if title=="Upward airtime" and entry.kind=="xp" and entry.name==title and entry.player==player_name:
 			entry.amount=int(entry.amount)+amount
 			entry.left=LIFE
-			if entry.has("card"): entry.card.get_node("RewardName").text=_xp_text(entry)
+			if entry.has("card"):
+				if entry.card is Node3D: _write_xp_3d(entry.card, entry)
+				else: entry.card.get_node("RewardName").text=_xp_text(entry)
 			active.erase(entry)
 			active.push_front(entry)
 			return
@@ -35,7 +53,25 @@ func enqueue_xp(title: String, amount: int, player_name := "") -> void:
 func _xp_text(entry: Dictionary) -> String:
 	return "%s  +%s XP" % [entry.name,preload("res://core/player_progression.gd").number(int(entry.amount))]
 
+func _three_d() -> bool:
+	return lucha != null and is_instance_valid(lucha) and lucha.get("cam") != null \
+		and LuchaKit.kit_model_exists("reward_card") and LuchaKit.kit_model_exists("xp_notice")
+
+
+func _ensure_layer() -> void:
+	if _layer != null and is_instance_valid(_layer):
+		return
+	_layer = Node3D.new()
+	_layer.name = "RewardNotices3D"
+	_layer.add_to_group(LuchaUI.UI_ROOT)
+	_layer.position = Vector3(0, 0, -LuchaUI.MENU_DIST)
+	_layer.scale = Vector3.ONE * LuchaUI.UI_SCALE
+	(lucha.get("cam") as Node3D).add_child(_layer)
+
+
 func _capacity() -> int:
+	if _three_d():
+		return 3
 	return clampi(int((get_viewport_rect().size.y-72.0)/(104.0*_scale_factor())),1,3)
 
 func _scale_factor() -> float:
@@ -54,10 +90,18 @@ func _retire_oldest() -> void:
 	if not entry.has("card"): return
 	outgoing=entry
 	outgoing.left=EXIT_FADE
+	if entry.card is Node3D:
+		outgoing.x0=(entry.card as Node3D).position.x  # it slides out from where it is
+		return
 	outgoing.alpha=entry.card.modulate.a
 	entry.card.position=Vector2(36,36+_capacity()*104*_scale_factor())
 
 func _mount(entry: Dictionary) -> void:
+	if _three_d():
+		_ensure_layer()
+		entry.card=_make_card_3d(entry)
+		_layer.add_child(entry.card)
+		return
 	card=make_card(entry.name,entry.rarity,entry.player) if entry.kind=="loot" else _make_xp_card(entry)
 	entry.card=card
 	add_child(card)
@@ -79,6 +123,9 @@ func _make_xp_card(entry: Dictionary) -> Control:
 	return panel
 
 func _process(dt: float) -> void:
+	if (_layer != null and is_instance_valid(_layer)) or _three_d():
+		_process_3d(dt)
+		return
 	while active.size()>_capacity(): _retire_oldest()
 	for i in range(active.size()-1,-1,-1):
 		var entry: Dictionary=active[i]
@@ -204,3 +251,164 @@ static func _label(value: String, font: Font, font_size: int) -> Label:
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_constant_override("outline_size", 0)
 	return label
+
+
+# ---------------------------------------------------------------- the kit cards (3D)
+
+## The stack, top left: newest at the top, each sliding in, out, and up as others go.
+func _process_3d(dt: float) -> void:
+	while active.size() > _capacity(): _retire_oldest()
+	for i in range(active.size() - 1, -1, -1):
+		var entry: Dictionary = active[i]
+		entry.age = float(entry.age) + dt
+		entry.left = float(entry.left) - dt
+		if float(entry.left) <= 0:
+			if entry.has("card"): entry.card.queue_free()
+			active.remove_at(i)
+	if outgoing.has("card"):
+		outgoing.left = float(outgoing.left) - dt
+		var gone: float = 1.0 - maxf(0.0, float(outgoing.left)) / EXIT_FADE
+		var node: Node3D = outgoing.card
+		node.position.x = float(outgoing.get("x0", node.position.x)) - gone * gone * _slide(node)
+		_tick_puff(node, dt)
+		if float(outgoing.left) <= 0.0:
+			node.queue_free()
+			outgoing.clear()
+	var hw := 6.79
+	var hh := 3.82
+	if lucha != null and is_instance_valid(lucha):
+		hw = float(lucha.get("virtual_half_w"))
+		hh = float(lucha.get("virtual_half_h"))
+	var top := hh - EDGE
+	for entry in active:
+		if not entry.has("card"): _mount(entry)
+		var node: Node3D = entry.card
+		var step: float = node.get_meta("step")
+		var home_x := -hw + EDGE + float(node.get_meta("left"))
+		var home_y := top - step * .5
+		top -= step
+		var t := clampf(float(entry.age) / SLIDE_IN, 0.0, 1.0)
+		var c1 := 1.0  # a small overshoot
+		var arrive := 1.0 + (c1 + 1.0) * pow(t - 1.0, 3) + c1 * pow(t - 1.0, 2)
+		var leave := clampf(1.0 - float(entry.left) / EXIT_FADE, 0.0, 1.0)
+		node.position.x = home_x - (1.0 - arrive) * _slide(node) - leave * leave * _slide(node)
+		if not node.get_meta("placed", false):
+			node.position.y = home_y
+			node.set_meta("placed", true)
+		else:
+			node.position.y += (home_y - node.position.y) * minf(1.0, dt * 14.0)
+		_tick_puff(node, dt)
+	showing = not active.is_empty() or not outgoing.is_empty()
+
+
+## How far a notice travels to be off the left edge.
+func _slide(node: Node3D) -> float:
+	return float(node.get_meta("width")) + EDGE + .4
+
+
+func _make_card_3d(entry: Dictionary) -> Node3D:
+	var loot: bool = entry.kind == "loot"
+	var node := Node3D.new()
+	node.name = "RewardCard" if loot else "XpNotice"
+	var model := LuchaKit.kit_model("reward_card" if loot else "xp_notice")
+	node.add_child(model)
+	node.scale = Vector3.ONE * CARD_SCALE
+	# Its left edge (the gem's rosette, the star's ring) and its width, at CARD_SCALE.
+	node.set_meta("left", (2.26 if loot else 1.74) * CARD_SCALE)
+	node.set_meta("width", (4.58 if loot else 3.26) * CARD_SCALE)
+	node.set_meta("step", CARD_STEP if loot else XP_STEP)
+	if loot:
+		var tier: int = entry.rarity
+		var colour: Color = COLORS[tier]
+		LuchaKit.tint_part(model, "reward_gem", colour)
+		for i in 5:
+			var pip := model.find_child("reward_pip_%d" % i, true, false) as Node3D
+			if pip != null:
+				pip.visible = i <= tier
+				LuchaKit.tint_part(model, "reward_pip_%d" % i, colour)
+		var who: String = str(entry.player)
+		var head := LuchaKit.text3d((who.to_upper() + ": UNLOCKED") if who != "" else "UNLOCKED", .13, LuchaKit.CREAM)
+		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		head.position = Vector3(-1.08, .175, .066)
+		_fit(head, .13, 2.8)
+		model.add_child(head)
+		var title := LuchaKit.text3d(str(entry.name), .19, LuchaKit.INK)
+		title.position = Vector3(.32, -.14, .068)
+		_fit(title, .19, 2.8)
+		LuchaKit.center_digits(title)
+		model.add_child(title)
+		if tier >= 3:
+			_puff(node, colour)
+	else:
+		var what := LuchaKit.text3d("", .105, LuchaKit.CREAM)
+		what.name = "XpWhat"
+		what.position = Vector3(-.2, 0, .06)
+		model.add_child(what)
+		var amount := LuchaKit.text3d("", .14, LuchaKit.RED)
+		amount.name = "XpAmount"
+		amount.position = Vector3(1.02, 0, .062)
+		model.add_child(amount)
+		_write_xp_3d(node, entry)
+	LuchaUI.no_shadows(node)
+	return node
+
+
+## The XP notice's two faces: what was done, and its XP on the chip.
+func _write_xp_3d(node: Node3D, entry: Dictionary) -> void:
+	var what := node.find_child("XpWhat", true, false) as Label3D
+	var amount := node.find_child("XpAmount", true, false) as Label3D
+	if what == null or amount == null:
+		return
+	what.text = str(entry.name).to_upper()
+	_fit(what, .105, 1.4)
+	LuchaKit.center_digits(what)
+	amount.text = "+%s XP" % preload("res://core/player_progression.gd").number(int(entry.amount))
+	_fit(amount, .14, .66)
+	LuchaKit.center_digits(amount)
+
+
+## The label at its cap height, narrowed to fit `width` if its text runs longer.
+static func _fit(lb: Label3D, cap: float, width: float) -> void:
+	lb.pixel_size = cap / 96.0
+	var font: Font = lb.font if lb.font != null else ThemeDB.fallback_font
+	var w := font.get_string_size(lb.text, HORIZONTAL_ALIGNMENT_LEFT, -1, lb.font_size).x * lb.pixel_size
+	if w > width:
+		lb.pixel_size *= width / w
+
+
+## For the two top rarities, a puff of kit stars in the rarity's colour as the card lands.
+func _puff(node: Node3D, colour: Color) -> void:
+	var stars: Array = []
+	for i in 10:
+		var star := LuchaKit.kit_model(BURST_STAR)
+		if star == null:
+			return
+		LuchaKit.tint_part(star, BURST_STAR, colour)
+		star.position = Vector3(-1.72, 0, .25)
+		node.add_child(star)
+		var a := TAU * (i + randf() * .5) / 10.0
+		stars.append({"node": star, "v": Vector3(cos(a), sin(a), 0) * randf_range(1.6, 2.6), "spin": randf_range(-8, 8), "age": -SLIDE_IN})
+	node.set_meta("puff", stars)
+
+
+func _tick_puff(node: Node3D, dt: float) -> void:
+	if not node.has_meta("puff"):
+		return
+	var stars: Array = node.get_meta("puff")
+	for st in stars:
+		if not is_instance_valid(st.node):
+			continue
+		var star: Node3D = st.node
+		st.age = float(st.age) + dt
+		star.visible = float(st.age) >= 0.0
+		if float(st.age) < 0.0:
+			continue
+		var life := float(st.age) / .7
+		star.position += (st.v as Vector3) * dt
+		st.v = (st.v as Vector3) * exp(-3.0 * dt) + Vector3(0, -2.0 * dt, 0)
+		star.rotation.z += float(st.spin) * dt
+		star.scale = Vector3.ONE * maxf(0.0, 1.0 - life) * 1.4
+		if life >= 1.0:
+			star.queue_free()
+	if stars.all(func(st): return not is_instance_valid(st.node)):
+		node.remove_meta("puff")

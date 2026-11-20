@@ -31,8 +31,10 @@ func _ready() -> void:
 	name="MatchXP"
 	belt=preload("res://ui3d/xp_results_compact.gd").new()
 	add_child(belt)
-	row_name=belt.label("MATCH XP",.155,LuchaKit.RED,Vector3(0,1.00,.24))
-	row_amount=belt.label("",.20,LuchaKit.INK,Vector3(0,.73,.24))
+	# On the kit panel the window's face is at z .118 (Dan's stood out at .24).
+	var face_z := .122 if belt.kit != null else .24
+	row_name=belt.label("MATCH XP",.155,LuchaKit.RED,Vector3(0,1.00,face_z))
+	row_amount=belt.label("",.20,LuchaKit.INK,Vector3(0,.73,face_z))
 	total_label=belt.label("",.12,LuchaKit.CREAM,Vector3(0,-1.42,.24))
 	total_label.visible=false # The belt and category counter already show the tally.
 	# Transparent atlas materials bypass the depth-based ink outline on these tiny drops.
@@ -144,7 +146,7 @@ func _launch_feed_star(departure: int, age: float) -> void:
 func _draw_feed_star(drop: Dictionary) -> void:
 	var spark: Node3D = drop.node
 	var t := clampf(float(drop.age) / STAR_FALL_SECONDS, 0.0, 1.0)
-	spark.position.y = lerpf(.55, belt.meter_y, t * t)
+	spark.position.y = lerpf(belt.feed_top, belt.meter_y, t * t)
 	spark.position.z = .35
 	spark.rotation.z = t * TAU * .5 + float(drop.spin)
 	spark.scale = Vector3.ONE * minf(1.0, minf(t * 10.0, (1.0-t) * 8.0))
@@ -197,11 +199,12 @@ func _notification(what: int) -> void:
 
 ## Reserve padding on all four sides, including multiline achievement names.
 func _fit_text() -> void:
-	_fit_label(row_name, .145, 1.48, .27)
-	_fit_label(row_amount, .20, 1.48, .21)
-	# Match the visible ink margins inside the recessed cream window (.64 .. 1.16).
-	var top_gap := 1.16 - (row_name.position.y + _ink_edges(row_name).y)
-	row_amount.position.y = .64 + top_gap - _ink_edges(row_amount).x
+	var kit_look: bool = belt.kit != null
+	_fit_label(row_name, .15 if kit_look else .145, belt.window_width, .30 if kit_look else .27)
+	_fit_label(row_amount, .21 if kit_look else .20, belt.window_width, .23 if kit_look else .21)
+	# Match the visible ink margins inside the recessed cream window.
+	var top_gap: float = belt.window_top - (row_name.position.y + _ink_edges(row_name).y)
+	row_amount.position.y = belt.window_bottom + top_gap - _ink_edges(row_amount).x
 
 
 func _fit_label(node: Label3D, max_size: float, width: float, height: float) -> void:

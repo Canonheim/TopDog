@@ -1,6 +1,42 @@
 extends "res://ui3d/xp_championship.gd"
 ## Sculpted marquee extension with a complete visible border and a shared gold spine.
+## THE KIT LOOK (Parker 11-19: "Dan added a bunch of XP stuff and the UI is a little different
+## than ours. Have our UI guy redo the new UI things so they are in our UI style. It already
+## looks good, but it's a different style with outlines and stuff"). The UI creator's kit
+## models (Top Dog Kit\docs\PARTS.md, X) carry the plates, the stars, the meter's fill and the
+## faces; the code writes the numbers on them. Dan's built look stays as the stand-in.
+const KIT_PANEL := "xp_match_panel"
+## The cream window the category and its XP are written in (xp_match_summary._fit_text).
+var window_top := 1.16
+var window_bottom := .64
+var window_width := 1.48
+var feed_top := .55  # where the feed stars start
+
+
 func build_display() -> void:
+	kit = LuchaKit.kit_model(KIT_PANEL)
+	if kit == null:
+		_build_marquee()
+		return
+	add_child(kit)
+	_kit_parts()
+	meter_left = -.88
+	meter_width = 1.76
+	meter_y = -.88
+	window_top = 1.19
+	window_bottom = .54
+	window_width = 1.70
+	feed_top = .54
+	level_cap = .22
+	level_text = label("1", level_cap, LuchaKit.CREAM, Vector3(0, -.04, .17))
+	amount_text = label("", .15, LuchaKit.INK, Vector3(0, -1.22, .118))
+	next_text = label("", .12, LuchaKit.INK, Vector3.ZERO)
+	next_text.visible = false
+	refresh()
+	LuchaUI.no_shadows(self)
+
+
+func _build_marquee() -> void:
 	var outline:=PackedVector2Array([
 		Vector2(-.72,1.75),Vector2(.72,1.75),Vector2(.85,1.68),Vector2(.91,1.55),
 		Vector2(1.06,1.48),Vector2(1.12,1.34),Vector2(1.12,-1.02),Vector2(1.06,-1.17),
@@ -64,4 +100,4 @@ func set_progress(state: Dictionary) -> void:
 	# Six-digit requirements at high levels must stay inside the cream face.
 	var font: Font = amount_text.font if amount_text.font != null else ThemeDB.fallback_font
 	var width := font.get_string_size(amount_text.text, HORIZONTAL_ALIGNMENT_CENTER, -1, amount_text.font_size).x
-	amount_text.pixel_size = minf(.125 / amount_text.font_size, 1.48 / maxf(width, 1))
+	amount_text.pixel_size = minf((.15 if kit != null else .125) / amount_text.font_size, (1.6 if kit != null else 1.48) / maxf(width, 1))
