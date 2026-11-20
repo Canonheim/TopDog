@@ -999,6 +999,31 @@ is not coming out of me, it is sill coming out of screen space".
 - Checked: lint 281; customization_probe (the match burst leaves the camera and comes from the
   climber); rendered match lock-ins of confetti, bills and popcorn with the camera panning away.
 
+## Dan's XP screens in the kit look (Parker, 2026-11-19)
+
+Parker: "Dan added a bunch of XP stuff and the UI is a little different than ours. Have our UI guy
+redo the new UI things so they are in our UI style. It already looks good, but it's a different style
+with outlines and stuff".
+- The UI creator's kit models (Top Dog Kit `docs\PARTS.md`, X) replace Dan's built looks; the code
+  writes the numbers on their faces, and Dan's look stays as the stand-in when a model is missing:
+  - `xp_title_belt`, the title's PLAYER XP belt (`ui3d/xp_championship.gd`): the level on the
+    medallion, the amount and the next reward on cream faces, the fill only stretches. It hangs
+    0.25 further left (3.60) so its wing keeps inside the edge at 16:10.
+  - `xp_match_panel`, the results' MATCH XP panel (`ui3d/xp_results_compact.gd`): the category and
+    its XP in the cream window (`window_top/bottom/width`, `feed_top`, read by the summary), hung at
+    x 3.42 from the board's middle, its straps under the board's rim.
+  - Lit stars no longer glow (the kit is matte): they grow 1.3 and turn the title's gold.
+  - `reward_card` and `xp_notice`, the in-match notices (`ui/pinata_reward_notice.gd`): 3D pieces on
+    the camera with the other UI, top left, at 0.9 of the UI's scale. The gem and the stars carry the
+    rarity's colour (pips one to five); the two top rarities give off a puff of `xp_burst_star`.
+    They slide in from the left edge and out the same way. Without the 3D UI (a unit test) the 2D
+    cards stand in.
+- Left as Dan made them: the level-up fireworks (glow sprites; Parker asked the UI creator for a video
+  of a solid version, not a game change), and the layouts that aren't live.
+- Checked: lint 283; customization_probe, match_xp_probe, xp_star_tail_probe, landing_xp_probe pass.
+  xp_display_probe (still on the old 500 XP curve), xp_tally_probe and xp_gain_probe (both time out)
+  fail the same way on main before this. Frames: `builds\xp_kit_look.jpg`, `builds\xp_kit_notices.jpg`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
