@@ -3553,3 +3553,13 @@ The pale balls along 2.9's pipe were the hot holds' resting wisp (peak_things.gd
 every 1 to 2.4 s at rest). It is out, for every hot hold (the chimney's hot rock too): at rest a hot hold pulses hot
 in colour and spits a spark now and then; held, the hand smokes, it shudders, and it lets go with its burst, as
 Parker asked on 11-12. Lint 260/0, `--peak` 0. Frame: `cam:2.9`.
+
+## 2.1's pool (the reviewer's w5 re-score, REVIEW_LOG 14cfd9f0; 11-20)
+The pool under 2.1's pier is the lock (a1's, drawn by `_lock_vis`). Nothing drifted since w3: w3 took `dark` off to
+keep the waterline and foam and left a light body (fade 1.6, murk 0.85), the tiles at near full contrast all the way
+down, and its front stood at z 1.44, in front of the walls' faces (1.2), so its east end was a glass edge before the
+pier. Now a water rule may say `deep_dark` (peak_zones: the deep colour alone darkened, the shallow band, waterline
+and foam keep their light; bodies and the lock both read it), and the lock may say `front` as a body does. The lock:
+fade 0.9, murk 0.95, deep_dark 0.75, front 1.1: it is murky dark a metre down, the tiles below are ghosts, and it
+ends at the pier's own face. The mine's view of the lock (`cam:1.13`) keeps its waterline. Lint 260/0, `--peak` 0.
+Frame: `cam:2.1`.
