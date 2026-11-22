@@ -12,7 +12,7 @@ func _ready() -> void:
   var reward = load("res://core/pinata_rewards.gd").roll(4,[],seed_value,rules)
   assert(reward.name == "Test")
   found[int(reward.rarity)] = true
- assert(found.size() == 5)
+ assert(found.size() == 4 and not found.has(0))
  for item in rules.items:
   var owned := []
   for other in rules.items:
@@ -46,7 +46,7 @@ func _ready() -> void:
  d.reward_unlocked.connect(func(reward): rewards.append(reward))
  d._on_collected(null,d.received_generation)
  assert(d.current.taken and rewards.size() == 1 and d.reward_store == null)
- assert(rewards[0].name == "Test" and rewards[0].rarity in [0, 1])
+ assert(rewards[0].name == "Test" and rewards[0].rarity == 1)
  d._on_collected(null,d.received_generation)
  assert(rewards.size() == 1)
  game._rpc_phase("between",0,game.line,2,-1)
