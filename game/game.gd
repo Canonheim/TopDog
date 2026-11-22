@@ -56,7 +56,7 @@ const LOCK_BUFFER_S := 0.3
 var _lock_want := {}  # climber id -> seconds the press is still wanted
 const STREAM_HZ := 30.0
 const CLOCK_HZ := 4.0
-const PAUSE_BETWEEN := 1.6  # seconds between turns / rounds
+const PAUSE_BETWEEN := 3.0  # seconds between turns / rounds
 const FREEZE_REPLY_S := 1.5  # how long the host waits for an owner's final pose
 const RING_OUT_S := 3.0  # down on the plaza: back in the ring after this long (Parker 11-08)
 const PULL_STALE_S := 0.25
@@ -1808,9 +1808,7 @@ func _rpc_chair_limb(cid: int, selected: int, release_velocity: Vector3) -> void
 		return
 	remote_chair_limbs[cid] = selected
 	if chair != null and chair.holder == cid and selected != chair.limb:
-		chair.drop(c, get_physics_process_delta_time())
-		if release_velocity.is_finite():
-			chair.linear_velocity = Vector3(release_velocity.x, release_velocity.y, 0).limit_length(8.0)
+		chair.drop(c, get_physics_process_delta_time(), release_velocity)
 
 
 func _tick_chair(dt: float) -> void:

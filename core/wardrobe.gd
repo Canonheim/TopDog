@@ -140,6 +140,8 @@ static func _recoloured(src: Mesh, uvs: Array, key: String) -> Mesh:
 	var out: Mesh = src
 	if not classes.is_empty():
 		var made := ArrayMesh.new()
+		# UV recolouring preserves geometry: let fitted cosmetics use its CPU bake.
+		made.set_meta("lock_geometry_source",src.resource_path)
 		for si in src.get_surface_count():
 			var arrays := src.surface_get_arrays(si)
 			var uv: PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV]

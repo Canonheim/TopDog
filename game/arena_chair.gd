@@ -58,6 +58,7 @@ var previous := Transform3D.IDENTITY
 var recent_hits := {}
 var carry_velocity := Vector3.ZERO
 var carry_spin := 0.0
+var release_grace := 0.0
 var last_hand := Vector3.ZERO
 var carrier_rids: Array[RID] = []
 var loose_target := Transform3D.IDENTITY
@@ -203,6 +204,7 @@ func _show_stage(stage: int) -> void:
 
 
 func can_reach(c: Climber, i: int) -> bool:
+	if holder == -1 and carrier_rids.has(c.bodies[c.limbs[i].def.end].get_rid()): return false
 	var end := c.limb_end(i)
 	var p := collider.to_local(Vector3(end.x, end.y, 0))
 	return p.distance_to(p.clamp(-SIZE * 0.5, SIZE * 0.5)) <= float(c.limbs[i].end_r) + 0.02
@@ -318,16 +320,16 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		bell_struck.emit(bell_at)
 
 
-func drop(c: Climber, dt: float) -> void:
-	clear_grip()
-	if c != null and not c.removed:
+func drop(c: Climber, _dt: float, remote_hand_velocity: Variant = null) -> void:
+	# Keep the rigid body's center-of-mass motion; a swinging grip can be moving
+	# in a different direction. Do not replace its spin with a pose-delta sample.
+	var flight := linear_velocity
+	var spin := angular_velocity
+	if remote_hand_velocity is Vector3 and remote_hand_velocity.is_finite() and c != null and not c.removed:
 		var end: RigidBody3D = c.bodies[c.limbs[limb].def.end]
-		var measured := (end.global_position - last_hand) / dt
-		if c.state == Climber.State.LIVE:
-			measured = end.linear_velocity
-		# A last-moment reversal takes priority over the short smoothing history.
-		if measured.dot(carry_velocity) < 0 or measured.length_squared() > 0.01:
-			carry_velocity = measured
+		flight = remote_hand_velocity + spin.cross(global_position-end.global_position)
+	clear_grip()
+	release_grace = Feel.get_k("chair_release_grace")
 	thrower = holder
 	holder = -1
 	limb = -1
@@ -336,13 +338,15 @@ func drop(c: Climber, dt: float) -> void:
 	collision_mask = Climber.SOLID_MASK
 	collision_layer = Climber.LAYER_PROP
 	Climber.sync_server(self)
-	linear_velocity = Vector3(carry_velocity.x, carry_velocity.y, 0).limit_length(8)
-	angular_velocity = Vector3.BACK * clampf(carry_spin, -10, 10)
+	linear_velocity = Vector3(flight.x, flight.y, 0).limit_length(8)
+	angular_velocity = spin.limit_length(10)
 	previous = global_transform
 	sleeping = false
 
 
-func release_carrier_when_clear() -> void:
+func release_carrier_when_clear(dt := -1.0) -> void:
+	release_grace = maxf(0.0, release_grace - (get_physics_process_delta_time() if dt < 0 else dt))
+	if release_grace > 0.0: return
 	if exceptions.is_empty():
 		return
 	var query := PhysicsShapeQueryParameters3D.new()

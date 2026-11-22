@@ -8,6 +8,16 @@ const Fit=preload("res://ui3d/vines/vines.gd")
 const DURATION=5.0
 const WEB_GROUP=&"lock_in_web_surface"
 const WEB_CLEARANCE=.008
+const BODY_GEOMETRY=preload("res://ui3d/spider_body_geometry.res")
+static var extra_body_geometry: Dictionary={}
+static var body_geometry_misses:=0
+static var web_material: ShaderMaterial
+static var spider_material: ShaderMaterial
+var setup_slice_started:=0
+var setup_max_slice_us:=0
+var setup_yields:=0
+var setup_stage:="prepare"
+var setup_max_stage:=""
 static var thread_mesh: ArrayMesh
 static var spider_meshes: Array[ArrayMesh]=[]
 var age:=0.0
@@ -31,6 +41,12 @@ static func prepare() -> void:
 	for index in 13:prepare_unit(index)
 static func prepare_unit(index: int) -> bool:
 	if index==0:
+		if web_material==null:
+			web_material=ShaderMaterial.new();web_material.shader=preload("res://ui3d/spider_surface.gdshader")
+			web_material.set_shader_parameter("atlas",CelPass.one().get_shader_parameter("base_texture"))
+			web_material.set_shader_parameter("swatch_uv",AtlasPalette.swatch(Color.WHITE).uv)
+			web_material.set_shader_parameter("opacity",.92)
+			spider_material=web_material.duplicate();spider_material.set_shader_parameter("swatch_uv",AtlasPalette.swatch(Color("261d1a")).uv);spider_material.set_shader_parameter("opacity",1.0)
 		if thread_mesh!=null:return true
 		var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
 		var uv: Vector2=AtlasPalette.swatch(Color("e2ded2")).uv
@@ -84,6 +100,7 @@ static func attach_owner(owner_node: Node, animate: bool, use_tower: bool, previ
 	return effect
 func start(owner_node: Node,animate: bool) -> void:
 	await setup(owner_node)
+	if not is_instance_valid(self) or not is_instance_valid(owner_node):return
 	if owner_node is Climber:
 		var center:=Vector3.ZERO
 		for body in owner_node.bodies.values():center+=body.global_position
@@ -92,6 +109,17 @@ func start(owner_node: Node,animate: bool) -> void:
 	lod_clock=rng.randf()*.25
 	age=0.0 if animate else 6.6;tick(age)
 	set_meta("ready",true);set_process(true)
+static func body_geometry(skin: MeshInstance3D) -> Dictionary:
+	var mesh:=skin.mesh
+	var source: String=mesh.get_meta("lock_geometry_source",mesh.resource_path)
+	var baked: Dictionary=BODY_GEOMETRY.get_meta("surfaces")
+	if baked.has(source):return baked[source]
+	# Unknown/custom geometry remains supported, cached once instead of each lock-in.
+	if not extra_body_geometry.has(mesh):
+		body_geometry_misses+=1
+		var arr:=mesh.surface_get_arrays(0)
+		extra_body_geometry[mesh]={"vertices":arr[Mesh.ARRAY_VERTEX],"indices":arr[Mesh.ARRAY_INDEX]}
+	return extra_body_geometry[mesh]
 func skin_hit(p: Vector2) -> float:
 	var z:=-INF
 	for t in cells.get(Vector2i(floori(p.x/.04),floori(p.y/.04)),[]):
@@ -120,17 +148,37 @@ func hit(p: Vector2) -> float:
 	return z
 func add_spider(path: Array, offset: float, weaving:=false) -> void:
 	if path.size()<2:return
-	var spider:=MeshInstance3D.new();spider.mesh=spider_meshes[0];spider.material_override=CelPass.one();spider.scale=Vector3.ONE*.045
+	var spider:=MeshInstance3D.new();spider.visible=false;spider.mesh=spider_meshes[0];spider.material_override=spider_material;spider.scale=Vector3.ONE*.045
 	spider.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(spider)
 	var distances:=PackedFloat32Array([0.0])
 	for i in range(1,path.size()):distances.append(distances[-1]+path[i-1].distance_to(path[i]))
 	spiders.append({"node":spider,"path":path,"offset":offset,"weaving":weaving,"distances":distances})
+func route_surface(core: Vector3,direction: Vector3,faces: PackedVector3Array) -> Vector3:
+	var distance:=0.0
+	for i in range(0,faces.size(),3):
+		if i%96==0 and budget_due():
+			await yield_setup()
+			if not is_instance_valid(self):return core
+		var contact=Geometry3D.ray_intersects_triangle(core,direction,faces[i],faces[i+1],faces[i+2])
+		if contact!=null:distance=maxf(distance,core.distance_to(contact))
+	return core+direction*distance if distance>0 else core+direction*3
+func budget_due() -> bool:
+	return Time.get_ticks_usec()-setup_slice_started>=1500
+func yield_setup() -> void:
+	var elapsed:=Time.get_ticks_usec()-setup_slice_started
+	if elapsed>setup_max_slice_us:setup_max_slice_us=elapsed;setup_max_stage=setup_stage
+	setup_yields+=1
+	await get_tree().process_frame
+	if is_instance_valid(self):setup_slice_started=Time.get_ticks_usec()
 func setup(actor: Node) -> void:
+	setup_slice_started=Time.get_ticks_usec()
 	owner_ref=weakref(actor);space=get_world_3d().direct_space_state;rng.randomize()
 	for index in 13:
 		prepare_unit(index)
-		await get_tree().process_frame
+		await yield_setup()
+		if not is_instance_valid(self):return
 	var parts: Dictionary={}
+	var local_faces: Dictionary={}
 	for key in Climber.Layout.ORDER:
 		var body: Node=actor.bodies.get(key) if actor is Climber else actor
 		if body==null:continue
@@ -140,16 +188,30 @@ func setup(actor: Node) -> void:
 			var meshes:=skin.find_children("*","MeshInstance3D",true,false)
 			if not meshes.is_empty():parts[key]=meshes[0]
 	# A single pose snapshot supplies front-surface tests; no physics raycasts.
+	setup_stage="triangles"
 	for key in parts:
 		var skin: MeshInstance3D=parts[key]
-		var arr:=skin.mesh.surface_get_arrays(0);var verts: PackedVector3Array=arr[Mesh.ARRAY_VERTEX];var ids: PackedInt32Array=arr[Mesh.ARRAY_INDEX]
+		var geometry:=body_geometry(skin)
+		var verts: PackedVector3Array=geometry.vertices;var ids: PackedInt32Array=geometry.indices
 		if ids.is_empty():for i in verts.size():ids.append(i)
+		var faces:=PackedVector3Array()
+		faces.resize(ids.size())
 		for i in range(0,ids.size(),3):
+			if budget_due():
+				await yield_setup()
+				if not is_instance_valid(self):return
+			faces[i]=verts[ids[i]];faces[i+1]=verts[ids[i+1]];faces[i+2]=verts[ids[i+2]]
 			var a:=to_local(skin.to_global(verts[ids[i]]));var b:=to_local(skin.to_global(verts[ids[i+1]]));var c:=to_local(skin.to_global(verts[ids[i+2]]))
 			var aa:=Vector2(a.x,a.y);var bb:=Vector2(b.x,b.y);var cc:=Vector2(c.x,c.y)
 			triangles.append([aa,bb,cc,Rect2(aa,Vector2.ZERO).expand(bb).expand(cc).grow(.00001),a.z,b.z,c.z])
-		await get_tree().process_frame
+		local_faces[key]=faces
+		await yield_setup()
+		if not is_instance_valid(self):return
+	setup_stage="cells"
 	for tri in triangles:
+		if budget_due():
+			await yield_setup()
+			if not is_instance_valid(self):return
 		depth_min=minf(depth_min,minf(tri[4],minf(tri[5],tri[6]))-.12)
 		depth_max=maxf(depth_max,maxf(tri[4],maxf(tri[5],tri[6]))+.12)
 		var rect: Rect2=tri[3]
@@ -163,16 +225,26 @@ func setup(actor: Node) -> void:
 	var bounds:=Rect2()
 	for tri in triangles:bounds=bounds.merge(tri[3])
 	bounds=bounds.grow(.24)
+	setup_stage="occupancy"
 	var occupied: Dictionary={}
 	var step:=.018
 	for y in range(floori(bounds.position.y/step),ceili(bounds.end.y/step)+1):
 		for x in range(floori(bounds.position.x/step),ceili(bounds.end.x/step)+1):
+			if budget_due():
+				await yield_setup()
+				if not is_instance_valid(self):return
 			var point:=Vector2(x,y)*step;var z:=hit(point)
 			if z!=-INF:occupied[Vector2i(x,y)]=z
-		if y%8==0:await get_tree().process_frame
+		if budget_due():
+			await yield_setup()
+			if not is_instance_valid(self):return
+	setup_stage="candidates"
 	var candidates: Array=[]
 	for y in range(floori(bounds.position.y/step),ceili(bounds.end.y/step)+1,3):
 		for x in range(floori(bounds.position.x/step),ceili(bounds.end.x/step)+1,3):
+			if budget_due():
+				await yield_setup()
+				if not is_instance_valid(self):return
 			var center:=Vector2(x,y)*step
 			if occupied.has(Vector2i(x,y)):continue
 			var support: Array=[];var min_radius:=INF;var max_gap:=0;var gap:=0
@@ -187,10 +259,16 @@ func setup(actor: Node) -> void:
 				gap=0 if support[ray%16] else gap+1;max_gap=maxi(max_gap,gap)
 			if min_radius>=.055 and min_radius<.28 and support.count(true)>=10 and max_gap<=6:
 				candidates.append({"center":center,"score":min_radius+support.count(true)*.003})
-		if y%12==0:await get_tree().process_frame
+		if budget_due():
+			await yield_setup()
+			if not is_instance_valid(self):return
 	candidates.sort_custom(func(a,b):return a.score>b.score)
+	setup_stage="anchors"
 	var accepted: Array=[]
 	for candidate in candidates:
+		if budget_due():
+			await yield_setup()
+			if not is_instance_valid(self):return
 		var center: Vector2=candidate.center+Vector2(rng.randf_range(-.008,.008),rng.randf_range(-.008,.008))
 		var duplicate:=false
 		for prev in accepted:
@@ -201,6 +279,9 @@ func setup(actor: Node) -> void:
 		var tower_anchors:=0;var body_anchors:=0
 		var spokes:=rng.randi_range(16,21);var phase:=rng.randf()*TAU
 		for j in spokes:
+			if budget_due():
+				await yield_setup()
+				if not is_instance_valid(self):return
 			var dir:=Vector2.from_angle(phase+TAU*j/spokes+rng.randf_range(-.018,.018))
 			var point:=center;var z:=0.0;var found:=false
 			for k in range(1,72):
@@ -229,10 +310,12 @@ func setup(actor: Node) -> void:
 			if outlines_overlap(polygon,prev.polygon):overlaps=true
 		if overlaps:continue
 		accepted.append({"center":center,"radius":candidate.score*.65,"polygon":polygon,"anchors":anchors,"tower_anchors":tower_anchors})
-		await get_tree().process_frame
+		await yield_setup()
+		if not is_instance_valid(self):return
 	set_meta("viable_pockets",accepted.size())
 	for i in range(accepted.size()-1,0,-1):
 		var j:=rng.randi_range(0,i);var swap=accepted[i];accepted[i]=accepted[j];accepted[j]=swap
+	setup_stage="webs"
 	for candidate in accepted:
 		# Recheck at placement, after all asynchronous pose work. Try another pocket
 		# if a different player's effect reserved this one while we were preparing.
@@ -241,20 +324,26 @@ func setup(actor: Node) -> void:
 		if webs.size()>=2:break
 	# Closed three-dimensional routes on real skin triangles. Sampling progresses
 	# in one direction around each body part; the spider never reverses or strafes.
+	await yield_setup()
+	if not is_instance_valid(self):return
+	setup_stage="routes"
 	for key in ["chest","arm_l_lo","arm_r_up","leg_l_up","leg_r_lo","head"]:
 		if not parts.has(key):continue
-		var skin: MeshInstance3D=parts[key];var box:=skin.mesh.get_aabb();var faces:=skin.mesh.get_faces()
+		var skin: MeshInstance3D=parts[key];var box:=skin.mesh.get_aabb();var faces: PackedVector3Array=local_faces[key]
 		var axis:=box.size.max_axis_index();var a:=(axis+1)%3;var b:=(axis+2)%3
 		var path: Array=[];var normals: Array=[];var phase:=rng.randf()*TAU
 		for i in 128:
 			var angle:=phase+TAU*float(i)/128
 			var core:=box.get_center();core[axis]+=box.size[axis]*.25*sin(angle*2)
 			var radial:=Vector3.ZERO;radial[a]=cos(angle);radial[b]=sin(angle)
-			var surface:=Fit.ray_surface(core+radial*3,box,faces,axis)
+			var surface: Vector3=await route_surface(core,radial,faces)
+			if not is_instance_valid(self):return
 			if surface.distance_to(core)>2:continue
 			var point:=skin.to_global(surface+radial*.006)
 			path.append(to_local(point));normals.append((global_basis.inverse()*skin.global_basis*radial).normalized())
-			if i%32==0:await get_tree().process_frame
+			if budget_due():
+				await yield_setup()
+				if not is_instance_valid(self):return
 		if path.size()<3:continue
 		# Copy the seam exactly rather than sampling 2*PI again.
 		path.append(path[0]);normals.append(normals[0])
@@ -306,13 +395,13 @@ func build_web(center: Vector2,anchors: Array[Vector3]) -> bool:
 			var a:=hub.lerp(anchors[j],t);var b:=hub.lerp(anchors[(j+1)%anchors.size()],u)
 			var mid:=(a+b)*.5;mid+=(hub-mid)*.025
 			segments.append([a,mid]);segments.append([mid,b])
-	var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=thread_mesh;mm.instance_count=segments.size()
+	var mm:=MultiMesh.new();mm.transform_format=MultiMesh.TRANSFORM_3D;mm.mesh=thread_mesh;mm.instance_count=segments.size();mm.visible_instance_count=0
 	for i in segments.size():
 		var a: Vector3=segments[i][0];var b: Vector3=segments[i][1];var delta:=b-a
 		var side:=delta.cross(Vector3.BACK).normalized()*.0025
 		mm.set_instance_transform(i,Transform3D(Basis(side,delta,Vector3.BACK),a))
 		path.append(a);path.append(b)
-	var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.material_override=CelPass.one();node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(node)
+	var node:=MultiMeshInstance3D.new();node.multimesh=mm;node.material_override=web_material;node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF;add_child(node)
 	# Reserve the entire eventual web immediately, including while still weaving.
 	# Other web cosmetics can use this group and a node-local web_outline too.
 	node.set_meta("web_outline",PackedVector3Array(anchors));node.add_to_group(WEB_GROUP)

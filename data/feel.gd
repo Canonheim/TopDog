@@ -9,6 +9,7 @@ const PPM := 100.0  # 2D physics pixels per metre (the physics world is in px)
 
 ## [value, min, max, help]. Order here is the dev panel's order.
 const SPEC := {
+	"chair_release_grace": [0.25, 0.0, 1.0, "Minimum thrower collision/regrab protection after releasing the chair (s)"],
 	"chair_unstick_delay": [0.3, 0.0, 1.0, "Resting player contact before a grounded loose chair slips away (s)"],
 	"chair_unstick_speed": [0.9, 0.0, 1.5, "Gentle sideways speed of a chair slipping out from under a player (m/s)"],
 	"chair_unstick_acceleration": [6.0, 0.0, 15.0, "Acceleration clearing a grounded chair from under a player (m/s2)"],
