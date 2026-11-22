@@ -1038,6 +1038,20 @@ it drops".
   Rendering at 1.5 and scaling down did help, at about 43% of the frame rate (395 to 225 fps on the
   title, RTX 5060): too much for weak PCs. "We are keeping FXAA."
 
+## One branch: main (Parker, 2026-11-22)
+
+Parker: "make main the only branch, so like catch up second director so he is on main too and make
+sure we dont lose his work".
+- Every session now works on `main` in this checkout (`TopYourPals`). The worktrees `TopDog-luchador`
+  (branch `luchador-ui`) and `TopDog-env` (`env-pass`) are retired, and the branches `luchador-ui`,
+  `env-pass`, `new-climber` and `merge-test` are deleted. All but `merge-test` were wholly in main;
+  `merge-test` (85b7776d) was an old trial merge whose two parents are both in main.
+- Kept: the Second Director's playtest-shot ledger (`docs/peak/playtest/shots/_seen.json`), and the
+  worktree's own builds 0.3.104-0.3.140 (1.9 GB, now `builds\luchador_worktree_builds`).
+- The title logo: the worktree's uncommitted `kit/models/title_logo.glb` was the kit's older file
+  over Dan's patch (11-10: two triangles filling a small hole in the banner slab). It was dropped,
+  and the kit's own `models/title_logo.glb` now carries Dan's patch, so a kit sync can't undo it.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.
