@@ -5,6 +5,25 @@ extends "res://ui3d/xp_championship.gd"
 ## looks good, but it's a different style with outlines and stuff"). The UI creator's kit
 ## models (Top Dog Kit\docs\PARTS.md, X) carry the plates, the stars, the meter's fill and the
 ## faces; the code writes the numbers on them. Dan's built look stays as the stand-in.
+var _firework_audio: Node
+
+func reset_firework_audio() -> void:
+	if is_instance_valid(_firework_audio): _firework_audio.reset()
+
+func _firework_launched(offset: float) -> void:
+	if not is_visible_in_tree(): return
+	if not is_instance_valid(_firework_audio):
+		_firework_audio = preload("res://ui3d/xp_firework_audio.gd").new()
+		add_child(_firework_audio)
+	_firework_audio.play_launch(offset)
+
+func _firework_popped() -> void:
+	if not is_visible_in_tree(): return
+	if not is_instance_valid(_firework_audio):
+		_firework_audio = preload("res://ui3d/xp_firework_audio.gd").new()
+		add_child(_firework_audio)
+	_firework_audio.play_burst()
+
 const KIT_PANEL := "xp_match_panel"
 ## The cream window the category and its XP are written in (xp_match_summary._fit_text).
 var window_top := 1.16
@@ -90,6 +109,8 @@ func celebrate(level: int) -> void:
 	for upper in [true, false]:
 		var effect := preload("res://ui3d/xp_fireworks.gd").new()
 		effect.simultaneous = true
+		effect.popped.connect(_firework_popped)
+		effect.launched.connect(_firework_launched)
 		add_child(effect)
 		effect.scale = Vector3.ONE * .48
 		effect.position = Vector3(0, 1.70 if upper else -1.40, -.18)

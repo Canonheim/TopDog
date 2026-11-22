@@ -4658,3 +4658,88 @@ func _run_neutralgrapple() -> void:
 		b.remove()
 		floor_body.queue_free()
 		await frames(2)
+
+
+func _run_pinatabounce() -> void:
+	var g := make_game("scramble",2,60.0)
+	await wait_phase(g,"round")
+	g.set_physics_process(false)
+	var c: Climber = g.climbers[g.live[0]]
+	var other: Climber = g.climbers[g.live[1]]
+	for actor in [c,other]:
+		actor.release_all()
+		actor.set_physics_process(false)
+		for piece: RigidBody3D in actor.bodies.values():
+			piece.global_position += Vector3(0,20,0)
+			piece.linear_velocity = Vector3.ZERO
+			piece.angular_velocity = Vector3.ZERO
+			piece.gravity_scale = 0
+			Climber.sync_server(piece)
+	await frames(2)
+	var d = g.pinata_director
+	var boost: Vector3 = d.pickup_bounce(Vector3(8,24,0))
+	t("pinata bounce: mild planar boost points toward the base", boost.x < 0 and boost.y < 0 and boost.z == 0 and is_equal_approx(boost.length(),1.2))
+	var before := Vector3.ZERO
+	var other_before := Vector3.ZERO
+	for piece: RigidBody3D in c.bodies.values(): before += piece.linear_velocity*piece.mass/c.total_mass
+	for piece: RigidBody3D in other.bodies.values(): other_before += piece.linear_velocity*piece.mass/other.total_mass
+	d.generation += 1
+	d._spawn(d.generation,Vector3(8,24,0),1)
+	d._collect(d.generation,"",0,c.climber_id,boost)
+	d._collect(d.generation,"",0,c.climber_id,boost)
+	await frames(2)
+	var after := Vector3.ZERO
+	var other_after := Vector3.ZERO
+	for piece: RigidBody3D in c.bodies.values(): after += piece.linear_velocity*piece.mass/c.total_mass
+	for piece: RigidBody3D in other.bodies.values(): other_after += piece.linear_velocity*piece.mass/other.total_mass
+	t("pinata bounce: collector receives exactly one boost", (after-before).distance_to(boost)<0.15, str(after-before))
+	t("pinata bounce: other players receive no boost", other_after.distance_to(other_before)<0.1)
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+
+
+func _run_chairunstick() -> void:
+	var floor_body := static_box(Vector2(20, 4.5), Vector2(8, 0.5))
+	var c := spawn(Vector2(30, 6))
+	c.set_physics_process(false)
+	var chair := preload("res://game/arena_chair.gd").new()
+	chair.setup(false, Vector2i(9,12))
+	world.add_child(chair)
+	chair.in_bubble = false
+	chair.freeze = false
+	chair.axis_lock_angular_x = true
+	chair.axis_lock_angular_y = true
+	chair.axis_lock_angular_z = true
+	chair.global_transform = Transform3D(Basis(Vector3.RIGHT, PI/2), Vector3(20,5.07,0))
+	Climber.sync_server(chair)
+	await seconds(0.5)
+	t("chair unstick: unloaded chair remains still", absf(chair.position.x-20) < 0.05)
+	# An isolated live torso reproduces the broad, balanced support contact.
+	var torso := RigidBody3D.new()
+	torso.mass = 8
+	torso.collision_layer = Climber.LAYER_LIVE
+	torso.collision_mask = Climber.SOLID_MASK | Climber.LAYER_PROP
+	torso.axis_lock_linear_z = true
+	torso.axis_lock_angular_x = true
+	torso.axis_lock_angular_y = true
+	torso.axis_lock_angular_z = true
+	torso.set_meta("climber", c)
+	var col := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(0.6,0.4,0.2)
+	col.shape = shape
+	torso.add_child(col)
+	world.add_child(torso)
+	torso.position = Vector3(20,5.35,0)
+	Climber.sync_server(torso)
+	var escape_speed := Feel.get_k("chair_unstick_speed")
+	Feel.set_k("chair_unstick_speed", 0.0)
+	await seconds(1)
+	t("chair unstick: baseline balanced body remains stranded above ground", torso.position.y > 5.28 and absf(chair.position.x-20) < 0.05, torso.position)
+	Feel.set_k("chair_unstick_speed", escape_speed)
+	await seconds(3)
+	t("chair unstick: grounded chair slips out from under a resting player", absf(chair.position.x-20) > 0.5, chair.position)
+	t("chair unstick: player settles onto ground", torso.position.y < 5.23, torso.position)
+	t("chair unstick: chair stays solid", chair.collision_layer == Climber.LAYER_PROP and chair.collision_mask == Climber.SOLID_MASK)
+	c.remove()

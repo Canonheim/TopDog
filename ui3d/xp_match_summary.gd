@@ -186,6 +186,7 @@ func _finish() -> void:
 
 func _clear_fireworks() -> void:
 	if belt==null: return
+	belt.reset_firework_audio()
 	for child in belt.get_children():
 		if child.has_meta("xp_sparks"): child.queue_free()
 

@@ -4,12 +4,13 @@ var fails := 0
 func check(ok: bool,label: String):
  if not ok: fails+=1; print("FAIL ",label)
 func _ready():
+ check(Director.WEIGHTS==[[0,100,0,0,0],[0,100,0,0,0],[0,80,20,0,0],[0,65,25,10,0],[0,55,25,15,5]],"white spawn odds merged into green without changing higher rarities")
  for distance in [0.0,6.999,7.0,13.999,14.0,20.999,21.0,27.999,28.0,100.0]:
   var counts := [0,0,0,0,0]
   for roll in 100: counts[Director.rarity_for_roll(distance,roll+.5)]+=1
   check(counts==Director.WEIGHTS[clampi(int(floor(distance/7.0)),0,4)],"distance rarity boundary %s"%distance)
  check(Director.SPAWN_CHANCE==.10,"10 percent")
- check(Director.rarity_for_roll(0,100.0)==0,"inclusive RNG endpoint remains white")
+ check(Director.rarity_for_roll(0,100.0)==1,"inclusive RNG endpoint remains green")
  check(Director.spacing_for_players(3)==10.5 and Director.spacing_for_players(12)==42.0,"future player scaling")
  var forced_seed := 0
  var r:=RandomNumberGenerator.new()
@@ -33,7 +34,7 @@ func _ready():
    check(is_instance_valid(director.current),mode+" actual round spawn")
    check(director.round_index==1,mode+" first round")
    if is_instance_valid(director.current):
-    check(director.current.rarity==0,mode+" initial white")
+    check(director.current.rarity==1,mode+" initial green")
     if mode!="delmar": check(director.current.position.y-Director.Pickup.PICKUP_RADIUS>=4.9999,mode+" five-unit ground clearance")
     director._collect(director.received_generation-1)
     check(not director.current.taken,"stale collection rejected")

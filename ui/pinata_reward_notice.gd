@@ -1,6 +1,6 @@
 extends Control
 ## Three newest loot / XP notices; the displaced oldest fades away permanently.
-const COLORS := [Color("ffffff"),Color("36dc70"),Color("398aff"),Color("ba54ff"),Color("ff3046")]
+const COLORS := [Color("36dc70"),Color("36dc70"),Color("398aff"),Color("ba54ff"),Color("ff3046")]
 const RADII := [12,16,21,27,34]
 const LIFE := 5.1
 const EXIT_FADE := .25
@@ -36,7 +36,7 @@ func _ready() -> void:
 	_xp_font=load(LuchaKit.TITLE_FONT) if ResourceLoader.exists(LuchaKit.TITLE_FONT) else ThemeDB.fallback_font
 
 func enqueue(reward_name: String, rarity: int, player_name := "") -> void:
-	_push({"name":reward_name,"rarity":clampi(rarity,0,4),"player":player_name,"kind":"loot","age":0.0,"left":LIFE})
+	_push({"name":reward_name,"rarity":clampi(rarity,1,4),"player":player_name,"kind":"loot","age":0.0,"left":LIFE})
 
 func enqueue_xp(title: String, amount: int, player_name := "") -> void:
 	if amount<=0: return
@@ -231,7 +231,7 @@ void fragment() {
 	text.name = "RewardName"
 	text.add_theme_constant_override("outline_size", 1)
 	text.add_theme_color_override("font_outline_color", Color("31313c"))
-	text.add_theme_color_override("font_color", Color("a8a8a8") if tier == 0 else Color.WHITE)
+	text.add_theme_color_override("font_color", COLORS[tier])
 	panel.add_child(text)
 	text.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	text.offset_top = 28
@@ -273,6 +273,7 @@ func _process_3d(dt: float) -> void:
 		var gone: float = 1.0 - maxf(0.0, float(outgoing.left)) / EXIT_FADE
 		var node: Node3D = outgoing.card
 		node.position.x = float(outgoing.get("x0", node.position.x)) - gone * gone * _slide(node)
+		_align_rarity_gem(node)
 		_tick_puff(node, dt)
 		if float(outgoing.left) <= 0.0:
 			node.queue_free()
@@ -300,6 +301,7 @@ func _process_3d(dt: float) -> void:
 			node.set_meta("placed", true)
 		else:
 			node.position.y += (home_y - node.position.y) * minf(1.0, dt * 14.0)
+		_align_rarity_gem(node)
 		_tick_puff(node, dt)
 	showing = not active.is_empty() or not outgoing.is_empty()
 
@@ -324,21 +326,26 @@ func _make_card_3d(entry: Dictionary) -> Node3D:
 	if loot:
 		var tier: int = entry.rarity
 		var colour: Color = COLORS[tier]
-		LuchaKit.tint_part(model, "reward_gem", colour)
-		for i in 5:
-			var pip := model.find_child("reward_pip_%d" % i, true, false) as Node3D
-			if pip != null:
-				pip.visible = i <= tier
-				LuchaKit.tint_part(model, "reward_pip_%d" % i, colour)
+		var gem := model.find_child("reward_gem", true, false) as MeshInstance3D
+		if gem != null:
+			# A raised table, sloping crown facets and solid girdle, on the house atlas.
+			gem.mesh = _rarity_gem(clampi(tier, 1, 4) + 2, colour)
+			gem.position.x = -.98
+			gem.position.y = 0
+			gem.position.z = .175  # rear face .150, ahead of the setting at .122
+			gem.material_override = CelPass.one()
+			gem.set_instance_shader_parameter(&"swatch_uv", Vector2(-1, -1))
+
 		var who: String = str(entry.player)
 		var head := LuchaKit.text3d((who.to_upper() + ": UNLOCKED") if who != "" else "UNLOCKED", .12, LuchaKit.CREAM)
 		head.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		head.position = Vector3(-.44, .165, .066)
 		_fit(head, .12, 1.6)
 		model.add_child(head)
-		var title := LuchaKit.text3d(str(entry.name), .17, LuchaKit.INK)
-		title.position = Vector3(.35, -.135, .068)
-		_fit(title, .17, 1.6)
+		var title := LuchaKit.poster_text(str(entry.name), .17, colour)
+		title.position = Vector3(.35, -.135, .078)
+		for letter_layer in title.get_children():
+			_fit(letter_layer as Label3D, .17, 1.6)
 		LuchaKit.center_digits(title)
 		model.add_child(title)
 		if tier >= 3:
@@ -416,3 +423,71 @@ func _tick_puff(node: Node3D, dt: float) -> void:
 			star.queue_free()
 	if stars.all(func(st): return not is_instance_valid(st.node)):
 		node.remove_meta("puff")
+
+
+## Faceted star-cut gem: every triangle uses one matte atlas swatch.
+static func _rarity_gem(points: int, colour: Color) -> ArrayMesh:
+	var ring := PackedVector2Array()
+	for i in points * 2:
+		var angle := PI * .5 + i * TAU / (points * 2)
+		var inner := .085 if points == 3 else .12
+		var radius := .275 if i % 2 == 0 else inner
+		ring.append(Vector2(cos(angle), sin(angle)) * radius)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var top_colour := colour.lightened(.22)
+	var tris := Geometry2D.triangulate_polygon(ring)
+	for k in range(0, tris.size(), 3):
+		var a := ring[tris[k]] * .55
+		var b := ring[tris[k + 1]] * .55
+		var c := ring[tris[k + 2]] * .55
+		_gem_triangle(st, Vector3(a.x,a.y,.09), Vector3(b.x,b.y,.09), Vector3(c.x,c.y,.09), top_colour)
+		var ba := ring[tris[k]]
+		var bb := ring[tris[k + 1]]
+		var bc := ring[tris[k + 2]]
+		_gem_triangle(st, Vector3(bc.x,bc.y,-.025), Vector3(bb.x,bb.y,-.025), Vector3(ba.x,ba.y,-.025), colour.darkened(.35))
+	for i in ring.size():
+		var a := ring[i]
+		var b := ring[(i + 1) % ring.size()]
+		var aa := a * .55
+		var bb := b * .55
+		var face_colour := colour.lightened(.38) if (a + b).y > .05 else colour.darkened(.22)
+		if (a + b).x > .1:
+			face_colour = colour.darkened(.1)
+		var v0 := Vector3(a.x,a.y,0)
+		var v1 := Vector3(b.x,b.y,0)
+		var v2 := Vector3(bb.x,bb.y,.09)
+		var v3 := Vector3(aa.x,aa.y,.09)
+		_gem_triangle(st,v0,v1,v2,face_colour)
+		_gem_triangle(st,v0,v2,v3,face_colour)
+		_gem_triangle(st,Vector3(a.x,a.y,-.025),Vector3(b.x,b.y,-.025),v1,colour.darkened(.35))
+		_gem_triangle(st,Vector3(a.x,a.y,-.025),v1,v0,colour.darkened(.35))
+	st.set_material(CelPass.one())
+	return st.commit()
+
+
+static func _gem_triangle(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, colour: Color) -> void:
+	st.set_normal((b-a).cross(c-a).normalized())
+	st.set_uv(AtlasPalette.matte_uv(colour))
+	# Godot front faces use clockwise winding; normals remain outward.
+	st.add_vertex(a)
+	st.add_vertex(c)
+	st.add_vertex(b)
+
+
+## Project the star's tip circle concentrically onto the setting's front plane.
+## Keep its depth: compensate perspective in XY rather than burying the gem.
+func _align_rarity_gem(card: Node3D) -> void:
+	var gem := card.find_child("reward_gem", true, false) as MeshInstance3D
+	if gem == null or lucha == null:
+		return
+	var camera := lucha.get("cam") as Camera3D
+	if camera == null:
+		return
+	var model := gem.get_parent() as Node3D
+	var circle := camera.to_local(model.to_global(Vector3(-.98, 0, .122)))
+	var tips := camera.to_local(model.to_global(Vector3(-.98, 0, .175)))
+	var ratio := tips.z / circle.z if camera.projection == Camera3D.PROJECTION_PERSPECTIVE else 1.0
+	var aligned := Vector3(circle.x * ratio, circle.y * ratio, tips.z)
+	gem.position = model.to_local(camera.to_global(aligned))
+	gem.scale = Vector3(ratio, ratio, 1)

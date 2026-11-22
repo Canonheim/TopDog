@@ -7,6 +7,8 @@ signal donkey_struck
 
 var grip_joint := RID()
 var terrain_contacts := {}
+var support_time := 0.0
+var escape_side := 0.0
 var incoming_linear := Vector3.ZERO
 var incoming_angular := Vector3.ZERO
 const MODELS := [
@@ -276,6 +278,7 @@ func _exit_tree() -> void:
 
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	_slide_from_under_player(state)
 	if in_bubble or not terrain_struck.has_connections():
 		return
 	var touching := {}
@@ -463,3 +466,41 @@ func _expire_hits(dt: float) -> void:
 			expired.erase(owner_climber.climber_id)
 	for id in expired:
 		recent_hits.erase(id)
+
+
+## A loose prop must not strand a climber on a surface that cannot be latched.
+## Only the simulating owner runs this (loose network replicas are frozen).
+func _slide_from_under_player(state: PhysicsDirectBodyState3D) -> void:
+	var grounded := false
+	var supported := false
+	var player_x := 0.0
+	if not in_bubble and holder == -1 and not freeze and state.linear_velocity.length() < 1.5:
+		for i in state.get_contact_count():
+			var other := state.get_contact_collider_object(i) as PhysicsBody3D
+			if other == null: continue
+			var normal := state.get_contact_local_normal(i)
+			if other.collision_layer & (Climber.LAYER_WORLD | Climber.LAYER_FROZEN) and normal.y > 0.5:
+				grounded = true
+			var c := Climber.climber_of(other)
+			if c != null and not c.removed and c.state != Climber.State.FROZEN and normal.y < -0.5:
+				supported = true
+				player_x = other.global_position.x
+	if not grounded or not supported:
+		support_time = 0.0
+		escape_side = 0.0
+		if physics_material_override != null: physics_material_override.friction = 1.0
+		return
+	support_time += state.step
+	if support_time < Feel.get_k("chair_unstick_delay"): return
+	if escape_side == 0.0:
+		escape_side = signf(state.transform.origin.x-player_x)
+		if escape_side == 0.0: escape_side = 1.0
+		# Prefer the inside of the ring if the chair is already against a rope.
+		if Climber.rope_x > 0 and absf(state.transform.origin.x) > Climber.rope_x-0.8:
+			escape_side = -signf(state.transform.origin.x)
+	if physics_material_override == null: physics_material_override = PhysicsMaterial.new()
+	physics_material_override.friction = 0.0
+	state.sleeping = false
+	var velocity := state.linear_velocity
+	velocity.x = move_toward(velocity.x, escape_side * Feel.get_k("chair_unstick_speed"), Feel.get_k("chair_unstick_acceleration") * state.step)
+	state.linear_velocity = velocity

@@ -10,7 +10,7 @@ At round start, snapshot the farthest collision-surface point belonging to a fro
 
 Tier spacing is `7 * max(2, configured climbers per round) / 2`, fixed at match start. Current turns and round-robin formats use the two-player baseline. Future simultaneous modes default to their starting roster count and can declare `climbers_per_round` in their mode row. Eliminations and disconnects do not reduce spacing.
 
-For current modes, distances below 7, 7–under 14, 14–under 21, 21–under 28, and 28+ select tiers 1–5. Color percentages, ordered White/Green/Blue/Purple/Red, remain `[100,0,0,0,0]`, `[65,35,0,0,0]`, `[45,35,20,0,0]`, `[35,30,25,10,0]`, `[30,25,25,15,5]`. Round count no longer selects rarity. No additional new-growth gating has been added.
+For current modes, distances below 7, 7–under 14, 14–under 21, 21–under 28, and 28+ select tiers 1–5. As of 2026-11-22, white spawn odds are folded into green. Color percentages, ordered White/Green/Blue/Purple/Red, are `[0,100,0,0,0]`, `[0,100,0,0,0]`, `[0,80,20,0,0]`, `[0,65,25,10,0]`, `[0,55,25,15,5]`. Thus below 14 units is always green; higher-color odds and thresholds are unchanged. White/common reward drops and the separate reward table are unchanged. Round count no longer selects rarity. No additional new-growth gating has been added.
 
 ## Spawn geometry
 

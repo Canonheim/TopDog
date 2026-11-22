@@ -1,4 +1,6 @@
 extends Node3D
+signal popped
+signal launched(offset: float)
 ## Three configurable fireworks: hot cores, colored halos, radial trails expanding from fixed burst centers.
 ## One shared quad and three atlas materials; instanced trails avoid hundreds of nodes.
 const COLORS := [Color("ff3295"),Color("28e4ff"),Color("ffd34a")]
@@ -68,9 +70,15 @@ func _process(delta: float) -> void:
 	for burst in bursts:
 		var age: float = elapsed-burst.delay
 		if age<0: continue
+		if not burst.get("launch_played", false):
+			burst["launch_played"] = true
+			if age < .38 and is_visible_in_tree(): launched.emit(age)
 		var mm: MultiMesh = burst.mesh
 		var target: Vector2 = burst.target
 		var t := age-.38
+		if t >= 0 and not burst.get("sound_played", false):
+			burst["sound_played"] = true
+			if is_visible_in_tree(): popped.emit()
 		# Rocket head and tapering ascent trail, then a brief central flash.
 		for j in 10:
 			if t<0:
