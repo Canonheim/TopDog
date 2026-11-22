@@ -1024,6 +1024,20 @@ with outlines and stuff".
   xp_display_probe (still on the old 500 XP curve), xp_tally_probe and xp_gain_probe (both time out)
   fail the same way on main before this. Frames: `builds\xp_kit_look.jpg`, `builds\xp_kit_notices.jpg`.
 
+## The results board hangs still (Parker, 2026-11-22)
+
+Parker: "when you end a game, the screen that hands down sways back and forth slightly. Make it not
+sway", then "it can keep the settling swing", then "the settle swing glitches into position after
+it drops".
+- `ui3d/results_board.gd`: the half-degree idle sway that never stopped is gone. The settling swing
+  stays, and now grows from zero in the last part of the drop (`SWING_FROM` 0.4 s, a damped sine
+  peaking near 2.2 degrees): it used to start at 2.5 degrees the frame the drop ended, a jump.
+- The same day's look at the UI's pulsing while it drifts ended with nothing changed: the ink's
+  thinning and steadying, sub-pixel crease lines, inverse hulls on the UI, lines baked into the UI's
+  meshes, FXAA off, MSAA (the ink does not draw under it) and SMAA were each tried and put back.
+  Rendering at 1.5 and scaling down did help, at about 43% of the frame rate (395 to 225 fps on the
+  title, RTX 5060): too much for weak PCs. "We are keeping FXAA."
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

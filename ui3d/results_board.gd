@@ -12,6 +12,7 @@ extends Menu3D
 ## every belt), carried in the board's own swinging space.
 
 const HANG_Y := 4.8  # the straps' line: the board swings about it
+const SWING_FROM := 0.4  # seconds into the 0.55 s drop: the swing starts in its last part
 const LEFT_IN := 0.30 + 2.10  # its left rim 0.30 in from the screen's edge, half its width
 const SLOTS := [0.90, 0.40, -0.10, -0.60, -1.10, -1.60]
 const ROW_Z := 0.07
@@ -559,10 +560,13 @@ func _process(delta: float) -> void:
 	_t += delta
 	var t := Time.get_ticks_msec() / 1000.0
 	_fit_screen()
-	# The swing about the straps: from 2.5 degrees, damped to a slow idle that never stops.
-	if _t > 0.55:
-		var u := _t - 0.55
-		_hang.rotation.z = deg_to_rad(2.5) * exp(-u * 2.2) * cos(u * 4.0) + deg_to_rad(0.5) * sin(TAU * 0.25 * u)
+	# The swing about the straps, damped to rest; no idle sway after it (Parker 11-22: "Make
+	# it not sway ... it can keep the settling swing"). It grows from ZERO as the drop ends
+	# (a sine, peaking near 2.2 degrees): it used to start at 2.5 degrees outright, a jump
+	# ("the settle swing glitches into position after it drops").
+	if _t > SWING_FROM:
+		var u := _t - SWING_FROM
+		_hang.rotation.z = deg_to_rad(4.5) * exp(-u * 2.2) * sin(u * 4.0)
 	if _medal != null and _t > 1.0:
 		_medal.rotation.y = deg_to_rad(10.0) * sin(TAU * 0.4 * t)
 	if _crest != null:
