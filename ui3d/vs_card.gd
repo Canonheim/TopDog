@@ -187,7 +187,7 @@ func _build_half(side: int, fighters: Array, round_n: int) -> Node3D:
 		tilt = deg_to_rad(KIT_TILT_DEG) * -out
 		name_cap = 0.5
 		name_fit = 3.35
-		name_h = 0.8
+		name_h = 1.15
 		steam_fit = 2.6
 		ink = NAVY
 		for pair in [["plaque", "p"], ["steam_strip", "s"], ["round_tab", "t"]]:
@@ -235,6 +235,10 @@ func _build_half(side: int, fighters: Array, round_n: int) -> Node3D:
 	if names.size() == 1 and (names[0] as String).contains(" THE "):
 		var cut := (names[0] as String).find(" THE ")
 		lines = [[(names[0] as String).substr(0, cut), name_cap * 0.9], [(names[0] as String).substr(cut + 1), name_cap * 0.62]]
+		if kit != null:
+			# The kit's taller plaque (3.7 x 1.3, PARTS.md V, round 4): the name at 0.5, 0.27 above
+			# the plaque's centre; its title at 0.36, 0.30 below.
+			lines = [[lines[0][0], 0.5, 0.27], [lines[1][0], 0.36, -0.30]]
 	else:
 		var rows := maxi(names.size(), 1)
 		for nm in names:
@@ -248,7 +252,8 @@ func _build_half(side: int, fighters: Array, round_n: int) -> Node3D:
 		var lb := LuchaKit.text3d(ln[0], cap, ink)
 		_fit(lb, cap, name_fit)
 		y -= cap * 0.54
-		lb.transform = Transform3D(turn, plaque_at + turn * Vector3(0, y, face_z))
+		var line_y: float = float(ln[2]) if (ln as Array).size() > 2 else y
+		lb.transform = Transform3D(turn, plaque_at + turn * Vector3(0, line_y, face_z))
 		y -= cap * 0.54
 		root.add_child(lb)
 	if not steams.is_empty():
