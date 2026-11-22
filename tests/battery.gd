@@ -1789,8 +1789,9 @@ func _run_chair() -> void:
 			g.chair.pick_up(c, 2)
 			foot.linear_velocity = Vector3(direction * 3.0, 0.3, 0)
 			g.chair.carry_velocity = Vector3(-direction * 3.0, 0, 0)
+			g.chair.linear_velocity = foot.linear_velocity
 			g.chair.drop(c, 1.0 / 120)
-			t("chair: release follows the limb even after reversal", g.chair.linear_velocity.x * direction > 2.0)
+			t("chair: release preserves current flight despite stale carry samples", g.chair.linear_velocity.x * direction > 2.0)
 		d.clear()
 	# Start the dropped chair balanced on its thin side, not already face-down.
 	g.chair.global_transform = Transform3D(Basis(Vector3.BACK, PI / 2), Vector3(-3, 0.28, 0))
@@ -2229,7 +2230,7 @@ func _run_chairsolid() -> void:
 	chair.global_position = Vector3(-6, 6, 0)
 	Climber.sync_server(chair)
 	await frames(2)
-	chair.release_carrier_when_clear()
+	chair.release_carrier_when_clear(0.3)
 	t("chair solid: former carrier collides again after separation", not chair.get_collision_exceptions().has(hand))
 	var terrain_hits := []
 	chair.terrain_struck.connect(func(_at, speed): terrain_hits.append(speed))
@@ -4743,3 +4744,56 @@ func _run_chairunstick() -> void:
 	t("chair unstick: player settles onto ground", torso.position.y < 5.23, torso.position)
 	t("chair unstick: chair stays solid", chair.collision_layer == Climber.LAYER_PROP and chair.collision_mask == Climber.SOLID_MASK)
 	c.remove()
+
+
+func _run_chairrelease() -> void:
+	var g := make_game("practice", 1, 60, "plaza")
+	await wait_phase(g,"turn")
+	g.set_physics_process(false)
+	var c: Climber = g.climbers[g.live[0]]
+	c.set_physics_process(false)
+	c.release_all()
+	var hand: RigidBody3D = c.bodies["hand_r"]
+	var chair := g.chair
+	chair.global_transform = Transform3D(Basis.IDENTITY, hand.global_position + Vector3(0.15,0.15,0))
+	chair.pick_up(c,1)
+	var flight := Vector3(3,2,0)
+	var spin := Vector3(2,1,4)
+	chair.linear_velocity = flight
+	chair.angular_velocity = spin
+	hand.linear_velocity = Vector3(-1,0,0)
+	chair.carry_velocity = Vector3(-3,0,0)
+	chair.carry_spin = -6
+	chair.drop(c,1.0/120)
+	t("chair release: preserves actual chair flight instead of reversing to hand speed", chair.linear_velocity.is_equal_approx(flight), chair.linear_velocity)
+	t("chair release: preserves physical rotation without snapping axes", chair.angular_velocity.is_equal_approx(spin), chair.angular_velocity)
+	t("chair release: cannot immediately regrab with another limb", not chair.can_reach(c,1))
+	t("chair release: thrower remains collision protected", chair.get_collision_exceptions().has(hand))
+	chair.release_carrier_when_clear(0.1)
+	t("chair release: contact protection survives the initial release frames", chair.get_collision_exceptions().has(hand))
+	chair.pick_up(c,1)
+	chair.angular_velocity = Vector3(0,0,4)
+	var remote_hand := Vector3(2,1,0)
+	var expected := remote_hand + chair.angular_velocity.cross(chair.global_position-hand.global_position)
+	expected.z = 0
+	chair.drop(c,1.0/120,remote_hand)
+	t("chair release: client hand velocity converts to chair center velocity", chair.linear_velocity.is_equal_approx(expected.limit_length(8)), chair.linear_velocity)
+
+	g.end_match()
+	g.queue_free()
+	await frames(2)
+
+
+func _run_intermission() -> void:
+	var g := make_game("practice",1,60,"plaza")
+	await wait_phase(g,"turn")
+	g.set_physics_process(false)
+	g._end_of_play()
+	t("round break: starts at three seconds", g.phase == "between" and is_equal_approx(g._between_t,3.0), g._between_t)
+	for i in 240: g._physics_process(Engine.time_scale/120.0)
+	t("round break: does not restart early", g.phase == "between" and g._between_t > 0.9,g._between_t)
+	for i in 132: g._physics_process(Engine.time_scale/120.0)
+	t("round break: next play begins after three seconds", g.phase in ["turn","round"],g.phase)
+	g.end_match()
+	g.queue_free()
+	await frames(2)

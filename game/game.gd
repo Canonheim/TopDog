@@ -58,11 +58,12 @@ const LOCK_BUFFER_S := 0.3
 var _lock_want := {}  # climber id -> seconds the press is still wanted
 const STREAM_HZ := 30.0
 const CLOCK_HZ := 4.0
-const PAUSE_BETWEEN := 1.6  # seconds between turns / rounds
+const PAUSE_BETWEEN := 3.0  # seconds between turns / rounds (Dan, 0.3.147: was 1.6)
 ## THE LAST LOCK-IN LINGERS (Parker 11-22: "have the last person to lock in have the camera linger on
 ## them for one second longer before it starts the next round and snaps to the next camera angle"):
-## a turn or round ended by a lock-in pauses this much longer, the camera held on that climber.
-const LOCK_LINGER_S := 1.0
+## through a pause a lock-in ended, the camera holds on that climber. The extra second he asked for
+## (over the 1.6 s he was playing) is inside Dan's 3.0 s break of the same day: none is added on top.
+const LOCK_LINGER_S := 0.0
 const FREEZE_REPLY_S := 1.5  # how long the host waits for an owner's final pose
 const RING_OUT_S := 3.0  # down on the plaza: back in the ring after this long (Parker 11-08)
 const PULL_STALE_S := 0.25
@@ -1860,9 +1861,7 @@ func _rpc_chair_limb(cid: int, selected: int, release_velocity: Vector3) -> void
 		return
 	remote_chair_limbs[cid] = selected
 	if chair != null and chair.holder == cid and selected != chair.limb:
-		chair.drop(c, get_physics_process_delta_time())
-		if release_velocity.is_finite():
-			chair.linear_velocity = Vector3(release_velocity.x, release_velocity.y, 0).limit_length(8.0)
+		chair.drop(c, get_physics_process_delta_time(), release_velocity)
 
 
 func _tick_chair(dt: float) -> void:

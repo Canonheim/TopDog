@@ -7,6 +7,8 @@ func ready_effect(effect: Node) -> void:
  var end:=Time.get_ticks_msec()+15000
  while is_instance_valid(effect) and not effect.get_meta("ready",false) and Time.get_ticks_msec()<end:
   if effect.name=="AbsoluteZero":check(not effect.visible,"No visible uninitialized icicles")
+  if effect.name=="Spiders":
+   for web in effect.webs:check(web.visible_instance_count==0,"No complete-web flash during setup")
   await get_tree().process_frame
  check(is_instance_valid(effect) and effect.get_meta("ready",false),"Effect ready")
 func _ready() -> void:
@@ -19,7 +21,7 @@ func _ready() -> void:
  var game:=Game.new();game.world=world;game.dress=false;add_child(game);game.set_process(false);game.set_physics_process(false)
  game.attached_lock_effect.connect(func(id: String,c: Climber):main.lucha.play_attached_lock_effect(id,c))
  var index:=0
- for entry in [["absolute_zero","Absolute Zero","AbsoluteZero"],["spiders","Spiders","Spiders"]]:
+ for entry in [["spiders","Spiders","Spiders"]]:
   var id: String=entry[0];var node_name: String=entry[2]
   check(Wardrobe.clean({"effect":id}).effect==id,"Profile "+id)
   check(Net._clean_players([{"name":"Test","slot":0,"appearance":{"effect":id}}])[0].appearance.effect==id,"Network "+id)
@@ -30,7 +32,12 @@ func _ready() -> void:
   check(preview!=null,"Preview "+id);await ready_effect(preview)
   if is_instance_valid(preview):
    preview.tick(7)
-   if id=="spiders":check(preview.webs.size()>0,"Customization has visible web geometry")
+   if id=="spiders":
+    check(preview.body_geometry_misses==0,"No GPU mesh readbacks in preview")
+    check(preview.webs.size()>0,"Customization has visible web geometry")
+    print("SPIDER_SETUP_PROFILE ",preview.setup_max_slice_us," us, ",preview.setup_yields," slices; stage ",preview.setup_max_stage,"; GPU reads ",preview.body_geometry_misses)
+   await get_tree().process_frame
+   await get_tree().process_frame
    await RenderingServer.frame_post_draw
    get_viewport().get_texture().get_image().save_png("C:/Users/growi/Documents/ChatGPT/Top Dog/effect-reviews/legendary-install/menu-"+id+".png")
   # Cancel a fresh preview while asynchronous geometry fitting may still be running.
@@ -45,6 +52,9 @@ func _ready() -> void:
   if is_instance_valid(fx):
    check(Prep.attach(id,actor,main.cam)==fx,"Duplicate attachment "+id);fx.tick(7)
    check(fx.get_child_count()+1<=Prep.NORMAL_NODE_LIMITS[id],"Node budget "+id)
+   if id=="spiders":
+    print("MATCH_SETUP ",fx.setup_max_slice_us," us ",fx.setup_max_stage,"; GPU reads ",fx.body_geometry_misses)
+    check(fx.body_geometry_misses==0,"No GPU mesh readbacks in match")
    if id=="gold":check(fx.stars.size()==3,"Three gold stars")
    if id=="absolute_zero":check(fx.icicles.size()>=4 and fx.icicles.size()<=8 and fx.mist_active,"Absolute Zero icicles and persistent mist")
   game.climbers.erase(actor.climber_id);game.live.clear();actor.remove();await get_tree().process_frame;await get_tree().process_frame

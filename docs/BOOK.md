@@ -1065,7 +1065,7 @@ sure we dont lose his work".
   (`VsCard.ROUND_STARTS_AT`). One fighter a side: the full name on two lines, its "THE ..." title
   under it; the Steam name on the strip (hidden offline). Box stand-ins if the kit pieces are missing.
 - **The last lock-in lingers** ("have the last person to lock in have the camera linger on them for
-  one second longer"): a turn or round ended by a lock-in pauses `Game.LOCK_LINGER_S` (1 s) longer,
+  one second longer"): through the pause a lock-in ended (Dan's 0.3.147 made every pause 3.0 s, up from 1.6, so no second is added on top: `Game.LOCK_LINGER_S` 0),
   the camera held on that climber (`lock_linger_climber`), until the next turn or the VS card.
 - **The Steam name is top right, over the clock** ("steam name is drawn in the top left over the EXP
   stuff"): centred over the buckle, a long name kept on screen (`LuchaUI.STEAM_CHAR_W`).
@@ -1115,3 +1115,6 @@ User-approved effect registered as Spiders (spiders), persistent attached cosmet
 
 ### 2026-11-22 — Gold, Absolute Zero, Spiders approved integration
 Gold and Absolute Zero now appear in the catalog and attached-effect dispatcher; latest seamless Spiders routes and shared legendary distance throttling retained. Actual customization and match-freeze integration checks passed without errors or preparation-budget warnings. Source installed only; no build requested or exported.
+
+## Spiders web rendering and lock-in stall fix (2026-11-22)
+Webs and spiders now have separate shared alpha materials sampling the house atlas; white web strands are double-sided and bypass opaque ink. MultiMeshes start with zero visible strands, and spiders remain hidden until initialized, preventing the complete-web setup flash. Surface fitting and crawl sampling yield in bounded slices. Rendered profiling traced recurring 24-30 ms stalls per body part to surface_get_arrays GPU readback. A shared CPU geometry bake for the shipped climber and head scenes removes those reads; UV-recoloured meshes retain their geometry-source key. Unknown meshes retain a once-per-mesh fallback cache. Regenerate ui3d/spider_body_geometry.res with tests/deep_freeze_review/bake_spider_geometry.gd when source geometry changes. Compressed bake: 297,061 bytes (not a GPU mesh). Two fresh rendered customization/match tests measured zero runtime mesh readbacks and maximum setup slices 2.514-2.767 ms; these are CPU slice measurements, not whole-frame GPU timings. Cold material preparation still measured about 8.3-8.6 ms in the preparation harness. Preview web creation, hidden setup, cancellation, actual match dispatch, duplicate attachment, node budgets and cleanup passed. Source installed; no executable export or version bump. Evidence: chat workspace effect-reviews/legendary-install/visual-integration.log and effect-reviews/spider-webs/.

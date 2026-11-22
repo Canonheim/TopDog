@@ -39,7 +39,14 @@ func _ready() -> void:
   if is_instance_valid(fx):
    check(Prep.attach(id,actor,main.cam)==fx,"Duplicate attachment "+id);fx.tick(7)
    check(fx.get_child_count()+1<=Prep.NORMAL_NODE_LIMITS[id],"Node budget "+id)
-   if id=="gold":check(fx.stars.size()==3,"Three gold stars")
+   if id=="gold":
+    check(fx.stars.size()==3,"Three gold stars")
+    var voice=fx.get_node_or_null("GoldTransformSound")
+    check(voice!=null and fx.get_child_count()+1==5,"Gold peak includes one temporary sound node")
+    var audio_deadline:=Time.get_ticks_msec()+int(fx.TRANSFORM_SOUND.get_length()*1000)+2000
+    while is_instance_valid(voice) and Time.get_ticks_msec()<audio_deadline:await get_tree().process_frame
+    check(not is_instance_valid(voice),"Gold sound cleans itself up after playback")
+    check(fx.get_child_count()+1==Prep.PERSISTENT_EFFECTS.gold.nodes_per_climber,"Gold settles back to four nodes")
    if id=="absolute_zero":check(fx.icicles.size()>=4 and fx.icicles.size()<=8 and fx.mist_active,"Absolute Zero icicles and persistent mist")
   index+=1
  game.queue_free();world.queue_free();main.queue_free();await get_tree().process_frame;await get_tree().process_frame

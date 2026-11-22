@@ -257,7 +257,8 @@ const CACHE_ARRAY_BYTE_LIMITS := {
 	"bees":259964,
 }
 const NORMAL_NODE_LIMITS := {
- "gold":4,"absolute_zero":10,
+ # Gold temporarily owns its transformation audio node; settled budget remains four.
+ "gold":5,"absolute_zero":10,
 	"spiders":11,
 	"vines":22,
 	"popcorn":73,
