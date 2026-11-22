@@ -279,6 +279,11 @@ func build(feet: Vector2, root: Node3D, model: PackedScene = null) -> void:
 				mesh.global_transform = keep
 				if pname.begins_with("hand"):
 					_hand_meshes[pname] = [mesh, mesh.transform]
+					# THE DRAWN WRIST IS NOT BLENDED (Parker 11-22: spinning the hand, it was "glitching off my
+					# body a bunch for a few frames"): _draw_wrists turns the mesh every frame, so smooth
+					# motion's blend between ticks smeared it up to half a metre off the wrist while the
+					# physics hand never left it (tests/hand_spin_probe). It still rides the blended hand.
+					mesh.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	if visual != null:
 		visual.queue_free()
 	# No self-collision: a climber's own pieces pass through each other, limbs fold

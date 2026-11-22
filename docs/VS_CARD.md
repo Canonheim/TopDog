@@ -52,9 +52,9 @@ except "V" and "S". +Z faces the camera; faces the game writes on are flat and p
 | In | 0.35 s | Both halves fly in from off screen, speeding up (ease in), each tilted 6 degrees as if thrown. |
 | Slam | 0.15 s | They meet: squash 6% along x and spring back, the tilt snaps flat, a ring of sparks from the medallion, the ring bell, and a short camera kick. |
 | Hold | 2.0 s | Still. No sway. The medallion pulses once at the slam and rests. |
-| Out | 1.3 s | The halves jump apart, then are LAUNCHED over the horizon (Parker: "launched over the horizon, not just shoot straight back"): thrown up and away in a high arc, tumbling end over end, coming down far off behind the skyline. The round starts as they go. |
+| Out | 0.4 s | The halves split and fly back off to the left and right, the way they came (Parker: "instead of it flying into the background, just have it fly back off to the left and right of the screen"). The round starts as they go. |
 
-Total 3.8 s. The match clock does not run and nobody can move until the card is gone.
+Total 2.9 s. The match clock does not run and nobody can move until the card is gone.
 
 ## The rules
 

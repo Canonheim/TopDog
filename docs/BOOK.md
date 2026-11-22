@@ -1059,7 +1059,7 @@ sure we dont lose his work".
   away into the background, and the round starts"; "we do want the FULL name of the climber").
   The design is `docs/VS_CARD.md`; the pieces are the UI creator's `vs_half_l`, `vs_half_r`,
   `vs_spark` (Top Dog Kit PARTS.md V). `ui3d/vs_card.gd` plays it in the HUD's near space: in 0.35 s,
-  slam 0.15 s, hold 2.0 s, then out in 1.3 s, launched over the horizon in a high tumbling arc ("not just shoot straight back"). The host shows it before every round of the round modes
+  slam 0.15 s, hold 2.0 s, then out in 0.4 s, back off to the left and right the way they came (Parker, later the same day: "instead of it flying into the background, just have it fly back off to the left and right"; a launch over the horizon came first). The host shows it before every round of the round modes
   (`Game._rpc_versus`, two or more fighters, not practice, not the Peak), picks each climber's made
   name early so the card can show it (`_next_names`), and starts the round as the halves leave
   (`VsCard.ROUND_STARTS_AT`). One fighter a side: the full name on two lines, its "THE ..." title
@@ -1079,6 +1079,18 @@ sure we dont lose his work".
   layout bound the camera actions to a trigger input named "soft_pull", which Steam does not have
   (its layouts use "click" with a "Soft_Press" activator) and dropped without a word. Now
   `SteamInput._trigger_click`. A raw pad always worked. Not yet tried on a pad under Steam.
+- **The announcer, a stand-in** ("do option 1 first for now as a place holder"; Parker will record the
+  names' words himself): the VS card has the system's text-to-speech voice read "NAME! Versus! NAME!"
+  (`VsCard._announce`, rate 1.35, pitch 0.85, the master volume; `audio/general/text_to_speech` on).
+  The call outlasts the card; Parker's recordings will be timed to it.
+- **The XP meters flush** ("make the EXP bar and the filling behind it on the same geometric plane so
+  the outline shader doesn't ink the yellow bars"): the UI creator's round 8 of `xp_title_belt` and
+  `xp_match_panel`; the ticks and the fill's edge carry no ink now (`builds\xp_meter_flush.jpg`).
+- **The drawn hand left the wrist when spun** ("my hand was like glitching off my body a bunch for a few
+  frames while I was spinning"): the physics hand never left (7.5 cm at most), but its mesh, turned
+  every frame by THE DRAWN WRIST, was also blended between physics ticks by smooth motion and smeared
+  up to 0.5 m off. The hand mesh's own blending is off now (it still rides the blended hand):
+  `tests/hand_spin_probe.tscn` (windowed, `-- --rate=N` turns a second), at most 0.18 m at every rate.
 - Checked: lint; hud_probe (its one failure, the clock lifting for a banner, fails the same without
   these changes); frozen_inside_probe; frames `builds\vs_card_beats.jpg`, `builds\vs_card_hold.jpg`.
 

@@ -12,23 +12,18 @@ extends Node3D
 const IN_S := 0.35
 const SLAM_S := 0.15
 const HOLD_S := 2.0
-const OUT_S := 1.3
+const OUT_S := 0.4
 const TOTAL_S := IN_S + SLAM_S + HOLD_S + OUT_S
 ## The round starts (the host) as the halves leave.
-const ROUND_STARTS_AT := IN_S + SLAM_S + HOLD_S + OUT_S * 0.8  # (late in the flight: the spawn's hitch would eat the launch)
+const ROUND_STARTS_AT := IN_S + SLAM_S + HOLD_S + OUT_S * 0.8  # (late in the exit: the spawn's hitch would eat it)
 
 const HALF_W := 5.6
 const HALF_H := 3.0
 const CARD_Y := 0.05  # the screen's middle, clear of the banner up top
 const PLAQUE := Vector2(4.0, 0.95)
 const STRIP := Vector2(3.2, 0.42)
-## LAUNCHED OVER THE HORIZON (Parker 11-22: "I want it to get launched over the horizon, not just
-## shoot straight back"): each half is thrown up and away in a high arc, tumbling, and comes down
-## far off behind the skyline.
-const FLY_BACK := 560.0  # HUD units into the scene (about 58 m: behind the plaza's skyline)
-const LENS_AT := 12.5  # the lens, in HUD units in front of the card (1.3 m)
-const ARC_PEAK := 0.82  # the arc's top, as a share of the half screen above the middle
-const ARC_END := 0.1  # where it comes down: the horizon
+## OFF THE WAY THEY CAME (Parker 11-22: "instead of it flying into the background, just have it fly
+## back off to the left and right of the screen"; it was launched over the horizon for an hour).
 ## The kit's halves (Top Dog Kit PARTS.md V): 6.0 long, the medallion 1.7 past the join; the plaque
 ## and the Steam strip are turned 3 degrees, rising toward the join; navy ink on cream.
 const KIT_LEN := 6.0
@@ -41,6 +36,7 @@ var _from_x := 12.0
 var _half_h := 3.8
 var _slammed := false
 var _sparks: Array = []
+var _call := ""  # what the announcer says at the slam
 
 
 func playing() -> bool:
@@ -53,6 +49,8 @@ func play(round_n: int, left: Array, right: Array, half_w: float, half_h := 3.8)
 	_half_h = half_h
 	_from_x = half_w + maxf(HALF_W, KIT_LEN) + 0.5
 	_halves = [_build_half(-1, left, round_n), _build_half(1, right, round_n)]
+	_call = _announcement(left, right)
+	_announce()  # (from the throw: the names take longer to say than the card holds)
 	for h in _halves:
 		add_child(h)
 		LuchaUI.no_shadows(h)
@@ -114,25 +112,48 @@ func _pose() -> void:
 		elif _t < IN_S + SLAM_S + HOLD_S:
 			pass
 		else:
-			# Apart, then LAUNCHED: up and away in a high arc, tumbling, down over the horizon.
+			# Apart, then back off the way they came: a little kick toward the middle, then
+			# out to the sides, speeding up, tilting the other way.
 			var u := (_t - IN_S - SLAM_S - HOLD_S) / OUT_S
-			var jump := smoothstep(0.0, 0.1, u)
-			var f := clampf((u - 0.08) / 0.92, 0.0, 1.0)
-			var depth := LENS_AT + FLY_BACK * pow(f, 1.6)  # (near and big at first, so the throw is seen)
-			# Where it is on screen (shares of the half screen), then out to its depth.
-			var rise := sin(PI * pow(f, 0.7))  # up quickly, a long fall
-			var screen_y := CARD_Y / _half_h * (1.0 - f) + ARC_PEAK * rise + ARC_END * f
-			var screen_x := side * (0.3 * jump / (_half_h * 1.78) + 0.16 * f)
-			at.x = screen_x * _half_h * 1.78 * depth / LENS_AT
-			at.y = screen_y * _half_h * depth / LENS_AT
-			at.z = LENS_AT - depth
-			roll = -side * TAU * 1.5 * f
-			half.rotation.x = TAU * 0.75 * f
-		if _t < IN_S + SLAM_S + HOLD_S:
-			half.rotation.x = 0.0
+			var e := pow(u, 1.8)
+			at.x = side * (lerpf(0.0, _from_x, e) - 0.12 * sin(PI * minf(u * 3.0, 1.0)))
+			roll = -side * deg_to_rad(6.0) * e
 		half.position = at
 		half.rotation.z = roll
 		half.scale = sc
+
+
+## THE ANNOUNCER, A STAND-IN (Parker 11-22: "have an announcer say 'STINKY TONY THE TEETH TICKLER! VS!
+## AGNES THE WRETCH!'"; "I can do all the voice recordings my self but do option 1 first for now as a
+## place holder"): the system's own text-to-speech voice reads the call. Parker's recordings of
+## the names' words replace it. Needs audio/general/text_to_speech on (project.godot).
+const ANNOUNCER_RATE := 1.35  # quicker than talking: a ring announcer's pace
+const ANNOUNCER_PITCH := 0.85  # a little lower
+
+
+func _announcement(left: Array, right: Array) -> String:
+	var sides: Array = []
+	for list in [left, right]:
+		var names: Array = []
+		for f in list:
+			names.append(str(f.get("name", "")))
+		sides.append(" and ".join(names))
+	return "%s! Versus! %s!" % [sides[0], sides[1]]
+
+
+func _announce() -> void:
+	if _call == "" or not DisplayServer.has_feature(DisplayServer.FEATURE_TEXT_TO_SPEECH):
+		return
+	var voices := DisplayServer.tts_get_voices_for_language("en")
+	if voices.is_empty():
+		return
+	DisplayServer.tts_stop()
+	# The game's master volume, as the speech's 0..100.
+	var master := AudioServer.get_bus_index("Master")
+	var vol := 1.0 if master < 0 or AudioServer.is_bus_mute(master) == false else 0.0
+	if master >= 0:
+		vol *= db_to_linear(AudioServer.get_bus_volume_db(master))
+	DisplayServer.tts_speak(_call, voices[0], int(clampf(vol, 0.0, 1.0) * 100.0), ANNOUNCER_PITCH, ANNOUNCER_RATE)
 
 
 func _slam() -> void:
