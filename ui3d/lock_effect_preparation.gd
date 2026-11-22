@@ -5,6 +5,9 @@ const WardrobeScript = preload("res://core/wardrobe.gd")
 # The old UI already preloaded these scripts. Keep compilation/resource decoding
 # in scene loading, rather than moving it into the first incremental mesh job.
 const SCRIPTS := {
+ "gold":preload("res://ui3d/gold/gold.gd"),"absolute_zero":preload("res://ui3d/absolute_zero/absolute_zero.gd"),
+	"spiders":preload("res://ui3d/spiders_effect.gd"),
+	"vines":preload("res://ui3d/vines/vines.gd"),
 	"bees":preload("res://ui3d/common_effects/bees.gd"),
 	"popcorn":preload("res://ui3d/common_effects/popcorn.gd"),
 	"fries":preload("res://ui3d/common_effects/fries.gd"),
@@ -70,6 +73,9 @@ const SCRIPTS := {
 # path, preparation adapter, variant count, normal pieces, triangle ceiling.
 # Existing geometry ceilings are reviewed exceptions, not defaults for new effects.
 const REGISTRY := {
+ "gold":["gold/gold","legendary_material",1,3,24],"absolute_zero":["absolute_zero/absolute_zero","legendary_material",1,9,400],
+	"spiders":["spiders_effect","spiders",13,10,10000],
+	"vines":["vines/vines","vines",33,21,36893],
 	"popcorn":["common_effects/popcorn", "common", 11, 72, 25881],
 	"fries":["common_effects/fries", "common", 9, 90, 8203],
 	"pizza_party":["common_effects/pizza_party", "common", 12, 72, 11555],
@@ -140,6 +146,9 @@ const MAX_UNITS_PER_FRAME := 4
 const WINNER_BUDGETS := {"confetti":{"pieces":300,"triangles":10300,"spawn_ms":8.0}}
 # Resident mesh ceilings are explicit even for adapters with a single prewarm call.
 const CACHE_MESH_LIMITS := {
+ "gold":1,"absolute_zero":2,
+	"spiders":13,
+	"vines":34,
 	"popcorn":10,
 	"fries":8,
 	"pizza_party":11,
@@ -192,6 +201,9 @@ const CACHE_MESH_LIMITS := {
 	"bees":6,
 }
 const CACHE_ARRAY_BYTE_LIMITS := {
+ "gold":10000,"absolute_zero":30000,
+	"spiders":1500000,
+	"vines":17922274,
 	"popcorn":502724,
 	"fries":268649,
 	"pizza_party":204036,
@@ -245,6 +257,9 @@ const CACHE_ARRAY_BYTE_LIMITS := {
 	"bees":259964,
 }
 const NORMAL_NODE_LIMITS := {
+ "gold":4,"absolute_zero":10,
+	"spiders":11,
+	"vines":22,
 	"popcorn":73,
 	"fries":91,
 	"pizza_party":73,
@@ -297,7 +312,7 @@ const NORMAL_NODE_LIMITS := {
 	"bees":37,
 }
 # Per retained climber: never treat attached cosmetics as timed camera bursts.
-const PERSISTENT_EFFECTS := {"railroad_spikes":{"meshes_per_climber":4,"triangles_per_climber":352,"nodes_per_climber":5}}
+const PERSISTENT_EFFECTS := {"gold":{"meshes_per_climber":3,"triangles_per_climber":24,"nodes_per_climber":4},"absolute_zero":{"meshes_per_climber":9,"triangles_per_climber":400,"nodes_per_climber":10},"spiders":{"meshes_per_climber":10,"triangles_per_climber":10000,"nodes_per_climber":11},"vines":{"meshes_per_climber":21,"triangles_per_climber":35136,"nodes_per_climber":22},"railroad_spikes":{"meshes_per_climber":4,"triangles_per_climber":352,"nodes_per_climber":5}}
 const TRANSIENT_ATTACHED_EFFECTS := {"lightning":{"lifetime":1.65,"skin_vertex_bytes":200000}}
 static func is_attached(id: String) -> bool:
 	return PERSISTENT_EFFECTS.has(id) or TRANSIENT_ATTACHED_EFFECTS.has(id)
@@ -453,7 +468,10 @@ static func prepare_step(id: String) -> bool:
 		if failed_paths.has(path): failed_effects[id] = failed_paths[path]
 	else:
 		match adapter:
+			"legendary_material": finished = script.prepare_unit(index)
 			"common": script.prepare_unit(index)
+			"spiders": finished = script.prepare_unit(index)
+			"vines": finished = script.prepare_unit(index)
 			"lightning":
 				finished = script.prepare_unit(index)
 				if not script.preparation_errors.is_empty(): failed_effects[id] = str(script.preparation_errors)

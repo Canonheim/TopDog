@@ -5,7 +5,7 @@ const Rewards = preload("res://core/pinata_rewards.gd")
 var reward_store: RefCounted
 const Pickup = preload("res://game/cosmetic_pinata.gd")
 const SPAWN_CHANCE := 0.10
-const WEIGHTS := [[100,0,0,0,0],[65,35,0,0,0],[45,35,20,0,0],[35,30,25,10,0],[30,25,25,15,5]]
+const WEIGHTS := [[0,100,0,0,0],[0,100,0,0,0],[0,80,20,0,0],[0,65,25,10,0],[0,55,25,15,5]]
 var game: Node
 var rng := RandomNumberGenerator.new()
 var round_index := 0
@@ -157,17 +157,24 @@ func _spawn(id: int, point: Vector3, rarity: int, practice_test := false) -> voi
  game.world.add_child(current)
  current.collected.connect(_on_collected.bind(id))
 
-func _on_collected(_body: Node3D,id: int) -> void:
+func _on_collected(body: Node3D,id: int) -> void:
  if game.is_host() and id == received_generation and game.phase in ["turn","round"]:
   var event_id := Crypto.new().generate_random_bytes(16).hex_encode()
-  _collect.rpc(id,event_id,rng.randi())
+  var collector := Climber.climber_of(body) if is_instance_valid(body) else null
+  var cid := -1
+  var bounce := Vector3.ZERO
+  if collector != null and collector.state != Climber.State.FROZEN and not collector.removed:
+   cid = collector.climber_id
+   bounce = pickup_bounce(current.global_position)
+  _collect.rpc(id,event_id,rng.randi(),cid,bounce)
 
 @rpc("authority","call_local","reliable")
-func _collect(id: int, event_id := "", reward_seed := 0) -> void:
+func _collect(id: int, event_id := "", reward_seed := 0, collector_id := -1, bounce := Vector3.ZERO) -> void:
  if id != received_generation or id == collected_generation or not is_instance_valid(current): return
  if game.phase not in ["turn","round"]: return
  collected_generation = id
  current.collect()
+ _apply_pickup_bounce(collector_id,bounce)
  if event_id.is_empty(): return
  var recipients := []
  for player in game.roster:
@@ -206,3 +213,25 @@ func handle_practice_dev_key(event: InputEvent) -> String:
   practice_spawn_queued = true
   return "Piñata queued for next round"
  return ""
+
+## Aim at the nearest frozen tower surface, or the starting base before a stack exists.
+func pickup_bounce(from: Vector3) -> Vector3:
+ var point := Vector2(from.x,from.y)
+ var target := base_anchor() + Vector2(0,1.0)
+ var nearest := INF
+ for candidate: Vector2 in tower_snapshot().points:
+  var distance := point.distance_squared_to(candidate)
+  if distance < nearest:
+   nearest = distance
+   target = candidate
+ var direction := (target-point).normalized()
+ return Vector3(direction.x,direction.y,0) * Feel.get_k("pinata_pickup_bounce")
+
+func _apply_pickup_bounce(cid: int, velocity: Vector3) -> void:
+ var collector: Climber = game.climbers.get(cid)
+ if collector == null or collector.removed or collector.state != Climber.State.LIVE or collector.owner_peer != game.me(): return
+ if not velocity.is_finite(): return
+ var boost := Vector3(velocity.x,velocity.y,0).limit_length(Feel.get_k("pinata_pickup_bounce"))
+ # Equal velocity change across the ragdoll avoids wrenching the touching limb.
+ for piece: RigidBody3D in collector.bodies.values():
+  piece.apply_central_impulse(boost * piece.mass)

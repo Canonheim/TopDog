@@ -9,6 +9,10 @@ const PPM := 100.0  # 2D physics pixels per metre (the physics world is in px)
 
 ## [value, min, max, help]. Order here is the dev panel's order.
 const SPEC := {
+	"chair_unstick_delay": [0.3, 0.0, 1.0, "Resting player contact before a grounded loose chair slips away (s)"],
+	"chair_unstick_speed": [0.9, 0.0, 1.5, "Gentle sideways speed of a chair slipping out from under a player (m/s)"],
+	"chair_unstick_acceleration": [6.0, 0.0, 15.0, "Acceleration clearing a grounded chair from under a player (m/s2)"],
+	"pinata_pickup_bounce": [1.2, 0.0, 3.0, "Small velocity boost toward the tower when a player collects a pinata (m/s)"],
 	"grapple_push_load": [1.6, 0.0, 4.0, "Active contact pressure added to the existing player grip spring-load ratio"],
 	"body_scale": [0.9, 0.6, 1.3, "Climber size (1.0 = the climber's modelled 2.0 m)"],
 	"shoulder_flare": [0.0, 0.0, 0.3, "Wide shoulders: arms sit this far further out than the model (m, Golemheim's flare). Rebuilds on the next spawn"],

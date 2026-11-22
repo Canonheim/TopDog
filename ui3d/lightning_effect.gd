@@ -263,6 +263,8 @@ static func strike(owner_node: Node,camera: Camera3D,animate := true,once := tru
 	var effect := new()
 	effect.name = "LightningStrike"
 	owner_node.add_child(effect)
+	if owner_node is Climber:
+		preload("res://ui3d/lock_effect_lod.gd").register(effect,&"legendary_locked_lod",effect.global_position,owner_node)
 	effect.top_level = true
 	effect.owner_ref = weakref(owner_node)
 	effect.tracked_skin = skin
