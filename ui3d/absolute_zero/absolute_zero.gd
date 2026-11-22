@@ -151,6 +151,7 @@ func setup(actor: Node) -> void:
 		var fitted:=fitted_icicle(point,length,faces)
 		if fitted==null:continue
 		var icicle:=MeshInstance3D.new();icicle.mesh=fitted;icicle.material_override=CelPass.one();icicle.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		icicle.scale=Vector3.ONE*.0001
 		add_child(icicle);icicle.global_position=point
 		icicle.set_meta("length",length);icicle.set_meta("start",rng.randf_range(.25,.65));icicle.set_meta("normal",candidate.normal)
 		icicles.append(icicle);selected.append(point);part_count[candidate.part]=int(part_count.get(candidate.part,0))+1
@@ -229,8 +230,8 @@ static func attach_owner(owner_node: Node,animate: bool) -> Node:
 	var existing:=owner_node.get_node_or_null("AbsoluteZero")
 	if existing!=null:return existing
 	var effect:=new();effect.name="AbsoluteZero";effect.set_meta("persistent_lock_effect",true);effect.set_meta("ready",false)
-	owner_node.add_child(effect);effect.set_process(false);effect.start(owner_node,animate);return effect
+	effect.hide();owner_node.add_child(effect);effect.set_process(false);effect.start(owner_node,animate);return effect
 func start(owner_node: Node,animate: bool) -> void:
 	await setup(owner_node)
 	if not is_instance_valid(self) or not is_instance_valid(owner_node):return
-	tick(0 if animate else 5);set_meta("ready",true);set_process(true)
+	tick(0 if animate else 5);show();set_meta("ready",true);set_process(true)

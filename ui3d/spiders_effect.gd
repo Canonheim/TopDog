@@ -65,16 +65,21 @@ static func prepare_unit(index: int) -> bool:
 	spider_meshes.append(mesh)
 	return true
 static func preview(model: Node3D, _camera: Camera3D) -> Node:
-	return attach_owner(model,true,false)
+	return attach_owner(model,true,false,_camera)
 static func attach(actor: Climber, _camera: Camera3D=null, animate:=true) -> Node:
 	if not is_instance_valid(actor) or actor.removed or actor.state!=Climber.State.FROZEN:return null
 	return attach_owner(actor,animate,true)
-static func attach_owner(owner_node: Node, animate: bool, use_tower: bool) -> Node:
+static func attach_owner(owner_node: Node, animate: bool, use_tower: bool, preview_camera: Camera3D=null) -> Node:
 	var existing:=owner_node.get_node_or_null("Spiders")
 	if existing!=null:return existing
 	var effect:=new();effect.name="Spiders";effect.tower_enabled=use_tower
 	effect.set_meta("persistent_lock_effect",true);effect.set_meta("ready",false)
 	owner_node.add_child(effect);effect.set_process(false)
+	if preview_camera!=null:
+		# The display model is rotated PI. Search and draw in camera-facing space,
+		# otherwise front-surface sampling selects its back and flips web culling.
+		effect.top_level=true
+		effect.global_transform=Transform3D(preview_camera.global_basis,(owner_node as Node3D).global_position)
 	effect.start(owner_node,animate)
 	return effect
 func start(owner_node: Node,animate: bool) -> void:
