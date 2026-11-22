@@ -404,9 +404,25 @@ func _build_rope(a: Dictionary, def: Dictionary, root: Node3D) -> void:
 			cs.shape = cap
 			if str(def.get("look", "")) == "hemp":
 				_hemp_piece(mi, rb, seg_len, i == n - 1)
+			elif kind == "chain" and not def.has("ladder"):
+				# A CHAIN OF LINKS (the reviewer's w1 at 2.6, 11-20: "two thin red hanging lines ... as thin as a drawn
+				# line. Give them visible links and some weight"): each piece one forged link, turned face on and edge
+				# on by turns, as a chain hangs: face on an open oval of four bars, edge on one bar reaching into its
+				# neighbours. The held iron's colour (ROPE_TONE), chunky enough to read at the game's distance.
+				mi.visible = false
+				var lh := seg_len + 0.06  # (each link laps a little into the next)
+				if i % 2 == 0:
+					var lw := 0.24
+					var bar := 0.055
+					for sx in [-(lw - bar) * 0.5, (lw - bar) * 0.5]:
+						rb.add_child(LuchaKit.box(Vector3(bar, lh - bar, bar), col, Vector3(sx, 0.0, 0.0)))
+					for sy in [-(lh - bar) * 0.5, (lh - bar) * 0.5]:
+						rb.add_child(LuchaKit.box(Vector3(lw, bar, bar), col, Vector3(0.0, sy, 0.0)))
+				else:
+					rb.add_child(LuchaKit.box(Vector3(0.07, lh + 0.1, 0.16), col, Vector3.ZERO))
 			else:
 				var bm := BoxMesh.new()
-				var wide := 0.085 if kind != "chain" else (0.11 if i % 2 == 0 else 0.07)
+				var wide := 0.085
 				bm.size = Vector3(wide, seg_len + 0.02, wide)
 				mi.mesh = bm
 				CelPass.paint(mi, col)
@@ -3015,7 +3031,9 @@ func _tick_tell(h: Dictionary, delta: float) -> void:
 		h["shook"] = false
 	if t >= float(h.get("wisp_at", 0.0)):
 		h["wisp_at"] = t + randf_range(1.0, 2.4)
-		peak.zones.burst(at + Vector2(0, 0.15), str(tell.wisp), 0.5)
+		# (At rest a hot hold no longer breathes its steam wisp: those pale balls floated along 2.9's pipe, the F-C11
+		# fault the falls' spray had (the reviewer, 11-20). It still pulses hot in colour and spits a spark now and
+		# then; held, the hand still smokes, it shudders, and it lets go with its burst.)
 		if randf() < 0.35:
 			peak.zones.burst(at, str(tell.spit), 0.3)
 

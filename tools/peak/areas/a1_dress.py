@@ -123,6 +123,10 @@ SKIN_REGIONS = {
     "mine_upper_works_mass": [(-238.2, 85.8), (-230.2, 85.8), (-230.2, 54.5), (-214.5, 54.5), (-214.5, 81.0), (-226.0, 90.5), (-238.2, 90.5)],
     "mine_throat_west": [(-256.0, -38.0), (-244.0, -38.0), (-244.0, 91.0), (-256.0, 91.0)],
 }
+# The rock round the frog's room, west of the throat (11-20: the room's west jamb was three plain slick slabs, their east
+# face lit cream by its lantern; mine_throat_west stops at x -252). It goes first, so its three slabs are its own.
+if _sw.model_bounds("mine_frog_mouth") is not None:
+    SKIN_REGIONS = {"mine_frog_mouth": [(-258.0, -32.0), (-252.0, -32.0), (-252.0, -20.5), (-258.0, -20.5)], **SKIN_REGIONS}
 
 # Every lit lantern's flame (x, y), for a1.py's lights (FOR THE AREA FILE, item 2). Filled by dress().
 LANTERN_LIGHTS = []
@@ -232,6 +236,8 @@ def dress(A):
     A.deco("mine_chamber_roof", -181.25, 21.3, z=0.0, size=(66.5, 37.7, 2.4), tone="rock2", skin=True)
     A.deco("mine_upper_works_mass", -226.25, 55.0, z=0.0, size=(23.5, 35.0, 2.4), tone="rock2", skin=True)
     A.deco("mine_throat_west", -248.0, -37.0, z=0.0, size=(8.0, 127.0, 2.4), tone="rock2", skin=True)
+    if _sw.model_bounds("mine_frog_mouth") is not None:  # (origin: the middle of its foot)
+        A.deco("mine_frog_mouth", -254.7, -31.5, z=0.0, size=(5.4, 10.7, 2.4), tone="rock2", skin=True)
     # Their bodies carried on behind (in place of today's flat cards). (El Diente's is part of it now;
     # its flat top at y 40 is still the ground the second cart and the back rail stand on, 1.7.)
     A.deco("mine_upper_works_body", -222.25, 55.0, z=-3.0, size=(15.5, 35.0, 1.0), tone="back")
@@ -261,7 +267,7 @@ def dress(A):
     A.deco("mine_frog_shelf", -251.2, -25.75, z=-3.5, size=(2.2, 0.45, 0.3), tone="wood2")
     A.deco("mine_towel_peg", -249.9, -26.9, z=-3.5, size=(0.4, 0.6, 0.1), tone="accent")
     hang(-249.7, -25.03, -2.4)  # the only warm light at the bottom of the mine
-    A.deco("mine_water_marks", -248.95, -27.4, z=-1.3, size=(0.3, 0.9, 0.02), tone="bone")  # the watchman's marks, on the door post
+    # (The watchman's marks on the door post, `mine_water_marks`, are out: 11-20, `mine_frog_cave` scratches them up its own post.)
     # The drowned level, 3 to 4 m behind: six sets under water to their caps, a boarded
     # tunnel seen through the water, a barrel wedged against a cap.
     for x in (-236.6, -234.0, -231.4, -226.2, -223.6, -221.0):

@@ -284,6 +284,7 @@ A.challenge("2.9", "Tubería", (-347.0, 118.2), 3, "B", moves=moves29)
 PS = 136.0
 airbox(-392, 134.5, -380, 158)  # the pool's hall
 A.water((-392, 134.5, -380, PS), PS, flow=(1.0, 0.0), look="pool")
+A.zones[-1].update({"front": 1.1, "fade": 0.8, "dark": 0.25, "murk": 0.9})  # (2.10's pool: in its basin, darker down, not a glass edge)
 slab(-385, -378, 138.0, t=0.5, skin="aguas_cascada_landing")  # Q10, over the spill's lip
 WET = [(-385.6, 139.4), (-386.7, 140.5), (-387.9, 141.5), (-388.8, 142.8), (-388.0, 150.0), (-389.2, 151.1), (-390.4, 152.2)]
 for i, p in enumerate(WET):
@@ -388,19 +389,21 @@ A.deco("valve_wheel", -349.3, 120.0, z=-0.4, size=(0.9, 0.9, 0.2), tone="accent"
 A.deco("valve_wheel", -377.6, 136.6, z=-0.4, size=(0.9, 0.9, 0.2), tone="accent")  # and the last's (page 2.9)
 A.light(-300, 121.0, color="#DDF2EC", rng=14.0, energy=0.9, z=-2.0)  # the well's far daylight on the pool
 A.effect("waterfall", (-244, 89.4, -238, RIV_S), through=True)  # over the lip, onto the lock's flap (La Esclusa, a1, carries it on down its back wall)
-A.effect("waterfall", (-232.6, RS, -230.8, MS), density=0.6)  # the mill channel's drain, into the race (note 22)
-A.effect("waterfall", (-229.0, 90.0, -226.0, RS), density=0.5)  # the race's drain, onto the lip ledge
-A.effect("waterfall", (-320.5, 115.0, -318.6, 116.0))  # the flume spills a metre into the pool (El Charco del Pozo)
-A.effect("waterfall", (-288, RIV_S, -284.5, 115), lip_depth=0.35)  # the first cascade (its top 0.35 m over the basin's lip, as a weir: q36)
-A.effect("waterfall", (-380.6, 116, -379, 136))  # the spill into the pipe hall
-A.effect("waterfall", (-392, 136, -389.5, 151))  # LA CASCADA CHICA
-A.effect("waterfall", (-430, 152, -425.5, 166), density=0.4)  # the dam's leak
-A.effect("mist", (-392, 134.5, -380, 156))
+# (`mist=False` on every one: no mist balls at their feet and no spatter, the floating white spray balls at 2.1, 2.9 and
+# 2.10, as the mine's went (F-C11; the black waters' first look, 11-20). Where they land in water they still churn and
+# foam. The cascade's mist effect over 2.10 is out for the same reason.)
+A.effect("waterfall", (-232.6, RS, -230.8, MS), density=1.0, width=0.6, mist=False)  # the mill channel's drain, into the race (note 22)
+A.effect("waterfall", (-229.0, 90.0, -226.0, RS), density=1.0, width=0.8, mist=False)  # the race's drain, onto the lip ledge (a spout, not a thin line by 2.1's climber)
+A.effect("waterfall", (-320.5, 115.0, -318.6, 116.0), mist=False)  # the flume spills a metre into the pool (El Charco del Pozo)
+A.effect("waterfall", (-288, RIV_S, -284.5, 115), lip_depth=0.35, mist=False)  # the first cascade (its top 0.35 m over the basin's lip, as a weir: q36)
+A.effect("waterfall", (-380.6, 116, -379, 136), mist=False)  # the spill into the pipe hall
+A.effect("waterfall", (-392, 136, -389.5, 151), mist=False)  # LA CASCADA CHICA
+A.effect("waterfall", (-430, 152, -425.5, 166), density=1.0, width=0.85, mist=False)  # the dam's leak (a spout, not a thin line by the climb: 2.11)
 # (Two mists over La Esclusa, x -292 .. -280 at 89 .. 98 and -250 .. -234 at 86 .. 94, are out: phase 0's floating spray
 # balls, seen in the mine's frames over the flume and the lock: the reviewer's q27, 11-18, as MINE_PASS F-C11 did in a1.)
 A.effect("drips", (-232, 90, -226, T0C))  # the race's drain drips on the lip ledge
 A.effect("drips", (-320, 115, -286, 128))
-A.effect("steam", (-378, 118, -348, 140), density=0.5)
+# (The pipe hall's steam is out: its balls floated along the pipe at 2.9's top, the black waters' first look, 11-20.)
 
 
 # ================================================================ THE ROCK: the region minus the air
@@ -491,6 +494,9 @@ A.light(-442.0, 172.6, color="#F2F6FF", rng=6.0, energy=1.0)  # the bright cryst
 # (st.py BODY_WINDOWS); behind the far wall a backstop in this biome's darkest tone, so no gap shows
 # the body's grey-tan, or the sky.
 A.card([(-472, 76), (-216, 76), (-216, 194), (-472, 194)], z=-11.6, tone="back3", edge=False)
+# (East of the area's edge, past x -222, st's body card (z -9, its grey-tan) stood uncut and filled 2.4's frame's
+# right edge, the brightest flat there (the black waters' first look, 11-20): this biome's dark in front of it.)
+A.card([(-222.6, 88), (-212, 88), (-212, 194), (-222.6, 194)], z=-8.8, tone="back3", edge=False)
 
 if __name__ == "__main__":
     A.save()

@@ -874,6 +874,14 @@ A.zones[-1]["lock"] = {"low": LOCK_LOW, "high": LOCK_HIGH, "rise": RISE, "hold":
 # origin its waterline) land.
 A.zones[-1]["lock"]["wheel"] = {"at": [-246.6, 82.1], "z": -1.6, "d": 1.4, "mover": "compuerta", "travel": -3.0, "turns": 2.0}  # (a whole number: the hub's pug upright while open)
 A.zones[-1]["lock"]["gauge"] = {"x": -230.8, "z": -1.75}
+# (Darker down and murkier, no still-water rings: seen from 2.1 above it, the lock read as a glass tank, its tiled floor
+# at full depth and round rings on its front: the black waters' first look, 11-20.)
+A.zones[-1].update({"fade": 1.6, "murk": 0.85, "rings": False})  # (not darkened: at dark 0.25 its waterline and
+# foam went with it and the lower third read as a green brick wall, the reviewer's w2)
+# (Its deep colour alone darkened and reached within the first metre, so the tiles below are ghosts while the
+# waterline and foam keep their light; its front set back behind the walls' faces (z 1.2), so it ends at the pier's
+# face, not in a glass edge before it: the black waters' w5 re-score, 11-20, 2.1 "a lit glass tank".)
+A.zones[-1].update({"fade": 0.9, "murk": 0.95, "deep_dark": 0.75, "front": 1.1})
 # The wicket: open (up into the gate) while the water is under its sill, from 13.03 s to 1.17 s of the
 # next cycle: shut 11.86 s, opening and shutting in 0.2 s.
 _open_at = CYCLE - (79.4 - LOCK_LOW) / (LOCK_HIGH - LOCK_LOW) * DRAIN    # 13.03 s: the drain under the sill

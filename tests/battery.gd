@@ -4453,6 +4453,20 @@ func _run_peakrope() -> void:
 	var let_go: bool = not segs.has(c.limbs[1].grab_other)
 	await pticks(pk, 12)
 	t("peak rope: the button up, it lets go (and does not take it straight back)", let_go and not segs.has(c.limbs[1].grab_other))
+	# STILL PASSED THROUGH AFTER (Parker 11-21: ropes "freak out like crazy and make you fly around", "I keep
+	# colliding with them kinda"): on Jolt a grab's joint took away the rope's pass-through for the limb that held
+	# it, and the hand let go of from inside the rope was thrown out of it. tests/peak_rope_snap_probe.tscn has the numbers.
+	var passes := true
+	for piece: RigidBody3D in segs:
+		passes = passes and piece.get_collision_exceptions().has(hand)
+	var touches := 0
+	for i in 36:
+		await pticks(pk, 1)
+		for b: RigidBody3D in c.bodies.values():
+			for o in b.get_colliding_bodies():
+				if segs.has(o):
+					touches += 1
+	t("peak rope: let go of, the rope still passes the hand through (no contacts after)", passes and touches == 0, "every piece passes it: %s, contacts %d" % [passes, touches])
 	c.remove()
 	pk.leave()
 	await pticks(pk, 2)

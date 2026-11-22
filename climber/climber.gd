@@ -490,6 +490,7 @@ func _build_limbs() -> void:
 			"grab_rel0": 0.0,  # the end's angle against its hold when it stuck (rad)
 			"slipping": false,  # THE SLIP: the weld is turning as a friction pivot
 			"pivot": false,  # the grip is on a rope: a free pivot, never a weld
+			"grab_own_exc": true,  # the grab made the end's exception with what it holds (release takes it away); false: it was there before
 			"cursor": Vector2.ZERO,  # where a held hand or foot is being steered (world m)
 			"driving": false,
 		})
@@ -1382,6 +1383,15 @@ func attach(i: int, other: Object) -> void:
 	var ob := other as CollisionObject3D
 	var at := end.global_position
 	var target := climber_of(other)
+	# WHAT WAS EXCEPTED BEFORE THE GRAB STAYS EXCEPTED (Parker 11-21: ropes "freak out like crazy and make you
+	# fly around", "I keep colliding with them kinda, even on limbs that are not being controlled"). On Jolt,
+	# turning a joint's collisions back on (below) takes away EVERY exception between its two bodies, both
+	# ways, including any made before the grab: the Peak's ropes pass a climber through them by one, and
+	# every take of a rope piece stripped it, so after letting go that hand or foot was solid against the
+	# piece, and let go of from inside it, on the rope's own line, it was thrown out. Held world things
+	# (not a climber's pieces: their latches keep their own rules) get back what they had.
+	var had_end := ob in end.get_collision_exceptions()
+	var had_other := target == null and ob is PhysicsBody3D and end in (ob as PhysicsBody3D).get_collision_exceptions()
 	if target != null and target.state != State.FROZEN:
 		var physics := PhysicsServer3D.body_get_direct_state(end.get_rid())
 		if physics != null:
@@ -1421,11 +1431,14 @@ func attach(i: int, other: Object) -> void:
 		# released foot never touched the deck again (0.1.3). An explicit exception,
 		# removed on release, is reversible.
 		PhysicsServer3D.joint_disable_collisions_between_bodies(rid, false)
+		if had_other and end not in (ob as PhysicsBody3D).get_collision_exceptions():
+			(ob as PhysicsBody3D).add_collision_exception_with(end)  # (the Peak's rope pieces: see above)
 		l.grab = rid
 		l.grab_rel0 = angle_of(end) - angle_of(ob)
 		l.slipping = false
 	if ob not in end.get_collision_exceptions():
 		end.add_collision_exception_with(ob)
+	l.grab_own_exc = target != null or not had_end  # (release takes away only what the grab made)
 	_solid_frame = -1
 	l.grab_other = other
 	l.grab_climber = null
@@ -1523,7 +1536,8 @@ func release(i: int) -> void:
 					reciprocal = true
 					break
 		if not reciprocal:
-			end.remove_collision_exception_with(l.grab_other)
+			if bool(l.grab_own_exc):
+				end.remove_collision_exception_with(l.grab_other)
 			if holder != null and l.grab_other is PhysicsBody3D:
 				l.grab_other.remove_collision_exception_with(end)
 	var oc = l.grab_climber

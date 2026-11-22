@@ -3514,3 +3514,52 @@ tunnel's back wall again); no new models.
    the buffer (was 25). The slam takes at most 10 m/s of it (`cap`), so the rider is thrown at 6.5 as the test wants.
    cart1 (1.7) is left on its authored `speeds`: its leap at the lip is tuned to them.
    `--peakride` 0 fails; lint 260/0; `--peak` 0. Watch: `cartv` logs the cart's speed each second.
+
+## The black waters' first look (the reviewer's w1, REVIEW_LOG c04d4f0e; 11-20)
+1. Spray balls: a waterfall effect may say `mist: false` (peak_zones.gd `_fall_vis`: no mist at its foot, no
+   spatter); every a2 fall says it, and the cascade's mist effect over 2.10 and the pipe hall's steam are out. Falls
+   landing in water still churn and foam. NOT taken out: the puffs along the pipe at 2.9's top are the hot pipe
+   joints' own tell (peak_things.gd TELLS.hot: a hot hold breathes a wisp at rest), Parker's 11-12 call.
+2. The pools: 2.1's "glass tank with bubble rings" is a1's lock (La Esclusa) seen from above. A lock may now take a
+   body's `dark`, `murk`, `fade` and `rings: false` (`_lock_vis`); a1's lock: fade 1.2, dark 0.25, murk 0.9, no
+   rings. 2.10's pool: front 1.1, fade 0.8, dark 0.25, murk 0.9.
+3. 2.4's east edge: st's body card (z -9, grey-tan) stood uncut past x -222; a2 lays its own dark (back3) in front of
+   it, x -222.6 .. -212, y 88 .. 194, z -8.8. (st.py's BODY_WINDOWS is part two b's file.)
+4. 2.11: the dam's leak is a spout (density 1, width 0.65); the race's drain by 2.1's climber the same (0.55).
+5. 2.6's chains are physics ropes, kind "chain" (cadena1..3; also cadena_salto1/2, last_chance, flume_out): their
+   drawing is the rope code in peak_things.gd, the Second Director's tonight. Left.
+Lint 260/0, `--peak` 0. Frames: `cam:2.1:2.4:2.9:2.10:2.11`.
+
+## The black waters' second look (the reviewer's w2, REVIEW_LOG 782cd567; 11-20)
+1. a1's lock seen from 2.1: not darkened any more (dark 0.25 took its waterline and foam and left a green brick wall);
+   fade 1.6, murk 0.85, no rings.
+2. A fall's `width` is now the least its ribbon thins to over a lip (it followed the lip's water and thinned to a line);
+   2.1's two falls (the race's drain 0.8, the mill's 0.6) are spouts.
+3. A FOAM BAND where a fall lands on a floor (`_fall_vis`): a soft white band across its width and past it, with a lump,
+   just in front of the sheet and clear of the floor. 2.1's falls on the coping and 2.11's spout (0.85) on the walkway.
+Lint 260/0, `--peak` 0. Frames: `cam:2.1:2.11`.
+
+## 2.6's hopper that did not show (the Second Director, 11-20)
+Cause: `aguas_hopper_back` is built facing away from the camera: all 768 of its faces and all its normals point to
+-z, so the game (back faces culled) drew none of it from the front. The node was built, visible and in place
+(watch `decoinfo:aguas_hopper_back:2.6`); nothing stood in front of it (`hidelook:` with the back wall hidden).
+Fix: a deco may say `turn` (degrees about the model's up, peak.gd `_deco`); the hopper is turned 180 (a V, the same
+either way round, its depth even about its middle), so it draws where a2_dress places it. The model itself is
+untouched: its maker can turn it to face +z, and then the `turn` comes out. (The sweeps don't read `turn`.)
+Lint 260/0, `--peak` 0. New watch scenes: `decoinfo:MODEL[:CHALLENGE]`, `hidelook:MODEL:CHALLENGE:X:Y:HALF`.
+
+## 2.9's pipe steam (the reviewer, REVIEW_LOG 0f035132, watch 3; 11-20)
+The pale balls along 2.9's pipe were the hot holds' resting wisp (peak_things.gd, the timed-hold tell: a steam burst
+every 1 to 2.4 s at rest). It is out, for every hot hold (the chimney's hot rock too): at rest a hot hold pulses hot
+in colour and spits a spark now and then; held, the hand smokes, it shudders, and it lets go with its burst, as
+Parker asked on 11-12. Lint 260/0, `--peak` 0. Frame: `cam:2.9`.
+
+## 2.1's pool (the reviewer's w5 re-score, REVIEW_LOG 14cfd9f0; 11-20)
+The pool under 2.1's pier is the lock (a1's, drawn by `_lock_vis`). Nothing drifted since w3: w3 took `dark` off to
+keep the waterline and foam and left a light body (fade 1.6, murk 0.85), the tiles at near full contrast all the way
+down, and its front stood at z 1.44, in front of the walls' faces (1.2), so its east end was a glass edge before the
+pier. Now a water rule may say `deep_dark` (peak_zones: the deep colour alone darkened, the shallow band, waterline
+and foam keep their light; bodies and the lock both read it), and the lock may say `front` as a body does. The lock:
+fade 0.9, murk 0.95, deep_dark 0.75, front 1.1: it is murky dark a metre down, the tiles below are ghosts, and it
+ends at the pier's own face. The mine's view of the lock (`cam:1.13`) keeps its waterline. Lint 260/0, `--peak` 0.
+Frame: `cam:2.1`.

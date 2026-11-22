@@ -870,6 +870,10 @@ func _deco(a: Dictionary, d: Dictionary) -> Node3D:
 	n.position = at
 	n.set_meta("deco", str(d.model))  # (a rope that rings a bell finds it by this)
 	n.rotation.z = deg_to_rad(float(d.get("rot", 0.0)))
+	if d.has("turn"):
+		# `turn`: degrees about the model's own up, for a model made facing away from the camera (a2's
+		# aguas_hopper_back: every face and normal toward -z, so the front saw none of it: the Second Director, 11-20)
+		n.rotation.y = deg_to_rad(float(d.turn))
 	var s := float(d.get("scale", 1.0))
 	# A landed model far from the size the author drew for (a mask asked for at 21 m,
 	# modelled at 10) is scaled to it; within a quarter either way it is left as made.

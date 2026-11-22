@@ -405,11 +405,22 @@ func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 	var floor_y := float(z.rect[1])
 	var level := float(z.surface)
 	var cols: Array = water_colors(a)
+	# (A lock may take a body's `dark`, `murk` and `fade` (_body_vis), and `rings: false`: no still-water rings drawn on
+	# its front. The black waters' first look, 11-20: seen from 2.1 the lock read as a glass tank, its tiled floor at
+	# full depth and round "bubble" rings on it.)
+	if z.has("dark"):
+		var dk := float(z.dark)
+		cols = [Color((cols[0] as Color).darkened(dk), (cols[0] as Color).a), Color((cols[1] as Color).darkened(dk), (cols[1] as Color).a)]
+	if z.has("murk"):
+		cols[1] = Color((cols[1] as Color).r, (cols[1] as Color).g, (cols[1] as Color).b, float(z.murk))
+	if z.has("deep_dark"):
+		cols[1] = _deep_darkened(cols[1], float(z.deep_dark))
+	var front_z := minf(WATER_DEPTH * 0.5, float(z.get("front", WATER_DEPTH * 0.5)))
 	var n := Node3D.new()
 	# the front: x0 .. x1, 0 .. 1 high, stretched to the level every tick
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var still := Color(0.5, 1.0, 0.0, 1.0)  # (no current, a still patch: the body shader's vertex colour)
+	var still := Color(0.5, 1.0 if bool(z.get("rings", true)) else 0.0, 0.0, 1.0)  # (no current, a still patch: the body shader's vertex colour)
 	var steps := maxi(1, int(ceil((x1 - x0) / 0.5)))
 	for i in steps:
 		var xl := lerpf(x0, x1, float(i) / steps)
@@ -425,9 +436,11 @@ func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 	fm.set_shader_parameter("deep_color", cols[1])
 	fm.set_shader_parameter("surface_y", level + Peak.ORIGIN.y)
 	fm.set_shader_parameter("mean_flow", 0.0)
+	if z.has("fade"):
+		fm.set_shader_parameter("fade_m", float(z.fade))
 	fm.render_priority = 1
 	front.material_override = fm
-	front.position = Vector3(0, floor_y, WATER_DEPTH * 0.5)
+	front.position = Vector3(0, floor_y, front_z)
 	front.scale.y = maxf(0.02, level + 0.16 - floor_y)
 	front.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	front.extra_cull_margin = 16.0  # (stretched every tick: never culled by its first size)
@@ -435,9 +448,9 @@ func _lock_vis(a: Dictionary, z: Dictionary, root: Node3D) -> Node3D:
 	# the top: Del Mar's surface, riding the level
 	var top := MeshInstance3D.new()
 	var pm := PlaneMesh.new()
-	pm.size = Vector2(x1 - x0, WATER_DEPTH)
+	pm.size = Vector2(x1 - x0, front_z + WATER_DEPTH * 0.5)
 	top.mesh = pm
-	top.position = Vector3((x0 + x1) * 0.5, level, 0)
+	top.position = Vector3((x0 + x1) * 0.5, level, (front_z - WATER_DEPTH * 0.5) * 0.5)
 	n.add_child(top)
 	var sea := DelMarSea.new()
 	n.add_child(sea)
@@ -1046,6 +1059,13 @@ const WATER_DEPTH := Peak.HALF * 2.4  # how far through the play plane a pool re
 
 ## [shallow, deep] for an area's water: Del Mar's two blues, pulled toward the area's own
 ## dark when tinted. (The alphas are how much the front hides what is in the water.)
+## `deep_dark`: only the deep colour darkened, so the body sinks to the murky dark a metre down while its shallow
+## band, the waterline and the foam keep their light (a body's `dark` darkens both and takes the waterline with it:
+## the reviewer's w2 at the lock). The black waters' w5 re-score, 11-20: 2.1's view of the lock, a lit glass tank.
+static func _deep_darkened(c: Color, k: float) -> Color:
+	return Color(c.darkened(k).r, c.darkened(k).g, c.darkened(k).b, c.a)
+
+
 func water_colors(a: Dictionary) -> Array:
 	var shallow := DelMarSea.SHALLOW
 	var deep := DelMarSea.DEEP
@@ -1227,6 +1247,8 @@ func _body_vis(a: Dictionary, zs: Array, root: Node3D) -> Dictionary:
 			# (`murk`: the deep colour's alpha (0.74 by default), so what stands in deep water sinks into it and only
 			# the part near the surface shows: the Sump's piles and sunk ladder, the reviewer's q45)
 			cols[1] = Color((cols[1] as Color).r, (cols[1] as Color).g, (cols[1] as Color).b, float(z.murk))
+		if z.has("deep_dark"):
+			cols[1] = _deep_darkened(cols[1], float(z.deep_dark))
 	pm.size = Vector2(w, front_z - back)
 	top.mesh = pm
 	top.position = Vector3(mid_x, surface, (front_z + back) * 0.5)
@@ -1436,6 +1458,7 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 			var tan := Vector2(dir * v0 * exp(-v0 * tt / out), -FALL_G * tt).normalized()
 			var nrm := Vector2(-tan.y, tan.x) * dir
 			var thick := clampf(depth * v0 / sqrt(v0 * v0 + FALL_G * FALL_G * tt * tt), 0.13, depth)
+			thick = maxf(thick, float(e.get("width", 0.0)))  # (an author's `width` is the least it thins to: a spout, not a thin line)
 			mid.append([c, nrm, thick])
 		xr = (mid[mid.size() - 1][0] as Vector2).x
 		width = float(mid[mid.size() - 1][2])
@@ -1507,7 +1530,8 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 			for k in n_foam:
 				var fx := xr - hw + (float(k) + 0.5) * (2.0 * hw / float(n_foam))
 				((foot.body as Dictionary).first as Array).append(Vector3(fx, maxf(1.3, hw / float(n_foam) * 1.3), 1.6))
-	if top_y - foot_y > 2.5:
+	var spray := bool(e.get("mist", true))  # (`mist: false`: no mist balls at its foot, no spatter: F-C11, the black waters' first look)
+	if top_y - foot_y > 2.5 and spray:
 		var mist := _particles(Color("#EAF6FC"), 5.0, int(clampf(7.0 * density + 4.0, 5.0, 14.0)), 2.6)
 		(mist.material_override as StandardMaterial3D).albedo_color.a = 0.26
 		mist.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
@@ -1521,6 +1545,27 @@ func _fall_vis(a: Dictionary, e: Dictionary, root: Node3D) -> void:
 		mist.position = Vector3(xr, foot_y + 0.3, 0.9)
 		root.add_child(mist)
 	if foot.is_empty():
+		# A FOAM BAND WHERE IT LANDS ON A FLOOR (the black waters' second look, 11-20: "a foam band at its foot"): a soft
+		# white band across its width and a little past, low on the floor, just in front of the sheet.
+		var band := MeshInstance3D.new()
+		var qm := QuadMesh.new()
+		qm.size = Vector2(hw * 2.0 + 0.9, 0.55)
+		band.mesh = qm
+		var bm := StandardMaterial3D.new()
+		bm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		bm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		bm.albedo_texture = _dot()
+		bm.albedo_color = Color(0.93, 0.97, 1.0, 0.85)
+		bm.cull_mode = BaseMaterial3D.CULL_DISABLED
+		band.material_override = bm
+		band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		band.position = Vector3(xr, foot_y + 0.3, sheet.position.z + 0.04)  # (clear of a floor a little over the fall's foot)
+		root.add_child(band)
+		var lump := band.duplicate() as MeshInstance3D  # (a second, narrower and higher: the band is lumpy, not one ellipse)
+		lump.scale = Vector3(0.6, 1.25, 1.0)
+		lump.position = Vector3(xr + hw * 0.25, foot_y + 0.4, sheet.position.z + 0.05)
+		root.add_child(lump)
+	if foot.is_empty() and spray:
 		# it lands on a floor: it spatters
 		var sp := _drops(int(clampf(10.0 * density, 5.0, 14.0)), 0.55)
 		sp.direction = Vector3.UP

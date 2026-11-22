@@ -4088,3 +4088,38 @@ func _w_cartv(_a: Array) -> void:
 		if float(m.arrived) >= 0.0:
 			print("WATCH cartv: at the buffer after %d s" % (i + 1))
 			break
+
+
+## A DECO'S NODE, AS THE GAME BUILT IT: decoinfo:MODEL prints every node named MODEL under the Peak: where it stands,
+## its scale, whether it and its parents are visible, its meshes' world boxes and their materials' alpha.
+func _w_decoinfo(a: Array) -> void:
+	var want := str(a[0]) if a.size() > 0 else ""
+	if a.size() > 1:
+		pk.warp(str(a[1]))  # decoinfo:MODEL:CHALLENGE: seen from that challenge's start
+	await secs(3.0)
+	for n: Node in pk.find_children(want, "Node3D", true, false):
+		var n3 := n as Node3D
+		var vis := n3.is_visible_in_tree()
+		print("WATCH deco %s: parent %s, at %s, scale %s, visible %s, meta deco %s" % [n.get_path(), n.get_parent().name, n3.global_position, n3.scale, vis, n.get_meta("deco", "-")])
+		var ms: Array = n.find_children("*", "MeshInstance3D", true, false)
+		if n is MeshInstance3D:
+			ms.append(n)
+		for mi: MeshInstance3D in ms:
+			var box: AABB = mi.global_transform * mi.get_aabb()
+			var mat: Material = mi.material_override if mi.material_override != null else (mi.mesh.surface_get_material(0) if mi.mesh != null and mi.mesh.get_surface_count() > 0 else null)
+			print("WATCH   mesh %s: box %s, layers %d, visible %s, override %s, material %s" % [mi.name, box, mi.layers, mi.is_visible_in_tree(), mi.material_override != null, mat])
+
+
+## A LOOK WITH ONE MODEL HIDDEN: hidelook:MODEL:CHALLENGE:X:Y:HALF: a shot as it is, then one with every node named
+## MODEL hidden (what it stands in front of, or what stands in front of it).
+func _w_hidelook(a: Array) -> void:
+	var want := str(a[0])
+	pk.warp(str(a[1]))
+	await secs(3.0)
+	look(Vector2(float(a[2]), float(a[3])), float(a[4]))
+	await secs(1.5)
+	await shot("hidelook_%s_on" % want)
+	for n: Node in pk.find_children(want, "Node3D", true, false):
+		(n as Node3D).visible = false
+	await secs(0.5)
+	await shot("hidelook_%s_off" % want)
