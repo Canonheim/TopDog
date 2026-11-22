@@ -24,6 +24,8 @@ signal lock_effect(effect: String)
 var lock_effect_at := Vector3.INF
 signal attached_lock_effect(effect: String, climber: Climber)
 signal phase_changed(phase: String)
+## THE VS CARD (docs/VS_CARD.md): a round is about to start. left / right: Arrays of {pid, name}.
+signal versus(round_n: int, left: Array, right: Array)
 signal match_over(results: Dictionary)
 signal xp_achievement(title: String, amount: int, player: String)
 signal climber_spawned(c: Climber)
@@ -57,6 +59,10 @@ var _lock_want := {}  # climber id -> seconds the press is still wanted
 const STREAM_HZ := 30.0
 const CLOCK_HZ := 4.0
 const PAUSE_BETWEEN := 1.6  # seconds between turns / rounds
+## THE LAST LOCK-IN LINGERS (Parker 11-22: "have the last person to lock in have the camera linger on
+## them for one second longer before it starts the next round and snaps to the next camera angle"):
+## a turn or round ended by a lock-in pauses this much longer, the camera held on that climber.
+const LOCK_LINGER_S := 1.0
 const FREEZE_REPLY_S := 1.5  # how long the host waits for an owner's final pose
 const RING_OUT_S := 3.0  # down on the plaza: back in the ring after this long (Parker 11-08)
 const PULL_STALE_S := 0.25
@@ -102,6 +108,14 @@ var _cid_next := 1
 var _spawn_n := 0
 var _last_spawn_sides := {}  # pid -> actual side of their most recent spawn
 var _between_t := 0.0
+var _vs_t := 0.0  # host: the VS card is up; the round starts when this runs out
+var _vs_pair: Array = []
+var _vs_sides: Array = []
+var _next_names := {}  # pid -> the made name the VS card showed (the spawn uses it)
+var _last_lock_cid := -1  # the last climber to lock in (every machine), and when
+var _last_lock_at := -INF
+## The climber the camera stays on through this between-turns pause, or -1 (LOCK_LINGER_S).
+var lock_linger_cid := -1
 var _clock_t := 0.0
 var _stream_t := 0.0
 var _seq := 0
@@ -226,6 +240,8 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	_last_spawn_sides.clear()
 	phase = "between"
 	_between_t = 0.8
+	_vs_t = 0.0
+	_next_names.clear()
 	phase_changed.emit(phase)
 	announce.emit(str(mode.name), true)
 
@@ -314,9 +330,14 @@ func _physics_process(delta: float) -> void:
 		"lobby":
 			_check_bounds()
 		"between":
-			_between_t -= real_delta
-			if _between_t <= 0.0:
-				_next()
+			if _vs_t > 0.0:
+				_vs_t -= real_delta
+				if _vs_t <= 0.0:
+					_start_round(_vs_pair, _vs_sides)
+			else:
+				_between_t -= real_delta
+				if _between_t <= 0.0:
+					_next()
 		"turn", "round":
 			if not practice:
 				clock -= real_delta
@@ -353,15 +374,45 @@ func _next() -> void:
 			if not is_instance_valid(partner) or partner.state == Climber.State.FROZEN:
 				_spawn_partner()
 	else:
-		round_n += 1
-		locked.clear()
-		_round_fail_tops.clear()
-		_rpc_phase.rpc("round", float(settings.get("timer", 60.0)), line if round_n > 1 else stage.first_line, round_n, -1)
 		var pair := _next_pair() if mode.get("round_robin", false) else still
-		_rpc_round_players.rpc(pair)
-		var sides := _classic_spawn_sides(pair) if mode.get("round_robin", false) else []
-		for i in pair.size():
-			_spawn(pair[i], sides[i] if not sides.is_empty() else 0)
+		var sides := _classic_spawn_sides(pair) if mode.get("round_robin", false) and pair.size() >= 2 else []
+		if pair.size() >= 2 and not practice and not peak_on:
+			# THE VS CARD first (Parker 11-22): the round starts as its halves fly off.
+			_vs_pair = pair
+			_vs_sides = sides
+			_vs_t = VsCard.ROUND_STARTS_AT
+			var left: Array = []
+			var right: Array = []
+			for i in pair.size():
+				var pid: int = pair[i]
+				var r := roster_entry(pid)
+				var nm := str(r.get("name", "?"))
+				if bool(r.get("random", false)):
+					nm = NameGen.make()  # (every round's climber is a new one: the spawn takes this name)
+					_next_names[pid] = nm
+				# Left of the card: who spawns on the left; with no sides, the first half of the list.
+				var on_left: bool = int(sides[i]) < 0 if not sides.is_empty() else i < (pair.size() + 1) / 2
+				(left if on_left else right).append({"pid": pid, "name": nm})
+			_rpc_versus.rpc(round_n + 1, left, right)
+			return
+		_start_round(pair, sides)
+
+
+func _start_round(pair: Array, sides: Array) -> void:
+	_vs_t = 0.0
+	round_n += 1
+	locked.clear()
+	_round_fail_tops.clear()
+	_rpc_phase.rpc("round", float(settings.get("timer", 60.0)), line if round_n > 1 else stage.first_line, round_n, -1)
+	_rpc_round_players.rpc(pair)
+	for i in pair.size():
+		_spawn(pair[i], sides[i] if not sides.is_empty() else 0)
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_versus(p_round: int, left: Array, right: Array) -> void:
+	lock_linger_cid = -1  # the camera leaves the last lock-in for the card
+	versus.emit(p_round, left, right)
 
 
 func round_matchup() -> String:
@@ -401,6 +452,9 @@ func _rpc_phase(p: String, p_clock: float, p_line: float, p_round: int, pid: int
 	clock = p_clock
 	line = p_line
 	round_n = p_round
+	# A pause that a lock-in just ended (its freeze came first, on the same reliable channel)
+	# keeps the camera on that climber (LOCK_LINGER_S).
+	lock_linger_cid = _last_lock_cid if p == "between" and _now - _last_lock_at < 0.5 else -1
 	phase_changed.emit(phase)
 	if p == "turn":
 		# (announced by _rpc_spawn, with the name the new climber gets.) Guests learn
@@ -508,7 +562,8 @@ func _spawn(pid: int, preferred_side := 0) -> void:
 	var r := roster_entry(pid)
 	var nm := str(r.get("name", "?"))
 	if bool(r.get("random", false)) and _is_new_character(pid):
-		nm = NameGen.make()
+		nm = str(_next_names[pid]) if _next_names.has(pid) else NameGen.make()  # (the VS card's, if it showed one)
+	_next_names.erase(pid)
 	_rpc_spawn.rpc(pid, cid, feet, nm)
 
 
@@ -1027,6 +1082,9 @@ func _rpc_freeze(cid: int, pose: PackedFloat32Array, verdict: String, why: Strin
 	if c == null:
 		return
 	var who := c.display_name
+	if why == "locked" and grounded:
+		_last_lock_cid = cid
+		_last_lock_at = _now
 	if grounded:
 		if c.state == Climber.State.FROZEN:
 			c.state = Climber.State.LIVE  # re-pose a body its owner froze early
@@ -1076,23 +1134,9 @@ func _free_locked_overlaps(locked: Climber) -> void:
 	for actor: Climber in climbers.values():
 		if actor == locked or actor.state != Climber.State.LIVE or actor.owner_peer != me():
 			continue
-		for body: RigidBody3D in actor.bodies.values():
-			var query := PhysicsTestMotionParameters3D.new()
-			query.margin = 0.025
-			query.recovery_as_collision = true
-			for attempt in 6:
-				query.from = body.global_transform
-				query.motion = Vector3.ZERO
-				var result := PhysicsTestMotionResult3D.new()
-				if not PhysicsServer3D.body_test_motion(body.get_rid(), query, result):
-					break
-				var recovery := result.get_travel()
-				recovery.z = 0.0
-				if recovery.length_squared() < 0.000001:
-					break
-				body.global_position += recovery
-				Climber.sync_server(body)
-				body.sleeping = false
+		actor.free_from(locked)  # a nudge, then the whole climber out if still sunk (Climber.IMPALE_DEPTH)
+	if is_instance_valid(partner) and partner != locked and partner.state == Climber.State.LIVE:
+		partner.free_from(locked)
 
 ## Frozen pieces were static already; push their final transforms to the server.
 func _snap_static(c: Climber) -> void:
@@ -1107,7 +1151,7 @@ func _end_of_play() -> void:
 	if mode.live == "all" and clock > 0.0:
 		pass
 	_rpc_phase.rpc("between", 0.0, maxf(line, tower_top()) if mode.line == "tower" else line, round_n, -1)
-	_between_t = PAUSE_BETWEEN
+	_between_t = PAUSE_BETWEEN + (LOCK_LINGER_S if lock_linger_cid >= 0 else 0.0)
 
 
 func _finish() -> void:
@@ -1296,6 +1340,14 @@ func _delmar_chair_spot() -> Vector2:
 				best_r = p.dot(d)
 				best = p
 	return Vector2(maxf(best.x, line - best.y) + 1.6, best.y - ChairScript.PICKUP_HEIGHT + 0.4)
+
+
+## The climber the camera stays on between turns (the last to lock in), or null.
+func lock_linger_climber() -> Climber:
+	if phase != "between" or lock_linger_cid < 0 or not climbers.has(lock_linger_cid):
+		return null
+	var c: Climber = climbers[lock_linger_cid]
+	return c if is_instance_valid(c) and not c.removed else null
 
 
 func live_climbers() -> Array:

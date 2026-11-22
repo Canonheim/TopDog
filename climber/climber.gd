@@ -1973,6 +1973,101 @@ func freeze() -> void:
 	froze.emit(self)
 
 
+## OUT OF A CLIMBER THAT FROZE INSIDE US (Parker 11-22: a frozen climber's foot "has penetrated and
+## severed and made this guy stuck ... This sort of thing can't happen"). Online, a freeze poses the
+## frozen climber where its owner had it, which can be inside this one; a nudge piece by piece left it
+## stuck there, held by its own planted hands and feet (8 times in 9 in the test). So first the light
+## nudge (each piece out by its overlap); if any piece is still sunk past IMPALE_DEPTH into the frozen
+## climber, this climber lets go and moves as one, to the nearest clear spot (up first, then aside).
+const IMPALE_DEPTH := 0.04  # m
+const SHOVE_STEP := 0.05  # m between the spots tried
+const SHOVE_MAX := 3.0  # m: no further than this
+const SHOVE_DIRS := [Vector2(0, 1), Vector2(-1, 0), Vector2(1, 0), Vector2(-0.7071, 0.7071), Vector2(0.7071, 0.7071)]
+
+
+func free_from(locked: Climber) -> void:
+	if state != State.LIVE or removed or not is_instance_valid(locked):
+		return
+	# A planted hand or foot the frozen climber now overlaps lets go first: its weld would pull
+	# it straight back in after the nudge.
+	for i in limbs.size():
+		if limbs[i].grab_other == null or climber_of(limbs[i].grab_other) == locked:
+			continue
+		var end: RigidBody3D = bodies[limbs[i].def.end]
+		var hit := _overlap(end, end.global_transform)
+		if not hit.is_empty() and climber_of(hit.collider) == locked and hit.depth > 0.01:
+			release(i)
+	for body: RigidBody3D in bodies.values():
+		var query := PhysicsTestMotionParameters3D.new()
+		query.margin = 0.025
+		query.recovery_as_collision = true
+		for attempt in 6:
+			query.from = body.global_transform
+			query.motion = Vector3.ZERO
+			var result := PhysicsTestMotionResult3D.new()
+			if not PhysicsServer3D.body_test_motion(body.get_rid(), query, result):
+				break
+			var recovery := result.get_travel()
+			recovery.z = 0.0
+			if recovery.length_squared() < 0.000001:
+				break
+			body.global_position += recovery
+			sync_server(body)
+			body.sleeping = false
+	if sunk_in(locked) > IMPALE_DEPTH:
+		shove_clear()
+
+
+## How deep the deepest piece of this climber sits in `other`'s pieces (m).
+func sunk_in(other: Climber) -> float:
+	var deepest := 0.0
+	for body: RigidBody3D in bodies.values():
+		var r := _overlap(body, body.global_transform)
+		if not r.is_empty() and climber_of(r.collider) == other:
+			deepest = maxf(deepest, r.depth)
+	return deepest
+
+
+## Let go, and move the whole climber to the nearest spot where no piece is sunk in anything.
+func shove_clear() -> bool:
+	var dist := SHOVE_STEP
+	while dist <= SHOVE_MAX + 0.001:
+		for dir: Vector2 in SHOVE_DIRS:
+			var shift := Vector3(dir.x, dir.y, 0.0) * dist
+			var clear := true
+			for body: RigidBody3D in bodies.values():
+				var xf := body.global_transform
+				xf.origin += shift
+				var r := _overlap(body, xf)
+				if not r.is_empty() and r.depth > 0.01:
+					clear = false
+					break
+			if clear:
+				release_all()
+				for body: RigidBody3D in bodies.values():
+					body.global_position += shift
+					body.linear_velocity = Vector3.ZERO
+					body.angular_velocity = Vector3.ZERO
+					sync_server(body)
+					body.sleeping = false
+				return true
+		dist += SHOVE_STEP
+	return false
+
+
+## What `body` would be sunk in at `xf`, and how deep: {} if nothing.
+func _overlap(body: RigidBody3D, xf: Transform3D) -> Dictionary:
+	var q := PhysicsTestMotionParameters3D.new()
+	q.from = xf
+	q.motion = Vector3.ZERO
+	q.margin = 0.001
+	q.recovery_as_collision = true
+	var r := PhysicsTestMotionResult3D.new()
+	if not PhysicsServer3D.body_test_motion(body.get_rid(), q, r):
+		return {}
+	return {"collider": r.get_collider(), "depth": r.get_travel().length()}
+
+
 ## Remote climbers: every piece kinematic, moved by apply_pose from the stream.
 func make_puppet() -> void:
 	state = State.PUPPET

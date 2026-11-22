@@ -316,6 +316,24 @@ func _press(input: String, actions: Array) -> String:
 	return '\t\t\t"%s"\n\t\t\t{\n\t\t\t\t"activators"\n\t\t\t\t{\n\t\t\t\t\t"Full_Press"\n\t\t\t\t\t{\n\t\t\t\t\t\t"bindings"\n\t\t\t\t\t\t{\n%s\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n' % [input, b]
 
 
+## A trigger's "click" input: its soft pull ("Soft_Press") and its full pull ("Full_Press").
+## THE SOFT PULL IS AN ACTIVATOR, NOT AN INPUT (Parker 11-22: Dan's triggers moved the match
+## camera, Parker's didn't): a trigger group's inputs are only "click" and "edge", as in every
+## layout Steam ships (Steam\controller_base\*.vdf). The camera's "soft_pull" input was dropped
+## by Steam without a word, so under Steam Input the triggers did nothing; a raw pad reads them
+## through Players' own binds and always worked.
+func _trigger_click(soft: Array, full: Array) -> String:
+	var acts := ""
+	for pair in [["Soft_Press", soft], ["Full_Press", full]]:
+		if (pair[1] as Array).is_empty():
+			continue
+		var b := ""
+		for a in pair[1]:
+			b += '\t\t\t\t\t\t\t"binding"\t\t"game_action Game %s, , "\n' % a
+		acts += '\t\t\t\t\t"%s"\n\t\t\t\t\t{\n\t\t\t\t\t\t"bindings"\n\t\t\t\t\t\t{\n%s\t\t\t\t\t\t}\n\t\t\t\t\t}\n' % [pair[0], b]
+	return '\t\t\t"click"\n\t\t\t{\n\t\t\t\t"activators"\n\t\t\t\t{\n%s\t\t\t\t}\n\t\t\t}\n' % acts
+
+
 func _group(id: int, mode: String, inputs: String, game_action := "") -> String:
 	var ga := ""
 	if game_action != "":
@@ -342,8 +360,8 @@ func _config(controller_type: String) -> String:
 		_group(0, "four_buttons", diamond) + _group(1, "dpad", dpad) + \
 		_group(2, "joystick_move", "", "steer") + _group(3, "switches", switches) + \
 		_group(4, "joystick_move", "", "look") + \
-		_group(5, "trigger", _press("soft_pull", ["camera_players"]) + _press("click", ["zoom"]) + _press("edge", ["zoom"])) + \
-		_group(6, "trigger", _press("soft_pull", ["camera_loot"])) + \
+		_group(5, "trigger", _trigger_click(["camera_players"], ["zoom"]) + _press("edge", ["zoom"])) + \
+		_group(6, "trigger", _trigger_click(["camera_loot"], [])) + \
 		'\t"preset"\n\t{\n\t\t"id"\t\t"0"\n\t\t"name"\t\t"Game"\n\t\t"group_source_bindings"\n\t\t{\n' + \
 		'\t\t\t"0"\t\t"button_diamond active"\n\t\t\t"1"\t\t"dpad active"\n\t\t\t"2"\t\t"joystick active"\n\t\t\t"3"\t\t"switch active"\n' + \
 		'\t\t\t"4"\t\t"right_joystick active"\n\t\t\t"5"\t\t"left_trigger active"\n\t\t\t"6"\t\t"right_trigger active"\n' + \

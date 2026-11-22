@@ -56,7 +56,9 @@ var _clock_text: Node3D
 var _clock_val := -1
 var _info: Node3D
 var _info_text := ""
-var _steam_tag: Node3D  # the nameplate climber's Steam name, top left (Parker 11-10)
+var _vs: VsCard  # the VS card before each round (docs/VS_CARD.md)
+var _steam_tag: Node3D  # the nameplate climber's Steam name, top right over the clock (Parker 11-22; was top left)
+const STEAM_CHAR_W := 0.18  # the Steam name's width per letter at its 0.26 size (HUD units)
 var _steam_text := ""
 var _local_start := -1
 var _banner: Node3D
@@ -98,6 +100,7 @@ func setup(p_main: Node) -> void:
 	settings.build()
 	_restyle_line()
 	main.game.announce.connect(_on_announce)
+	main.game.versus.connect(_on_versus)
 	main.game.lock_effect.connect(play_lock_effect)
 	main.game.attached_lock_effect.connect(play_attached_lock_effect)
 	no_shadows(cam)  # UI never casts shadows into the world (the menus' words ghosted on the apron)
@@ -1815,6 +1818,25 @@ func board_free_centre_ndc() -> float:
 	return (3.35 if COMPACT_RESULTS_XP else 2.25) / maxf(virtual_half_w, 0.01)
 
 
+## THE VS CARD (Parker 11-22): the halves slam in with each side's made names and Steam names.
+func _on_versus(round_n: int, left: Array, right: Array) -> void:
+	if hud_bottom == null:
+		return
+	if _vs == null:
+		_vs = VsCard.new()
+		_vs.name = "VsCard"
+		hud_bottom.add_child(_vs)
+	var g: Game = main.game
+	var sides: Array = []
+	for list in [left, right]:
+		var out: Array = []
+		for f in list:
+			var r: Dictionary = g.roster_entry(int(f.pid))
+			out.append({"name": str(f.name), "steam": LuchaHudBottom.steam_name(int(r.get("peer", 0)))})
+		sides.append(out)
+	_vs.play(round_n, sides[0], sides[1], virtual_half_w, virtual_half_h)
+
+
 ## Everything under `n` stops casting shadows (UI pieces hang in the sun's light).
 static func no_shadows(n: Node) -> void:
 	if n is GeometryInstance3D:
@@ -2144,7 +2166,12 @@ func _process(delta: float) -> void:
 		hud_bottom.get_node("Buckle").position = Vector3(half_w - 1.15, half_h - 1.05, 0)
 		_clock_text.position = hud_bottom.get_node("Buckle").position + Vector3(0, 0, 0.075)
 		_info.position = Vector3(half_w - 0.95, -half_h + 0.45, 0)
-		_steam_tag.position = Vector3(-half_w + 0.3, half_h - 0.4, 0)
+		# THE STEAM NAME, TOP RIGHT, OVER THE CLOCK (Parker 11-22: "steam name is drawn in the top left
+		# over the EXP stuff, move steam name to top right instead and have it be above the timer"):
+		# centred over the buckle (0.6 tall, its top 0.75 under the edge), a long name kept on screen.
+		var buckle_x: float = (hud_bottom.get_node("Buckle") as Node3D).position.x
+		var steam_half := _steam_text.length() * STEAM_CHAR_W * 0.5
+		_steam_tag.position = Vector3(minf(buckle_x, half_w - 0.3 - steam_half), half_h - 0.4, 0)
 		# The who's-climbing label repeats the banner's news, and its tail covers it:
 		# it waits too.
 		_info.visible = not (_banner != null and _banner.visible)
@@ -2162,7 +2189,7 @@ func _process(delta: float) -> void:
 				info = "GET READY..."
 		if g.practice:
 			info = "" if g.peak_on else "PRACTICE"
-		# The Steam name, top left, read from its left edge (online only).
+		# The Steam name, top right, centred over the clock (online only).
 		var steam := hud_bottom.steam_shown.to_upper() if show else ""
 		if steam != _steam_text:
 			_steam_text = steam
@@ -2170,7 +2197,6 @@ func _process(delta: float) -> void:
 				ch.queue_free()
 			if steam != "":
 				var st := LuchaKit.poster_text(steam, 0.26, LuchaKit.GOLD, LuchaKit.INK, 0.05)
-				st.position = Vector3(steam.length() * 0.09, 0, 0)
 				_steam_tag.add_child(st)
 				no_shadows(st)
 		if info != _info_text:

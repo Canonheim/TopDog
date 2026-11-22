@@ -1052,6 +1052,36 @@ sure we dont lose his work".
   over Dan's patch (11-10: two triangles filling a small hole in the banner slab). It was dropped,
   and the kit's own `models/title_logo.glb` now carries Dan's patch, so a kit sync can't undo it.
 
+## The VS card, the last lock-in's linger, and three fixes (Parker, 2026-11-22)
+
+- **THE VS CARD** (Parker: "Each round, I want a 'VS' title card to come in from left and right of
+  screen, connecting at the middle ... slam together, sit there for 2 seconds, then split and fly
+  away into the background, and the round starts"; "we do want the FULL name of the climber").
+  The design is `docs/VS_CARD.md`; the pieces are the UI creator's `vs_half_l`, `vs_half_r`,
+  `vs_spark` (Top Dog Kit PARTS.md V). `ui3d/vs_card.gd` plays it in the HUD's near space: in 0.35 s,
+  slam 0.15 s, hold 2.0 s, then out in 1.3 s, launched over the horizon in a high tumbling arc ("not just shoot straight back"). The host shows it before every round of the round modes
+  (`Game._rpc_versus`, two or more fighters, not practice, not the Peak), picks each climber's made
+  name early so the card can show it (`_next_names`), and starts the round as the halves leave
+  (`VsCard.ROUND_STARTS_AT`). One fighter a side: the full name on two lines, its "THE ..." title
+  under it; the Steam name on the strip (hidden offline). Box stand-ins if the kit pieces are missing.
+- **The last lock-in lingers** ("have the last person to lock in have the camera linger on them for
+  one second longer"): a turn or round ended by a lock-in pauses `Game.LOCK_LINGER_S` (1 s) longer,
+  the camera held on that climber (`lock_linger_climber`), until the next turn or the VS card.
+- **The Steam name is top right, over the clock** ("steam name is drawn in the top left over the EXP
+  stuff"): centred over the buckle, a long name kept on screen (`LuchaUI.STEAM_CHAR_W`).
+- **A climber frozen inside a live one** ("this foot has penetrated and severed and made this guy
+  stuck ... This sort of thing can't happen"): online, a freeze poses the frozen climber where its
+  owner had it, which can be inside another. The piece-by-piece nudge left the live climber stuck 8
+  times in 9 (`tests/frozen_inside_probe.tscn -- --old`). Now `Climber.free_from`: overlapped planted
+  ends let go, the nudge, then, if still sunk past `IMPALE_DEPTH`, the whole climber lets go and
+  moves to the nearest clear spot (up first). 0 in 9. A drop onto a frozen foot never stuck (0 in 15).
+- **The triggers under Steam Input** (Dan's triggers moved the match camera, Parker's did not): the
+  layout bound the camera actions to a trigger input named "soft_pull", which Steam does not have
+  (its layouts use "click" with a "Soft_Press" activator) and dropped without a word. Now
+  `SteamInput._trigger_click`. A raw pad always worked. Not yet tried on a pad under Steam.
+- Checked: lint; hud_probe (its one failure, the clock lifting for a banner, fails the same without
+  these changes); frozen_inside_probe; frames `builds\vs_card_beats.jpg`, `builds\vs_card_hold.jpg`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

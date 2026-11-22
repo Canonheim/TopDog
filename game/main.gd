@@ -1085,6 +1085,11 @@ func _tick_camera(delta: float) -> void:
 		line_bar.visible = false
 		return
 	var live := game.live_climbers()
+	# THE LAST LOCK-IN LINGERS (Game.LOCK_LINGER_S): through a pause a lock-in ended, the camera
+	# frames that climber as it did in play, then the next turn takes it on.
+	var linger: Climber = game.lock_linger_climber()
+	if linger != null:
+		live = [linger]
 	var top := 1.6
 	if game.stage != null and (live.is_empty() or game.phase == "idle"):
 		top = game.tower_top()
@@ -1095,7 +1100,7 @@ func _tick_camera(delta: float) -> void:
 	# structure", as the reference game does): in play the camera frames only the
 	# live climbers, close. With nobody live (menus, between turns) it frames the
 	# tower top and the line as before, so the 3D menus riding the camera stay put.
-	var follow := not live.is_empty() and game.phase in ["turn", "round"]
+	var follow := not live.is_empty() and (game.phase in ["turn", "round"] or linger != null)
 	for climber: Climber in live:
 		var point := climber.centre_of_mass()
 		lo = lo.min(point)
@@ -1147,7 +1152,7 @@ func _tick_camera(delta: float) -> void:
 	# Loot extends the chosen shared/personal view, but never triggers personal
 	# camera switching itself. Include the decorative stars as well as the hitbox.
 	var frame_loot := false
-	if follow and _camera_loot and is_instance_valid(game.pinata_director):
+	if follow and linger == null and _camera_loot and is_instance_valid(game.pinata_director):
 		var loot = game.pinata_director.current
 		if is_instance_valid(loot) and not loot.taken:
 			var loot_point := Vector2(loot.global_position.x, loot.global_position.y)

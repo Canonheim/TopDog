@@ -22,17 +22,26 @@ func _ready() -> void:
 	await get_tree().create_timer(2.0).timeout
 	var hb: LuchaHudBottom = main.lucha.hud_bottom
 	_check("the bottom shows in a turn", hb.is_visible_in_tree())
-	# Parker 11-10: the plate holds the made name only; the Steam name goes top left.
+	# Parker 11-10: the plate holds the made name only; the Steam name goes up top (top right since 11-22).
 	_check("the nameplate names the climber in full, never clipped", hb._name_shown == "BARTHOLOMEW THE EXCEEDINGLY LONG-NAMED", hb._name_shown)
 	await get_tree().create_timer(3.0).timeout
 	_check("...and keeps it (no cycling)", hb._name_shown == "BARTHOLOMEW THE EXCEEDINGLY LONG-NAMED", hb._name_shown)
-	_check("offline there's no Steam name (top left stays empty)", hb.steam_shown == "" and main.lucha._steam_tag.get_child_count() == 0, hb.steam_shown)
-	# Online, the climber's player's Steam name shows top left.
+	_check("offline there's no Steam name (the tag stays empty)", hb.steam_shown == "" and main.lucha._steam_tag.get_child_count() == 0, hb.steam_shown)
+	# Online, the climber's player's Steam name shows top right, over the clock (Parker 11-22).
 	Net.online = true
 	Net.members[1] = {"name": "SteamPal", "players": [], "ready": true}
 	await get_tree().create_timer(0.3).timeout
-	_check("online, the Steam name shows top left", hb.steam_shown == "SteamPal" and main.lucha._steam_text == "STEAMPAL" and main.lucha._steam_tag.get_child_count() > 0, main.lucha._steam_text)
+	_check("online, the Steam name shows", hb.steam_shown == "SteamPal" and main.lucha._steam_text == "STEAMPAL" and main.lucha._steam_tag.get_child_count() > 0, main.lucha._steam_text)
+	var tag_at: Vector3 = main.lucha._steam_tag.position
+	var buckle_at: Vector3 = (hb.get_node("Buckle") as Node3D).position
+	_check("the Steam name is top right, centred over the clock", tag_at.x > 0.0 and absf(tag_at.x - buckle_at.x) < 0.01 and tag_at.y > buckle_at.y + 0.5, [tag_at, buckle_at])
 	await _shot("hud_steam_tag")
+	# A long Steam name keeps its right end on screen.
+	Net.members[1] = {"name": "Captain Overlongname The Third", "players": [], "ready": true}
+	await get_tree().create_timer(0.3).timeout
+	var long_right: float = main.lucha._steam_tag.position.x + main.lucha._steam_text.length() * LuchaUI.STEAM_CHAR_W * 0.5
+	_check("a long Steam name stays on screen", long_right <= main.lucha.virtual_half_w - 0.29, long_right)
+	await _shot("hud_steam_tag_long")
 	Net.online = false
 	Net.members.erase(1)
 	_check("below the line the toast is down in its slot, and hidden", not hb.popped and hb._lock.position.y < 0.1 and not hb._lock.visible, hb._lock.position.y)

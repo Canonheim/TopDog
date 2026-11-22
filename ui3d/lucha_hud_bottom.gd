@@ -8,7 +8,7 @@ extends Node3D
 ## nameplate  on the kit's hud_nameplate (its nameplate_face), fitted for 33
 ##            letters: the climber's made-up name only (the climbing climber in
 ##            turns modes, your own in Classic). Its player's Steam name shows in
-##            the HUD's top-left corner instead (steam_shown, Parker 11-10). Its
+##            the HUD's top-right corner, over the clock (steam_shown, Parker 11-10; moved 11-22). Its
 ##            nameplate_lockin tab says LOCK IN! when your climber is above the
 ##            line, held a moment either way so it never flickers.
 ## A stand-in plate until the kit's part lands; it swaps in by name.
@@ -24,7 +24,7 @@ const KIT_SCALE := 2.4  # the kit's plate (2.6 m face) at HUD size
 const LOCK_AT := Vector3(-3.2, -2.05, 0.0)  # the LOCK IN tab, above the plate's left end
 const LOCK_TEXT := "LOCK IN!"
 ## The Steam name of the nameplate's climber's player (online only, else ""), which
-## LuchaUI shows in the top-left corner (Parker 11-10: "the name plate should now only
+## LuchaUI shows in the top-right corner, over the clock (Parker 11-10: "the name plate should now only
 ## have the built names and the name of the steam name should show in the upper left").
 var steam_shown := ""
 ## THE STEADY TAB (Parker 11-09: the lock-in "was flashing oddly"): your climber must be
