@@ -63,6 +63,8 @@ const DEFAULT_KBM := {
 	"pause": [{"key": KEY_ESCAPE}, {}],
 	"look": [{"key": KEY_ALT}, {}],
 	"zoom": [{"key": KEY_SHIFT}, {}],
+	"camera_players": [{}, {}],  # (no key by default: a slot to bind on the Controls board)
+	"camera_loot": [{}, {}],
 	"fart": [{"key": KEY_F}, {}],  # (note 54, Parker 11-13: "F" is the keyboard's fart, so everyone can pay their respects)
 }
 const DEFAULT_PAD := {
@@ -85,6 +87,10 @@ const DEFAULT_PAD := {
 ## pressed. They are binds like the rest (saved, swapped, reset) but are not rows on the
 ## Controls board yet: that board is the UI kit's, laid out for six.
 const CAMERA_ACTIONS := ["look", "zoom"]
+## Binds the Controls board's second page shows too, saved and swapped like the rest (Parker 11-23:
+## "make sure the controls page has all the keybinds like Dan's new camera controls"): the match
+## camera's players and pinata toggles (the triggers) and the fart.
+const EXTRA_ACTIONS := ["camera_players", "camera_loot", "fart"]
 const CAMERA_ACTION_NAMES := ["Look around (hold, and move the mouse)", "Zoom out (hold)"]
 ## Saved binds from an older default layout are dropped when this changes.
 const BINDS_VERSION := 3
@@ -813,7 +819,7 @@ func _load() -> void:
 	for scheme in ["kbm", "pad"]:
 		var d = cf.get_value("binds", scheme, null)
 		if d is Dictionary:
-			for a in ACTIONS + CAMERA_ACTIONS:
+			for a in ACTIONS + CAMERA_ACTIONS + EXTRA_ACTIONS:
 				if d.has(a) and d[a] is Array and d[a].size() == 2:
 					binds[scheme][a] = d[a]
 

@@ -37,6 +37,11 @@ func reset() -> void:
  _clear()
  round_index = 0
  tier_spacing = 7.0
+ # The numbering starts again with every match (the code review, 11-23: it never reset, so a
+ # machine that had seen more pinatas under another host dropped the new host's first ones).
+ generation = 0
+ received_generation = 0
+ collected_generation = -1
 
 func _clear() -> void:
  if is_instance_valid(current) and not current.taken:

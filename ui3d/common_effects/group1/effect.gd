@@ -13,13 +13,25 @@ static func source_transform(mesh_node: Node3D, root: Node3D) -> Transform3D:
 		if ancestor == root: break
 		ancestor = ancestor.get_parent()
 	return result
+# The preparer loads variant_path() on a worker thread, then hands the scene to
+# install_variant() on the main thread. prepare_variant() stays the synchronous
+# fallback for a cold live burst.
+const RESOURCE_TYPE := "PackedScene"
+static func variant_path(effect: String,index: int) -> String:
+	return "res://ui3d/common_effects/group1/models/"+effect+"_"+str(index)+".glb"
+static func has_variant(effect: String,index: int) -> bool:
+	return cached.has(effect+"_"+str(index))
 static func prepare_variant(effect: String,index: int) -> void:
+	if has_variant(effect,index): return
+	var start := Time.get_ticks_usec()
+	var scene: PackedScene = load(variant_path(effect,index))
+	install_variant(effect,index,scene,Time.get_ticks_usec()-start)
+static func install_variant(effect: String,index: int,scene: PackedScene,load_usec := 0) -> void:
 	var key := effect+"_"+str(index)
 	if cached.has(key): return
-	var start := Time.get_ticks_usec()
-	var scene: PackedScene = load("res://ui3d/common_effects/group1/models/"+key+".glb")
 	assert(scene != null)
 	var loaded := Time.get_ticks_usec()
+	var start := loaded-load_usec
 	var instance: Node3D = scene.instantiate()
 	var instantiated := Time.get_ticks_usec()
 	CelPass.celify(instance)

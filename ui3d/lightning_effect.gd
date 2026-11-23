@@ -85,31 +85,46 @@ static func prepare_unit(index: int) -> bool:
 static func mesh_path(index: int) -> String:
 	return "res://kit/effects/prepared/lightning_%02d.res" % index
 
+## The preparer clears this while its loads in flight are at their cap; live
+## callers keep it true. A slow load is still pending, never a failure.
+static var request_allowed := true
+static var draining := false
+
 static func prepare_mesh_unit(index: int) -> bool:
 	if meshes.is_empty(): meshes.resize(VARIANTS)
-	if meshes[index] != null: return true
 	var path := mesh_path(index)
-	if not pending_meshes.has(index):
-		if not ResourceLoader.exists(path):
-			preparation_errors[path] = "Missing bolt mesh bake"
+	if pending_meshes.has(index):
+		# Collect our own ticket even if a live burst already loaded this mesh.
+		var status := ResourceLoader.load_threaded_get_status(path)
+		if status==ResourceLoader.THREAD_LOAD_IN_PROGRESS: return false
+		pending_meshes.erase(index)
+		if status==ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			if meshes[index]==null: preparation_errors[path] = "Mesh load failed"
 			return true
-		if ResourceLoader.load_threaded_request(path,"ArrayMesh")!=OK:
-			preparation_errors[path] = "Mesh request failed"
-			return true
-		pending_meshes[index] = Time.get_ticks_msec()
-		return false
-	var status := ResourceLoader.load_threaded_get_status(path)
-	if status==ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-		if Time.get_ticks_msec()-int(pending_meshes[index])>5000:
-			preparation_errors[path] = "Mesh request timed out"
-			return true
-		return false
-	if status!=ResourceLoader.THREAD_LOAD_LOADED:
-		preparation_errors[path] = "Mesh load failed"
+		var loaded = ResourceLoader.load_threaded_get(path)
+		if meshes[index]==null:
+			if loaded is ArrayMesh: meshes[index] = loaded
+			else: preparation_errors[path] = "Mesh load failed"
 		return true
-	meshes[index] = ResourceLoader.load_threaded_get(path)
-	pending_meshes.erase(index)
-	return true
+	if meshes[index] != null: return true
+	if not ResourceLoader.exists(path):
+		preparation_errors[path] = "Missing bolt mesh bake"
+		return true
+	if draining or not request_allowed: return false
+	if ResourceLoader.load_threaded_request(path,"ArrayMesh")!=OK:
+		preparation_errors[path] = "Mesh request failed"
+		return true
+	pending_meshes[index] = Time.get_ticks_msec()
+	return false
+
+## Quit: stop new requests and block until every request in flight is collected.
+static func drain() -> void:
+	draining = true
+	for index in pending_meshes.keys():
+		var path := mesh_path(index)
+		if ResourceLoader.load_threaded_get_status(path)!=ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			ResourceLoader.load_threaded_get(path)
+	pending_meshes.clear()
 
 static func prepare_variant(index: int) -> void:
 	if meshes.is_empty(): meshes.resize(VARIANTS)

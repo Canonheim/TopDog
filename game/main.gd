@@ -121,12 +121,16 @@ func _ready() -> void:
 	game.phase_changed.connect(_on_phase)
 	game.match_over.connect(_on_over)
 	game.climber_spawned.connect(_on_spawned)
-	game.host_left.connect(func(): _to_title("The host left the game."))
+	# (The host leaving is announced once, by Net's server_disconnected: the code review, 11-23.)
 	Players.camera = cam
 	_build_ui()
 	_build_dev_indicator()
 	Net.session_started.connect(_on_session_started)
 	Net.session_ended.connect(func(r): _to_title(r))
+	Net.join_connecting.connect(_on_join_connecting)
+	Net.session_reset.connect(func():
+		if _lobby_chat:
+			_lobby_chat.clear())
 	Net.status.connect(func(t):
 		if _online_status: _online_status.text = t
 		if _lobby_status: _lobby_status.text = t)
@@ -349,18 +353,18 @@ func _build_world() -> void:
 
 
 func _process(delta: float) -> void:
+	_tick_loading(delta)
 	_tick_camera_controls()
 	_tick_camera(delta)
 	_tick_peak(delta)
-	# THE LINE AS SEEN (Parker 11-11): the game judges a lock-in by what this camera shows,
-	# the plaza's flag string where it hangs and glides, Del Mar's rope where it's drawn.
-	game.view_from = cam.global_position
-	var flags := line_bar.has_node("LineFlags")
-	game.shown_bar_y = line_bar.position.y
-	game.shown_bar_z = line_bar.position.z + (LuchaUI.LINE_Z if flags else 0.0)
-	game.shown_bar_sag = LuchaUI.LINE_SAG if flags else 0.0
+	# THE LINE WHERE IT HANGS (Parker 11-23): the flag string's sag is part of the judged line;
+	# the camera is not (Game.lock_gap).
+	game.shown_bar_sag = LuchaUI.LINE_SAG if line_bar.has_node("LineFlags") else 0.0
 	_tick_hud(delta)
-	var glyphs_on := screen != "pause" and screen != "results"  # (results: the board on the left would wear them)
+	# The limb letters show only where you climb (Parker 11-23: "make sure these glyphs are not being drawn
+	# when you pause so they are not showing up on the menu screens"): never on the pause menu, Options,
+	# Controls, the AI settings or the results board (it would wear them).
+	var glyphs_on := screen not in ["pause", "results", "options", "controls", "practice_ai", "customize"]
 	if glyphs_on != _glyphs_on or game.climbers.size() != _glyphs_n:
 		_glyphs_on = glyphs_on
 		_glyphs_n = game.climbers.size()
@@ -386,15 +390,15 @@ func _process(delta: float) -> void:
 			_lobby_back_pressed()
 		elif screen in ["hud", "pause"] and Players.pause_pressed(s):
 			_toggle_pause()
-	if _input_health != null and _input_health.visible:
-		_input_health.text = "INPUT (F2 hides)   log: %s
-%s" % [ProjectSettings.globalize_path(Players.LOG_PATH), Players.health()]
 	if _build_tag != null:
 		_build_tag.visible = screen == "title"
 	_readout_t -= delta
 	var readout_due := _readout_t <= 0.0
 	if readout_due:
 		_readout_t = 0.25  # the readout's text is rebuilt four times a second, not every frame
+	if _input_health != null and _input_health.visible and readout_due:
+		_input_health.text = "INPUT (F2 hides)   log: %s
+%s" % [ProjectSettings.globalize_path(Players.LOG_PATH), Players.health()]
 	if _pad_corner != null:
 		# Only with the F2 input readout open (the UI pass, 1e: it was on every menu).
 		_pad_corner.visible = screen not in ["hud", "pause"] and _input_health != null and _input_health.visible
@@ -538,53 +542,143 @@ const WIPE_OUT_S := 0.6
 const WIPE_SPIN := 1.1  # radians the star turns as it closes (and back as it opens)
 var _wipe: ColorRect
 var _wiping := false
+## THE LOADING STAR (Parker 11-23: "make sure the star screen transition has a little spinning star that
+## says loading in the corner"): a small gold star turning beside LOADING in the bottom right, shown
+## while the wipe is shut.
+var _loading: Control
+var _loading_star: Polygon2D
+const LOADING_STAR_R := 26.0  # px at 1080 lines
+const LOADING_SPIN := 3.2  # radians a second
 
 
-func start_peak_wiped() -> void:
+func _ensure_wipe() -> void:
+	if _wipe != null:
+		return
+	var layer := CanvasLayer.new()
+	layer.layer = 128  # (over the HUD and the dev label's 100)
+	add_child(layer)
+	_wipe = ColorRect.new()
+	_wipe.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_wipe.mouse_filter = Control.MOUSE_FILTER_STOP  # (nothing under it is pressed while it runs)
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://shaders/star_wipe.gdshader")
+	_wipe.material = mat
+	layer.add_child(_wipe)
+	_loading = Control.new()
+	_loading.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_loading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_loading.visible = false
+	layer.add_child(_loading)
+	var outline := Polygon2D.new()  # the star's dark edge, a touch bigger behind it
+	_loading_star = Polygon2D.new()
+	_loading_star.polygon = _star_points(LOADING_STAR_R)
+	_loading_star.color = LuchaKit.GOLD
+	outline.polygon = _star_points(LOADING_STAR_R + 4.0)
+	outline.color = LuchaKit.INK
+	_loading_star.add_child(outline)
+	outline.show_behind_parent = true
+	_loading.add_child(_loading_star)
+	var word := Label.new()
+	word.name = "Word"
+	word.text = "LOADING"
+	if ResourceLoader.exists(LuchaKit.TITLE_FONT):
+		word.add_theme_font_override("font", load(LuchaKit.TITLE_FONT))
+	word.add_theme_font_size_override("font_size", 40)
+	word.add_theme_color_override("font_color", LuchaKit.GOLD)
+	word.add_theme_color_override("font_outline_color", LuchaKit.INK)
+	word.add_theme_constant_override("outline_size", 10)
+	_loading.add_child(word)
+
+
+## A five-pointed star's outline, its points `r` from the middle, one point up.
+static func _star_points(r: float) -> PackedVector2Array:
+	var pts := PackedVector2Array()
+	for i in 10:
+		var a := -PI / 2.0 + TAU * i / 10.0
+		pts.append(Vector2(cos(a), sin(a)) * (r if i % 2 == 0 else r * 0.45))
+	return pts
+
+
+## Shown (fading with the wipe) and placed in the bottom-right corner at this window's size.
+func _loading_show(alpha: float) -> void:
+	if _loading == null:
+		return
+	_loading.visible = alpha > 0.01
+	_loading.modulate.a = alpha
+	if not _loading.visible:
+		return
+	var vs := get_viewport().get_visible_rect().size
+	var k := vs.y / 1080.0
+	var word := _loading.get_node("Word") as Label
+	word.scale = Vector2.ONE * k
+	var word_w := word.get_combined_minimum_size().x * k
+	var margin := 44.0 * k
+	word.position = Vector2(vs.x - margin - word_w, vs.y - margin - 46.0 * k)
+	_loading_star.scale = Vector2.ONE * k
+	_loading_star.position = Vector2(word.position.x - (LOADING_STAR_R + 22.0) * k, vs.y - margin - 22.0 * k)
+
+
+func _tick_loading(delta: float) -> void:
+	if _loading != null and _loading.visible:
+		_loading_star.rotation += LOADING_SPIN * delta / maxf(Engine.time_scale, 0.001)
+		_loading_show(_loading.modulate.a)
+
+
+## Close the star, run `work` on the black, wait until `ready` (if given) says the new scene is
+## settled, then open the star on it. The loading star shows while it's shut.
+func _wipe_through(work: Callable, ready := Callable()) -> void:
 	if _wiping:
 		return
 	_wiping = true
-	if _wipe == null:
-		var layer := CanvasLayer.new()
-		layer.layer = 128  # (over the HUD and the dev label's 100)
-		add_child(layer)
-		_wipe = ColorRect.new()
-		_wipe.set_anchors_preset(Control.PRESET_FULL_RECT)
-		_wipe.mouse_filter = Control.MOUSE_FILTER_STOP  # (nothing under it is pressed while it runs)
-		var mat := ShaderMaterial.new()
-		mat.shader = load("res://shaders/star_wipe.gdshader")
-		_wipe.material = mat
-		layer.add_child(_wipe)
+	_ensure_wipe()
 	var vs := get_viewport().get_visible_rect().size
-	var mat2 := _wipe.material as ShaderMaterial
-	mat2.set_shader_parameter("aspect", vs.x / maxf(1.0, vs.y))
+	(_wipe.material as ShaderMaterial).set_shader_parameter("aspect", vs.x / maxf(1.0, vs.y))
 	_wipe_set(1.0)
 	_wipe.visible = true
 	Sound.play("star_wipe_in", -3.0)
 	await _wipe_tween(1.0, 0.0, WIPE_IN_S, Tween.EASE_IN_OUT)
-	# Black: let two frames be drawn so the black is what stays on screen while the climb is built.
+	_loading_show(1.0)
+	# Black: let two frames be drawn so the black (and LOADING) is what stays on screen while it builds.
 	await get_tree().process_frame
 	await get_tree().process_frame
-	_start_peak()
-	# Open on the climber standing at the station: wait until he is in and settled (the camera snaps to him
-	# then), as the watch scenes do, and past the climb's first hitching frames.
-	for i in 900:
-		await get_tree().process_frame
-		var pk: Peak = game.peak
-		if pk != null and pk.player != null and is_instance_valid(pk.player) and pk.player.live_time > 0.4:
-			break
+	work.call()
+	if ready.is_valid():
+		for i in 900:
+			await get_tree().process_frame
+			if ready.call():
+				break
 	for i in 3:
 		await get_tree().process_frame
 	Sound.play("star_wipe_out", -3.0)
 	await _wipe_tween(0.0, 1.0, WIPE_OUT_S, Tween.EASE_OUT)
+	_loading_show(0.0)
 	_wipe.visible = false
 	_wiping = false
 
+
+func start_peak_wiped() -> void:
+	# Open on the climber standing at the station: wait until he is in and settled (the camera snaps to him
+	# then), as the watch scenes do, and past the climb's first hitching frames.
+	await _wipe_through(_start_peak, func() -> bool:
+		var pk: Peak = game.peak
+		return pk != null and pk.player != null and is_instance_valid(pk.player) and pk.player.live_time > 0.4)
+
+
+## LEAVING THE SOLO CLIMB, THROUGH THE STAR (Parker 11-23: "also that it shows up when you leave the solo
+## mode too"): QUIT TO MENU from the Peak closes the star, puts the menu up behind it, opens on it.
+func leave_peak_wiped() -> void:
+	await _wipe_through(func():
+		get_tree().paused = false
+		game.end_match()
+		_to_title(""))
 
 func _wipe_set(v: float) -> void:
 	var mat := _wipe.material as ShaderMaterial
 	mat.set_shader_parameter("open", v)
 	mat.set_shader_parameter("spin", (1.0 - v) * WIPE_SPIN)
+	# LOADING fades in over the last fifth of the close, out over the first fifth of the open.
+	if _loading != null and (_loading.visible or v < 0.2):
+		_loading_show(clampf((0.2 - v) / 0.2, 0.0, 1.0))
 
 
 func _wipe_tween(from: float, to: float, secs: float, ease_kind: Tween.EaseType) -> void:
@@ -1028,6 +1122,16 @@ func results_podium_focus() -> Vector2:
 	return Vector2((game.stage.barrel_half if game.stage != null else 1.0) + 2.8, 1.5)
 
 
+## The camera to `to`, looking `drop` below level onto the play plane; not moved at all once it has
+## settled (the code review, 11-23: every frame's write moved every 3D menu hung on the camera).
+func _cam_move(to: Vector3, drop: float) -> void:
+	if to.distance_squared_to(cam.position) < 1e-10 and is_equal_approx(float(cam.get_meta(&"cam_drop", -1.0)), drop):
+		return
+	cam.position = to
+	cam.set_meta(&"cam_drop", drop)
+	cam.look_at(Vector3(cam.position.x, cam.position.y - drop, 0.0), Vector3.UP)
+
+
 func _tick_camera(delta: float) -> void:
 	if game.peak_on and game.peak != null and screen in ["hud", "pause", "controls", "options"]:
 		_peak_camera(delta)
@@ -1043,8 +1147,7 @@ func _tick_camera(delta: float) -> void:
 					focus = actor.centre_of_mass()
 					distance = 9.0
 					break
-		cam.position = cam.position.lerp(Vector3(focus.x, focus.y + 1.0, distance), 1.0 - exp(-delta * 3.0))
-		cam.look_at(Vector3(cam.position.x, cam.position.y - 1.0, 0), Vector3.UP)
+		_cam_move(cam.position.lerp(Vector3(focus.x, focus.y + 1.0, distance), 1.0 - exp(-delta * 3.0)), 1.0)
 		line_bar.visible = false
 		return
 	if screen == "customize":
@@ -1201,8 +1304,7 @@ func _tick_camera(delta: float) -> void:
 		half_h = maxf(half_h, maxf(centre.x - lo.x, hi.x - centre.x) / aspect)
 		dist = half_h / tan(deg_to_rad(_cam_fov * 0.5))
 	_cam_target = Vector3(centre.x, centre.y + 0.3, dist)
-	cam.position = cam.position.lerp(_cam_target, 1.0 - exp(-delta * 2.5))
-	cam.look_at(Vector3(cam.position.x, cam.position.y - 0.3, 0.0), Vector3.UP)
+	_cam_move(cam.position.lerp(_cam_target, 1.0 - exp(-delta * 2.5)), 0.3)
 	line_bar.position.y = lerpf(line_bar.position.y, line_y, 1.0 - exp(-delta * 8.0))
 	line_bar.visible = game.phase in ["turn", "round", "between"] and not delmar  # Del Mar's line is the rope
 
@@ -1295,7 +1397,7 @@ func _exit_tree() -> void:
 
 func _on_phase(p: String) -> void:
 	_set_match_pace(p in ["turn", "round", "between"])
-	var from_pause := (screen == "controls" and _controls_back == "pause") or (screen == "options" and _options_back == "pause")
+	var from_pause := (screen == "controls" and (_controls_back == "pause" or (_controls_back == "options" and _options_back == "pause"))) or (screen == "options" and _options_back == "pause")
 	if p in ["loading", "turn", "round", "between"] and screen not in ["hud", "pause", "practice_ai"] and not from_pause:
 		show_screen("hud")
 
@@ -1735,10 +1837,22 @@ func _refresh_lobby() -> void:
 
 func _on_chat(who: String, text: String) -> void:
 	if _lobby_chat:
+		# (Net escapes "[" in guests' words and names: no markup gets through. The code review, 11-23.)
 		if who == "":
 			_lobby_chat.append_text("[i]%s[/i]\n" % text)
 		else:
 			_lobby_chat.append_text("[b]%s:[/b] %s\n" % [who, text])
+		while _lobby_chat.get_paragraph_count() > 101:
+			_lobby_chat.remove_paragraph(0)
+
+
+## A join swaps the peer to a Steam client: a local match can't run under it (the code review,
+## 11-23: a practice kept running as a guest of nobody until the join was refused, then was wiped).
+func _on_join_connecting() -> void:
+	get_tree().paused = false
+	if local_mode and game.phase != "idle":
+		game.end_match()
+		show_screen("friends")
 
 
 func _start_online() -> void:
@@ -1858,6 +1972,7 @@ func quit_game() -> void:
 	if _quitting:
 		return
 	_quitting = true
+	preload("res://ui3d/lock_effect_preparation.gd").drain()  # every threaded effect load collected before teardown (the code review, 11-23: quitting mid-load segfaulted)
 	Net.shutdown()
 	for child in get_children():
 		if child is WorldEnvironment:
@@ -1961,6 +2076,10 @@ func _toggle_pause() -> void:
 ## waiting room (the host sends it again; a guest keeps the room the host already sent).
 func leave_results() -> void:
 	if close_dev_results(): return
+	# Back in the lobby, it opens again (the code review, 11-23: after a failed match load the
+	# host's lobby stayed "mid-match", shut to joins and with an empty ring, until the next FIGHT!).
+	if Net.is_host():
+		Net.set_in_match(false)
 	if local_mode or Net.is_host() or game.phase != "lobby":
 		game.end_match()
 	show_screen("title" if local_mode else "lobby")

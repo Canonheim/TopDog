@@ -20,6 +20,11 @@ signal settings_changed
 signal session_started  # we're connected (host or client)
 signal session_ended(reason: String)
 signal lobby_list(rows: Array)
+## Every leave(): the session's leftovers (chat, the host's settings) are gone; clear yours.
+signal session_reset
+## A join is about to swap the peer to a Steam client: a local match can't keep
+## running under it (its is_host() would turn false mid-match).
+signal join_connecting
 
 const LobbyLogic := preload("res://net/lobby_logic.gd")
 const SteamInputScript := preload("res://core/steam_input.gd")
@@ -54,6 +59,17 @@ var _hosting := false
 var _invite_lobby := 0
 var _list_wanted := false
 var _chat_times := {}
+const CHAT_GAP_MS := 500  # one chat line per machine per half second
+const CHAT_CAP := 200  # letters kept from any chat line we receive
+## THE COALESCED ROSTER: the host marks the member list dirty and sends it at most
+## every MEMBERS_GAP_MS, and only when it really changed (each send makes main resend
+## the waiting room's poses to every guest).
+const MEMBERS_GAP_MS := 250
+var _members_dirty := false
+var _members_sent_ms := -100000
+var _sent_members := {}
+## The player's own match settings, kept while a host's settings stand in (a guest).
+var _own_settings := {}
 
 
 func _ready() -> void:
@@ -70,7 +86,8 @@ func _ready() -> void:
 	multiplayer.peer_disconnected.connect(_on_peer_disconnected)
 	multiplayer.connected_to_server.connect(_on_connected)
 	multiplayer.connection_failed.connect(func(): _end("Couldn't connect"))
-	multiplayer.server_disconnected.connect(func(): _end("Host left"))
+	multiplayer.server_disconnected.connect(func():
+		_end("The host left the game." if online else "The host closed the connection before letting you in."))
 	var argv := OS.get_cmdline_args()
 	for i in argv.size():
 		# Steam launches a CLOSED game with +connect_lobby <id> when a friend
@@ -88,6 +105,8 @@ func _process(_delta: float) -> void:
 		_pending_lobby = false
 		_hosting = false
 		status.emit("Steam didn't answer. Try hosting again.")
+	if _members_dirty:
+		_flush_members()
 	if _joining_lobby != 0:
 		var peer := multiplayer.multiplayer_peer
 		if not _awaiting_accept and peer is SteamMultiplayerPeer and peer.get_connection_status() == MultiplayerPeer.CONNECTION_CONNECTED:
@@ -186,12 +205,17 @@ var _host_started_ms := 0
 
 
 func _on_lobby_created(result: int, lobby_id: int) -> void:
-	_pending_lobby = false
+	# THE LATE REPLY: past the host timeout (or after a leave) nobody wants this lobby.
+	# Without this a reply 20 s late made us host of a public lobby out of nowhere.
+	var wanted := _hosting
+	if wanted:
+		_pending_lobby = false  # (not when unwanted: a join may be pending now)
 	_hosting = false
 	if result != Steam.RESULT_OK:
-		status.emit("Steam lobby failed (%d)" % result)
+		if wanted:
+			status.emit("Steam lobby failed (%d)" % result)
 		return
-	if online:
+	if online or not wanted:
 		Steam.setLobbyJoinable(lobby_id, false)
 		Steam.leaveLobby(lobby_id)
 		return
@@ -256,6 +280,8 @@ func join_steam(lobby_id: int) -> void:
 	if not steam_ok:
 		status.emit("Steam isn't running.")
 		return
+	if _own_settings.is_empty():
+		_own_settings = settings.duplicate(true)  # the host's arrive next; leave() puts these back
 	_pending_lobby = true
 	_joining_lobby = lobby_id
 	_join_started_ms = Time.get_ticks_msec()
@@ -365,6 +391,7 @@ func _on_lobby_joined(lobby_id: int, _perms: int, _locked: bool, response: int) 
 		_joining_lobby = 0
 		status.emit("Steam connect failed (%s)" % err)
 		return
+	join_connecting.emit()  # (main ends a running local match before the peer swaps)
 	multiplayer.multiplayer_peer = peer
 	status.emit("Connecting through Steam...")
 
@@ -377,6 +404,8 @@ func _start_session_as_host() -> void:
 	in_match = false
 	members.clear()
 	members[1] = {"name": my_name(), "players": _local_players(), "ready": false}
+	_members_dirty = false
+	_sent_members = members.duplicate(true)
 	members_changed.emit()
 	session_started.emit()
 
@@ -396,10 +425,11 @@ func _on_peer_connected(_id: int) -> void:
 func _on_peer_disconnected(id: int) -> void:
 	if not is_host():
 		return
+	_chat_times.erase(id)
 	if members.has(id):
 		var n: String = members[id].name
 		members.erase(id)
-		_rpc_members.rpc(members)
+		_push_members()
 		_rpc_chat_line.rpc("", "%s left" % n)
 
 
@@ -420,7 +450,7 @@ func update_local_players() -> void:
 			status.emit("That lobby is full (%d players maximum)." % MAX_CLIMBERS)
 			return
 		members[1].players = players
-		_rpc_members.rpc(members)
+		_push_members()
 	else:
 		_rpc_players.rpc_id(1, _local_players())
 
@@ -433,17 +463,25 @@ func _rpc_hello(version: String, pname: String, players: Array) -> void:
 	if version != GAME_VERSION:
 		_rpc_refused.rpc_id(id, "The host is on version %s (you have %s)" % [GAME_VERSION, version])
 		return
+	if members.has(id):
+		# A second hello from a member: only its players can have changed. No second
+		# "joined" line, no settings resend (a looping client spammed every peer).
+		_rpc_players(players)
+		return
 	if in_match:
 		_rpc_refused.rpc_id(id, "That game is mid-match. Try again when it's back in the lobby.")
 		return
 	var cleaned := _clean_players(players)
-	if (not members.has(id) and members.size() >= MAX_MACHINES) or not can_fit_players(id, cleaned.size()):
+	if members.size() >= MAX_MACHINES or not can_fit_players(id, cleaned.size()):
 		_rpc_refused.rpc_id(id, "That lobby is full")
 		return
-	members[id] = {"name": pname.left(32), "players": cleaned, "ready": false}
-	_rpc_members.rpc(members)
+	var n := clean_text(pname, 32)
+	if n == "":
+		n = "Player"
+	members[id] = {"name": n, "players": cleaned, "ready": false}
 	_rpc_settings.rpc_id(id, settings)
-	_rpc_chat_line.rpc("", "%s joined" % pname.left(32))
+	_push_members()
+	_rpc_chat_line.rpc("", "%s joined" % n)
 
 
 @rpc("any_peer", "call_remote", "reliable")
@@ -454,11 +492,33 @@ func _rpc_players(players: Array) -> void:
 	if in_match:
 		return
 	var cleaned := _clean_players(players)
+	if cleaned == members[id].players:
+		return  # the same players again: nothing to tell anyone, and they stay ready
 	if not can_fit_players(id, cleaned.size()):
 		_rpc_note_capacity.rpc_id(id)
 		return
 	members[id].players = cleaned
 	members[id].ready = false
+	_push_members()
+
+
+## Host: the member list changed; it goes out within MEMBERS_GAP_MS (coalesced).
+func _push_members() -> void:
+	_members_dirty = true
+	_flush_members()
+
+
+func _flush_members() -> void:
+	if not _members_dirty or not is_host():
+		return
+	var now := Time.get_ticks_msec()
+	if now - _members_sent_ms < MEMBERS_GAP_MS:
+		return  # _process sends it when the gap is up
+	_members_dirty = false
+	if members == _sent_members:
+		return  # changed and changed back: nothing to send
+	_members_sent_ms = now
+	_sent_members = members.duplicate(true)
 	_rpc_members.rpc(members)
 
 
@@ -466,7 +526,7 @@ func _clean_players(players: Array) -> Array:
 	var out: Array = []
 	for p in players.slice(0, 4):
 		if p is Dictionary:
-			out.append({"name": str(p.get("name", "Climber")).left(40), "random": bool(p.get("random", true)), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": clampi(int(p.get("slot", 0)), 0, Players.MAX_LOCAL - 1), "appearance": Wardrobe.clean(p.get("appearance", {}))})  # (slot clamped: the waiting room's pid is peer * 16 + slot)
+			out.append({"name": clean_text(str(p.get("name", "Climber")), 40), "random": bool(p.get("random", true)), "tint": p.get("tint", Color.WHITE) if p.get("tint") is Color else Color.WHITE, "slot": clampi(int(p.get("slot", 0)), 0, Players.MAX_LOCAL - 1), "appearance": Wardrobe.clean(p.get("appearance", {}))})  # (slot clamped: the waiting room's pid is peer * 16 + slot)
 	return out
 
 
@@ -489,25 +549,30 @@ func _climber_count() -> int:
 
 @rpc("authority", "call_remote", "reliable")
 func _rpc_refused(reason: String) -> void:
-	_end(reason)
+	_end(reason)  # (before we were let in: a status line only, local play untouched)
 
 
 @rpc("authority", "call_local", "reliable")
 func _rpc_members(m: Dictionary) -> void:
+	# The host only sends a list that changed; a guest still checks (a resend of the
+	# same list must not make main resend the waiting room).
+	var changed := is_host() or m != members
 	members = m
 	if _awaiting_accept and members.has(me()):
 		_awaiting_accept = false
 		_pending_lobby = false
 		_joining_lobby = 0
 		online = true
+		changed = true
 		session_started.emit()
-	members_changed.emit()
+	if changed:
+		members_changed.emit()
 
 
 func set_ready(on: bool) -> void:
 	if is_host():
 		members[1].ready = on
-		_rpc_members.rpc(members)
+		_push_members()
 	else:
 		_rpc_ready.rpc_id(1, on)
 
@@ -515,9 +580,9 @@ func set_ready(on: bool) -> void:
 @rpc("any_peer", "call_remote", "reliable")
 func _rpc_ready(on: bool) -> void:
 	var id := multiplayer.get_remote_sender_id()
-	if is_host() and members.has(id):
+	if is_host() and members.has(id) and bool(members[id].ready) != on:
 		members[id].ready = on
-		_rpc_members.rpc(members)
+		_push_members()
 
 
 func all_ready() -> bool:
@@ -528,7 +593,7 @@ func all_ready() -> bool:
 
 
 func send_chat(text: String) -> void:
-	text = text.strip_edges().left(140)
+	text = clean_text(text, 140)
 	if text == "":
 		return
 	if is_host():
@@ -540,21 +605,51 @@ func send_chat(text: String) -> void:
 @rpc("any_peer", "call_remote", "reliable")
 func _rpc_chat(text: String) -> void:
 	if is_host() and members.has(multiplayer.get_remote_sender_id()):
-		_relay_chat(multiplayer.get_remote_sender_id(), text.left(140))
+		text = clean_text(text, 140)
+		if text != "":
+			_relay_chat(multiplayer.get_remote_sender_id(), text)
 
 
 func _relay_chat(id: int, text: String) -> void:
 	var now := Time.get_ticks_msec()
-	if now - int(_chat_times.get(id, 0)) < 400:
-		return  # rate limit
+	if _chat_times.has(id) and now - int(_chat_times[id]) < CHAT_GAP_MS:
+		return  # rate limit, per machine (the host relays everyone's chat)
 	_chat_times[id] = now
 	var who: String = members[id].name if members.has(id) else "?"
 	_rpc_chat_line.rpc(who, text)
 
 
+## SAFE CHAT ON RECEIPT: every machine cleans what it is handed (a guest's words, or a
+## host's), so no consumer sees markup or control letters. "[" arrives as "[lb]", which
+## a RichTextLabel's append_text shows as "[" (unescape_chat() for plain labels).
 @rpc("authority", "call_local", "reliable")
 func _rpc_chat_line(who: String, text: String) -> void:
-	chat_line.emit(who, text)
+	text = clean_text(text, CHAT_CAP)
+	if text == "":
+		return
+	chat_line.emit(escape_chat(clean_text(who, 32)), escape_chat(text))
+
+
+## Control letters (newlines, tabs, the bidi overrides) out, edges trimmed, at most `cap`.
+static func clean_text(s: String, cap: int) -> String:
+	var out := ""
+	for i in s.length():
+		var c := s.unicode_at(i)
+		if c < 32 or c == 127 or (c >= 0x80 and c < 0xA0) or c == 0x200B or c == 0x200E or c == 0x200F \
+				or (c >= 0x202A and c <= 0x202E) or (c >= 0x2066 and c <= 0x2069):
+			out += " " if c == 9 or c == 10 or c == 13 else ""
+			continue
+		out += s[i]
+	return out.strip_edges().left(cap)
+
+
+static func escape_chat(s: String) -> String:
+	return s.replace("[", "[lb]")
+
+
+## The exact inverse of escape_chat (every "[" it made is followed by "lb]").
+static func unescape_chat(s: String) -> String:
+	return s.replace("[lb]", "[")
 
 
 func set_settings(s: Dictionary) -> void:
@@ -626,11 +721,25 @@ func leave() -> void:
 	in_match = false
 	_pending_lobby = false
 	members.clear()
+	_members_dirty = false
+	_sent_members = {}
+	_chat_times.clear()
+	# A guest goes back to its own settings (it kept the old host's mode, and hosted
+	# with it next).
+	if not _own_settings.is_empty():
+		var differs: bool = settings != _own_settings
+		settings = _own_settings
+		_own_settings = {}
+		if differs:
+			settings_changed.emit()
+	session_reset.emit()
 
 
+## REFUSED OR FAILED BEFORE WE WERE LET IN: a status line, never session_ended (it sent
+## main to the title and ended the local match). Only a session we were in ends one.
 func _end(reason: String) -> void:
 	var was := online
 	leave()
 	status.emit(reason)
-	if was or reason != "":
+	if was:
 		session_ended.emit(reason)

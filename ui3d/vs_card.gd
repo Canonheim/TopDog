@@ -36,6 +36,7 @@ var _from_x := 12.0
 var _half_h := 3.8
 var _slammed := false
 var _sparks: Array = []
+var _spark_nodes: Array = []  # built hidden in play(), launched at the slam (no instancing on the big frame)
 var _call := ""  # what the announcer says at the slam
 
 
@@ -54,6 +55,7 @@ func play(round_n: int, left: Array, right: Array, half_w: float, half_h := 3.8)
 	for h in _halves:
 		add_child(h)
 		LuchaUI.no_shadows(h)
+	_build_sparks()
 	_t = 0.0
 	_slammed = false
 	visible = true
@@ -77,6 +79,10 @@ func _clear() -> void:
 		if is_instance_valid(s.node):
 			(s.node as Node).queue_free()
 	_sparks.clear()
+	for n in _spark_nodes:
+		if is_instance_valid(n):
+			(n as Node).queue_free()
+	_spark_nodes.clear()
 
 
 func _process(delta: float) -> void:
@@ -159,18 +165,33 @@ func _announce() -> void:
 func _slam() -> void:
 	Sound.play("lock", -3.0, 0.8)
 	Sound.play("thud", -2.0)
+	for i in _spark_nodes.size():
+		if not is_instance_valid(_spark_nodes[i]):
+			continue
+		var star: Node3D = _spark_nodes[i]
+		var a := TAU * i / 10.0 + 0.2
+		star.position = Vector3(0, CARD_Y, 0.4)
+		star.scale = Vector3.ONE * 0.5
+		star.visible = true
+		_sparks.append({"node": star, "dir": Vector3(cos(a), sin(a), 0.0), "life": 0.0})
+	_spark_nodes.clear()  # (now in _sparks, which frees them)
+
+
+## The slam's ten sparks, instanced and celified up front (hidden) so the slam frame only
+## shows them: a hitch there landed on the card's big moment.
+func _build_sparks() -> void:
 	for i in 10:
 		var star := LuchaKit.kit_model("vs_spark")
 		if star == null:
 			star = LuchaKit.kit_model("xp_burst_star")
 		if star == null:
 			return
-		var a := TAU * i / 10.0 + 0.2
 		star.position = Vector3(0, CARD_Y, 0.4)
 		star.scale = Vector3.ONE * 0.5
+		star.visible = false
 		add_child(star)
 		LuchaUI.no_shadows(star)
-		_sparks.append({"node": star, "dir": Vector3(cos(a), sin(a), 0.0), "life": 0.0})
+		_spark_nodes.append(star)
 
 
 func _tick_sparks(delta: float) -> void:

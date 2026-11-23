@@ -1094,6 +1094,90 @@ sure we dont lose his work".
 - Checked: lint; hud_probe (its one failure, the clock lifting for a banner, fails the same without
   these changes); frozen_inside_probe; frames `builds\vs_card_beats.jpg`, `builds\vs_card_hold.jpg`.
 
+## The code sweep, online first (Parker, 2026-11-23)
+
+Parker: "do a code sweep for bugs and optimizations, with an emphasis on online net code", then "Fix
+them all. Also the line should not be camera dependant, I just wanted the line moved to be more in
+line with where it looked like it should be based on the camera, but it should not actually de
+dependant on the camera. Originally it was just not close". Four reviewers read the match flow, the
+lobby, the stream and the per-frame paths; every finding was checked against the code, then fixed.
+
+- **The line where it hangs** (`Game.lock_gap`, `bar_y`, `_rope_line`): a lock-in is judged against the
+  drawn line's own shape on the play plane, the plaza's flag string with its sag, Del Mar's rope with
+  its sag. No camera, no glide: every machine judges a pose the same. `REMOTE_SLACK` 0.06 -> 0.01.
+- **Match flow** (`game/game.gd`): a lock-in or final pose is refused unless it is in the arena, a
+  whole body, and (another machine's climber) within 2.5 m of its last streamed pose
+  (`_valid_lock_pose`: a forged pose 1e20 m up hung the host's spawn search); the spawn search is
+  bounded; a fighter who leaves during the VS card takes the card down and the next pair is picked
+  (no ghost); the last match's failed tops, sinkings and lock presses are cleared at a start; a
+  held-up claim at time-up is asked three times then judged in the air (it asked every tick for 16 s);
+  the time-up pass runs 10 times a second; guests count the clock down between packets and ignore a
+  late one; the cosmetic RPCs (bell, exertion, slap, fart, floatie) are rate-limited per machine.
+- **The stream** (`net/pose_wire.gd`, `_rpc_pose_q`, `_rpc_still`, `_owner_clock`): a pose is 100 bytes
+  on the wire (was 200) and carries its owner's clock, so puppets play back evenly; an unmoved climber
+  sends a few bytes, not its pose (an idle full lobby cost the host about 180 KB/s); a repeated pose
+  adds no sample; a puppet jump over 0.6 m is placed outright and anything this machine runs lets go
+  of it (it swept through everything at 90 m/s); blended poses reuse one array; `stream_hz` is worked
+  out once a tick. The old dead pull pass is gone; holds by a machine that left are forgotten; two
+  players taking each other in one round trip no longer both lose their grip (the higher id lets go).
+- **The chair**: other machines' copies touch only the arena and the tower while held or for 1.5 s
+  after a throw (the host judges every hit; hits landed twice); my own throw no longer snaps back; an
+  unchanged chair pose goes out as a keepalive twice a second, not every tick.
+- **The pinata**: its numbering restarts with every match (a machine that had seen more pinatas
+  under another host dropped the new host's first ones and their rewards).
+- **The lobby** (`net/net.gd`, `ui3d/lucha_online.gd`, main): a late Steam "lobby created" is left; a
+  refused or failed join no longer wipes local play, and joining ends a local match first; member
+  updates are coalesced (every ready toggle resent every climber's pose to everyone) and poses go only
+  to a machine new to the room; "host left" is said once; the player's own settings come back on
+  leaving and the chat is cleared; guests' chat and names are cleaned and their "[" escaped (no
+  markup); the host's lobby opens again after a failed match load (`leave_results`).
+- **Start-up effects** (Dan's `ui3d/lock_effect_preparation.gd` and the effect groups): at most three
+  loads in flight, a slow load is never failed on time alone, a failed effect is retried at the next
+  match; the common effects load on worker threads, one heavy unit a frame; `drain()` collects every
+  load before the game quits (`main.quit_game`): quitting mid-load segfaulted.
+- **Per frame**: the camera isn't moved once settled (`_cam_move`); the narrow-window pass, the HUD
+  fade and the nameplate edge write only on change; glyphs and drawn wrists write only on change;
+  `tower_top` is kept until the tower changes; the VS card's sparks are built before the slam.
+- Tests: `tests/pose_wire_probe.tscn` new; the lockline battery now checks no camera moves the line;
+  the net battery's "a load arrives" check is retired (no loads since Dan's rework); a bare Game in a
+  test starts its rounds without the VS card (`versus` with no listener).
+- **Wire change**: Dan's build and ours must both have this before playing together (GAME_VERSION).
+
+## The star wipe says LOADING, both ways (Parker, 2026-11-23)
+
+Parker: "make sure the star screen transition has a little spinning star that says loading in the
+corner and also that it shows up when you leave the solo mode too".
+- `main._wipe_through(work, ready)`: the star closes, a small turning gold star and LOADING (the
+  title font, ink edge) fade in at the bottom right, the work runs on the black, and the star opens
+  once the new scene is ready. `start_peak_wiped` uses it, and so does the new `leave_peak_wiped`:
+  QUIT TO MENU from the Peak (offline) closes the star, puts the menu up behind it, opens on it.
+- The loading star turns whenever the game draws frames; while the climb itself is being built the
+  game is busy and it holds still for that moment.
+
+## The Options table, Controls in Options, the menus' glyphs (Parker, 2026-11-23)
+
+Parker: "The options screen needs a complete upgrade. Make this stuff land on a table and make it always
+draw on top of the scene. Like it also sinks into the ring sometimes. Also make sure the controls page
+has all the keybinds like Dan's new camera controls. Also have the controls button be in the Options
+menu instead of the main menu. Also make sure these glyphs are not being drawn when you pause so they
+are not showing up on the menu screens", then "have the controls menu be a controller on the table
+that when you highlight floats into the air", "it can be based on the one we use in the game start
+game pad recommendation screen".
+- `ui3d/lucha_settings.gd`: the UI creator's `options_table` (PARTS.md O2) with the mixer desk, the TV
+  and the boot screen's `boot_pad` standing on it, the whole set hung on the camera in the banner's
+  frame (it can never sink into the world). They drop onto the table one after another (6% squash,
+  the table hops). The pad, focused, floats up and bobs with `controller_focus` round it; picked, it
+  opens Controls; Controls' BACK returns to Options. BACK sits alone, centred.
+- CONTROLS is off the title menu (the pause menu keeps its own).
+- The Controls board's second page: LOOK AROUND, ZOOM OUT, PLAYERS CAMERA, PINATA CAMERA, FART, with the
+  kit's new icons; `Players.EXTRA_ACTIONS` are saved and swapped like the rest (the camera toggles have
+  no keyboard key by default).
+- The limb letters are hidden on every menu screen (pause, Options, Controls, the AI settings,
+  customize, results).
+- The title belt's medal: Dan's 0.3.145 patch (no disc behind the LEVEL rosette) had been lost to the
+  flat-meter re-land; re-applied to both copies (game and kit). Dan's reward_card edit (no pips) is
+  newer than the kit's copy: the UI creator was told. Frames: `builds\options_table.png`.
+
 ## Record
 
 - **2026-11-07:** plan, then P0–P7 in one session.

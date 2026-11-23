@@ -60,6 +60,20 @@ var _vs: VsCard  # the VS card before each round (docs/VS_CARD.md)
 var _steam_tag: Node3D  # the nameplate climber's Steam name, top right over the clock (Parker 11-22; was top left)
 const STEAM_CHAR_W := 0.18  # the Steam name's width per letter at its 0.26 size (HUD units)
 var _steam_text := ""
+var _steam_src := ""  # the raw steam_shown _steam_up was made from (skips a per-frame to_upper)
+var _steam_up := ""
+var _buckle: Node3D  # hud_bottom's "Buckle" (looked up once, not by path five times a frame)
+var _info_turn_src := ""  # the player name _info_turn was made from
+var _info_turn := " CLIMBING"  # "<NAME> CLIMBING", made only when the name changes
+var _info_round_n := -1
+var _info_round := ""  # "ROUND n", made only when the round changes
+## THE OCCLUSION CACHE: each HUD group with its meshes, rebuilt only when a node enters or
+## leaves the tree under hud_bottom (it searched every group's meshes every frame).
+var _occ_groups: Array = []  # [group: Node3D, meshes: Array]
+var _occ_dirty := true
+var _occ_hooked := false
+var _occ_any_faded := false  # some HUD mesh is not at transparency 0
+var _occ_f32 := PackedFloat32Array([0.0])  # rounds a fade the way transparency stores it
 var _local_start := -1
 var _banner: Node3D
 var _banner_t := 0.0
@@ -1502,7 +1516,8 @@ func _build_menus() -> void:
 	t.add_button("SOLO: THE PEAK", main.start_peak_wiped)  # the Peak of DeGayo (Parker 11-11), through the star wipe (11-20)
 	t.add_button("PRACTICE", main._open_practice)
 	t.add_button("CUSTOMIZE", func(): main.show_screen("customize"))
-	t.add_button("CONTROLS", func(): main._controls_back = "title"; main.show_screen("controls"))
+	# (CONTROLS is in OPTIONS now: Parker 11-23, "have the controls button be in the Options menu instead
+	# of the main menu".)
 	t.add_button("OPTIONS", func(): main._options_back = "title"; main.show_screen("options"))
 	t.add_button("QUIT", main.quit_game)
 	# PRESS ANY BUTTON TO START, under the big logo (Parker 11-11).
@@ -1724,6 +1739,9 @@ var virtual_half_w := 6.79
 var virtual_half_h := 3.82
 var column_shift := {}  # menu id -> how far its column moved right (its own units)
 var _narrow_key := ""
+var _narrow_aspect := NAN  # the inputs _narrow_key was last made from (the string only when one changes)
+var _narrow_menus := -1
+var _narrow_current := ""  # (_narrow_aspect NAN forces the first make)
 
 
 func _tick_narrow() -> void:
@@ -1739,9 +1757,15 @@ func _tick_narrow() -> void:
 		_capture_home(n as Node3D)
 	# Again when the window's shape changes, a menu is built late (Customize, the delete
 	# question), or the screen changes (a lobby's belts are rebuilt).
-	var key := "%.4f %d %s" % [aspect, menus.size(), current]
-	if key != _narrow_key:
+	var key_changed := false
+	if aspect != _narrow_aspect or menus.size() != _narrow_menus or current != _narrow_current:
+		_narrow_aspect = aspect
+		_narrow_menus = menus.size()
+		_narrow_current = current
+		var key := "%.4f %d %s" % [aspect, menus.size(), current]
+		key_changed = key != _narrow_key
 		_narrow_key = key
+	if key_changed:
 		for id in menus:
 			var m = menus[id]
 			if m is ResultsBoard or not (m is Menu3D):
@@ -1757,10 +1781,17 @@ func _tick_narrow() -> void:
 		var hp: Vector3 = nd.get_meta("ui_home_p")
 		var hs: Vector3 = nd.get_meta("ui_home_s")
 		var dx := shift * UI_SCALE if nd.get_meta("follow_column", false) else 0.0
-		nd.position = Vector3((hp.x + dx) * ui_k, hp.y * ui_k, hp.z)
-		nd.scale = hs * ui_k
-		nd.set_meta("ui_applied_p", nd.position)
-		nd.set_meta("ui_applied_s", nd.scale)
+		# Written only when they differ (each write re-dirtied the root's whole subtree).
+		var want_p := Vector3((hp.x + dx) * ui_k, hp.y * ui_k, hp.z)
+		var want_s := hs * ui_k
+		if nd.position != want_p:
+			nd.position = want_p
+		if nd.scale != want_s:
+			nd.scale = want_s
+		if nd.get_meta("ui_applied_p", Vector3(NAN, NAN, NAN)) != nd.position:
+			nd.set_meta("ui_applied_p", nd.position)
+		if nd.get_meta("ui_applied_s", Vector3(NAN, NAN, NAN)) != nd.scale:
+			nd.set_meta("ui_applied_s", nd.scale)
 
 
 ## THE CARD ROW FITS ITSELF (the UI pass, 8b): its right end (the last card's tail) stays
@@ -1779,8 +1810,11 @@ func _fit_card_row(shift: float) -> void:
 			right = maxf(right, (ch as Node3D).position.x + _card_half_w)
 	var room := virtual_half_w - 0.25 - origin - left
 	var sc := clampf(room / maxf(right - left, 0.01), 0.5, 1.0)
-	_card_row.scale = Vector3.ONE * sc
-	_card_row.position.x = left * (1.0 - sc)
+	if _card_row.scale != Vector3.ONE * sc:
+		_card_row.scale = Vector3.ONE * sc
+	var px := left * (1.0 - sc)
+	if _card_row.position.x != px:
+		_card_row.position.x = px
 
 
 ## A card's half width as drawn (the kit card with its ribbon tails), measured once.
@@ -1821,6 +1855,11 @@ func board_free_centre_ndc() -> float:
 ## THE VS CARD (Parker 11-22): the halves slam in with each side's made names and Steam names.
 func _on_versus(round_n: int, left: Array, right: Array) -> void:
 	if hud_bottom == null:
+		return
+	if round_n < 0:
+		# A fighter left during the card: game.gd emits versus(-1, [], []) to take it down.
+		if _vs != null:
+			_vs.stop()
 		return
 	if _vs == null:
 		_vs = VsCard.new()
@@ -1981,6 +2020,7 @@ func _build_hud() -> void:
 	_hud.add_child(hud_bottom)
 	_clock_text.reparent(hud_bottom, false)
 	_hud.get_node("Buckle").reparent(hud_bottom, false)
+	_buckle = buckle
 	_info.reparent(hud_bottom, false)
 	_steam_tag = Node3D.new()
 	_steam_tag.name = "SteamTag"
@@ -2160,16 +2200,16 @@ func _process(delta: float) -> void:
 		main.hud_info.visible = false
 		var g: Game = main.game
 		var show := g.phase in ["turn", "round"] and not g.practice
-		hud_bottom.get_node("Buckle").visible = show
+		_buckle.visible = show
 		var half_h := virtual_half_h  # (the HUD's own space, which shrinks in narrow windows)
 		var half_w := virtual_half_w
-		hud_bottom.get_node("Buckle").position = Vector3(half_w - 1.15, half_h - 1.05, 0)
-		_clock_text.position = hud_bottom.get_node("Buckle").position + Vector3(0, 0, 0.075)
+		_buckle.position = Vector3(half_w - 1.15, half_h - 1.05, 0)
+		_clock_text.position = _buckle.position + Vector3(0, 0, 0.075)
 		_info.position = Vector3(half_w - 0.95, -half_h + 0.45, 0)
 		# THE STEAM NAME, TOP RIGHT, OVER THE CLOCK (Parker 11-22: "steam name is drawn in the top left
 		# over the EXP stuff, move steam name to top right instead and have it be above the timer"):
 		# centred over the buckle (0.6 tall, its top 0.75 under the edge), a long name kept on screen.
-		var buckle_x: float = (hud_bottom.get_node("Buckle") as Node3D).position.x
+		var buckle_x: float = _buckle.position.x
 		var steam_half := _steam_text.length() * STEAM_CHAR_W * 0.5
 		_steam_tag.position = Vector3(minf(buckle_x, half_w - 0.3 - steam_half), half_h - 0.4, 0)
 		# The who's-climbing label repeats the banner's news, and its tail covers it:
@@ -2182,15 +2222,25 @@ func _process(delta: float) -> void:
 		var info := ""
 		match g.phase:
 			"turn":
-				info = "%s CLIMBING" % str(g.player_name(g.turn_order[g.turn_i] if g.turn_i >= 0 else -1)).split(" the ")[0].to_upper()
+				var climbing_name := str(g.player_name(g.turn_order[g.turn_i] if g.turn_i >= 0 else -1))
+				if climbing_name != _info_turn_src:
+					_info_turn_src = climbing_name
+					_info_turn = "%s CLIMBING" % climbing_name.split(" the ")[0].to_upper()
+				info = _info_turn
 			"round":
-				info = "ROUND %d" % g.round_n
+				if g.round_n != _info_round_n:
+					_info_round_n = g.round_n
+					_info_round = "ROUND %d" % g.round_n
+				info = _info_round
 			"between":
 				info = "GET READY..."
 		if g.practice:
 			info = "" if g.peak_on else "PRACTICE"
 		# The Steam name, top right, centred over the clock (online only).
-		var steam := hud_bottom.steam_shown.to_upper() if show else ""
+		if hud_bottom.steam_shown != _steam_src:
+			_steam_src = hud_bottom.steam_shown
+			_steam_up = _steam_src.to_upper()
+		var steam := _steam_up if show else ""
 		if steam != _steam_text:
 			_steam_text = steam
 			for ch in _steam_tag.get_children():
@@ -2251,7 +2301,7 @@ func _process(delta: float) -> void:
 				if v <= COUNTDOWN_FROM:
 					if _pulse_tween != null and _pulse_tween.is_valid():
 						_pulse_tween.kill()
-					var buckle_node := hud_bottom.get_node("Buckle") as Node3D
+					var buckle_node := _buckle
 					_clock_text.scale = Vector3.ONE * 1.6
 					buckle_node.scale = Vector3.ONE * 1.08
 					_pulse_tween = create_tween().set_parallel(true)
@@ -2429,38 +2479,74 @@ func _tick_hud_occlusion(delta: float) -> void:
 			first = false
 		if not first:
 			actors.append(projected.grow(8.0))
-	var groups: Array = hud_bottom.get_children()
-	groups.erase(_clock_text)
-	groups.erase(hud_bottom.get_node("Buckle"))
-	for group: Node3D in groups:
-		if not group.is_visible_in_tree():
-			continue
-		var meshes: Array = group.find_children("*", "GeometryInstance3D", true, false)
-		if group is GeometryInstance3D:
-			meshes.append(group)
-		var covered := false
-		for mesh: GeometryInstance3D in meshes:
-			if not mesh.is_visible_in_tree():
+	# No body on screen and nothing still fading back: every mesh is already at 0 (the loop
+	# below would only write 0 over 0). A changed HUD is looked over once first.
+	if actors.is_empty() and not _occ_any_faded and not _occ_dirty:
+		return
+	if not _occ_hooked:
+		_occ_hooked = true
+		get_tree().node_added.connect(_occ_tree_changed)
+		get_tree().node_removed.connect(_occ_tree_changed)
+	if _occ_dirty:
+		_occ_dirty = false
+		_occ_groups.clear()
+		for ch in hud_bottom.get_children():
+			if ch == _clock_text or ch == _buckle:
 				continue
-			var box := mesh.get_aabb()
-			var rect := Rect2()
-			for i in 8:
-				var pixel := cam.unproject_position(mesh.global_transform * box.get_endpoint(i))
-				rect = Rect2(pixel, Vector2.ZERO) if i == 0 else rect.expand(pixel)
-			for actor in actors:
-				if rect.intersects(actor):
-					covered = true
+			var group := ch as Node3D
+			var meshes: Array = group.find_children("*", "GeometryInstance3D", true, false)
+			if group is GeometryInstance3D:
+				meshes.append(group)
+			_occ_groups.append([group, meshes])
+	var any_faded := false
+	for entry: Array in _occ_groups:
+		var group: Node3D = entry[0]
+		var meshes: Array = entry[1]
+		if not group.is_visible_in_tree():
+			# (Skipped as before; a hidden group keeps whatever fade it had.)
+			for mesh: GeometryInstance3D in meshes:
+				if mesh.transparency != 0.0:
+					any_faded = true
 					break
-			if covered:
-				break
+			continue
+		var covered := false
+		if not actors.is_empty():
+			for mesh: GeometryInstance3D in meshes:
+				if not mesh.is_visible_in_tree():
+					continue
+				var box := mesh.get_aabb()
+				var xf := mesh.global_transform
+				var rect := Rect2()
+				for i in 8:
+					var pixel := cam.unproject_position(xf * box.get_endpoint(i))
+					rect = Rect2(pixel, Vector2.ZERO) if i == 0 else rect.expand(pixel)
+				for actor in actors:
+					if rect.intersects(actor):
+						covered = true
+						break
+				if covered:
+					break
 		for mesh: GeometryInstance3D in meshes:
-			var fade := lerpf(mesh.transparency, 0.85 if covered else 0.0, 1.0 - exp(-delta * 18.0))
+			var was := mesh.transparency
+			var fade := lerpf(was, 0.85 if covered else 0.0, 1.0 - exp(-delta * 18.0))
 			# Snap the last bit back to exactly 0: any transparency above 0 keeps a mesh in
 			# the alpha pass, off the screen ink (the plate lost its outlines for good once it
 			# had faded once, and its face sorted under its body, Parker 11-09).
 			if not covered and fade < 0.01:
 				fade = 0.0
-			mesh.transparency = fade
+			# Written only when the stored (32-bit) value would change.
+			_occ_f32[0] = fade
+			if _occ_f32[0] != was:
+				mesh.transparency = fade
+			if _occ_f32[0] != 0.0:
+				any_faded = true
+	_occ_any_faded = any_faded
+
+
+## A node entered or left the tree: if it's under the HUD's bottom, its mesh lists are stale.
+func _occ_tree_changed(n: Node) -> void:
+	if not _occ_dirty and is_instance_valid(hud_bottom) and hud_bottom.is_ancestor_of(n):
+		_occ_dirty = true
 
 func _fill_pause() -> void:
 	var p: Menu3D = menus.pause
@@ -2473,6 +2559,9 @@ func _fill_pause() -> void:
 	p.add_button("CONTROLS", func(): main._controls_back = "pause"; main.show_screen("controls"))
 	p.add_button("OPTIONS", func(): main._options_back = "pause"; main.show_screen("options"))
 	p.add_button("QUIT TO MENU", func():
+		if main.game.peak_on and not Net.online:
+			main.leave_peak_wiped()  # (out of the solo climb through the star, as it came in: Parker 11-23)
+			return
 		get_tree().paused = false
 		main.game.end_match()
 		if Net.online:

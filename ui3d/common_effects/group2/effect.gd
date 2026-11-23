@@ -13,10 +13,26 @@ static func effect_meshes(effect: String) -> Array:
 	for name in DATA.EFFECTS[effect].variants:
 		if meshes.has(name): result.append(meshes[name])
 	return result
+# The preparer loads variant_path() on a worker thread, then hands the scene to
+# install_variant() on the main thread. prepare_one() stays the synchronous
+# fallback for a cold live burst.
+const RESOURCE_TYPE := "PackedScene"
+static func asset_path(name: String) -> String:
+	return "res://ui3d/common_effects/group2/assets/"+name+".glb"
+static func variant_path(effect: String,index: int) -> String:
+	return asset_path(DATA.EFFECTS[effect].variants[index])
+static func has_variant(effect: String,index: int) -> bool:
+	return meshes.has(DATA.EFFECTS[effect].variants[index])
+static func install_variant(effect: String,index: int,scene: PackedScene) -> void:
+	install_one(DATA.EFFECTS[effect].variants[index],scene,Time.get_ticks_usec())
 static func prepare_one(name: String) -> void:
 	if meshes.has(name): return
 	var start := Time.get_ticks_usec()
-	var scene: PackedScene = load("res://ui3d/common_effects/group2/assets/"+name+".glb")
+	var scene: PackedScene = load(asset_path(name))
+	install_one(name,scene,start)
+static func install_one(name: String,scene: PackedScene,start: int) -> void:
+	if meshes.has(name): return
+	assert(scene != null)
 	var temporary := scene.instantiate()
 	var sources := temporary.find_children("*","MeshInstance3D",true,false)
 	if temporary is MeshInstance3D: sources.append(temporary)

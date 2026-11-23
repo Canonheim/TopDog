@@ -371,6 +371,21 @@ static var cold_requests := {}
 static var failed_paths := {}
 static var failed_effects := {}
 static var max_frame_cpu_ms := 0.0
+# THE LOAD TICKETS. Every threaded request stays in `pending` until its ticket is
+# collected with load_threaded_get: a slow load is still pending (never a failure on
+# time alone), only a real failed/missing resource fails. At most MAX_IN_FLIGHT loads
+# are reading at once; drain() collects every ticket before the game quits.
+const MAX_IN_FLIGHT := 3
+const SLOW_LOAD_WARN_MS := 5000
+const MAX_HEAVY_UNITS_PER_FRAME := 1
+enum {LOAD_WAIT, LOAD_READY, LOAD_FAILED}
+static var permanent_failures := {}  # path -> true: missing files a retry cannot fix
+static var failed_effect_paths := {}  # effect -> the path that failed it
+static var slow_paths := {}
+static var draining := false
+static var scheduler: WeakRef
+static var _heavy_left := -1  # -1: ungated (direct callers run one step per call)
+static var _frame_started_usec := 0
 var order: Array = []
 var cursor := 0
 var selected_turn := false
@@ -412,32 +427,83 @@ static func scene_key(id: String, index: int) -> String:
 		return script.TYPES[index/32] + "_" + str((index/4)%8) + "_" + ["b","c","d","dd"][index%4]
 	return script.TYPES[3+(index-96)/8] + "_" + str((index-96)%8)
 
+## Loads still reading on a worker. A finished but uncollected ticket holds no IO.
+static func in_flight() -> int:
+	var count := 0
+	for path in pending:
+		if ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS: count += 1
+	for path in SCRIPTS.vines.pending:
+		if ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS: count += 1
+	for index in SCRIPTS.lightning.pending_meshes:
+		if ResourceLoader.load_threaded_get_status(SCRIPTS.lightning.mesh_path(index)) == ResourceLoader.THREAD_LOAD_IN_PROGRESS: count += 1
+	return count
+
+## Request `path` (when a slot is free) and report LOAD_WAIT / LOAD_READY / LOAD_FAILED.
+## LOAD_READY leaves the ticket in `pending` for take(); nothing is dropped untracked.
+static func request_status(path: String, type_hint := "") -> int:
+	if failed_paths.has(path): return LOAD_FAILED
+	if not pending.has(path):
+		if draining or in_flight() >= MAX_IN_FLIGHT: return LOAD_WAIT
+		if not ResourceLoader.exists(path):
+			fail_path(path,"missing resource",true)
+			return LOAD_FAILED
+		var error := ResourceLoader.load_threaded_request(path,type_hint)
+		if error != OK:
+			fail_path(path,"request failed: " + str(error))
+			return LOAD_FAILED
+		pending[path] = Time.get_ticks_msec()
+		return LOAD_WAIT
+	var status := ResourceLoader.load_threaded_get_status(path)
+	if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		if not slow_paths.has(path) and Time.get_ticks_msec()-int(pending[path]) > SLOW_LOAD_WARN_MS:
+			slow_paths[path] = true
+			push_warning("Effect preparation load is slow, still waiting: " + path)
+		return LOAD_WAIT
+	if status == ResourceLoader.THREAD_LOAD_LOADED: return LOAD_READY
+	if status == ResourceLoader.THREAD_LOAD_FAILED: ResourceLoader.load_threaded_get(path)  # release the ticket
+	fail_path(path,"threaded load failed")
+	return LOAD_FAILED
+
+## Collect a LOAD_READY ticket. With `required`, a null result fails the path.
+static func take(path: String, required := true) -> Resource:
+	var resource: Resource = ResourceLoader.load_threaded_get(path)
+	pending.erase(path)
+	slow_paths.erase(path)
+	if resource == null and required: fail_path(path,"threaded load returned nothing")
+	return resource
+
+## Inside the scheduler's frame, at most one main-thread instantiate/celify unit, and
+## only while the frame still has room for it. Direct callers are ungated.
+static func _claim_heavy() -> bool:
+	if _heavy_left < 0: return true
+	if _heavy_left == 0: return false
+	if (Time.get_ticks_usec()-_frame_started_usec)/1000.0 >= FRAME_TARGET_MS*0.5: return false
+	_heavy_left -= 1
+	return true
+
+static func _note_failure(id: String, path: String) -> void:
+	if failed_paths.has(path):
+		failed_effects[id] = failed_paths[path]
+		failed_effect_paths[id] = path
+
 static func prepare_scene(script, key: String, path: String) -> bool:
 	if failed_paths.has(path): return false
 	if not script.scenes.has(key):
-		if not pending.has(path):
-			if not ResourceLoader.exists(path):
-				fail_path(path,"missing resource")
-				return false
-			var error := ResourceLoader.load_threaded_request(path, "PackedScene")
-			if error != OK:
-				fail_path(path,"request failed: " + str(error))
-				return false
-			pending[path] = Time.get_ticks_msec()
+		if request_status(path,"PackedScene") != LOAD_READY: return false
+		if not _claim_heavy(): return false
+		var scene := take(path) as PackedScene
+		if scene == null:
+			fail_path(path,"threaded load is not a scene")
 			return false
-		var status := ResourceLoader.load_threaded_get_status(path)
-		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-			if Time.get_ticks_msec()-int(pending[path]) > 5000: fail_path(path,"load timeout")
-			return false
-		if status != ResourceLoader.THREAD_LOAD_LOADED:
-			fail_path(path,"threaded load failed")
-			return false
-		script.scenes[key] = ResourceLoader.load_threaded_get(path)
-	if pending.has(path):
-		# An early live request may already have loaded this same resource.
-		if ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS: return false
-		ResourceLoader.load_threaded_get(path)
-		pending.erase(path)
+		script.scenes[key] = scene
+	else:
+		if pending.has(path):
+			# An early live request may already have loaded this same resource.
+			var state := request_status(path,"PackedScene")
+			if state == LOAD_WAIT: return false
+			if state == LOAD_READY: take(path,false)
+			else: failed_paths.erase(path)  # our ticket failed, but the live load has the scene
+		if not _claim_heavy(): return false
 	# Temporary instance is never added to the tree; retain only original PackedScene
 	# and CelPass's shared material twins. No duplicate full scene trees or packing.
 	var sample: Node = script.scenes[key].instantiate()
@@ -445,40 +511,63 @@ static func prepare_scene(script, key: String, path: String) -> bool:
 	sample.free()
 	return true
 
-static func fail_path(path: String, reason: String) -> void:
+static func fail_path(path: String, reason: String, permanent := false) -> void:
 	if failed_paths.has(path): return
 	failed_paths[path] = reason
+	if permanent: permanent_failures[path] = true
 	pending.erase(path)
+	slow_paths.erase(path)
 	push_warning("Effect preparation skipped %s: %s" % [path,reason])
+
+## The "common" adapter: unit 0 is the shared material; each later unit is one variant,
+## read on a worker thread and installed (instantiate + celify) on the main thread.
+static func prepare_common(id: String, index: int, script) -> bool:
+	if index == 0:
+		script.prepare_unit(0)
+		return true
+	var group = script.GROUP
+	var variant := index-1
+	var path: String = group.variant_path(id,variant)
+	if group.has_variant(id,variant):
+		if pending.has(path):
+			# A cold live burst loaded it synchronously first: still collect our ticket.
+			var state := request_status(path,group.RESOURCE_TYPE)
+			if state == LOAD_WAIT: return false
+			if state == LOAD_READY: take(path,false)
+			else: failed_paths.erase(path)
+	else:
+		var state := request_status(path,group.RESOURCE_TYPE)
+		if state == LOAD_FAILED: _note_failure(id,path)
+		if state != LOAD_READY: return false
+		if not _claim_heavy(): return false
+		var resource := take(path)
+		if resource == null:
+			_note_failure(id,path)
+			return false
+		group.install_variant(id,variant,resource)
+	script.prepare_unit(index)  # cached now: only refreshes the effect's mesh list
+	return true
 
 static func prepare_baked(id: String, index: int, script) -> bool:
 	var cache = preload("res://ui3d/effect_mesh_cache.gd")
 	var path: String = cache.path_for(id,index)
 	if failed_paths.has(path): return false
 	if not cache.meshes.has(path):
-		if not pending.has(path):
-			if not ResourceLoader.exists(path):
-				fail_path(path,"missing baked mesh; run tests/bake_effect_meshes.gd")
-				return false
-			if ResourceLoader.load_threaded_request(path,"ArrayMesh") != OK:
-				fail_path(path,"mesh request failed")
-				return false
-			pending[path] = Time.get_ticks_msec()
+		if not pending.has(path) and not ResourceLoader.exists(path):
+			fail_path(path,"missing baked mesh; run tests/bake_effect_meshes.gd",true)
 			return false
-		var status := ResourceLoader.load_threaded_get_status(path)
-		if status == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
-			if Time.get_ticks_msec()-int(pending[path]) > 5000: fail_path(path,"mesh load timeout")
-			return false
-		if status != ResourceLoader.THREAD_LOAD_LOADED:
+		if request_status(path,"ArrayMesh") != LOAD_READY: return false
+		var mesh := take(path) as ArrayMesh
+		if mesh == null:
 			fail_path(path,"mesh load failed")
 			return false
-		var mesh := ResourceLoader.load_threaded_get(path) as ArrayMesh
 		for surface in mesh.get_surface_count(): mesh.surface_set_material(surface,CelPass.one())
 		cache.meshes[path] = mesh
-	if pending.has(path):
-		if ResourceLoader.load_threaded_get_status(path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS: return false
-		ResourceLoader.load_threaded_get(path)
-		pending.erase(path)
+	elif pending.has(path):
+		var state := request_status(path,"ArrayMesh")
+		if state == LOAD_WAIT: return false
+		if state == LOAD_READY: take(path,false)
+		else: failed_paths.erase(path)
 	if id == "roses":
 		if index < 6:
 			if script.meshes.is_empty(): script.meshes.resize(6)
@@ -500,22 +589,27 @@ static func prepare_step(id: String) -> bool:
 	var finished := true
 	if adapter.begins_with("baked:"):
 		finished = prepare_baked(id,index,script)
-		var path: String = preload("res://ui3d/effect_mesh_cache.gd").path_for(id,index)
-		if failed_paths.has(path): failed_effects[id] = failed_paths[path]
+		_note_failure(id,preload("res://ui3d/effect_mesh_cache.gd").path_for(id,index))
 	elif adapter.begins_with("scene:"):
 		var key := scene_key(id,index)
 		var path := "res://kit/models/"+adapter.trim_prefix("scene:")+key+".glb"
 		finished = prepare_scene(script,key,path)
 		if finished and is_attached(id): script.prepare()
-		if failed_paths.has(path): failed_effects[id] = failed_paths[path]
+		_note_failure(id,path)
 	else:
 		match adapter:
 			"legendary_material": finished = script.prepare_unit(index)
-			"common": script.prepare_unit(index)
+			"common": finished = prepare_common(id,index,script)
 			"spiders": finished = script.prepare_unit(index)
-			"vines": finished = script.prepare_unit(index)
-			"lightning":
+			"vines":
+				# Vines keeps its own tickets; it may start one only while a slot is free.
+				script.request_allowed = not draining and in_flight() < MAX_IN_FLIGHT
 				finished = script.prepare_unit(index)
+				script.request_allowed = true
+			"lightning":
+				script.request_allowed = not draining and in_flight() < MAX_IN_FLIGHT
+				finished = script.prepare_unit(index)
+				script.request_allowed = true
 				if not script.preparation_errors.is_empty(): failed_effects[id] = str(script.preparation_errors)
 			"space": script.prepare_unit(index)
 			"pickles": script.prepare_unit(index)
@@ -589,6 +683,7 @@ static func burst(id: String, camera: Node3D, big := false) -> Node3D:
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	scheduler = weakref(self)
 	for error in validation_errors(): push_error(error)
 	order = REGISTRY.keys()
 	var wardrobe := get_node_or_null("/root/Wardrobe")
@@ -598,6 +693,7 @@ func _ready() -> void:
 		order.push_front(selected)
 
 func _process(_dt: float) -> void:
+	if draining: return
 	# No background geometry work in a live match or over a visible celebration.
 	var main := get_parent()
 	var game: Node=main.get("game")
@@ -608,9 +704,15 @@ func _process(_dt: float) -> void:
 		for child in camera.get_children():
 			if child.has_meta("burst_profile"): return
 	var started := Time.get_ticks_usec()
+	# Cheap units (polling a load, small procedural meshes) share the frame; one heavy
+	# main-thread unit (instantiate + celify of a loaded model) ends it.
+	_frame_started_usec = started
+	_heavy_left = MAX_HEAVY_UNITS_PER_FRAME
 	for _unit in MAX_UNITS_PER_FRAME:
 		if (Time.get_ticks_usec()-started)/1000.0 >= FRAME_TARGET_MS: break
 		_schedule_one()
+		if _heavy_left == 0 or not is_processing(): break
+	_heavy_left = -1
 	var elapsed := (Time.get_ticks_usec()-started)/1000.0
 	max_frame_cpu_ms = maxf(max_frame_cpu_ms,elapsed)
 	if elapsed > PREPARE_STEP_BUDGET_MS:
@@ -634,14 +736,59 @@ func _schedule_one() -> void:
 			return
 	set_process(false)
 
+func _notification(what: int) -> void:
+	# The window's X always quits (main.gd): collect every load before teardown.
+	if what == NOTIFICATION_WM_CLOSE_REQUEST: drain()
+
 func _exit_tree() -> void:
 	# Release completed threaded-loader tickets when a menu/test scene is removed.
 	# Never wait on IO during scene teardown; unfinished work stays tracked so a
 	# replacement preparation node can resume it rather than duplicate the request.
+	# Quitting must call drain() first (main.gd quit_game).
 	for path in pending.keys():
 		var status := ResourceLoader.load_threaded_get_status(path)
-		if status == ResourceLoader.THREAD_LOAD_LOADED:
+		if status == ResourceLoader.THREAD_LOAD_LOADED or status == ResourceLoader.THREAD_LOAD_FAILED:
 			ResourceLoader.load_threaded_get(path)
 			pending.erase(path)
 		elif status != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
 			pending.erase(path)
+
+## THE DRAIN (quit): stop scheduling and new requests, then block on every tracked
+## threaded load (ours, Vines', Lightning's) until its ticket is collected, so no
+## worker is still reading when the engine tears down. Safe to call more than once.
+static func drain() -> void:
+	draining = true
+	if scheduler != null:
+		var node: Node = scheduler.get_ref()
+		if is_instance_valid(node): node.set_process(false)
+	for path in pending.keys():
+		if ResourceLoader.load_threaded_get_status(path) != ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			ResourceLoader.load_threaded_get(path)  # blocks until the worker is done
+	pending.clear()
+	slow_paths.clear()
+	SCRIPTS.vines.drain()
+	SCRIPTS.lightning.drain()
+
+## A failed effect is not failed for the whole session: the next match preparation
+## retries it (missing files excepted, a retry cannot fix those).
+static func retry_failed(ids: Array = []) -> void:
+	var targets: Array = ids if not ids.is_empty() else failed_effects.keys()
+	var retried := false
+	for id in targets:
+		if not failed_effects.has(id): continue
+		var path: String = failed_effect_paths.get(id,"")
+		if path != "" and permanent_failures.has(path): continue
+		if id == "lightning":
+			var errors: Dictionary = SCRIPTS.lightning.preparation_errors
+			for error_path in errors.keys():
+				if not str(errors[error_path]).begins_with("Missing"): errors.erase(error_path)
+			if not errors.is_empty(): continue
+			# A failed bolt mesh unit counted as done; run the mesh units again.
+			progress[id] = mini(int(progress.get(id,0)),1)
+		failed_effects.erase(id)
+		failed_effect_paths.erase(id)
+		if path != "": failed_paths.erase(path)
+		retried = true
+	if retried and scheduler != null and not draining:
+		var node: Node = scheduler.get_ref()
+		if is_instance_valid(node): node.set_process(true)

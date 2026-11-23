@@ -675,6 +675,12 @@ func _process(_delta: float) -> void:
 		var c := Color(1, 1, 1, 0.55)
 		var sc := 1.0
 		var stuck: bool = l.grab_other != null
+		# Written only when it changes (the code review, 11-23: every glyph's texture, colour
+		# and scale were set every frame).
+		var state := (1 if stuck else 0) | (2 if l.held else 0)
+		if (g as Node).get_meta(&"glyph_state", -1) == state:
+			continue
+		(g as Node).set_meta(&"glyph_state", state)
 		var disc := (g as Node).get_node_or_null("StuckDisc")
 		if disc != null:
 			disc.visible = stuck
@@ -710,8 +716,11 @@ func _draw_wrists() -> void:
 		var stop := deg_to_rad(WRIST_LIMIT_DEG)
 		var back := clampf(rel, -stop, stop) - rel
 		if absf(back) < 0.001:
-			mesh.transform = entry[1]
+			if mesh.get_meta(&"wrist_turned", true):
+				mesh.transform = entry[1]  # (once on coming back to rest, not every frame)
+				mesh.set_meta(&"wrist_turned", false)
 			continue
+		mesh.set_meta(&"wrist_turned", true)
 		var w2 := xf2(wj[0]) * (wj[2] as Vector2)
 		var pivot := hand.to_local(Vector3(w2.x, w2.y, 0.0))
 		var turn := Transform3D(Basis(Vector3.BACK, back), pivot - Basis(Vector3.BACK, back) * pivot)
@@ -1519,6 +1528,8 @@ var _drag_total := 0.0
 
 func _touching_solid() -> bool:
 	for body: RigidBody3D in bodies.values():
+		if body.get_contact_count() == 0:
+			continue  # (no Array built for a piece touching nothing: the code review, 11-23)
 		for other in body.get_colliding_bodies():
 			if other.collision_layer & (LAYER_WORLD | LAYER_FROZEN):
 				return true

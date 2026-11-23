@@ -18,6 +18,9 @@ func _ready() -> void:
 func track(node: Node) -> void:
  if node is Climber and node.multiplayer==multiplayer and not node.grab_made.is_connected(on_grab):
   node.grab_made.connect(on_grab)
+  # Freed climbers drop off the list (the code review, 11-23: it only ever grew).
+  for i in range(actors.size()-1,-1,-1):
+   if not is_instance_valid(actors[i].get_ref()):actors.remove_at(i)
   actors.append(weakref(node))
 func on_grab(source: Climber, _limb: int, other: Object) -> void:
  if not is_instance_valid(other) or not other.has_meta("climber"):return

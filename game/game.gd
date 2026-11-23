@@ -42,6 +42,8 @@ const ChairScript := preload("res://game/arena_chair.gd")
 const PartnerScript := preload("res://climber/practice_partner.gd")
 var pinata_director: Node
 var chair: ChairScript
+var _chair_sent: Array = []  # [state, transform, time] of the last chair pose sent (host)
+var _chair_loose_at := -INF  # when this machine's copy of the chair was last let go of
 var chair_debris: Node3D
 var partner: PartnerScript
 var partner_last_lock := Vector2(INF, INF)
@@ -65,6 +67,9 @@ const LOCK_BUFFER_S := 0.3
 var _lock_want := {}  # climber id -> seconds the press is still wanted
 const STREAM_HZ := 30.0
 const CLOCK_HZ := 4.0
+const CHAIR_FLIGHT_S := 1.5  # a thrown chair's copies stay hitless this long after it's let go
+const FREEZE_TRIES := 3  # final-pose asks at time-up before a held-up claim is judged "in the air"
+const TIME_UP_HZ := 10.0  # the time-up pass runs this often (it ran every physics tick)
 const PAUSE_BETWEEN := 3.0  # seconds between turns / rounds (Dan, 0.3.147: was 1.6)
 ## THE LAST LOCK-IN LINGERS (Parker 11-22: "have the last person to lock in have the camera linger on
 ## them for one second longer before it starts the next round and snaps to the next camera angle"):
@@ -127,6 +132,9 @@ var lock_linger_cid := -1
 var _clock_t := 0.0
 var _stream_t := 0.0
 var _seq := 0
+var _freeze_tries := {}  # cid -> how many times the host asked its owner for a final pose at time-up
+var _time_up_t := 0.0
+var _spam := {}  # [sender, kind] -> [window start, count]: cosmetic RPC rate limits
 var _pending_freeze := {}  # cid -> {"t": float, "verdict_hint": String}
 ## THE GROW-IN (Parker 11-10): every spawn grows from nothing over Climber.GROW_S,
 ## pushing whatever is in the way. Batteries that pose climbers the instant they
@@ -197,6 +205,13 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	settings = p_settings
 	partner_last_lock = Vector2(INF, INF)
 	partner_attempt = 0
+	# Nothing of the last match carries over (the code review, 11-23: a Classic match's failed tops
+	# picked the winner of a later solo Tower game).
+	_round_fail_tops.clear()
+	_sinking.clear()
+	_lock_want.clear()
+	_freeze_tries.clear()
+	_spam.clear()
 	mode = Modes.practice_row(str(settings.get("practice_mode", "scramble"))) if settings.get("mode") == "practice" else Modes.row(str(settings.get("mode", "scramble")))
 	practice = bool(mode.get("practice", false))
 	peak_on = str(mode.get("arena", "")) == "peak"
@@ -384,6 +399,9 @@ func _physics_process(delta: float) -> void:
 	else:
 		_partner_out = 0.0
 	if not is_host():
+		# Guests count the clock down between the host's packets (it stalled when they dropped).
+		if phase in ["turn", "round"] and not practice:
+			clock = maxf(0.0, clock - real_delta)
 		return
 	match phase:
 		"lobby":
@@ -407,9 +425,13 @@ func _physics_process(delta: float) -> void:
 			_check_bounds()
 			if clock <= 0.0:
 				_overtime += real_delta
-				_time_up()
+				_time_up_t -= real_delta
+				if _time_up_t <= 0.0:
+					_time_up_t = 1.0 / TIME_UP_HZ
+					_time_up()
 			else:
 				_overtime = 0.0
+				_time_up_t = 0.0
 			_tick_pending(real_delta)
 
 
@@ -435,7 +457,8 @@ func _next() -> void:
 	else:
 		var pair := _next_pair() if mode.get("round_robin", false) else still
 		var sides := _classic_spawn_sides(pair) if mode.get("round_robin", false) and pair.size() >= 2 else []
-		if pair.size() >= 2 and not practice and not peak_on:
+		# (No card with nothing to show it: a test's bare Game starts its rounds at once.)
+		if pair.size() >= 2 and not practice and not peak_on and not versus.get_connections().is_empty():
 			# THE VS CARD first (Parker 11-22): the round starts as its halves fly off.
 			_vs_pair = pair
 			_vs_sides = sides
@@ -459,6 +482,19 @@ func _next() -> void:
 
 func _start_round(pair: Array, sides: Array) -> void:
 	_vs_t = 0.0
+	# Nobody who has left since the card was shown is spawned.
+	var kept: Array = []
+	var kept_sides: Array = []
+	for i in pair.size():
+		if alive.get(int(pair[i]), false):
+			kept.append(pair[i])
+			if not sides.is_empty():
+				kept_sides.append(sides[i])
+	if kept.size() < mini(2, pair.size()):
+		_next()
+		return
+	pair = kept
+	sides = kept_sides
 	round_n += 1
 	locked.clear()
 	_round_fail_tops.clear()
@@ -466,6 +502,11 @@ func _start_round(pair: Array, sides: Array) -> void:
 	_rpc_round_players.rpc(pair)
 	for i in pair.size():
 		_spawn(pair[i], sides[i] if not sides.is_empty() else 0)
+
+
+@rpc("authority", "call_local", "reliable")
+func _rpc_versus_cancel() -> void:
+	versus.emit(-1, [], [])  # (round -1: take the card down)
 
 
 @rpc("authority", "call_local", "reliable")
@@ -526,13 +567,18 @@ func _rpc_phase(p: String, p_clock: float, p_line: float, p_round: int, pid: int
 
 @rpc("authority", "call_local", "unreliable")
 func _rpc_clock(p_clock: float, p_line: float) -> void:
-	if not is_host():
+	# A late packet from the last round must not put its clock back (the code review, 11-23).
+	if not is_host() and phase in ["turn", "round"]:
 		clock = p_clock
 		line = maxf(line, p_line)
 
 
 ## Resolve on the host before broadcasting. Read body poses directly so a climber
 ## created earlier in this same physics tick already occupies its space.
+const SPAWN_TRIES := 64
+const SPAWN_MAX_RISE := 200.0  # m: no spawn is searched for higher than this above its spot
+
+
 func _open_spawn(preferred: Vector2) -> Vector2:
 	if stage.delmar:
 		return preferred  # the pier's two spawns, 3 m apart (Stage.spawn_point)
@@ -553,7 +599,9 @@ func _open_spawn(preferred: Vector2) -> Vector2:
 			bounds = bounds.merge(c.pose_bounds(buffer.back()[1]))
 		blocked.append(bounds.grow(0.16))
 	var y := preferred.y
-	while true:
+	# A bounded search (the code review, 11-23: a blocking box with a huge top, from a forged lock-in
+	# pose, never let y move on and hung the host forever).
+	for attempt in SPAWN_TRIES:
 		var candidates := [clampf(preferred.x, -edge, edge), -edge, edge, -inside, inside]
 		var spans: Array[Vector2] = []
 		var next_y := INF
@@ -581,6 +629,8 @@ func _open_spawn(preferred: Vector2) -> Vector2:
 		if is_finite(distance):
 			return Vector2(best, y)
 		# A completely packed floor can still accept a separated spawn above it.
+		if not is_finite(next_y) or next_y <= y or next_y > preferred.y + SPAWN_MAX_RISE:
+			break
 		y = next_y
 	return preferred
 
@@ -843,7 +893,11 @@ func _tick_fart_meters(seconds: float) -> void:
 const STREAM_MIN_HZ := 10.0
 const STREAM_KEEPALIVE_S := 0.5
 var _last_sent := {}  # cid -> [pose, time, on_support]: the last pose streamed
+var _clock_off := {}  # cid -> (this clock - its owner's clock), smoothed (_owner_clock)
 var _puppet_at := {}  # cid -> the newest sample's time once it has been applied in full
+
+
+const PoseWire := preload("res://net/pose_wire.gd")
 
 
 static func _same_pose(a: PackedFloat32Array, b: PackedFloat32Array) -> bool:
@@ -854,12 +908,22 @@ static func _same_pose(a: PackedFloat32Array, b: PackedFloat32Array) -> bool:
 			return false
 	return true
 
+var _hz_frame := -1
+var _hz := 0.0
+
+
 func stream_hz() -> float:
-	var moving := 0
-	for c: Climber in climbers.values():
-		if c.state != Climber.State.FROZEN:
-			moving += 1
-	return clampf(STREAM_HZ * 4.0 / maxf(float(moving), 4.0), STREAM_MIN_HZ, STREAM_HZ)
+	# Once a physics frame (the code review, 11-23: it walked every climber, the frozen tower
+	# too, twice a tick).
+	var frame := Engine.get_physics_frames()
+	if frame != _hz_frame:
+		_hz_frame = frame
+		var moving := 0
+		for c: Climber in climbers.values():
+			if c.state != Climber.State.FROZEN:
+				moving += 1
+		_hz = clampf(STREAM_HZ * 4.0 / maxf(float(moving), 4.0), STREAM_MIN_HZ, STREAM_HZ)
+	return _hz
 
 
 func _tick_owned(real_delta: float) -> void:
@@ -908,23 +972,28 @@ func _tick_owned(real_delta: float) -> void:
 			var last: Array = _last_sent.get(cid, [])
 			if not last.is_empty() and bool(last[2]) == on_support and bool(last[3]) == airborne and _now - float(last[1]) < STREAM_KEEPALIVE_S and _same_pose(last[0], now_pose):
 				continue
+			var flags := (1 if on_support else 0) | (2 if airborne else 0)
+			var t_ms := int(_now * 1000.0)
+			if not last.is_empty() and bool(last[2]) == on_support and bool(last[3]) == airborne and _same_pose(last[0], now_pose):
+				# STILL: a few bytes of "where it was" instead of the whole pose (the code review,
+				# 11-23: an idle waiting room cost the host about 180 KB/s in full keepalive poses).
+				_last_sent[cid] = [last[0], _now, on_support, airborne]
+				_rpc_still.rpc(cid, t_ms, flags)
+				continue
 			_last_sent[cid] = [now_pose, _now, on_support, airborne]
-			_rpc_pose.rpc(cid, _seq, now_pose, on_support, airborne)
-	# Remote pulls on my climbers that went stale stop pulling.
-	for cid in _pulls.keys():
-		if not climbers.has(cid):
-			_pulls.erase(cid)
-			continue
-		var pc: Climber = climbers[cid]
-		pc.remote_pulls.clear()
-		pc.remote_support = false
-		for key in _pulls[cid]:
-			var sample: Dictionary = _pulls[cid][key]
-			if sample.has("time") and _now - float(sample.time) < PULL_STALE_S:
-				pc.remote_pulls[key] = sample
-				pc.remote_support = pc.remote_support or sample.supported
+			_rpc_pose_q.rpc(cid, t_ms, PoseWire.pack(now_pose), flags)
+	# (The per-tick pass over remote pulls is gone, the code review 11-23: since grips stopped
+	# sending force, no sample ever had a time, so it only cleared two fields every tick.
+	# _pulls still counts who holds my climbers: _rpc_grabbed, _forget_peer_grabs.)
 	if send and chair != null and is_host() and multiplayer.get_peers().size() > 0:
-		_rpc_chair_pose.rpc(chair_generation, chair.holder, chair.limb, chair.grip_point, chair.global_transform, chair.hit_count, chair.in_bubble)
+		# STILL CHAIRS SEND LITTLE (the code review, 11-23: its pose went to every peer on every
+		# stream tick, sitting in its bubble or not): unchanged, a keepalive twice a second.
+		var state := [chair_generation, chair.holder, chair.limb, chair.hit_count, chair.in_bubble]
+		var xf: Transform3D = chair.global_transform
+		var same: bool = _chair_sent.size() == 3 and _chair_sent[0] == state and (_chair_sent[1] as Transform3D).is_equal_approx(xf)
+		if not same or _now - float(_chair_sent[2]) >= STREAM_KEEPALIVE_S:
+			_chair_sent = [state, xf, _now]
+			_rpc_chair_pose.rpc(chair_generation, chair.holder, chair.limb, chair.grip_point, xf, chair.hit_count, chair.in_bubble)
 @rpc("any_peer", "call_remote", "reliable")
 func _rpc_lock_request(cid: int, pose: PackedFloat32Array, welded: bool) -> void:
 	if not is_host() or not climbers.has(cid):
@@ -963,12 +1032,34 @@ func _pose_on_support(c: Climber, pose: PackedFloat32Array) -> bool:
 	return false
 
 
-func _valid_lock_pose(pose: PackedFloat32Array) -> bool:
+## A pose a machine sends to be frozen into the tower (the code review, 11-23: only its size and
+## finiteness were checked, so a forged pose with a piece 1e20 m up froze into everyone's tower,
+## sent the line there and hung the host's next spawn). It must be in the arena, a whole body
+## (every piece near the pelvis), and, for a climber another machine runs, near where its stream
+## last showed it.
+const POSE_LIMIT := 500.0  # m from the origin
+const POSE_BODY_SPAN := 3.0  # m: no piece further than this from the pelvis (body_scale 1)
+const POSE_STREAM_SLACK := 2.5  # m: how far a sent pose may be from the last streamed one
+
+
+func _valid_lock_pose(pose: PackedFloat32Array, c: Climber = null) -> bool:
 	if pose.size() != Layout.ORDER.size() * 3:
 		return false
 	for value in pose:
-		if not is_finite(value):
+		if not is_finite(value) or absf(value) > POSE_LIMIT:
 			return false
+	var k := Layout.ORDER.find("pelvis") * 3
+	var pelvis := Vector2(pose[k], pose[k + 1])
+	var span := POSE_BODY_SPAN * maxf(1.0, Feel.get_k("body_scale"))
+	for i in range(0, pose.size(), 3):
+		if Vector2(pose[i], pose[i + 1]).distance_to(pelvis) > span:
+			return false
+	if c != null and c.owner_peer != me():
+		var buffer: Array = _puppet_buf.get(c.climber_id, [])
+		if not buffer.is_empty():
+			var last: PackedFloat32Array = buffer.back()[1]
+			if last.size() == pose.size() and Vector2(last[k], last[k + 1]).distance_to(pelvis) > POSE_STREAM_SLACK:
+				return false
 	return true
 
 ## welded: the owner's word that a hand or foot is welded to the arena or the tower
@@ -977,7 +1068,7 @@ func _judge_lock(cid: int, pose: PackedFloat32Array, welded := false) -> void:
 	var c: Climber = climbers.get(cid)
 	if c == null or c.state == Climber.State.FROZEN or _pending_freeze.has(cid) or _sinking.has(cid):
 		return  # (in the sea: nobody locks in from the water)
-	if not (phase == "turn" or phase == "round") or not _valid_lock_pose(pose):
+	if not (phase == "turn" or phase == "round") or not _valid_lock_pose(pose, c):
 		return
 	if pose_gap(c, pose) <= LOCK_MARGIN - _slack(c):
 		if c.owner_peer != me():
@@ -1020,7 +1111,14 @@ func _time_up() -> void:
 			continue
 		if c.owner_peer == me():
 			_broadcast_freeze(cid, c.pose(), "time")
+		elif int(_freeze_tries.get(cid, 0)) >= FREEZE_TRIES:
+			# Its owner says it's held up, the host finds no support under its final pose (the
+			# chair, a live rival), asked three times: out now (the code review, 11-23: it asked
+			# every tick for up to 16 s, then said "in the air" anyway).
+			_rpc_note.rpc("%s ran out of time in the air!" % c.display_name)
+			_broadcast_freeze(cid, c.pose(), "air")
 		else:
+			_freeze_tries[cid] = int(_freeze_tries.get(cid, 0)) + 1
 			_pending_freeze[cid] = {"t": FREEZE_REPLY_S}
 			_rpc_freeze_now.rpc_id(c.owner_peer, cid)
 	_finish_timeout_if_settled()
@@ -1041,7 +1139,7 @@ func _rpc_final_pose(cid: int, pose: PackedFloat32Array, welded := false) -> voi
 		return
 	if climbers.has(cid) and climbers[cid].owner_peer != multiplayer.get_remote_sender_id():
 		return
-	if not _valid_lock_pose(pose):
+	if not _valid_lock_pose(pose, climbers.get(cid)):
 		return
 	_pending_freeze.erase(cid)
 	_broadcast_freeze(cid, pose, "time", welded)
@@ -1254,11 +1352,23 @@ func alive_pids() -> Array:
 	return out
 
 
+var _top_key: Array = []
+var _top := 0.0
+
+
 func tower_top() -> float:
+	# Kept until the tower changes (the code review, 11-23: main asked for it every frame between
+	# turns, every frozen piece measured each time). A frozen tower doesn't move; a removal or a
+	# new piece changes the list or the climbers.
+	var key := [tower.size(), climbers.size(), stage, tower.back() if not tower.is_empty() else -1]
+	if key == _top_key:
+		return _top
 	var top := stage.first_line if stage != null else 0.0  # the first line until the tower passes it
 	for cid in tower:
 		if climbers.has(cid):
 			top = maxf(top, measure(climbers[cid]))
+	_top_key = key
+	_top = top
 	return top
 
 
@@ -1272,24 +1382,22 @@ func lock_line() -> float:
 	return line
 
 
-## THE LINE AS SEEN (Parker 11-11: "I wanted only the invisible boundary line that you
-## had to get over to be changed to match how it looked from the camera"). The flag
-## string and the rope stay where they hang and glide as they always did; the line a
-## lock-in must clear is what they cover on screen, carried onto the climbers' plane
-## (z = 0) along this machine's sight lines. Main sets these every frame; with no
-## camera (or judge_by_view off) it's the plain line.
-var view_from := Vector3.INF  # the camera
-var shown_bar_y := NAN  # the plaza: the flag string's height as drawn (it glides up)
-var shown_bar_z := 0.0  # ...how far behind the plane it hangs
-var shown_bar_sag := 0.0  # ...and its sag at its middle
-var judge_by_view := true
-## A climber owned by another machine: its owner judged by its own camera, which
-## frames the same way but may lag a touch; the host gives it this much.
-const REMOTE_SLACK := 0.06
-
-
-func _viewed() -> bool:
-	return judge_by_view and view_from.is_finite() and view_from.z > 1.0
+## THE LINE WHERE IT HANGS (Parker 11-23: "the line should not be camera dependant, I just wanted
+## the line moved to be more in line with where it looked like it should be based on the camera, but
+## it should not actually be dependant on the camera. Originally it was just not close"). Since 11-11
+## a lock-in was judged by what THIS machine's camera showed (the string carried onto the play plane
+## along its sight lines), so two machines could judge one pose differently and the host judged a
+## guest by the host's own camera. Now the line a lock-in must clear is the drawn line's own shape on
+## the play plane, the same on every machine: the plaza's flag string at the line with its sag
+## (lowest at the middle), Del Mar's rope through its eyes with its sag. No camera, no glide.
+var view_from := Vector3.INF  # (no longer read: kept for old tests)
+var shown_bar_y := NAN  # (no longer read)
+var shown_bar_z := 0.0  # (no longer read)
+var shown_bar_sag := 0.0  # the plaza: the flag string's sag at its middle (main sets it; 0 with no flags)
+var judge_by_view := false  # (no longer read)
+## A climber owned by another machine: the host judges the pose its owner sent, by the same
+## arithmetic, so this only covers float rounding over the wire.
+const REMOTE_SLACK := 0.01
 
 
 func _slack(c: Climber) -> float:
@@ -1304,63 +1412,49 @@ func pose_gap(c: Climber, pose: PackedFloat32Array) -> float:
 	return lock_gap(c.pose_reach_points(pose, stage.line_dir()) if stage != null else c.pose_reach_points(pose, Vector2(0, 1)))
 
 
-## How far the furthest of `points` (z = 0) shows past the line on screen (> 0: over).
+## How far the furthest of `points` (z = 0) is past the line (> 0: over).
 func lock_gap(points: Array) -> float:
 	var delmar := stage != null and stage.delmar
 	var best := -INF
-	if not _viewed():
-		var d := Vector2(1, 1) if delmar else Vector2(0, 1)
-		for p: Vector2 in points:
-			best = maxf(best, p.dot(d))
-		return best - (maxf(lock_line(),stage.first_line) if delmar else lock_line())
 	if delmar:
-		var seen := _seen_rope()
+		var rope := _rope_line()
 		var world_front := -INF
 		for p: Vector2 in points:
-			best = maxf(best, p.x + p.y - _seen_w(seen, p.x - p.y))
-			world_front = maxf(world_front,p.x+p.y-stage.first_line)
-		# Perspective cannot turn the launch dock into a valid tower-building area.
-		best = minf(best,world_front)
+			best = maxf(best, p.x + p.y - _seen_w(rope, p.x - p.y))
+			world_front = maxf(world_front, p.x + p.y - stage.first_line)
+		# The launch dock is never a tower-building area.
+		best = minf(best, world_front)
 	else:
 		for p: Vector2 in points:
-			best = maxf(best, p.y - _seen_bar_y(p.x))
+			best = maxf(best, p.y - bar_y(p.x))
 	return best
 
 
-## The plaza: the height the flag string shows at, on the plane, over x.
-func _seen_bar_y(x: float) -> float:
-	var e := view_from
-	var zs := shown_bar_z
-	if is_nan(shown_bar_y) or e.z <= zs + 0.5:
-		return lock_line()
-	var t := e.z / (e.z - zs)  # (a point on the string, seen from e, crosses z = 0 this far along)
-	var sx := e.x + (x - e.x) / t
-	var f := clampf((sx + LuchaUI.LINE_HALF_W) / (2.0 * LuchaUI.LINE_HALF_W), 0.0, 1.0)
-	var sy := minf(line, shown_bar_y) - shown_bar_sag * 4.0 * f * (1.0 - f)
-	return e.y + (sy - e.y) * t
+## The plaza: the line's height over x, the flag string's sag in it (none past its poles).
+func bar_y(x: float) -> float:
+	var f := clampf((x + LuchaUI.LINE_HALF_W) / (2.0 * LuchaUI.LINE_HALF_W), 0.0, 1.0)
+	return lock_line() - shown_bar_sag * 4.0 * f * (1.0 - f)
 
 
-## Del Mar: the rope as drawn (its eyes, its sag), carried onto the plane: points as
+## Del Mar: the rope as it hangs (its eyes, its sag) laid on the plane: points as
 ## (u, w) = (x - y, x + y), along the line and across it, in order of u.
-func _seen_rope() -> PackedVector2Array:
+func _rope_line() -> PackedVector2Array:
 	var ends: Array = stage.rope_ends(lock_line())
 	var a: Vector3 = ends[0]
 	var b: Vector3 = ends[1]
 	var sag := Stage.ROPE_SAG * (b - a).length()
-	var e := view_from
 	var out := PackedVector2Array()
 	for i in Stage.ROPE_POINTS + 1:
 		var s := float(i) / Stage.ROPE_POINTS
-		var p := a + (b - a) * s
-		p.y -= sag * 4.0 * s * (1.0 - s)
-		var q := e + (p - e) * (e.z / maxf(e.z - p.z, 0.01))
+		var q := a + (b - a) * s
+		q.y -= sag * 4.0 * s * (1.0 - s)
 		out.append(Vector2(q.x - q.y, q.x + q.y))
 	if out[0].x > out[out.size() - 1].x:
 		out.reverse()
 	return out
 
 
-## The seen rope's w at u (past its ends, its end stretches on straight).
+## The rope's w at u (past its ends, its end stretches on straight).
 func _seen_w(seen: PackedVector2Array, u: float) -> float:
 	var n := seen.size()
 	var i := 0
@@ -1423,6 +1517,50 @@ func live_climbers() -> Array:
 
 @rpc("any_peer", "call_remote", "unreliable")
 func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool, airborne: bool = false) -> void:
+	# (the old full-float pose: kept for tests; the stream sends _rpc_pose_q)
+	_take_pose(cid, seq, pose, on_support, airborne, -1)
+
+
+## THE POSE ON THE WIRE (the code review, 11-23): 100 bytes, not 200 (net/pose_wire.gd), stamped
+## with the owner's own clock, so puppets play back evenly however the packets arrive.
+@rpc("any_peer", "call_remote", "unreliable")
+func _rpc_pose_q(cid: int, t_ms: int, data: PackedByteArray, flags: int) -> void:
+	var pose := PoseWire.unpack(data)
+	if pose.is_empty():
+		return
+	_take_pose(cid, t_ms, pose, flags & 1 != 0, flags & 2 != 0, t_ms)
+
+
+## Its owner says it hasn't moved: the flags and the clock, no pose.
+@rpc("any_peer", "call_remote", "unreliable")
+func _rpc_still(cid: int, t_ms: int, flags: int) -> void:
+	var c: Climber = climbers.get(cid)
+	if c == null or c.state != Climber.State.PUPPET or c.owner_peer != multiplayer.get_remote_sender_id():
+		return
+	if t_ms <= int(_last_seq.get(cid, -1)):
+		return
+	_last_seq[cid] = t_ms
+	c.puppet_on_support = flags & 1 != 0
+	_xp_airborne[cid] = flags & 2 != 0
+	_owner_clock(cid, t_ms)
+
+
+## The owner's clock against this one: the smallest (local - owner) seen lately, so the network's
+## delay is taken out and the samples land as evenly as they were sent.
+func _owner_clock(cid: int, t_ms: int) -> float:
+	var off := _now - float(t_ms) / 1000.0
+	var est: float = _clock_off.get(cid, INF)
+	if off < est:
+		est = off  # a quicker packet: the true offset is at most this
+	else:
+		est = minf(off, est + 0.002)  # drift up slowly (clocks drift; a slow patch passes)
+	_clock_off[cid] = est
+	return float(t_ms) / 1000.0 + est
+
+
+## seq: the owner's clock in ms (_rpc_pose_q), or a plain counter (the old _rpc_pose, t_ms < 0:
+## stamped on arrival).
+func _take_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool, airborne: bool, t_ms: int) -> void:
 	var c: Climber = climbers.get(cid)
 	if c == null or c.state != Climber.State.PUPPET:
 		return
@@ -1435,11 +1573,17 @@ func _rpc_pose(cid: int, seq: int, pose: PackedFloat32Array, on_support: bool, a
 	c.puppet_on_support = on_support
 	_xp_airborne[cid] = airborne
 	_last_seq[cid] = seq
+	var at := _owner_clock(cid, t_ms) if t_ms >= 0 else _now
 	if not _puppet_buf.has(cid):
 		_puppet_buf[cid] = []
-	_puppet_buf[cid].append([_now, pose])
-	while _puppet_buf[cid].size() > 12:
-		_puppet_buf[cid].pop_front()
+	var buf: Array = _puppet_buf[cid]
+	# The same pose again (a pause, an older keepalive): nothing new to play (the code review,
+	# 11-23: identical samples kept idle puppets re-posed every tick).
+	if not buf.is_empty() and _same_pose(buf.back()[1], pose):
+		return
+	buf.append([at, pose])
+	while buf.size() > 12:
+		buf.pop_front()
 
 
 ## Puppets play back the stream Feel "puppet_delay" seconds behind, interpolated.
@@ -1468,19 +1612,58 @@ func _tick_puppets() -> void:
 		var at_newest := t >= float(buf[-1][0])
 		if at_newest and float(_puppet_at.get(cid, -1.0)) == float(buf[-1][0]):
 			continue  # already standing on the newest sample: 16 transforms a tick saved per idle puppet
-		c.apply_pose(_lerp_pose(a[1], b[1], f))
+		# A JUMP IS A JUMP (the code review, 11-23): a big correction by its owner (a respawn, a shove
+		# out of a frozen climber) was blended over one sample, sweeping the kinematic puppet through
+		# everything at 90 m/s and flinging whoever held it. Over PUPPET_JUMP_M it is placed outright
+		# and anything this machine runs lets go of it.
+		var pa: PackedFloat32Array = a[1]
+		var pb: PackedFloat32Array = b[1]
+		var k := _pelvis_i * 3
+		if Vector2(pb[k] - pa[k], pb[k + 1] - pa[k + 1]).length() > PUPPET_JUMP_M:
+			if f > 0.0:
+				_let_go_of(c)
+				c.apply_pose(pb)
+				for body in c.bodies.values():
+					(body as RigidBody3D).reset_physics_interpolation()
+					Climber.sync_server(body)
+				buf.erase(a)
+		else:
+			c.apply_pose(_lerp_pose(pa, pb, f, _scratch(cid)))
 		if at_newest:
 			_puppet_at[cid] = float(buf[-1][0])
 		else:
 			_puppet_at.erase(cid)
 
 
-static func _lerp_pose(a: PackedFloat32Array, b: PackedFloat32Array, f: float) -> PackedFloat32Array:
+const PUPPET_JUMP_M := 0.6
+var _pelvis_i: int = Layout.ORDER.find("pelvis")
+var _scratch_poses := {}  # cid -> the array each blended pose is written into (no copy a tick)
+
+
+func _scratch(cid: int) -> PackedFloat32Array:
+	if not _scratch_poses.has(cid):
+		var p := PackedFloat32Array()
+		p.resize(Layout.ORDER.size() * 3)
+		_scratch_poses[cid] = p
+	return _scratch_poses[cid]
+
+
+## Every climber this machine runs lets go of `c`'s pieces.
+func _let_go_of(c: Climber) -> void:
+	for other: Climber in climbers.values():
+		if other == c or other.state != Climber.State.LIVE or other.owner_peer != me():
+			continue
+		for i in other.limbs.size():
+			if Climber.climber_of(other.limbs[i].grab_other) == c:
+				other.release(i)
+
+
+static func _lerp_pose(a: PackedFloat32Array, b: PackedFloat32Array, f: float, into := PackedFloat32Array()) -> PackedFloat32Array:
 	if f <= 0.0:
 		return a
 	if f >= 1.0:
 		return b
-	var out := a.duplicate()
+	var out := into if into.size() == a.size() else a.duplicate()
 	for i in range(0, out.size(), 3):
 		out[i] = lerpf(a[i], b[i], f)
 		out[i + 1] = lerpf(a[i + 1], b[i + 1], f)
@@ -1519,6 +1702,8 @@ func _rpc_knockout(cid: int, clip: String) -> void:
 
 @rpc("any_peer", "call_local", "reliable")
 func _rpc_exertion(cid: int, clip: String) -> void:
+	if not _spam_ok("exertion", 30):
+		return
 	var c := _audio_climber(cid)
 	if c != null:
 		Sound.play_exertion(clip, c.bodies["head"])
@@ -1557,9 +1742,25 @@ func _sea_splash(x: float, size: float) -> void:
 
 
 ## A floatie bounced someone: it squashes and boings on every machine.
+## A cosmetic RPC from another machine at most `per_s` times a second (the code review, 11-23:
+## nothing stopped a modified client spamming sounds and squashes). This machine's own always pass.
+func _spam_ok(kind: String, per_s: int) -> bool:
+	var sender := multiplayer.get_remote_sender_id()
+	if sender == 0 or sender == me():
+		return true
+	var key := "%d:%s" % [sender, kind]
+	var now := Time.get_ticks_msec() / 1000.0  # (wall time: a test machine's _now can stand still)
+	var w: Array = _spam.get(key, [now, 0])
+	if now - float(w[0]) >= 1.0:
+		w = [now, 0]
+	w[1] = int(w[1]) + 1
+	_spam[key] = w
+	return int(w[1]) <= per_s
+
+
 @rpc("any_peer", "call_local", "reliable")
 func _rpc_floatie(i: int, at: Vector3) -> void:
-	if stage == null or stage.floaties == null or not at.is_finite():
+	if stage == null or stage.floaties == null or not at.is_finite() or not _spam_ok("floatie", 30):
 		return
 	if multiplayer.get_remote_sender_id() != me():
 		stage.floaties.squash(i)
@@ -1583,7 +1784,7 @@ var bell_rings := 0  # rings heard on this machine (the batteries count them)
 
 @rpc("any_peer", "call_local", "reliable")
 func _rpc_bell(cid: int, at: Vector3, clip: String) -> void:
-	if _audio_climber(cid) == null or not at.is_finite() or not clip in Sound.SFX["church_bell"]:
+	if not _spam_ok("bell", 30) or _audio_climber(cid) == null or not at.is_finite() or not clip in Sound.SFX["church_bell"]:
 		return
 	_play_bell(at, clip)
 
@@ -1649,12 +1850,14 @@ func _play_bell(at: Vector3, clip: String, extra_gain_db := 0.0) -> void:
 
 @rpc("any_peer", "call_local", "reliable")
 func _rpc_slap(cid: int, at: Vector3, clip: String, pitch: float) -> void:
-	if _audio_climber(cid) != null and at.is_finite() and pitch >= 0.92 and pitch <= 1.08:
+	if _spam_ok("slap", 30) and _audio_climber(cid) != null and at.is_finite() and pitch >= 0.92 and pitch <= 1.08:
 		Sound.play_grab(clip, at, pitch, world)
 
 
 @rpc("any_peer", "call_local", "reliable")
 func _rpc_fart(cid: int, take: int, pitch: float, budget: float) -> void:
+	if not _spam_ok("fart", 60):
+		return
 	var c := _audio_climber(cid)
 	if c == null:
 		return
@@ -1700,16 +1903,32 @@ func _rpc_grabbed(cid: int, source_id: int, limb: int, connected: bool) -> void:
 		_pulls[cid] = {}
 	if connected:
 		source.remote_grip_targets[limb] = c
-		# A remote take cannot close a moving-anchor feedback loop either.
-		for i in c.limbs.size():
-			var target: Climber = c.limbs[i].grab_climber
-			if is_instance_valid(target) and target._grips_reach(source): c.release(i)
+		# A remote take cannot close a moving-anchor feedback loop either. Two players who take
+		# each other within one round trip: only the higher id lets go (the code review, 11-23:
+		# each machine dropped its own grip, so both lost theirs).
+		if c.climber_id > source_id:
+			for i in c.limbs.size():
+				var target: Climber = c.limbs[i].grab_climber
+				if is_instance_valid(target) and target._grips_reach(source): c.release(i)
 		_pulls[cid][key] = {}
 	else:
 		source.remote_grip_targets.erase(limb)
 		_pulls[cid].erase(key)
 		c.remote_pulls.erase(key)
 	c.remote_grabbed = _pulls[cid].size()
+
+
+## A machine left: its climbers' holds on mine are gone (the code review, 11-23: the counts
+## stayed up for the rest of the match).
+func _forget_peer_grabs(peer: int) -> void:
+	for cid in _pulls.keys():
+		var c: Climber = climbers.get(cid)
+		for key: Vector2i in (_pulls[cid] as Dictionary).keys():
+			var source: Climber = climbers.get(key.x)
+			if source == null or source.owner_peer == peer:
+				_pulls[cid].erase(key)
+		if c != null:
+			c.remote_grabbed = (_pulls[cid] as Dictionary).size()
 
 
 func _send_contact_loads(_c: Climber) -> void:
@@ -1741,6 +1960,7 @@ func _rpc_push_load(source_id: int, defender_id: int, limb: int, pressure: float
 # ================================================================ leaving
 
 func _on_peer_left(id: int) -> void:
+	_forget_peer_grabs(id)  # (every machine: each counts the holds on its own climbers)
 	if phase=="loading":
 		if is_host():
 			effect_load_pending.erase(id)
@@ -1768,7 +1988,14 @@ func _on_peer_left(id: int) -> void:
 		if not alive.get(cur, true):
 			_end_of_play()
 	if phase != "over" and _game_decided(alive_pids()):
+		_vs_t = 0.0
 		_finish()
+	elif phase == "between" and _vs_t > 0.0 and _vs_pair.any(func(p): return not alive.get(int(p), false)):
+		# Gone during the VS card (the code review, 11-23: the round still spawned them, a ghost
+		# puppet nobody runs): the card goes, and the next pair is picked.
+		_vs_t = 0.0
+		_rpc_versus_cancel.rpc()
+		_between_t = 0.3
 	elif phase == "round":
 		var settled := true
 		for pid in round_players:
@@ -1958,6 +2185,17 @@ func _tick_chair(dt: float) -> void:
 		return
 	var carrier: Climber = partner if chair.holder == -2 else climbers.get(chair.holder)
 	if not is_host():
+		# A COPY DOESN'T HIT (the code review, 11-23: every machine's copy of a swung or thrown
+		# chair struck the climbers it met, then the host's judged hit landed too): held, or in
+		# the air after a throw, a copy touches only the arena and the tower. The host judges
+		# every hit and sends its nudge. Loose and settled, it's solid again (to stand on).
+		var flying: bool = chair.holder != -1 or _now - _chair_loose_at < CHAIR_FLIGHT_S
+		if not chair.in_bubble:
+			var layer: int = 0 if flying else Climber.LAYER_PROP
+			var mask: int = (Climber.LAYER_WORLD | Climber.LAYER_FROZEN) if flying else Climber.SOLID_MASK
+			if chair.collision_layer != layer or chair.collision_mask != mask:
+				chair.collision_layer = layer
+				chair.collision_mask = mask
 		if chair.grip_joint.is_valid():
 			return
 		if not chair.in_bubble:
@@ -2077,9 +2315,15 @@ func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose:
 	# Capture the old floating bubble position before applying the carried pose.
 	chair.in_bubble = in_bubble
 	if chair.holder != cid or chair.limb != limb:
+		var was_mine: bool = chair.holder >= 0 and climbers.has(chair.holder) and (climbers[chair.holder] as Climber).owner_peer == me()
 		chair.clear_grip()
 		chair.freeze = true  # loose replicas follow the host snapshots
-		chair.global_transform = pose
+		# My own throw glides on from where my hand let go (the code review, 11-23: the host's
+		# pose, a round trip behind, snapped it back about a metre); others' are placed.
+		if not (was_mine and cid == -1):
+			chair.global_transform = pose
+		if cid == -1:
+			_chair_loose_at = _now
 		if cid >= 0 or in_bubble:
 			chair.set_carrier(climbers.get(cid))
 	if cid < 0 and not in_bubble:
@@ -2107,12 +2351,16 @@ func _clear_climbers() -> void:
 	_last_seq.clear()
 	_pulls.clear()
 	_pending_freeze.clear()
+	_freeze_tries.clear()
 	_last_sent.clear()
 	_puppet_at.clear()
+	_clock_off.clear()
+	_scratch_poses.clear()
 	_overtime = 0.0
 
 
 func end_match() -> void:
+	_waiting_peers.clear()
 	effect_load_token=""
 	effect_load_pending.clear()
 	if is_instance_valid(effect_load_job):effect_load_job.queue_free()
@@ -2132,6 +2380,9 @@ func end_match() -> void:
 
 
 ## Host sends only authenticated members, after Net's completed handshake.
+var _waiting_peers := {}  # the guest machines the waiting room's last snapshot went to
+
+
 func sync_waiting_room() -> void:
 	if not is_host() or Net.in_match:
 		return
@@ -2142,9 +2393,17 @@ func sync_waiting_room() -> void:
 			if bool(entry.get("random", false)):
 				entry.name = climbers[live[entry.pid]].display_name if live.has(entry.pid) and climbers.has(live[entry.pid]) else NameGen.make()
 			guests.append(entry)
+	# Poses only when a machine is new to the room (the code review, 11-23: every ready toggle
+	# resent every climber's pose to everyone; the guests only use them for climbers they lack).
+	var peers := {}
+	for e in guests:
+		peers[int(e.peer)] = true
+	var new_peer := peers.keys().any(func(p): return not _waiting_peers.has(p))
+	_waiting_peers = peers
 	var snapshot := {}
-	for cid in climbers:
-		snapshot[cid] = climbers[cid].pose()
+	if new_peer:
+		for cid in climbers:
+			snapshot[cid] = climbers[cid].pose()
 	_rpc_waiting_room.rpc(guests, snapshot)
 
 

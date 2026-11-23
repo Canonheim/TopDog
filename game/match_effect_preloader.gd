@@ -26,6 +26,8 @@ func start(roster: Array, show_ui:=true) -> void:
   var bg:=ColorRect.new();bg.color=Color(0.025,.035,.04,.94);bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);overlay.add_child(bg)
   label=Label.new();label.text="Preparing match…";label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;label.vertical_alignment=VERTICAL_ALIGNMENT_CENTER;label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);bg.add_child(label)
  report.effects=selected(roster)
+ # An earlier failure (a load that failed once) gets a fresh try every match.
+ Prep.retry_failed(report.effects)
  await get_tree().process_frame
  view=SubViewport.new();view.size=Vector2i(64,64);view.own_world_3d=true;view.msaa_3d=get_viewport().msaa_3d;add_child(view)
  camera=Camera3D.new();camera.projection=Camera3D.PROJECTION_ORTHOGONAL;camera.size=3;camera.position=Vector3(0,0,5);view.add_child(camera)

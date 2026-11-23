@@ -2,11 +2,24 @@ extends RefCounted
 const Launch = preload("res://ui3d/common_effects/launch_frame.gd")
 const DATA = preload("res://ui3d/common_effects/group4/manifest_data.gd")
 static var cached := {}
+# The preparer loads variant_path() on a worker thread, then hands the scene to
+# install_variant() on the main thread. prepare_variant() stays the synchronous
+# fallback for a cold live burst.
+const RESOURCE_TYPE := "PackedScene"
+static func variant_path(effect: String, index: int) -> String:
+	return "res://ui3d/common_effects/group4/models/"+effect+"_"+str(index)+".glb"
+static func has_variant(effect: String, index: int) -> bool:
+	return cached.has(effect+"_"+str(index))
 static func prepare_variant(effect: String, index: int) -> void:
+	CelPass.one()
+	if has_variant(effect,index): return
+	var scene: PackedScene = load(variant_path(effect,index))
+	install_variant(effect,index,scene)
+static func install_variant(effect: String, index: int, scene: PackedScene) -> void:
 	CelPass.one()
 	var key := effect+"_"+str(index)
 	if cached.has(key): return
-	var scene: PackedScene = load("res://ui3d/common_effects/group4/models/"+key+".glb")
+	assert(scene != null)
 	var instance := scene.instantiate()
 	var meshes := instance.find_children("*", "MeshInstance3D", true, false)
 	assert(meshes.size()==1)

@@ -55,7 +55,7 @@ func probe() -> void:
 	scheduler.set_process(false)
 	# A failed large effect cannot prevent round-robin preparation of other entries.
 	Prep.failed_effects["underwear"] = "injected probe failure"
-	for _frame in 32:
+	for _frame in 160:  # (one heavy unit a frame since the code review, 11-23: slower by design, never starved)
 		scheduler._process(1.0/60)
 		await process_frame
 	check(int(Prep.progress.get("confetti",0)) > 0,"Scheduler failed to progress")

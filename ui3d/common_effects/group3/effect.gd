@@ -3,10 +3,21 @@ const Launch = preload("res://ui3d/common_effects/launch_frame.gd")
 ## Approved motion with shared immutable native meshes and the house atlas.
 const DATA = preload("res://ui3d/common_effects/group3/data.gd")
 static var meshes := {}
+# The preparer loads variant_path() on a worker thread, then hands the mesh to
+# install_variant() on the main thread. prepare_variant() stays the synchronous
+# fallback for a cold live burst.
+const RESOURCE_TYPE := "Mesh"
+static func variant_path(effect: String,index: int) -> String:
+	return DATA.EFFECTS[effect].variants[index]
+static func has_variant(effect: String,index: int) -> bool:
+	return meshes.has(variant_path(effect,index))
 static func prepare_variant(effect: String,index: int) -> void:
-	var path: String = DATA.EFFECTS[effect].variants[index]
+	if has_variant(effect,index): return
+	var source: Mesh = load(variant_path(effect,index))
+	install_variant(effect,index,source)
+static func install_variant(effect: String,index: int,source: Mesh) -> void:
+	var path := variant_path(effect,index)
 	if meshes.has(path): return
-	var source: Mesh = load(path)
 	assert(source != null)
 	for surface in source.get_surface_count(): source.surface_set_material(surface,CelPass.one())
 	meshes[path] = source

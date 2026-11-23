@@ -44,8 +44,27 @@ const VOLUME_STEP := 0.05  # Parker 11-10: "volume should be 5% steps"
 const KNOB_DEG := {"windowed": 62.0, "fullscreen": 0.0, "borderless": -62.0}
 const STOP_NODES := {"windowed": "tv_stop_windowed", "fullscreen": "tv_stop_fullscreen", "borderless": "tv_stop_borderless"}
 const STOP_TEXT := {"windowed": "WINDOWED", "fullscreen": "FULLSCREEN", "borderless": "WINDOWED\nFULLSCREEN"}
-const SET_SCALE := 0.62  # the desk and the TV on the canvas
-const DROP_FROM := 13.0  # metres above where they land
+## THE OPTIONS TABLE (Parker 11-23: "Make this stuff land on a table and make it always draw on top of
+## the scene"; the UI creator's options_table, PARTS.md O2): the desk and the TV stand on it, one group
+## hung on the camera in the banner's own frame, scaled SET_FRAME_SCALE with its origin SET_FRAME_Y down.
+const SET_FRAME_SCALE := 0.86
+const SET_FRAME_Y := -0.95
+const DESK_AT := Vector3(-2.85, 0, 0)
+## What DEFAULTS puts back: Sound's own starting volumes, and full screen (Parker 11-23: "the default
+## should be full screen not windowed").
+const DEFAULT_VOLUMES := {"Master": 0.4, "Music": 0.6, "Effects": 0.9}
+const DEFAULT_WINDOW_MODE := "fullscreen"
+const TV_AT := Vector3(3.05, 0, 0)
+## EVERYTHING FALLS IN FROM THE TOP (Parker 11-23: "make sure everything falls in from the top including
+## the controller"): the table first, then the desk, the TV and the controller onto it, each from above
+## the screen's top edge.
+const DROP_FROM := 11.0  # table units above their places (past the top of the screen)
+const DROP_GAP := 0.09  # seconds between one piece and the next
+const PAD_AT := Vector3(0.4, 0.58, 0.2)  # the controller's spot on the table (the UI creator's)
+const PAD_SCALE := 0.9
+const PAD_LEAN_DEG := -12.0  # propped, leaning back
+const PAD_RISE := 0.45  # how high it floats when highlighted
+const DROP_S := 0.32
 const SET_Z := 1.2  # the set stands this far in front of the play plane (the apron side of the ring)
 const SET_VIEW_DIST := 10.0  # the title camera's distance to it, near enough
 
@@ -69,6 +88,10 @@ var _cells := {}  # "action|scheme|index" -> {node, text, face}
 ## button to the current UI screen, no need for a full rework"): the six limb rows are page
 ## one, the two camera controls page two; NEXT PAGE turns between them.
 const CAMERA_ROWS := ["LOOK AROUND (HOLD)", "ZOOM OUT (HOLD)"]
+## Page two's other rows (Parker 11-23: "make sure the controls page has all the keybinds like Dan's new
+## camera controls"): the match camera's two toggles and the fart.
+const EXTRA_ROWS := ["PLAYERS CAMERA", "PINATA CAMERA", "FART"]
+const EXTRA_BADGES := ["icon_cam_players", "icon_cam_pinata", "icon_fart"]
 var _pages: Array = []  # [page node, its cell stops]
 var _common_stops: Array = []  # RESET, BACK, NEXT PAGE
 var _page := 0
@@ -80,7 +103,15 @@ var _monitor_shown := ""
 var _bubble: Node3D
 
 var _opt_hud: Node3D
-var _opt_set: Node3D  # the desk and the TV, in the world
+var _table: Node3D  # options_table (PARTS.md O2), under _opt_set
+var _pad: Node3D  # boot_pad on the table: the way into Controls
+var _pad_ring: Node3D
+var _pad_lift := 0.0
+var _landing := false  # the set is falling in: the controller's float leaves it to the tween
+var _pad_word: Node3D
+var _mic: Node3D
+var _opt_frame_scale := 1.0
+var _opt_set: Node3D  # the desk and the TV, on the camera (always in front of the world)
 var _desk: Node3D
 var _tv: Node3D
 var _faders: Array = []  # per bus: {model, cap, fill, focus, readout_text}
@@ -160,8 +191,8 @@ func _build_controls() -> void:
 		board = LuchaKit.box(Vector3(11.84, 5.34, 0.24), LuchaKit.CREAM)
 	board.position = Vector3(0, -0.35, 0)
 	frame.add_child(board)
-	var flags := LuchaKit.bunting(Vector3(-5.5, 2.45, 0.08), Vector3(5.5, 2.45, 0.08), 22, 0.1)
-	board.add_child(flags)
+	# (No flag string across the board's top: Parker 11-23, "get rid of the circled flags as they look
+	# sloppy behind the other UI like this".)
 	# The column tabs.
 	for c in 3:
 		var tab := _kit("bind_col_tab", Vector3(1.22, 0.4, 0.05), TAB_TINTS[c])
@@ -185,6 +216,8 @@ func _build_controls() -> void:
 		rows.append([0, Players.ACTIONS[r], str(Players.ACTION_NAMES[r]).to_upper(), BADGES[r], ROWS_Y[r]])
 	for r in Players.CAMERA_ACTIONS.size():
 		rows.append([1, Players.CAMERA_ACTIONS[r], CAMERA_ROWS[r], "icon_eye", ROWS_Y[r]])
+	for r in Players.EXTRA_ACTIONS.size():
+		rows.append([1, Players.EXTRA_ACTIONS[r], EXTRA_ROWS[r], EXTRA_BADGES[r], ROWS_Y[Players.CAMERA_ACTIONS.size() + r]])
 	for row: Array in rows:
 		var page: Node3D = _pages[int(row[0])][0]
 		var action: String = row[1]
@@ -385,9 +418,14 @@ func _build_options() -> void:
 	frame.position = Vector3(0, 0, -LuchaUI.PAUSE_DIST)
 	frame.scale = Vector3.ONE * LuchaUI.UI_SCALE * LuchaUI.PAUSE_DIST / LuchaUI.MENU_DIST
 	frame.add_child(_banner("OPTIONS", Vector3(0, 3.0, 0)))
-	var back_b := _belt_small("BACK", Vector3(0, -2.55, 0.08))  # (up, clear of the footer)
+	var back_b := _belt_small("BACK", Vector3(1.05, -2.55, 0.08))  # (up, clear of the footer)
 	back_b.node.scale = Vector3.ONE * 1.3
 	frame.add_child(back_b.node)
+	# DEFAULTS beside it (Parker 11-23: "add a 'defaults' button next to the back button"): the three
+	# volumes and the window mode back to how the game first starts.
+	var defaults_b := _belt_small("DEFAULTS", Vector3(-1.05, -2.55, 0.08))
+	defaults_b.node.scale = Vector3.ONE * 1.3
+	frame.add_child(defaults_b.node)
 	var hint := LuchaKit.footer(["LEFT / RIGHT: SLIDE", ["A", PAD_A], "PICK", ["B", PAD_B], "BACK"])
 	hint.position = Vector3(0, -3.25, 0.1)
 	frame.add_child(hint)
@@ -395,13 +433,27 @@ func _build_options() -> void:
 	_opt_hud.visible = false
 	_opt_set = Node3D.new()
 	_opt_set.name = "OptionsSet"
-	main.world.add_child(_opt_set)
+	# ON THE CAMERA, NOT IN THE WORLD (Parker 11-23: "make it always draw on top of the scene. Like it
+	# also sinks into the ring sometimes"): the table, the desk and the TV hang just behind the banner
+	# and the belts, nearer than anything in the world.
+	cam.add_child(_opt_set)
 	_opt_set.visible = false
+	_opt_frame_scale = frame.scale.x
+	_table = LuchaKit.kit_model("options_table")
+	if _table != null:
+		_opt_set.add_child(_table)
+		var plate := _table.find_child("table_plate", true, false) as Node3D
+		if plate != null:
+			# (OPTIONS, not ON AIR: Parker 11-23, "For the little thing that says on air, make it say Options".)
+			var on_air := LuchaKit.fit_text("OPTIONS", 2.0, 0.2, LuchaKit.CREAM, LuchaKit.INK)
+			on_air.position = Vector3(0, 0, 0.02)
+			plate.add_child(on_air)
+		_mic = _table.find_child("table_mic", true, false) as Node3D
+	LuchaUI.no_shadows(_opt_set)
 	var stops: Array = []
 	# The mixer desk.
 	_desk = _kit("mixer_desk", Vector3(4.2, 2.5, 0.47), LuchaKit.INK)
-	_desk.scale = Vector3.ONE * SET_SCALE
-	_desk.position = Vector3(-2.35, 0, 0)
+	_desk.position = DESK_AT
 	_opt_set.add_child(_desk)
 	for b in BUSES.size():
 		var bus: String = BUSES[b]
@@ -436,8 +488,7 @@ func _build_options() -> void:
 		stops.append(_stop(area_node, Vector3(1.1, 2.0, 0.4), "fader", {"bus": bus, "fader": b, "focus": focus}))
 	# The big screen TV.
 	_tv = _kit("big_screen_tv", Vector3(3.0, 3.5, 0.56), LuchaKit.GOLD)
-	_tv.scale = Vector3.ONE * SET_SCALE
-	_tv.position = Vector3(2.45, 0, 0)
+	_tv.position = TV_AT
 	_opt_set.add_child(_tv)
 	for mode in STOP_NODES:
 		var sn := _tv.find_child(STOP_NODES[mode], true, false) as Node3D
@@ -455,12 +506,46 @@ func _build_options() -> void:
 	var knob_area := Node3D.new()
 	knob_area.position = Vector3(0, 1.4, 0.3)
 	_tv.add_child(knob_area)
-	var knob_focus := LuchaKit.cursor_star()
-	knob_focus.scale = Vector3.ONE * 0.9
-	knob_focus.position = Vector3(0, 3.85, 0.2)
-	_tv.add_child(knob_focus)
+	# THE TV'S STICKER (Parker 11-23: "When you highlight the TV, give it the same white outline background
+	# sticker you did for the back button and the controller, instead of the star"): the kit's tv_focus
+	# behind it; the cursor star stands in until that lands.
+	var knob_focus: Node3D = LuchaKit.kit_model("tv_focus")
+	if knob_focus != null:
+		knob_focus.visible = false
+		_opt_set.add_child(knob_focus)
+		knob_focus.position = TV_AT
+	else:
+		knob_focus = LuchaKit.cursor_star()
+		knob_focus.scale = Vector3.ONE * 0.9
+		knob_focus.position = Vector3(0, 3.85, 0.2)
+		_tv.add_child(knob_focus)
 	stops.append(_stop(knob_area, Vector3(3.0, 3.2, 0.6), "knob", {"focus": knob_focus}))
-	# BACK (on the camera, but a stop of this screen too).
+	# THE CONTROLLER ON THE TABLE (Parker 11-23: "have the controls menu be a controller on the table that
+	# when you highlight floats into the air", "it can be based on the one we use in the game start game
+	# pad recommendation screen"): the boot screen's boot_pad, propped between the desk and the TV;
+	# focused, it rises and bobs with its cream ring; picked, the Controls board opens.
+	_pad = LuchaKit.kit_model("boot_pad")
+	if _pad != null:
+		_opt_set.add_child(_pad)
+		_pad.position = PAD_AT
+		_pad.scale = Vector3.ONE * PAD_SCALE
+		_pad.rotation.x = deg_to_rad(PAD_LEAN_DEG)
+		var ring := LuchaKit.kit_model("controller_focus")
+		if ring != null:
+			ring.position = PAD_AT
+			ring.scale = Vector3.ONE * PAD_SCALE
+			ring.rotation.x = deg_to_rad(PAD_LEAN_DEG)
+			ring.visible = false
+			_opt_set.add_child(ring)
+		_pad_ring = ring
+		# CONTROLS over it while it floats (Parker 11-23: "when this is highlighted, have the word Controls
+		# show up above it").
+		_pad_word = LuchaKit.poster_text("CONTROLS", 0.36, LuchaKit.GOLD, LuchaKit.INK, 0.05)
+		_pad_word.visible = false
+		_opt_set.add_child(_pad_word)
+		stops.append(_stop(_pad, Vector3(1.6, 1.1, 0.5), "controls", {"focus": ring}))
+	# DEFAULTS and BACK (on the camera, but stops of this screen too).
+	stops.append(_stop(defaults_b.node, Vector3(1.3, 0.5, 0.3), "defaults", {"focus": defaults_b.focus, "text": defaults_b.text}))
 	stops.append(_stop(back_b.node, Vector3(1.3, 0.5, 0.3), "back", {"focus": back_b.focus, "text": back_b.text}))
 	_opt_set.set_meta("stops", stops)
 	_opt_hud.set_meta("stops", [])
@@ -468,44 +553,58 @@ func _build_options() -> void:
 
 ## Where the set lands: on the ring canvas in front of the barrel from the title; from
 ## pause (the camera may be up the tower) just below the middle of the view.
-func _set_home(from: String) -> Vector3:
-	var x := cam.global_position.x
-	if from == "pause":
-		var d := maxf(1.0, cam.global_position.z - SET_Z)
-		return Vector3(x, cam.global_position.y - 0.19 * d, SET_Z)
-	return Vector3(x, 0.0, SET_Z)
 
 
-## From pause the follow camera may be close: the set shrinks to take the same share
-## of the view as it does from the title (SET_VIEW_DIST away).
-func _set_scale(from: String) -> float:
-	if from != "pause":
-		return 1.0
-	return clampf((cam.global_position.z - SET_Z) / SET_VIEW_DIST, 0.25, 1.5)
+## Where the set hangs: the banner's frame, a hair behind it (so the belts draw over it).
+func _place_set() -> void:
+	var d := LuchaUI.PAUSE_DIST + 0.08  # (deep enough that a falling piece passes behind the banner and the belts)
+	var k := _opt_frame_scale * d / LuchaUI.PAUSE_DIST
+	_opt_set.position = Vector3(0, SET_FRAME_Y * k, -d)
+	_opt_set.rotation = Vector3.ZERO
+	_opt_set.scale = Vector3.ONE * k * SET_FRAME_SCALE
 
 
 func _open_options(from: String) -> void:
 	_refresh_faders()
 	_refresh_knob(main.window_mode(), false)
 	_opt_hud.visible = true
-	var home := _set_home(from)
 	if _set_tween != null and _set_tween.is_valid():
 		_set_tween.kill()
+	_place_set()
 	_opt_set.visible = true
-	_opt_set.global_position = home
-	_opt_set.scale = Vector3.ONE * _set_scale(from)
-	# Out of the sky, one then the other, a thump and a bounce.
+	# THE LANDING: the table falls in first, then the desk, the TV and the controller onto it; each landing
+	# squashes the piece 6% and hops the table.
 	_set_tween = create_tween().set_parallel(true)
+	_landing = true
 	var k := 0
-	for piece: Node3D in [_desk, _tv]:
+	var pieces: Array = []
+	if _table != null:
+		pieces.append(_table)
+	pieces.append_array([_desk, _tv])
+	if _pad != null:
+		pieces.append(_pad)
+		_pad_lift = 0.0
+		_pad.rotation = Vector3(deg_to_rad(PAD_LEAN_DEG), 0, 0)
+		if _pad_ring != null:
+			_pad_ring.visible = false
+		if _pad_word != null:
+			_pad_word.visible = false
+	for piece: Node3D in pieces:
 		# Its true spot, not where it is: reopened mid fly-out it landed in mid-air.
-		var land := Vector3(-2.35 if piece == _desk else 2.45, 0, 0)
+		var land: Vector3 = Vector3.ZERO if piece == _table else (DESK_AT if piece == _desk else (TV_AT if piece == _tv else PAD_AT))
+		var delay := DROP_GAP * k
 		piece.position = land + Vector3(0, DROP_FROM, 0)
-		piece.rotation.z = (0.4 if k == 0 else -0.4)
-		_set_tween.tween_property(piece, "position", land, 0.75).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT).set_delay(0.12 * k)
-		_set_tween.tween_property(piece, "rotation:z", 0.0, 0.75).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT).set_delay(0.12 * k)
+		var size := PAD_SCALE if piece == _pad else 1.0
+		piece.scale = Vector3.ONE * size
+		_set_tween.tween_property(piece, "position", land, DROP_S).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN).set_delay(delay)
+		_set_tween.tween_property(piece, "scale", Vector3(1.03, 0.94, 1.0) * size, 0.06).set_delay(delay + DROP_S)
+		_set_tween.tween_property(piece, "scale", Vector3.ONE * size, 0.06).set_delay(delay + DROP_S + 0.06)
+		if piece != _table:
+			_set_tween.tween_callback(_landed).set_delay(delay + DROP_S)
+		else:
+			_set_tween.tween_callback(func() -> void: Sound.play("thud", -6.0)).set_delay(delay + DROP_S)
 		k += 1
-	_set_tween.tween_callback(func() -> void: Sound.play("thud", -6.0)).set_delay(0.45)
+	_set_tween.tween_callback(func() -> void: _landing = false).set_delay(DROP_GAP * k + DROP_S + 0.12)
 	# The barrel (or the cactus, the donkey) sinks into the canvas, from the title only:
 	# in a match the tower may stand on it.
 	_base_sunk = false
@@ -515,6 +614,19 @@ func _open_options(from: String) -> void:
 		create_tween().tween_property(base, "position:y", -4.0, 0.5).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 
+## A prop hit the table: a thud, the table hops, the mic nods.
+func _landed() -> void:
+	Sound.play("thud", -8.0)
+	if _table != null:
+		var tw := create_tween()
+		tw.tween_property(_table, "position:y", -0.06, 0.06)
+		tw.tween_property(_table, "position:y", 0.0, 0.08)
+	if _mic != null:
+		var tm := create_tween()
+		tm.tween_property(_mic, "rotation:z", deg_to_rad(5.0), 0.06)
+		tm.tween_property(_mic, "rotation:z", 0.0, 0.18).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
 func _close_options() -> void:
 	_opt_hud.visible = false
 	if _set_tween != null and _set_tween.is_valid():
@@ -522,15 +634,26 @@ func _close_options() -> void:
 	_drag = -1
 	# Back up into the sky, then gone; the barrel rises again.
 	_set_tween = create_tween().set_parallel(true)
+	_landing = true  # (the controller's float leaves it to the tween)
 	var k := 0
-	for piece: Node3D in [_desk, _tv]:
-		var home: Vector3 = Vector3(-2.35 if piece == _desk else 2.45, 0, 0)
-		_set_tween.tween_property(piece, "position", home + Vector3(0, DROP_FROM + 4.0, 0), 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN).set_delay(0.06 * k)
+	var pieces: Array = [_desk, _tv]
+	if _pad != null:
+		pieces.append(_pad)
+	if _table != null:
+		pieces.append(_table)  # (the table goes last, the way it came in first)
+	for piece: Node3D in pieces:
+		var home: Vector3 = Vector3.ZERO if piece == _table else (DESK_AT if piece == _desk else (TV_AT if piece == _tv else PAD_AT))
+		_set_tween.tween_property(piece, "position", home + Vector3(0, DROP_FROM + 4.0, 0), 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN).set_delay(0.05 * k)
 		k += 1
 	_set_tween.chain().tween_callback(func() -> void:
 		_opt_set.visible = false
-		_desk.position = Vector3(-2.35, 0, 0)
-		_tv.position = Vector3(2.45, 0, 0))
+		_desk.position = DESK_AT
+		_tv.position = TV_AT
+		if _pad != null:
+			_pad.position = PAD_AT
+		if _table != null:
+			_table.position = Vector3.ZERO
+		_landing = false)
 	if _base_sunk and main.game != null and main.game.stage != null and is_instance_valid(main.game.stage.base_root):
 		create_tween().tween_property(main.game.stage.base_root, "position:y", 0.0, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(0.25)
 	_base_sunk = false
@@ -677,6 +800,16 @@ func _activate(i: int) -> void:
 				Sound.play("lock", -6.0)
 		"back":
 			main._back()
+		"defaults":
+			for b in BUSES.size():
+				_set_volume(b, float(DEFAULT_VOLUMES[BUSES[b]]))
+			if apply_window_mode and main.window_mode() != DEFAULT_WINDOW_MODE:
+				main.set_window_mode(DEFAULT_WINDOW_MODE)
+			_refresh_knob(DEFAULT_WINDOW_MODE)
+			Sound.play("lock", -6.0)
+		"controls":
+			main._controls_back = "options"
+			main.show_screen("controls")
 		"page":
 			_show_page(1 - _page)
 			for k in _stops.size():
@@ -782,17 +915,37 @@ func _process(_delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
 	for i in _stops.size():
 		var st: Dictionary = _stops[i]
-		if st.kind in ["reset", "back"]:
+		if st.kind in ["reset", "back", "defaults"]:
 			var n: Node3D = st.node
 			var want := 1.12 if i == _focus else 1.0
 			if n.get_parent() != null and n.get_parent().get_parent() == _opt_hud:
 				want *= 1.3
+				# Lifted a little while focused, so its sticker clears the footer banner (Parker 11-23:
+				# "make it move up slightly so the background is not clipped by the banner below it").
+				if not n.has_meta(&"base_y"):
+					n.set_meta(&"base_y", n.position.y)
+				n.position.y = lerpf(n.position.y, float(n.get_meta(&"base_y")) + (0.22 if i == _focus else 0.0), 0.2)
 			n.scale = n.scale.lerp(Vector3.ONE * want, 0.2)
 			n.rotation.z = sin(t * 5.0) * 0.03 if i == _focus else 0.0
 		elif st.kind == "knob":
 			var f: Node3D = st.focus
-			if f != null:
+			if f != null and f.get_parent() == _tv:  # (the stand-in star wiggles; the sticker holds still)
 				f.rotation.z = sin(t * 6.0) * 0.18
+		elif st.kind == "controls" and _pad != null and not _landing:
+			# Highlighted, it floats up and bobs, tilting a little; let go of, it settles back.
+			var up := i == _focus and current == "options"
+			_pad_lift = move_toward(_pad_lift, 1.0 if up else 0.0, _delta * 5.0)
+			var e := _pad_lift * _pad_lift * (3.0 - 2.0 * _pad_lift)
+			var bob := sin(t * 3.0) * 0.06 * e
+			_pad.position = PAD_AT + Vector3(0, PAD_RISE * e + bob, 0.15 * e)
+			_pad.rotation = Vector3(deg_to_rad(PAD_LEAN_DEG) * (1.0 - e) + sin(t * 2.0) * 0.06 * e, 0.0, sin(t * 1.6) * 0.08 * e)
+			if _pad_ring != null:
+				_pad_ring.position = _pad.position
+				_pad_ring.rotation = _pad.rotation
+			if _pad_word != null:
+				_pad_word.visible = e > 0.05
+				_pad_word.position = _pad.position + Vector3(0, 0.95, 0.3)
+				_pad_word.scale = Vector3.ONE * maxf(0.001, e)
 
 
 # ================================================================ pieces
@@ -846,6 +999,6 @@ func _relabel_belt(d: Dictionary, text_s: String) -> void:
 		return
 	for ch in (d.text as Node3D).get_children():
 		ch.queue_free()
-	var t := LuchaKit.fit_text(text_s, 0.8 * 1.25, 0.15 * 1.25)
+	var t := LuchaKit.fit_text(text_s, 0.9 * 1.25, 0.15 * 1.25)  # (the fight-card tag has room for 0.9: the UI creator, 11-23)
 	LuchaKit.center_digits(t)
 	(d.text as Node3D).add_child(t)

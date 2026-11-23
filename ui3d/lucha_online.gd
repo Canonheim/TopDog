@@ -22,6 +22,7 @@ const PAGE := 4  # rows per page (friends, games): they fit above REFRESH and BA
 const SIGN_SCALE := 2.05  # the kit sign (2.4 m) at board size
 const RIBBON_SCALE := 1.45
 const SIGN_W := 2.4 * SIGN_SCALE
+const CHAT_KEEP := 3  # chat lines kept: the board shows the last three
 
 var _mode_card: Node3D = null  # the Del Mar card (LuchaUI._build_mode_card)
 var ui: LuchaUI
@@ -104,6 +105,15 @@ func build() -> void:
 	Net.settings_changed.connect(_on_settings)
 	Net.chat_line.connect(_on_chat)
 	Net.lobby_list.connect(_on_lobby_list)
+	Net.session_reset.connect(_on_session_reset)
+
+
+## A left session's chat and the host's last settings don't follow us into the next one.
+func _on_session_reset() -> void:
+	chat_lines.clear()
+	_guest_shown = []
+	if _chat_board != null:
+		_fill_chat()
 
 
 func _on_settings() -> void:
@@ -467,8 +477,9 @@ func _fill_cards() -> void:
 
 
 func _on_chat(who: String, text: String) -> void:
-	chat_lines.append([who, text])
-	while chat_lines.size() > 3:
+	# (Net hands chat over escaped for rich text; these are plain 3D letters)
+	chat_lines.append([Net.unescape_chat(who).left(32), Net.unescape_chat(text).left(Net.CHAT_CAP)])
+	while chat_lines.size() > CHAT_KEEP:
 		chat_lines.pop_front()
 	if ui.current == "lobby":
 		_fill_chat()

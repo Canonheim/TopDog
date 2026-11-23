@@ -39,6 +39,7 @@ var main: Node
 var _plate: Node3D
 var _name_node: Node3D
 var _name_shown := ""
+var _name_raw := ""  # the last name set_name_text was given, before to_upper
 var _face_w := 6.2
 var _face_h := 0.66
 var _gems: Node3D  # the kit's nameplate_lockin: red, lime when you can lock in
@@ -53,6 +54,12 @@ const TAB_X := -0.78  # the toaster tab in plate space (the UI creator's numbers
 const TAB_DOWN_Y := 0.05  # in the pocket, below the lip
 const TAB_UP_Y := 0.30  # the face clear, its foot still in the slot
 var _lock_text: Node3D
+## The plate's bottom-front edge (_bottom_front), measured once per plate: inside the plate
+## only the toaster tab ever moves (its y and its showing), so those are the cache's key.
+var _bf := Vector2.ZERO
+var _bf_valid := false
+var _bf_tab_y := 0.0
+var _bf_tab_vis := false
 
 
 func _init(p_main: Node) -> void:
@@ -81,6 +88,7 @@ func _build_plate() -> void:
 		_plate.add_child(face)
 	_plate.position = PLATE_AT
 	add_child(_plate)
+	_bf_valid = false  # (a new plate: measure its edge again)
 	if face != null:
 		var box := _local_aabb(face, _plate)
 		_face_w = box.size.x * 0.92
@@ -162,6 +170,9 @@ func _set_popped(up: bool) -> void:
 
 
 func set_name_text(s: String) -> void:
+	if s == _name_raw:
+		return  # (called every frame: no to_upper copy when the name hasn't changed)
+	_name_raw = s
 	s = s.to_upper()
 	if s == _name_shown:
 		return
@@ -259,12 +270,27 @@ func _to_corners() -> void:
 	if _plate != null and main != null and main.cam != null:
 		var cam: Camera3D = main.cam
 		var inv := cam.global_transform.affine_inverse()
-		var pb := _bottom_front(_plate)
+		var pb := _plate_bottom_front()
 		var pp := inv * (_plate.global_transform * Vector3(0.0, pb.x, pb.y))
 		if pp.z < -0.01:
 			var target := inv * cam.project_position(Vector2(size.x * 0.5, size.y - 8.0), -pp.z)
 			var parent_scale := (_plate.get_parent() as Node3D).global_transform.basis.get_scale().y
 			_plate.position.y += (target.y - pp.y) / maxf(parent_scale, 0.0001)
+
+
+## _bottom_front(_plate), re-measured only when the plate is rebuilt or its toaster tab moves.
+func _plate_bottom_front() -> Vector2:
+	var tab_y := 0.0
+	var tab_vis := false
+	if _lock != null and _lock.get_parent() == _plate:
+		tab_y = _lock.position.y
+		tab_vis = _lock.visible
+	if not _bf_valid or tab_y != _bf_tab_y or tab_vis != _bf_tab_vis:
+		_bf = _bottom_front(_plate)
+		_bf_valid = true
+		_bf_tab_y = tab_y
+		_bf_tab_vis = tab_vis
+	return _bf
 
 
 ## The bottom-front edge of a model's meshes, local to it (before its own

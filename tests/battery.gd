@@ -607,6 +607,10 @@ func lift_and_lock(g: Game, pid: int, above := 0.4, airborne := false, request_l
 		p[k] += offset.x
 		p[k + 1] += offset.y
 	c.apply_pose(p)
+	# Let its new place reach the host first: a lock-in pose far from the climber's last streamed
+	# pose is refused as forged (Game.POSE_STREAM_SLACK, the code review 11-23).
+	if not g.is_host():
+		await frames(12)
 	(g.bot_drivers[pid] as Drivers.ScriptDriver).lock = request_lock
 	if request_lock:
 		await frames(3)
@@ -858,7 +862,7 @@ func _run_net() -> void:
 		bell_audio.clear()
 		B._rpc_bell.rpc(b1.climber_id, b1.bodies["hand_r"].global_position, clip)
 		await frames(4)
-		t("net: bell clip reaches all peers without pitch or distance changes: " + clip, bell_audio.size() == 3 and bell_audio.all(func(row): return row[0] == clip and row[1] == 1.0 and row[2] == AudioStreamPlayer3D.ATTENUATION_DISABLED))
+		t("net: bell clip reaches all peers without pitch or distance changes: " + clip, bell_audio.size() == 3 and bell_audio.all(func(row): return row[0] == clip and row[1] == 1.0 and row[2] == AudioStreamPlayer3D.ATTENUATION_DISABLED), bell_audio)
 	bell_audio.clear()
 	A.chair.bell_struck.emit(Vector3(0, 1.8, 0))
 	await frames(4)
@@ -1010,7 +1014,8 @@ func _run_net() -> void:
 	b1.attach(0, b0.bodies["hand_r"])
 	await seconds(0.12)
 	t("net: an owner receives the remote surface contact", a0.remote_grabbed >= 1 and b1.limbs[0].grab_climber == b0, a0.remote_grabbed)
-	t("net: a load arrives for the touched body piece", a0.remote_pulls.values().any(func(v): return v.piece == "hand_r"), a0.remote_pulls)
+	# (No load arrives any more: grips on moving climbers transfer no force since Dan's rework, and the
+	# pull pass that never filled remote_pulls was removed in the code review, 11-23.)
 	b1.release_all()
 	for l in b1.limbs:
 		l.regrip = 1.2
@@ -2706,7 +2711,7 @@ func _run_lockline() -> void:
 	var d1 := g.bot_drivers[1] as Drivers.ScriptDriver
 	var r0 := _stand_on_base(c0, st, -0.3)
 	var r1 := _stand_on_base(c1, st, 0.3)
-	g.judge_by_view = false  # (1-3 test the press and the glide on the plain line; 4-5 the view)
+	g.judge_by_view = false  # (no longer read: the line is never judged by a camera)
 	await frames(2)
 	r0 = g.measure(c0)
 	r1 = g.measure(c1)
@@ -2731,8 +2736,9 @@ func _run_lockline() -> void:
 	_set_line(g, r0 - 0.4, r0 - 0.4)
 	await frames(3)
 	t("lockline: a press just before crossing locks once you're over (no second press)", c0.state == Climber.State.FROZEN and not notes.has("Get above the line to lock in!"), [c0.state, notes])
-	# 3. Del Mar's rope gliding out after a lock: judged by the rope as drawn.
-	_set_line(g, r1 + 0.5, r1 + 0.5)
+	# 3. Del Mar's rope gliding out after a lock: judged by the rope as drawn. (Short by more than the
+	# rope's sag, which is part of the line now that no camera is: Parker 11-23.)
+	_set_line(g, r1 + 1.2, r1 + 1.2)
 	d1.lock = true
 	await frames(3)
 	t("lockline: Del Mar: short of the drawn rope, refused", c1.state == Climber.State.LIVE)
@@ -2741,38 +2747,41 @@ func _run_lockline() -> void:
 	d1.lock = true
 	await frames(3)
 	t("lockline: Del Mar: past the gliding rope as drawn (the line already further out), the lock is taken", c1.state == Climber.State.FROZEN, [c1.state, g.line, g._shown_line, r1])
-	# 4. Del Mar: the rope as drawn, seen from the camera, IS the line.
-	g.judge_by_view = true
+	# 4. Del Mar: the rope where it hangs (its sag), the same whatever the camera (Parker 11-23:
+	# "the line should not be camera dependant").
 	var worst := 0.0
-	var shifted := 0.0
-	for view in [Vector3(108.0, 3.0, 14.0), Vector3(99.0, 6.5, 9.0), Vector3(118.0, -0.5, 20.0)]:
-		g.view_from = view
-		var c: float = g.lock_line()
-		var ends: Array = st.rope_ends(c)
-		var a: Vector3 = ends[0]
-		var b: Vector3 = ends[1]
-		for sv in [0.2, 0.5, 0.8]:
-			var pt: Vector3 = a + (b - a) * sv
-			pt.y -= Stage.ROPE_SAG * (b - a).length() * 4.0 * sv * (1.0 - sv)
-			var hit: Vector3 = view + (pt - view) * (view.z / (view.z - pt.z))  # where its sight line meets z = 0
-			worst = maxf(worst, absf(g.lock_gap([Vector2(hit.x, hit.y)]) - minf(0.0,hit.x+hit.y-st.first_line)))
-			shifted = maxf(shifted, absf(hit.x + hit.y - c))
-	t("lockline: Del Mar: projected rope respects the fixed launch boundary", worst < 0.005, "worst %.5f, the view moves it up to %.2f" % [worst, shifted])
+	var by_view := 0.0
+	var c4: float = g.lock_line()
+	var ends: Array = st.rope_ends(c4)
+	var a: Vector3 = ends[0]
+	var b: Vector3 = ends[1]
+	for sv in [0.2, 0.5, 0.8]:
+		var pt: Vector3 = a + (b - a) * sv
+		pt.y -= Stage.ROPE_SAG * (b - a).length() * 4.0 * sv * (1.0 - sv)
+		worst = maxf(worst, absf(g.lock_gap([Vector2(pt.x, pt.y)]) - minf(0.0, pt.x + pt.y - st.first_line)))
+		var gap0: float = g.lock_gap([Vector2(pt.x, pt.y)])
+		for view in [Vector3(108.0, 3.0, 14.0), Vector3(99.0, 6.5, 9.0), Vector3(118.0, -0.5, 20.0)]:
+			g.view_from = view  # (no longer read)
+			by_view = maxf(by_view, absf(g.lock_gap([Vector2(pt.x, pt.y)]) - gap0))
+	t("lockline: Del Mar: a hand on the rope where it hangs is on the line (the launch boundary kept)", worst < 0.005, "worst %.5f" % worst)
+	t("lockline: Del Mar: no camera moves the line", by_view == 0.0, by_view)
 	var ends0: Array = st.rope_ends(100.0)
 	t("lockline: Del Mar: the rope, mast and buoy stay where they were (eyes behind the plane, the sag back)", Stage.ROPE_SAG > 0.0 and (ends0[1] as Vector3).is_equal_approx(Vector3(Stage.MAST_X, 100.0 - Stage.MAST_X, Stage.MAST_EYE_Z)) and is_equal_approx((ends0[0] as Vector3).z, Stage.BUOY_Z) and not ("view_from" in st))
-	# 5. The plaza: a hand where the flag string shows on screen is exactly on the line.
-	g.view_from = Vector3(1.0, 3.5, 12.0)
-	g.shown_bar_y = g.line - 0.3  # (still gliding up to it)
-	g.shown_bar_z = -0.45
+	# 5. The plaza: the line is the flag string where it hangs, sag and all; no camera, no glide.
 	g.shown_bar_sag = LuchaUI.LINE_SAG
 	var pworst := 0.0
+	var pview := 0.0
 	for sx in [-6.0, 0.0, 3.0]:
 		var f: float = (sx + LuchaUI.LINE_HALF_W) / (2.0 * LuchaUI.LINE_HALF_W)
-		var sp := Vector3(sx, g.shown_bar_y - LuchaUI.LINE_SAG * 4.0 * f * (1.0 - f), -0.45)
-		var e: Vector3 = g.view_from
-		var hit: Vector3 = e + (sp - e) * (e.z / (e.z - sp.z))
-		pworst = maxf(pworst, absf(hit.y - g._seen_bar_y(hit.x)))
-	t("lockline: the plaza: where the gliding, sagging flag string shows is the line", pworst < 0.002, "worst %.5f" % pworst)
+		var on_string: float = g.lock_line() - LuchaUI.LINE_SAG * 4.0 * f * (1.0 - f)
+		pworst = maxf(pworst, absf(g.bar_y(sx) - on_string))  # (bar_y: the plaza's line, read directly)
+		var gap0: float = g.bar_y(sx)
+		for view in [Vector3(1.0, 3.5, 12.0), Vector3(-4.0, 9.0, 6.0)]:
+			g.view_from = view
+			g.shown_bar_y = g.line - 0.3
+			pview = maxf(pview, absf(g.bar_y(sx) - gap0))
+	t("lockline: the plaza: a hand on the flag string where it hangs is on the line", pworst < 0.002, "worst %.5f" % pworst)
+	t("lockline: the plaza: no camera (or glide) moves the line", pview == 0.0, pview)
 	g.queue_free()
 	await frames(2)
 

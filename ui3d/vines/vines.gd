@@ -39,11 +39,25 @@ static func prepare_part(skin: MeshInstance3D,key: String) -> bool:
 	for variant in VARIANTS:
 		if not prepare_variant(skin,key,variant): return false
 	return true
+## The preparer clears this while its loads in flight are at their cap; live
+## callers keep it true. drain() stops new requests for good (quit).
+static var request_allowed := true
+static var draining := false
+static func may_request() -> bool:
+	return request_allowed and not draining
+## Quit: stop new requests and block until every request in flight is collected.
+static func drain() -> void:
+	draining = true
+	for path in pending.keys():
+		if ResourceLoader.load_threaded_get_status(path)!=ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
+			ResourceLoader.load_threaded_get(path)
+	pending.clear()
 static func prepare_variant(skin: MeshInstance3D,key: String,variant: int) -> bool:
 	var begin := Time.get_ticks_usec()
 	if material==null:
 		var shader_path := "res://ui3d/vines/vines.gdshader"
 		if not pending.has(shader_path):
+			if not may_request() and not authoring: return false
 			ResourceLoader.load_threaded_request(shader_path,"Shader");pending[shader_path]=true
 		if ResourceLoader.load_threaded_get_status(shader_path)!=ResourceLoader.THREAD_LOAD_LOADED and not authoring: return false
 		material=CelPass.one().duplicate()
@@ -58,7 +72,9 @@ static func prepare_variant(skin: MeshInstance3D,key: String,variant: int) -> bo
 				points.append(Vector3(0,float(i),0));growth.append(float(i)/10)
 			tube(surface,points,1.0,growth,1.0,8,true);connector=surface.commit();ResourceSaver.save(connector,path)
 		else:
-			if not pending.has(path):ResourceLoader.load_threaded_request(path,"ArrayMesh");pending[path]=true
+			if not pending.has(path):
+				if not may_request(): return false
+				ResourceLoader.load_threaded_request(path,"ArrayMesh");pending[path]=true
 			if ResourceLoader.load_threaded_get_status(path)!=ResourceLoader.THREAD_LOAD_LOADED:return false
 			connector=ResourceLoader.load_threaded_get(path);pending.erase(path)
 	var source_mesh: Mesh=skin.get_meta("dress_src",skin.mesh) if skin!=null else null
@@ -71,6 +87,7 @@ static func prepare_variant(skin: MeshInstance3D,key: String,variant: int) -> bo
 		ResourceSaver.save(cache[cache_key],path)
 	elif ResourceLoader.exists(path):
 		if not pending.has(path):
+			if not may_request(): return false
 			ResourceLoader.load_threaded_request(path,"ArrayMesh")
 			pending[path]=true
 		if ResourceLoader.load_threaded_get_status(path)==ResourceLoader.THREAD_LOAD_LOADED:
