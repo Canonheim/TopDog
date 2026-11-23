@@ -1,0 +1,32 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://ui3d/crystal_growth/film.gdshader" id="1_t2sor"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas.png" id="2_q3tk1"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas_surface.png" id="3_5alqp"]
+
+[resource]
+resource_name = "ONE"
+render_priority = 0
+shader = ExtResource("1_t2sor")
+shader_parameter/spectrum = PackedVector2Array(0.07055664, 0.52368164, 0.11743164, 0.58618164, 0.67993164, 0.55493164, 0.72680664, 0.58618164, 0.38305664, 0.53930664, 0.16430664, 0.58618164, 0.67993164, 0.57055664)
+shader_parameter/cool_body = Vector2(0.53930664, 0.52368164)
+shader_parameter/stone_dark = Vector2(0, 0)
+shader_parameter/stone_base = Vector2(0, 0)
+shader_parameter/stone_light = Vector2(0.94555664, 0.55493164)
+shader_parameter/moss_dark = Vector2(0, 0)
+shader_parameter/moss_green = Vector2(0, 0)
+shader_parameter/emission = Color(0, 0, 0, 1)
+shader_parameter/emission_energy = 1.0
+shader_parameter/emission_strength_max = 4.0
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/base_texture = ExtResource("2_q3tk1")
+shader_parameter/specular = Color(0, 0, 0, 0.5)
+shader_parameter/fresnel = Color(0, 0, 0, 0)
+shader_parameter/use_vertex_color = false
+shader_parameter/surface_texture = ExtResource("3_5alqp")
+shader_parameter/shine_satin_lighten = 0.5
+shader_parameter/shine_satin_breadth = 0.62
+shader_parameter/shine_polished_breadth = 0.78
+shader_parameter/shine_polished_rim = 0.65
+shader_parameter/uv_scale = Vector2(1, 1)
+shader_parameter/uv_offset = Vector2(0, 0)

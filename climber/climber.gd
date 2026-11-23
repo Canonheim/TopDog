@@ -100,6 +100,7 @@ var puppet_on_support := false
 var remote_grabbed := 0  # grabs on me reported from other machines
 ## Online: forces other machines' climbers put on my pieces, piece -> Vector2 (N).
 var remote_pulls := {}
+var remote_grip_targets := {}  # Logical outgoing edges from remote grip notifications.
 var joints := {}  # joint name -> Dictionary
 var limbs: Array = []  # per limb: Dictionary (see _build_limbs)
 var total_mass := 0.0
@@ -486,6 +487,7 @@ func _build_limbs() -> void:
 			"held": false,
 			"grab": RID(),  # pin joint RID while stuck
 			"grab_other": null,  # the body stuck to
+			"live_anchor": null,
 			"grab_climber": null,  # its climber, if it is one
 			"grab_piece": "",
 			"end_offset": Vector3.ZERO, "contact_offset": Vector3.ZERO, "last_anchor": Vector3.ZERO,
@@ -729,12 +731,6 @@ func _physics_process(delta: float) -> void:
 		_tick_sink(delta)
 		return
 	_impact_guard = maxf(0, _impact_guard - delta)
-	for load_info: Dictionary in remote_pulls.values():
-		var piece: RigidBody3D = bodies.get(load_info.piece)
-		if piece != null:
-			var force: Vector3 = load_info.force
-			piece.apply_force(force, piece.global_basis * (load_info.offset as Vector3))
-			_incoming_pull = maxf(_incoming_pull, force.length() * (1.0 if load_info.get("directly_supported", false) else 0.2))
 	_forget_dead_holds()
 	_tick_slip(delta)
 	if knockout_left > 0:
@@ -759,18 +755,8 @@ func _physics_process(delta: float) -> void:
 			body.gravity_scale = gravity
 		_gravity_scale = gravity
 	_tick_joints(attached, delta)
-	_tick_push_contacts(delta)
-	# Opposed pulls have to persist through several physics ticks to peel a grip.
-	var load_ratio := _incoming_pull / maxf(1, total_mass * 9.8 * 2.0)
-	_pull_load = maxf(0, _pull_load + (load_ratio - 0.9) * delta)
-	_incoming_pull = 0
-	if _pull_load >= 0.15:
-		_pull_load = 0
-		for i in limbs.size():
-			var grip: Dictionary = limbs[i]
-			if grip.grab.is_valid() and (grip.grab_climber == null or grip.grab_climber.state == State.FROZEN):
-				release(i)
-				grip.regrip = 0.65
+	_incoming_pull = 0.0
+	_pull_load = 0.0
 
 
 ## IN THE DRINK (Parker 11-11): limp from the moment a piece goes in, every grip let go
@@ -1089,7 +1075,7 @@ func grounded_locally() -> bool:
 		var c: Climber = queue.pop_back()
 		if c.touches_solid():
 			return true
-		var next: Array = c.held_by.duplicate()
+		var next: Array = []  # Support follows outgoing grips only; being held grants no leverage.
 		for l in c.limbs:
 			if l.grab_other != null and l.grab_climber != null:
 				next.append(l.grab_climber)
@@ -1201,6 +1187,8 @@ func _forget_dead_holds() -> void:
 			if (l.grab as RID).is_valid():
 				PhysicsServer3D.free_rid(l.grab)
 			l.grab = RID()
+			if is_instance_valid(l.live_anchor): l.live_anchor.queue_free()
+			l.live_anchor = null
 			l.grab_other = null
 			l.grab_climber = null
 			l.grab_piece = ""
@@ -1228,7 +1216,7 @@ func _tick_limb(i: int, delta: float) -> void:
 	l.held = held
 	l.regrip = maxf(0.0, l.regrip - delta)
 	var was_stuck: bool = l.grab_other != null
-	if l.grab_climber != null and not l.grab.is_valid():
+	if l.grab_climber != null and is_instance_valid(l.live_anchor):
 		_tick_live_contact(i, delta)
 	if not held and l.grab_other == null and l.regrip <= 0.0:
 		_try_grab(i)
@@ -1279,10 +1267,9 @@ func _try_grab(i: int) -> void:
 		attach(i, best)
 
 
-## A live contact has no angular weld. A damped spring transfers opposite forces
-## at the two original contact points. A short overload allowance lets a catch
-## or toss transfer momentum before the contact peels.
-func _tick_live_contact(i: int, dt: float) -> void:
+## A live player is moving terrain: only the holding climber loads this
+## collisionless kinematic anchor, never the target player's physics bodies.
+func _tick_live_contact(i: int, _dt: float) -> void:
 	var l: Dictionary = limbs[i]
 	var other: RigidBody3D = l.grab_other
 	var rival: Climber = l.grab_climber
@@ -1290,86 +1277,33 @@ func _tick_live_contact(i: int, dt: float) -> void:
 		release(i)
 		attach(i, other)
 		return
-	var end: RigidBody3D = bodies[l.def.end]
-	var point := other.to_global(l.contact_offset)
-	var lever := point - other.global_position
-	var speed := other.linear_velocity + other.angular_velocity.cross(lever)
-	if rival.state == State.PUPPET:
-		speed = (point - (l.last_anchor as Vector3)) / dt
-	l.last_anchor = point
-	var hand_lever := end.global_basis * (l.end_offset as Vector3)
-	var hand_speed := end.linear_velocity + end.angular_velocity.cross(hand_lever)
-	var gap := point - (end.global_position + hand_lever)
-	var weight := total_mass * 9.8
-	var stiffness := weight * 24.0
-	var damping := 1.6 * sqrt(stiffness * end.mass)
-	var force := (gap * stiffness + (speed - hand_speed) * damping) / (1.0 + damping * dt / end.mass)
-	var push: float = l.push_load if live_time < l.push_until else 0.0
-	var ratio := force.length() / (weight * 2.0) + push * Feel.get_k("grapple_push_load")
-	l.strain_time = maxf(0, float(l.strain_time) + dt * (ratio - 1.45))
-	if l.strain_time > 0.055 or gap.length() > 0.60:
-		l.peeled_from = rival.get_instance_id()
-		release(i)
-		l.regrip = 0.22
-		return
-	force = force.limit_length(weight * 3.0)
-	end.apply_force(force, hand_lever)
-	l.contact_force = -force
-	if rival.state == State.LIVE:
-		other.apply_force(-force, lever)
-		rival._incoming_pull = maxf(rival._incoming_pull, force.length() * (1.0 if touches_solid() else 0.2))
+	l.live_anchor.global_transform = other.global_transform
+	sync_server(l.live_anchor)
+	l.contact_force = Vector3.ZERO
 
+# Legacy entry points remain harmless for existing callers; pushing never peels grips.
 func _tick_push_contacts(_dt: float) -> void:
-	var loads := {}
-	if _active_limb >= 0 and driver != null and is_attached():
-		var aim = driver.aim(self, _active_limb)
-		if aim != null:
-			var active: Dictionary = limbs[_active_limb]
-			var end: RigidBody3D = bodies[active.def.end]
-			var command: Vector2 = ((_aim_target(_active_limb, aim) - pos2(end)) / (active.l1 + active.l2)).limit_length(1.0)
-			for name in [active.def.up, active.def.lo, active.def.end]:
-				var piece: RigidBody3D = bodies[name]
-				var physics := PhysicsServer3D.body_get_direct_state(piece.get_rid())
-				if physics == null:
-					continue
-				for j in physics.get_contact_count():
-					var other = physics.get_contact_collider_object(j)
-					var source := climber_of(other)
-					if source == null or source == self or source.removed or source.state == State.FROZEN:
-						continue
-					# Already in world space (Jolt, Godot 4): turning it by the piece's own
-					# rotation misread every push from a turned hand (found 11-18, when the
-					# new climber's test pose turned the defending hand 128 degrees).
-					var normal := physics.get_contact_local_normal(j)
-					var pressure := maxf(0, -Vector3(command.x, command.y, 0).dot(normal))
-					for i in source.limbs.size():
-						var key := Vector2i(source.climber_id, i)
-						var connected: bool = source.limbs[i].grab_climber == self if source.state == State.LIVE else remote_pulls.has(key)
-						if connected and pressure > 0.03:
-							loads[key] = {"source": source, "pressure": maxf(pressure, loads.get(key, {}).get("pressure", 0.0))}
-					# Pushing the player we hold also loads our own connections.
-					for i in limbs.size():
-						if limbs[i].grab_climber == source and pressure > 0.03:
-							var key := Vector2i(climber_id, i)
-							loads[key] = {"source": self, "target": source, "pressure": maxf(pressure, loads.get(key, {}).get("pressure", 0.0))}
-	for key in loads:
-		var source: Climber = loads[key].source
-		var pressure: float = loads[key].pressure
-		if source.state == State.PUPPET:
-			push_load_requested.emit(source.climber_id, key.y, pressure)
-		else:
-			source.set_push_load(key.y, loads[key].get("target", self), pressure)
+	pass
 
-## A pressure sample adds to spring strain, never independently releases a grip.
-## Expiration prevents a dropped network packet from leaving permanent pressure.
-func set_push_load(i: int, target: Climber, pressure: float) -> void:
-	if i < 0 or i >= limbs.size() or limbs[i].grab_climber != target or not is_finite(pressure):
-		return
-	var l: Dictionary = limbs[i]
-	l.push_load = clampf(pressure, 0.0, 1.0)
-	l.push_until = live_time + 0.10
+func set_push_load(_i: int, _target: Climber, _pressure: float) -> void:
+	pass
 
 
+## Moving-terrain anchors must not form feedback loops that hold each other aloft.
+func _grips_reach(wanted: Climber) -> bool:
+	var pending: Array = [self]
+	var seen := {}
+	while not pending.is_empty():
+		var actor: Climber = pending.pop_back()
+		if actor == wanted: return true
+		if seen.has(actor): continue
+		seen[actor] = true
+		for remote_target in actor.remote_grip_targets.values():
+			if is_instance_valid(remote_target) and remote_target.state != State.FROZEN: pending.append(remote_target)
+		for grip in actor.limbs:
+			if is_instance_valid(grip.grab_climber) and grip.grab_climber.state != State.FROZEN:
+				pending.append(grip.grab_climber)
+	return false
 
 ## Stick limb i's end to `other` (a PhysicsBody3D) right where it is.
 func attach(i: int, other: Object) -> void:
@@ -1388,6 +1322,7 @@ func attach(i: int, other: Object) -> void:
 	var ob := other as CollisionObject3D
 	var at := end.global_position
 	var target := climber_of(other)
+	if target != null and target.state != State.FROZEN and target._grips_reach(self): return
 	# WHAT WAS EXCEPTED BEFORE THE GRAB STAYS EXCEPTED (Parker 11-21: ropes "freak out like crazy and make you
 	# fly around", "I keep colliding with them kinda, even on limbs that are not being controlled"). On Jolt,
 	# turning a joint's collisions back on (below) takes away EVERY exception between its two bodies, both
@@ -1397,21 +1332,30 @@ func attach(i: int, other: Object) -> void:
 	# (not a climber's pieces: their latches keep their own rules) get back what they had.
 	var had_end := ob in end.get_collision_exceptions()
 	var had_other := target == null and ob is PhysicsBody3D and end in (ob as PhysicsBody3D).get_collision_exceptions()
+
 	if target != null and target.state != State.FROZEN:
-		var physics := PhysicsServer3D.body_get_direct_state(end.get_rid())
-		if physics != null:
-			for j in physics.get_contact_count():
-				if physics.get_contact_collider_object(j) == other:
-					at = physics.get_contact_collider_position(j)
-					at.z = 0
-					break
-		l.end_offset = end.to_local(at)
+		var anchor := RigidBody3D.new()
+		anchor.name = "LiveGripAnchor"
+		anchor.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
+		anchor.freeze = true
+		anchor.collision_layer = 0
+		anchor.collision_mask = 0
+		end.get_parent().add_child(anchor)
+		anchor.global_transform = ob.global_transform
+		sync_server(anchor)
+		sync_server(end)
+		l.live_anchor = anchor
 		l.contact_offset = ob.to_local(at)
-		l.last_anchor = at
+		l.end_offset = Vector3.ZERO
 		l.contact_force = Vector3.ZERO
-		l.strain_time = 0.0
-		l.push_load = 0.0
-		l.push_until = 0.0
+		var rid := PhysicsServer3D.joint_create()
+		PhysicsServer3D.joint_make_hinge(rid, end.get_rid(), Transform3D.IDENTITY, anchor.get_rid(), ob.global_transform.affine_inverse()*end.global_transform)
+		PhysicsServer3D.hinge_joint_set_flag(rid, PhysicsServer3D.HINGE_JOINT_FLAG_USE_LIMIT, true)
+		PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_LIMIT_LOWER, 0.0)
+		PhysicsServer3D.hinge_joint_set_param(rid, PhysicsServer3D.HINGE_JOINT_LIMIT_UPPER, 0.0)
+		l.grab = rid
+		l.grab_rel0 = angle_of(end)-angle_of(ob)
+		l.slipping = false
 	else:
 		# A WELD, as the reference game's grabs are: a hinge on z locked at its current
 		# angle, so a stuck hand or foot can't turn on what it holds (a free pin let the
@@ -1524,6 +1468,8 @@ func _tick_slip(dt: float) -> void:
 
 func release(i: int) -> void:
 	var l: Dictionary = limbs[i]
+	if is_instance_valid(l.live_anchor): l.live_anchor.queue_free()
+	l.live_anchor = null
 	if l.grab_other == null:
 		return
 	if l.grab.is_valid():
@@ -2359,12 +2305,5 @@ func remove() -> void:
 	queue_free()
 
 ## Incoming live grips on any segment of this limb, local or remotely simulated.
-func _limb_has_incoming_grip(limb: Dictionary) -> bool:
-	var names: Array = [limb.def.up, limb.def.lo, limb.def.end]
-	for holder in held_by:
-		if not is_instance_valid(holder): continue
-		for grip in holder.limbs:
-			if grip.grab_climber == self and grip.grab_piece in names: return true
-	for sample in remote_pulls.values():
-		if sample.get("piece", "") in names: return true
-	return false
+func _limb_has_incoming_grip(_limb: Dictionary) -> bool:
+	return false  # Incoming grips do not change the target player's limb controls.

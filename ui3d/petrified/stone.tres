@@ -1,0 +1,30 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://ui3d/petrified/stone.gdshader" id="1_2wds1"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas.png" id="2_t46ba"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas_surface.png" id="3_vkmbs"]
+
+[resource]
+resource_name = "ONE"
+render_priority = 0
+shader = ExtResource("1_2wds1")
+shader_parameter/stone_dark = Vector2(0.13305664, 0.60180664)
+shader_parameter/stone_base = Vector2(0.94555664, 0.57055664)
+shader_parameter/stone_light = Vector2(0.97680664, 0.57055664)
+shader_parameter/moss_dark = Vector2(0.27368164, 0.60180664)
+shader_parameter/moss_green = Vector2(0.13305664, 0.55493164)
+shader_parameter/emission = Color(0, 0, 0, 1)
+shader_parameter/emission_energy = 1.0
+shader_parameter/emission_strength_max = 4.0
+shader_parameter/color = Color(1, 1, 1, 1)
+shader_parameter/base_texture = ExtResource("2_t46ba")
+shader_parameter/specular = Color(0, 0, 0, 0.5)
+shader_parameter/fresnel = Color(0, 0, 0, 0)
+shader_parameter/use_vertex_color = false
+shader_parameter/surface_texture = ExtResource("3_vkmbs")
+shader_parameter/shine_satin_lighten = 0.5
+shader_parameter/shine_satin_breadth = 0.62
+shader_parameter/shine_polished_breadth = 0.78
+shader_parameter/shine_polished_rim = 0.65
+shader_parameter/uv_scale = Vector2(1, 1)
+shader_parameter/uv_offset = Vector2(0, 0)

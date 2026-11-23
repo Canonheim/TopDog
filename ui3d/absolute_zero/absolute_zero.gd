@@ -1,18 +1,28 @@
 extends Node3D
+var cancelled:=false
+func cancel_preview() -> void:
+	cancelled=true
+	hide();set_process(false)
 const Lod=preload("res://ui3d/lock_effect_lod.gd")
 const LOD_GROUP=Lod.LEGENDARY_GROUP
 var lod_clock:=0.0
 var lod_interval:=1.0/15.0
 const DURATION:=3.5
 const SHINE_DURATION:=0.25
-const MIN_ICICLES:=4
-const MAX_ICICLES:=8
+const MIN_ICICLES:=6
+const MAX_ICICLES:=10
 const MIST_GROUP=&"deep_freeze_mist_owner"
 const PUFF_COUNT:=6
-static var ice_mesh: ArrayMesh
-static var frost_material: ShaderMaterial
-static var mist_material: ShaderMaterial
-static var mist_mesh: QuadMesh
+static var ice_mesh: ArrayMesh=preload("res://ui3d/absolute_zero/ice_mesh.res")
+static var frost_material: ShaderMaterial=preload("res://ui3d/absolute_zero/frost_material.tres")
+static var mist_material: ShaderMaterial=preload("res://ui3d/absolute_zero/mist_material.tres")
+static var mist_mesh: QuadMesh=preload("res://ui3d/absolute_zero/mist_mesh.tres")
+const BODY_GEOMETRY=preload("res://ui3d/spider_body_geometry.res")
+static var extra_geometry: Dictionary={}
+static var geometry_readbacks:=0
+var setup_slice_started:=0
+var setup_max_slice_us:=0
+var setup_yields:=0
 var age:=0.0
 var skins: Array=[]
 var icicles: Array=[]
@@ -28,23 +38,26 @@ var rng:=RandomNumberGenerator.new()
 var mist_active:=false
 var settled:=false
 static func prepare() -> void:
-	if ice_mesh!=null:return
-	frost_material=CelPass.one().duplicate();frost_material.shader=preload("res://ui3d/absolute_zero/frost.gdshader")
-	mist_material=ShaderMaterial.new();mist_material.shader=preload("res://ui3d/absolute_zero/mist.gdshader")
-	mist_mesh=QuadMesh.new();mist_mesh.size=Vector2.ONE
-	var st:=SurfaceTool.new();st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var palette: Array[Vector2]=[]
-	for color in ["d7f4fa","9bcbdc","effbff","78b7cf"]:palette.append(AtlasPalette.swatch(Color(color)).uv)
-	for band in 3:
-		var y0:=-float(band)/3;var y1:=-float(band+1)/3
-		var r0: float=[.11,.083,.045][band];var r1: float=[.083,.045,.001][band]
-		for side in 7:
-			var angle:=TAU*side/7;var next:=TAU*(side+1)/7
-			var a:=Vector3(cos(angle)*r0,y0,sin(angle)*r0);var b:=Vector3(cos(next)*r0,y0,sin(next)*r0)
-			var c:=Vector3(cos(next)*r1+.012,y1,sin(next)*r1);var d:=Vector3(cos(angle)*r1+.012,y1,sin(angle)*r1)
-			var n: Vector3=(c-a).cross(b-a).normalized()
-			for p in [a,c,b,a,d,c]:st.set_normal(n);st.set_uv(palette[side%4]);st.add_vertex(p)
-	ice_mesh=st.commit()
+	# Immutable resources load with the effect script, not on the first lock-in.
+	pass
+static func body_geometry(skin: MeshInstance3D,surface: int) -> Dictionary:
+	var mesh:=skin.mesh
+	var source: String=mesh.get_meta("lock_geometry_source",mesh.resource_path)
+	var baked: Dictionary=BODY_GEOMETRY.get_meta("surfaces")
+	if surface==0 and baked.has(source):return baked[source]
+	var key: String=str(mesh.get_instance_id())+":"+str(surface)
+	if not extra_geometry.has(key):
+		geometry_readbacks+=1
+		var arr:=mesh.surface_get_arrays(surface)
+		extra_geometry[key]={"vertices":arr[Mesh.ARRAY_VERTEX],"indices":arr[Mesh.ARRAY_INDEX],"normals":arr[Mesh.ARRAY_NORMAL],"mesh":mesh}
+	return extra_geometry[key]
+func budget_due() -> bool:
+	return Time.get_ticks_usec()-setup_slice_started>=1500
+func yield_setup() -> void:
+	setup_max_slice_us=maxi(setup_max_slice_us,Time.get_ticks_usec()-setup_slice_started)
+	setup_yields+=1
+	await get_tree().process_frame
+	if is_instance_valid(self):setup_slice_started=Time.get_ticks_usec()
 func fitted_icicle(point: Vector3, length: float, faces: Array) -> ArrayMesh:
 	# Fit a wider root ring to the actual underside once, without extra render nodes.
 	var root: Array[Vector3]=[]
@@ -58,6 +71,9 @@ func fitted_icicle(point: Vector3, length: float, faces: Array) -> ArrayMesh:
 			var origin:=point+offset+Vector3.DOWN*length*.4
 			var closest:=INF;var hit:=Vector3.ZERO
 			for face in faces:
+				if budget_due():
+					await yield_setup()
+					if not is_instance_valid(self) or cancelled:return null
 				var contact=Geometry3D.ray_intersects_triangle(origin,Vector3.UP,face[0],face[1],face[2])
 				if contact!=null:
 					var distance: float=origin.distance_to(contact)
@@ -86,7 +102,10 @@ func fitted_icicle(point: Vector3, length: float, faces: Array) -> ArrayMesh:
 			for vertex in [a,c,b,a,d,c]:st.set_normal(normal);st.set_uv(palette[side%4]);st.add_vertex(vertex)
 	return st.commit()
 func setup(actor: Node) -> void:
+	setup_slice_started=Time.get_ticks_usec()
 	prepare();rng.randomize();owner_ref=weakref(actor)
+	await yield_setup()
+	if not is_instance_valid(self) or cancelled or not is_instance_valid(actor):return
 	var body_size: float=actor.body_scale if actor is Climber else 1.0
 	var candidates: Array=[];var faces: Array=[];var bottom:=INF;var top:=-INF
 	for key in Climber.Layout.ORDER:
@@ -101,9 +120,12 @@ func setup(actor: Node) -> void:
 			var surface_sites: Array=[]
 			var seen:=0
 			for surface in skin.mesh.get_surface_count():
-				var arr:=skin.mesh.surface_get_arrays(surface);var verts: PackedVector3Array=arr[Mesh.ARRAY_VERTEX];var normals: PackedVector3Array=arr[Mesh.ARRAY_NORMAL];var ids: PackedInt32Array=arr[Mesh.ARRAY_INDEX]
+				var geometry:=body_geometry(skin,surface);var verts: PackedVector3Array=geometry.vertices;var normals: PackedVector3Array=geometry.normals;var ids: PackedInt32Array=geometry.indices
 				if ids.is_empty():for i in verts.size():ids.append(i)
 				for i in range(0,ids.size(),3):
+					if budget_due():
+						await yield_setup()
+						if not is_instance_valid(self) or cancelled:return
 					var a:=skin.to_global(verts[ids[i]]);var b:=skin.to_global(verts[ids[i+1]]);var c:=skin.to_global(verts[ids[i+2]])
 					faces.append([a,b,c]);bottom=minf(bottom,minf(a.y,minf(b.y,c.y)));top=maxf(top,maxf(a.y,maxf(b.y,c.y)))
 					var n: Vector3=(normal_basis*(normals[ids[i]]+normals[ids[i+1]]+normals[ids[i+2]])).normalized()
@@ -118,8 +140,8 @@ func setup(actor: Node) -> void:
 						candidates.append({"point":center,"normal":n,"part":key})
 			skins.append({"node":skin,"original":skin.material_override})
 			mist_sites.append_array(surface_sites)
-		await get_tree().process_frame
-		if not is_instance_valid(self) or not is_instance_valid(actor):return
+		await yield_setup()
+		if not is_instance_valid(self) or cancelled or not is_instance_valid(actor):return
 	frost_bottom=bottom;frost_span=maxf(.1,top-bottom)
 	var frost_seed:=rng.randf()*20
 	for entry in skins:
@@ -129,11 +151,17 @@ func setup(actor: Node) -> void:
 		entry.node.set_instance_shader_parameter("frost_seed",frost_seed)
 		entry.node.set_instance_shader_parameter("frost_progress",0.0)
 		entry.node.set_instance_shader_parameter("frost_shine",-.2)
+	# Preview frost can start while the bounded icicle fitting continues.
+	if not actor is Climber:
+		show();tick(0);set_process(true)
 	for i in range(candidates.size()-1,0,-1):
 		var j:=rng.randi_range(0,i);var swap=candidates[i];candidates[i]=candidates[j];candidates[j]=swap
 	var selected: Array[Vector3]=[];var part_count: Dictionary={}
 	var target_count:=rng.randi_range(MIN_ICICLES,MAX_ICICLES)
 	for candidate in candidates:
+		if budget_due():
+			await yield_setup()
+			if not is_instance_valid(self) or cancelled:return
 		if part_count.get(candidate.part,0)>=2:continue
 		var point: Vector3=candidate.point+candidate.normal*.002
 		var length:=rng.randf_range(.12,.25)*body_size
@@ -141,14 +169,29 @@ func setup(actor: Node) -> void:
 		for p in selected:
 			if p.distance_to(point)<.12*body_size:crowded=true
 		if crowded:continue
-		var blocked:=false
+		# Vertical fitting rays only intersect triangles overlapping this small XZ area.
+		var nearby_faces: Array=[]
+		var radius:=length*.18+.002
 		for face in faces:
+			if budget_due():
+				await yield_setup()
+				if not is_instance_valid(self) or cancelled:return
+			var a: Vector3=face[0];var b: Vector3=face[1];var c: Vector3=face[2]
+			if maxf(a.x,maxf(b.x,c.x))<point.x-radius or minf(a.x,minf(b.x,c.x))>point.x+radius:continue
+			if maxf(a.z,maxf(b.z,c.z))<point.z-radius or minf(a.z,minf(b.z,c.z))>point.z+radius:continue
+			nearby_faces.append(face)
+		var blocked:=false
+		for face in nearby_faces:
+			if budget_due():
+				await yield_setup()
+				if not is_instance_valid(self) or cancelled:return
 			var contact=Geometry3D.ray_intersects_triangle(point+Vector3.DOWN*.006,Vector3.DOWN,face[0],face[1],face[2])
 			if contact!=null and point.distance_to(contact)<length+.02:blocked=true;break
 		if blocked:continue
 		var query:=PhysicsRayQueryParameters3D.create(point,point+Vector3.DOWN*(length+.02),1)
 		if not get_world_3d().direct_space_state.intersect_ray(query).is_empty():continue
-		var fitted:=fitted_icicle(point,length,faces)
+		var fitted: ArrayMesh=await fitted_icicle(point,length,nearby_faces)
+		if not is_instance_valid(self) or cancelled:return
 		if fitted==null:continue
 		var icicle:=MeshInstance3D.new();icicle.mesh=fitted;icicle.material_override=CelPass.one();icicle.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		icicle.scale=Vector3.ONE*.0001
@@ -156,8 +199,8 @@ func setup(actor: Node) -> void:
 		icicle.set_meta("length",length);icicle.set_meta("start",rng.randf_range(.25,.65));icicle.set_meta("normal",candidate.normal)
 		icicles.append(icicle);selected.append(point);part_count[candidate.part]=int(part_count.get(candidate.part,0))+1
 		if icicles.size()>=target_count:break
-		await get_tree().process_frame
-		if not is_instance_valid(self) or not is_instance_valid(actor):return
+		await yield_setup()
+		if not is_instance_valid(self) or cancelled or not is_instance_valid(actor):return
 	# Six reused quads per player; all players retain access, with no permanent
 	# first-four-owner exclusion. Sample surface points once, never every frame.
 	add_to_group(MIST_GROUP);mist_active=true
@@ -166,7 +209,7 @@ func setup(actor: Node) -> void:
 	for i in PUFF_COUNT:puff_sites.append({});puff_cycles.append(-1)
 	if actor is Climber:Lod.register(self,LOD_GROUP,Vector3(actor.bodies.values()[0].global_position.x,(bottom+top)*.5,actor.bodies.values()[0].global_position.z),actor)
 	lod_clock=rng.randf()*.25
-	tick(0);set_meta("ready",true)
+	tick(age);set_meta("ready",true)
 func tick(t: float) -> void:
 	age=t;var progress:=clampf(age/DURATION,0,1)
 	var sweep:=clampf((age-DURATION)/SHINE_DURATION,0,2)
@@ -233,5 +276,5 @@ static func attach_owner(owner_node: Node,animate: bool) -> Node:
 	effect.hide();owner_node.add_child(effect);effect.set_process(false);effect.start(owner_node,animate);return effect
 func start(owner_node: Node,animate: bool) -> void:
 	await setup(owner_node)
-	if not is_instance_valid(self) or not is_instance_valid(owner_node):return
-	tick(0 if animate else 5);show();set_meta("ready",true);set_process(true)
+	if not is_instance_valid(self) or cancelled or not is_instance_valid(owner_node):return
+	tick(age if animate else 5);show();set_meta("ready",true);set_process(true)

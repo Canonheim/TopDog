@@ -1,5 +1,8 @@
 extends Control
 ## Three newest loot / XP notices; the displaced oldest fades away permanently.
+const LOOT_SCENE = preload("res://kit/models/reward_card.glb")
+const XP_SCENE = preload("res://kit/models/xp_notice.glb")
+static var gem_cache := {}
 const COLORS := [Color("36dc70"),Color("36dc70"),Color("398aff"),Color("ba54ff"),Color("ff3046")]
 const RADII := [12,16,21,27,34]
 const LIFE := 5.1
@@ -30,6 +33,7 @@ const EDGE_TOP := .14  # from its top
 const BURST_STAR := "xp_burst_star"
 
 func _ready() -> void:
+	for tier in range(1,5): _rarity_gem(tier+2,COLORS[tier])
 	mouse_filter=Control.MOUSE_FILTER_IGNORE
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	process_mode=Node.PROCESS_MODE_ALWAYS
@@ -144,9 +148,13 @@ func _process(dt: float) -> void:
 			outgoing.card.queue_free()
 			outgoing.clear()
 	var factor:=_scale_factor()
+	var mounted := false
 	for i in active.size():
 		var entry: Dictionary=active[i]
-		if not entry.has("card"): _mount(entry)
+		if not entry.has("card"):
+			if mounted: continue
+			_mount(entry)
+			mounted = true
 		var node: Control=entry.card
 		node.scale=Vector2.ONE*factor
 		node.position=Vector2(36,36+i*104*factor)
@@ -284,8 +292,12 @@ func _process_3d(dt: float) -> void:
 		hw = float(lucha.get("virtual_half_w"))
 		hh = float(lucha.get("virtual_half_h"))
 	var top := hh - EDGE_TOP
+	var mounted := false
 	for entry in active:
-		if not entry.has("card"): _mount(entry)
+		if not entry.has("card"):
+			if mounted: continue
+			_mount(entry)
+			mounted = true
 		var node: Node3D = entry.card
 		var step: float = node.get_meta("step")
 		var home_x := -hw + EDGE + float(node.get_meta("left"))
@@ -315,7 +327,8 @@ func _make_card_3d(entry: Dictionary) -> Node3D:
 	var loot: bool = entry.kind == "loot"
 	var node := Node3D.new()
 	node.name = "RewardCard" if loot else "XpNotice"
-	var model := LuchaKit.kit_model("reward_card" if loot else "xp_notice")
+	var model: Node3D = (LOOT_SCENE if loot else XP_SCENE).instantiate()
+	CelPass.celify(model)
 	node.add_child(model)
 	node.scale = Vector3.ONE * CARD_SCALE
 	# Its left edge (the gem's rosette, the star's ring), top and width, at CARD_SCALE.
@@ -427,6 +440,8 @@ func _tick_puff(node: Node3D, dt: float) -> void:
 
 ## Faceted star-cut gem: every triangle uses one matte atlas swatch.
 static func _rarity_gem(points: int, colour: Color) -> ArrayMesh:
+	var key := str(points)+colour.to_html()
+	if gem_cache.has(key): return gem_cache[key]
 	var ring := PackedVector2Array()
 	for i in points * 2:
 		var angle := PI * .5 + i * TAU / (points * 2)
@@ -463,7 +478,9 @@ static func _rarity_gem(points: int, colour: Color) -> ArrayMesh:
 		_gem_triangle(st,Vector3(a.x,a.y,-.025),Vector3(b.x,b.y,-.025),v1,colour.darkened(.35))
 		_gem_triangle(st,Vector3(a.x,a.y,-.025),v1,v0,colour.darkened(.35))
 	st.set_material(CelPass.one())
-	return st.commit()
+	var mesh := st.commit()
+	gem_cache[key] = mesh
+	return mesh
 
 
 static func _gem_triangle(st: SurfaceTool, a: Vector3, b: Vector3, c: Vector3, colour: Color) -> void:

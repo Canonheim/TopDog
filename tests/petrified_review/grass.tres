@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://tests/petrified_review/grass.gdshader" id="1_kjvl7"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas.png" id="2_rcsle"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_kjvl7")
+shader_parameter/atlas = ExtResource("2_rcsle")

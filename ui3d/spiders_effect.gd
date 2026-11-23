@@ -1,4 +1,8 @@
 extends Node3D
+var cancelled:=false
+func cancel_preview() -> void:
+	cancelled=true
+	hide();set_process(false)
 const Lod=preload("res://ui3d/lock_effect_lod.gd")
 const LOD_GROUP=Lod.LEGENDARY_GROUP
 var lod_clock:=0.0
@@ -8,6 +12,7 @@ const Fit=preload("res://ui3d/vines/vines.gd")
 const DURATION=5.0
 const WEB_GROUP=&"lock_in_web_surface"
 const WEB_CLEARANCE=.008
+const PREPARED=preload("res://ui3d/spider_prepared.res")
 const BODY_GEOMETRY=preload("res://ui3d/spider_body_geometry.res")
 static var extra_body_geometry: Dictionary={}
 static var body_geometry_misses:=0
@@ -40,6 +45,15 @@ var rng:=RandomNumberGenerator.new()
 static func prepare() -> void:
 	for index in 13:prepare_unit(index)
 static func prepare_unit(index: int) -> bool:
+	if index==0:
+		web_material=PREPARED.get_meta("web_material")
+		spider_material=PREPARED.get_meta("spider_material")
+		thread_mesh=PREPARED.get_meta("thread")
+	elif spider_meshes.size()<index:
+		spider_meshes.append(PREPARED.get_meta("gaits")[index-1])
+	return true
+# Authoring-only source for the lossless prepared gait cache.
+static func build_unit(index: int) -> bool:
 	if index==0:
 		if web_material==null:
 			web_material=ShaderMaterial.new();web_material.shader=preload("res://ui3d/spider_surface.gdshader")
@@ -100,14 +114,14 @@ static func attach_owner(owner_node: Node, animate: bool, use_tower: bool, previ
 	return effect
 func start(owner_node: Node,animate: bool) -> void:
 	await setup(owner_node)
-	if not is_instance_valid(self) or not is_instance_valid(owner_node):return
+	if not is_instance_valid(self) or cancelled or not is_instance_valid(owner_node):return
 	if owner_node is Climber:
 		var center:=Vector3.ZERO
 		for body in owner_node.bodies.values():center+=body.global_position
 		center/=maxi(1,owner_node.bodies.size())
 		Lod.register(self,LOD_GROUP,center,owner_node)
 	lod_clock=rng.randf()*.25
-	age=0.0 if animate else 6.6;tick(age)
+	age=age if animate else 6.6;tick(age)
 	set_meta("ready",true);set_process(true)
 static func body_geometry(skin: MeshInstance3D) -> Dictionary:
 	var mesh:=skin.mesh
@@ -158,7 +172,7 @@ func route_surface(core: Vector3,direction: Vector3,faces: PackedVector3Array) -
 	for i in range(0,faces.size(),3):
 		if i%96==0 and budget_due():
 			await yield_setup()
-			if not is_instance_valid(self):return core
+			if not is_instance_valid(self) or cancelled:return core
 		var contact=Geometry3D.ray_intersects_triangle(core,direction,faces[i],faces[i+1],faces[i+2])
 		if contact!=null:distance=maxf(distance,core.distance_to(contact))
 	return core+direction*distance if distance>0 else core+direction*3
@@ -176,7 +190,7 @@ func setup(actor: Node) -> void:
 	for index in 13:
 		prepare_unit(index)
 		await yield_setup()
-		if not is_instance_valid(self):return
+		if not is_instance_valid(self) or cancelled:return
 	var parts: Dictionary={}
 	var local_faces: Dictionary={}
 	for key in Climber.Layout.ORDER:
@@ -199,19 +213,19 @@ func setup(actor: Node) -> void:
 		for i in range(0,ids.size(),3):
 			if budget_due():
 				await yield_setup()
-				if not is_instance_valid(self):return
+				if not is_instance_valid(self) or cancelled:return
 			faces[i]=verts[ids[i]];faces[i+1]=verts[ids[i+1]];faces[i+2]=verts[ids[i+2]]
 			var a:=to_local(skin.to_global(verts[ids[i]]));var b:=to_local(skin.to_global(verts[ids[i+1]]));var c:=to_local(skin.to_global(verts[ids[i+2]]))
 			var aa:=Vector2(a.x,a.y);var bb:=Vector2(b.x,b.y);var cc:=Vector2(c.x,c.y)
 			triangles.append([aa,bb,cc,Rect2(aa,Vector2.ZERO).expand(bb).expand(cc).grow(.00001),a.z,b.z,c.z])
 		local_faces[key]=faces
 		await yield_setup()
-		if not is_instance_valid(self):return
+		if not is_instance_valid(self) or cancelled:return
 	setup_stage="cells"
 	for tri in triangles:
 		if budget_due():
 			await yield_setup()
-			if not is_instance_valid(self):return
+			if not is_instance_valid(self) or cancelled:return
 		depth_min=minf(depth_min,minf(tri[4],minf(tri[5],tri[6]))-.12)
 		depth_max=maxf(depth_max,maxf(tri[4],maxf(tri[5],tri[6]))+.12)
 		var rect: Rect2=tri[3]
@@ -232,19 +246,19 @@ func setup(actor: Node) -> void:
 		for x in range(floori(bounds.position.x/step),ceili(bounds.end.x/step)+1):
 			if budget_due():
 				await yield_setup()
-				if not is_instance_valid(self):return
+				if not is_instance_valid(self) or cancelled:return
 			var point:=Vector2(x,y)*step;var z:=hit(point)
 			if z!=-INF:occupied[Vector2i(x,y)]=z
 		if budget_due():
 			await yield_setup()
-			if not is_instance_valid(self):return
+			if not is_instance_valid(self) or cancelled:return
 	setup_stage="candidates"
 	var candidates: Array=[]
 	for y in range(floori(bounds.position.y/step),ceili(bounds.end.y/step)+1,3):
 		for x in range(floori(bounds.position.x/step),ceili(bounds.end.x/step)+1,3):
 			if budget_due():
 				await yield_setup()
-				if not is_instance_valid(self):return
+				if not is_instance_valid(self) or cancelled:return
 			var center:=Vector2(x,y)*step
 			if occupied.has(Vector2i(x,y)):continue
 			var support: Array=[];var min_radius:=INF;var max_gap:=0;var gap:=0
@@ -261,14 +275,14 @@ func setup(actor: Node) -> void:
 				candidates.append({"center":center,"score":min_radius+support.count(true)*.003})
 		if budget_due():
 			await yield_setup()
-			if not is_instance_valid(self):return
+			if not is_instance_valid(self) or cancelled:return
 	candidates.sort_custom(func(a,b):return a.score>b.score)
 	setup_stage="anchors"
 	var accepted: Array=[]
 	for candidate in candidates:
 		if budget_due():
 			await yield_setup()
-			if not is_instance_valid(self):return
+			if not is_instance_valid(self) or cancelled:return
 		var center: Vector2=candidate.center+Vector2(rng.randf_range(-.008,.008),rng.randf_range(-.008,.008))
 		var duplicate:=false
 		for prev in accepted:
@@ -281,7 +295,7 @@ func setup(actor: Node) -> void:
 		for j in spokes:
 			if budget_due():
 				await yield_setup()
-				if not is_instance_valid(self):return
+				if not is_instance_valid(self) or cancelled:return
 			var dir:=Vector2.from_angle(phase+TAU*j/spokes+rng.randf_range(-.018,.018))
 			var point:=center;var z:=0.0;var found:=false
 			for k in range(1,72):
@@ -311,7 +325,7 @@ func setup(actor: Node) -> void:
 		if overlaps:continue
 		accepted.append({"center":center,"radius":candidate.score*.65,"polygon":polygon,"anchors":anchors,"tower_anchors":tower_anchors})
 		await yield_setup()
-		if not is_instance_valid(self):return
+		if not is_instance_valid(self) or cancelled:return
 	set_meta("viable_pockets",accepted.size())
 	for i in range(accepted.size()-1,0,-1):
 		var j:=rng.randi_range(0,i);var swap=accepted[i];accepted[i]=accepted[j];accepted[j]=swap
@@ -325,7 +339,10 @@ func setup(actor: Node) -> void:
 	# Closed three-dimensional routes on real skin triangles. Sampling progresses
 	# in one direction around each body part; the spider never reverses or strafes.
 	await yield_setup()
-	if not is_instance_valid(self):return
+	if not is_instance_valid(self) or cancelled:return
+	# Start preview weaving now; remaining crawling routes are built incrementally.
+	if not actor is Climber:
+		tick(0);set_process(true)
 	setup_stage="routes"
 	for key in ["chest","arm_l_lo","arm_r_up","leg_l_up","leg_r_lo","head"]:
 		if not parts.has(key):continue
@@ -337,13 +354,13 @@ func setup(actor: Node) -> void:
 			var core:=box.get_center();core[axis]+=box.size[axis]*.25*sin(angle*2)
 			var radial:=Vector3.ZERO;radial[a]=cos(angle);radial[b]=sin(angle)
 			var surface: Vector3=await route_surface(core,radial,faces)
-			if not is_instance_valid(self):return
+			if not is_instance_valid(self) or cancelled:return
 			if surface.distance_to(core)>2:continue
 			var point:=skin.to_global(surface+radial*.006)
 			path.append(to_local(point));normals.append((global_basis.inverse()*skin.global_basis*radial).normalized())
 			if budget_due():
 				await yield_setup()
-				if not is_instance_valid(self):return
+				if not is_instance_valid(self) or cancelled:return
 		if path.size()<3:continue
 		# Copy the seam exactly rather than sampling 2*PI again.
 		path.append(path[0]);normals.append(normals[0])
@@ -355,7 +372,7 @@ func setup(actor: Node) -> void:
 		add_spider(path,rng.randf())
 		spiders[-1]["normals"]=normals
 		spiders[-1]["tangents"]=tangents
-	set_meta("pocket_count",webs.size());set_meta("signature",signature);tick(0)
+	set_meta("pocket_count",webs.size());set_meta("signature",signature);tick(age)
 	# Pose-query data is temporary. Settled webs and crawl routes need no queries.
 	triangles.clear();cells.clear();tower_cache.clear()
 static func outlines_overlap(a: PackedVector2Array,b: PackedVector2Array) -> bool:

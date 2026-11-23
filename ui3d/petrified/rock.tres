@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://ui3d/petrified/rock.gdshader" id="1_bh6ks"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas.png" id="2_fmalf"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_bh6ks")
+shader_parameter/atlas = ExtResource("2_fmalf")
+shader_parameter/swatch = Vector2(0.94555664, 0.57055664)

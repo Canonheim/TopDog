@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://ui3d/petrified/dust.gdshader" id="1_ofjsu"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas.png" id="2_lhjr4"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_ofjsu")
+shader_parameter/atlas = ExtResource("2_lhjr4")
+shader_parameter/swatch = Vector2(0.94555664, 0.57055664)

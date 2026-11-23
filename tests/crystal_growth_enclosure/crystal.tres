@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://tests/crystal_growth_enclosure/crystal.gdshader" id="1_jfjth"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas.png" id="2_3cpdk"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_jfjth")
+shader_parameter/spectrum = PackedVector2Array(0.07055664, 0.52368164, 0.11743164, 0.58618164, 0.67993164, 0.55493164, 0.72680664, 0.58618164, 0.38305664, 0.53930664, 0.16430664, 0.58618164, 0.67993164, 0.57055664)
+shader_parameter/atlas = ExtResource("2_3cpdk")

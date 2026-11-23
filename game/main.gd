@@ -148,6 +148,7 @@ func _ready() -> void:
 	if reward_notice != null:
 		reward_notice.set("lucha", lucha)
 	var effect_preparation := preload("res://ui3d/lock_effect_preparation.gd").new()
+	preload("res://game/cosmetic_pinata.gd").warm_at_boot(cam)
 	effect_preparation.name = "LockEffectPreparation"
 	add_child(effect_preparation)
 	if _boot_wanted():
@@ -1295,7 +1296,7 @@ func _exit_tree() -> void:
 func _on_phase(p: String) -> void:
 	_set_match_pace(p in ["turn", "round", "between"])
 	var from_pause := (screen == "controls" and _controls_back == "pause") or (screen == "options" and _options_back == "pause")
-	if p in ["turn", "round", "between"] and screen not in ["hud", "pause", "practice_ai"] and not from_pause:
+	if p in ["loading", "turn", "round", "between"] and screen not in ["hud", "pause", "practice_ai"] and not from_pause:
 		show_screen("hud")
 
 

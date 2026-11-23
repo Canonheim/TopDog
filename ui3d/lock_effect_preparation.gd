@@ -5,6 +5,15 @@ const WardrobeScript = preload("res://core/wardrobe.gd")
 # The old UI already preloaded these scripts. Keep compilation/resource decoding
 # in scene loading, rather than moving it into the first incremental mesh job.
 const SCRIPTS := {
+ "ruby":preload("res://ui3d/crystal_growth/ruby.gd"),
+ "sapphire":preload("res://ui3d/crystal_growth/sapphire.gd"),
+ "emerald":preload("res://ui3d/crystal_growth/emerald.gd"),
+ "quartz":preload("res://ui3d/crystal_growth/quartz.gd"),
+ "rose_quartz":preload("res://ui3d/crystal_growth/rose_quartz.gd"),
+ "topaz":preload("res://ui3d/crystal_growth/topaz.gd"),
+ "amethyst":preload("res://ui3d/crystal_growth/amethyst.gd"),
+
+ "petrified":preload("res://ui3d/petrified/effect.gd"),
  "gold":preload("res://ui3d/gold/gold.gd"),"absolute_zero":preload("res://ui3d/absolute_zero/absolute_zero.gd"),
 	"spiders":preload("res://ui3d/spiders_effect.gd"),
 	"vines":preload("res://ui3d/vines/vines.gd"),
@@ -73,7 +82,15 @@ const SCRIPTS := {
 # path, preparation adapter, variant count, normal pieces, triangle ceiling.
 # Existing geometry ceilings are reviewed exceptions, not defaults for new effects.
 const REGISTRY := {
- "gold":["gold/gold","legendary_material",1,3,24],"absolute_zero":["absolute_zero/absolute_zero","legendary_material",1,9,400],
+ "ruby":["crystal_growth/ruby","legendary_material",1,17,1744],
+ "sapphire":["crystal_growth/sapphire","legendary_material",1,17,1744],
+ "emerald":["crystal_growth/emerald","legendary_material",1,17,1744],
+ "quartz":["crystal_growth/quartz","legendary_material",1,17,1744],
+ "rose_quartz":["crystal_growth/rose_quartz","legendary_material",1,17,1744],
+ "topaz":["crystal_growth/topaz","legendary_material",1,17,1744],
+ "amethyst":["crystal_growth/amethyst","legendary_material",1,17,1744],
+ "petrified":["petrified/effect","legendary_material",1,25,2600],
+ "gold":["gold/gold","legendary_material",1,3,24],"absolute_zero":["absolute_zero/absolute_zero","legendary_material",1,11,450],
 	"spiders":["spiders_effect","spiders",13,10,10000],
 	"vines":["vines/vines","vines",33,21,36893],
 	"popcorn":["common_effects/popcorn", "common", 11, 72, 25881],
@@ -146,6 +163,14 @@ const MAX_UNITS_PER_FRAME := 4
 const WINNER_BUDGETS := {"confetti":{"pieces":300,"triangles":10300,"spawn_ms":8.0}}
 # Resident mesh ceilings are explicit even for adapters with a single prewarm call.
 const CACHE_MESH_LIMITS := {
+ "ruby":2,
+ "sapphire":2,
+ "emerald":2,
+ "quartz":2,
+ "rose_quartz":2,
+ "topaz":2,
+ "amethyst":2,
+ "petrified":4,
  "gold":1,"absolute_zero":2,
 	"spiders":13,
 	"vines":34,
@@ -201,6 +226,14 @@ const CACHE_MESH_LIMITS := {
 	"bees":6,
 }
 const CACHE_ARRAY_BYTE_LIMITS := {
+ "ruby":100000,
+ "sapphire":100000,
+ "emerald":100000,
+ "quartz":100000,
+ "rose_quartz":100000,
+ "topaz":100000,
+ "amethyst":100000,
+ "petrified":100000,
  "gold":10000,"absolute_zero":30000,
 	"spiders":1500000,
 	"vines":17922274,
@@ -258,7 +291,15 @@ const CACHE_ARRAY_BYTE_LIMITS := {
 }
 const NORMAL_NODE_LIMITS := {
  # Gold temporarily owns its transformation audio node; settled budget remains four.
- "gold":5,"absolute_zero":10,
+ "ruby":18,
+ "sapphire":18,
+ "emerald":18,
+ "quartz":18,
+ "rose_quartz":18,
+ "topaz":18,
+ "amethyst":18,
+ "petrified":27,
+ "gold":5,"absolute_zero":12,
 	"spiders":11,
 	"vines":22,
 	"popcorn":73,
@@ -313,7 +354,7 @@ const NORMAL_NODE_LIMITS := {
 	"bees":37,
 }
 # Per retained climber: never treat attached cosmetics as timed camera bursts.
-const PERSISTENT_EFFECTS := {"gold":{"meshes_per_climber":3,"triangles_per_climber":24,"nodes_per_climber":4},"absolute_zero":{"meshes_per_climber":9,"triangles_per_climber":400,"nodes_per_climber":10},"spiders":{"meshes_per_climber":10,"triangles_per_climber":10000,"nodes_per_climber":11},"vines":{"meshes_per_climber":21,"triangles_per_climber":35136,"nodes_per_climber":22},"railroad_spikes":{"meshes_per_climber":4,"triangles_per_climber":352,"nodes_per_climber":5}}
+const PERSISTENT_EFFECTS := {"ruby":{"meshes_per_climber":17,"triangles_per_climber":1744,"nodes_per_climber":18},"sapphire":{"meshes_per_climber":17,"triangles_per_climber":1744,"nodes_per_climber":18},"emerald":{"meshes_per_climber":17,"triangles_per_climber":1744,"nodes_per_climber":18},"quartz":{"meshes_per_climber":17,"triangles_per_climber":1744,"nodes_per_climber":18},"rose_quartz":{"meshes_per_climber":17,"triangles_per_climber":1744,"nodes_per_climber":18},"topaz":{"meshes_per_climber":17,"triangles_per_climber":1744,"nodes_per_climber":18},"amethyst":{"meshes_per_climber":17,"triangles_per_climber":1744,"nodes_per_climber":18},"petrified":{"meshes_per_climber":25,"triangles_per_climber":2600,"nodes_per_climber":27},"gold":{"meshes_per_climber":3,"triangles_per_climber":24,"nodes_per_climber":5},"absolute_zero":{"meshes_per_climber":11,"triangles_per_climber":450,"nodes_per_climber":12},"spiders":{"meshes_per_climber":10,"triangles_per_climber":10000,"nodes_per_climber":11},"vines":{"meshes_per_climber":21,"triangles_per_climber":35136,"nodes_per_climber":22},"railroad_spikes":{"meshes_per_climber":4,"triangles_per_climber":352,"nodes_per_climber":5}}
 const TRANSIENT_ATTACHED_EFFECTS := {"lightning":{"lifetime":1.65,"skin_vertex_bytes":200000}}
 static func is_attached(id: String) -> bool:
 	return PERSISTENT_EFFECTS.has(id) or TRANSIENT_ATTACHED_EFFECTS.has(id)
@@ -559,6 +600,8 @@ func _ready() -> void:
 func _process(_dt: float) -> void:
 	# No background geometry work in a live match or over a visible celebration.
 	var main := get_parent()
+	var game: Node=main.get("game")
+	if game!=null and str(game.get("phase")) in ["loading","load_failed"]:return
 	if str(main.get("screen")) in ["hud","results"]: return
 	var camera: Node = main.get("cam")
 	if camera != null:
@@ -602,6 +645,3 @@ func _exit_tree() -> void:
 			pending.erase(path)
 		elif status != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
 			pending.erase(path)
-
-
-

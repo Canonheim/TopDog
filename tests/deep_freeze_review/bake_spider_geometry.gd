@@ -10,7 +10,7 @@ func _initialize() -> void:
    var mesh: Mesh=node.mesh
    if mesh==null or mesh.get_surface_count()==0 or surfaces.has(mesh.resource_path):continue
    var arr:=mesh.surface_get_arrays(0)
-   surfaces[mesh.resource_path]={"vertices":arr[Mesh.ARRAY_VERTEX],"indices":arr[Mesh.ARRAY_INDEX]}
+   surfaces[mesh.resource_path]={"vertices":arr[Mesh.ARRAY_VERTEX],"normals":arr[Mesh.ARRAY_NORMAL],"indices":arr[Mesh.ARRAY_INDEX]}
   root.free()
  var data:=Resource.new();data.set_meta("surfaces",surfaces)
  var err:=ResourceSaver.save(data,"res://ui3d/spider_body_geometry.res",ResourceSaver.FLAG_COMPRESS)

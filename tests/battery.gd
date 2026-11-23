@@ -4474,80 +4474,8 @@ func _run_peakrope() -> void:
 
 
 func _run_push_tension() -> void:
-	var a := spawn(Vector2.ZERO)
-	var b := spawn(Vector2(0.5, 0))
-	var floor_body := static_box(Vector2(0, -0.1), Vector2(10, 0.1))
-	for c in [a, b]:
-		c.set_physics_process(false)
-	a.attach(0, b.bodies.chest)
-	a.set_push_load(0, b, 0.5)
-	a._tick_live_contact(0, 0.01)
-	t("push: light pressure alone stays below original strain threshold", a.limbs[0].strain_time == 0)
-	for tick in 50:
-		a.set_push_load(0, b, 1.0)
-		a._tick_live_contact(0, 0.01)
-		if a.limbs[0].grab_other == null:
-			break
-	t("push: sustained full pressure breaks through original strain meter", a.limbs[0].grab_other == null)
-	t("push: original cooldown and same-contact protection restored", is_equal_approx(a.limbs[0].regrip, 0.22) and a.limbs[0].peeled_from == b.get_instance_id())
-	a.attach(0, b.bodies.chest)
-	a.set_push_load(0, b, 1)
-	a.live_time += 0.11
-	a._tick_live_contact(0, 0.01)
-	t("push: stale pressure expires", a.limbs[0].strain_time == 0)
-	a.limbs[0].push_load = 0
-	a.set_push_load(0, a, 1)
-	t("push: wrong player cannot add pressure", a.limbs[0].push_load == 0)
-	for c in [a, b]:
-		c.release_all()
-		for piece: RigidBody3D in c.bodies.values():
-			piece.freeze = true
-	a.attach(0, b.bodies.chest)
-	b.attach(2, floor_body)
-	b.driver.point_limb(1, true, Vector2.ZERO)
-	b._select_active_limb()
-	var hand: RigidBody3D = b.bodies.hand_r
-	var arm: RigidBody3D = a.bodies.arm_l_up
-	PhysicsServer3D.free_rid(b.joints.wrist_r.rid)
-	b.joints.erase("wrist_r")
-	hand.freeze = false
-	hand.gravity_scale = 0
-	# On top of the upper arm, along its own upper side (its slant in the hands-on-hips
-	# pose is the body's: 35 deg on the knight, 55 on the new climber), pushing in and
-	# pulling away along that side's normal.
-	var arm_shape: Array = Layout.PIECES["arm_l_up"].shape
-	var axis := ((arm_shape[2] as Vector2) - (arm_shape[1] as Vector2)).normalized().rotated(Climber.angle_of(arm))
-	var up_side := axis.orthogonal()
-	if up_side.y < 0.0:
-		up_side = -up_side
-	var contact_at := arm.global_position + Vector3(up_side.x, up_side.y, 0.0) * 0.11
-	for tick in 12:
-		hand.global_position = contact_at
-		hand.linear_velocity = -Vector3(up_side.x, up_side.y, 0.0)
-		Climber.sync_server(hand)
-		await frames(1)
-	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y + 1))
-	b._tick_push_contacts(0.01)
-	t("push: contact while steering away adds no extra tension", a.limbs[0].push_load == 0)
-	b.driver.aims[1] = null
-	b._tick_push_contacts(0.01)
-	t("push: neutral active limb adds no extra tension", a.limbs[0].push_load == 0)
-	b.driver.point_limb(1, true, Vector2(hand.global_position.x, hand.global_position.y - 1))
-	b._tick_push_contacts(0.01)
-	t("push: actual active contact adds spring pressure", a.limbs[0].push_load > 0)
-	# The same contact also loads the pushing player's outgoing grip.
-	b.attach(0, a.bodies.chest)
-	b._tick_push_contacts(0.01)
-	t("push: pushing while gripping the rival loads own spring too", b.limbs[0].push_load > 0)
-	var requests := []
-	b.push_load_requested.connect(func(cid: int, limb: int, pressure: float): requests.append([cid, limb, pressure]))
-	a.state = Climber.State.PUPPET
-	b.remote_pulls[Vector2i(a.climber_id, 0)] = {"supported": true}
-	b._tick_push_contacts(0.01)
-	t("push: remote contact routes pressure to gripping owner", requests.size() == 1 and requests[0][0] == a.climber_id and requests[0][1] == 0 and requests[0][2] > 0)
-	a.state = Climber.State.LIVE
-
-
+	# The old peel mechanic is removed; keep this entry point checking its replacement.
+	await _run_movingterrain()
 
 
 func _run_cameratoggles() -> void:
@@ -4678,23 +4606,42 @@ func _run_pinatabounce() -> void:
 			Climber.sync_server(piece)
 	await frames(2)
 	var d = g.pinata_director
-	var boost: Vector3 = d.pickup_bounce(Vector3(8,24,0))
-	t("pinata bounce: mild planar boost points toward the base", boost.x < 0 and boost.y < 0 and boost.z == 0 and is_equal_approx(boost.length(),1.2))
+	var normal := Vector3.LEFT
+	var incoming := Vector3(4,3,0)
+	var boost: Vector3 = d.pickup_bounce(incoming,normal)
+	t("pinata bounce: reverses full trajectory at half speed", (incoming+boost).is_equal_approx(Vector3(-2,-1.5,0)) and is_equal_approx((incoming+boost).length(),incoming.length()*0.5))
+	t("pinata bounce: stationary pickup adds no kick",d.pickup_bounce(Vector3.ZERO,normal)==Vector3.ZERO)
+	t("pinata bounce: direction is independent of the surface angle",(Vector3.LEFT*4+d.pickup_bounce(Vector3.LEFT*4,Vector3.UP)).is_equal_approx(Vector3.RIGHT*2))
+	for piece: RigidBody3D in c.bodies.values(): piece.linear_velocity=incoming
 	var before := Vector3.ZERO
 	var other_before := Vector3.ZERO
 	for piece: RigidBody3D in c.bodies.values(): before += piece.linear_velocity*piece.mass/c.total_mass
 	for piece: RigidBody3D in other.bodies.values(): other_before += piece.linear_velocity*piece.mass/other.total_mass
 	d.generation += 1
 	d._spawn(d.generation,Vector3(8,24,0),1)
-	d._collect(d.generation,"",0,c.climber_id,boost)
-	d._collect(d.generation,"",0,c.climber_id,boost)
+	d._collect(d.generation,"",0,c.climber_id,normal)
+	d._collect(d.generation,"",0,c.climber_id,normal)
 	await frames(2)
 	var after := Vector3.ZERO
 	var other_after := Vector3.ZERO
 	for piece: RigidBody3D in c.bodies.values(): after += piece.linear_velocity*piece.mass/c.total_mass
 	for piece: RigidBody3D in other.bodies.values(): other_after += piece.linear_velocity*piece.mass/other.total_mass
-	t("pinata bounce: collector receives exactly one boost", (after-before).distance_to(boost)<0.15, str(after-before))
+	t("pinata bounce: collector reflects exactly once", (after-before).distance_to(boost)<0.15, str(after-before))
 	t("pinata bounce: other players receive no boost", other_after.distance_to(other_before)<0.1)
+	t("pinata bounce: free scramble player counts as airborne",d.pickup_airborne(c))
+	c.attach(0,other.bodies.hand_l)
+	t("pinata bounce: holding another player blocks expulsion",not d.pickup_airborne(c))
+	c.release(0)
+	var floor_body := static_box(Vector2(0,18),Vector2(20,0.2))
+	c.attach(0,floor_body)
+	t("pinata bounce: terrain latch blocks expulsion",not d.pickup_airborne(c))
+	for piece: RigidBody3D in c.bodies.values(): piece.linear_velocity=Vector3.ZERO
+	d._apply_pickup_bounce(c.climber_id,normal)
+	var blocked_speed:=0.0
+	for piece: RigidBody3D in c.bodies.values():blocked_speed+=piece.linear_velocity.length()
+	t("pinata bounce: latched collector receives no impulse",is_zero_approx(blocked_speed))
+	c.release(0)
+
 	g.end_match()
 	g.queue_free()
 	await frames(2)
@@ -4767,10 +4714,10 @@ func _run_chairrelease() -> void:
 	chair.drop(c,1.0/120)
 	t("chair release: preserves actual chair flight instead of reversing to hand speed", chair.linear_velocity.is_equal_approx(flight), chair.linear_velocity)
 	t("chair release: preserves physical rotation without snapping axes", chair.angular_velocity.is_equal_approx(spin), chair.angular_velocity)
-	t("chair release: cannot immediately regrab with another limb", not chair.can_reach(c,1))
+	t("chair release: immediate handoff is allowed", chair.can_reach(c,1))
 	t("chair release: thrower remains collision protected", chair.get_collision_exceptions().has(hand))
 	chair.release_carrier_when_clear(0.1)
-	t("chair release: contact protection survives the initial release frames", chair.get_collision_exceptions().has(hand))
+	t("chair release: overlapping carrier remains collision protected", chair.get_collision_exceptions().has(hand))
 	chair.pick_up(c,1)
 	chair.angular_velocity = Vector3(0,0,4)
 	var remote_hand := Vector3(2,1,0)
@@ -4797,3 +4744,123 @@ func _run_intermission() -> void:
 	g.end_match()
 	g.queue_free()
 	await frames(2)
+
+
+func _run_movingterrain() -> void:
+	var c := spawn(Vector2(0,8))
+	var target := spawn(Vector2(3,8))
+	c.set_physics_process(false)
+	target.set_physics_process(false)
+	c.release_all();target.release_all()
+	var hand: RigidBody3D = c.bodies["hand_r"]
+	var body: RigidBody3D = target.bodies["arm_l_lo"]
+	c.attach(1,body)
+	var grip: Dictionary = c.limbs[1]
+	t("moving terrain: live grip uses independent kinematic anchor", grip.grab.is_valid() and is_instance_valid(grip.live_anchor) and grip.live_anchor.freeze)
+	# Targets must not receive force even when loaded far beyond the old peel threshold.
+	var pose := body.global_transform
+	var before: Vector3 = body.constant_force
+	grip.push_load=100.0;grip.push_until=100.0;grip.strain_time=100.0
+	for tick in 30:
+		body.global_position += Vector3(0.01,0.005,0)
+		Climber.sync_server(body)
+		c._tick_live_contact(1,1.0/120)
+	t("moving terrain: anchor follows the target", grip.live_anchor.global_transform.is_equal_approx(body.global_transform))
+	t("moving terrain: load and pressure never detach grip", grip.grab_other==body and grip.grab.is_valid())
+	t("moving terrain: no force or control influence on target", grip.contact_force==Vector3.ZERO and body.constant_force==before and not target._limb_has_incoming_grip(target.limbs[0]))
+
+	body.global_transform=pose
+	Climber.sync_server(body)
+	target._free_joints()  # Isolate received force from the target's own joint relaxation.
+	for actor in [c,target]:
+		for piece: RigidBody3D in actor.bodies.values():
+			piece.gravity_scale=0
+			piece.linear_velocity=Vector3.ZERO
+			piece.angular_velocity=Vector3.ZERO
+	for tick in 60:
+		hand.apply_central_force(Vector3(-60,20,0))
+		c._tick_live_contact(1,1.0/120)
+		await frames(1)
+	var momentum:=Vector3.ZERO
+	for piece: RigidBody3D in target.bodies.values():momentum+=piece.linear_velocity*piece.mass
+	t("moving terrain: loaded grip does not accelerate target",momentum.length()<0.1,momentum)
+	t("moving terrain: loaded grip stays attached in physics",grip.grab.is_valid() and grip.grab_other==body)
+	var anchor: Node = grip.live_anchor
+	c.release(1)
+	await frames(2)
+	t("moving terrain: manual release removes anchor", not is_instance_valid(anchor) and not grip.grab.is_valid())
+	c.remove();target.remove()
+	await frames(2)
+
+func _run_chairrestpickup() -> void:
+	var g := make_game("practice",1,60,"plaza")
+	await wait_phase(g,"turn")
+	g.set_physics_process(false)
+	var c: Climber = g.climbers[g.live[0]]
+	c.set_physics_process(false)
+	var hand: RigidBody3D = c.bodies["hand_r"]
+	var chair := g.chair
+	chair.global_transform=Transform3D(Basis.IDENTITY,hand.global_position)
+	chair.pick_up(c,1)
+	chair.linear_velocity=Vector3.RIGHT*3
+	chair.drop(c,1.0/120)
+	t("chair recovery: moving chair permits immediate pickup",chair.can_reach(c,1))
+	chair.linear_velocity=Vector3.ZERO;chair.angular_velocity=Vector3.ZERO
+	t("chair recovery: stationary chair is immediately reachable under thrower",chair.can_reach(c,1))
+	chair.release_carrier_when_clear(0.0)
+	t("chair recovery: no timed pickup protection",chair.can_reach(c,1))
+	chair.pick_up(c,1)
+	t("chair recovery: stationary overlapping chair can be picked up",chair.holder==c.climber_id)
+	g.end_match();g.queue_free();await frames(2)
+
+
+func _run_chairlatency() -> void:
+	var g := make_game("practice",1,60,"plaza")
+	await wait_phase(g,"turn")
+	var c: Climber = g.climbers[g.live[0]]
+	var d: Drivers.ScriptDriver=c.driver
+	d.set_limb(1,true)
+	await frames(2)
+	g.chair.pick_up(c,1)
+	var released_at: Array[int]=[]
+	c.limb_selected.connect(func(i,_v):
+		if i==-1:released_at.append(Engine.get_physics_frames()))
+	d.clear()
+	for tick in 8:
+		await frames(1)
+		if g.chair.holder==-1:break
+	var drop_frame:=Engine.get_physics_frames()
+	t("chair latency: local release observed",not released_at.is_empty() and g.chair.holder==-1)
+	if not released_at.is_empty():print("CHAIR_RELEASE_TIMING observed ticks after selection=",drop_frame-released_at[0],"; physics Hz=",Engine.physics_ticks_per_second)
+	g.end_match();g.queue_free();await frames(2)
+
+
+func _run_chairhandoff() -> void:
+	var g := make_game("practice",1,60,"plaza")
+	await wait_phase(g,"turn")
+	g.set_physics_process(false)
+	var c: Climber=g.climbers[g.live[0]]
+	c.set_physics_process(false)
+	var d: Drivers.ScriptDriver=c.driver
+	d.set_limb(1,true);c._select_active_limb()
+	g.chair.pick_up(c,1)
+	c.bodies.hand_l.global_position=g.chair.global_position
+	Climber.sync_server(c.bodies.hand_l)
+	d.set_limb(1,false);d.set_limb(0,true)
+	c._select_active_limb()
+	t("chair handoff: switches hands in input tick without pickup timer",g.chair.holder==c.climber_id and g.chair.limb==0)
+	var all_angles:=true
+	for i in 16:
+		var v:=Vector3(cos(TAU*i/16),sin(TAU*i/16),0)*4
+		g.chair.pick_up(c,0);g.chair.linear_velocity=v
+		g.chair.drop(c,1.0/120)
+		all_angles=all_angles and g.chair.linear_velocity.is_equal_approx(v)
+	t("chair release: preserves all sixteen tested angles without snapping",all_angles)
+	var victim:=g.partner
+	victim.set_physics_process(false);victim.release_all();victim._free_joints()
+	var body: RigidBody3D=victim.bodies.arm_l_lo
+	body.gravity_scale=0;body.linear_velocity=Vector3.ZERO
+	g._chair_impact(victim,"arm_l_lo",Vector3.ZERO,Vector3.RIGHT*body.mass*5)
+	await frames(2)
+	t("chair body nudge: small positive impulse without knockout",body.linear_velocity.x>0.05 and body.linear_velocity.x<0.5 and victim.knockout_left<=0,body.linear_velocity)
+	g.end_match();g.queue_free();await frames(2)

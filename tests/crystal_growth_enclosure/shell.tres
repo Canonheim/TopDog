@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://tests/crystal_growth_enclosure/shell.gdshader" id="1_670gm"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas.png" id="2_gvude"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_670gm")
+shader_parameter/atlas = ExtResource("2_gvude")
+shader_parameter/pale = Vector2(0.52368164, 0.52368164)

@@ -1,0 +1,158 @@
+[
+  {
+    "run": "warm-1",
+    "boot_frames": {
+      "frames_over_25ms": 1,
+      "max_ms": 300.441,
+      "median_ms": 16.661,
+      "p95_ms": 16.804
+    },
+    "boot_us": 105971,
+    "boot_warm": true,
+    "collect_us": 201,
+    "collection_frames": {
+      "frames_over_25ms": 0,
+      "max_ms": 18.461,
+      "median_ms": 16.67,
+      "p95_ms": 16.813
+    },
+    "new_nodes": 0,
+    "spawn_frames": {
+      "frames_over_25ms": 0,
+      "max_ms": 18.129,
+      "median_ms": 16.671,
+      "p95_ms": 18.081
+    },
+    "spawn_us": 1210
+  },
+  {
+    "run": "cold-1",
+    "boot_frames": {
+      "frames_over_25ms": 1,
+      "max_ms": 192.035,
+      "median_ms": 16.65,
+      "p95_ms": 16.97
+    },
+    "boot_us": 0,
+    "boot_warm": false,
+    "collect_us": 161,
+    "collection_frames": {
+      "frames_over_25ms": 0,
+      "max_ms": 18.719,
+      "median_ms": 16.66,
+      "p95_ms": 16.803
+    },
+    "new_nodes": 0,
+    "spawn_frames": {
+      "frames_over_25ms": 1,
+      "max_ms": 131.428,
+      "median_ms": 16.667,
+      "p95_ms": 17.019
+    },
+    "spawn_us": 114673
+  },
+  {
+    "run": "warm-2",
+    "boot_frames": {
+      "frames_over_25ms": 1,
+      "max_ms": 295.192,
+      "median_ms": 16.657,
+      "p95_ms": 16.947
+    },
+    "boot_us": 103982,
+    "boot_warm": true,
+    "collect_us": 197,
+    "collection_frames": {
+      "frames_over_25ms": 0,
+      "max_ms": 18.636,
+      "median_ms": 16.664,
+      "p95_ms": 16.824
+    },
+    "new_nodes": 0,
+    "spawn_frames": {
+      "frames_over_25ms": 0,
+      "max_ms": 17.958,
+      "median_ms": 16.662,
+      "p95_ms": 17.956
+    },
+    "spawn_us": 1188
+  },
+  {
+    "run": "cold-2",
+    "boot_frames": {
+      "frames_over_25ms": 1,
+      "max_ms": 190.529,
+      "median_ms": 16.662,
+      "p95_ms": 16.985
+    },
+    "boot_us": 0,
+    "boot_warm": false,
+    "collect_us": 161,
+    "collection_frames": {
+      "frames_over_25ms": 0,
+      "max_ms": 18.481,
+      "median_ms": 16.661,
+      "p95_ms": 16.833
+    },
+    "new_nodes": 0,
+    "spawn_frames": {
+      "frames_over_25ms": 1,
+      "max_ms": 131.382,
+      "median_ms": 16.647,
+      "p95_ms": 18.09
+    },
+    "spawn_us": 114657
+  },
+  {
+    "run": "warm-3",
+    "boot_frames": {
+      "frames_over_25ms": 1,
+      "max_ms": 296.586,
+      "median_ms": 16.659,
+      "p95_ms": 16.818
+    },
+    "boot_us": 104133,
+    "boot_warm": true,
+    "collect_us": 219,
+    "collection_frames": {
+      "frames_over_25ms": 0,
+      "max_ms": 18.52,
+      "median_ms": 16.675,
+      "p95_ms": 16.833
+    },
+    "new_nodes": 0,
+    "spawn_frames": {
+      "frames_over_25ms": 0,
+      "max_ms": 18.42,
+      "median_ms": 16.631,
+      "p95_ms": 18.023
+    },
+    "spawn_us": 1267
+  },
+  {
+    "run": "cold-3",
+    "boot_frames": {
+      "frames_over_25ms": 1,
+      "max_ms": 193.394,
+      "median_ms": 16.643,
+      "p95_ms": 17.588
+    },
+    "boot_us": 0,
+    "boot_warm": false,
+    "collect_us": 171,
+    "collection_frames": {
+      "frames_over_25ms": 0,
+      "max_ms": 18.605,
+      "median_ms": 16.667,
+      "p95_ms": 16.806
+    },
+    "new_nodes": 0,
+    "spawn_frames": {
+      "frames_over_25ms": 1,
+      "max_ms": 131.956,
+      "median_ms": 16.668,
+      "p95_ms": 16.925
+    },
+    "spawn_us": 115305
+  }
+]

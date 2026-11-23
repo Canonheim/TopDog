@@ -17,6 +17,13 @@ extends Node
 ## Offline, Godot's OfflineMultiplayerPeer makes us peer 1 and the authority, and
 ## every rpc() with call_local just runs here: one code path for both.
 
+const MatchEffectPreloader=preload("res://game/match_effect_preloader.gd")
+var effect_load_token: String=""
+var effect_load_pending: Dictionary={}
+var effect_load_job: Node
+var effect_load_wait:=0.0
+var effect_load_report: Dictionary={}
+
 signal announce(text: String, big: bool)
 signal lock_effect(effect: String)
 ## Where the lock-in effect being fired bursts: the climber's centre, world metres
@@ -239,13 +246,60 @@ func _rpc_start(p_settings: Dictionary, p_roster: Array) -> void:
 	round_n = 0
 	_spawn_n = 0
 	_last_spawn_sides.clear()
-	phase = "between"
+	phase = "loading"
 	_between_t = 0.8
 	_vs_t = 0.0
 	_next_names.clear()
 	phase_changed.emit(phase)
-	announce.emit(str(mode.name), true)
+	effect_load_token=str(settings.get("xp_match_id",""))
+	effect_load_pending.clear()
+	effect_load_pending[me()]=true
+	for row in roster: effect_load_pending[int(row.get("peer",1))]=true
+	effect_load_wait=0.0
+	if is_instance_valid(effect_load_job): effect_load_job.queue_free()
+	effect_load_job=MatchEffectPreloader.new()
+	add_child(effect_load_job)
+	var token:=effect_load_token
+	effect_load_job.completed.connect(func(report: Dictionary):
+		if phase!="loading" or token!=effect_load_token:return
+		effect_load_report=report
+		_rpc_effects_ready.rpc_id(1,token,report.errors.is_empty()))
+	effect_load_job.start(roster,dress)
 
+
+@rpc("any_peer","call_local","reliable")
+func _rpc_effects_ready(token: String,ok: bool) -> void:
+	if not is_host() or phase!="loading" or token!=effect_load_token:return
+	var peer:=multiplayer.get_remote_sender_id()
+	if peer==0:peer=me()
+	if not effect_load_pending.has(peer):return
+	if not ok:
+		_rpc_effects_failed.rpc(token)
+		return
+	effect_load_pending.erase(peer)
+	_try_effects_ready()
+
+func _try_effects_ready() -> void:
+	if is_host() and phase=="loading" and effect_load_pending.is_empty():
+		_rpc_effects_begin.rpc(effect_load_token)
+
+@rpc("authority","call_local","reliable")
+func _rpc_effects_begin(token: String) -> void:
+	if phase!="loading" or token!=effect_load_token:return
+	if is_instance_valid(effect_load_job):effect_load_job.queue_free()
+	effect_load_job=null
+	phase="between";_between_t=.8
+	phase_changed.emit(phase)
+	announce.emit(str(mode.name),true)
+
+@rpc("authority","call_local","reliable")
+func _rpc_effects_failed(token: String) -> void:
+	if phase!="loading" or token!=effect_load_token:return
+	phase="load_failed"
+	if is_instance_valid(effect_load_job):
+		effect_load_job.cancelled=true
+		effect_load_job.fail()
+	phase_changed.emit(phase)
 
 func roster_entry(pid: int) -> Dictionary:
 	for r in roster:
@@ -270,6 +324,10 @@ func _process(delta: float) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if phase in ["loading","load_failed"]:
+		effect_load_wait+=delta/maxf(.001,Engine.time_scale)
+		if phase=="loading" and is_host() and effect_load_wait>120.0:_rpc_effects_failed.rpc(effect_load_token)
+		return
 	if peak_on and peak != null:
 		peak.tick(delta)
 	if stage != null and stage.delmar:
@@ -661,8 +719,7 @@ func _rpc_spawn(pid: int, cid: int, feet: Vector2, nm: String) -> void:
 			if source != null and source.owner_peer != me():
 				_rpc_push_load.rpc_id(source.owner_peer, source_id, cid, limb, pressure))
 		c.rope_bounced.connect(func(at: Vector3, speed: float): _rpc_rope.rpc(cid, at, speed))
-		if chair != null and not is_host():
-			c.limb_selected.connect(func(i: int, velocity: Vector3): _rpc_chair_limb.rpc_id(1, cid, i, velocity))
+		c.limb_selected.connect(func(i: int, velocity: Vector3): _chair_selection_changed(c, i, velocity))
 	else:
 		c.driver = Drivers.NullDriver.new()
 		c.make_puppet()
@@ -1642,19 +1699,21 @@ func _rpc_grabbed(cid: int, source_id: int, limb: int, connected: bool) -> void:
 	if not _pulls.has(cid):
 		_pulls[cid] = {}
 	if connected:
+		source.remote_grip_targets[limb] = c
+		# A remote take cannot close a moving-anchor feedback loop either.
+		for i in c.limbs.size():
+			var target: Climber = c.limbs[i].grab_climber
+			if is_instance_valid(target) and target._grips_reach(source): c.release(i)
 		_pulls[cid][key] = {}
 	else:
+		source.remote_grip_targets.erase(limb)
 		_pulls[cid].erase(key)
 		c.remote_pulls.erase(key)
 	c.remote_grabbed = _pulls[cid].size()
 
 
-func _send_contact_loads(c: Climber) -> void:
-	for i in c.limbs.size():
-		var l: Dictionary = c.limbs[i]
-		var target: Climber = l.grab_climber
-		if is_instance_valid(target) and target.state == Climber.State.PUPPET:
-			_rpc_pull.rpc_id(target.owner_peer, target.climber_id, c.climber_id, i, l.grab_piece, l.contact_offset, l.contact_force, c.grounded_locally(), c.touches_solid())
+func _send_contact_loads(_c: Climber) -> void:
+	pass  # Moving-terrain grips transfer no force to their target.
 
 
 @rpc("any_peer", "call_remote", "unreliable")
@@ -1666,8 +1725,8 @@ func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vecto
 		return
 	if not _pulls.has(cid) or not _pulls[cid].has(key) or not c.bodies.has(piece) or not offset.is_finite() or not force.is_finite():
 		return
-	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
-	_pulls[cid][key] = {"piece": piece, "offset": offset, "force": force.limit_length(cap), "supported": supported, "directly_supported": directly_supported, "time": _now}
+	return  # Retained RPC signature; old force samples are ignored.
+
 
 @rpc("any_peer", "call_remote", "unreliable")
 func _rpc_push_load(source_id: int, defender_id: int, limb: int, pressure: float) -> void:
@@ -1682,6 +1741,13 @@ func _rpc_push_load(source_id: int, defender_id: int, limb: int, pressure: float
 # ================================================================ leaving
 
 func _on_peer_left(id: int) -> void:
+	if phase=="loading":
+		if is_host():
+			effect_load_pending.erase(id)
+			for row in roster:
+				if int(row.peer)==id:alive[int(row.pid)]=false
+			_try_effects_ready()
+		return
 	if phase not in ["turn", "round", "between", "over"]:
 		return  # (the lobby's waiting room follows the member list; idle has no match)
 	if not is_host():
@@ -1854,14 +1920,37 @@ func _spawn_partner() -> void:
 		Sound.play_at("knockout", partner.bodies["head"].global_position, 0.0, world, Sound.SFX["knockout"].pick_random()))
 
 
+# Handle release during the input-selection tick, not next tick's chair polling.
+func _chair_selection_changed(c: Climber, selected: int, hand_velocity: Vector3) -> void:
+	if chair == null: return
+	var releasing := chair.holder == c.climber_id and selected != chair.limb
+	if not is_host():
+		_rpc_chair_limb.rpc_id(1,c.climber_id,selected,hand_velocity,chair.linear_velocity,chair.angular_velocity,releasing)
+		return
+	if not releasing: return
+	chair.drop(c,get_physics_process_delta_time())
+	if selected >= 0 and chair.can_reach(c,selected): chair.pick_up(c,selected)
+	_send_chair_transition()
+
+func _send_chair_transition() -> void:
+	if chair != null and multiplayer.get_peers().size()>0:
+		_rpc_chair_pose.rpc(chair_generation,chair.holder,chair.limb,chair.grip_point,chair.global_transform,chair.hit_count,chair.in_bubble)
+
 @rpc("any_peer", "call_remote", "reliable")
-func _rpc_chair_limb(cid: int, selected: int, release_velocity: Vector3) -> void:
+func _rpc_chair_limb(cid: int, selected: int, release_velocity: Vector3, flight := Vector3.ZERO, spin := Vector3.ZERO, has_motion := false) -> void:
 	var c: Climber = climbers.get(cid)
 	if not is_host() or c == null or c.owner_peer != multiplayer.get_remote_sender_id() or selected < -1 or selected >= 4:
 		return
 	remote_chair_limbs[cid] = selected
 	if chair != null and chair.holder == cid and selected != chair.limb:
-		chair.drop(c, get_physics_process_delta_time(), release_velocity)
+		if has_motion and flight.is_finite() and spin.is_finite():
+			chair.linear_velocity = Vector3(flight.x,flight.y,0).limit_length(8)
+			chair.angular_velocity = spin.limit_length(10)
+			chair.drop(c, get_physics_process_delta_time())
+		else:
+			chair.drop(c, get_physics_process_delta_time(), release_velocity)
+		if selected >= 0 and chair.can_reach(c,selected): chair.pick_up(c,selected)
+		_send_chair_transition()
 
 
 func _tick_chair(dt: float) -> void:
@@ -1970,6 +2059,7 @@ func _chair_impact(victim: Climber, piece_name: String, local_offset: Vector3, i
 	if piece_name == "head" and victim.knockout_left <= 0 and impulse.length() / piece.mass >= 4.5:
 		victim.knock_out()
 	var offset := piece.global_basis * local_offset
+	if piece_name != "head": impulse = impulse.limit_length(piece.mass * Feel.get_k("chair_body_nudge"))
 	piece.apply_impulse(impulse, offset)
 
 
@@ -2023,6 +2113,10 @@ func _clear_climbers() -> void:
 
 
 func end_match() -> void:
+	effect_load_token=""
+	effect_load_pending.clear()
+	if is_instance_valid(effect_load_job):effect_load_job.queue_free()
+	effect_load_job=null
 	if peak != null:
 		peak.leave()  # (it saves where the climber is)
 	peak_on = false

@@ -173,7 +173,7 @@ func _rebuild_preview(direction: int) -> void:
 	if turn != null:
 		turn.kill()
 	if preview != null:
-		preview.free()
+		_discard_preview(preview)
 	var p: Dictionary = Wardrobe.profiles[Wardrobe.selected]
 	preview = Wardrobe.model(p).instantiate()
 	preview.name = "EditedClimber"
@@ -199,6 +199,30 @@ func _rebuild_preview(direction: int) -> void:
 		preview.rotation.y += direction * 0.35
 		turn = create_tween()
 		turn.tween_property(preview, "rotation:y", PI, 0.3).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_restore_attached_preview.call_deferred(weakref(preview), str(p.effect), direction != 0)
+
+func _discard_preview(model: Node3D) -> void:
+	model.hide()
+	var draining:=false
+	for child in model.get_children():
+		if child.has_method("cancel_preview"):
+			child.cancel_preview();draining=true
+	if draining:
+		# Let bounded async fitting unwind before freeing its script instance.
+		await get_tree().process_frame
+		if is_instance_valid(model):model.queue_free()
+	elif is_instance_valid(model):
+		model.free()
+
+func _restore_attached_preview(model_ref: WeakRef, effect: String, rotating: bool) -> void:
+	# Surface fitting must sample the final display pose, after the camera/turn settles.
+	if rotating:
+		await get_tree().create_timer(0.32).timeout
+	var model = model_ref.get_ref()
+	if not is_instance_valid(model) or model != preview or not active:
+		return
+	if effect in Wardrobe.ATTACHED_EFFECTS:
+		preload("res://ui3d/lock_effect_preparation.gd").effect_script(effect).preview(model, main.cam)
 
 func _exit_tree() -> void:
 	if is_instance_valid(stage):

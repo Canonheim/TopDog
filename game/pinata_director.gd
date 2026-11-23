@@ -3,6 +3,9 @@ extends Node
 signal reward_unlocked(reward: Dictionary)
 const Rewards = preload("res://core/pinata_rewards.gd")
 var reward_store: RefCounted
+var reward_rules := {}
+var reward_jobs: Array = []
+var reward_thread: Thread
 const Pickup = preload("res://game/cosmetic_pinata.gd")
 const SPAWN_CHANCE := 0.10
 const WEIGHTS := [[0,100,0,0,0],[0,100,0,0,0],[0,80,20,0,0],[0,65,25,10,0],[0,55,25,15,5]]
@@ -17,10 +20,14 @@ var current: Area3D
 var practice_dev_enabled := false
 var practice_spawn_queued := false
 var practice_reward_owned := {}
+var phase_ticket:=0
+var snapshot_max_slice_us:=0
+var placement_max_slice_us:=0
 
 func _ready() -> void:
  game = get_parent()
  rng.randomize()
+ reward_rules = Rewards.table()
  game.phase_changed.connect(_phase)
 
 func reset() -> void:
@@ -38,6 +45,7 @@ func _clear() -> void:
  current = null
 
 func _phase(value: String) -> void:
+ phase_ticket+=1
  _clear()
  if value not in ["turn","round"]: return
  var forced_practice: bool = game.practice and practice_spawn_queued and game.is_host()
@@ -50,9 +58,14 @@ func _phase(value: String) -> void:
   tier_spacing = spacing_for_players(builders)
  round_index += 1
  if not game.is_host(): return
- var snapshot := tower_snapshot()
  if not forced_practice and rng.randf() >= SPAWN_CHANCE: return
- var point := choose_position(snapshot)
+ _spawn_after_snapshot(forced_practice,phase_ticket)
+
+func _spawn_after_snapshot(forced_practice: bool,ticket: int) -> void:
+ var snapshot: Dictionary=await tower_snapshot_async()
+ if ticket!=phase_ticket or game.phase not in ["turn","round"]:return
+ var point: Vector3=await choose_position_async(snapshot)
+ if ticket!=phase_ticket or game.phase not in ["turn","round"]:return
  if not point.is_finite(): return
  generation += 1
  _spawn.rpc(generation, point, rarity_for_roll(snapshot.distance,rng.randf()*100.0,tier_spacing),forced_practice)
@@ -89,22 +102,17 @@ func tower_snapshot() -> Dictionary:
   var climber: Climber = game.climbers[cid]
   if climber.state != Climber.State.FROZEN: continue
   for body in climber.bodies.values():
+   if not is_instance_valid(body):continue
    for collision: CollisionShape3D in body.find_children("*","CollisionShape3D",true,false):
     if collision.shape == null: continue
-    # Actual collision-surface samples, including transformed hands and feet.
-    var mesh := collision.shape.get_debug_mesh()
-    for surface in mesh.get_surface_count():
-     for vertex: Vector3 in mesh.surface_get_arrays(surface)[Mesh.ARRAY_VERTEX]:
-      var world_point: Vector3 = collision.global_transform * vertex
-      var point := Vector2(world_point.x,world_point.y)
-      points.append(point)
-      left = minf(left,point.x)
-      right = maxf(right,point.x)
-      top = maxf(top,point.y)
-      var reach := anchor.distance_to(point)
-      if reach>distance:
-       distance=reach
-       farthest=point
+    # CPU collision-shape samples: no debug mesh construction/GPU readback during play.
+    for vertex: Vector3 in collision_samples(collision.shape):
+     var world_point: Vector3=collision.global_transform*vertex
+     var point:=Vector2(world_point.x,world_point.y)
+     points.append(point)
+     left=minf(left,point.x);right=maxf(right,point.x);top=maxf(top,point.y)
+     var reach:=anchor.distance_to(point)
+     if reach>distance:distance=reach;farthest=point
  # Before any body has locked, use an upright frame at the anchor and Tier 1.
  var direction := (farthest-anchor).normalized() if distance>.001 else Vector2(0,1)
  var normal := Vector2(-direction.y,direction.x)
@@ -165,7 +173,9 @@ func _on_collected(body: Node3D,id: int) -> void:
   var bounce := Vector3.ZERO
   if collector != null and collector.state != Climber.State.FROZEN and not collector.removed:
    cid = collector.climber_id
-   bounce = pickup_bounce(current.global_position)
+   bounce = body.global_position-current.global_position
+   bounce.z = 0
+   bounce = bounce.normalized()
   _collect.rpc(id,event_id,rng.randi(),cid,bounce)
 
 @rpc("authority","call_local","reliable")
@@ -181,7 +191,7 @@ func _collect(id: int, event_id := "", reward_seed := 0, collector_id := -1, bou
   if int(player.get("peer",1)) == game.me(): recipients.append(player)
  if recipients.is_empty(): return
  if game.practice:
-  var rules := Rewards.table()
+  var rules := reward_rules.duplicate(true)
   rules.items = rules.items.filter(func(item): return bool(item.get("test",false)))
   for player in recipients:
    var slot := str(int(player.get("slot",0)))
@@ -194,9 +204,8 @@ func _collect(id: int, event_id := "", reward_seed := 0, collector_id := -1, bou
    reward_unlocked.emit(reward)
   return
  if reward_store == null: reward_store = Rewards.new()
- for reward in reward_store.collect(event_id,current.rarity,reward_seed,recipients):
-  reward_unlocked.emit(reward)
- if not reward_store.error.is_empty(): push_error(reward_store.error)
+ reward_jobs.append([event_id,current.rarity,reward_seed,recipients.duplicate(true),reward_rules.duplicate(true)])
+
 
 
 
@@ -214,24 +223,162 @@ func handle_practice_dev_key(event: InputEvent) -> String:
   return "Piñata queued for next round"
  return ""
 
-## Aim at the nearest frozen tower surface, or the starting base before a stack exists.
-func pickup_bounce(from: Vector3) -> Vector3:
- var point := Vector2(from.x,from.y)
- var target := base_anchor() + Vector2(0,1.0)
- var nearest := INF
- for candidate: Vector2 in tower_snapshot().points:
-  var distance := point.distance_squared_to(candidate)
-  if distance < nearest:
-   nearest = distance
-   target = candidate
- var direction := (target-point).normalized()
- return Vector3(direction.x,direction.y,0) * Feel.get_k("pinata_pickup_bounce")
+## Reverse the airborne collector's whole-body trajectory at half speed.
+func pickup_bounce(velocity: Vector3, _normal := Vector3.ZERO) -> Vector3:
+ # Delta v: current v + (-1.5 v) = -0.5 v.
+ return Vector3(velocity.x,velocity.y,0) * -1.5
 
-func _apply_pickup_bounce(cid: int, velocity: Vector3) -> void:
+func pickup_airborne(collector: Climber) -> bool:
+ if collector.stuck_count() > 0: return false
+ # Check the whole ragdoll, including torso landings and active limbs.
+ for piece: RigidBody3D in collector.bodies.values():
+  for contact in piece.get_colliding_bodies():
+   if Climber.climber_of(contact) == collector: continue
+   if contact is CollisionObject3D and contact.collision_layer & (Climber.SOLID_MASK | Climber.LAYER_PROP): return false
+ return true
+
+func _apply_pickup_bounce(cid: int, normal: Vector3) -> void:
  var collector: Climber = game.climbers.get(cid)
  if collector == null or collector.removed or collector.state != Climber.State.LIVE or collector.owner_peer != game.me(): return
- if not velocity.is_finite(): return
- var boost := Vector3(velocity.x,velocity.y,0).limit_length(Feel.get_k("pinata_pickup_bounce"))
- # Equal velocity change across the ragdoll avoids wrenching the touching limb.
+ if not pickup_airborne(collector): return
+ # Use the owner's actual ragdoll velocity, not a delayed remote pose estimate.
+ var velocity := Vector3.ZERO
+ var mass_sum := 0.0
+ for piece: RigidBody3D in collector.bodies.values():
+  velocity += piece.linear_velocity * piece.mass
+  mass_sum += piece.mass
+ if mass_sum <= 0.0: return
+ var boost := pickup_bounce(velocity/mass_sum,normal)
+ # Equal velocity change preserves relative limb movement and spin.
  for piece: RigidBody3D in collector.bodies.values():
   piece.apply_central_impulse(boost * piece.mass)
+
+
+# Serialized background saves preserve receipt ordering and duplicate protection.
+# Only main-thread polling emits UI signals, and only after the atomic save succeeds.
+func _process(_dt: float) -> void:
+ if reward_thread != null:
+  if reward_thread.is_alive(): return
+  var grants: Array = reward_thread.wait_to_finish()
+  reward_thread = null
+  for reward in grants: reward_unlocked.emit(reward)
+  if not reward_store.error.is_empty(): push_error(reward_store.error)
+ if reward_jobs.is_empty(): return
+ var job: Array = reward_jobs.pop_front()
+ reward_thread = Thread.new()
+ var err := reward_thread.start(reward_store.collect.bind(job[0],job[1],job[2],job[3],job[4]))
+ if err != OK:
+  reward_thread = null
+  reward_jobs.push_front(job)
+  push_error("Could not start piñata reward save worker; reward remains queued.")
+
+func _exit_tree() -> void:
+ # Leaving the match must not discard an earned reward or abandon a live thread.
+ if reward_thread != null:
+  reward_thread.wait_to_finish()
+  reward_thread = null
+ for job in reward_jobs:
+  reward_store.collect(job[0],job[1],job[2],job[3],job[4])
+ reward_jobs.clear()
+
+static var shape_samples: Dictionary={}
+static func collision_samples(shape: Shape3D) -> PackedVector3Array:
+ if shape is ConvexPolygonShape3D:return shape.points
+ var key: String=shape.get_class()
+ if shape is BoxShape3D:key+=str(shape.size)
+ elif shape is SphereShape3D:key+=str(shape.radius)
+ elif shape is CapsuleShape3D:key+=str(shape.radius)+":"+str(shape.height)
+ if shape_samples.has(key):return shape_samples[key]
+ var points:=PackedVector3Array()
+ if shape is BoxShape3D:
+  for x in [-.5,.5]:
+   for y in [-.5,.5]:
+    for z in [-.5,.5]:points.append(shape.size*Vector3(x,y,z))
+ elif shape is SphereShape3D or shape is CapsuleShape3D:
+  var radius: float=shape.radius
+  var half:=maxf(0.,shape.height*.5-radius) if shape is CapsuleShape3D else 0.
+  for side in 16:
+   var angle:=TAU*side/16.
+   var y:=cos(angle)*radius
+   points.append(Vector3(sin(angle)*radius,y+(half if y>=0 else -half),0))
+ elif shape is ConvexPolygonShape3D:points=shape.points
+ shape_samples[key]=points
+ return points
+
+
+func tower_snapshot_async() -> Dictionary:
+ var slice_start:=Time.get_ticks_usec()
+ var anchor := base_anchor()
+ var farthest := anchor
+ var distance := 0.0
+ var points: Array[Vector2] = []
+ var left := anchor.x
+ var right := anchor.x
+ var top := anchor.y
+ for cid in game.tower:
+  if not game.climbers.has(cid): continue
+  var climber: Climber = game.climbers[cid]
+  if climber.state != Climber.State.FROZEN: continue
+  for body in climber.bodies.values():
+   if not is_instance_valid(body):continue
+   for collision: CollisionShape3D in body.find_children("*","CollisionShape3D",true,false):
+    if Time.get_ticks_usec()-slice_start>=1200:
+     snapshot_max_slice_us=maxi(snapshot_max_slice_us,Time.get_ticks_usec()-slice_start)
+     await get_tree().process_frame
+     slice_start=Time.get_ticks_usec()
+     if not is_instance_valid(climber) or not is_instance_valid(collision):continue
+    if collision.shape == null: continue
+    # CPU collision-shape samples: no debug mesh construction/GPU readback during play.
+    for vertex: Vector3 in collision_samples(collision.shape):
+     var world_point: Vector3=collision.global_transform*vertex
+     var point:=Vector2(world_point.x,world_point.y)
+     points.append(point)
+     left=minf(left,point.x);right=maxf(right,point.x);top=maxf(top,point.y)
+     var reach:=anchor.distance_to(point)
+     if reach>distance:distance=reach;farthest=point
+ snapshot_max_slice_us=maxi(snapshot_max_slice_us,Time.get_ticks_usec()-slice_start)
+ # Before any body has locked, use an upright frame at the anchor and Tier 1.
+ var direction := (farthest-anchor).normalized() if distance>.001 else Vector2(0,1)
+ var normal := Vector2(-direction.y,direction.x)
+ if normal.y<0: normal=-normal
+ return {"anchor":anchor,"farthest":farthest,"distance":distance,"direction":direction,"normal":normal,"points":points,"left":left,"right":right,"top":top}
+
+func choose_position_async(snapshot: Dictionary = {}) -> Vector3:
+ var slice_start:=Time.get_ticks_usec()
+ if snapshot.is_empty(): snapshot=await tower_snapshot_async()
+ var height := 1.995 * Feel.get_k("body_scale")
+ var radius: float = Pickup.PICKUP_RADIUS
+ var sphere := SphereShape3D.new()
+ sphere.radius = radius+.15
+ var query := PhysicsShapeQueryParameters3D.new()
+ query.shape = sphere
+ query.collision_mask = Climber.LAYER_WORLD | Climber.LAYER_LIVE | Climber.LAYER_FROZEN | Climber.LAYER_PROP
+ for attempt in 64:
+  var candidate: Vector2
+  if game.stage.delmar:
+   # Invisible anchor-to-tip frame, never the arena's progress-line angle.
+   var along := maxf(5.0+radius+.01,float(snapshot.distance)+rng.randf_range(-.5,2.5)*height)
+   var across := rng.randf_range(-3.5+radius,5.0-radius)
+   candidate = snapshot.anchor+snapshot.direction*along+snapshot.normal*across
+   # Entire sphere must be off the dock and five units above its deck.
+   if candidate.x-radius <= Stage.PIER_END or candidate.y-radius < Stage.DECK_Y+5.0: continue
+  else:
+   var side := 1.0 if rng.randf()<.5 else -1.0
+   var gap := rng.randf_range(2.5,3.5) if rng.randf()<.2 else rng.randf_range(1.5,2.5)
+   candidate.x = (float(snapshot.right) if side>0 else float(snapshot.left))+side*height*gap
+   candidate.y = maxf(5.0+radius+.01,float(snapshot.top)+height*rng.randf_range(-.4,1.5))
+  var too_close := false
+  for point: Vector2 in snapshot.points:
+   if Time.get_ticks_usec()-slice_start>=1200:
+    placement_max_slice_us=maxi(placement_max_slice_us,Time.get_ticks_usec()-slice_start)
+    await get_tree().process_frame
+    slice_start=Time.get_ticks_usec()
+   if point.distance_squared_to(candidate)<pow(1.25*height+radius,2):
+    too_close=true
+    break
+  if too_close: continue
+  var position := Vector3(candidate.x,candidate.y,0)
+  query.transform.origin=position
+  placement_max_slice_us=maxi(placement_max_slice_us,Time.get_ticks_usec()-slice_start)
+  if game.world.get_world_3d().direct_space_state.intersect_shape(query,1).is_empty(): return position
+ return Vector3(INF,INF,INF)

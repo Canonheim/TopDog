@@ -1,0 +1,9 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://ui3d/petrified/flower.gdshader" id="1_4qv2g"]
+[ext_resource type="Texture2D" path="res://palette/house_atlas.png" id="2_pqxol"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_4qv2g")
+shader_parameter/atlas = ExtResource("2_pqxol")

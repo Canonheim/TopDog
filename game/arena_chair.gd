@@ -58,7 +58,6 @@ var previous := Transform3D.IDENTITY
 var recent_hits := {}
 var carry_velocity := Vector3.ZERO
 var carry_spin := 0.0
-var release_grace := 0.0
 var last_hand := Vector3.ZERO
 var carrier_rids: Array[RID] = []
 var loose_target := Transform3D.IDENTITY
@@ -204,7 +203,6 @@ func _show_stage(stage: int) -> void:
 
 
 func can_reach(c: Climber, i: int) -> bool:
-	if holder == -1 and carrier_rids.has(c.bodies[c.limbs[i].def.end].get_rid()): return false
 	var end := c.limb_end(i)
 	var p := collider.to_local(Vector3(end.x, end.y, 0))
 	return p.distance_to(p.clamp(-SIZE * 0.5, SIZE * 0.5)) <= float(c.limbs[i].end_r) + 0.02
@@ -329,7 +327,6 @@ func drop(c: Climber, _dt: float, remote_hand_velocity: Variant = null) -> void:
 		var end: RigidBody3D = c.bodies[c.limbs[limb].def.end]
 		flight = remote_hand_velocity + spin.cross(global_position-end.global_position)
 	clear_grip()
-	release_grace = Feel.get_k("chair_release_grace")
 	thrower = holder
 	holder = -1
 	limb = -1
@@ -344,9 +341,7 @@ func drop(c: Climber, _dt: float, remote_hand_velocity: Variant = null) -> void:
 	sleeping = false
 
 
-func release_carrier_when_clear(dt := -1.0) -> void:
-	release_grace = maxf(0.0, release_grace - (get_physics_process_delta_time() if dt < 0 else dt))
-	if release_grace > 0.0: return
+func release_carrier_when_clear(_dt := -1.0) -> void:
 	if exceptions.is_empty():
 		return
 	var query := PhysicsShapeQueryParameters3D.new()
@@ -411,7 +406,7 @@ func sweep_hits(dt: float, excluded_id: int) -> Dictionary:
 	_expire_hits(dt)
 	var hits := {}
 	var travel := displacement.length() + angle * SIZE.length() * 0.5
-	if travel / dt >= HIT_SPEED:
+	if travel / dt >= minf(HIT_SPEED, Feel.get_k("chair_body_hit_speed")):
 		var query := PhysicsShapeQueryParameters3D.new()
 		query.shape = hit_shape
 		query.margin = 0.012  # Include resting separation at a physical impact.
@@ -439,7 +434,8 @@ func sweep_hits(dt: float, excluded_id: int) -> Dictionary:
 				var point: Vector3 = hit.point
 				var speed := displacement / dt + omega.cross(point - query.transform.origin)
 				speed.z = 0
-				if speed.length() >= HIT_SPEED and (not hits.has(id) or speed.length() > float(hits[id].speed)):
+				var threshold := HIT_SPEED if str(piece.get_meta("piece")) == "head" else Feel.get_k("chair_body_hit_speed")
+				if speed.length() >= threshold and (not hits.has(id) or speed.length() > float(hits[id].speed)):
 					var impulse := speed.normalized() * minf(victim.total_mass * 0.75, piece.mass * speed.length() * 0.85)
 					hits[id] = {"piece": piece.get_meta("piece"), "offset": piece.to_local(point), "impulse": impulse, "speed": speed.length()}
 	for id in hits:

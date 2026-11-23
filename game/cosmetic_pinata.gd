@@ -1,10 +1,14 @@
 extends Area3D
 ## Collectible visual and contact effect; the match director handles spawning and authority.
 signal collected(body: Node3D)
+signal burst_prepared
+static var burst_cache_ready := false
+static var shared_paper: BoxMesh
 enum Rarity { WHITE, GREEN, BLUE, PURPLE, RED }
 @export_enum("White", "Green", "Blue", "Purple", "Red") var rarity: int = Rarity.WHITE
 const RarityStyle := preload("res://game/pinata_rarity.gd")
 const PICKUP_RADIUS := 0.4736 # Scaled body mesh: center to farthest branch tip, excluding tassels/rope.
+const BREAK_SOUND := preload("res://audio/sfx/pinata_break_party.wav")
 const PINATA := preload("res://kit/models/pinata.glb")
 const COLORS := [Color("ff365c"),Color("ffd533"),Color("22d9ce"),Color("a758ef"),Color("ff852e"),Color("70d94d")]
 var contact_enabled := true
@@ -14,6 +18,7 @@ var visual: Node3D
 var spinner: Node3D
 var stars: Array[MeshInstance3D] = []
 var burst_root: Node3D
+var cleaning_burst := false
 
 func _ready() -> void:
 	collision_layer = 0
@@ -48,6 +53,25 @@ func _ready() -> void:
 		stars.append(star)
 	_update_star_pulse()
 	body_entered.connect(_touch)
+	_prepare_burst()
+	if not burst_cache_ready: _warm_burst()
+
+## Called during boot, before the player reaches a match. Keep resources resident.
+static func warm_at_boot(camera: Camera3D) -> Node3D:
+	if burst_cache_ready: return null
+	var holder := Node3D.new()
+	holder.name = "PinataPreparation"
+	camera.add_child(holder)
+	holder.position = Vector3(0,0,-2)
+	holder.scale = Vector3.ONE * 0.00001
+	var pickup = new()
+	pickup.contact_enabled = false
+	pickup.monitoring = false
+	pickup.burst_prepared.connect(func():
+		holder.hide()
+		holder.process_mode = Node.PROCESS_MODE_DISABLED)
+	holder.add_child(pickup)
+	return holder
 
 static func _star(radius: float) -> ArrayMesh:
 	var st := SurfaceTool.new()
@@ -63,7 +87,16 @@ static func _star(radius: float) -> ArrayMesh:
 	return st.commit()
 
 func _process(delta: float) -> void:
-	if taken: return
+	if taken:
+		if cleaning_burst and is_instance_valid(burst_root):
+			if burst_root.get_child_count()>0:
+				var child := burst_root.get_child(0)
+				burst_root.remove_child(child)
+				child.queue_free()
+			else:
+				burst_root.queue_free()
+				queue_free()
+		return
 	_face_camera()
 	pulse_time += delta
 	_update_star_pulse()
@@ -102,16 +135,27 @@ func collect() -> void:
 	set_process(false)
 	_burst()
 
-func _burst() -> void:
+func _prepare_burst() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	burst_root = Node3D.new()
 	burst_root.name = "PinataCollectionBurst"
+	burst_root.hide()
+	burst_root.process_mode = Node.PROCESS_MODE_DISABLED
 	get_parent().add_child(burst_root)
 	burst_root.global_position = global_position
+	# Collection already replicates to every peer; its taken guard prevents double playback.
+	var voice := AudioStreamPlayer3D.new()
+	voice.name = "PinataBreakSound"
+	voice.stream = BREAK_SOUND
+	voice.bus = "Effects"
+	voice.unit_size = 6.0
+	burst_root.add_child(voice)
+	voice.finished.connect(voice.queue_free)
 	# Paper comes from the same center, with a dense quick burst and a falling tail.
 	for i in 6:
 		var paper := CPUParticles3D.new()
+		paper.emitting = false
 		paper.amount = 12
 		paper.lifetime = 1.65
 		paper.one_shot = true
@@ -128,25 +172,62 @@ func _burst() -> void:
 		paper.angle_max = 360
 		paper.scale_amount_min = .55
 		paper.scale_amount_max = 1.25
-		var card := BoxMesh.new()
-		card.size = Vector3(.075,.12,.008)
-		paper.mesh = card
+		if shared_paper == null:
+			shared_paper = BoxMesh.new()
+			shared_paper.size = Vector3(.075,.12,.008)
+		paper.mesh = shared_paper
 		paper.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		CelPass.paint(paper,COLORS[i])
 		burst_root.add_child(paper)
-		paper.emitting = true
+
 	# Stratified angles leave no blank sector; each entire spark uses one swatch.
 	for i in 24:
 		var spark := Spark.new()
 		spark.tint = COLORS[i%COLORS.size()]
+		spark.history_time = -float(i%4)/120.0
 		var angle := TAU*(i+rng.randf_range(-.4,.4))/24
 		spark.velocity = Vector3(cos(angle),sin(angle),rng.randf_range(-.18,.18))*rng.randf_range(2.0,4.0)
 		spark.bend = rng.randf_range(-1.5,1.5)
 		spark.lifetime = rng.randf_range(.8,1.35)
 		burst_root.add_child(spark)
+		spark.set_process(false)
+
+func _warm_burst() -> void:
+	# Render a subpixel burst while the pickup appears, warming first-use pipelines.
+	burst_root.scale = Vector3.ONE * 0.00001
+	burst_root.show()
+	burst_root.process_mode = Node.PROCESS_MODE_INHERIT
+	for child in burst_root.get_children():
+		if child is CPUParticles3D: child.emitting = true
+		elif child is Spark:
+			child.ribbon.set_instance_transform(0,Transform3D.IDENTITY)
+			child.ribbon.visible_instance_count = 1
+	for frame in 4:
+		await get_tree().process_frame
+		if taken: return
+	burst_root.hide()
+	burst_root.process_mode = Node.PROCESS_MODE_DISABLED
+	for child in burst_root.get_children():
+		if child is CPUParticles3D: child.emitting = false
+		elif child is Spark: child.ribbon.visible_instance_count = 0
+	burst_cache_ready = true
+	burst_prepared.emit()
+
+func _burst() -> void:
+	burst_root.scale = Vector3.ONE
+	burst_root.global_position = global_position
+	burst_root.show()
+	burst_root.process_mode = Node.PROCESS_MODE_INHERIT
+	for child in burst_root.get_children():
+		if child is CPUParticles3D:
+			child.emitting = true
+			child.restart()
+		elif child is Spark: child.set_process(true)
+		elif child is AudioStreamPlayer3D: child.play()
 	get_tree().create_timer(2.0).timeout.connect(func():
-		if is_instance_valid(burst_root): burst_root.queue_free()
-		queue_free())
+		if is_instance_valid(burst_root): burst_root.hide()
+		cleaning_burst = true
+		set_process(true))
 
 class Spark extends Node3D:
 	var tint := Color.WHITE
@@ -155,23 +236,33 @@ class Spark extends Node3D:
 	var lifetime := 1.0
 	var age := 0.0
 	var head: MeshInstance3D
-	var tail: MeshInstance3D
-	var ribbon := ImmediateMesh.new()
+	var tail: MultiMeshInstance3D
+	var ribbon := MultiMesh.new()
+	static var shared_ball: SphereMesh
+	static var shared_strip: QuadMesh
 	var history: Array[Vector3] = []
 	var history_time := 0.0
 	func _ready() -> void:
 		head = MeshInstance3D.new()
-		var ball := SphereMesh.new()
-		ball.radius = .045
-		ball.height = .09
-		ball.radial_segments = 8
-		ball.rings = 4
-		head.mesh = ball
+		if shared_ball == null:
+			shared_ball = SphereMesh.new()
+			shared_ball.radius = .045
+			shared_ball.height = .09
+			shared_ball.radial_segments = 8
+			shared_ball.rings = 4
+		head.mesh = shared_ball
 		head.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(head)
 		CelPass.paint(head,tint)
-		tail = MeshInstance3D.new()
-		tail.mesh = ribbon
+		tail = MultiMeshInstance3D.new()
+		if shared_strip == null:
+			shared_strip = QuadMesh.new()
+			shared_strip.size = Vector2.ONE
+		ribbon.transform_format = MultiMesh.TRANSFORM_3D
+		ribbon.mesh = shared_strip
+		ribbon.instance_count = 6
+		ribbon.visible_instance_count = 0
+		tail.multimesh = ribbon
 		tail.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		add_child(tail)
 		CelPass.paint(tail,tint)
@@ -179,34 +270,29 @@ class Spark extends Node3D:
 	func _process(delta: float) -> void:
 		age += delta
 		if age >= lifetime:
-			queue_free()
+			hide()
+			set_process(false)
 			return
 		velocity = velocity.rotated(Vector3.BACK,bend*delta)
 		velocity *= exp(-.55*delta)
 		head.position += velocity*delta
 		head.scale = Vector3.ONE*maxf(.03,1.0-smoothstep(lifetime*.65,lifetime,age))
 		history_time += delta
-		if history_time >= 1.0/60:
-			history_time = 0
+		if history_time >= 1.0/30:
+			history_time = fmod(history_time,1.0/30)
 			history.push_front(head.position)
-			if history.size()>13: history.pop_back()
-		ribbon.clear_surfaces()
+			if history.size()>7: history.pop_back()
+		else: return
 		if history.size()<2: return
-		ribbon.surface_begin(Mesh.PRIMITIVE_TRIANGLES)
+		ribbon.visible_instance_count = history.size()-1
 		for i in history.size()-1:
-			var direction := (history[i]-history[i+1]).normalized()
+			var delta_position := history[i]-history[i+1]
+			var length := maxf(delta_position.length(),.00001)
+			var direction := delta_position/length
 			var across := Vector3(-direction.y,direction.x,0).normalized()
-			var width := .027*(1.0-float(i)/history.size())*head.scale.x
-			var next_width := .027*(1.0-float(i+1)/history.size())*head.scale.x
-			var a := history[i]+across*width
-			var b := history[i]-across*width
-			var c := history[i+1]-across*next_width
-			var d := history[i+1]+across*next_width
-			for v in [a,b,c,a,c,d,c,b,a,d,c,a]:
-				ribbon.surface_set_normal(Vector3.BACK)
-				ribbon.surface_add_vertex(v)
-		ribbon.surface_end()
+			var width := .027*(1.0-(float(i)+.5)/history.size())*head.scale.x
+			var basis := Basis(across*maxf(width*2,.00001),direction*length,Vector3.BACK)
+			ribbon.set_instance_transform(i,Transform3D(basis,(history[i]+history[i+1])*.5))
 
 func _exit_tree() -> void:
 	if is_instance_valid(burst_root): burst_root.queue_free()
-
