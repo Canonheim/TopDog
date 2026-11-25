@@ -1,6 +1,7 @@
 shader_type spatial;
 // Blend coverage independently; never make the underlying character transparent.
 instance uniform float quartz_facets=0.0;
+instance uniform float colored_facets=0.0;
 instance uniform float film_coverage : hint_range(0.0,1.0) = 1.0;
 instance uniform vec2 shade_uv=vec2(-1.0);
 instance uniform float multicolor=0.0;
@@ -283,6 +284,10 @@ ALBEDO = color.rgb * tint.rgb * texture(base_texture, base_uv).rgb;
   vec3 pale=texture(base_texture,stone_light).rgb;
   vec3 quartz_face=mix(cool*.72,pale*.94,smoothstep(.08,.94,facet));
   ALBEDO=mix(ALBEDO,quartz_face,film*.78);
+ }else if(colored_facets>.5){
+  // Strengthen value contrast without increasing mineral hue saturation.
+  vec3 mineral_face=crystal*mix(.62,1.02,smoothstep(.08,.94,facet));
+  ALBEDO=mix(ALBEDO,mineral_face,film*.58);
  }
 
 

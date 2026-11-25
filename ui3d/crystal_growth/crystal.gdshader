@@ -26,10 +26,16 @@ void fragment(){
  swatch=clamp(mix(vec3(dot(swatch,vec3(.2126,.7152,.0722))),swatch,color_strength),vec3(0.0),vec3(1.0));
  float rim=pow(1.0-abs(dot(normalize(NORMAL),normalize(VIEW))),3.0);
  float edge=1.0-smoothstep(.0,.035,min(UV2.x,1.0-UV2.x));
- ALBEDO=mix(swatch,vec3(1.0),(rim*.55+edge*.22)/color_strength);
+ // Fine effect-local ink edges: the global outline pass precedes transparency.
+ float taper=max(0.0,(UV2.y-.72)/.28)*.5;
+ float boundary=min(UV2.x-taper,1.0-taper-UV2.x);
+ float pixel=max(fwidth(boundary),.0001);
+ float ink=1.0-smoothstep(pixel*.15,pixel*.85,boundary);
+ ALBEDO=mix(swatch,vec3(1.0),(rim*.12+edge*.05)/color_strength);
+ ALBEDO=mix(ALBEDO,vec3(.025,.022,.03),ink*.88);
  METALLIC=.12;
- ROUGHNESS=.10;
- SPECULAR=.95;
- EMISSION=swatch*(rim*.20+edge*.12);
- ALPHA=(.55+rim*.25+edge*.12+variation*.06)*smoothstep(0.0,.08,growth)*crystal_opacity;
+ ROUGHNESS=.18;
+ SPECULAR=.45;
+ EMISSION=swatch*(rim*.10+edge*.05)*(1.0-ink);
+ ALPHA=mix(.55+rim*.25+edge*.12+variation*.06,.92,ink)*smoothstep(0.0,.08,growth)*crystal_opacity;
 }

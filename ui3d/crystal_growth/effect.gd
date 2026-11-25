@@ -111,6 +111,7 @@ func populate(skin: MeshInstance3D,key: String) -> void:
  skin.set_instance_shader_parameter("stone_progress",0.0);skin.set_instance_shader_parameter("stone_seed",film_seed)
  skin.material_override=FILM
  skin.set_instance_shader_parameter("quartz_facets",1.0 if shade_index==0 else 0.0)
+ skin.set_instance_shader_parameter("colored_facets",1.0 if shade_index in [1,3,4,5,6] else 0.0)
  skin.set_instance_shader_parameter("shade_uv",shade_uv)
  skin.set_instance_shader_parameter("multicolor",1.0 if shade_index==7 else 0.0)
  skin.set_instance_shader_parameter("tint_boost",1.6 if shade_index in [4,5] else (1.2 if shade_index in [1,6,7] else 1.0))

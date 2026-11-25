@@ -1256,3 +1256,20 @@ Rainbow Quartz retired at user request. Removed from menu, catalog metadata, att
 
 ## Build 0.3.151 (2026-11-23)
 Exported builds/TopDog.exe with Rainbow Quartz retirement, Quartz-specific facet contrast softened from .55 to .72 on the dark swatch multiplier, and 10 percent crystal-section color boost except Amethyst. No added geometry or effects. Release title screenshot confirms version0.3.151; title and demo processes exited0. Demo screenshots showed the plaza without a visible climber/HUD, so match-entry validation is inconclusive, not a confirmed gameplay pass. Evidence: workspace effect-reviews/crystal-growth-enclosure/build151-*.png and logs.
+
+## Crystal ink and white-wash trial (2026-11-23)
+Effect-local transparent crystal shader now uses derivative-scaled thin facet-edge ink, with matching growth/opacity. Global outline compositor is unchanged because it executes before transparent crystals. White rim/edge albedo mix reduced .55/.22 to .12/.05; specular .95 to .45, roughness .10 to .18, reduced emission. Body film and mineral swatches unchanged; previous shader backed up in workspace crystal-before-ink.gdshader. Seven-variant render completed without shader errors. Prepared50-character RTX2080 1080p GPU median1.748ms vs1.573ms baseline; max CPU setup slice.236ms, shared1.119ms. No added geometry/draw passes. Audit reports completed, then native renderer returned abnormal shutdown as in prior reviews; not a clean-exit claim. Trial source only, no new executable. Evidence: workspace effect-reviews/crystal-growth-enclosure/mineral-ink-frames/000.png, gpu-ink.json, gpu_ink.log.
+
+
+Build0.3.152 exported in place on2026-11-23 with effect-local crystal ink edges and reduced white rim/specular wash. Export and packaged startup exited0; screenshot confirms0.3.152. No script errors in export/launch logs. Background preparation still emitted over-budget warnings for other cosmetics (including sewing_kit9.136ms); this is not an all-effects hitch-free certification. Evidence: workspace crystal-growth-enclosure/build152-engine.log, build152-launch.log, build152-title.png.
+
+
+## Build0.3.153 and separate bump trial (2026-11-23)
+Approved stronger body facet values installed for Sapphire, Emerald, Rose Quartz, Topaz and Amethyst; Ruby and Quartz retained. Exported builds/TopDog.exe0.3.153, packaged launch/normal exit passed. Separate film_bump.gdshader remains under export-excluded tests/crystal_growth_enclosure and workspace only; no production effect references it. Procedural derivative normal relief follows triangular boundaries with1.8mm apparent height and capped slope, no added geometry. Review50-body RTX2080 1080p settledGPU1.773ms vs1.566ms baseline; max setup slice.223ms/shared1.109ms. Reports and rendered comparisons completed; native review shutdown returned abnormal as previously observed. Bump not approved/installed. Evidence workspace crystal-growth-enclosure/{gpu-bump.json,bump-closeup.png,facets-closeup.png,build153-launch.log}.
+
+
+## Crystal missing sides corrected (2026-11-23)
+Actual shard mesh audit found all30 tested side vertices had inward normals. Reversed triangle winding and normals in ui3d/crystal_growth/shard.res; verified all24 triangles outward and every geometric edge shared by exactly2 triangles. Positions, UVs,72vertices,24triangles unchanged; no extra passes/material changes. Corrected original review baker too. Rendered close-up completed; skin film untouched and bump remains separate. Source correction only, no new build. Evidence workspace crystal-growth-enclosure/shard_audit.log, shard_fix.log, crystal-sides-fixed.png. Backup shard-before-winding-fix.res retained.
+
+
+Build0.3.154 exported in place on2026-11-23 with corrected outward crystal face winding/normals. Skin pattern unchanged; separate bump trial excluded. Export and packaged launch/normal exit returned0; screenshot confirms0.3.154. No script/export errors in build154-engine.log or build154-launch.log. Evidence in workspace effect-reviews/crystal-growth-enclosure/.
