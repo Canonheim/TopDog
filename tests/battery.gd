@@ -4563,16 +4563,21 @@ func _run_neutralgrapple() -> void:
 		var turns := 0
 		var previous := 0.0
 		var push := 0.0
+		var tail_peak := 0.0
+		var relative_peak := 0.0
 		for tick in 480:
 			await frames(1)
 			if tick > 180:
 				peak = maxf(peak,absf(target.angular_velocity.z))
+				relative_peak = maxf(relative_peak,absf(target.angular_velocity.z-b.bodies.arm_l_lo.angular_velocity.z))
 				if previous * target.angular_velocity.z < 0 and absf(target.angular_velocity.z)>2: turns+=1
 				previous = target.angular_velocity.z
+			if tick > 360:
+				tail_peak = maxf(tail_peak,absf(target.angular_velocity.z))
 			push = maxf(push,a.limbs[1].push_load)
-		print("NEUTRAL held=",held," peak_spin=",peak," reversals=",turns," push=",push," attached=",a.limbs[1].grab_climber==b)
+		print("NEUTRAL held=",held," peak_spin=",peak," reversals=",turns," push=",push," attached=",a.limbs[1].grab_climber==b," tail=",tail_peak," relative_peak=",relative_peak)
 		t("neutral grapple has no deliberate push load",push == 0)
-		t("neutral grapple settles without runaway wrist spin", peak < 5.0 and a.limbs[1].grab_climber == b)
+		t("neutral grapple settles without runaway wrist spin", relative_peak < 5.0 and tail_peak < 5.0 and a.limbs[1].grab_climber == b)
 		if held:
 			var at := b.limb_end(0)
 			b.driver.point_limb(0,true,at + Vector2(0.04,0.02))
@@ -4756,50 +4761,53 @@ func _run_intermission() -> void:
 
 
 func _run_movingterrain() -> void:
+	await _run_springgrapple() # Historical test entry point now verifies restored behavior.
+
+func _run_springgrapple() -> void:
 	var c := spawn(Vector2(0,8))
 	var target := spawn(Vector2(3,8))
-	c.set_physics_process(false)
-	target.set_physics_process(false)
-	c.release_all();target.release_all()
-	var hand: RigidBody3D = c.bodies["hand_r"]
-	var body: RigidBody3D = target.bodies["arm_l_lo"]
-	c.attach(1,body)
-	var grip: Dictionary = c.limbs[1]
-	t("moving terrain: live grip uses independent kinematic anchor", grip.grab.is_valid() and is_instance_valid(grip.live_anchor) and grip.live_anchor.freeze)
-	# Targets must not receive force even when loaded far beyond the old peel threshold.
-	var pose := body.global_transform
-	var before: Vector3 = body.constant_force
-	grip.push_load=100.0;grip.push_until=100.0;grip.strain_time=100.0
-	for tick in 30:
-		body.global_position += Vector3(0.01,0.005,0)
-		Climber.sync_server(body)
-		c._tick_live_contact(1,1.0/120)
-	t("moving terrain: anchor follows the target", grip.live_anchor.global_transform.is_equal_approx(body.global_transform))
-	t("moving terrain: load and pressure never detach grip", grip.grab_other==body and grip.grab.is_valid())
-	t("moving terrain: no force or control influence on target", grip.contact_force==Vector3.ZERO and body.constant_force==before and not target._limb_has_incoming_grip(target.limbs[0]))
-
-	body.global_transform=pose
-	Climber.sync_server(body)
-	target._free_joints()  # Isolate received force from the target's own joint relaxation.
 	for actor in [c,target]:
+		actor.set_physics_process(false)
+		actor.release_all();actor._free_joints()
 		for piece: RigidBody3D in actor.bodies.values():
-			piece.gravity_scale=0
-			piece.linear_velocity=Vector3.ZERO
-			piece.angular_velocity=Vector3.ZERO
-	for tick in 60:
-		hand.apply_central_force(Vector3(-60,20,0))
+			piece.gravity_scale=0;piece.collision_layer=0;piece.collision_mask=0
+			piece.linear_velocity=Vector3.ZERO;piece.angular_velocity=Vector3.ZERO
+	var hand: RigidBody3D=c.bodies.hand_r
+	var body: RigidBody3D=target.bodies.arm_l_lo
+	body.collision_layer=Climber.LAYER_LIVE
+	hand.global_position=body.global_position
+	Climber.sync_server(hand)
+	c.attach(1,body)
+	var grip: Dictionary=c.limbs[1]
+	t("spring grip: no moving-terrain anchor or rigid live joint",grip.grab_other==body and not grip.grab.is_valid() and not is_instance_valid(grip.live_anchor))
+	body.position.x+=.08;Climber.sync_server(body)
+	c._tick_live_contact(1,1.0/120)
+	t("spring grip: restoring force opposes displacement",grip.contact_force.x<0)
+	await frames(2)
+	t("spring grip: both players receive force",hand.linear_velocity.x>0 and body.linear_velocity.x<0)
+	t("spring grip: internal force conserves linear momentum",(hand.linear_velocity*hand.mass+body.linear_velocity*body.mass).length()<.01)
+	c.set_push_load(1,target,100.0)
+	t("spring grip: no deliberate shove meter",grip.push_load==0 and grip.grab_other==body)
+	body.position.x+=1.0;Climber.sync_server(body)
+	c._tick_live_contact(1,1.0/120)
+	t("spring grip: excessive stretch breaks contact",grip.grab_other==null and is_equal_approx(grip.regrip,Feel.get_k("grapple_regrip")) and grip.peeled_from==target.get_instance_id())
+	hand.global_position=body.global_position;Climber.sync_server(hand)
+	c.attach(1,body)
+	body.linear_velocity=Vector3(100,0,0)
+	for tick in 30:
+		if grip.grab_other==null:break
 		c._tick_live_contact(1,1.0/120)
-		await frames(1)
-	var momentum:=Vector3.ZERO
-	for piece: RigidBody3D in target.bodies.values():momentum+=piece.linear_velocity*piece.mass
-	t("moving terrain: loaded grip does not accelerate target",momentum.length()<0.1,momentum)
-	t("moving terrain: loaded grip stays attached in physics",grip.grab.is_valid() and grip.grab_other==body)
-	var anchor: Node = grip.live_anchor
-	c.release(1)
-	await frames(2)
-	t("moving terrain: manual release removes anchor", not is_instance_valid(anchor) and not grip.grab.is_valid())
-	c.remove();target.remove()
-	await frames(2)
+	t("spring grip: sustained load breaks contact without overstretch",grip.grab_other==null)
+	var g: Game=GameScript.new();g.world=world;add_child(g);g.set_physics_process(false)
+	g.climbers[target.climber_id]=target
+	var key:=Vector2i(c.climber_id,1)
+	g._pulls[target.climber_id]={key:{"piece":"arm_l_lo","offset":Vector3.ZERO,"force":Vector3.LEFT,"supported":true,"time":g._now}}
+	g._refresh_remote_pulls()
+	t("spring network: fresh samples provide force and support",target.remote_pulls.has(key) and target.remote_support)
+	g._now+=Game.PULL_STALE_S+.01;g._refresh_remote_pulls()
+	t("spring network: stale samples cannot keep pulling or supporting",target.remote_pulls.is_empty() and not target.remote_support)
+	g.climbers.clear();g.queue_free()
+	c.remove();target.remove();await frames(2)
 
 func _run_chairrestpickup() -> void:
 	var g := make_game("practice",1,60,"plaza")
@@ -4873,3 +4881,42 @@ func _run_chairhandoff() -> void:
 	await frames(2)
 	t("chair body nudge: small positive impulse without knockout",body.linear_velocity.x>0.05 and body.linear_velocity.x<0.5 and victim.knockout_left<=0,body.linear_velocity)
 	g.end_match();g.queue_free();await frames(2)
+
+
+func _run_chairreplica() -> void:
+	var c := spawn(Vector2(0, 5))
+	c.set_physics_process(false)
+	var g: Game = GameScript.new()
+	g.world = world
+	add_child(g)
+	g.set_physics_process(false)
+	g.climbers[c.climber_id] = c
+	g._rpc_spawn_chair(42, Vector2.ZERO, Vector2i(9, 12))
+	var chair = g.chair
+	var end: RigidBody3D = c.bodies[c.limbs[0].def.end]
+	end.global_transform = Transform3D(Basis(Vector3.BACK, .8), Vector3(2, 4, 0))
+	Climber.sync_server(end)
+	var relative := Basis(Vector3.UP, .65) * Basis(Vector3.BACK, -.4)
+	var point := Vector3(.1, .35, 0)
+	var host_pose := Transform3D(Basis(Vector3.BACK, -1.0), Vector3(-2, 1, 0))
+	g._rpc_chair_pose(42, c.climber_id, 0, point, host_pose, 10, false, relative)
+	t("chair replica: frozen with no local grip joint", chair.freeze and not chair.grip_joint.is_valid())
+	t("chair replica: host grip rotation follows displayed limb", chair.global_basis.is_equal_approx(end.global_basis * relative))
+	t("chair replica: contact point stays on displayed hand", (chair.global_transform * point).distance_to(end.global_position) < .00001)
+	var updated := Basis(Vector3.UP, -.9) * Basis(Vector3.BACK, .3)
+	g._rpc_chair_pose(42, c.climber_id, 0, point, host_pose, 12, false, updated)
+	end.position.x += .1
+	end.rotate_z(.1)
+	chair.follow_replica(end, 1.0/120.0)
+	t("chair replica: subsequent snapshots update held angle", chair.global_basis.is_equal_approx(end.global_basis * updated))
+	t("chair replica: estimates finite release motion", chair.linear_velocity.is_finite() and chair.angular_velocity.is_finite())
+	t("chair replica: wear updates while held", chair.hit_count == 12)
+	g._rpc_chair_pose(42, -1, -1, Vector3.ZERO, host_pose, 12, false)
+	t("chair replica: release stays host driven", chair.holder == -1 and chair.freeze and not chair.grip_joint.is_valid() and chair.loose_target.is_equal_approx(host_pose))
+	g._rpc_chair_pose(41, c.climber_id, 0, point, host_pose, 0, false, relative)
+	t("chair replica: stale round snapshot ignored", chair.holder == -1)
+	g.climbers.clear()
+	g._clear_chair()
+	g.queue_free()
+	c.remove()
+	await frames(2)

@@ -982,9 +982,7 @@ func _tick_owned(real_delta: float) -> void:
 				continue
 			_last_sent[cid] = [now_pose, _now, on_support, airborne]
 			_rpc_pose_q.rpc(cid, t_ms, PoseWire.pack(now_pose), flags)
-	# (The per-tick pass over remote pulls is gone, the code review 11-23: since grips stopped
-	# sending force, no sample ever had a time, so it only cleared two fields every tick.
-	# _pulls still counts who holds my climbers: _rpc_grabbed, _forget_peer_grabs.)
+	_refresh_remote_pulls()
 	if send and chair != null and is_host() and multiplayer.get_peers().size() > 0:
 		# STILL CHAIRS SEND LITTLE (the code review, 11-23: its pose went to every peer on every
 		# stream tick, sitting in its bubble or not): unchanged, a keepalive twice a second.
@@ -993,7 +991,7 @@ func _tick_owned(real_delta: float) -> void:
 		var same: bool = _chair_sent.size() == 3 and _chair_sent[0] == state and (_chair_sent[1] as Transform3D).is_equal_approx(xf)
 		if not same or _now - float(_chair_sent[2]) >= STREAM_KEEPALIVE_S:
 			_chair_sent = [state, xf, _now]
-			_rpc_chair_pose.rpc(chair_generation, chair.holder, chair.limb, chair.grip_point, xf, chair.hit_count, chair.in_bubble)
+			_rpc_chair_pose.rpc(chair_generation, chair.holder, chair.limb, chair.grip_point, xf, chair.hit_count, chair.in_bubble, _chair_grip_basis())
 @rpc("any_peer", "call_remote", "reliable")
 func _rpc_lock_request(cid: int, pose: PackedFloat32Array, welded: bool) -> void:
 	if not is_host() or not climbers.has(cid):
@@ -1927,12 +1925,33 @@ func _forget_peer_grabs(peer: int) -> void:
 			var source: Climber = climbers.get(key.x)
 			if source == null or source.owner_peer == peer:
 				_pulls[cid].erase(key)
+				if c != null: c.remote_pulls.erase(key)
 		if c != null:
 			c.remote_grabbed = (_pulls[cid] as Dictionary).size()
 
 
-func _send_contact_loads(_c: Climber) -> void:
-	pass  # Moving-terrain grips transfer no force to their target.
+func _refresh_remote_pulls() -> void:
+	for cid in _pulls.keys():
+		if not climbers.has(cid):
+			_pulls.erase(cid)
+			continue
+		var pc: Climber = climbers[cid]
+		pc.remote_pulls.clear()
+		pc.remote_support = false
+		for key in _pulls[cid]:
+			var sample: Dictionary = _pulls[cid][key]
+			if sample.has("time") and _now - float(sample.time) < PULL_STALE_S:
+				pc.remote_pulls[key] = sample
+				pc.remote_support = pc.remote_support or sample.supported
+
+
+func _send_contact_loads(c: Climber) -> void:
+	for i in c.limbs.size():
+		var l: Dictionary = c.limbs[i]
+		var target: Climber = l.grab_climber
+		if is_instance_valid(target) and target.state == Climber.State.PUPPET:
+			_rpc_pull.rpc_id(target.owner_peer, target.climber_id, c.climber_id, i, l.grab_piece, l.contact_offset, l.contact_force, c.grounded_locally(), c.touches_solid())
+
 
 
 @rpc("any_peer", "call_remote", "unreliable")
@@ -1944,7 +1963,8 @@ func _rpc_pull(cid: int, source_id: int, limb: int, piece: String, offset: Vecto
 		return
 	if not _pulls.has(cid) or not _pulls[cid].has(key) or not c.bodies.has(piece) or not offset.is_finite() or not force.is_finite():
 		return
-	return  # Retained RPC signature; old force samples are ignored.
+	var cap := Feel.get_k("pull_cap") * c.total_mass * 9.8
+	_pulls[cid][key] = {"piece": piece, "offset": offset, "force": force.limit_length(cap), "supported": supported, "directly_supported": directly_supported, "time": _now}
 
 
 @rpc("any_peer", "call_remote", "unreliable")
@@ -2159,9 +2179,16 @@ func _chair_selection_changed(c: Climber, selected: int, hand_velocity: Vector3)
 	if selected >= 0 and chair.can_reach(c,selected): chair.pick_up(c,selected)
 	_send_chair_transition()
 
+func _chair_grip_basis() -> Basis:
+	var carrier: Climber = partner if chair.holder == -2 else climbers.get(chair.holder)
+	if carrier == null or chair.limb < 0: return Basis.IDENTITY
+	var end: RigidBody3D = carrier.bodies[carrier.limbs[chair.limb].def.end]
+	return end.global_basis.inverse() * chair.global_basis
+
+
 func _send_chair_transition() -> void:
 	if chair != null and multiplayer.get_peers().size()>0:
-		_rpc_chair_pose.rpc(chair_generation,chair.holder,chair.limb,chair.grip_point,chair.global_transform,chair.hit_count,chair.in_bubble)
+		_rpc_chair_pose.rpc(chair_generation,chair.holder,chair.limb,chair.grip_point,chair.global_transform,chair.hit_count,chair.in_bubble,_chair_grip_basis())
 
 @rpc("any_peer", "call_remote", "reliable")
 func _rpc_chair_limb(cid: int, selected: int, release_velocity: Vector3, flight := Vector3.ZERO, spin := Vector3.ZERO, has_motion := false) -> void:
@@ -2196,7 +2223,9 @@ func _tick_chair(dt: float) -> void:
 			if chair.collision_layer != layer or chair.collision_mask != mask:
 				chair.collision_layer = layer
 				chair.collision_mask = mask
-		if chair.grip_joint.is_valid():
+		if carrier != null and chair.limb >= 0:
+			var end: RigidBody3D = carrier.bodies[carrier.limbs[chair.limb].def.end]
+			chair.follow_replica(end, dt)
 			return
 		if not chair.in_bubble:
 			chair.global_transform = chair.global_transform.interpolate_with(chair.loose_target, 1.0 - exp(-30.0 * dt))
@@ -2309,12 +2338,13 @@ func _rpc_chair_impact(cid: int, piece: String, local_offset: Vector3, impulse: 
 
 
 @rpc("authority", "call_remote", "unreliable_ordered")
-func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose: Transform3D, hit_count: int, in_bubble: bool) -> void:
+func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose: Transform3D, hit_count: int, in_bubble: bool, grip_basis := Basis.IDENTITY) -> void:
 	if chair == null or generation != chair_generation:
 		return
 	# Capture the old floating bubble position before applying the carried pose.
 	chair.in_bubble = in_bubble
-	if chair.holder != cid or chair.limb != limb:
+	var grip_changed: bool = chair.holder != cid or chair.limb != limb
+	if grip_changed:
 		var was_mine: bool = chair.holder >= 0 and climbers.has(chair.holder) and (climbers[chair.holder] as Climber).owner_peer == me()
 		chair.clear_grip()
 		chair.freeze = true  # loose replicas follow the host snapshots
@@ -2331,11 +2361,13 @@ func _rpc_chair_pose(generation: int, cid: int, limb: int, point: Vector3, pose:
 	chair.holder = cid
 	chair.limb = limb
 	chair.grip_point = point
-	var carrier: Climber = climbers.get(cid)
-	if carrier != null and limb >= 0 and not chair.grip_joint.is_valid():
+	chair.replica_grip_basis = grip_basis
+	chair.clear_grip()
+	chair.freeze = true
+	var carrier: Climber = partner if cid == -2 else climbers.get(cid)
+	if grip_changed and carrier != null and limb >= 0:
 		var end: RigidBody3D = carrier.bodies[carrier.limbs[limb].def.end]
-		chair.global_position = end.global_position - pose.basis * point
-		chair.lock_grip(end)
+		chair.follow_replica(end, 0.0)
 	chair.loose_target = pose
 	chair.set_hit_count(hit_count)
 

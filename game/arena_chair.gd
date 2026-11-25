@@ -53,6 +53,7 @@ var holder := -1
 var thrower := -1
 var limb := -1
 var grip_point := Vector3.ZERO
+var replica_grip_basis := Basis.IDENTITY
 var hit_shape := BoxShape3D.new()
 var previous := Transform3D.IDENTITY
 var recent_hits := {}
@@ -249,6 +250,20 @@ func follow(c: Climber, dt: float) -> void:
 	var hand_velocity := (end.global_position - last_hand) / dt
 	carry_velocity = carry_velocity.lerp(hand_velocity, 1.0 - exp(-35.0 * dt))
 	last_hand = end.global_position
+
+
+# Replicas follow the authoritative grip orientation on their displayed carrier.
+# Never join client physics to a chair whose motion is decided by the host.
+func follow_replica(end: RigidBody3D, dt: float) -> void:
+	var old := global_transform
+	var basis := end.global_basis * replica_grip_basis
+	global_transform = Transform3D(basis, end.global_position - basis * grip_point)
+	if dt > 0.0:
+		linear_velocity = (global_position - old.origin) / dt
+		var turn := (global_basis * old.basis.inverse()).get_rotation_quaternion().normalized()
+		if turn.w < 0.0: turn = -turn
+		angular_velocity = turn.get_axis() * turn.get_angle() / dt
+	Climber.sync_server(self)
 
 
 func lock_grip(end: RigidBody3D) -> void:

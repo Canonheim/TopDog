@@ -9,6 +9,13 @@ const PPM := 100.0  # 2D physics pixels per metre (the physics world is in px)
 
 ## [value, min, max, help]. Order here is the dev panel's order.
 const SPEC := {
+	"grapple_idle_friction": [0.25, 0.0, 1.0, "Passive wrist/ankle damping while a live grip is not being steered"],
+	"grapple_stiffness": [24.0, 5.0, 60.0, "Live grip spring stiffness per body weight"],
+	"grapple_force_cap": [3.0, 1.0, 8.0, "Maximum live grip spring force in body weights"],
+	"grapple_strain_ratio": [1.45, 0.5, 3.0, "Strain starts above this multiple of two body weights"],
+	"grapple_strain_limit": [0.055, 0.01, 0.3, "Accumulated overload required to release a player grip"],
+	"grapple_max_stretch": [0.60, 0.2, 1.2, "Player grip stretch limit in metres"],
+	"grapple_regrip": [0.22, 0.0, 1.0, "Regrip delay after a player spring breaks (s)"],
 	"chair_body_nudge": [0.45, 0.0, 1.5, "Maximum extra struck-body-part speed from a non-head chair hit (m/s)"],
 	"chair_body_hit_speed": [0.6, 0.1, 1.8, "Minimum chair contact speed for a light body nudge (m/s)"],
 	"chair_unstick_delay": [0.3, 0.0, 1.0, "Resting player contact before a grounded loose chair slips away (s)"],
